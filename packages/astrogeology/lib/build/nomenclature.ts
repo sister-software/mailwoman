@@ -110,9 +110,9 @@ export function nomenclatureNDJSONLine(feature: PlanetaryNomenclatureFeature): s
 
 	return stringifyJSON({
 		type: "Feature",
-		tippecanoe: { layer: NOMENCLATURE_LAYER, minzoom: minZoomForDiameter(feature.diameterKm ?? null) },
+		tippecanoe: { layer: NOMENCLATURE_LAYER, minzoom: minZoomForDiameter(feature.diameterKm) },
 		geometry: { type: "Point", coordinates: [centerLon, centerLat] },
-		properties: { ...properties, bbox: properties.bbox ? stringifyJSON(properties.bbox) : undefined },
+		properties: { ...properties, bbox: properties.bbox ? stringifyJSON(properties.bbox) : null },
 	})
 }
 

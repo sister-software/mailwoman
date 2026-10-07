@@ -73,7 +73,7 @@ export interface PipelineOpts {
 export interface NormalizedInputLite {
 	raw: string
 	normalized: string
-	appliedLocale?: string
+	appliedLocale?: string | null
 }
 
 /**
@@ -236,7 +236,7 @@ export interface QueryKindResult {
 	/**
 	 * Advisories raised during kind classification.
 	 */
-	intentMarkers?: ReadonlyArray<QueryIntentMarker>
+	intentMarkers: ReadonlyArray<QueryIntentMarker> | null
 }
 
 /**

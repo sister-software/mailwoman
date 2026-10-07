@@ -106,7 +106,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 
-	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
+	readonly artifactCoverage: GazetteerArtifactCoverage | null
 
 	readonly #importanceSelect: string
 
@@ -184,7 +184,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			}
 		}
 
-		this.artifactCoverage = readGazetteerCoverageManifest(this.database) ?? undefined
+		this.artifactCoverage = readGazetteerCoverageManifest(this.database)
 	}
 
 	#ancestorLineage(id: number | string): Ancestor[] {
@@ -425,8 +425,20 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 						country: query.country?.toUpperCase() ?? "",
 						lat: Number(hit.latitude),
 						lon: Number(hit.longitude),
+						parent_id: null,
 						score: 1,
+						distanceKm: null,
 						exactMatch: true,
+						prominence: null,
+						population: null,
+						referential: null,
+						encyclopedic: null,
+						importance: null,
+						bbox: null,
+						mismatch: null,
+						containedByQualifier: null,
+						regionScopeMiss: null,
+						variantAliasExempted: null,
 					},
 				]
 			}
@@ -616,6 +628,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		const candidates = rows.map((row): PlaceCandidate => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 			const parent = this.#ancestorLineage(Number(row.spr_id))[0]
+			const hasPopulation = row.population !== null && row.population > 0
 
 			return {
 				id: Number(row.spr_id),
@@ -626,37 +639,35 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
 
-				...(parent ? { parent_id: Number(parent.id) } : {}),
+				parent_id: parent ? Number(parent.id) : null,
 
 				score: -Number(row.neg_rank),
+				distanceKm: null,
 
 				prominence: -Number(row.effectiveNegRank),
 
 				exactMatch: !row.demoted && !row.fuzzy,
 
-				...(regionScopeMiss ? { regionScopeMiss: true } : {}),
+				regionScopeMiss: regionScopeMiss ? true : null,
 
-				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
+				containedByQualifier: row.containedByQualifier ?? null,
 
-				...(row.variantExempted ? { variantAliasExempted: true as const } : {}),
+				variantAliasExempted: row.variantExempted ? true : null,
 
-				...(row.population === null || row.population <= 0
-					? {}
-					: { population: row.population, referential: referentialFromPopulation(row.population) }),
+				population: hasPopulation ? row.population : null,
+				referential: hasPopulation ? referentialFromPopulation(row.population) : null,
+				encyclopedic: null,
 
-				...(typeof row.importance === "number" && Number.isFinite(row.importance)
-					? { importance: row.importance }
-					: {}),
-				...(hasBbox
+				importance: typeof row.importance === "number" && Number.isFinite(row.importance) ? row.importance : null,
+				bbox: hasBbox
 					? {
-							bbox: {
-								minLat: Number(row.min_lat),
-								maxLat: Number(row.max_lat),
-								minLon: Number(row.min_lon),
-								maxLon: Number(row.max_lon),
-							},
+							minLat: Number(row.min_lat),
+							maxLat: Number(row.max_lat),
+							minLon: Number(row.min_lon),
+							maxLon: Number(row.max_lon),
 						}
-					: {}),
+					: null,
+				mismatch: null,
 			}
 		})
 

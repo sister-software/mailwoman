@@ -45,12 +45,29 @@ const RESULT = {
 	unit: null,
 	postcode_country_scope: null,
 	hierarchy: [
-		{ tag: "locality", value: "Portland", name: "Portland", placeID: "wof:101715829", lat: 45.537178, lon: -122.65 },
+		{
+			tag: "locality",
+			value: "Portland",
+			name: "Portland",
+			placeID: "wof:101715829",
+			lat: 45.537178,
+			lon: -122.65,
+			in_winner_lineage: null,
+		},
 	],
 	candidates: [
 		{ name: "Portland", tag: "locality", lat: 45.5, lon: -122.6, countryCode: "US", placeID: "wof:101715829" },
 		{ name: "Portland", tag: "locality", lat: 43.66, lon: -70.25, countryCode: "US", placeID: "wof:101715745" },
 	],
+	rooftop: null,
+	capital_promotion: null,
+	dropped_components: null,
+	unfollowed_components: null,
+	derivation: null,
+	entity: null,
+	variant_alias_exemption: null,
+	admin_coherence: null,
+	authoritative: null,
 	intent_markers: [],
 } as GeocodeResult
 
@@ -59,6 +76,7 @@ const TRACE = {
 		kind: "structured_address",
 		confidence: 0.9,
 		alternatives: [{ kind: "vague", confidence: 0.3 }],
+		intentMarkers: null,
 	},
 } satisfies Pick<GeocodeTrace, "kind">
 

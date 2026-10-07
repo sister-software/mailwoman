@@ -57,19 +57,19 @@ export interface PostcodeCountryScope {
 	 *
 	 * It is set only for `pair` evidence, because the other verdicts compare no second point.
 	 */
-	distanceKm?: number
+	distanceKm: number | null
 
 	/**
 	 * The postcode place behind the verdict.
 	 * It is absent for `locality` evidence.
 	 */
-	postcodePlace?: ResolvedPlace
+	postcodePlace: ResolvedPlace | null
 
 	/**
 	 * The locality place behind the verdict.
 	 * It is absent for `postcode` evidence.
 	 */
-	localityPlace?: ResolvedPlace
+	localityPlace: ResolvedPlace | null
 }
 
 /**
@@ -327,7 +327,15 @@ export async function findPostcodeCountryScope(
 			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > thresholdKm
 
 		if (country !== defaultCountry && !contradicted && !verdicts.has(country)) {
-			verdicts.set(country, { country, postcode, locality, evidence: "locality", localityPlace })
+			verdicts.set(country, {
+				country,
+				postcode,
+				locality,
+				evidence: "locality",
+				distanceKm: null,
+				postcodePlace: null,
+				localityPlace,
+			})
 		}
 	}
 
@@ -339,7 +347,15 @@ export async function findPostcodeCountryScope(
 		const [country, postcodePlace] = [...pcHolders.entries()][0]!
 
 		if (country !== defaultCountry) {
-			return { country, postcode, locality: localities[0]!, evidence: "postcode", postcodePlace }
+			return {
+				country,
+				postcode,
+				locality: localities[0]!,
+				evidence: "postcode",
+				distanceKm: null,
+				postcodePlace,
+				localityPlace: null,
+			}
 		}
 	}
 

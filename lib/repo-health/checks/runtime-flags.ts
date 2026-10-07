@@ -72,6 +72,8 @@ export const runtimeFlagsCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `parsed ${flags.length} flags out of the register; more than ${PLAUSIBLE_REGISTER_SIZE} are expected, so the parser matched nothing`,
 				file: REGISTER,
+				line: null,
+				details: null,
 			})
 		}
 
@@ -90,6 +92,8 @@ export const runtimeFlagsCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `registered flag ${flag} has NO test touching it — either a flag to delete or coverage to write; if neither yet, add it to UNCOVERED_ALLOWLIST with the reason and the tracking issue`,
 				file: REGISTER,
+				line: null,
+				details: null,
 			})
 		}
 
@@ -102,6 +106,8 @@ export const runtimeFlagsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${flag} is allowlisted as uncovered but is now ${isCovered ? "covered by a test" : "absent from the register"} — drop the allowlist entry`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 		}

@@ -153,7 +153,7 @@ export async function reconcileLedger(
 				deps.ledger,
 				license.lid,
 				next.state,
-				next.paymentState ? { paymentState: next.paymentState } : {}
+				next.paymentState === null ? {} : { paymentState: next.paymentState }
 			)
 
 			report.corrected.push({ lid: license.lid, from: license.license_state, to: next.state })
@@ -192,7 +192,7 @@ async function mintIfUnminted(
 
 interface Correction {
 	state: LicenseState
-	paymentState?: string
+	paymentState: string | null
 }
 
 async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<string | null> {
@@ -239,7 +239,11 @@ async function stateStripeSays(
 		}
 
 		return {
-			state: licenseStateAfterSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
+			state: licenseStateAfterSubscription(license.license_state, subscription, {
+				graceUntil: token?.expires ?? null,
+				today,
+			}),
+			paymentState: null,
 		}
 	}
 
@@ -256,5 +260,6 @@ async function stateStripeSays(
 
 	return {
 		state: licenseStateAfterSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
+		paymentState: null,
 	}
 }

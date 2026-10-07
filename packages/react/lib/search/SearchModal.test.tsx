@@ -11,10 +11,10 @@ import { userEvent } from "vitest/browser"
 
 import { renderComponent } from "../../test/render.tsx"
 
-function response(query: string, urls: string[], corrected?: string): SearchResponse {
+function response(query: string, urls: string[], corrected: string | null = null): SearchResponse {
 	return {
 		query,
-		...(corrected ? { corrected } : {}),
+		corrected,
 		hits: urls.map((url, index) => ({
 			url,
 			anchor: index === 0 ? "" : "section",

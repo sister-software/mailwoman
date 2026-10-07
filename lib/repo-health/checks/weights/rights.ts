@@ -44,6 +44,8 @@ export const weightsRightsCheck: RepoCheck = {
 						severity: DiagnosticSeverity.Error,
 						message: `${licenseFile} differs from what the manifest states — ${REGENERATE}`,
 						file: licenseFile,
+						line: null,
+						details: null,
 					})
 				}
 			} catch {
@@ -51,6 +53,8 @@ export const weightsRightsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${licenseFile} is missing, so the tarball states its terms nowhere — ${REGENERATE}`,
 					file: licenseFile,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -62,6 +66,8 @@ export const weightsRightsCheck: RepoCheck = {
 						severity: DiagnosticSeverity.Error,
 						message: `${provenanceFile} differs from what package.json and model-card.json state — ${REGENERATE}`,
 						file: provenanceFile,
+						line: null,
+						details: null,
 					})
 				}
 			} catch {
@@ -69,6 +75,8 @@ export const weightsRightsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${provenanceFile} is missing or unparseable, so the package records no provenance — ${REGENERATE}`,
 					file: provenanceFile,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -82,6 +90,8 @@ export const weightsRightsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${record.workspace}/package.json does not declare ${generated} in "files", so the published tarball omits it`,
 					file: `${record.workspace}/package.json`,
+					line: null,
+					details: null,
 				})
 			}
 		}

@@ -66,9 +66,9 @@ if (family === primary) {
 
 interface ArmRow {
 	id: string
-	country?: string
+	country: string | null
 	input: string
-	characterClass?: string
+	characterClass: string | null
 	familyShare: number
 	routedToday: boolean
 	underPresence: boolean
@@ -89,9 +89,9 @@ for (const board of await loadRegressionCases()) {
 
 	rows.push({
 		id: board.id,
-		...(board.country ? { country: board.country } : {}),
+		country: board.country || null,
 		input: board.input,
-		characterClass: shape.characterClass,
+		characterClass: shape.characterClass ?? null,
 		familyShare: (shape.scripts ?? [])
 			.filter((entry) => FAMILY_SCRIPTS.has(entry.script))
 			.reduce((sum, entry) => sum + entry.share, 0),

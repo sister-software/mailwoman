@@ -38,7 +38,7 @@ export interface LabelledSpan {
 	 *
 	 * The label by itself cannot identify which tag produced it, since several collapse onto one.
 	 */
-	tag?: string
+	tag: string | null
 }
 
 /**
@@ -62,10 +62,10 @@ export interface SpanDiff {
 	mailwoman: string | null
 	libpostal: string | null
 	/**
-	 * Set when several mailwoman tags map onto this one label, so a reader does
-	 * not take the agreement at face value.
+	 * Non-null when several mailwoman tags map onto this one label, so a reader
+	 * does not take the agreement at face value.
 	 */
-	collapsed_from?: string[]
+	collapsed_from: string[] | null
 }
 
 export interface ParseComparisonRow {
@@ -110,7 +110,7 @@ export function mailwomanSpans(tree: AddressTree): LabelledSpan[] {
 	return mapped.map((component, index) => ({
 		label: component.label,
 		value: component.value,
-		...(matches[index] ? { tag: matches[index]!.classification } : {}),
+		tag: matches[index]?.classification ?? null,
 	}))
 }
 
@@ -145,7 +145,7 @@ export async function libpostalSpans(client: APIClient, input: string): Promise<
 
 	return body
 		.filter((entry): entry is { label: string; value: string } => isLabelledSpan(entry))
-		.map((entry) => ({ label: entry.label, value: entry.value }))
+		.map((entry) => ({ label: entry.label, value: entry.value, tag: null }))
 }
 
 function isLabelledSpan(entry: unknown): boolean {
@@ -185,7 +185,7 @@ export function diffSpans(mailwoman: readonly LabelledSpan[], libpostal: readonl
 			verdict,
 			mailwoman: ours,
 			libpostal: theirs,
-			...(collapsedFrom.length > 1 ? { collapsed_from: collapsedFrom } : {}),
+			collapsed_from: collapsedFrom.length > 1 ? collapsedFrom : null,
 		}
 	})
 }

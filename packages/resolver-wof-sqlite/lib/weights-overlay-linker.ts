@@ -515,15 +515,15 @@ export interface SoftFeedLink {
 export async function committedSoftFeedLinks(): Promise<{
 	anchor: SoftFeedLink
 	country: SoftFeedLink
-	streetType?: SoftFeedLink
+	streetType: SoftFeedLink | null
 }> {
 	const config = await readReleaseConfig()
 	const sources = repoCommittedSoftFeedSources(repoRootPath(), config.softFeed ?? {})
 
-	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | undefined => {
+	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | null => {
 		const source = sources.get(name)
 
-		return source ? { source, name, consequenceIfMissing } : undefined
+		return source ? { source, name, consequenceIfMissing } : null
 	}
 
 	const anchor = link("anchor-lexicon-v1.json", "gazetteer channel will resolve OFF in this worktree.")
@@ -537,7 +537,7 @@ export async function committedSoftFeedLinks(): Promise<{
 
 	const streetType = link("street-type-lexicon-v3.json", "the street_type channel will resolve OFF in this worktree.")
 
-	return { anchor, country, ...(streetType ? { streetType } : {}) }
+	return { anchor, country, streetType }
 }
 
 /**

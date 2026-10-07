@@ -23,7 +23,7 @@ test("countryFlag: non-two-letter input → empty string", () => {
 
 test("countryReferenceAnnotator: fills iso3166 + flag + calling code + currency", async () => {
 	expect(countryReferenceAnnotator({ lat: 0, lon: 0, countryCode: "us" })).toEqual({
-		iso3166: { alpha2: "US" },
+		iso3166: { alpha2: "US", alpha3: null, numeric: null },
 		flag: "🇺🇸",
 		callingCode: 1,
 		currency: { isoCode: "USD", name: "United States dollar", symbol: "$" },

@@ -48,7 +48,7 @@ import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
 import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
 import type { MailwomanTokenizer, TokenizedPiece } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
-import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "#trace"
+import type { NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
 import {
 	argmaxWithConfidence,
@@ -286,13 +286,19 @@ export class NeuralAddressClassifier {
 				text,
 				caseNormalized: false,
 				pieces: [],
+				anchor: null,
+				gazetteer: null,
+				country: null,
 				logits: [],
+				localeLogits: null,
+				spanScores: null,
+				localeCountries: null,
 				detectedSystem: null,
 				systemSource: resolveSystemVerdict(
 					opts?.addressSystemConventions ?? this.cfg.addressSystemConventions ?? null,
 					null
 				).systemSource,
-				priors: TRACE_PRIOR_KINDS.map((kind) => ({ kind, applied: false })),
+				priors: TRACE_PRIOR_KINDS.map((kind) => untracedPrior(kind, false)),
 				emissions: [],
 				labels,
 				path: [],
@@ -311,13 +317,14 @@ export class NeuralAddressClassifier {
 			text: modelText,
 			caseNormalized: modelText !== text,
 			pieces: pieces.map((p) => ({ piece: p.piece, id: p.id, start: p.start, end: p.end })),
-			...(trace.anchor ? { anchor: trace.anchor } : {}),
-			...(trace.gazetteer ? { gazetteer: trace.gazetteer } : {}),
-			...(trace.country ? { country: trace.country } : {}),
+			anchor: trace.anchor,
+			gazetteer: trace.gazetteer,
+			country: trace.country,
 			logits,
+			localeLogits: trace.localeLogits,
 			// The country order travels with the logits so consumers do not hardcode it.
-			...(trace.localeLogits ? { localeLogits: trace.localeLogits, localeCountries: [...LOCALE_COUNTRIES] } : {}),
-			...(trace.spanScores ? { spanScores: trace.spanScores } : {}),
+			localeCountries: trace.localeLogits ? [...LOCALE_COUNTRIES] : null,
+			spanScores: trace.spanScores,
 			detectedSystem: trace.detectedSystem,
 			systemSource: trace.systemSource,
 			priors: trace.priors,
@@ -351,11 +358,11 @@ export class NeuralAddressClassifier {
 		 * The intermediates that `traceParse` needs, present only when `trace` is true.
 		 */
 		trace?: {
-			anchor?: SoftFeatureChannel
-			gazetteer?: SoftFeatureChannel
-			country?: SoftFeatureChannel
-			localeLogits?: number[]
-			spanScores?: number[][][]
+			anchor: SoftFeatureChannel | null
+			gazetteer: SoftFeatureChannel | null
+			country: SoftFeatureChannel | null
+			localeLogits: number[] | null
+			spanScores: number[][][] | null
 			detectedSystem: SystemCode | null
 			systemSource: "off" | "auto" | "pinned"
 			priors: TracePrior[]
@@ -373,7 +380,7 @@ export class NeuralAddressClassifier {
 
 		// The character path takes no soft-feature channels.
 		const soft: SoftFeatures = encoded.charIDs
-			? {}
+			? { anchor: null, gazetteer: null, country: null, streetType: null, localitySurface: null }
 			: buildSoftFeatures(text, pieces, {
 					postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
 					postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
@@ -393,8 +400,8 @@ export class NeuralAddressClassifier {
 					soft.country,
 					soft.streetType || soft.localitySurface || this.cfg.addressSystems
 						? {
-								...(soft.streetType ? { streetType: soft.streetType } : {}),
-								...(soft.localitySurface ? { localitySurface: soft.localitySurface } : {}),
+								streetType: soft.streetType,
+								localitySurface: soft.localitySurface,
 								...(this.cfg.addressSystems
 									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint ?? null, text) }
 									: {}),
@@ -442,7 +449,7 @@ export class NeuralAddressClassifier {
 
 		// A null system applies no conventions.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions ?? null
-		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits ?? null)
+		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits)
 		const conventions = conventionsForSystem(detectedSystem)
 
 		const queryShapePrior = opts?.queryShape
@@ -454,7 +461,7 @@ export class NeuralAddressClassifier {
 
 		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
-		tracePriors?.push({ kind: "queryShape", applied: queryShapePrior !== undefined && matrixHasBias(queryShapePrior) })
+		tracePriors?.push(untracedPrior("queryShape", queryShapePrior !== undefined && matrixHasBias(queryShapePrior)))
 
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
@@ -480,7 +487,7 @@ export class NeuralAddressClassifier {
 			emissions = addEmissionMatrix(emissions, fstPrior)
 		}
 
-		tracePriors?.push({ kind: "fst", applied: fstPrior !== undefined && matrixHasBias(fstPrior) })
+		tracePriors?.push(untracedPrior("fst", fstPrior !== undefined && matrixHasBias(fstPrior)))
 
 		const morphologyPrior = opts?.fstStreetMorphology
 			? buildStreetMorphologyEmissionPriors(
@@ -495,10 +502,9 @@ export class NeuralAddressClassifier {
 			emissions = addEmissionMatrix(emissions, morphologyPrior)
 		}
 
-		tracePriors?.push({
-			kind: "streetMorphology",
-			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
-		})
+		tracePriors?.push(
+			untracedPrior("streetMorphology", morphologyPrior !== undefined && matrixHasBias(morphologyPrior))
+		)
 
 		// The span proposer adds phrase priors and is on by default, with `spanProposer: false` turning it off.
 		const configured = this.cfg.spanProposer === false ? undefined : (this.cfg.spanProposer ?? this.defaultProposer())
@@ -509,7 +515,7 @@ export class NeuralAddressClassifier {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
 
-		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
+		tracePriors?.push(untracedPrior("spanProposer", spanProposals.length > 0))
 
 		// The placetype-pair prior stays off unless options or config enable it.
 		// It runs before the conventions mask, so the mask still removes any
@@ -557,8 +563,9 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "placetypePair",
 			applied: placetypePairApplied,
-
-			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
+			probePath: (placetypePairApplied && pairProbeTrace?.firedPath) || null,
+			census: null,
+			censusProbedParents: null,
 		})
 
 		// The census adds no bias, so `applied` is always false and the observations
@@ -566,12 +573,9 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "placetypeCensus",
 			applied: false,
-			...(pairProbeTrace?.censusProbedParents === undefined
-				? {}
-				: {
-						census: pairProbeTrace.censusObservations ?? [],
-						censusProbedParents: pairProbeTrace.censusProbedParents,
-					}),
+			probePath: null,
+			census: pairProbeTrace?.censusProbedParents === undefined ? null : (pairProbeTrace.censusObservations ?? []),
+			censusProbedParents: pairProbeTrace?.censusProbedParents ?? null,
 		})
 
 		// Forbidden tags get an emission of -1e9 (log 0), and the mask copies the matrix
@@ -600,7 +604,7 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
+		tracePriors?.push(untracedPrior("conventionsMask", conventionsMaskApplied))
 
 		let labelIndices =
 			this.decodeMode === "viterbi"
@@ -711,15 +715,15 @@ export class NeuralAddressClassifier {
 			tokens,
 			logits,
 			pieces,
-			localeCountry: confidentLocaleCountry(localeLogits ?? null),
+			localeCountry: confidentLocaleCountry(localeLogits),
 			...(trace
 				? {
 						trace: {
-							...(soft.anchor ? { anchor: soft.anchor } : {}),
-							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
-							...(soft.country ? { country: soft.country } : {}),
-							...(localeLogits ? { localeLogits } : {}),
-							...(spanScores ? { spanScores } : {}),
+							anchor: soft.anchor,
+							gazetteer: soft.gazetteer,
+							country: soft.country,
+							localeLogits,
+							spanScores,
 							detectedSystem,
 							systemSource,
 							priors: tracePriors!,
@@ -821,4 +825,11 @@ function addMatrices(a: number[][], b: number[][]): number[][] {
 	}
 
 	return out
+}
+
+/**
+ * A trace record for a prior with no probe path or census observations.
+ */
+function untracedPrior(kind: TracePriorKind, applied: boolean): TracePrior {
+	return { kind, applied, probePath: null, census: null, censusProbedParents: null }
 }

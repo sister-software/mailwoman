@@ -108,7 +108,7 @@ describe("the committed canonical-form suite", () => {
 
 			const coordinate = fixture.outcomeComparator === "assembled_coordinate"
 
-			expect(fixture.toleranceM, `${fixture.id}: toleranceM`).toBe(coordinate ? seedCase.expectToleranceM : undefined)
+			expect(fixture.toleranceM, `${fixture.id}: toleranceM`).toBe(coordinate ? seedCase.expectToleranceM : null)
 		}
 	})
 
@@ -166,7 +166,7 @@ describe("the committed canonical-form suite", () => {
 	it("gives every tracked row a reference and a note, and every blocking row no reference", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a blocking row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a blocking row must not name a defect`).toBeNull()
 
 				continue
 			}

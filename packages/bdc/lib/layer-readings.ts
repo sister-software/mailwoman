@@ -104,6 +104,6 @@ export async function bdcLayerReadings(
 		basis: surveyed ? landscape.coverage_basis : null,
 		surveyedAt: landscape.vintage,
 		records: surveyed ? landscape.filings.filter((filing) => filing.technology_code === technologyCode).length : null,
-		evidence: { source: query.source },
+		evidence: { source: query.source, observedAt: null, validFrom: null, validTo: null },
 	}))
 }

@@ -77,7 +77,7 @@ export interface ObservedRate {
 	/**
 	 * The size of the set this sample was drawn from, when the caller took a subset of something larger.
 	 */
-	populationN?: number
+	populationN?: number | null
 }
 
 /**

@@ -135,7 +135,7 @@ describe("runDoctor (injected boundaries)", () => {
 		const gaz = byID(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.OK)
 		expect(gaz.detail).toContain("/data/wof/candidate.db")
-		expect(gaz.fix).toBeUndefined()
+		expect(gaz.fix).toBeNull()
 		expect(report.exitCode).toBe(0)
 	})
 
@@ -166,6 +166,12 @@ describe("runDoctor (injected boundaries)", () => {
 			applied: "AGPL-3.0-only",
 			obligations: ["attribution", "share_alike", "source_offer"],
 			recognized: true,
+			attribution: null,
+			licensee: null,
+			keyID: null,
+			keyStatus: null,
+			lid: null,
+			lidStatus: null,
 		})
 
 		expect(poi.license).toEqual({
@@ -175,6 +181,11 @@ describe("runDoctor (injected boundaries)", () => {
 			obligations: ["attribution"],
 			recognized: true,
 			attribution: "Overture Maps Foundation",
+			licensee: null,
+			keyID: null,
+			keyStatus: null,
+			lid: null,
+			lidStatus: null,
 		})
 	})
 
@@ -313,7 +324,7 @@ describe("runDoctor (injected boundaries)", () => {
 			},
 		})
 
-		expect(byID(handIssued.checks, "license-mailwoman").license).not.toHaveProperty("lidStatus")
+		expect(byID(handIssued.checks, "license-mailwoman").license).toHaveProperty("lidStatus", null)
 	})
 
 	it("license posture: an expired, unknown or retired key reports its reason and the open-source branch applies", async () => {

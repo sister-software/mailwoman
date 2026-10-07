@@ -1,10 +1,12 @@
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { createWOFResolver } from "#resolve"
 
 const MESSINA = {
+	...EMPTY_PLACE_FIELDS,
 	id: 10,
 	name: "Messina",
 	placetype: "region",
@@ -16,6 +18,7 @@ const MESSINA = {
 }
 
 const MAINE = {
+	...EMPTY_PLACE_FIELDS,
 	id: 20,
 	name: "Maine",
 	placetype: "region",
@@ -27,6 +30,7 @@ const MAINE = {
 }
 
 const MISSOURI = {
+	...EMPTY_PLACE_FIELDS,
 	id: 30,
 	name: "Missouri",
 	placetype: "region",
@@ -38,6 +42,7 @@ const MISSOURI = {
 }
 
 const PORTLAND_ME: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 21,
 	name: "Portland",
 	placetype: "locality",
@@ -148,6 +153,7 @@ describe("ResolveTree + adminCoherence", () => {
 
 	it("Falls through to a same-named COUNTRY when no region holds the locality ( — Tbilisi, Georgia)", async () => {
 		const usGeorgia = {
+			...EMPTY_PLACE_FIELDS,
 			id: 40,
 			name: "Georgia",
 			placetype: "region",
@@ -159,6 +165,7 @@ describe("ResolveTree + adminCoherence", () => {
 		}
 
 		const georgiaCountry = {
+			...EMPTY_PLACE_FIELDS,
 			id: 50,
 			name: "Georgia",
 			placetype: "country",
@@ -170,6 +177,7 @@ describe("ResolveTree + adminCoherence", () => {
 		}
 
 		const tbilisi: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 51,
 			name: "Tbilisi",
 			placetype: "locality",
@@ -182,6 +190,7 @@ describe("ResolveTree + adminCoherence", () => {
 		}
 
 		const atlanta: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 41,
 			name: "Atlanta",
 			placetype: "locality",
@@ -218,6 +227,7 @@ describe("ResolveTree + adminCoherence", () => {
 
 	it("Re-picks via matchCountry when the gazetteer has NO country node + the locality is orphaned ( — flattened GE hierarchy)", async () => {
 		const usGeorgia = {
+			...EMPTY_PLACE_FIELDS,
 			id: 40,
 			name: "Georgia",
 			placetype: "region",
@@ -229,6 +239,7 @@ describe("ResolveTree + adminCoherence", () => {
 		}
 
 		const tbilisiOrphan: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 51,
 			name: "Tbilisi",
 			placetype: "locality",
@@ -270,6 +281,7 @@ describe("ResolveTree + adminCoherence", () => {
 
 	it("stays inert for a domestic (region, locality) pair — matchCountry returns null for a US state name", async () => {
 		const usGeorgia = {
+			...EMPTY_PLACE_FIELDS,
 			id: 40,
 			name: "Georgia",
 			placetype: "region",
@@ -281,6 +293,7 @@ describe("ResolveTree + adminCoherence", () => {
 		}
 
 		const atlanta: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 41,
 			name: "Atlanta",
 			placetype: "locality",
@@ -320,6 +333,7 @@ describe("ResolveTree + adminCoherence", () => {
 
 describe("resolveTree + applyParentFallbackContradiction", () => {
 	const TAINAN: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 100,
 		name: "Tainan City",
 		placetype: "region",
@@ -331,6 +345,7 @@ describe("resolveTree + applyParentFallbackContradiction", () => {
 	}
 
 	const HSINCHU: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 200,
 		name: "Hsinchu City",
 		placetype: "region",
@@ -342,6 +357,7 @@ describe("resolveTree + applyParentFallbackContradiction", () => {
 	}
 
 	const HSINCHU_BEI_QU: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 201,
 		name: "Bei Qu",
 		placetype: "locality",

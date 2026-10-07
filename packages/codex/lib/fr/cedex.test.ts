@@ -15,7 +15,7 @@ describe("matchCedex", () => {
 
 	it("matches bare CEDEX without an office number", () => {
 		expect(matchCedex("23130 SAINT-LOUP Cedex")).toMatchObject({ matched: "Cedex" })
-		expect(matchCedex("23130 SAINT-LOUP Cedex")?.office).toBeUndefined()
+		expect(matchCedex("23130 SAINT-LOUP Cedex")?.office).toBeNull()
 	})
 
 	it("is case-insensitive and returns the LAST occurrence", () => {
@@ -29,7 +29,7 @@ describe("matchCedex", () => {
 		// (a three-digit number is not a cedex office. This is the desired behavior).
 		const m = matchCedex("PARIS CEDEX 123")
 		expect(m?.matched).toBe("CEDEX")
-		expect(m?.office).toBeUndefined()
+		expect(m?.office).toBeNull()
 	})
 
 	it("returns null when absent", () => {

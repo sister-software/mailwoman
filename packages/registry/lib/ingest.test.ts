@@ -80,7 +80,15 @@ describe("ingestRows", () => {
 			.trim()
 			.replaceAll(/\s+/g, "|"),
 		formatted: raw,
-		geocode: { coordinate: { latitude: 45.5, longitude: -122.6 }, tier: "address_point", uncertaintyMeters: 1 },
+		raw: null,
+		geocode: {
+			coordinate: { latitude: 45.5, longitude: -122.6 },
+			tier: "address_point",
+			uncertaintyMeters: 1,
+			hierarchy: null,
+			poBox: null,
+			multiUnit: null,
+		},
 	})
 
 	const mapping = {
@@ -105,7 +113,17 @@ describe("ingestRows", () => {
 		const [a, b] = await ingestRows(streamRows(csvPath), mapping, { geocodeAddress: stubGeocode })
 
 		expect(a!.id).toBe("c1")
-		expect(a!.name).toEqual({ prefix: "Dr.", given: "Robert", family: "Smith" })
+
+		expect(a!.name).toEqual({
+			prefix: "Dr.",
+			given: "Robert",
+			middle: null,
+			familyParticle: null,
+			family: "Smith",
+			suffix: null,
+			nickname: null,
+		})
+
 		expect(a!.organization?.canonical).toBe("acme health")
 		expect(a!.organization?.designations).toEqual(["llc"])
 		expect(a!.phone).toBe("503-555-0100")
@@ -113,7 +131,16 @@ describe("ingestRows", () => {
 		expect(a!.address?.geocode?.tier).toBe("address_point")
 		expect(a!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
 
-		expect(b!.name).toEqual({ given: "Maria", family: "Garcia" })
+		expect(b!.name).toEqual({
+			prefix: null,
+			given: "Maria",
+			middle: null,
+			familyParticle: null,
+			family: "Garcia",
+			suffix: null,
+			nickname: null,
+		})
+
 		expect(b!.organization).toBeNull()
 		expect(b!.phone).toBeNull()
 	})
@@ -243,8 +270,26 @@ describe("streamRows (lazy delimited ingest)", () => {
 		await writeLocalTextFile("name\taddress\nJohn Smith\t123 Main St\nMaria Garcia\t50 Elm Ave\n", file)
 		const records = await ingestRows(streamRows(file), { name: "name", address: "address" })
 		expect(records).toHaveLength(2)
-		expect(records[0]!.name).toEqual({ given: "John", family: "Smith" })
-		expect(records[1]!.name).toEqual({ given: "Maria", family: "Garcia" })
+
+		expect(records[0]!.name).toEqual({
+			prefix: null,
+			given: "John",
+			middle: null,
+			familyParticle: null,
+			family: "Smith",
+			suffix: null,
+			nickname: null,
+		})
+
+		expect(records[1]!.name).toEqual({
+			prefix: null,
+			given: "Maria",
+			middle: null,
+			familyParticle: null,
+			family: "Garcia",
+			suffix: null,
+			nickname: null,
+		})
 	})
 })
 
@@ -277,7 +322,7 @@ describe("geocodeAddressVia", () => {
 		const geocoded = geocodeAddressVia({ parse: () => components, geocode: () => null })
 		const address = await geocoded("123 Main St")
 		expect(address?.canonicalKey).toBeTruthy()
-		expect(address?.geocode).toBeUndefined()
+		expect(address?.geocode).toBeNull()
 	})
 
 	it("parseAndGeocode variant: one combined call wires the same PostalAddress + coordinate", async () => {
@@ -303,6 +348,6 @@ describe("geocodeAddressVia", () => {
 		const geocoded = geocodeAddressVia({ parseAndGeocode: async () => ({ components, geo: null }) })
 		const address = await geocoded("123 Main St")
 		expect(address?.canonicalKey).toBeTruthy()
-		expect(address?.geocode).toBeUndefined()
+		expect(address?.geocode).toBeNull()
 	})
 })

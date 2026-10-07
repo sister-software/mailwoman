@@ -173,7 +173,7 @@ export interface QueryShape {
 export interface NormalizedInputLite {
 	raw: string
 	normalized: string
-	appliedLocale?: string
+	appliedLocale?: string | null
 }
 
 /**

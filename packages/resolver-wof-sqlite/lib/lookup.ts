@@ -703,22 +703,28 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		)
 
 		return rows.map((row) => {
-			const c: PlaceCandidate = {
+			return {
 				id: row.id,
 				name: row.name,
 				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
 				lat: row.lat ?? 0,
 				lon: row.lon ?? 0,
-				parent_id: row.parent_id ?? undefined,
+				parent_id: row.parent_id ?? null,
 				score: 0,
-			}
-
-			if (row.population !== null && row.population > 0) {
-				c.population = row.population
-			}
-
-			return c
+				population: row.population !== null && row.population > 0 ? row.population : null,
+				distanceKm: null,
+				exactMatch: null,
+				prominence: null,
+				referential: null,
+				encyclopedic: null,
+				importance: null,
+				bbox: null,
+				mismatch: null,
+				containedByQualifier: null,
+				regionScopeMiss: null,
+				variantAliasExempted: null,
+			} satisfies PlaceCandidate
 		})
 	}
 

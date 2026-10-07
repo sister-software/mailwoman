@@ -51,15 +51,15 @@ export interface GeocodeResult {
 
 	/**
 	 * Spans that the one-value-per-tag projection dropped.
-	 * The field is present only when some were dropped.
+	 * The field is null unless some were dropped.
 	 */
-	dropped_components?: DroppedSpan[]
+	dropped_components: DroppedSpan[] | null
 
 	/**
 	 * Components in `components` that the coordinate ignored.
-	 * The field is present only when some exist.
+	 * The field is null unless some exist.
 	 */
-	unfollowed_components?: UnfollowedComponent[]
+	unfollowed_components: UnfollowedComponent[] | null
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
@@ -76,15 +76,15 @@ export interface GeocodeResult {
 	/**
 	 * The derivation behind this answer.
 	 *
-	 * It is present only when the caller supplied a resolver trace sink.
+	 * It is null unless the caller supplied a resolver trace sink.
 	 */
-	derivation?: DerivationProjection
+	derivation: DerivationProjection | null
 
 	/**
 	 * The poi.db entity that supplied the coordinate.
-	 * It is present only when the `venue` tier answered.
+	 * It is null unless the `venue` tier answered.
 	 */
-	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
+	entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
 
 	/**
 	 * The locality key and postcode stored on the matched address-point row.
@@ -92,7 +92,7 @@ export interface GeocodeResult {
 	 * These values describe the rooftop rather than the query.
 	 * Consumers may display them but must not filter on them.
 	 */
-	rooftop?: { localityNorm?: string; postcode?: string }
+	rooftop: { localityNorm: string | null; postcode: string | null } | null
 
 	/**
 	 * The uncertainty radius in meters, or null when the tier reports none.
@@ -141,7 +141,7 @@ export interface GeocodeResult {
 	 * Each entry is resolved independently.
 	 * `in_winner_lineage` is `true` when the entry lies on the winner's ancestor chain,
 	 * `false` when it lies outside.
-	 * The field is absent when the chain is unknown.
+	 * The field is null when the chain is unknown.
 	 */
 	hierarchy: HierarchyEntry[]
 
@@ -156,7 +156,7 @@ export interface GeocodeResult {
 		lat: number
 		lon: number
 		countryCode: string | null
-		placeID?: string
+		placeID: string | null
 	}>
 
 	/**
@@ -169,14 +169,14 @@ export interface GeocodeResult {
 	/**
 	 * The promoted candidate's country.
 	 *
-	 * It is present only when capital promotion changed a node's leading candidate.
+	 * It is null unless capital promotion changed a node's leading candidate.
 	 */
-	capital_promotion?: string
+	capital_promotion: string | null
 
 	/**
 	 * Set when the variant-alias exemption lifted a node's winner past the cross-country alias penalty.
 	 */
-	variant_alias_exemption?: true
+	variant_alias_exemption: true | null
 
 	/**
 	 * Query-intent advisories.
@@ -191,18 +191,18 @@ export interface GeocodeResult {
 	 * Whether the winner's resolved ancestry confirms, contradicts or cannot check
 	 * the parsed `region` and `country`.
 	 *
-	 * It is present whenever a winner resolved.
+	 * It is non-null whenever a winner resolved.
 	 * Downstream ranking does not read it.
 	 */
-	admin_coherence?: AdminCoherenceReport
+	admin_coherence: AdminCoherenceReport | null
 
 	/**
 	 * The answer from a configured authoritative provider, reported alongside Mailwoman's own answer.
 	 *
-	 * The field is absent when no provider is configured.
+	 * The field is null when no provider is configured.
 	 * Every value inside comes from the provider, including `refused` and `transport_error`.
 	 */
-	authoritative?: AuthoritativeAssertion
+	authoritative: AuthoritativeAssertion | null
 }
 
 /**
@@ -255,7 +255,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	let tier: ResolutionTier = "admin"
 	let uncertaintyM: number | null = null
 
-	let rooftop: { localityNorm?: string; postcode?: string } | null = null
+	let rooftop: { localityNorm: string | null; postcode: string | null } | null = null
 
 	let answeringBasis: string | null = null
 
@@ -275,8 +275,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 
 			if (ap.locality_norm || ap.postcode) {
 				rooftop = {
-					...(ap.locality_norm ? { localityNorm: ap.locality_norm } : {}),
-					...(ap.postcode ? { postcode: ap.postcode } : {}),
+					localityNorm: ap.locality_norm || null,
+					postcode: ap.postcode || null,
 				}
 			}
 		}
@@ -363,7 +363,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 			lat: primaryNode.lat,
 			lon: primaryNode.lon!,
 			countryCode: (primaryNode.metadata?.["resolver_country"] as string | null)?.trim()?.toUpperCase() ?? null,
-			...(primaryNode.placeID ? { placeID: primaryNode.placeID } : {}),
+			placeID: primaryNode.placeID || null,
 		})
 
 		const alts =
@@ -389,7 +389,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 				lat: a.lat,
 				lon: a.lon,
 				countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
-				...(a.id != null ? { placeID: `wof:${a.id}` } : {}),
+				placeID: a.id != null ? `wof:${a.id}` : null,
 			})
 		}
 	}
@@ -397,8 +397,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const extractedOutcome: GeocodeOutcomeLike = {
 		input,
 		components,
-		...(dropped?.length ? { dropped_components: dropped } : {}),
-		...(unfollowed.length ? { unfollowed_components: unfollowed } : {}),
+		dropped_components: dropped?.length ? dropped : null,
+		unfollowed_components: unfollowed.length ? unfollowed : null,
 		lat,
 		lon,
 		resolution_tier: tier,
@@ -415,18 +415,17 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		countryCode,
 		hierarchy,
 		candidates,
-		...(rooftop ? { rooftop } : {}),
+		rooftop,
 
-		...adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
+		admin_coherence: adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
-		...((): { capital_promotion?: string } => {
-			const promoted = capitalPromotionOf(tree)
-
-			return promoted === null ? {} : { capital_promotion: promoted }
-		})(),
-		...(variantAliasExemptionOf(tree) === true ? { variant_alias_exemption: true as const } : {}),
+		capital_promotion: capitalPromotionOf(tree),
+		variant_alias_exemption: variantAliasExemptionOf(tree) === true ? true : null,
 
 		intent_markers: [],
+		derivation: null,
+		entity: null,
+		authoritative: null,
 	}
 
 	return extractedOutcome

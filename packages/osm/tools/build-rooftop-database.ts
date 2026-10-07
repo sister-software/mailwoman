@@ -252,6 +252,7 @@ async function main(): Promise<void> {
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
 			createdAt: args.createdAt,
+			sourceRecords: null,
 		})
 
 		kdb.exec("ANALYZE")

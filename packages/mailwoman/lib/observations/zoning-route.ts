@@ -51,7 +51,7 @@ export interface ZoningDesignationObservation {
 	 *
 	 * Its basis is `source_present`, which supports a presence claim only.
 	 */
-	coverage?: ObservationCoverageRecord
+	coverage: ObservationCoverageRecord | null
 	/**
 	 * The index cell that was probed.
 	 */
@@ -130,7 +130,7 @@ export function createZoningDesignationRoute(options: ZoningDesignationRouteOpti
 
 	return createDesignationRoute(lookup, {
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
-		refusalFor: (reading) => (reading.kind !== ZoningReadingKind.Designated ? "no_designation_here" : undefined),
+		refusalFor: (reading) => (reading.kind !== ZoningReadingKind.Designated ? "no_designation_here" : null),
 		toObservation: (reading, latitude, longitude) =>
 			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
@@ -152,7 +152,7 @@ function toObservation(
 		reading: reading.kind,
 		designations: reading.designations,
 		containment: reading.containment,
-		...observationCoverageRecord(reading.coverage),
+		coverage: observationCoverageRecord(reading.coverage),
 		indexCellIndex: reading.indexCellIndex,
 		limits: reading.limits,
 		coverageLimit: reading.coverageLimit,
@@ -187,6 +187,6 @@ export function zoningAssignmentClause(observation: ZoningDesignationObservation
 export function describeZoningDesignation(observation: ZoningDesignationObservation): string {
 	return (
 		`${zoningAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} ` +
-		`(${observation.containment}); ${describeCoverage(observation.coverage ?? null)}; ${describeLayerProvenance(observation.layer, { tier: true })}`
+		`(${observation.containment}); ${describeCoverage(observation.coverage)}; ${describeLayerProvenance(observation.layer, { tier: true })}`
 	)
 }

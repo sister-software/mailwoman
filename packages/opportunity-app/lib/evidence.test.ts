@@ -29,7 +29,7 @@ describe("buildingReportPart", () => {
 
 	test("the parts hold every building line once, in order, and no line outside the building sections", () => {
 		const parts = dossier.buildings.map((section) => buildingReportPart(lines, section.building.id))
-		const buildingLines = lines.filter((entry) => entry.building !== undefined)
+		const buildingLines = lines.filter((entry) => entry.building !== null)
 
 		expect(parts.join("\n")).toBe(buildingLines.map((entry) => entry.text).join("\n"))
 		expect(parts.join("\n")).not.toContain("## Sources")

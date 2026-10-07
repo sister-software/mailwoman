@@ -99,13 +99,42 @@ describe("planRepoSync", () => {
 	})
 
 	it("clones what is absent", () => {
-		expect(planRepoSync(upstreamOrigin, DIR, { exists: false, isRepository: false }).action).toBe(SyncAction.Clone)
+		expect(
+			planRepoSync(
+				upstreamOrigin,
+				DIR,
+				clone({
+					exists: false,
+					isRepository: false,
+					originURL: null,
+					dirty: null,
+					ahead: null,
+					behind: null,
+					shallow: null,
+					head: null,
+					headDate: null,
+				})
+			).action
+		).toBe(SyncAction.Clone)
 	})
 
 	it("refuses a directory that is not a checkout rather than cloning over it", () => {
-		expect(planRepoSync(upstreamOrigin, DIR, { exists: true, isRepository: false }).action).toBe(
-			SyncAction.RefuseNotAClone
-		)
+		expect(
+			planRepoSync(
+				upstreamOrigin,
+				DIR,
+				clone({
+					isRepository: false,
+					originURL: null,
+					dirty: null,
+					ahead: null,
+					behind: null,
+					shallow: null,
+					head: null,
+					headDate: null,
+				})
+			).action
+		).toBe(SyncAction.RefuseNotAClone)
 	})
 
 	it("fast-forwards a clean, correctly-pointed, behind clone — and only then", () => {

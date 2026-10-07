@@ -587,8 +587,8 @@ describe("buildCandidateTable", () => {
 		test("without a score source the column exists and is empty — and the result says so", async () => {
 			const { output, result } = await adminOnlyCandidate()
 
-			expect(result.importanceScored).toBeUndefined()
-			expect(result.importanceFiltered).toBeUndefined()
+			expect(result.importanceScored).toBeNull()
+			expect(result.importanceFiltered).toBeNull()
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 

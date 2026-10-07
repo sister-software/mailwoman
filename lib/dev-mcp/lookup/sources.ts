@@ -770,13 +770,10 @@ export function lookupCodex(queries: string[]): LookupRow[] {
 			query,
 			hit: true,
 			entries,
-			...(systems.length
-				? {
-						note:
-							"`postcode_systems` is a SHAPE test, not gazetteer membership: a bare five-digit code matches the " +
-							"US, German and French shapes alike. Ask `postcode` or `candidate` for membership.",
-					}
-				: {}),
+			note: systems.length
+				? "`postcode_systems` is a SHAPE test, not gazetteer membership: a bare five-digit code matches the " +
+					"US, German and French shapes alike. Ask `postcode` or `candidate` for membership."
+				: null,
 		}
 	})
 }
@@ -857,6 +854,6 @@ export function lookupPostcodeAnchor(
 			)
 		}
 
-		return { query, hit: true, entries, ...(notes.length ? { note: notes.join(" ") } : {}) }
+		return { query, hit: true, entries, note: notes.length ? notes.join(" ") : null }
 	})
 }

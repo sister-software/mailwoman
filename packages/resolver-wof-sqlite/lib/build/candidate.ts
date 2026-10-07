@@ -178,9 +178,9 @@ export interface BuildCandidateResult {
 	/**
 	 * The count of places that received an `importance` score.
 	 *
-	 * It is `undefined` when no score source was given.
+	 * It is `null` when no score source was given.
 	 */
-	importanceScored?: number
+	importanceScored: number | null
 
 	/**
 	 * The count of places that matched a scored group by name key, country and placetype
@@ -188,7 +188,7 @@ export interface BuildCandidateResult {
 	 *
 	 * A large change between rebuilds means the score source and the admin source have diverged.
 	 */
-	importanceFiltered?: number
+	importanceFiltered: number | null
 
 	/**
 	 * The count of alias rows the gloss anomaly detector stamped `name_role = 'gloss'`.
@@ -603,6 +603,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		ancestorPlaces: sidecar.ancestorPlaces + nLocalityScoped,
 		intervalPlaces: sidecar.intervalPlaces,
 		...roles,
-		...(importance ? { importanceScored: importance.matched, importanceFiltered: importance.refused } : {}),
+		importanceScored: importance ? importance.matched : null,
+		importanceFiltered: importance ? importance.refused : null,
 	}
 }

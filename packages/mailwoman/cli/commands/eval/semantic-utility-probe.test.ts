@@ -176,7 +176,7 @@ describe("the freeze mechanism", () => {
 describe("execution refusals", () => {
 	it("refuses an unregistered comparator", async () => {
 		const fixture = definition.targetRows[0]!
-		const outcome: POIBoardOutcome = { path: "full" }
+		const outcome: POIBoardOutcome = { path: "full", poiIntent: null }
 
 		const unregistered = "resolution_identity" as ProbeComparatorName
 
@@ -236,9 +236,9 @@ describe("execution refusals", () => {
 
 describe("the outcome-shape vocabulary", () => {
 	it("names a shape for every reachable pipeline outcome", async () => {
-		expect(poiOutcomeShape({ path: "full" })).toBe("no_poi_branch")
-		expect(poiOutcomeShape({ path: "fast-path" })).toBe("no_poi_branch")
-		expect(poiOutcomeShape({ path: "poi" })).toBe("no_poi_branch")
+		expect(poiOutcomeShape({ path: "full", poiIntent: null })).toBe("no_poi_branch")
+		expect(poiOutcomeShape({ path: "fast-path", poiIntent: null })).toBe("no_poi_branch")
+		expect(poiOutcomeShape({ path: "poi", poiIntent: null })).toBe("no_poi_branch")
 
 		expect(poiOutcomeShape({ path: "poi", poiIntent: { type: "abstain", reason: "anchor_required" } })).toBe(
 			"poi_abstain"
@@ -271,9 +271,11 @@ describe("the metric arithmetic", () => {
 		return {
 			id,
 			role,
+			group: null,
 			query: id,
 			shape,
-			grade: { id, query: id, expectKind: "results", pass, detail: "" },
+			abstainReason: null,
+			grade: { id, query: id, expectKind: "results", pass, detail: "", nearestKm: null, resultCount: null },
 		}
 	}
 

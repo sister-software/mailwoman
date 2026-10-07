@@ -64,8 +64,8 @@ export interface TriageAttestation {
 	 * `unattested` means the check ran and found no match.
 	 */
 	state: "attested" | "unattested" | "unmeasured"
-	population?: number
-	distanceKm?: number
+	population: number | null
+	distanceKm: number | null
 }
 
 /**
@@ -100,7 +100,7 @@ export interface TriageRow {
 	/**
 	 * The live record that covers this place, if any.
 	 */
-	coveredBy?: CoveredBy
+	coveredBy: CoveredBy | null
 	attestation: TriageAttestation
 }
 
@@ -119,10 +119,10 @@ export interface TriageSummary {
 	/**
 	 * The number of uncovered rows that GeoNames attests.
 	 *
-	 * It is `undefined` when the country has no dump.
+	 * It is `null` when the country has no dump.
 	 * A value of 0 means the check ran and found none.
 	 */
-	uncoveredAttested?: number
+	uncoveredAttested: number | null
 }
 
 /**
@@ -183,7 +183,7 @@ function fold(value: string): string {
 function judgeCoverage(
 	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },
 	neighbours: readonly LiveRecord[]
-): { verdict: CoverageVerdict; coveredBy?: CoveredBy } {
+): { verdict: CoverageVerdict; coveredBy: CoveredBy | null } {
 	let containment: { record: LiveRecord; distanceKm: number } | null = null
 	let crossBand: { record: LiveRecord; distanceKm: number } | null = null
 
@@ -240,7 +240,7 @@ function judgeCoverage(
 		}
 	}
 
-	return { verdict: CoverageVerdict.Uncovered }
+	return { verdict: CoverageVerdict.Uncovered, coveredBy: null }
 }
 
 async function loadAttestors(
@@ -363,7 +363,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 				live
 			)
 
-			let attestation: TriageAttestation = { state: "unmeasured" }
+			let attestation: TriageAttestation = { state: "unmeasured", population: null, distanceKm: null }
 
 			if (attestors) {
 				const near = (attestors.get(key) ?? [])
@@ -373,7 +373,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 
 				attestation = near.length
 					? { state: "attested", population: near[0]!.pop, distanceKm: near[0]!.distanceKm }
-					: { state: "unattested" }
+					: { state: "unattested", population: null, distanceKm: null }
 			}
 
 			countryRows.push({
@@ -388,7 +388,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 					? CurrencyClass.DeprecatedNoSuccessor
 					: CurrencyClass.NotCurrentUnstated,
 				coverage: verdict,
-				...(coveredBy ? { coveredBy } : {}),
+				coveredBy,
 				attestation,
 			})
 		}
@@ -410,7 +410,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 				coveredCrossBand: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
 				coveredContainment: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
 				uncovered: uncovered.length,
-				...(attestors ? { uncoveredAttested: uncovered.filter((r) => r.attestation.state === "attested").length } : {}),
+				uncoveredAttested: attestors ? uncovered.filter((r) => r.attestation.state === "attested").length : null,
 			})
 		}
 

@@ -126,11 +126,11 @@ export interface FSTFreshnessRow {
 	artifact: string
 	present: boolean
 	/**
-	 * `undefined` = current.
+	 * `null` = current.
 	 * Otherwise the prose from `fstStaleReason`.
 	 */
-	staleReason?: string
-	builtAt?: string
+	staleReason: string | null
+	builtAt: string | null
 	rebuildCommand: string
 }
 
@@ -157,7 +157,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
 
 		if (!(await pathExists(path))) {
-			rows.push({ artifact: relative, present: false, rebuildCommand })
+			rows.push({ artifact: relative, present: false, staleReason: null, builtAt: null, rebuildCommand })
 
 			continue
 		}
@@ -172,8 +172,8 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 		rows.push({
 			artifact: relative,
 			present: true,
-			...(staleReason === null ? {} : { staleReason }),
-			...(fields?.provenance?.builtAt ? { builtAt: fields.provenance.builtAt } : {}),
+			staleReason,
+			builtAt: fields?.provenance?.builtAt || null,
 			rebuildCommand,
 		})
 	}

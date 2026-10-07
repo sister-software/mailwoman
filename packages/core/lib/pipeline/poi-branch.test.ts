@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest"
 import { runPipeline } from "#pipeline/runtime-pipeline"
 import type { POIIntentOutcome, QueryKindResult } from "#pipeline/types"
 
-const POI_KIND: QueryKindResult = { kind: "poi_query", confidence: 0.92, alternatives: [] }
+const POI_KIND: QueryKindResult = { kind: "poi_query", confidence: 0.92, alternatives: [], intentMarkers: null }
 
 describe("poi_query pipeline branch", () => {
 	it("routes to stages.poiIntent and returns path 'poi' with the outcome", async () => {
@@ -68,8 +68,8 @@ describe("poi_query pipeline branch", () => {
 		})
 
 		expect(result.path).toBe("full")
-		expect(result.poiIntent).toBeUndefined()
-		expect("poiIntent" in result).toBe(false)
+		expect(result.poiIntent).toBeNull()
+		expect(result.poiIntent).toBeNull()
 	})
 
 	it("ignores a poi_query kind entirely when no stage is wired", async () => {
@@ -78,7 +78,7 @@ describe("poi_query pipeline branch", () => {
 		})
 
 		expect(result.path).toBe("full")
-		expect("poiIntent" in result).toBe(false)
+		expect(result.poiIntent).toBeNull()
 	})
 
 	it("returns an abstain outcome verbatim", async () => {

@@ -19,9 +19,9 @@ const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((s
 export interface PostcodeShapeVerdict {
 	/**
 	 * The upper-case postcode systems of the first confirmed span, passed to
-	 * `findPostcodeCountryScope` as its candidate systems; `undefined` when no span was confirmed.
+	 * `findPostcodeCountryScope` as its candidate systems; `null` when no span was confirmed.
 	 */
-	narrowing?: string[]
+	narrowing: string[] | null
 
 	/**
 	 * Postcode values whose shape fits a system used by a sibling country or region span.
@@ -84,7 +84,7 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
  * `house_number`, and any other span is stamped `postcode_shape_excluded`.
  */
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {
-	const verdict: PostcodeShapeVerdict = { confirmed: [], excluded: [], abstained: [] }
+	const verdict: PostcodeShapeVerdict = { narrowing: null, confirmed: [], excluded: [], abstained: [] }
 
 	const postcodes = collectNodes(roots, (n) => n.tag === "postcode" && n.value.trim())
 

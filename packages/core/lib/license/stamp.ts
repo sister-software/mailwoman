@@ -36,7 +36,7 @@ export interface EngineStamp {
 	 */
 	license: string
 	license_url: string
-	notice?: string
+	notice: string | null
 }
 
 export function licensePageURL(docsURL?: string): string {
@@ -66,7 +66,7 @@ export function buildEngineStamp(input: {
 		version: input.version,
 		license,
 		license_url: licensePageURL(),
-		...(commercial ? {} : { notice: `${noticeSentence(license)} ${NOTICE_REMEDY}.` }),
+		notice: commercial ? null : `${noticeSentence(license)} ${NOTICE_REMEDY}.`,
 	}
 }
 

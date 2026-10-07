@@ -5,6 +5,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, test } from "vitest"
 
@@ -14,11 +15,48 @@ const VENEZUELA = 8_040_579_053_981
 const ZULIA_LOCALITY_CO = 8_084_693_553_936
 
 const PLACES: ResolvedPlace[] = [
-	{ id: VENEZUELA, name: "Venezuela", placetype: "country", country: "VE", lat: 8, lon: -66, score: 7.4 },
-	{ id: 8_040_579_053_000, name: "Colombia", placetype: "country", country: "CO", lat: 4.6, lon: -74.1, score: 7.3 },
-	{ id: 8_596_679_816_180, name: "Zulia", placetype: "region", country: "VE", lat: 10.4, lon: -71.9, score: 6.5 },
-	{ id: ZULIA_LOCALITY_CO, name: "Zulia", placetype: "locality", country: "CO", lat: 7.9, lon: -72.6, score: 3.1 },
 	{
+		...EMPTY_PLACE_FIELDS,
+		id: VENEZUELA,
+		name: "Venezuela",
+		placetype: "country",
+		country: "VE",
+		lat: 8,
+		lon: -66,
+		score: 7.4,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 8_040_579_053_000,
+		name: "Colombia",
+		placetype: "country",
+		country: "CO",
+		lat: 4.6,
+		lon: -74.1,
+		score: 7.3,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 8_596_679_816_180,
+		name: "Zulia",
+		placetype: "region",
+		country: "VE",
+		lat: 10.4,
+		lon: -71.9,
+		score: 6.5,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: ZULIA_LOCALITY_CO,
+		name: "Zulia",
+		placetype: "locality",
+		country: "CO",
+		lat: 7.9,
+		lon: -72.6,
+		score: 3.1,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
 		id: 8_933_755_722_164,
 		name: "Maracaibo",
 		placetype: "locality",

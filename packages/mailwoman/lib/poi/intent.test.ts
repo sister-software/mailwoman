@@ -18,10 +18,11 @@ const anchorResult = (raw: string): PipelineResult => ({
 	normalized: { raw, normalized: raw },
 	queryShape: { knownFormats: [] },
 	locale: LOCALE,
-	kind: { kind: "structured_address", confidence: 0.5, alternatives: [] },
+	kind: { kind: "structured_address", confidence: 0.5, alternatives: [], intentMarkers: null },
 	phraseProposals: [],
 	tree: { raw, roots: [] },
 	timing: {},
+	poiIntent: null,
 	faults: [],
 	intentMarkers: [],
 	path: "full",
@@ -401,7 +402,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		const result = await pipeline("hospital")
 
 		expect(result.path).not.toBe("poi")
-		expect("poiIntent" in result).toBe(false)
+		expect(result.poiIntent).toBeNull()
 		expect(result.kind.kind).not.toBe("poi_query")
 	})
 
@@ -571,7 +572,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		const result = await pipeline("350 5th Ave, New York, NY 10118")
 
 		expect(result.path).not.toBe("poi")
-		expect("poiIntent" in result).toBe(false)
+		expect(result.poiIntent).toBeNull()
 	})
 
 	it("ON: a bare build-local-only category (neither local layer nor db) abstains", async () => {

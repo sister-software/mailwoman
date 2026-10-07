@@ -173,6 +173,7 @@ export const privateNameShadowsCheck: RepoCheck = {
 				file: shadow.file,
 				line: shadow.line,
 				message: `private \`${shadow.name}\` shares its name with the export in ${shadow.exportedIn.join(", ")}. Import the home, or keep the copy behind \`// ${SHADOW_IGNORE_MARKER} <reason>\`.`,
+				details: null,
 			})
 		}
 

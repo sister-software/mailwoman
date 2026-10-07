@@ -16,8 +16,22 @@ function fc(features: EntityFeatureCollection["features"]): EntityFeatureCollect
 	return { type: "FeatureCollection", features }
 }
 
-function point(lon: number, lat: number, props: EntityGeoData): EntityFeatureCollection["features"][number] {
-	return { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties: props }
+function point(
+	lon: number,
+	lat: number,
+	props: Pick<EntityGeoData, "entityID" | "recordCount" | "sources" | "name"> & Partial<EntityGeoData>
+): EntityFeatureCollection["features"][number] {
+	const properties: EntityGeoData = {
+		sourceIDs: [],
+		cohesion: null,
+		organization: null,
+		address: null,
+		geocodeTier: null,
+		bucket: null,
+		...props,
+	}
+
+	return { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties }
 }
 
 describe("toMapHTML", () => {

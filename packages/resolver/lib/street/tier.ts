@@ -117,7 +117,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			locality,
 			region,
 			subregion,
-			...(bbox ? { bbox } : {}),
+			bbox,
 		})
 
 		if (hit) {
@@ -139,9 +139,8 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			lon: hit.lon,
 			source: hit.source,
 			release: hit.release,
-
-			...(hit.localityNorm ? { locality_norm: hit.localityNorm } : {}),
-			...(hit.postcode ? { postcode: hit.postcode } : {}),
+			locality_norm: hit.localityNorm || null,
+			postcode: hit.postcode || null,
 		},
 		resolution_tier: "address_point",
 	}

@@ -216,6 +216,9 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 		// `raw.geometry.location_type` is the ground truth when this matters.
 		tier: toResolutionTier(result) ?? "admin",
 		uncertaintyMeters: null,
+		hierarchy: null,
+		poBox: null,
+		multiUnit: null,
 	}
 
 	const address = withGeocode(

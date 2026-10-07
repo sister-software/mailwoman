@@ -389,6 +389,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		await swapDatabaseIntoPlace(tmpOut, finalOut)

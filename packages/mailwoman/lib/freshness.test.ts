@@ -31,6 +31,8 @@ async function stamped(path: PathBuilder, name: string, createdAt: string): Prom
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { wofID: "spr_id" },
 		createdAt,
+		attribution: null,
+		sourceRecords: null,
 	})
 
 	return path
@@ -55,7 +57,7 @@ describe("readFreshness — a stamped artifact", () => {
 		expect(entry?.version).toBe("candidate@2026-08-17")
 
 		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-databases=24"])
-		expect(entry?.reason).toBeUndefined()
+		expect(entry?.reason).toBeNull()
 	})
 
 	it("dates the whole report from the newest artifact it read", async () => {
@@ -85,8 +87,8 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		expect(entry?.path).toBe(path.toString())
 		expect(entry?.reason).toContain("predates the layer interface")
 
-		expect(entry?.built).toBeUndefined()
-		expect(report.dataUpdated).toBeUndefined()
+		expect(entry?.built).toBeNull()
+		expect(report.dataUpdated).toBeNull()
 	})
 
 	it("reports a missing file as absence, not as a throw", async () => {
@@ -106,7 +108,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
-		expect(entry?.reason).toBeDefined()
+		expect(entry?.reason).not.toBeNull()
 	})
 
 	it("Refuses a stamp it cannot date instead of dropping it from the maximum", async () => {
@@ -118,7 +120,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
 		expect(entry?.reason).toContain("created_at")
 
-		expect(report.dataUpdated).toBeUndefined()
+		expect(report.dataUpdated).toBeNull()
 	})
 
 	it("dates a report from the artifacts that could be read, and still lists the ones that could not", async () => {

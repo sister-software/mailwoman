@@ -336,6 +336,7 @@ describe("createPOIExecutor", () => {
 			country: "US",
 			confidence: 0.6,
 			gersID: null,
+			distanceM: null,
 		}
 
 		const executor = createPOIExecutor({

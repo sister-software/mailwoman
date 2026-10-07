@@ -67,7 +67,7 @@ console.log(`spanMode          ${stringifyJSON(cfg.postcodeAnchorSpanMode ?? nul
 console.log("\nchannel           lexicon?  pieces with a non-zero clue")
 
 for (const name of ["anchor", "gazetteer", "country", "streetType", "localitySurface"] as const) {
-	const channel = (channels as Record<string, { features: number[][] } | undefined>)[name]
+	const channel = channels[name]
 
 	if (!channel) {
 		console.log(`${name.padEnd(18)} NO        — channel not constructed (source absent)`)

@@ -143,7 +143,7 @@ export async function downloadPinned(
 	// An earlier read could overwrite pins another fetch recorded meanwhile.
 	await writeLock({
 		...(await readLock()),
-		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), ...(snapshot ? { snapshot } : {}) },
+		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), snapshot },
 	})
 
 	return { path, bytes, sha256, reused: false }

@@ -133,7 +133,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		locality?: string
 		region?: string
 		subregion?: string
-		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+		bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 	}): AddressPointHit | null {
 		if (!this.#byPostcode || !this.#byLocality || !this.#byBbox) return null
 		const number = normalizeHouseNumberForKey(query.number, this.#locale)
@@ -169,8 +169,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			lon: row.lon,
 			source: row.source,
 			release: row.release,
-			...(row.locality_norm ? { localityNorm: row.locality_norm } : {}),
-			...(row.postcode ? { postcode: row.postcode } : {}),
+			localityNorm: row.locality_norm || null,
+			postcode: row.postcode || null,
 		}
 	}
 
@@ -187,7 +187,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			postcode?: string
 			locality?: string
 			localityTail?: NameKey
-			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+			bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}
 	) {
 		let row = this.#probe(streetNorm, number, query)
@@ -241,7 +241,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			postcode?: string
 			locality?: string
 			localityTail?: NameKey
-			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+			bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}
 	): AddressPointRow | null {
 		let row: AddressPointRow | null = null

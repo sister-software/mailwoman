@@ -41,22 +41,22 @@ export interface AuthorityDesignationObservation {
 	/**
 	 * The authority's code, verbatim.
 	 *
-	 * It is absent on a designated absence, because the authority publishes no code for that case.
+	 * It is null on a designated absence, because the authority publishes no code for that case.
 	 */
-	code?: string
+	code: string | null
 	/**
 	 * The authority's definition of the code and the URL where it is published.
 	 */
-	definition?: { code: string; label: string; definition: string; definitionURL: string }
+	definition: { code: string; label: string; definition: string; definitionURL: string } | null
 	/**
 	 * The ID of the polygon that contains the point, when one does.
 	 */
-	areaID?: string
+	areaID: string | null
 	containment: FloodContainmentPath
 	/**
 	 * The coverage record for the location inside the authority's footprint.
 	 */
-	coverage?: ObservationCoverageRecord
+	coverage: ObservationCoverageRecord | null
 	/**
 	 * The index cell that was probed.
 	 */
@@ -139,7 +139,7 @@ export function createAuthorityDesignationRoute(options: AuthorityDesignationRou
 
 	return createDesignationRoute(lookup, {
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
-		refusalFor: (reading) => (reading.kind === FloodReadingKind.Unknown ? "outside_authority_footprint" : undefined),
+		refusalFor: (reading) => (reading.kind === FloodReadingKind.Unknown ? "outside_authority_footprint" : null),
 		toObservation: (reading, latitude, longitude) =>
 			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
@@ -159,11 +159,11 @@ function toObservation(
 
 	return {
 		reading: reading.kind,
-		...(reading.zoneCode ? { code: reading.zoneCode } : {}),
-		...(reading.definition ? { definition: reading.definition } : {}),
-		...(reading.areaID ? { areaID: reading.areaID } : {}),
+		code: reading.zoneCode || null,
+		definition: reading.definition ?? null,
+		areaID: reading.areaID || null,
 		containment: reading.containment,
-		...observationCoverageRecord(reading.coverage),
+		coverage: observationCoverageRecord(reading.coverage),
 		indexCellIndex: reading.indexCellIndex,
 		extent: {
 			authority: extent.authority,
@@ -195,6 +195,6 @@ export function floodZoneAssignmentClause(observation: AuthorityDesignationObser
 export function describeAuthorityDesignation(observation: AuthorityDesignationObservation): string {
 	return (
 		`${observation.extent.authority}'s map ${floodZoneAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} ` +
-		`(${observation.containment}); ${describeCoverage(observation.coverage ?? null, { completeness: true })}; ${describeLayerProvenance(observation.layer)}`
+		`(${observation.containment}); ${describeCoverage(observation.coverage, { completeness: true })}; ${describeLayerProvenance(observation.layer)}`
 	)
 }

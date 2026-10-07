@@ -113,6 +113,6 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 		normalized: text,
 		transforms: Object.freeze(transforms) as NormalizationTransform[],
 		offsetMap: map,
-		appliedLocale: opts?.locale,
+		appliedLocale: opts?.locale ?? null,
 	}) satisfies NormalizedInput
 }

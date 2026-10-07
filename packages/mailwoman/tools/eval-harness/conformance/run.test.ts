@@ -27,8 +27,14 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		law: "case-folding-invariance",
 		base: "10 Downing Street, London",
 		variant: "10 DOWNING STREET, LONDON",
+		context: null,
 		outcomeComparator: "component_map",
 		expect: "equivalent",
+		status: null,
+		bugRef: null,
+		rowRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -61,6 +67,9 @@ function tableObserver(table: Record<string, Record<string, string>>): {
 				dependent_locality: null,
 				unit: null,
 				postcode_country_scope: null,
+				capital_promotion: null,
+				variant_alias_exemption: null,
+				admin_coherence: null,
 				hierarchy: [],
 			},
 		} satisfies ConformanceOutcome
@@ -237,7 +246,7 @@ describe("formatConformanceFinding", () => {
 
 	it("carries the mechanism-account vocabulary into the line when the observer supplied one", async () => {
 		const shaped: ConformanceObserver = async (query) => ({
-			result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
+			result: (await tableObserver(HELD_TABLE).observe(query, null)).result,
 			mechanismShapes: query.startsWith("10 D") ? ["clean"] : ["retrieval_empty"],
 		})
 
@@ -274,11 +283,36 @@ describe("gauntletObserver", () => {
 			dependent_locality: null,
 			unit: null,
 			hierarchy: [
-				{ tag: "locality", value: "London", name: "London", placeID: "wof:101750367" },
-				{ tag: "country", value: "United Kingdom", name: "United Kingdom", placeID: "wof:85633159" },
+				{
+					tag: "locality",
+					value: "London",
+					name: "London",
+					placeID: "wof:101750367",
+					lat: null,
+					lon: null,
+					in_winner_lineage: null,
+				},
+				{
+					tag: "country",
+					value: "United Kingdom",
+					name: "United Kingdom",
+					placeID: "wof:85633159",
+					lat: null,
+					lon: null,
+					in_winner_lineage: null,
+				},
 			],
 			candidates: [],
 			postcode_country_scope: null,
+			rooftop: null,
+			capital_promotion: null,
+			dropped_components: null,
+			unfollowed_components: null,
+			derivation: null,
+			entity: null,
+			variant_alias_exemption: null,
+			admin_coherence: null,
+			authoritative: null,
 		})
 
 		const outcome = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
@@ -316,13 +350,22 @@ describe("tracedGauntletObserver", () => {
 			hierarchy: [],
 			candidates: [],
 			postcode_country_scope: null,
+			rooftop: null,
+			capital_promotion: null,
+			dropped_components: null,
+			unfollowed_components: null,
+			derivation: null,
+			entity: null,
+			variant_alias_exemption: null,
+			admin_coherence: null,
+			authoritative: null,
 		},
 		resolver: [
 			{
 				tag: "locality",
 				value: "Springfield",
 				placetype: "locality",
-				query: { limit: 5 },
+				query: { limit: 5, country: null, parentID: null, postcode: null, regionQualifier: null },
 				checks: ["bare_race"],
 				candidates: [
 					{
@@ -332,10 +375,16 @@ describe("tracedGauntletObserver", () => {
 						placetype: "locality",
 						score: 5,
 						ranks: { initial: 1 },
+						prominence: null,
+						importance: null,
+						population: null,
+						exactMatch: null,
+						containedByQualifier: null,
 					},
 				],
 				candidatesTruncated: 0,
 				picked: { id: 85_940_429, name: "Springfield", source: "ranked" },
+				reachableIn: null,
 			},
 		],
 	})
@@ -376,23 +425,68 @@ describe("the unmeasured verdict bucket", () => {
 	 * at its window with a base candidate missing.
 	 */
 	const unmeasuredObserver: ConformanceObserver = async (query) => ({
-		result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
+		result: (await tableObserver(HELD_TABLE).observe(query, null)).result,
 		candidates: [
 			{
 				tag: "locality",
 				value: "Springfield",
 				placetype: "locality",
-				query: { limit: query === "Springfield" ? 5 : 1 },
+				query: {
+					limit: query === "Springfield" ? 5 : 1,
+					country: null,
+					parentID: null,
+					postcode: null,
+					regionQualifier: null,
+				},
 				checks: [],
 				candidates:
 					query === "Springfield"
 						? [
-								{ id: 1, name: "a", country: "US", placetype: "locality", score: 1, ranks: {} },
-								{ id: 2, name: "b", country: "US", placetype: "locality", score: 1, ranks: {} },
+								{
+									id: 1,
+									name: "a",
+									country: "US",
+									placetype: "locality",
+									score: 1,
+									ranks: {},
+									prominence: null,
+									importance: null,
+									population: null,
+									exactMatch: null,
+									containedByQualifier: null,
+								},
+								{
+									id: 2,
+									name: "b",
+									country: "US",
+									placetype: "locality",
+									score: 1,
+									ranks: {},
+									prominence: null,
+									importance: null,
+									population: null,
+									exactMatch: null,
+									containedByQualifier: null,
+								},
 							]
-						: [{ id: 1, name: "a", country: "US", placetype: "locality", score: 1, ranks: {} }],
+						: [
+								{
+									id: 1,
+									name: "a",
+									country: "US",
+									placetype: "locality",
+									score: 1,
+									ranks: {},
+									prominence: null,
+									importance: null,
+									population: null,
+									exactMatch: null,
+									containedByQualifier: null,
+								},
+							],
 				candidatesTruncated: 0,
 				picked: null,
+				reachableIn: null,
 			},
 		],
 	})

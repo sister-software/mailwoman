@@ -70,7 +70,7 @@ export interface AbsenceObservation {
 			version: string
 			tier: string
 			license: string
-			attribution?: string
+			attribution: string | null
 			source: string
 			sourceVintage: string
 			buildCmd: string
@@ -374,7 +374,7 @@ async function decide(outcome: POIIntentOutcome | null, context: DecisionContext
 					version: layer.version,
 					tier: layer.tier,
 					license: layer.license,
-					...(layer.attribution ? { attribution: layer.attribution } : {}),
+					attribution: layer.attribution || null,
 					source: layer.source,
 					sourceVintage: layer.sourceVintage,
 					buildCmd: layer.buildCmd,

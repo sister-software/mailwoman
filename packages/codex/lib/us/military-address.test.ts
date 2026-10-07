@@ -70,7 +70,7 @@ describe("matchMilitaryUnitLine", () => {
 	it("matches UNIT lines with and without BOX", () => {
 		expect(matchMilitaryUnitLine("UNIT 7 BOX 234A")).toMatchObject({ code: "UNIT", id: "7", box: "234A" })
 		expect(matchMilitaryUnitLine("UNIT 7")).toMatchObject({ code: "UNIT", id: "7" })
-		expect(matchMilitaryUnitLine("UNIT 7")?.box).toBeUndefined()
+		expect(matchMilitaryUnitLine("UNIT 7")?.box).toBeNull()
 	})
 
 	it("throws on PSC/CMR without BOX — structurally malformed per Appendix B", () => {

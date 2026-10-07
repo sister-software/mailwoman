@@ -48,7 +48,7 @@ export interface FSTSourceIdentity {
  */
 export interface FSTStampFields {
 	formatVersion: number
-	provenance: FSTProvenance | undefined
+	provenance: FSTProvenance | null
 }
 
 /**
@@ -59,8 +59,8 @@ export interface FSTExpectation {
 	/**
 	 * Serializer version to require, defaulting to {@link FST_FORMAT_VERSION}.
 	 */
-	formatVersion?: number
-	exclusionPolicy?: string
+	formatVersion?: number | null
+	exclusionPolicy?: string | null
 }
 
 /**
@@ -76,20 +76,20 @@ export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStam
 	if (header.readUInt32LE(0) !== MAGIC) return null
 	const formatVersion = header.readUInt16LE(4)
 
-	if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: undefined }
+	if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: null }
 	const trailerStart = header.readUInt32LE(PROVENANCE_OFFSET_FIELD)
 
 	// 0 means this build wrote no trailer and past-EOF means truncated.
 	// Both read as no stamp.
-	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
+	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: null }
 
 	const jsonLength = (await readFileRange(path, trailerStart, 4)).readUInt32LE(0)
 
-	if (jsonLength === 0 || trailerStart + 4 + jsonLength > size) return { formatVersion, provenance: undefined }
+	if (jsonLength === 0 || trailerStart + 4 + jsonLength > size) return { formatVersion, provenance: null }
 
 	const json = await readFileRange(path, trailerStart + 4, jsonLength)
 
-	return { formatVersion, provenance: tryParsingJSON<FSTProvenance>(json.toString("utf8")) ?? undefined }
+	return { formatVersion, provenance: tryParsingJSON<FSTProvenance>(json.toString("utf8")) ?? null }
 }
 
 /**
@@ -141,7 +141,7 @@ export async function readWOFSourceIdentity(
 const sourceIdentityMemo = new Map<string, FSTSourceIdentity>()
 
 /**
- * Why an FST artifact is stale against `expected`, or `undefined` when it still matches.
+ * Why an FST artifact is stale against `expected`, or `null` when it still matches.
  */
 export function fstStaleReason(fields: FSTStampFields | null, expected: FSTExpectation): string | null {
 	if (!fields) return "unreadable or not an FST artifact"
@@ -167,11 +167,11 @@ export function fstStaleReason(fields: FSTStampFields | null, expected: FSTExpec
 		return `source db ${provenance.sourceDBMD5.slice(0, 8)} → ${expected.source.md5.slice(0, 8)} (built ${provenance.builtAt})`
 	}
 
-	if (provenance.sourceDBBytes !== undefined && provenance.sourceDBBytes !== expected.source.bytes) {
+	if (provenance.sourceDBBytes != null && provenance.sourceDBBytes !== expected.source.bytes) {
 		return `source db size ${provenance.sourceDBBytes} → ${expected.source.bytes} at a matching md5 — one of the two is misrecorded`
 	}
 
-	if (expected.exclusionPolicy !== undefined && provenance.exclusionPolicy !== expected.exclusionPolicy) {
+	if (expected.exclusionPolicy != null && provenance.exclusionPolicy !== expected.exclusionPolicy) {
 		return `exclusion policy ${provenance.exclusionPolicy ?? "(none)"} → ${expected.exclusionPolicy}`
 	}
 
@@ -190,16 +190,16 @@ export async function fstFreshnessWarning({
 }: {
 	fstPath: PathBuilderLike
 	sourceDBPath: PathBuilderLike
-	formatVersion?: number
-	exclusionPolicy?: string
+	formatVersion?: number | null
+	exclusionPolicy?: string | null
 	rebuildCommand: string
 }): Promise<string | null> {
 	if (!(await pathExists(fstPath)) || !(await pathExists(sourceDBPath))) return null
 
 	const reason = fstStaleReason(await peekFSTStampFields(fstPath), {
 		source: await readWOFSourceIdentity(sourceDBPath),
-		...(formatVersion === undefined ? {} : { formatVersion }),
-		...(exclusionPolicy === undefined ? {} : { exclusionPolicy }),
+		formatVersion: formatVersion ?? null,
+		exclusionPolicy: exclusionPolicy ?? null,
 	})
 
 	return reason === null ? null : formatFSTStaleWarning({ fstPath, reason, rebuildCommand })

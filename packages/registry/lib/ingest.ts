@@ -211,7 +211,7 @@ export async function ingestRow(
 
 	return {
 		id,
-		source: mapping.source,
+		source: mapping.source ?? null,
 		name: nameValue ? parsePersonName(nameValue) : null,
 		organization: orgValue ? canonicalizeOrganizationName(orgValue) : null,
 		phone: (mapping.phone && row[mapping.phone]) || null,
@@ -337,7 +337,9 @@ export function geocodeAddressVia(deps: GeocodeAddressViaDeps): GeocodeAddress {
 			coordinate: { latitude: resolved.lat, longitude: resolved.lon },
 			tier: resolved.resolution_tier,
 			uncertaintyMeters: resolved.uncertainty_m,
-			hierarchy: resolved.hierarchy,
+			hierarchy: resolved.hierarchy ?? null,
+			poBox: null,
+			multiUnit: null,
 		}
 
 		return withGeocode(base, geocode)

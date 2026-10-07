@@ -94,10 +94,12 @@ const NominatimStatusArtifactSchema = z
 		name: z.string(),
 		path: z.string(),
 		manifest: z.enum(["present", "absent", "unreadable"]),
-		reason: z.string().optional(),
-		built: z.string().optional(),
-		version: z.string().optional(),
-		sources: z.array(z.string()).optional(),
+		reason: z.string().nullable(),
+		built: z.string().nullable(),
+		version: z.string().nullable(),
+		sources: z.array(z.string()).nullable(),
+		license: z.string().nullable(),
+		attribution: z.string().nullable(),
 	})
 	.openapi("NominatimStatusArtifact")
 

@@ -462,7 +462,7 @@ const numberOrderCache = new Map<string, boolean | null>()
  *
  * @returns `null` where the layout prints no street line.
  */
-export function houseNumberLeadsStreet(country: string, script?: AddressScript): boolean | null {
+export function houseNumberLeadsStreet(country: string, script: AddressScript | null = null): boolean | null {
 	const key = `${country}:${script ?? ""}`
 	const cached = numberOrderCache.get(key)
 
@@ -548,7 +548,7 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 		components.venue = name
 	}
 
-	const script = scriptOfComponents({ street: line, locality: city }) ?? undefined
+	const script = scriptOfComponents({ street: line, locality: city })
 
 	if (PO_BOX_LINE.test(line)) {
 		components.po_box = line
@@ -618,7 +618,7 @@ function placeStreetNumber(
 	line: string,
 	addressNumber: string,
 	country: string,
-	script: AddressScript | undefined
+	script: AddressScript | null
 ): { street: string; house_number?: string } | { refused: GLEIFRefusal } {
 	const unplacedDigit = (street: string): boolean => /\d/u.test(street.replaceAll(ORDINAL_TOKEN, ""))
 

@@ -211,6 +211,6 @@ function toPOIResult(hit: POISearchHit): POIResult {
 		country: hit.country,
 		confidence: hit.confidence,
 		gersID: hit.gersID,
-		...(hit.distanceM !== undefined ? { distanceM: hit.distanceM } : {}),
+		...(hit.distanceM !== null ? { distanceM: hit.distanceM } : {}),
 	}
 }

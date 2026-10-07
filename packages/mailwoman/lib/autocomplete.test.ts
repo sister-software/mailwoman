@@ -20,10 +20,22 @@ interface FSTNodeInternal {
 	places: FixtureEntry[]
 }
 
-type FixtureEntry = FixturePlace & { lat: number; lon: number }
+type FixtureEntry = FixturePlace & {
+	lat: number
+	lon: number
+	encyclopedic: number | null
+	crossCountryBranches: number | null
+}
 
 function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
-	const entries: FixtureEntry[] = places.map((p) => ({ ...p, lat: 0, lon: 0 }))
+	const entries: FixtureEntry[] = places.map((p) => ({
+		...p,
+		lat: 0,
+		lon: 0,
+		encyclopedic: null,
+		crossCountryBranches: null,
+	}))
+
 	const nodes: FSTNodeInternal[] = [{ edges: new Map(), places: [] }]
 
 	for (const entry of entries) {

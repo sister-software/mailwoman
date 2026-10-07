@@ -104,10 +104,10 @@ export function featureIDFromLink(link: string): string {
 	return match[1]
 }
 
-export function approvalDateFromSource(value: string): string | undefined {
+export function approvalDateFromSource(value: string): string | null {
 	const match = /^(\d{4})\/(\d{2})\/(\d{2})/u.exec(value)
 
-	return match ? `${match[1]}-${match[2]}-${match[3]}` : undefined
+	return match ? `${match[1]}-${match[2]}-${match[3]}` : null
 }
 
 export function featureFromSourceRow(body: BuildableBodyID, row: NomenclatureSourceRow): PlanetaryNomenclatureFeature {
@@ -118,7 +118,7 @@ export function featureFromSourceRow(body: BuildableBodyID, row: NomenclatureSou
 		cleanName: text(row.clean_name),
 		featureType: row.type,
 		featureTypeCode: text(row.code),
-		diameterKm: row.diameter ?? undefined,
+		diameterKm: row.diameter ?? null,
 		centerLon: normalizeLongitude(row.center_lon),
 		centerLat: clampLat(row.center_lat),
 		bbox: normalizeBBox({ minLon: row.min_lon, maxLon: row.max_lon, minLat: row.min_lat, maxLat: row.max_lat }),

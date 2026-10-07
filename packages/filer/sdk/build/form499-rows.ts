@@ -33,7 +33,7 @@ export function closeableCessationDate(ceasedAt: string | null, validFrom: strin
  * {@linkcode processForm499Lifecycle}'s per-row context.
  */
 export interface Form499LifecycleContext {
-	lifecycle: Form499Lifecycle | undefined
+	lifecycle: Form499Lifecycle | null
 	form499NodeID: string
 	lastFiledAt: string
 }

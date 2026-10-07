@@ -48,7 +48,7 @@ describe("measureLine", () => {
 	})
 
 	it("emits the piece sequence only when asked — it is what shows WHERE a word shatters, and what makes a reply long", () => {
-		expect(measureLine(stub("ư"), "Đư", false).sequence).toBeUndefined()
+		expect(measureLine(stub("ư"), "Đư", false).sequence).toBeNull()
 		expect(measureLine(stub("ư"), "Đư", true).sequence).toBe("Đ|<0xC6>|<0xB0>")
 	})
 })

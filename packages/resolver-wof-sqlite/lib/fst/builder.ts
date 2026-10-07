@@ -296,11 +296,12 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned, so a place with no Wikipedia article has no field instead of a zero.
-			// The serializer's per-place presence bit reads `!== undefined`.
-			...(encyclopedic === undefined ? {} : { encyclopedic }),
+			// A place with no Wikipedia article is `null` rather than a zero.
+			// The serializer's per-place presence bit reads `!== null`.
+			encyclopedic: encyclopedic ?? null,
 			lat: row.latitude,
 			lon: row.longitude,
+			crossCountryBranches: null,
 		}
 
 		const primaryTokens = normalizeTokens(row.name)
@@ -352,9 +353,10 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		sourceDB: dbPath,
 		sourceDBMD5: source.md5,
 		sourceDBBytes: source.bytes,
+		modelCardVersion: null,
 		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined
 			? { exclusionPolicy: opts.exclusionPolicy ?? "unspecified", excludedInsertions: excludedCount }
-			: {}),
+			: { exclusionPolicy: null, excludedInsertions: null }),
 	}
 
 	return {

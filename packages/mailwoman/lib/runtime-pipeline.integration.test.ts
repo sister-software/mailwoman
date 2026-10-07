@@ -23,7 +23,7 @@ function fakeClassifier(): AddressClassifier {
 }
 
 function passthroughResolver(): Resolver {
-	return { resolveTree: vi.fn(async (tree) => tree) }
+	return { resolveTree: vi.fn(async (tree) => tree), artifactCoverage: null, capabilityGaps: null }
 }
 
 describe("createRuntimePipeline — wiring", () => {
@@ -120,6 +120,7 @@ describe("createRuntimePipeline — wiring", () => {
 			kind: "structured_address" as const,
 			confidence: 0,
 			alternatives: [],
+			intentMarkers: null,
 		}))
 
 		const pipeline = createRuntimePipeline({ classifier, classifyKind: customKind })
@@ -208,6 +209,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 			kind: "vague" as const,
 			confidence: 0.5,
 			alternatives: [],
+			intentMarkers: null,
 		}))
 
 		const pipeline = createRuntimePipeline({ classifyKind: customKind })

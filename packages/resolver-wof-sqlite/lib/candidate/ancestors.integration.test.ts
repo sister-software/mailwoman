@@ -183,7 +183,7 @@ describe("the candidate ancestors sidecar", () => {
 		expect(hits.length).toBeGreaterThan(0)
 
 		for (const hit of hits) {
-			expect(hit.parent_id).toBeUndefined()
+			expect(hit.parent_id).toBeNull()
 		}
 	})
 

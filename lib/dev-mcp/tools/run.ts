@@ -110,10 +110,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					lat: run.result.lat,
 					lon: run.result.lon,
 					km:
-						item.truthLat === undefined ||
-						item.truthLon === undefined ||
-						run.result.lat === null ||
-						run.result.lon === null
+						item.truthLat === null || item.truthLon === null || run.result.lat === null || run.result.lon === null
 							? null
 							: haversineKm(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
 					tier: run.result.resolution_tier,
@@ -144,7 +141,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 			n: rows.length,
 			selection: set.selection,
 			eventLabel: "resolved to a coordinate",
-			...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+			populationN: set.populationN,
 		})
 
 		return {

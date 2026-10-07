@@ -560,7 +560,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			id: `entity-${i}`,
 			records: group,
 			representative: rep,
-			coordinate: rep.address?.geocode?.coordinate ?? undefined,
+			coordinate: rep.address?.geocode?.coordinate ?? null,
 			cohesion: group.length > 1 && minIntraWeight[i]! !== Infinity ? minIntraWeight[i]! : null,
 		}
 	})

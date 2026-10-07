@@ -52,6 +52,8 @@ export const rightsChainCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${path} is ${role} and could not be read, so the rights chain cannot be traced through it`,
 					file: path,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -63,6 +65,8 @@ export const rightsChainCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `${path} is ${role} and never names ${LICENSOR} — a licensee reading it alone cannot tell who grants the rights`,
 				file: path,
+				line: null,
+				details: null,
 			})
 		}
 

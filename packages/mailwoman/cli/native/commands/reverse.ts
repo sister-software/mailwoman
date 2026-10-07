@@ -127,7 +127,7 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 						country: place.country,
 						lat: place.lat,
 						lon: place.lon,
-						...(place.distanceKm == null ? {} : { distanceKm: place.distanceKm }),
+						distanceKm: place.distanceKm ?? null,
 					})),
 					engine: stamp,
 				})

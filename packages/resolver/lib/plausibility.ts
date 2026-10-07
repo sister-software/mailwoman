@@ -33,7 +33,7 @@ export interface ResolvedCoordinate {
 	/**
 	 * The canonical place URI, such as `wof:…`, when the resolver supplied one.
 	 */
-	placeID?: string
+	placeID: string | null
 }
 
 /**
@@ -51,7 +51,7 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 
 			if (tier > bestTier) {
 				bestTier = tier
-				best = { tag: node.tag, lat: node.lat, lon: node.lon, placeID: node.placeID }
+				best = { tag: node.tag, lat: node.lat, lon: node.lon, placeID: node.placeID ?? null }
 			}
 		}
 
@@ -134,12 +134,12 @@ export interface PlausibilityVerdict {
 	 * Why the resolution is implausible, set only when `implausible` is true:
 	 * `country-centroid` or `outside-expected-country`.
 	 */
-	reason?: "country-centroid" | "outside-expected-country"
+	reason: "country-centroid" | "outside-expected-country" | null
 
 	/**
 	 * The coordinate the verdict was based on, present when anything resolved.
 	 */
-	coordinate?: ResolvedCoordinate
+	coordinate: ResolvedCoordinate | null
 }
 
 /**
@@ -183,5 +183,5 @@ export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpt
 		return { implausible: true, reason: "outside-expected-country", coordinate }
 	}
 
-	return { implausible: false, coordinate: coordinate ?? undefined }
+	return { implausible: false, reason: null, coordinate: coordinate ?? null }
 }

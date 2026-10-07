@@ -54,7 +54,7 @@ import { type DossierRecords, validateRecords, type ValidationIssue } from "#val
 
 export interface Unresolved {
 	question: string
-	subject?: EntityID
+	subject: EntityID | null
 	candidates: readonly string[]
 	/**
 	 * The record that would resolve the question, in words a reader can act on.
@@ -96,7 +96,7 @@ export interface BuildingSection {
 	readings: readonly {
 		layer: string
 		extent: string
-		surveyedAt?: ISODate
+		surveyedAt: ISODate | null
 		class: LayerReadingClass
 		sources: readonly SourceRecordID[]
 	}[]
@@ -125,7 +125,7 @@ export interface BuildingSection {
 export interface UnplacedReading {
 	layer: string
 	extent: string
-	surveyedAt?: ISODate
+	surveyedAt: ISODate | null
 	class: LayerReadingClass
 	sources: readonly SourceRecordID[]
 }
@@ -139,7 +139,7 @@ export interface Dossier {
 	 * The report dates each claim from its evidence or from these records.
 	 */
 	admittedSources: readonly SourceRecord[]
-	excluded: readonly { id: SourceRecordID; availableAt: ISODate; observedAt?: ISODate }[]
+	excluded: readonly { id: SourceRecordID; availableAt: ISODate; observedAt: ISODate | null }[]
 	undated: readonly SourceRecordID[]
 	buildings: readonly BuildingSection[]
 	unresolved: readonly Unresolved[]
@@ -158,7 +158,7 @@ export interface Dossier {
 interface ReadingGroup {
 	layer: string
 	extent: string
-	surveyedAt?: ISODate
+	surveyedAt: ISODate | null
 	class: LayerReadingClass
 	readings: readonly LayerReading[]
 }
@@ -202,7 +202,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 
 	const admitted: SourceRecordID[] = []
 	const admittedSources: SourceRecord[] = []
-	const excluded: { id: SourceRecordID; availableAt: ISODate; observedAt?: ISODate }[] = []
+	const excluded: { id: SourceRecordID; availableAt: ISODate; observedAt: ISODate | null }[] = []
 	const undated: SourceRecordID[] = []
 
 	for (const source of records.sources) {
@@ -241,7 +241,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	// the two shows the decision with its outcome pending.
 	const dispositions = admittedOnly(records.dispositions ?? []).map((disposition) =>
 		disposition.outcome && !admittedSet.has(disposition.outcome.evidence.source)
-			? { ...disposition, outcome: undefined }
+			? { ...disposition, outcome: null }
 			: disposition
 	)
 
@@ -331,7 +331,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 
 	// An identifier with evidence waits for its record, as an alias candidate does.
 	const identifiers = building.externalIDs.filter(
-		(id) => id.evidence === undefined || admitted.sourceIDs.has(id.evidence.source)
+		(id) => id.evidence === null || admitted.sourceIDs.has(id.evidence.source)
 	)
 
 	const aliases = admitted.aliases
@@ -408,7 +408,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 	const windows = admitted.windows.filter((window) => window.subject === building.id)
 
 	for (const window of windows) {
-		if (window.end === undefined) {
+		if (window.end === null) {
 			unresolved.push({
 				question: `When does the construction window that opened ${window.start ?? "on an unknown date"} (${window.stage}) close? The record states no end.`,
 				subject: building.id,

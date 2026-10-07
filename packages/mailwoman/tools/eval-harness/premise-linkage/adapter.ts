@@ -193,6 +193,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			],
 			attribution: "Synthetic fixture data — not derived from any licensed source",
 			license: "fixture-terms-v1",
+			retrievedAt: null,
 			datasetVersion: "fixture-premise-linkage",
 		},
 	},
@@ -251,6 +252,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasStreet: true,
 			hasLocality: true,
 			hasHistoricalAlias: false,
+			expectedLat: null,
+			expectedLon: null,
 		},
 		matchOn: "golf terrace",
 		transportError: true,
@@ -266,6 +269,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasStreet: true,
 			hasLocality: true,
 			hasHistoricalAlias: false,
+			expectedLat: null,
+			expectedLon: null,
 		},
 		matchOn: "hotel terrace",
 		// The provider commits to a premise but supplies no identifier in the graded scheme.
@@ -357,6 +362,8 @@ export function syntheticFixtureDeps(): GeocodeDeps {
 	}
 
 	const resolver: Resolver = {
+		artifactCoverage: null,
+		capabilityGaps: null,
 		resolveTree: async (tree) => ({
 			raw: tree.raw,
 			roots: [

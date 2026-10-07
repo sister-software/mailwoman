@@ -59,7 +59,7 @@ export interface ReadOGRLayerIdentityOptions {
 	/**
 	 * Forwarded to the datum-transformation guard.
 	 */
-	areaOfUse?: string
+	areaOfUse?: string | null
 	/**
 	 * Refuse a layer that declares no extent.
 	 */
@@ -184,7 +184,7 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 
 	await assertDatumTransformationAvailable(code, {
 		context: options.context,
-		...(options.areaOfUse === undefined ? {} : { areaOfUse: options.areaOfUse }),
+		areaOfUse: options.areaOfUse ?? null,
 	})
 
 	const fields = new Set((described.fields ?? []).map((field) => field.name).filter((name) => name !== undefined))

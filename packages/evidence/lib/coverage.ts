@@ -89,12 +89,12 @@ export interface RequireExclusionInput {
 	 * Identity of the fold the layer's builder wrote its keys with, derived the same way.
 	 */
 	layerFold: string
-	country?: string
+	country?: string | null
 	/**
 	 * ISO-2 upper-case countries this probe can answer for.
 	 * Omit for an unscoped probe.
 	 */
-	countries?: ReadonlySet<string>
+	countries?: ReadonlySet<string> | null
 }
 
 /**

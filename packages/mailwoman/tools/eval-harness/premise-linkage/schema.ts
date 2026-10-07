@@ -93,10 +93,10 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	expectedObjectID: PremiseLinkageObjectID
 	/**
 	 * Truth coordinate, when the row has one.
-	 * Absent means unmeasured, never zero.
+	 * Null means unmeasured, never zero.
 	 */
-	expectedLat?: number
-	expectedLon?: number
+	expectedLat: number | null
+	expectedLon: number | null
 	/**
 	 * Whether the provider's terms permit a coordinate error to appear in a published aggregate.
 	 * false keeps the row in every identifier metric and out of every coordinate one.
@@ -181,17 +181,17 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	/**
 	 * Great-circle error in meters.
 	 *
-	 * It is present only when {@link coordinatePublishable} is true.
+	 * It is non-null only when {@link coordinatePublishable} is true.
 	 * The row must include a truth coordinate and the arm must produce one.
 	 */
-	coordinateErrorM?: number
+	coordinateErrorM: number | null
 	/**
 	 * The provider consulted for this arm, or `"none"` for the open arm.
 	 */
 	providerName: string
-	providerDatasetVersion?: string
+	providerDatasetVersion: string | null
 	mailwomanVersion: string
-	failureCategory?: PremiseLinkageFailureCategory
+	failureCategory: PremiseLinkageFailureCategory | null
 }
 
 /**
@@ -253,7 +253,7 @@ export interface PremiseLinkageCoordinateThreshold {
 export interface PremiseLinkageArmReport {
 	arm: string
 	providerName: string
-	providerDatasetVersion?: string
+	providerDatasetVersion: string | null
 	rowsRead: number
 	erroredOverAll: PremiseLinkageCount
 	overall: PremiseLinkageRates

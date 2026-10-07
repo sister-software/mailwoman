@@ -38,6 +38,8 @@ const SPEC = computeMapPlaceRenderSpec({
 	lon: -74.006,
 	score: 1,
 	bbox: { minLat: 40.6, maxLat: 40.8, minLon: -74.1, maxLon: -73.9 },
+	tier: null,
+	uncertaintyM: null,
 })
 
 /**

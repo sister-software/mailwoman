@@ -74,7 +74,7 @@ async function pinnedSource(
 			url: source.url,
 			sha256: fetched.sha256,
 			bytes: fetched.bytes,
-			...(locked.snapshot ? { snapshot: locked.snapshot } : {}),
+			snapshot: locked.snapshot,
 			coordinates: BODIES[source.body].coordinates,
 		},
 	}

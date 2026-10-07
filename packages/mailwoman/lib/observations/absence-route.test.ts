@@ -114,6 +114,7 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuil
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: "2026-08-27T00:00:00.000Z",
+		sourceRecords: null,
 	})
 
 	const categories = options.categories ?? ["pharmacy"]

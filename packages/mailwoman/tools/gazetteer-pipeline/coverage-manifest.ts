@@ -53,18 +53,74 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
  * The constant in core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
-	{ country: "US", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "FR", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "DE", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "ES", hardFilterSafe: true, hardResolveRate: 0.998, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "NL", hardFilterSafe: true, hardResolveRate: 0.973, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "IT", hardFilterSafe: true, hardResolveRate: 0.968, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{
+		country: "US",
+		hardFilterSafe: true,
+		hardResolveRate: 1,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
+	{
+		country: "FR",
+		hardFilterSafe: true,
+		hardResolveRate: 1,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
+	{
+		country: "DE",
+		hardFilterSafe: true,
+		hardResolveRate: 1,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
+	{
+		country: "ES",
+		hardFilterSafe: true,
+		hardResolveRate: 0.998,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
+	{
+		country: "NL",
+		hardFilterSafe: true,
+		hardResolveRate: 0.973,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
+	{
+		country: "IT",
+		hardFilterSafe: true,
+		hardResolveRate: 0.968,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
 	// Measured and failed the check.
 	// Present rows on purpose: a failed measurement is a first-class negative result,
 	// distinguishable from "never measured".
 	// They stay on the soft prior until their gazetteer coverage is filled.
-	{ country: "FI", hardFilterSafe: false, hardResolveRate: 0.695, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "PL", hardFilterSafe: false, hardResolveRate: 0.778, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{
+		country: "FI",
+		hardFilterSafe: false,
+		hardResolveRate: 0.695,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
+	{
+		country: "PL",
+		hardFilterSafe: false,
+		hardResolveRate: 0.778,
+		sampleSize: null,
+		measuredAt: "2026-06-22",
+		source: OA_PANEL_SOURCE,
+	},
 	// The postcodeCountryPrior format signal routes GB/CA confidently.
 	// The OSM-panel checks passed with the hard filter on.
 	// CA cleared on the format-prior rationale despite a sub-95% panel number,
@@ -91,6 +147,8 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	{
 		country: "AU",
 		hardFilterSafe: true,
+		hardResolveRate: null,
+		sampleSize: null,
 		measuredAt: "2026-07-06",
 		source: "#244 AU placer-class promote (2026-07-06): hard filter recall-safe (unresolved 4→2, abroad 43→20)",
 	},

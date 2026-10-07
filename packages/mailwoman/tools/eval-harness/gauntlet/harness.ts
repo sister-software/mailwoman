@@ -516,8 +516,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				})
 
 	const capitalLevel = capitalIndex
-		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
-				capitalIndex.levelOfPlace(place.name, place.country ?? null, place.lat, place.lon)
+		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
+				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
@@ -714,15 +714,15 @@ export interface GauntletResult {
 	postcode_country_scope: string | null
 	/**
 	 * The capital promotion's firing receipt, projected verbatim: the promoted candidate's
-	 * country, present only when the promotion changed some node's leading candidate,
+	 * country, or null unless the promotion changed some node's leading candidate,
 	 * carrying the same firing-count posture as {@linkcode postcode_country_scope}.
 	 */
-	capital_promotion?: string
+	capital_promotion: string | null
 	/**
-	 * The variant-exemption firing receipt, projected verbatim and present (`true`) only when the
-	 * winning candidate reached the top because the exemption spared it the cross-country alias penalty.
+	 * The variant-exemption firing receipt, projected verbatim: `true` when the exemption
+	 * spared the winning candidate the cross-country alias penalty, and null otherwise.
 	 */
-	variant_alias_exemption?: true
+	variant_alias_exemption: true | null
 	/**
 	 * The resolved admin chain, locality → country, verbatim from
 	 * {@linkcode GeocodeResult.hierarchy}; Cases do not assert this value.
@@ -730,15 +730,15 @@ export interface GauntletResult {
 	 * The ablation layer's degradation ladder is synthesized from the gazetteer `placeID`s.
 	 * An empty array means the run resolved no admin-grade entry.
 	 */
-	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
+	hierarchy: Array<{ tag: string; name: string; placeID: string | null; lat: number | null; lon: number | null }>
 	/**
 	 * The stage-1 admin-coherence verdicts, verbatim from {@linkcode GeocodeResult.admin_coherence};
 	 * Cases do not assert these flag-only measurements.
 	 *
 	 * A dev-mcp row can count verdicts per component across a board run.
-	 * The field is absent when the geocode resolved no winner to check.
+	 * The field is null when the geocode resolved no winner to check.
 	 */
-	admin_coherence?: AdminCoherenceReport
+	admin_coherence: AdminCoherenceReport | null
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -767,14 +767,15 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
-		...(g.capital_promotion === undefined ? {} : { capital_promotion: g.capital_promotion }),
-		...(g.variant_alias_exemption === true ? { variant_alias_exemption: true as const } : {}),
-		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
+		capital_promotion: g.capital_promotion ?? null,
+		variant_alias_exemption: g.variant_alias_exemption === true ? true : null,
+		admin_coherence: g.admin_coherence ?? null,
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,
 			name: h.name,
-			...(h.placeID ? { placeID: h.placeID } : {}),
-			...(h.lat != null ? { lat: h.lat, lon: h.lon! } : {}),
+			placeID: h.placeID || null,
+			lat: h.lat ?? null,
+			lon: h.lon ?? null,
 		})),
 	}
 }

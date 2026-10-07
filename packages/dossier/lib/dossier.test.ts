@@ -40,7 +40,8 @@ function cell2Reading(overrides: Partial<LayerReading>): LayerReading {
 		basis: "surveyed",
 		surveyedAt: "2022-03-15",
 		records: 0,
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+		subject: null,
 		...overrides,
 	}
 }
@@ -82,7 +83,15 @@ describe("buildDossier as of 2022-06-30", () => {
 				...EXAMPLE_RECORDS,
 				sources: [
 					...EXAMPLE_RECORDS.sources,
-					{ id: "late", publisher: "p", title: "t", observedAt: "2022-01-01", availableAt: "2022-12-01" },
+					{
+						id: "late",
+						publisher: "p",
+						title: "t",
+						observedAt: "2022-01-01",
+						availableAt: "2022-12-01",
+						url: null,
+						retrievedAt: null,
+					},
 				],
 			},
 			{ asOf: "2022-06-30" }
@@ -97,7 +106,12 @@ describe("buildDossier as of 2022-06-30", () => {
 				{
 					...EXAMPLE_RECORDS,
 					containment: [
-						{ child: "entrance:ghost", parent: HOUSE, relation: "entrance_of", evidence: { source: "survey-2022" } },
+						{
+							child: "entrance:ghost",
+							parent: HOUSE,
+							relation: "entrance_of",
+							evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+						},
 					],
 				},
 				{ asOf: "2022-06-30" }
@@ -127,7 +141,7 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 	test("a reading without a subject attaches to each building that an admitted membership places in its extent", () => {
 		const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
 
-		expect(EXAMPLE_RECORDS.readings.every((reading) => reading.subject === undefined)).toBe(true)
+		expect(EXAMPLE_RECORDS.readings.every((reading) => reading.subject === null)).toBe(true)
 
 		expect(layersAndExtents(dossier, HOUSE)).toEqual([
 			["ducts", "cell-1"],
@@ -157,7 +171,11 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 			...EXAMPLE_RECORDS,
 			memberships: [
 				...EXAMPLE_RECORDS.memberships!,
-				{ subject: ANNEX, extent: "cell-3", evidence: { source: "manager-2023" } },
+				{
+					subject: ANNEX,
+					extent: "cell-3",
+					evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
+				},
 			],
 		}
 
@@ -246,7 +264,13 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 			buildDossier(
 				{
 					...EXAMPLE_RECORDS,
-					memberships: [{ subject: NORTH, extent: "cell-1", evidence: { source: "survey-2022" } }],
+					memberships: [
+						{
+							subject: NORTH,
+							extent: "cell-1",
+							evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+						},
+					],
 				},
 				{ asOf: "2022-06-30" }
 			)
@@ -266,9 +290,17 @@ describe("buildDossier: a building's external identifiers", () => {
 				? {
 						...entity,
 						externalIDs: [
-							{ namespace: "example:bin", value: "1001", evidence: { source: "permit-2021" } },
-							{ namespace: "example:uprn", value: "77", evidence: { source: "manager-2023" } },
-							{ namespace: "example:listing", value: "L-9" },
+							{
+								namespace: "example:bin",
+								value: "1001",
+								evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+							},
+							{
+								namespace: "example:uprn",
+								value: "77",
+								evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
+							},
+							{ namespace: "example:listing", value: "L-9", evidence: null },
 						],
 					}
 				: entity
@@ -277,8 +309,12 @@ describe("buildDossier: a building's external identifiers", () => {
 
 	test("a section keeps an identifier with admitted evidence and one without evidence, and leaves out one whose evidence it excludes", () => {
 		expect(sectionOf(buildDossier(records, { asOf: "2022-06-30" }), HOUSE).identifiers).toEqual([
-			{ namespace: "example:bin", value: "1001", evidence: { source: "permit-2021" } },
-			{ namespace: "example:listing", value: "L-9" },
+			{
+				namespace: "example:bin",
+				value: "1001",
+				evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+			},
+			{ namespace: "example:listing", value: "L-9", evidence: null },
 		])
 
 		expect(
@@ -291,7 +327,15 @@ describe("buildDossier: a building's external identifiers", () => {
 			...records,
 			entities: records.entities.map((entity) =>
 				entity.id === ANNEX
-					? { ...entity, externalIDs: [{ ...entity.externalIDs[0]!, evidence: { source: "undated-listing" } }] }
+					? {
+							...entity,
+							externalIDs: [
+								{
+									...entity.externalIDs[0]!,
+									evidence: { source: "undated-listing", observedAt: null, validFrom: null, validTo: null },
+								},
+							],
+						}
 					: entity
 			),
 		}
@@ -303,7 +347,11 @@ describe("buildDossier: a building's external identifiers", () => {
 		expect(sectionOf(buildDossier(OPP_RECORDS, { asOf: "2023-06-30" }), OPP_BUILDING).identifiers).toEqual([])
 
 		expect(sectionOf(buildDossier(OPP_RECORDS, { asOf: "2026-10-05" }), OPP_BUILDING).identifiers).toEqual([
-			{ namespace: "nyc:bin", value: "3429422", evidence: { source: "pad-geosearch-26c" } },
+			{
+				namespace: "nyc:bin",
+				value: "3429422",
+				evidence: { source: "pad-geosearch-26c", observedAt: null, validFrom: null, validTo: null },
+			},
 		])
 	})
 })
@@ -315,8 +363,11 @@ describe("buildDossier: the records behind a section's readings and questions", 
 				...EXAMPLE_RECORDS,
 				readings: [
 					...EXAMPLE_RECORDS.readings,
-					{ ...MISSING_READING, evidence: { source: "inspection-2022" } },
-					{ ...MISSING_READING, evidence: { source: "survey-2022" } },
+					{
+						...MISSING_READING,
+						evidence: { source: "inspection-2022", observedAt: null, validFrom: null, validTo: null },
+					},
+					{ ...MISSING_READING, evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null } },
 				],
 			},
 			{ asOf: "2022-06-30" }
@@ -388,7 +439,11 @@ describe("buildDossier: building positions", () => {
 			...EXAMPLE_RECORDS,
 			positions: [
 				...EXAMPLE_RECORDS.positions!,
-				{ ...HOUSE_POSITION, latitude: -30.00015, evidence: { source: "manager-2023" } },
+				{
+					...HOUSE_POSITION,
+					latitude: -30.00015,
+					evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
+				},
 			],
 		}
 
@@ -424,7 +479,7 @@ describe("buildDossier: the claims a section shows", () => {
 				predicate: "riser_access",
 				value: "shared riser",
 				status: "observed",
-				evidence: { source: "manager-2023" },
+				evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
 			},
 			{
 				id: "c4",
@@ -435,7 +490,7 @@ describe("buildDossier: the claims a section shows", () => {
 				status: "inferred",
 				derivedFrom: ["c3"],
 				explanation: "A shared riser may not reach the roof.",
-				evidence: { source: "survey-2022" },
+				evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 			},
 			{
 				id: "c5",
@@ -445,7 +500,7 @@ describe("buildDossier: the claims a section shows", () => {
 				value: 40,
 				status: "derived",
 				derivedFrom: ["c4"],
-				evidence: { source: "permit-2021" },
+				evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
 			},
 		],
 	}
@@ -479,7 +534,7 @@ describe("buildDossier: the claims a section shows", () => {
 							derivedFrom: ["c9"],
 							explanation:
 								"A cabinet within 40 m is an observation of proximity, and connection requires its own record.",
-							evidence: { source: "survey-2022" },
+							evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 						},
 					],
 				},
@@ -619,7 +674,11 @@ describe("one park point, real records", () => {
 			expect(section.aliases).toEqual([
 				{
 					text: "11 Ocean Parkway, Brooklyn, NY 11218",
-					resolution: { kind: "resolved", entity: building, evidence: { source: "pad-geosearch-26c" } },
+					resolution: {
+						kind: "resolved",
+						entity: building,
+						evidence: { source: "pad-geosearch-26c", observedAt: null, validFrom: null, validTo: null },
+					},
 				},
 			])
 

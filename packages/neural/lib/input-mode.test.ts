@@ -35,7 +35,14 @@ function stubRunner(seen: { evidence: unknown[] }): NeuralRunner {
 			const evidence = args[4]
 			seen.evidence.push(evidence)
 
-			return { logits: ids.map(() => LABELS.map(() => 0)), numLabels: LABELS.length }
+			return {
+				logits: ids.map(() => LABELS.map(() => 0)),
+				numLabels: LABELS.length,
+				localeLogits: null,
+				addressSystemLogits: null,
+				spanScores: null,
+				maxSpan: null,
+			}
 		},
 	}
 }
@@ -76,8 +83,8 @@ describe("inputMode register enforcement (Decision A)", () => {
 		expect(seen.evidence).toHaveLength(1)
 		// The street channel remains present (all-zero confidence on a street-word-less input —
 		// inert by construction); the locality channel is what the eval withholds.
-		const evidence = seen.evidence[0] as { streetType?: unknown; localitySurface?: unknown }
-		expect(evidence.localitySurface).toBeUndefined()
+		const evidence = seen.evidence[0] as { streetType: unknown; localitySurface: unknown }
+		expect(evidence.localitySurface).toBeNull()
 		expect(evidence.streetType).toBeDefined()
 	})
 

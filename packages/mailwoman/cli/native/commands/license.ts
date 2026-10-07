@@ -286,12 +286,10 @@ async function adopt(parsed: ParsedCommand): Promise<number> {
 	}
 
 	const keyPath = await writeLicenseKeyFile(token)
-	const refreshPath = secret && lid ? await writeRefreshCredentials({ lid, secret }) : undefined
+	const refreshPath = secret && lid ? await writeRefreshCredentials({ lid, secret }) : null
 
 	if (booleanValue(parsed.values, "json")) {
-		process.stdout.write(
-			prettyJSON({ keyPath, ...(refreshPath ? { refreshPath } : {}), payload: verification.payload })
-		)
+		process.stdout.write(prettyJSON({ keyPath, refreshPath, payload: verification.payload }))
 	} else {
 		process.stdout.write(
 			[
@@ -376,11 +374,11 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 	if (!token) throw new CLIUsageError("verify needs a token: pass --key <token> or set MAILWOMAN_LICENSE_KEY.")
 
 	const verification = await verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys() })
-	const kid = "kid" in verification ? verification.kid : undefined
+	const kid = "kid" in verification ? verification.kid : null
 	const online = booleanValue(parsed.values, "online")
-	const publication = online && kid ? await confirmLicenseKeyPublished(kid) : undefined
+	const publication = online && kid ? await confirmLicenseKeyPublished(kid) : null
 	const lid = licenseIDOf(verification, token)
-	const lidStatus = online && lid ? await checkLicenseStatus(lid) : undefined
+	const lidStatus = online && lid ? await checkLicenseStatus(lid) : null
 
 	const ok =
 		verification.status === "valid" &&
@@ -393,8 +391,8 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 		process.stdout.write(
 			prettyJSON({
 				...verification,
-				...(publication ? { publication } : {}),
-				...(lidStatus ? { lid_status: lidStatus } : {}),
+				publication,
+				lid_status: lidStatus,
 			})
 		)
 	} else {

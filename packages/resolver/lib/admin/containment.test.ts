@@ -9,6 +9,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -60,6 +61,7 @@ async function makeBackend(
 			if (query.placetype !== "locality") return []
 
 			return specs.map((spec): ResolvedPlace => ({
+				...EMPTY_PLACE_FIELDS,
 				id: spec.id,
 				name: "Marwei",
 				placetype: "locality",
@@ -69,10 +71,9 @@ async function makeBackend(
 				score: 100 - spec.id,
 				prominence: 8 - spec.id,
 				exactMatch: spec.exactMatch ?? true,
-				...(spec.importance === undefined ? {} : { importance: spec.importance }),
-				...(query.regionQualifier === undefined || spec.contained === undefined
-					? {}
-					: { containedByQualifier: spec.contained }),
+				importance: spec.importance ?? null,
+				containedByQualifier:
+					query.regionQualifier === undefined || spec.contained === undefined ? null : spec.contained,
 			}))
 		},
 	}

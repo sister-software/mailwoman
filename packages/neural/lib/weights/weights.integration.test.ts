@@ -263,6 +263,9 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			expect(disabledTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 				kind: "placetypePair",
 				applied: false,
+				probePath: null,
+				census: null,
+				censusProbedParents: null,
 			})
 
 			const bDepLocCol = disabledTrace.labels.indexOf("B-dependent_locality")

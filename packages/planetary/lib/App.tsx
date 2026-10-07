@@ -61,6 +61,9 @@ function featureFromHit(hit: SearchHit): SelectedFeature {
 		featureType: hit.featureType,
 		featureTypeCode: hit.featureTypeCode,
 		diameterKm: hit.diameterKm,
+		origin: null,
+		approvalStatus: null,
+		approvalDate: null,
 		centerLon: hit.centerLon,
 		centerLat: hit.centerLat,
 	}

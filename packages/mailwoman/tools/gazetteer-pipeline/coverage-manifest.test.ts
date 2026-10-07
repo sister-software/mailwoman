@@ -116,7 +116,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		const au = manifest!.countryCoverage.get("AU")
 		expect(au?.hardFilterSafe).toBe(true)
-		expect(au?.hardResolveRate).toBeUndefined()
+		expect(au?.hardResolveRate).toBeNull()
 
 		expect(manifest!.countryBBoxes.size).toBe(Object.keys(COUNTRY_BBOX).length)
 		const us = manifest!.countryBBoxes.get("US")
@@ -166,6 +166,6 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		using lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 
-		expect(lookup.artifactCoverage).toBeUndefined()
+		expect(lookup.artifactCoverage).toBeNull()
 	})
 })

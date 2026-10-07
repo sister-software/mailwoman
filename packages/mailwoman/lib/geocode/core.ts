@@ -141,7 +141,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Capital status callback for bounded capital promotion.
 	 */
-	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
+	capitalLevel?: (place: { name: string; country: string | null; lat: number; lon: number }) => number
 	/**
 	 * Locale hint country for fuzzy matching only.
 	 */
@@ -570,7 +570,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	if (deps.nationalDatabases) {
 		const provider = deps.nationalDatabases
 
-		opts.streetCentroids = (country: string) => provider(country).streetCentroids
+		opts.streetCentroids = (country: string) => provider(country).streetCentroids ?? null
 
 		for (const c of [deps.defaultCountry?.toLowerCase(), placedCountry?.toLowerCase(), streetPlacerCountry]) {
 			if (c && !streetHints.includes(c)) {

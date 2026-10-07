@@ -35,11 +35,11 @@ export interface Provenance {
 		n: number
 		sha256: string
 		selection: string
-		population_n?: number
-		why?: string
+		population_n: number | null
+		why: string | null
 		not_covered: string[]
 		has_truth: ResolvedInputSet["hasTruth"]
-		corpus_hash?: string
+		corpus_hash: string | null
 		notes: string[]
 	}
 }
@@ -53,11 +53,11 @@ export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set
 		n: set.n,
 		sha256: set.sha256,
 		selection: set.selection,
-		...(set.populationN === undefined ? {} : { population_n: set.populationN }),
-		...(set.why === undefined ? {} : { why: set.why }),
+		population_n: set.populationN,
+		why: set.why,
 		not_covered: set.notCovered,
 		has_truth: set.hasTruth,
-		...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
+		corpus_hash: set.corpusHash,
 		notes: set.notes,
 	}
 }
@@ -402,7 +402,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 		const query = [
 			record.placetype,
 			record.query.country ? `country=${record.query.country}` : null,
-			record.query.parentID !== undefined ? `parent=${record.query.parentID}` : null,
+			record.query.parentID != null ? `parent=${record.query.parentID}` : null,
 			record.query.regionQualifier ? `qualifier=${stringifyJSON(record.query.regionQualifier)}` : null,
 			`limit=${record.query.limit}`,
 		]
@@ -410,7 +410,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 			.join(" ")
 
 		const reach =
-			record.reachableIn === undefined
+			record.reachableIn == null
 				? ""
 				: record.reachableIn.length
 					? `\n    UNREACHABLE, not absent — the key lives in ${record.reachableIn
@@ -426,10 +426,10 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 			const picked = record.picked && record.picked.id === c.id ? " ◀ PICKED" : ""
 
 			return `    ${c.name} (${c.country} ${c.placetype} id=${c.id}) score=${c.score}${
-				c.prominence !== undefined ? ` prom=${c.prominence.toFixed(2)}` : ""
-			}${c.importance !== undefined ? ` imp=${c.importance.toFixed(2)}` : ""}${
-				c.population !== undefined ? ` pop=${c.population}` : ""
-			}${c.containedByQualifier !== undefined ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`
+				c.prominence != null ? ` prom=${c.prominence.toFixed(2)}` : ""
+			}${c.importance != null ? ` imp=${c.importance.toFixed(2)}` : ""}${
+				c.population != null ? ` pop=${c.population}` : ""
+			}${c.containedByQualifier != null ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`
 		})
 
 		const head =
@@ -484,9 +484,9 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 export interface ComparedRow {
 	id: string
 	input: string
-	country?: string
-	address_kind?: string
-	status?: string
+	country: string | null
+	address_kind: string | null
+	status: string | null
 	differed: boolean
 	grade: RowGrade
 	a: unknown
@@ -496,15 +496,15 @@ export interface ComparedRow {
 
 	/**
 	 * True when the place ID chains differ.
-	 * It is present only when both arms report `place_ids`.
+	 * It is `null` unless both arms report `place_ids`.
 	 */
-	identity_differed?: boolean
+	identity_differed: boolean | null
 
 	/**
 	 * True when the result tiers differ.
-	 * It is present only when both arms report a tier.
+	 * It is `null` unless both arms report a tier.
 	 */
-	tier_differed?: boolean
+	tier_differed: boolean | null
 }
 
 /**

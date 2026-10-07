@@ -83,7 +83,7 @@ export interface BaselineSelection {
 	/**
 	 * The reason for an abstention.
 	 */
-	abstainedBecause?: "no_admin_node" | "empty_pool" | "below_similarity_floor"
+	abstainedBecause: "no_admin_node" | "empty_pool" | "below_similarity_floor" | null
 }
 
 /**
@@ -234,5 +234,6 @@ export function selectBaseline(tree: AddressTree, pool: readonly SameDataCandida
 		subject,
 		confidence: Math.min(1, best.components.total / maximum),
 		components: best.components,
+		abstainedBecause: null,
 	}
 }

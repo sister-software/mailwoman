@@ -399,7 +399,7 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 
 // #region surface-ambiguity classes
 
-test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
+test("web reader roundtrips crossCountryBranches under header flags bit0, null without it", async () => {
 	const { serializeFST } = await import("#fst")
 	const { FSTMatcher } = await import("#fst")
 
@@ -416,7 +416,8 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 					referential: 0.4,
 					lat: 44.36,
 					lon: -100.35,
-					crossCountryBranches: 7,
+					encyclopedic: null,
+					crossCountryBranches: 7 as number | null,
 				},
 			],
 		},
@@ -429,12 +430,12 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 	expect(m.accepting(hit.stateID)[0]!.crossCountryBranches).toBe(7)
 
 	// The first buffer is already built — mutating the shared fixture only affects the second build.
-	delete (nodes[1]!.places[0] as { crossCountryBranches?: number }).crossCountryBranches
+	nodes[1]!.places[0]!.crossCountryBranches = null
 	const withoutAmbiguity = new Uint8Array(serializeFST(FSTMatcher.fromNodes(nodes)))
 	const m2 = deserializeFSTWeb(withoutAmbiguity)
 	const hit2 = m2.walk(["pierre"])!
 
-	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeUndefined()
+	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeNull()
 })
 
 // #endregion

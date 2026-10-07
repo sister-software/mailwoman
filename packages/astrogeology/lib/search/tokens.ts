@@ -14,19 +14,18 @@ import type { BuildableBodyID } from "#bodies"
  * What a suggestion returns: enough to place and frame the feature without a second lookup.
  *
  * `diameterKm` lets a camera choose a zoom.
- * When it is absent, the framing function uses its smallest-feature branch.
+ * When it is null, the framing function uses its smallest-feature branch.
  *
  * Every search result and deep link then frames a 4,000 km canyon as tightly as a 3 km crater.
  * `featureTypeCode` accompanies it for the same reason.
  *
  * A reader that has the feature should not need the tile to describe it.
  *
- * Both fields are optional because the IAU gazetteer leaves them unset for some features.
- * An absent diameter represents missing data, while zero represents a measured value.
+ * Both fields are null where the IAU gazetteer leaves them unset.
+ * A null diameter represents missing data, while zero represents a measured value.
  *
- * A type alias rather than an interface: the trie builder takes a `JSONValue`, and only an
- * alias has the implicit index signature that makes an optional property assignable to one.
- * An interface fails to assign once `diameterKm` is present.
+ * A type alias rather than an interface: the trie builder takes a `JSONValue`,
+ * and only an alias has the implicit index signature that makes it assignable to one.
  */
 // oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above. an interface does not assign to `JSONValue`
 export type NomenclatureSearchPayload = {
@@ -34,8 +33,8 @@ export type NomenclatureSearchPayload = {
 	body: BuildableBodyID
 	name: string
 	featureType: string
-	featureTypeCode?: string
-	diameterKm?: number
+	featureTypeCode: string | null
+	diameterKm: number | null
 	centerLon: number
 	centerLat: number
 }

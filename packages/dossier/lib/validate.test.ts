@@ -22,7 +22,15 @@ import {
 import { validateRecords } from "#validate"
 
 function readingFor(subject: EntityID): LayerReading {
-	return { layer: "ducts", extent: "cell-1", subject, basis: null, records: null, evidence: { source: "survey-2022" } }
+	return {
+		layer: "ducts",
+		extent: "cell-1",
+		subject,
+		basis: null,
+		records: null,
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+		surveyedAt: null,
+	}
 }
 
 describe("validateRecords", () => {
@@ -47,7 +55,7 @@ describe("validateRecords", () => {
 					predicate: "storeys",
 					value: 13,
 					status: "observed",
-					evidence: { source: "no-such-source" },
+					evidence: { source: "no-such-source", observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		})
@@ -58,7 +66,17 @@ describe("validateRecords", () => {
 	test("a malformed date is an error", () => {
 		const issues = validateRecords({
 			...EMPTY_RECORDS,
-			sources: [{ id: "s", publisher: "p", title: "t", availableAt: "03/01/2022" }],
+			sources: [
+				{
+					id: "s",
+					publisher: "p",
+					title: "t",
+					availableAt: "03/01/2022",
+					url: null,
+					observedAt: null,
+					retrievedAt: null,
+				},
+			],
 		})
 
 		expect(issues).toContainEqual(expect.objectContaining({ severity: "error", code: "malformed_date", ref: "s" }))
@@ -105,9 +123,25 @@ describe("validateRecords: external identifiers", () => {
 			...EXAMPLE_RECORDS,
 			entities: EXAMPLE_RECORDS.entities.map((entity) =>
 				entity.id === HOUSE
-					? { ...entity, externalIDs: [{ ...entity.externalIDs[0]!, evidence: { source: "permit-2021" } }] }
+					? {
+							...entity,
+							externalIDs: [
+								{
+									...entity.externalIDs[0]!,
+									evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+								},
+							],
+						}
 					: entity.id === ANNEX
-						? { ...entity, externalIDs: [{ ...entity.externalIDs[0]!, evidence: { source: "no-such-permit" } }] }
+						? {
+								...entity,
+								externalIDs: [
+									{
+										...entity.externalIDs[0]!,
+										evidence: { source: "no-such-permit", observedAt: null, validFrom: null, validTo: null },
+									},
+								],
+							}
 						: entity
 			),
 		})
@@ -138,7 +172,7 @@ describe("validateRecords: the claims a claim derives from", () => {
 					value: 40,
 					status: "derived",
 					derivedFrom: ["c1", "c9"],
-					evidence: { source: "survey-2022" },
+					evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 				},
 				{
 					id: "c4",
@@ -149,7 +183,7 @@ describe("validateRecords: the claims a claim derives from", () => {
 					status: "inferred",
 					derivedFrom: ["c8"],
 					explanation: "A riser shown on a plan may not reach the roof.",
-					evidence: { source: "survey-2022" },
+					evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		})
@@ -188,9 +222,21 @@ describe("validateRecords: memberships and positions", () => {
 		const issues = validateRecords({
 			...EXAMPLE_RECORDS,
 			memberships: [
-				{ subject: HOUSE, extent: "cell-1", evidence: { source: "no-such-survey" } },
-				{ subject: NORTH, extent: "cell-1", evidence: { source: "survey-2022" } },
-				{ subject: "building:ghost", extent: "cell-1", evidence: { source: "survey-2022" } },
+				{
+					subject: HOUSE,
+					extent: "cell-1",
+					evidence: { source: "no-such-survey", observedAt: null, validFrom: null, validTo: null },
+				},
+				{
+					subject: NORTH,
+					extent: "cell-1",
+					evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+				},
+				{
+					subject: "building:ghost",
+					extent: "cell-1",
+					evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+				},
 			],
 		})
 
@@ -207,7 +253,7 @@ describe("validateRecords: memberships and positions", () => {
 			latitude: 40.1,
 			longitude: -73.9,
 			synthetic: true,
-			evidence: { source: "survey-2022" },
+			evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 		}
 
 		const issues = validateRecords({
@@ -258,7 +304,7 @@ describe("validateRecords: availability checks and the records that explain them
 			kind: ExplanationKind.Route,
 			probability: 0.4,
 			basis: "held in 4 of 10 comparable exceptions",
-			evidence: { source: "survey-2022" },
+			evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 		}
 
 		const issues = validateRecords({
@@ -287,7 +333,11 @@ describe("validateRecords: availability checks and the records that explain them
 				{
 					...ACCESS_DISPOSITION,
 					id: "x3",
-					outcome: { ...ACCESS_DISPOSITION.outcome!, minutesSpent: -5, evidence: { source: "no-such-log" } },
+					outcome: {
+						...ACCESS_DISPOSITION.outcome!,
+						minutesSpent: -5,
+						evidence: { source: "no-such-log", observedAt: null, validFrom: null, validTo: null },
+					},
 				},
 			],
 		})
@@ -310,7 +360,7 @@ describe("validateRecords: availability checks and the records that explain them
 					kind: ExplanationKind.Capacity,
 					applies: true,
 					statement: "Cabinet C-1 has no spare ports",
-					evidence: { source: "no-such-survey" },
+					evidence: { source: "no-such-survey", observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		})

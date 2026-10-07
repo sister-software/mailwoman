@@ -40,16 +40,19 @@ test("extractAssertCalls: literal inputs + expected records, in file order", () 
 			file: "packages/mailwoman/test/address.usa.test.ts",
 			input: "wrigley field",
 			expected: [{ street: ["wrigley field"] }, { venue: ["wrigley field"] }],
+			nonLiteral: false,
 		},
 		{
 			file: "packages/mailwoman/test/address.usa.test.ts",
 			input: "E Cesar Chavez St",
 			expected: [{ street: ["E Cesar Chavez St"] }],
+			nonLiteral: false,
 		},
 		{
 			file: "packages/mailwoman/test/address.usa.test.ts",
 			input: "no expectations means no solutions",
 			expected: [],
+			nonLiteral: false,
 		},
 	])
 })

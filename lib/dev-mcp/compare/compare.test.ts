@@ -207,10 +207,10 @@ describe("mwdev_compare — external arm", () => {
 			{ body: peliasBody(ANDORRA_LA_VELLA) },
 		])
 
-		const rows = result["rows_changed"] as Array<{ identity_differed?: boolean }>
+		const rows = result["rows_changed"] as Array<{ identity_differed: boolean | null }>
 
 		for (const row of rows) {
-			expect(row.identity_differed).toBeUndefined()
+			expect(row.identity_differed).toBeNull()
 		}
 
 		const identity = result["identity_changed"] as { n: number; of_comparable: number }

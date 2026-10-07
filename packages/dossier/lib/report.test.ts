@@ -108,7 +108,7 @@ describe("renderReport: the serviceability section", () => {
 						kind,
 						probability: [0.5, 0.2, 0.3][index]!,
 						basis: "a synthetic study",
-						evidence: { source: "operator-log-2022" },
+						evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
 					})),
 				},
 				{ asOf: "2022-06-30" }
@@ -191,6 +191,8 @@ describe("renderReport: the claims part", () => {
 					title: "Dated rental listing",
 					availableAt: "2022-01-03",
 					retrievedAt: "2026-10-04",
+					url: null,
+					observedAt: null,
 				},
 			],
 			claims: [
@@ -201,7 +203,7 @@ describe("renderReport: the claims part", () => {
 					predicate: "listed_units",
 					value: 3,
 					status: "observed",
-					evidence: { source: "listing-2022" },
+					evidence: { source: "listing-2022", observedAt: null, validFrom: null, validTo: null },
 				},
 				{
 					id: "c7",
@@ -210,7 +212,7 @@ describe("renderReport: the claims part", () => {
 					predicate: "storeys",
 					value: 13,
 					status: "observed",
-					evidence: { source: "survey-2022", observedAt: "2022-03-16" },
+					evidence: { source: "survey-2022", observedAt: "2022-03-16", validFrom: null, validTo: null },
 				},
 				{
 					id: "c8",
@@ -219,7 +221,7 @@ describe("renderReport: the claims part", () => {
 					predicate: "storeys",
 					value: 13,
 					status: "observed",
-					evidence: { source: "survey-2022" },
+					evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		}
@@ -244,7 +246,7 @@ describe("renderReport: the claims part", () => {
 					value: { easting: 533_018, northing: 165_662, system: "OSGB36", corners: [] },
 					status: "derived",
 					derivedFrom: ["c1", "c2"],
-					evidence: { source: "permit-2021" },
+					evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		}
@@ -593,7 +595,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 		})
 
 		const announced = buildDossier(
-			{ ...EXAMPLE_RECORDS, availability: [{ ...AVAILABILITY[0]!, from: "2022-08-01", to: undefined }] },
+			{ ...EXAMPLE_RECORDS, availability: [{ ...AVAILABILITY[0]!, from: "2022-08-01", to: null }] },
 			{ asOf: "2022-06-30" }
 		)
 
@@ -656,7 +658,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 					kind,
 					probability: [0.5, 0.2, 0.3][index]!,
 					basis: "a synthetic study",
-					evidence: { source: "operator-log-2022" },
+					evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
 				})),
 			},
 			{ asOf: "2022-06-30" }
@@ -681,7 +683,8 @@ describe("reportLines: the citation that each line without one gains", () => {
 						investigated: "route",
 						decision: "Request the provider's plant record for cell-1",
 						decidedAt: "2022-06-02",
-						evidence: { source: "operator-log-2022" },
+						evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
+						outcome: null,
 					},
 				],
 			},
@@ -695,6 +698,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 				text: "- fact (operator-log-2022): 1 of 2 dispositions awaits an outcome.",
 				part: ReportPart.Outcomes,
 				kind: ReportLineKind.Conclusion,
+				building: null,
 				sources: ["operator-log-2022"],
 			},
 		])
@@ -716,6 +720,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 				text: "- fact (source unstated): 1 of 2 dispositions awaits an outcome.",
 				part: ReportPart.Outcomes,
 				kind: ReportLineKind.Conclusion,
+				building: null,
 				sources: [],
 			},
 		])
@@ -909,7 +914,15 @@ describe("reportLines: the sources part", () => {
 					...EXAMPLE_RECORDS,
 					sources: [
 						...EXAMPLE_RECORDS.sources,
-						{ id: "listing-2022", publisher: "Example Listings", title: "Dated listing", availableAt: "2022-01-03" },
+						{
+							id: "listing-2022",
+							publisher: "Example Listings",
+							title: "Dated listing",
+							availableAt: "2022-01-03",
+							url: null,
+							observedAt: null,
+							retrievedAt: null,
+						},
 					],
 				},
 				{ asOf: "2022-06-30" }

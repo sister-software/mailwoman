@@ -8,6 +8,7 @@ import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type CoincidentLocality,
+	EMPTY_PLACE_FIELDS,
 	compareReferential,
 	type ResolveCandidateTrace,
 	type ResolveNodeTrace,
@@ -85,7 +86,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 	const checks: string[] = []
 	const stageOrders: Array<[string, readonly ResolvedPlace[]]> = []
 
-	let reachableIn: ResolveNodeTrace["reachableIn"]
+	let reachableIn: ResolveNodeTrace["reachableIn"] = null
 
 	let ctx: {
 		node: AddressNode
@@ -133,11 +134,11 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				country: c.country,
 				placetype: c.placetype,
 				score: c.score,
-				...(c.prominence != null ? { prominence: c.prominence } : {}),
-				...(c.importance != null ? { importance: c.importance } : {}),
-				...(c.population != null ? { population: c.population } : {}),
-				...(c.exactMatch != null ? { exactMatch: c.exactMatch } : {}),
-				...(c.containedByQualifier != null ? { containedByQualifier: c.containedByQualifier } : {}),
+				prominence: c.prominence ?? null,
+				importance: c.importance ?? null,
+				population: c.population ?? null,
+				exactMatch: c.exactMatch ?? null,
+				containedByQualifier: c.containedByQualifier ?? null,
 				ranks: rankMap.get(c) ?? {},
 			}))
 
@@ -146,14 +147,14 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				value: ctx.node.value,
 				placetype: ctx.placetype,
 				query: {
-					...(ctx.query.country ? { country: ctx.query.country } : {}),
-					...(ctx.query.parentID != null ? { parentID: ctx.query.parentID } : {}),
-					...(ctx.query.postcode ? { postcode: ctx.query.postcode } : {}),
-					...(ctx.query.regionQualifier ? { regionQualifier: ctx.query.regionQualifier } : {}),
+					country: ctx.query.country || null,
+					parentID: ctx.query.parentID ?? null,
+					postcode: ctx.query.postcode || null,
+					regionQualifier: ctx.query.regionQualifier || null,
 					limit: ctx.query.limit ?? ctx.defaultLimit,
 				},
 				checks,
-				...(reachableIn ? { reachableIn } : {}),
+				reachableIn,
 				candidates: rows,
 				candidatesTruncated: Math.max(0, finalOrder.length - TRACE_CANDIDATE_CAP),
 				picked,
@@ -281,7 +282,7 @@ export interface ResolutionState {
 	 * Returns a candidate's capital level for bounded capital promotion.
 	 * Capital promotion is off when it is absent.
 	 */
-	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
+	capitalLevel?: (place: { name: string; country: string | null; lat: number; lon: number }) => number
 
 	/**
 	 * The country scope applied to a lookup when no parent, default country, or node hint supplies one.
@@ -519,6 +520,7 @@ export function applyPostcodeConsistency(
 
 		if (reconciling) {
 			const displaced: ResolvedPlace = {
+				...EMPTY_PLACE_FIELDS,
 				id: 0,
 				name: String(node.metadata?.["resolver_name"] ?? node.value),
 				placetype: "locality",

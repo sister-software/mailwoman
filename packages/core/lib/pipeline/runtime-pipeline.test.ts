@@ -27,7 +27,11 @@ function fakeClassifier(tree: AddressTree): AddressClassifier {
 }
 
 function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
-	return { resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)) }
+	return {
+		resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)),
+		artifactCoverage: null,
+		capabilityGaps: null,
+	}
 }
 
 describe("HardCountryFor — coverage-guarded hard country filter", () => {
@@ -76,7 +80,7 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 		override?: ReadonlySet<string>
 	}): Promise<string | null> => {
 		const resolveTree = vi.fn(async (tree: AddressTree, _opts?: ResolveOpts) => tree)
-		const resolver: Resolver = { resolveTree }
+		const resolver: Resolver = { resolveTree, artifactCoverage: null, capabilityGaps: null }
 
 		if (opts.artifact) {
 			resolver.artifactCoverage = opts.artifact
@@ -197,7 +201,7 @@ describe("runPipeline — stage composition", () => {
 			classifyKind: vi.fn(async (_in, _sh, _lo) => {
 				order.push("classifyKind")
 
-				return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
+				return { kind: "structured_address" as const, confidence: 0, alternatives: [], intentMarkers: null }
 			}),
 			classifier: {
 				parse: vi.fn(async (text) => {
@@ -212,6 +216,8 @@ describe("runPipeline — stage composition", () => {
 
 					return tree
 				}),
+				artifactCoverage: null,
+				capabilityGaps: null,
 			},
 		}
 
@@ -272,6 +278,7 @@ describe("runPipeline — fast-path routing", () => {
 		kind: "postcode_only",
 		confidence: 0.97,
 		alternatives: [],
+		intentMarkers: null,
 	}
 
 	const postcodeShape: QueryShapeLite = {
@@ -311,6 +318,7 @@ describe("runPipeline — fast-path routing", () => {
 			kind: "locality_only",
 			confidence: 0.96,
 			alternatives: [],
+			intentMarkers: null,
 		}
 
 		const classifier = fakeClassifier(fakeTree("Paris"))
@@ -419,6 +427,8 @@ describe("RunPipeline — graceful degradation", () => {
 			resolveTree: vi.fn(async () => {
 				throw new Error("resolver boom")
 			}),
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		const result = await runPipeline("hello", { classifier, resolver })
@@ -459,7 +469,7 @@ describe("runPipeline — abort signal", () => {
 		const classifyKind = vi.fn(async () => {
 			controller.abort()
 
-			return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
+			return { kind: "structured_address" as const, confidence: 0, alternatives: [], intentMarkers: null }
 		})
 
 		await expect(
@@ -517,6 +527,7 @@ describe("runPipeline — timing budget shape", () => {
 		kind: "postcode_only",
 		confidence: 0.97,
 		alternatives: [],
+		intentMarkers: null,
 	}
 
 	it("full path with all stages: normalize / query-shape / locale-hint / kind-classifier / token-classify / resolve", async () => {
@@ -621,11 +632,18 @@ describe("RunPipeline — non-graceful stage failures", () => {
 			resolveTree: vi.fn(async () => {
 				throw new Error("resolver exploded")
 			}),
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
-			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			classifyKind: async () => ({
+				kind: "postcode_only" as const,
+				confidence: 0.97,
+				alternatives: [],
+				intentMarkers: null,
+			}),
 			resolver,
 		})
 
@@ -651,7 +669,7 @@ describe("runPipeline — locale + opts threading", () => {
 	})
 
 	it("passes resolveOpts to resolver", async () => {
-		const resolver: Resolver = { resolveTree: vi.fn(async (t) => t) }
+		const resolver: Resolver = { resolveTree: vi.fn(async (t) => t), artifactCoverage: null, capabilityGaps: null }
 		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
 		expect(resolver.resolveTree).toHaveBeenCalledWith(expect.anything(), { maxLookups: 3 })
 	})
@@ -667,6 +685,8 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 
 				return t
 			}),
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		return { resolver, seen }
@@ -760,7 +780,12 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
-			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			classifyKind: async () => ({
+				kind: "postcode_only" as const,
+				confidence: 0.97,
+				alternatives: [],
+				intentMarkers: null,
+			}),
 			resolver,
 			placeCountry,
 		})
@@ -819,6 +844,8 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 				resolveTree: vi.fn(async () => {
 					throw new Error("backend closed")
 				}),
+				artifactCoverage: null,
+				capabilityGaps: null,
 			},
 		})
 
@@ -836,11 +863,18 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
-			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			classifyKind: async () => ({
+				kind: "postcode_only" as const,
+				confidence: 0.97,
+				alternatives: [],
+				intentMarkers: null,
+			}),
 			resolver: {
 				resolveTree: vi.fn(async () => {
 					throw new Error("backend closed")
 				}),
+				artifactCoverage: null,
+				capabilityGaps: null,
 			},
 		})
 

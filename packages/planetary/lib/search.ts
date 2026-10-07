@@ -22,14 +22,14 @@ export interface SearchHit {
 	/**
 	 * The IAU feature-type code, when the gazetteer has one.
 	 */
-	featureTypeCode?: string
+	featureTypeCode: string | null
 	/**
 	 * What the camera needs to choose a zoom.
 	 *
-	 * Absent for a feature when the gazetteer gives no diameter.
+	 * `null` for a feature when the gazetteer gives no diameter.
 	 * A caller must read as unknown rather than as zero.
 	 */
-	diameterKm?: number
+	diameterKm: number | null
 	centerLon: number
 	centerLat: number
 }
@@ -43,8 +43,15 @@ const SearchPayloadSchema = z.object({
 	name: z.string().min(1),
 	featureType: z.string().min(1),
 	// Optional because the gazetteer leaves them unset for some features.
-	featureTypeCode: z.string().min(1).optional(),
-	diameterKm: z.number().optional(),
+	featureTypeCode: z
+		.string()
+		.min(1)
+		.optional()
+		.transform((value) => value ?? null),
+	diameterKm: z
+		.number()
+		.optional()
+		.transform((value) => value ?? null),
 	centerLon: z.number(),
 	centerLat: z.number(),
 })

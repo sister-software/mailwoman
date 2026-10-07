@@ -71,7 +71,7 @@ describe("matchAuDeliveryService", () => {
 		expect(matchAuDeliveryService("Care PO")).toMatchObject({ designator: "CARE PO" })
 		expect(matchAuDeliveryService("Poste Restante")).toMatchObject({ designator: "CARE PO" })
 		expect(matchAuDeliveryService("Community Postal Agent")).toMatchObject({ designator: "CPA" })
-		expect(matchAuDeliveryService("CMB")?.id).toBeUndefined()
+		expect(matchAuDeliveryService("CMB")?.id).toBeNull()
 	})
 
 	it("requires a number where the AMAS rule requires one", () => {

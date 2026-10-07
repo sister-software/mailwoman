@@ -235,7 +235,7 @@ describe("Saint-Denis — ranking is referential", () => {
 		expect(results[0]!.id).toBe(101_751_155)
 
 		for (const r of results) {
-			expect(r.encyclopedic).toBeUndefined()
+			expect(r.encyclopedic).toBeNull()
 		}
 	})
 })

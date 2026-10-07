@@ -124,7 +124,7 @@ describe("the committed case-folding suite", () => {
 	it("gives every tracked row a reference and a note, and every enforcing row neither", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeNull()
 
 				continue
 			}

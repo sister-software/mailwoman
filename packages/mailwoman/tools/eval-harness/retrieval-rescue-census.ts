@@ -30,9 +30,9 @@ export interface RescueRowInput {
 	/**
 	 * Truth, when the row includes a coordinate pin.
 	 */
-	expectLat?: number
-	expectLon?: number
-	expectToleranceM?: number
+	expectLat: number | null
+	expectLon: number | null
+	expectToleranceM: number | null
 	/**
 	 * The delivered answer (post entity tiers, production behavior).
 	 */
@@ -46,9 +46,9 @@ export interface RescueRowInput {
 	 * The unconditional fork-entity probe's hit for this input, when a `declared_fork`
 	 * marker rode and the probe was asked ignoring check 1.
 	 *
-	 * Undefined = probe not applicable or no hit.
+	 * Null = probe not applicable or no hit.
 	 */
-	unconditionalEntityHit?: LatLon
+	unconditionalEntityHit: LatLon | null
 	/**
 	 * The resolver's ranked alternatives excluding the winner (`candidates[1..]` of the delivered result).
 	 */
@@ -58,18 +58,18 @@ export interface RescueRowInput {
 export interface RescueRowReport {
 	id: string
 	input: string
-	country?: string
+	country: string | null
 	markers: string[]
 	classification: RescueClass
 	/**
 	 * Distance from the delivered answer to truth, km.
-	 * Undefined when ungraded or unresolved.
+	 * Null when ungraded or unresolved.
 	 */
-	deliveredKm?: number
+	deliveredKm: number | null
 	/**
 	 * Rank (1-based within the alternates) of the first alternate inside tolerance, when one exists.
 	 */
-	rescueRank?: number
+	rescueRank: number | null
 	/**
 	 * The row is correct as delivered while an unconditional entity hit exists,
 	 * the set a check loosening puts at risk.
@@ -91,21 +91,20 @@ function within(lat: number, lon: number, row: RescueRowInput): boolean {
 export function classifyRescueRow(row: RescueRowInput): {
 	classification: RescueClass
 	checkProtects: boolean
-	deliveredKm?: number
-	rescueRank?: number
+	deliveredKm: number | null
+	rescueRank: number | null
 } {
-	if (row.expectLat === undefined || row.expectLon === undefined) {
-		return { classification: "ungraded", checkProtects: false }
+	if (row.expectLat === null || row.expectLon === null) {
+		return { classification: "ungraded", checkProtects: false, deliveredKm: null, rescueRank: null }
 	}
 
 	const deliveredKm =
-		row.lat !== null && row.lon !== null ? haversineKm(row.lat, row.lon, row.expectLat, row.expectLon) : undefined
+		row.lat !== null && row.lon !== null ? haversineKm(row.lat, row.lon, row.expectLat, row.expectLon) : null
 
 	const deliveredCorrect = row.lat !== null && row.lon !== null && within(row.lat, row.lon, row)
 
 	const entityHitCorrect =
-		row.unconditionalEntityHit !== undefined &&
-		within(row.unconditionalEntityHit.lat, row.unconditionalEntityHit.lon, row)
+		row.unconditionalEntityHit !== null && within(row.unconditionalEntityHit.lat, row.unconditionalEntityHit.lon, row)
 
 	let rescueRank: number | null = null
 
@@ -118,13 +117,14 @@ export function classifyRescueRow(row: RescueRowInput): {
 	}
 
 	// Track correct rows with an entity hit as risks if the check is loosened.
-	const checkProtects = deliveredCorrect && row.unconditionalEntityHit !== undefined
+	const checkProtects = deliveredCorrect && row.unconditionalEntityHit !== null
 
 	if (deliveredCorrect) {
 		return {
 			classification: row.entityFired ? "entity_rescued_already" : "correct_as_is",
 			checkProtects,
-			...(deliveredKm === undefined ? {} : { deliveredKm }),
+			deliveredKm,
+			rescueRank: null,
 		}
 	}
 
@@ -140,8 +140,8 @@ export function classifyRescueRow(row: RescueRowInput): {
 	return {
 		classification,
 		checkProtects: false,
-		...(deliveredKm === undefined ? {} : { deliveredKm }),
-		...(rescueRank === null ? {} : { rescueRank }),
+		deliveredKm,
+		rescueRank,
 	}
 }
 

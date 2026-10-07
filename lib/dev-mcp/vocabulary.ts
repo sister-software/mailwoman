@@ -27,11 +27,11 @@ interface VocabularyLine {
 	 */
 	piecesPerCharacter: number
 	/**
-	 * The piece sequence, joined by `|`, present only when asked for.
+	 * The piece sequence, joined by `|`, `null` unless asked for.
 	 *
 	 * It shows where a word shatters and is what makes a reply long.
 	 */
-	sequence?: string
+	sequence: string | null
 }
 
 /**
@@ -53,15 +53,15 @@ export interface VocabularyReport {
 		 */
 		byteFallbackShare: number
 	}
-	control?: VocabularyReport["totals"]
+	control: VocabularyReport["totals"] | null
 	/**
 	 * Per-character coverage over every letter in the input, the actionable half:
 	 * a list of codepoints is a decision, a percentage is not.
 	 */
-	characters?: {
+	characters: {
 		inVocabulary: string[]
 		byteFallback: string[]
-	}
+	} | null
 }
 
 interface Tokenizer {
@@ -78,7 +78,7 @@ function measureLine(tokenizer: Tokenizer, text: string, withSequence: boolean):
 		characters,
 		byteFallbacks: pieces.filter((p) => BYTE_PIECE.test(p)).length,
 		piecesPerCharacter: characters ? pieces.length / characters : 0,
-		...(withSequence ? { sequence: pieces.join("|") } : {}),
+		sequence: withSequence ? pieces.join("|") : null,
 	}
 }
 
@@ -164,10 +164,8 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 		tokenizerPath,
 		lines,
 		totals: total(lines),
-		...(options.control?.length
-			? { control: total(options.control.map((text) => measureLine(tokenizer, text, false))) }
-			: {}),
-		...((options.perCharacter ?? true) ? { characters: characterCoverage(tokenizer, options.texts) } : {}),
+		control: options.control?.length ? total(options.control.map((text) => measureLine(tokenizer, text, false))) : null,
+		characters: (options.perCharacter ?? true) ? characterCoverage(tokenizer, options.texts) : null,
 	}
 }
 

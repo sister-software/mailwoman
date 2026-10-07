@@ -3,6 +3,7 @@ import type { GauntletDeps, GauntletResult } from "mailwoman/tools/eval-harness/
 import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
+import { resolvedInput } from "#dev-mcp/input-sets"
 import { buildRoutedMailwomanArm, type RoutedMailwomanArmDeps } from "#dev-mcp/routed-mailwoman-arm"
 
 // `tier` has a real value because `toGauntletResult` passes `resolution_tier`
@@ -23,7 +24,10 @@ const EMPTY_RESULT = {
 	dependent_locality: null,
 	unit: null,
 	postcode_country_scope: null,
+	capital_promotion: null,
+	variant_alias_exemption: null,
 	hierarchy: [],
+	admin_coherence: null,
 } as GauntletResult
 
 function resolved(
@@ -85,9 +89,9 @@ describe("buildRoutedMailwomanArm", () => {
 		const arm = await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate" },
 			[
-				{ id: "gb", input: "SW1A 1AA", country: "GB" },
-				{ id: "de", input: "99423 Weimar", country: "DE" },
-				{ id: "us", input: "90210", country: "US" },
+				resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" }),
+				resolvedInput({ id: "de", input: "99423 Weimar", country: "DE" }),
+				resolvedInput({ id: "us", input: "90210", country: "US" }),
 			],
 			deps
 		)
@@ -105,7 +109,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 		const arm = await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate" },
-			[{ id: "us", input: "90210", country: "US" }],
+			[resolvedInput({ id: "us", input: "90210", country: "US" })],
 			deps
 		)
 
@@ -132,9 +136,9 @@ describe("buildRoutedMailwomanArm", () => {
 		await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate" },
 			[
-				{ id: "gb", input: "SW1A 1AA", country: "GB" },
-				{ id: "de", input: "99423 Weimar", country: "DE" },
-				{ id: "us", input: "90210", country: "US" },
+				resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" }),
+				resolvedInput({ id: "de", input: "99423 Weimar", country: "DE" }),
+				resolvedInput({ id: "us", input: "90210", country: "US" }),
 			],
 			deps
 		)
@@ -147,11 +151,11 @@ describe("buildRoutedMailwomanArm", () => {
 
 		const arm = await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate", default_country: "US", gazetteer_prior: false },
-			[{ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" }],
+			[resolvedInput({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" })],
 			deps
 		)
 
-		await arm.geocode({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" })
+		await arm.geocode(resolvedInput({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" }))
 
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
@@ -177,7 +181,7 @@ describe("buildRoutedMailwomanArm", () => {
 				capital_tier: true,
 				variant_alias_exemption: true,
 			},
-			[{ id: "us", input: "1 Main St", country: "us" }],
+			[resolvedInput({ id: "us", input: "1 Main St", country: "us" })],
 			deps
 		)
 
@@ -196,7 +200,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 	it("prefers the board's runtime route over its truth country", async () => {
 		const deps = fakeDeps()
-		const row = { id: "route", input: "Douglas, Isle of Man", country: "GB", routeCountry: "IM" }
+		const row = resolvedInput({ id: "route", input: "Douglas, Isle of Man", country: "GB", routeCountry: "IM" })
 		const arm = await buildRoutedMailwomanArm({ weights_cache: "/candidate" }, [row], deps)
 
 		await arm.geocode(row)
@@ -220,7 +224,11 @@ describe("buildRoutedMailwomanArm", () => {
 		})
 
 		await expect(
-			buildRoutedMailwomanArm({ weights_cache: "/candidate" }, [{ id: "gb", input: "SW1A 1AA", country: "GB" }], deps)
+			buildRoutedMailwomanArm(
+				{ weights_cache: "/candidate" },
+				[resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" })],
+				deps
+			)
 		).rejects.toThrow(/outside weights_cache/)
 	})
 
@@ -233,7 +241,11 @@ describe("buildRoutedMailwomanArm", () => {
 		})
 
 		await expect(
-			buildRoutedMailwomanArm({ weights_cache: "/candidate" }, [{ id: "gb", input: "SW1A 1AA", country: "GB" }], deps)
+			buildRoutedMailwomanArm(
+				{ weights_cache: "/candidate" },
+				[resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" })],
+				deps
+			)
 		).rejects.toThrow(/must share the en-US model/)
 	})
 })

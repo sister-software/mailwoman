@@ -43,6 +43,7 @@ function stubLookup(
 					country: r.country ?? "FR",
 					confidence: r.confidence ?? 0.9,
 					gersID: null,
+					distanceM: null,
 				}))
 		},
 	}

@@ -59,7 +59,7 @@ export interface CIKCorroborationVerdict {
 	/**
 	 * The trimmed SIC that was checked, if any.
 	 */
-	sic?: string
+	sic: string | null
 }
 
 /**
@@ -87,13 +87,13 @@ export function corroborateCIK(
 	options: CIKCorroborationOptions = {}
 ): CIKCorroborationVerdict {
 	if (options.pinnedCIKs?.has(cik)) {
-		return { corroborated: true, basis: CIKCorroborationBasis.Pinned }
+		return { corroborated: true, basis: CIKCorroborationBasis.Pinned, sic: null }
 	}
 
 	const trimmed = (sic ?? "").trim()
 
 	if (!trimmed) {
-		return { corroborated: false, basis: CIKCorroborationBasis.NoSIC }
+		return { corroborated: false, basis: CIKCorroborationBasis.NoSIC, sic: null }
 	}
 
 	const accepted = options.acceptedSICCodes ?? TELECOM_SIC_CODES

@@ -106,7 +106,7 @@ export const LISTING = "synthetic-listing-2026"
 export const PLANT_RECORD = "synthetic-plant-record-2026"
 
 function syntheticSource(id: string, title: string, observedAt: string, availableAt: string): SourceRecord {
-	return { id, publisher: "Synthetic example", title, observedAt, availableAt, retrievedAt: DISTRICT_AS_OF }
+	return { id, publisher: "Synthetic example", title, observedAt, availableAt, retrievedAt: DISTRICT_AS_OF, url: null }
 }
 
 const SOURCES: SourceRecord[] = [
@@ -140,16 +140,22 @@ function completed(subject: EntityID, count: number): UnitCount {
 		count,
 		at: "2026-08-01",
 		membership: `${subject}:all`,
-		evidence: { source: INSPECTION, observedAt: "2026-08-01" },
+		evidence: { source: INSPECTION, observedAt: "2026-08-01", validFrom: null, validTo: null },
 	}
 }
 
 function position(subject: EntityID, latitude: number, longitude: number, source = SURVEY) {
-	return { subject, latitude, longitude, synthetic: true, evidence: { source } }
+	return {
+		subject,
+		latitude,
+		longitude,
+		synthetic: true,
+		evidence: { source, observedAt: null, validFrom: null, validTo: null },
+	}
 }
 
 function membership(subject: EntityID, extent: string, source = SURVEY) {
-	return { subject, extent, evidence: { source } }
+	return { subject, extent, evidence: { source, observedAt: null, validFrom: null, validTo: null } }
 }
 
 /**
@@ -173,7 +179,7 @@ export const DISTRICT_RECORDS: DossierRecords = {
 			count: 40,
 			at: "2026-03-01",
 			membership: `${BUILDING_E}:all`,
-			evidence: { source: PERMIT },
+			evidence: { source: PERMIT, observedAt: null, validFrom: null, validTo: null },
 		},
 		completed(BUILDING_F, 12),
 		completed(BUILDING_G, 8),
@@ -187,7 +193,9 @@ export const DISTRICT_RECORDS: DossierRecords = {
 			subject: BUILDING_A,
 			product: "fiber 1 Gbps",
 			from: "2026-06-01",
-			evidence: { source: LISTING },
+			evidence: { source: LISTING, observedAt: null, validFrom: null, validTo: null },
+			to: null,
+			extent: null,
 		},
 	],
 	readings: [
@@ -197,7 +205,8 @@ export const DISTRICT_RECORDS: DossierRecords = {
 			basis: "surveyed",
 			surveyedAt: "2026-07-15",
 			records: 0,
-			evidence: { source: SURVEY },
+			evidence: { source: SURVEY, observedAt: null, validFrom: null, validTo: null },
+			subject: null,
 		},
 		{
 			layer: "example-fiber",
@@ -205,7 +214,8 @@ export const DISTRICT_RECORDS: DossierRecords = {
 			basis: "source_present",
 			surveyedAt: "2026-07-15",
 			records: 0,
-			evidence: { source: SURVEY },
+			evidence: { source: SURVEY, observedAt: null, validFrom: null, validTo: null },
+			subject: null,
 		},
 	],
 	filings: [],

@@ -22,7 +22,9 @@ import type { TimezoneDatabase } from "#schema"
  *
  * @returns `undefined` if the runtime can't resolve the zone.
  */
-export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | null {
+export function offsetSecForTimezone(tzid: string, date: Date | null = null): number | null {
+	date ??= new Date()
+
 	try {
 		const parts = new Intl.DateTimeFormat("en-US", { timeZone: tzid, timeZoneName: "longOffset" }).formatToParts(date)
 		const name = parts.find((p) => p.type === "timeZoneName")?.value ?? ""
@@ -85,6 +87,6 @@ export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 		if (!name) return {}
 		const offsetSec = offsetSecForTimezone(name, date)
 
-		return { timezone: offsetSec != null ? { name, offsetSec } : { name } }
+		return { timezone: { name, offsetSec, offsetString: null } }
 	}
 }

@@ -85,7 +85,7 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 						{"  "}
 						{s.country} {s.currencyClass}: {s.total.toLocaleString()} records — {s.uncovered.toLocaleString()}{" "}
 						uncovered, {s.coveredCrossBand.toLocaleString()} cross-band
-						{s.uncoveredAttested === undefined ? " (attestation unmeasured)" : `, ${s.uncoveredAttested} attested`}
+						{s.uncoveredAttested === null ? " (attestation unmeasured)" : `, ${s.uncoveredAttested} attested`}
 					</Text>
 				))}
 			{queue.length > 0 && <Text>{"\n"}Review queue (uncovered + attested, most populous first):</Text>}

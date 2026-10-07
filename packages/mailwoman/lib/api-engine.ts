@@ -229,7 +229,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				input: address,
 				components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
 				tree,
-				debug: opts.debug ? decodeAsXML(tree) : undefined,
+				debug: opts.debug ? decodeAsXML(tree) : null,
 			}
 		}
 	} catch {

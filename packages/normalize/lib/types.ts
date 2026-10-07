@@ -55,7 +55,7 @@ export interface NormalizedInput {
 	/**
 	 * The locale used for case-folding + abbreviation rules.
 	 */
-	appliedLocale?: string
+	appliedLocale: string | null
 }
 
 export interface NormalizeOpts {

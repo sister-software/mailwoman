@@ -251,7 +251,7 @@ export async function relabelGoldenDirectory(
 		parent: options.parentLabel ?? basename(input),
 		generated_at: new Date().toISOString(),
 		tool: "corpus/src/tools/golden-relabel-street.ts (mailwoman corpus golden-relabel)",
-		...(options.commit ? { commit: options.commit } : {}),
+		commit: options.commit || null,
 		convention: {
 			street_convention: { US: "split", "*": "folded" },
 			declared:

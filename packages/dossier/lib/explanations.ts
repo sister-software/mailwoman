@@ -62,7 +62,7 @@ export interface Statement {
 	 * A check's extent that no admitted reading covers is one such subject.
 	 * Such a statement cites no source, and the report prints it as an absence.
 	 */
-	absence?: true
+	absence: boolean
 }
 
 /**
@@ -167,11 +167,11 @@ export interface OperatorOutcome {
 	/**
 	 * Minutes the investigation took.
 	 */
-	minutesSpent?: number
+	minutesSpent: number | null
 	/**
 	 * The operator's stated minutes for the same investigation without the report.
 	 */
-	baselineMinutes?: number
+	baselineMinutes: number | null
 	/**
 	 * The record of the outcome.
 	 *
@@ -203,7 +203,7 @@ export interface OperatorDisposition {
 	decision: string
 	decidedAt: ISODate
 	evidence: Evidence
-	outcome?: OperatorOutcome
+	outcome: OperatorOutcome | null
 }
 
 export interface Investigation {
@@ -364,7 +364,7 @@ export interface ExplanationInput {
 }
 
 function statement(kind: StatementKind, text: string, sources: readonly SourceRecordID[] = []): Statement {
-	return { kind, text, sources: distinctSources(sources) }
+	return { kind, text, sources: distinctSources(sources), absence: false }
 }
 
 /**
@@ -603,14 +603,14 @@ function accessFinding(context: RuleContext): Finding {
 		(event) => event.kind === CommercialEventKind.LandlordPermission && touches(event)
 	)
 
-	const after = permissions.filter((event) => event.date !== undefined && compareISODate(event.date, date) > 0)
-	const inForce = permissions.filter((event) => event.date !== undefined && compareISODate(event.date, date) <= 0)
+	const after = permissions.filter((event) => event.date !== null && compareISODate(event.date, date) > 0)
+	const inForce = permissions.filter((event) => event.date !== null && compareISODate(event.date, date) <= 0)
 
 	const builds = input.events.filter(
 		(event) =>
 			event.kind === CommercialEventKind.AcceptedBuild &&
 			touches(event) &&
-			event.date !== undefined &&
+			event.date !== null &&
 			compareISODate(event.date, date) <= 0
 	)
 
@@ -663,7 +663,7 @@ function accessFinding(context: RuleContext): Finding {
 			`a dated landlord permission or refusal for ${label} from a party with signing authority`,
 			...(signatories.length ? [] : [`a record naming the signatory for ${label}`]),
 			...permissions
-				.filter((event) => event.date === undefined)
+				.filter((event) => event.date === null)
 				.map((event) => `the date of landlord permission ${event.id}`),
 		],
 		action: `Ask the owner or manager of ${label} whether a permission for the provider was in force on ${date}, and who signs for ${label}.`,
@@ -693,15 +693,15 @@ function capacityFinding(context: RuleContext): Finding {
 function openWindowText(window: ConstructionWindow, date: ISODate): string {
 	const named = `The construction window "${window.stage}"`
 
-	if (window.start === undefined) {
-		return window.end === undefined
+	if (window.start === null) {
+		return window.end === null
 			? `${named} states no start and no end.`
 			: `${named} states no start and closed ${window.end}, after ${date}.`
 	}
 
 	if (compareISODate(window.start, date) > 0) return `${named} opened ${window.start}, after ${date}.`
 
-	return window.end === undefined
+	return window.end === null
 		? `${named} opened ${window.start} and states no end.`
 		: `${named} opened ${window.start} and closed ${window.end}, after ${date}.`
 }
@@ -728,7 +728,7 @@ function installationFinding(context: RuleContext): Finding {
 	const { check, input, label, date } = context
 	const building = input.building.id
 	const windows = input.windows.filter((window) => window.subject === building)
-	const closed = (window: ConstructionWindow) => window.end !== undefined && compareISODate(window.end, date) <= 0
+	const closed = (window: ConstructionWindow) => window.end !== null && compareISODate(window.end, date) <= 0
 
 	const completed = input.counts.filter(
 		(count) => count.subject === building && count.stage === UnitStage.Completed && compareISODate(count.at, date) <= 0
@@ -738,7 +738,7 @@ function installationFinding(context: RuleContext): Finding {
 		(record) =>
 			record.subject === building &&
 			compareISODate(record.from, date) <= 0 &&
-			(record.to === undefined || compareISODate(date, record.to) <= 0)
+			(record.to === null || compareISODate(date, record.to) <= 0)
 	)
 
 	return {

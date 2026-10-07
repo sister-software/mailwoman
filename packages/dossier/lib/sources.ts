@@ -16,7 +16,7 @@ export interface SourceRecord extends SourceTime {
 	id: SourceRecordID
 	publisher: string
 	title: string
-	url?: string
+	url: string | null
 }
 
 /**

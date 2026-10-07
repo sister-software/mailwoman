@@ -80,7 +80,7 @@ export interface AgreementRow {
 	 * rendering the same edge differently.
 	 *
 	 * A receipt without it forces a re-run.
-	 * `undefined` means the service returned no polygon at all near the point.
+	 * `null` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres: number | null
 }

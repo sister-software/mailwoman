@@ -265,7 +265,7 @@ export interface BDCFile {
 	/**
 	 * The date the file was downloaded, parsed and stored in the database.
 	 */
-	synchronizedAt?: Date
+	synchronizedAt: Date | null
 
 	/**
 	 * The category of the file.
@@ -390,6 +390,7 @@ export function parseRawBDCFile(raw: RawBDCFile): BDCFile {
 		stateCode: raw.state_fips ?? "",
 		providerID: (raw.provider_id === null ? 0 : Number.parseInt(raw.provider_id, 10)) as ProviderID,
 		providerName: raw.provider_name ?? "",
+		synchronizedAt: null,
 	}
 
 	return parsedBDC

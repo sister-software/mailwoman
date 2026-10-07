@@ -125,7 +125,7 @@ export interface USMilitaryUnitMatch {
 	/**
 	 * The box number when present ("4620", "1234A").
 	 */
-	box?: string
+	box: string | null
 }
 
 /**
@@ -162,7 +162,7 @@ export function matchMilitaryUnitLine(input: unknown): USMilitaryUnitMatch | nul
 		)
 	}
 
-	return { matched: m[1]!, code, id, ...(box ? { box } : {}) }
+	return { matched: m[1]!, code, id, box: box || null }
 }
 
 /**

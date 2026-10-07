@@ -36,9 +36,9 @@ export interface DatumTransformationVerdict {
 	/**
 	 * The candidate operation string returned by PROJ, verbatim.
 	 *
-	 * Absent when PROJ returned no candidate operation.
+	 * Null when PROJ returned no candidate operation.
 	 */
-	best?: string
+	best: string | null
 	usable: boolean
 	reason: string
 }
@@ -57,7 +57,7 @@ export function assessDatumTransformation(summary: string): DatumTransformationV
 		(line) => line.includes(", ") && !line.startsWith("Note:") && !line.startsWith("Candidate operations")
 	)
 
-	if (!best) return { usable: false, reason: "projinfo named no candidate operation" }
+	if (!best) return { best: null, usable: false, reason: "projinfo named no candidate operation" }
 
 	if (best.includes("grid missing")) return { best, usable: false, reason: "its grid is not installed" }
 
@@ -77,11 +77,11 @@ export interface AssertDatumTransformationOptions {
 	 * Identifies the caller in the refusal, so a build log reports which ingest stopped.
 	 */
 	context: string
-	targetEPSG?: number
+	targetEPSG?: number | null
 	/**
 	 * The area-of-use to name in the `projsync` action the message prints.
 	 */
-	areaOfUse?: string
+	areaOfUse?: string | null
 }
 
 /**

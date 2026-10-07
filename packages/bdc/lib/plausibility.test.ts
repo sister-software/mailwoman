@@ -200,6 +200,8 @@ async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<l
 		freshnessPolicy: "sealed",
 		spineKeys: { h3: { column: "h3_cell", resolution: resolutionOverride } },
 		createdAt: `${ASOF_DATE}T00:00:00Z`,
+		attribution: null,
+		sourceRecords: null,
 	})
 
 	resources.move()

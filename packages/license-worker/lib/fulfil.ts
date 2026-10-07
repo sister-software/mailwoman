@@ -285,7 +285,7 @@ export async function sendTokenEmail(
 				issued: token.issued,
 				expires: token.expires,
 				agreement: license.agreement_version,
-				...(license.refresh_secret_pending ? { refreshSecret: license.refresh_secret_pending } : {}),
+				refreshSecret: license.refresh_secret_pending || null,
 			},
 			token.invoice_id
 		))

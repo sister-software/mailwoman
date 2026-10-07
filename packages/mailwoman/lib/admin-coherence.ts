@@ -184,19 +184,19 @@ export interface AdminCoherenceSourceNode {
 }
 
 /**
- * Builds the `admin_coherence` response field from the parsed nodes and the resolved winner.
+ * Builds the `admin_coherence` response value from the parsed nodes and the resolved winner.
  *
  * The function uses `fallbackWinner` when `winner` is absent.
- * It returns an empty object when both are absent.
+ * It returns null when both are absent.
  */
 export function adminCoherenceField(
 	nodes: readonly AdminCoherenceSourceNode[],
 	winner: AdminCoherenceSourceNode | null,
 	fallbackWinner: AdminCoherenceSourceNode | null
-): { admin_coherence?: AdminCoherenceReport } {
+): AdminCoherenceReport | null {
 	const picked = winner ?? fallbackWinner
 
-	if (!picked) return {}
+	if (!picked) return null
 
 	const report = assessAdminCoherence(
 		{
@@ -210,7 +210,7 @@ export function adminCoherenceField(
 		}
 	)
 
-	return { admin_coherence: report }
+	return report
 }
 
 /**
@@ -228,7 +228,7 @@ export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
 export function forkedEntityCoherenceField(
 	roots: readonly AdminCoherenceTreeNode[],
 	entity: { name: string; country: string }
-): { admin_coherence?: AdminCoherenceReport } {
+): AdminCoherenceReport | null {
 	const nodes: AdminCoherenceSourceNode[] = [...walkNodes(roots)].map((n) => ({
 		tag: n.tag,
 		value: n.value,

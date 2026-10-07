@@ -45,6 +45,8 @@ function form499FixtureRows(): Form499Row[] {
 			dcAgentTelephone: "555-2000",
 			dcAgentEmailAddress: "agent@ctcorp.com",
 			dcAgentAddress: "456 Agent Ave",
+			lifecycle: null,
+			operatingStates: null,
 		},
 		{
 			form499ID: "899902",
@@ -64,6 +66,8 @@ function form499FixtureRows(): Form499Row[] {
 			dcAgentTelephone: "",
 			dcAgentEmailAddress: "",
 			dcAgentAddress: "",
+			lifecycle: null,
+			operatingStates: null,
 		},
 	]
 }
@@ -426,6 +430,8 @@ describe("buildFilerDatabase", () => {
 				dcAgentTelephone: "",
 				dcAgentEmailAddress: "",
 				dcAgentAddress: "",
+				lifecycle: null,
+				operatingStates: null,
 			}
 		}
 
@@ -578,6 +584,8 @@ describe("buildFilerDatabase", () => {
 				dcAgentTelephone: "",
 				dcAgentEmailAddress: "",
 				dcAgentAddress: "",
+				lifecycle: null,
+				operatingStates: null,
 				...overrides,
 			}
 		}
@@ -804,7 +812,7 @@ describe("buildFilerDatabase", () => {
 		function edgarFixtureRow(
 			overrides: Partial<EdgarSubsidiaryRow> & Pick<EdgarSubsidiaryRow, "subsidiaryName">
 		): EdgarSubsidiaryRow {
-			return { cik: CIK_PARENT, filingDate: "2026-04-01", ...overrides }
+			return { cik: CIK_PARENT, filingDate: "2026-04-01", jurisdiction: null, ...overrides }
 		}
 
 		function corroborationForm499Row(
@@ -825,6 +833,8 @@ describe("buildFilerDatabase", () => {
 				dcAgentTelephone: "",
 				dcAgentEmailAddress: "",
 				dcAgentAddress: "",
+				lifecycle: null,
+				operatingStates: null,
 				...overrides,
 			}
 		}
@@ -1085,7 +1095,7 @@ describe("buildFilerDatabase", () => {
 
 			await expect(
 				buildFilerDatabase({
-					edgarRows: [{ cik: "123", subsidiaryName: "Bad CIK Sub LLC", filingDate: "2026-04-01" }],
+					edgarRows: [{ cik: "123", subsidiaryName: "Bad CIK Sub LLC", jurisdiction: null, filingDate: "2026-04-01" }],
 					out,
 					sourceVintage: EDGAR_SOURCE_VINTAGE,
 					buildSHA: "deadbeef",

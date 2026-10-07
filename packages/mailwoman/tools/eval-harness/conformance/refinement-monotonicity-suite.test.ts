@@ -127,7 +127,7 @@ describe("the committed refinement suite", () => {
 	it("carries no tracked row — a red row here would be a live defect, and there is none", () => {
 		for (const fixture of fixtures) {
 			expect(fixture.status ?? "pass", `${fixture.id}`).toBe("pass")
-			expect(fixture.bugRef).toBeUndefined()
+			expect(fixture.bugRef).toBeNull()
 		}
 	})
 })

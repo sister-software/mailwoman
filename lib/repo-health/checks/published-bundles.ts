@@ -70,6 +70,8 @@ export function compareRegistryToSnapshot(
 				severity: DiagnosticSeverity.Error,
 				file,
 				message: `bundle \`${bundle.name}\` is in BUNDLES and has no row in the snapshot. Run published-bundles.run.ts and commit the result.`,
+				line: null,
+				details: null,
 			})
 		}
 
@@ -81,6 +83,8 @@ export function compareRegistryToSnapshot(
 					severity: DiagnosticSeverity.Error,
 					file,
 					message: `\`${artifact.remotePath}\` (bundle \`${bundle.name}\`) is in BUNDLES and has no row in the snapshot.`,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -93,6 +97,8 @@ export function compareRegistryToSnapshot(
 					severity: DiagnosticSeverity.Error,
 					file,
 					message: `\`${artifact.remotePath}\` (bundle \`${bundle.name}\`) has an unmeasured size in the snapshot, so its approxBytes of ${artifact.approxBytes} is unverified.`,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -103,6 +109,8 @@ export function compareRegistryToSnapshot(
 					severity: DiagnosticSeverity.Error,
 					file,
 					message: `\`${artifact.remotePath}\` (bundle \`${bundle.name}\`) records approxBytes ${artifact.approxBytes} and the bucket served ${contentLength} bytes on ${snapshot.measuredAt}. Correct the registry, or re-run published-bundles.run.ts if the artifact changed.`,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -115,6 +123,8 @@ export function compareRegistryToSnapshot(
 			severity: DiagnosticSeverity.Error,
 			file,
 			message: `\`${remotePath}\` is in the snapshot and no bundle in BUNDLES names it. Re-run published-bundles.run.ts so the snapshot describes the registry.`,
+			line: null,
+			details: null,
 		})
 	}
 

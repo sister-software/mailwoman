@@ -53,8 +53,8 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 	tag: string
 	value: string
 	name: string
-	lat?: number
-	lon?: number
+	lat: number | null
+	lon: number | null
 }
 
 /**
@@ -116,12 +116,22 @@ export function assembleHierarchy(
 			// and this falls back to the raw parsed span when a node resolved without one.
 			// Consumers should display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | null)?.trim() || n.value.trim(),
-			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeID ? { placeID: n.placeID } : {}),
+			lat: n.lat ?? null,
+			lon: n.lat != null ? n.lon! : null,
+			placeID: n.placeID || null,
+			in_winner_lineage: null,
 		}))
 
 	if (streetLocality && !hierarchy.some((h) => h.tag === "locality" || h.tag === "dependent_locality")) {
-		hierarchy.unshift({ tag: "locality", value: streetLocality, name: streetLocality })
+		hierarchy.unshift({
+			tag: "locality",
+			value: streetLocality,
+			name: streetLocality,
+			lat: null,
+			lon: null,
+			placeID: null,
+			in_winner_lineage: null,
+		})
 	}
 
 	annotateHierarchyLineage(hierarchy, anchor)
@@ -133,8 +143,8 @@ export function assembleHierarchy(
  * A hierarchy entry as `extractGeocodeResult` builds it, reduced to what the annotation reads and writes.
  */
 export interface HierarchyLineageEntry {
-	placeID?: string | undefined
-	in_winner_lineage?: boolean
+	placeID: string | null
+	in_winner_lineage: boolean | null
 }
 
 /**

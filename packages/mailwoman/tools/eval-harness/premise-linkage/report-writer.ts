@@ -214,7 +214,7 @@ function suppressSmallCells(report: PremiseLinkageReport): PremiseLinkageReport 
 
 function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 	rows.forEach((row, index) => {
-		if (!row.coordinatePublishable && row.coordinateErrorM !== undefined) {
+		if (!row.coordinatePublishable && row.coordinateErrorM !== null) {
 			throw new PremiseLinkageRedactionError(
 				`rows[${index}].coordinateErrorM`,
 				PremiseLinkageRedactionReason.UnpublishableCoordinate,

@@ -33,9 +33,9 @@ export interface CommandSpec {
 
 export interface CommandNode {
 	name: string
-	spec?: CommandSpec
-	component?: unknown
-	commands?: Map<string, CommandNode>
+	spec: CommandSpec | null
+	component: unknown
+	commands: Map<string, CommandNode> | null
 }
 
 export async function readCommands(
@@ -74,7 +74,7 @@ export async function readCommands(
 				continue
 			}
 
-			commands.set(entry, { name: entry, commands: children })
+			commands.set(entry, { name: entry, spec: null, component: null, commands: children })
 
 			continue
 		}
@@ -94,8 +94,9 @@ export async function readCommands(
 
 		commands.set(name, {
 			name,
-			...(module.spec ? { spec: module.spec } : {}),
-			...(executable ? { component: executable } : {}),
+			spec: module.spec ?? null,
+			component: executable ?? null,
+			commands: null,
 		})
 	}
 

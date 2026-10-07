@@ -45,12 +45,12 @@ export interface CandidateReading {
 	 * One-based rank in the base pool.
 	 * It is absent when the base pool lacks the candidate.
 	 */
-	baseRank?: number
+	baseRank: number | null
 	/**
 	 * One-based rank in the refined pool.
 	 * It is absent when the refined pool lacks the candidate.
 	 */
-	variantRank?: number
+	variantRank: number | null
 	/**
 	 * Resolver evidence for the account.
 	 */
@@ -157,7 +157,7 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 			fold.scope.country = record.query.country
 		}
 
-		if (record.query.parentID !== undefined) {
+		if (record.query.parentID != null) {
 			fold.scope.parentID = record.query.parentID
 		}
 
@@ -328,6 +328,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 				account: "contradicted",
 				direction: "removed",
 				baseRank: candidate.rank,
+				variantRank: null,
 				reason: `country ${candidate.country} fails the refined lookup's country=${variant.scope.country} scope`,
 			})
 
@@ -343,6 +344,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 				account: "beyond_window",
 				direction: "removed",
 				baseRank: candidate.rank,
+				variantRank: null,
 				reason: `the refined table was at its window (${variant.pool.size} rows, limit ${variant.limit}) — absence here cannot decide admissibility`,
 			})
 
@@ -358,6 +360,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 				account: "rescoped",
 				direction: "removed",
 				baseRank: candidate.rank,
+				variantRank: null,
 				reason: `the refined lookup ran through a different hierarchy path (${rescope}), so its pool is a different population`,
 			})
 
@@ -372,6 +375,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			account: "unexplained",
 			direction: "removed",
 			baseRank: candidate.rank,
+			variantRank: null,
 			reason:
 				`admissible at rank ${candidate.rank} before refinement and gone after, from a table with room ` +
 				`(${variant.pool.size} of ${variant.limit}) under ${describeScope(variant.scope)}` +
@@ -392,6 +396,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 				country: candidate.country,
 				account: "beyond_window",
 				direction: "added",
+				baseRank: null,
 				variantRank: candidate.rank,
 				reason: `the base table was at its window (${base.pool.size} rows, limit ${base.limit}), so this candidate was never observed absent`,
 			})
@@ -407,6 +412,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 				country: candidate.country,
 				account: "rescoped",
 				direction: "added",
+				baseRank: null,
 				variantRank: candidate.rank,
 				reason: `reached through a hierarchy path the base lookup did not run (${rescope})`,
 			})
@@ -421,6 +427,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			country: candidate.country,
 			account: "unexplained",
 			direction: "added",
+			baseRank: null,
 			variantRank: candidate.rank,
 			reason:
 				`entered at rank ${candidate.rank} with no added constraint and no re-scope, from a base table with ` +

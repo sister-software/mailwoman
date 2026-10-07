@@ -68,7 +68,7 @@ export interface ProvenanceDocument {
 		outputs: Array<{ name: string; type: string; shape: Array<number | string> }>
 		text_emitting_output: boolean
 		summary: string
-		unreadable?: string
+		unreadable: string | null
 	} | null
 	training_attribution: {
 		status: "recorded" | "none-recorded-in-this-package"
@@ -287,7 +287,7 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 					outputs: record.modelGraph.outputs,
 					text_emitting_output: record.modelGraph.textEmittingOutput,
 					summary: describeModelGraph(record.modelGraph),
-					...(record.modelGraph.unreadable === undefined ? {} : { unreadable: record.modelGraph.unreadable }),
+					unreadable: record.modelGraph.unreadable,
 				}
 			: null,
 		training_attribution: {

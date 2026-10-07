@@ -262,6 +262,9 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 			expect(withoutCensus.priors.find((p) => p.kind === "placetypeCensus")).toEqual({
 				kind: "placetypeCensus",
 				applied: false,
+				probePath: null,
+				census: null,
+				censusProbedParents: null,
 			})
 		},
 		120_000

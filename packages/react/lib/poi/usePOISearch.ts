@@ -86,11 +86,11 @@ function buildOverpass(
 	categoryID: string,
 	matchedPhrase: string,
 	remainder: string
-): { overpassQL?: string; overpassError?: string } {
+): { overpassQL: string | null; overpassError: string | null } {
 	const category = runtime.lookup.getPOICategory(categoryID)
 
 	if (!category) {
-		return {}
+		return { overpassQL: null, overpassError: null }
 	}
 
 	const intent: OverpassIntentLike = {
@@ -99,9 +99,12 @@ function buildOverpass(
 	}
 
 	try {
-		return { overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTags: [category.osmTag] } : {}) }
+		return {
+			overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTags: [category.osmTag] } : {}),
+			overpassError: null,
+		}
 	} catch (error) {
-		return { overpassError: error instanceof Error ? error.message : String(error) }
+		return { overpassQL: null, overpassError: error instanceof Error ? error.message : String(error) }
 	}
 }
 
@@ -161,7 +164,7 @@ export function usePOISearch({
 			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, null, runtime.lexicon) : null
 
 			if (!matched) {
-				setStoredResult({ query: trimmed, value: { kindResult } })
+				setStoredResult({ query: trimmed, value: { kindResult, subject: null, overpassQL: null, overpassError: null } })
 
 				return
 			}
@@ -174,11 +177,13 @@ export function usePOISearch({
 						subject: {
 							kind: "brand",
 							name: matched.match.categoryID,
-							...(matched.match.wikidata ? { wikidata: matched.match.wikidata } : {}),
+							wikidata: matched.match.wikidata || null,
 							matchedPhrase: matched.match.matchedPhrase,
 							confidence: matched.match.confidence,
 							remainder: matched.remainder,
 						},
+						overpassQL: null,
+						overpassError: null,
 					},
 				})
 
@@ -188,7 +193,7 @@ export function usePOISearch({
 			const category = runtime.lookup.getPOICategory(matched.match.categoryID)
 
 			if (!category) {
-				setStoredResult({ query: trimmed, value: { kindResult } })
+				setStoredResult({ query: trimmed, value: { kindResult, subject: null, overpassQL: null, overpassError: null } })
 
 				return
 			}
@@ -218,11 +223,10 @@ export function usePOISearch({
 	const result = storedResult?.query === trimmedText ? storedResult.value : null
 	const liveSearch: LiveSearchState = storedLive?.query === trimmedText ? storedLive.state : { status: "idle" }
 
-	const subject = result?.subject
+	const subject = result?.subject ?? null
 
 	const subjectLiveCapable =
-		subject !== undefined &&
-		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
+		subject !== null && (subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== null : !subject.buildLocal)
 
 	const canSearchLive = Boolean(
 		runLiveSearch && runtime && subject && subjectLiveCapable && subject.remainder.trim().length > 0
@@ -249,6 +253,7 @@ export function usePOISearch({
 
 							overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
 							anchor: subject.remainder,
+							brandWikidata: null,
 						}
 			)
 

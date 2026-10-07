@@ -17,7 +17,7 @@ export interface ObservationLayerRecord {
 	version: string
 	tier: string
 	license: string
-	attribution?: string
+	attribution: string | null
 	source: string
 	sourceVintage: string
 	buildCmd: string
@@ -47,7 +47,7 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 		version: manifest.version,
 		tier: manifest.tier,
 		license: manifest.license,
-		...(manifest.attribution ? { attribution: manifest.attribution } : {}),
+		attribution: manifest.attribution || null,
 		source: manifest.source,
 		sourceVintage: manifest.sourceVintage,
 		buildCmd: manifest.buildCmd,
@@ -57,7 +57,7 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 }
 
 /**
- * A reader's coverage row as the record a designation includes, absent rather than zeroed
+ * A reader's coverage row as the record a designation includes, null rather than zeroed
  * where the layer holds no row for the cell because a missing row means unknown.
  */
 export function observationCoverageRecord(
@@ -70,19 +70,19 @@ export function observationCoverageRecord(
 				completeness: number
 				observedRows: number
 		  }
+		| null
+		| null
 		| undefined
-): { coverage: ObservationCoverageRecord } | Record<string, never> {
-	if (!coverage) return {}
+): ObservationCoverageRecord | null {
+	if (!coverage) return null
 
 	return {
-		coverage: {
-			h3Cell: coverage.h3Cell,
-			h3CellIndex: coverage.h3CellIndex,
-			resolution: coverage.resolution,
-			basis: String(coverage.basis),
-			completeness: coverage.completeness,
-			observedRows: coverage.observedRows,
-		},
+		h3Cell: coverage.h3Cell,
+		h3CellIndex: coverage.h3CellIndex,
+		resolution: coverage.resolution,
+		basis: String(coverage.basis),
+		completeness: coverage.completeness,
+		observedRows: coverage.observedRows,
 	}
 }
 
@@ -120,9 +120,9 @@ export type LayerDesignationDecision<Observation, Refusal extends string> =
 export interface CreateDesignationRouteOptions<Reading, Observation, Refusal extends string> {
 	read: (latitude: number, longitude: number) => Reading
 	/**
-	 * The explicit absence a reading maps to, or `undefined` where the reading fires.
+	 * The explicit absence a reading maps to, or `null` where the reading fires.
 	 */
-	refusalFor: (reading: Reading) => Refusal | undefined
+	refusalFor: (reading: Reading) => Refusal | null
 	/**
 	 * Build the observation for a reading {@link CreateDesignationRouteOptions.refusalFor} let through.
 	 */

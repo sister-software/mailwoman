@@ -69,7 +69,7 @@ describe("floodLayerReading", () => {
 			basis: "designated",
 			surveyedAt: VINTAGE,
 			records: 1,
-			evidence: { source: SOURCE },
+			evidence: { source: SOURCE, observedAt: null, validFrom: null, validTo: null },
 		})
 
 		expect(classifyReading(reading)).toBe("records")
@@ -81,7 +81,7 @@ describe("floodLayerReading", () => {
 			predicate: "flood_zone",
 			value: "FZ3",
 			status: "designated",
-			evidence: { source: SOURCE },
+			evidence: { source: SOURCE, observedAt: null, validFrom: null, validTo: null },
 		})
 	})
 
@@ -112,7 +112,7 @@ describe("floodLayerReading", () => {
 
 		expect(reading).toMatchObject({ basis: null, records: null, surveyedAt: VINTAGE })
 		expect(classifyReading(reading)).toBe("unknown")
-		expect(claim).toBeUndefined()
+		expect(claim).toBeNull()
 	})
 
 	it("attaches each building's reading and claim to that building in the dossier", () => {
@@ -127,6 +127,8 @@ describe("floodLayerReading", () => {
 					title: "Flood Map for Planning",
 					observedAt: VINTAGE,
 					availableAt: VINTAGE,
+					url: null,
+					retrievedAt: null,
 				},
 			],
 			entities: [

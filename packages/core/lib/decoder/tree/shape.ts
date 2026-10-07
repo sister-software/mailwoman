@@ -77,8 +77,8 @@ export interface FlatTreeNode {
 	 * source moves from `resolver` to `neural` has lost its gazetteer backing.
 	 * A projection that drops this reports that span as unchanged.
 	 */
-	source?: string
-	sourceID?: string
+	source: string | null
+	sourceID: string | null
 	/**
 	 * The resolver's answer for this span, when one won.
 	 *
@@ -91,10 +91,10 @@ export interface FlatTreeNode {
 	 *
 	 * Candidate objects would invite a walk that this projection already performed.
 	 */
-	placeID?: string
-	lat?: number
-	lon?: number
-	alternatives?: number
+	placeID: string | null
+	lat: number | null
+	lon: number | null
+	alternatives: number | null
 }
 
 /**
@@ -123,12 +123,12 @@ export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 			confidence: node.confidence,
 			start: node.start,
 			end: node.end,
-			...(node.source === undefined ? {} : { source: node.source }),
-			...(node.sourceID === undefined ? {} : { sourceID: node.sourceID }),
-			...(node.placeID === undefined ? {} : { placeID: node.placeID }),
-			...(node.lat === undefined ? {} : { lat: node.lat }),
-			...(node.lon === undefined ? {} : { lon: node.lon }),
-			...(node.alternatives === undefined ? {} : { alternatives: node.alternatives.length }),
+			source: node.source ?? null,
+			sourceID: node.sourceID ?? null,
+			placeID: node.placeID ?? null,
+			lat: node.lat ?? null,
+			lon: node.lon ?? null,
+			alternatives: node.alternatives?.length ?? null,
 		}))
 		.toSorted((a, b) => a.start - b.start)
 }

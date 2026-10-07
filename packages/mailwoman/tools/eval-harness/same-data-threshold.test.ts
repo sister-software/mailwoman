@@ -60,6 +60,7 @@ function resultFor(overrides: Partial<ArmRowResult> & Pick<ArmRowResult, "rowID"
 			candidateIDs: ["101"],
 			candidateFields: ["id"],
 		},
+		error: null,
 		...overrides,
 	}
 }

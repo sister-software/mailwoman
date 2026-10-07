@@ -174,7 +174,7 @@ export async function createLayerManifestTable(db: layerschemahandle): Promise<v
 		.addColumn("spine_keys", "text", (c) => c.notNull())
 		.addColumn("created_at", "text", (c) => c.notNull())
 		// Keep the column nullable for artifacts built before it existed.
-		// Those artifacts read NULL. `readLayerManifest` leaves `sourceRecords` absent.
+		// Those artifacts read NULL, and `readLayerManifest` returns `sourceRecords: null`.
 		// A build that counted records and found no publishers writes `{}`.
 		.addColumn("source_records", "text")
 		.execute()

@@ -33,6 +33,7 @@ function leg(label: string, improved: number, regressed: number, extra: Partial<
 		regressedByCountry: {},
 		regressedInputs: [],
 		improvedInputs: [],
+		runID: null,
 		...extra,
 	}
 }
@@ -69,7 +70,7 @@ describe("decideArc", () => {
 	it("says a missing control is a MISSING CONTROL, not a passing one", () => {
 		const arc = decideArc(null, null, leg("candidate", 12, 4), PROTECTIONS)
 
-		expect(arc.attributableNet).toBeUndefined()
+		expect(arc.attributableNet).toBeNull()
 		expect(arc.reasons.some((r) => r.includes("No self-control leg ran"))).toBe(true)
 		expect(arc.reasons.some((r) => r.includes("upper bound"))).toBe(true)
 	})

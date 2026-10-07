@@ -119,7 +119,7 @@ function isPostcodeFormatHit(hit: { format: string }): boolean {
  * The pipeline uses it when no normalizer is configured.
  */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
-	return { raw, normalized: raw, appliedLocale: opts?.locale }
+	return { raw, normalized: raw, appliedLocale: opts?.locale ?? null }
 }
 
 /**
@@ -161,6 +161,7 @@ async function defaultClassifyKind(
 		kind: "structured_address",
 		confidence: 0,
 		alternatives: [],
+		intentMarkers: null,
 	}
 }
 
@@ -303,7 +304,7 @@ export async function runPipeline(
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
 
-	const intentMarkers: QueryIntentMarker[] = kind.intentMarkers ? [...kind.intentMarkers] : []
+	const intentMarkers: QueryIntentMarker[] = [...(kind.intentMarkers ?? [])]
 
 	// A POI-shaped query goes to the intent stage first.
 	// A null outcome falls through to parsing.
@@ -353,6 +354,7 @@ export async function runPipeline(
 			phraseProposals: [],
 			tree,
 			timing,
+			poiIntent: null,
 			faults,
 			intentMarkers,
 			path: "fast-path",
@@ -413,6 +415,7 @@ export async function runPipeline(
 		phraseProposals,
 		tree,
 		timing,
+		poiIntent: null,
 		faults,
 		intentMarkers,
 		path: "full",

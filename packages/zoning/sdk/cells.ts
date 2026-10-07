@@ -68,9 +68,9 @@ export interface CellIndexMeasurement {
 	multiCandidateShare: number
 	/**
 	 * Features a center-in-polygon polyfill would have returned no cell for —
-	 * see {@link polyfillFindsNothing} — and `undefined` where the measurement did not run it.
+	 * see {@link polyfillFindsNothing} — and `null` where the measurement did not run it.
 	 */
-	polyfillZeroCellFeatures?: number
+	polyfillZeroCellFeatures: number | null
 	/**
 	 * Features whose bounding box forced a coarser resolution than the target — see `CELL_ESTIMATE_BUDGET`.
 	 */
@@ -188,7 +188,7 @@ export class ZoningCellIndex {
 			},
 			multiCandidateCells: multi,
 			multiCandidateShare: touched ? multi / touched : 0,
-			...(this.#measuredPolyfill ? { polyfillZeroCellFeatures: this.#polyfillZeroCell } : {}),
+			polyfillZeroCellFeatures: this.#measuredPolyfill ? this.#polyfillZeroCell : null,
 			coarsenedFeatures: this.#coarsened,
 			zeroCellFeatures: this.#zeroCell,
 		}
@@ -213,7 +213,7 @@ export function formatResolutionRows(measurements: readonly CellIndexMeasurement
 			(measurement) =>
 				`| ${measurement.resolution} | ${measurement.features.toLocaleString()} | ` +
 				`${
-					measurement.polyfillZeroCellFeatures === undefined
+					measurement.polyfillZeroCellFeatures === null
 						? "not measured"
 						: `${measurement.polyfillZeroCellFeatures.toLocaleString()} (${(
 								(measurement.polyfillZeroCellFeatures / Math.max(1, measurement.features)) *

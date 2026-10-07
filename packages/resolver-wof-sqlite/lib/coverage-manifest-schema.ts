@@ -146,8 +146,8 @@ export async function writeGazetteerCoverageManifest(
 				facts.coverage.map((f) => ({
 					country: f.country.toUpperCase(),
 					hard_filter_safe: f.hardFilterSafe ? 1 : 0,
-					hard_resolve_rate: f.hardResolveRate ?? null,
-					sample_size: f.sampleSize ?? null,
+					hard_resolve_rate: f.hardResolveRate,
+					sample_size: f.sampleSize,
 					measured_at: f.measuredAt,
 					source: f.source,
 				}))
@@ -201,8 +201,8 @@ export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): Gazet
 			countryCoverage.set(country, {
 				country,
 				hardFilterSafe: Number(row.hard_filter_safe) !== 0,
-				...(row.hard_resolve_rate === null ? {} : { hardResolveRate: Number(row.hard_resolve_rate) }),
-				...(row.sample_size === null ? {} : { sampleSize: Number(row.sample_size) }),
+				hardResolveRate: row.hard_resolve_rate === null ? null : Number(row.hard_resolve_rate),
+				sampleSize: row.sample_size === null ? null : Number(row.sample_size),
 				measuredAt: String(row.measured_at),
 				source: String(row.source),
 			})

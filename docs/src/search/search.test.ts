@@ -19,7 +19,7 @@ describe("search", () => {
 
 		expect(response.hits.filter((hit) => hit.url === "/docs/kb/decoding-and-viterbi")).toHaveLength(1)
 		expect(response.hits[0]?.hierarchy[1]).toBe("Decoding and Viterbi")
-		expect(response.corrected).toBeUndefined()
+		expect(response.corrected).toBeNull()
 	})
 
 	test("corrects a misspelled token and reports the corrected text", async () => {
@@ -49,6 +49,6 @@ describe("search", () => {
 	})
 
 	test("returns zero hits when nothing matches and no correction is close", async () => {
-		expect(await search(db, "zzzzzzz")).toEqual({ query: "zzzzzzz", hits: [] })
+		expect(await search(db, "zzzzzzz")).toEqual({ query: "zzzzzzz", corrected: null, hits: [] })
 	})
 })

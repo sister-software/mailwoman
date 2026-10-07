@@ -18,7 +18,7 @@ import {
 } from "#hierarchy-lineage"
 
 function entry(placeID?: string): HierarchyLineageEntry {
-	return placeID ? { placeID } : {}
+	return { placeID: placeID ?? null, in_winner_lineage: null }
 }
 
 describe("annotateHierarchyLineage (#1731)", () => {
@@ -55,7 +55,7 @@ describe("annotateHierarchyLineage (#1731)", () => {
 		annotateHierarchyLineage([locality, region], { placeID: "wof:85803821", metadata: {} })
 
 		expect(locality.in_winner_lineage).toBe(true)
-		expect(region.in_winner_lineage).toBeUndefined()
+		expect(region.in_winner_lineage).toBeNull()
 	})
 
 	it("leaves everything ABSENT with no anchor or a place-less anchor", () => {
@@ -65,8 +65,8 @@ describe("annotateHierarchyLineage (#1731)", () => {
 		annotateHierarchyLineage([a, b], null)
 		annotateHierarchyLineage([a, b], { metadata: { ancestors: [{ id: 1 }] } })
 
-		expect(a.in_winner_lineage).toBeUndefined()
-		expect(b.in_winner_lineage).toBeUndefined()
+		expect(a.in_winner_lineage).toBeNull()
+		expect(b.in_winner_lineage).toBeNull()
 	})
 
 	it("anchors at the DEEPEST resolved admin node — a descendant is never flagged by its ancestor's chain", () => {
@@ -100,7 +100,7 @@ describe("annotateHierarchyLineage (#1731)", () => {
 			metadata: { ancestors: [{ id: 85_688_543 }] },
 		})
 
-		expect(registerLocality.in_winner_lineage).toBeUndefined()
+		expect(registerLocality.in_winner_lineage).toBeNull()
 		expect(region.in_winner_lineage).toBe(true)
 	})
 })

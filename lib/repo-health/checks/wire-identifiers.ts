@@ -177,6 +177,7 @@ export const wireIdentifiersCheck: RepoCheck = {
 						`\`${name}\` in \`${field}\` is not a source any adapter, recipe or carried overlay emits. ` +
 						"A source id is the string stored on every row of a built corpus, so a config keys on the spelling its corpus stores. " +
 						"If a sweep renamed it, restore the stored spelling. If it is new, add it to RECIPE_SOURCES or CARRIED_SOURCES in packages/corpus/lib/recipes/sources.ts.",
+					details: null,
 				})
 			}
 		}

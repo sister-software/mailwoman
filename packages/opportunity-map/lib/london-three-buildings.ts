@@ -244,14 +244,14 @@ export interface LondonSite {
 	 */
 	plannedUnits: number
 	/**
-	 * The LDD row's `Existing Total Residential Units`, absent when the row leaves the field empty.
+	 * The LDD row's `Existing Total Residential Units`, `null` when the row leaves the field empty.
 	 */
-	existingUnits?: number
+	existingUnits: number | null
 	ldd: SourceRecordID
 	/**
-	 * The referral row's case, Stage 2 date and total units, absent when the referral file holds no row.
+	 * The referral row's case, Stage 2 date and total units, `null` when the referral file holds no row.
 	 */
-	referral?: { source: SourceRecordID; case: string; stage2: ISODate; totalUnits: number }
+	referral: { source: SourceRecordID; case: string; stage2: ISODate; totalUnits: number } | null
 	/**
 	 * Each postcode the record infers, with ONSPD's introduction month, NSUL's count of UPRNs
 	 * with the postcode, and how many of those UPRNs lie within 50 m of the grid reference.
@@ -299,6 +299,7 @@ export const LONDON_SITES: readonly LondonSite[] = [
 		started: "2018-02-20",
 		completed: "2020-02-24",
 		plannedUnits: 153,
+		existingUnits: null,
 		ldd: "ldd-17-02680-ful",
 		referral: { source: "gla-referral-3831a", case: "3831a", stage2: "2018-02-12", totalUnits: 153 },
 		inferredPostcodes: [
@@ -338,7 +339,9 @@ export const LONDON_SITES: readonly LondonSite[] = [
 		started: "2017-08-31",
 		completed: "2019-09-04",
 		plannedUnits: 122,
+		existingUnits: null,
 		ldd: "ldd-16-0601-ful",
+		referral: null,
 		inferredPostcodes: [
 			{ postcode: "NW2 2DL", introduced: "2018-08", uprns: 78, within50m: 78 },
 			{ postcode: "NW2 2DW", introduced: "2019-09", uprns: 40, within50m: 40 },
@@ -431,6 +434,7 @@ function ofcomSource(id: SourceRecordID, files: string, availableAt: ISODate): S
 		observedAt: "2026-01-31",
 		availableAt,
 		retrievedAt: "2026-10-05",
+		url: null,
 	}
 }
 
@@ -465,6 +469,7 @@ function siteSources(site: LondonSite): SourceRecord[] {
 		observedAt: site.completed,
 		availableAt: "2021-01-13",
 		retrievedAt: "2026-10-05",
+		url: null,
 	}
 
 	if (!site.referral) return [ldd]
@@ -478,6 +483,7 @@ function siteSources(site: LondonSite): SourceRecord[] {
 			observedAt: site.referral.stage2,
 			availableAt: "2026-01-21",
 			retrievedAt: "2026-10-05",
+			url: null,
 		},
 	]
 }
@@ -490,6 +496,8 @@ const SOURCES: SourceRecord[] = [
 		title: "ONS Postcode Directory, February 2026",
 		availableAt: "2026-02-27",
 		retrievedAt: "2026-07-22",
+		url: null,
+		observedAt: null,
 	},
 	{
 		id: NSUL,
@@ -498,6 +506,7 @@ const SOURCES: SourceRecord[] = [
 		observedAt: "2026-06-30",
 		availableAt: "2026-07-31",
 		retrievedAt: "2026-09-03",
+		url: null,
 	},
 	...OFCOM_SOURCES,
 	{
@@ -526,7 +535,13 @@ const SOURCES: SourceRecord[] = [
 export function sitePosition(site: LondonSite): BuildingPosition {
 	const { latitude, longitude } = osgb36ToWGS84(site.grid)
 
-	return { subject: site.building, latitude, longitude, synthetic: false, evidence: { source: site.ldd } }
+	return {
+		subject: site.building,
+		latitude,
+		longitude,
+		synthetic: false,
+		evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null },
+	}
 }
 
 /**
@@ -534,7 +549,7 @@ export function sitePosition(site: LondonSite): BuildingPosition {
  */
 export function siteFloodRecords(site: LondonSite): { reading: LayerReading; claim: Claim<string> } {
 	const { latitude, longitude } = sitePosition(site)
-	const evidence = { source: FLOOD_MAP }
+	const evidence = { source: FLOOD_MAP, observedAt: null, validFrom: null, validTo: null }
 
 	return {
 		reading: {
@@ -591,7 +606,7 @@ function bdukExplanation(site: LondonSite, { postcode, listed, within50m }: BDUK
 function siteClaims(site: LondonSite): Claim[] {
 	const id = (...parts: string[]) => [site.key, ...parts].join(":")
 	const subject = site.building
-	const ldd = { source: site.ldd }
+	const ldd = { source: site.ldd, observedAt: null, validFrom: null, validTo: null }
 
 	const claims: Claim[] = [
 		{
@@ -623,7 +638,7 @@ function siteClaims(site: LondonSite): Claim[] {
 		},
 	]
 
-	if (site.existingUnits !== undefined) {
+	if (site.existingUnits !== null) {
 		claims.push({
 			id: id("existing-residential-units"),
 			subject,
@@ -647,7 +662,7 @@ function siteClaims(site: LondonSite): Claim[] {
 			status: "inferred",
 			derivedFrom: [id("site-grid-reference"), id("permission-date")],
 			explanation: `ONSPD dates the introduction of ${entry.postcode} to ${entry.introduced}, after the permission date, and NSUL places ${placed} UPRNs with that postcode within 50 m of the planning grid reference. The link rests on proximity and introduction date, and no published record links the planning record to the postcode.`,
-			evidence: { source: NSUL },
+			evidence: { source: NSUL, observedAt: null, validFrom: null, validTo: null },
 		})
 	}
 
@@ -671,7 +686,7 @@ function siteClaims(site: LondonSite): Claim[] {
 			status: "inferred",
 			derivedFrom: area.postcodes.map(postcodeClaim),
 			explanation: `ONSPD assigns ${proseList(area.postcodes)} to output area ${area.outputArea}. No source states the building's output area, so the link rests on the building's postcodes.`,
-			evidence: { source: ONSPD },
+			evidence: { source: ONSPD, observedAt: null, validFrom: null, validTo: null },
 		})
 	}
 
@@ -697,7 +712,12 @@ function siteClaims(site: LondonSite): Claim[] {
 				status: "inferred",
 				derivedFrom: [postcodeClaim(figure.postcode)],
 				explanation: `Ofcom states this percentage for ${premisesWords(premisesSet)} it assigns to postcode ${figure.postcode} and publishes no premises count for a postcode. ${postcodeLink(figure.postcode)}`,
-				evidence: { source: premisesSet === "all" ? OFCOM_POSTCODES_ALL : OFCOM_POSTCODES_RESIDENTIAL },
+				evidence: {
+					source: premisesSet === "all" ? OFCOM_POSTCODES_ALL : OFCOM_POSTCODES_RESIDENTIAL,
+					observedAt: null,
+					validFrom: null,
+					validTo: null,
+				},
 			})
 		}
 	}
@@ -720,7 +740,12 @@ function siteClaims(site: LondonSite): Claim[] {
 				status: "inferred",
 				derivedFrom: [id("output-area", figure.outputArea)],
 				explanation: `Ofcom states these counts for ${premisesWords(premisesSet)} it assigns to output area ${figure.outputArea}. The building's link to ${figure.outputArea} is inferred through its postcodes.`,
-				evidence: { source: premisesSet === "all" ? OFCOM_OUTPUT_AREAS_ALL : OFCOM_OUTPUT_AREAS_RESIDENTIAL },
+				evidence: {
+					source: premisesSet === "all" ? OFCOM_OUTPUT_AREAS_ALL : OFCOM_OUTPUT_AREAS_RESIDENTIAL,
+					observedAt: null,
+					validFrom: null,
+					validTo: null,
+				},
 			})
 		}
 	}
@@ -738,7 +763,7 @@ function siteClaims(site: LondonSite): Claim[] {
 			status: "inferred",
 			derivedFrom: [postcodeClaim(postcode), id("site-grid-reference")],
 			explanation: bdukExplanation(site, counts),
-			evidence: { source: BDUK_LONDON },
+			evidence: { source: BDUK_LONDON, observedAt: null, validFrom: null, validTo: null },
 		})
 	}
 
@@ -761,7 +786,7 @@ function siteCounts(site: LondonSite): UnitCount[] {
 			count: site.plannedUnits,
 			at: site.permitted,
 			membership,
-			evidence: { source: site.ldd },
+			evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null },
 		},
 	]
 
@@ -773,7 +798,7 @@ function siteCounts(site: LondonSite): UnitCount[] {
 			count: site.referral.totalUnits,
 			at: site.permitted,
 			membership,
-			evidence: { source: site.referral.source },
+			evidence: { source: site.referral.source, observedAt: null, validFrom: null, validTo: null },
 		})
 	}
 
@@ -788,7 +813,7 @@ function siteEntity(site: LondonSite): Entity {
 			{
 				namespace: `${site.authority.toLowerCase()}:planning-application`,
 				value: site.reference,
-				evidence: { source: site.ldd },
+				evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null },
 			},
 		],
 		label: site.label,
@@ -796,13 +821,27 @@ function siteEntity(site: LondonSite): Entity {
 }
 
 function siteAlias(site: LondonSite): Alias {
-	return { text: site.address, candidates: [{ entity: site.building, evidence: { source: site.ldd } }] }
+	return {
+		text: site.address,
+		candidates: [
+			{ entity: site.building, evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null } },
+		],
+		address: null,
+	}
 }
 
 function siteMemberships(site: LondonSite): ExtentMembership[] {
 	return [
-		{ subject: site.building, extent: `planning-authority:${site.authority}`, evidence: { source: site.ldd } },
-		{ subject: site.building, extent: `postcode:${site.postcode}`, evidence: { source: site.ldd } },
+		{
+			subject: site.building,
+			extent: `planning-authority:${site.authority}`,
+			evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null },
+		},
+		{
+			subject: site.building,
+			extent: `postcode:${site.postcode}`,
+			evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null },
+		},
 	]
 }
 
@@ -812,7 +851,7 @@ function siteWindow(site: LondonSite): ConstructionWindow {
 		start: site.started,
 		end: site.completed,
 		stage: "construction",
-		evidence: { source: site.ldd },
+		evidence: { source: site.ldd, observedAt: null, validFrom: null, validTo: null },
 	}
 }
 

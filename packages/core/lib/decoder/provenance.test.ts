@@ -32,6 +32,7 @@ function proposal(
 		source,
 		source_id: sourceID,
 		penalty: 0,
+		metadata: null,
 	}
 }
 

@@ -1,5 +1,6 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolveNodeTrace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -33,6 +34,7 @@ class StubBackend implements Pick<ResolverBackend, "findPlace"> {
 
 const WHITBY_PLACES: ResolvedPlace[] = [
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 1,
 		name: "Whitby",
 		placetype: "locality",
@@ -45,6 +47,7 @@ const WHITBY_PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 2,
 		name: "Whitby",
 		placetype: "locality",
@@ -175,6 +178,6 @@ describe("Resolver-interior trace", () => {
 			{ traceSink: (entry) => quiet.push(entry) }
 		)
 
-		expect(quiet.find((r) => r.placetype === "locality")?.reachableIn).toBeUndefined()
+		expect(quiet.find((r) => r.placetype === "locality")?.reachableIn).toBeNull()
 	})
 })

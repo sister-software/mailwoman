@@ -111,13 +111,13 @@ export interface POISubjectMatch {
 	/**
 	 * The relation crossing from the subject span to the anchor span.
 	 */
-	relation?: POISpatialRelation
-	relationSpan?: POIQuerySpan
+	relation: POISpatialRelation | null
+	relationSpan: POIQuerySpan | null
 	/**
 	 * The anchor remainder after the separator; `""` when the whole input matched.
 	 */
 	remainder: string
-	anchorSpan?: POIQuerySpan
+	anchorSpan: POIQuerySpan | null
 }
 
 /**
@@ -184,7 +184,10 @@ export function matchPOISubject(text: string, locale: string | null, lookup: POI
 			matches,
 			subject: trimmed,
 			subjectSpan: { text: trimmed, start: inputStart, end: inputStart + trimmed.length },
+			relation: null,
+			relationSpan: null,
 			remainder: "",
+			anchorSpan: null,
 		}
 	}
 

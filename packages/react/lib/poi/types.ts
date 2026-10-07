@@ -67,9 +67,9 @@ export interface POIBrandSubject extends POISubjectBase {
 	name: string
 	/**
 	 * The brand's Wikidata QID.
-	 * It is absent when the lexicon had no QID for the brand.
+	 * It is `null` when the lexicon had no QID for the brand.
 	 */
-	wikidata?: string
+	wikidata: string | null
 }
 
 /**
@@ -84,9 +84,9 @@ export type POISubject = POICategorySubject | POIBrandSubject
  */
 export interface POIExplorerResult {
 	kindResult: QueryKindResult
-	subject?: POISubject
-	overpassQL?: string
-	overpassError?: string
+	subject: POISubject | null
+	overpassQL: string | null
+	overpassError: string | null
 }
 
 /**
@@ -130,9 +130,9 @@ export type POILiveSearch = (params: {
 	anchor: string
 	/**
 	 * The brand's Wikidata QID.
-	 * It is present only when the subject is a chain brand.
+	 * It is `null` unless the subject is a chain brand.
 	 */
-	brandWikidata?: string
+	brandWikidata: string | null
 }) => Promise<POILiveSearchResult>
 
 /**

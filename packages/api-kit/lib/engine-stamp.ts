@@ -24,7 +24,7 @@ export const EngineStampSchema = z
 		version: z.string(),
 		license: z.string(),
 		license_url: z.string(),
-		notice: z.string().optional(),
+		notice: z.string().nullable(),
 	})
 	.openapi("EngineStamp") satisfies z.ZodType<EngineStamp>
 

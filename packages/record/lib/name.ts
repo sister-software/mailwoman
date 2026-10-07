@@ -30,37 +30,38 @@ import { TextSpliterator } from "spliterator"
 /**
  * A parsed person name.
  *
- * All fields optional — the parser fills what it can identify.
+ * Every field is nullable.
+ * The parser fills what it can identify.
  */
 export interface PersonName {
 	/**
 	 * Title / salutation that preceded the name (`Dr`, `Mr`, `Capt`).
 	 */
-	prefix?: string
+	prefix: string | null
 	/**
 	 * First / given name.
 	 */
-	given?: string
+	given: string | null
 	/**
 	 * Middle name(s) or initial.
 	 */
-	middle?: string
+	middle: string | null
 	/**
 	 * Surname, _without_ any particle (`Vega`, not `de la Vega`).
 	 */
-	family?: string
+	family: string | null
 	/**
 	 * Surname particle, stored separately (`de la`, `van der`, `von`).
 	 */
-	familyParticle?: string
+	familyParticle: string | null
 	/**
 	 * Generational or professional suffix (`Jr`, `III`, `PhD`, `MD`).
 	 */
-	suffix?: string
+	suffix: string | null
 	/**
 	 * A parenthetical or quoted nickname (`"Gob"` in `George "Gob" Bluth`).
 	 */
-	nickname?: string
+	nickname: string | null
 }
 
 /**
@@ -220,7 +221,15 @@ const countChar = (s: string, c: string): number => s.split(c).length - 1
 export function parsePersonName(input: string | null): PersonName | null {
 	if (!isPresent(input)) return null
 
-	const result: PersonName = {}
+	const result: PersonName = {
+		prefix: null,
+		given: null,
+		middle: null,
+		family: null,
+		familyParticle: null,
+		suffix: null,
+		nickname: null,
+	}
 
 	// 1. Extract a parenthetical "(Jim)" or quoted "Jim" nickname, then strip it out.
 	let working = input
@@ -256,7 +265,7 @@ export function parsePersonName(input: string | null): PersonName | null {
 
 	const tokens = working.split(/\s+/).filter((value) => value.length)
 
-	if (!tokens.length) return Object.keys(result).length ? result : null
+	if (!tokens.length) return Object.values(result).some((value) => value !== null) ? result : null
 
 	// 3. Titles at the start become the prefix.
 	const prefixParts: string[] = []
@@ -310,7 +319,7 @@ export function parsePersonName(input: string | null): PersonName | null {
 		const before = tokens.slice(0, particleStart)
 
 		if (before.length) {
-			result.given = before[0]
+			result.given = before[0]!
 		}
 
 		if (before.length > 1) {
@@ -322,13 +331,13 @@ export function parsePersonName(input: string | null): PersonName | null {
 
 	// 6. No particle: last token is the surname, first is given, the rest is middle.
 	if (tokens.length === 1) {
-		result.given = tokens[0]
+		result.given = tokens[0]!
 
 		return result
 	}
 
-	result.given = tokens[0]
-	result.family = tokens.at(-1)
+	result.given = tokens[0]!
+	result.family = tokens.at(-1)!
 
 	if (tokens.length > 2) {
 		result.middle = tokens.slice(1, -1).join(" ")
@@ -371,7 +380,7 @@ export type PersonNameStyle = "full" | "short"
  * The parser stores it separately so the matcher can compare `Vega` independently of `de la`;
  * printing them apart would produce a form absent from the input name.
  */
-export function formatPersonName(name: PersonName | null, style: PersonNameStyle = "full"): string {
+export function formatPersonName(name: Partial<PersonName> | null, style: PersonNameStyle = "full"): string {
 	if (!name) return ""
 
 	const order = style === "short" ? SHORT_NAME_ORDER : NAME_ORDER

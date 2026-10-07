@@ -114,7 +114,7 @@ describe("verifyFloodDatabase", () => {
 		})
 
 		expect(result.agreement[0]!.service).toBeNull()
-		expect(result.agreement[0]!.nearestEdgeMetres).toBeUndefined()
+		expect(result.agreement[0]!.nearestEdgeMetres).toBeNull()
 		expect(result.disagreed).toBe(1)
 	})
 

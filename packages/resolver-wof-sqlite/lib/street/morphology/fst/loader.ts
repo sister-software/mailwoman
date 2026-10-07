@@ -73,11 +73,11 @@ export interface LoadedStreetMorphologyFST {
 	/**
 	 * The artifact path when `source === "artifact"`.
 	 */
-	path?: PathBuilderLike
+	path: PathBuilderLike | null
 	/**
 	 * Build provenance, read from the artifact trailer or copied from the fallback build.
 	 */
-	provenance?: FSTProvenance
+	provenance: FSTProvenance | null
 }
 
 /**
@@ -96,7 +96,7 @@ export async function loadStreetMorphologyFST(
 			const matcher = deserializeFST(buf)
 			const provenance = readFSTProvenance(buf)
 
-			return { matcher, source: "artifact", path: artifactPath, ...(provenance ? { provenance } : {}) }
+			return { matcher, source: "artifact", path: artifactPath, provenance }
 		} catch (error) {
 			warn(
 				`street-morphology artifact at ${artifactPath} unreadable (${(error as Error).message}) — falling back to the dictionary build`
@@ -108,5 +108,5 @@ export async function loadStreetMorphologyFST(
 		dictionariesDir: (opts.dictionariesDir ?? resourceDictionaryPath("libpostal")).toString(),
 	})
 
-	return { matcher: built.matcher, source: "built", provenance: built.provenance }
+	return { matcher: built.matcher, source: "built", path: null, provenance: built.provenance }
 }

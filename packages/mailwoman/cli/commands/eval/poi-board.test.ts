@@ -137,7 +137,7 @@ describe("gradeCase — results expectation", () => {
 
 		expect(grade.pass).toBe(false)
 		expect(grade.resultCount).toBe(0)
-		expect(grade.nearestKm).toBeUndefined()
+		expect(grade.nearestKm).toBeNull()
 	})
 
 	it("fails when the outcome is an abstain instead of results", () => {
@@ -149,7 +149,7 @@ describe("gradeCase — results expectation", () => {
 	})
 
 	it("fails when the pipeline never took the poi path at all", () => {
-		const grade = gradeCase(resultsFixture, { path: "full" })
+		const grade = gradeCase(resultsFixture, { path: "full", poiIntent: null })
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/no poi intent/)
@@ -254,13 +254,13 @@ describe("gradeCase — abstain expectation", () => {
 
 describe("gradeCase — address expectation", () => {
 	it("passes when the pipeline never claims the poi path", () => {
-		const grade = gradeCase(addressFixture, { path: "full" })
+		const grade = gradeCase(addressFixture, { path: "full", poiIntent: null })
 
 		expect(grade.pass).toBe(true)
 	})
 
 	it("passes when path is full-length address parse even with poiIntent absent", () => {
-		const grade = gradeCase(addressFixture, { path: "fast-path" })
+		const grade = gradeCase(addressFixture, { path: "fast-path", poiIntent: null })
 
 		expect(grade.pass).toBe(true)
 	})
@@ -568,7 +568,7 @@ describe("the tracked-row convention", () => {
 		const subject: POIIntent = { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } }
 
 		const grades = [
-			gradeCase(resultsFixture, { path: "full" }),
+			gradeCase(resultsFixture, { path: "full", poiIntent: null }),
 			gradeCase(trackedFixture, intentOutcome({ type: "intent", intent: subject, results: [] })),
 		]
 
@@ -595,7 +595,7 @@ describe("the tracked-row convention", () => {
 	})
 
 	it("Refuses a grade whose id names no committed fixture, rather than dropping it from the floors", () => {
-		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full" })
+		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full", poiIntent: null })
 
 		expect(() => partitionCases([resultsFixture], [orphan])).toThrow(/names no committed fixture/u)
 	})

@@ -149,6 +149,7 @@ describe("buildPOIDatabase", () => {
 			freshnessPolicy: "sealed",
 			spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 			createdAt: "2026-07-18T00:00:00Z",
+			sourceRecords: null,
 		})
 
 		expect(result.coverageCells).toBeGreaterThan(0)

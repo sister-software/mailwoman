@@ -461,10 +461,10 @@ export function resolveControlRows(
 export interface ProbeRowOutcome {
 	id: string
 	role: "target" | "control"
-	group?: ProbeControlGroup
+	group: ProbeControlGroup | null
 	query: string
 	shape: POIOutcomeShape
-	abstainReason?: string
+	abstainReason: string | null
 	grade: CaseGrade
 }
 

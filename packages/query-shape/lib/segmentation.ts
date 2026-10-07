@@ -12,7 +12,7 @@ import type { Segment, SegmentSeparator } from "#types"
  * Locale-aware grammar reserved for future (JP whitespace, KR honorifics).
  * Default rules apply when no locale-specific override exists.
  */
-export function segment(text: string, _locale?: string): Segment[] {
+export function segment(text: string, _locale?: string | null): Segment[] {
 	const segments: Segment[] = []
 
 	if (!text.length) return segments

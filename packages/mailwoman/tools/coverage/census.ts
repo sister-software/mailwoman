@@ -58,7 +58,7 @@ export interface CountryCoverage {
 	/**
 	 * Holds the locale package name when one ships.
 	 */
-	weightsPackage?: string
+	weightsPackage: string | null
 	/**
 	 * Counts admin places in the serving gazetteer.
 	 */
@@ -165,7 +165,7 @@ export interface CoverageReport {
 	/**
 	 * Explains the mismatch when the counted corpus differs from the configured corpus.
 	 */
-	corpusMismatch?: string
+	corpusMismatch: string | null
 	corpusRowsTotal: number
 	/**
 	 * Holds the cached census timestamp, or `null` when the corpus was recounted in this run.
@@ -674,7 +674,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			corpusRows: census.rows[cc] ?? 0,
 			corpusStreetRows: census.streetRows[cc] ?? 0,
 			admitted: admitted.has(cc),
-			...(weightsPackages.has(cc) ? { weightsPackage: weightsPackages.get(cc) } : {}),
+			weightsPackage: weightsPackages.get(cc) ?? null,
 			gazetteerPlaces,
 			geocodeTier: ROOFTOP_PUBLISHED.has(cc)
 				? "rooftop-published"
@@ -700,7 +700,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 				"Every row count here is about the corpus that was COUNTED, not the one that trains — a country the " +
 				"newer corpus added reads as zero rows. Re-run with refresh, or point at the config whose corpus was " +
 				"censused."
-			: undefined
+			: null
 
 	return {
 		countries,
@@ -714,7 +714,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		},
 		corpusVersion: census.corpusVersion,
 		configuredCorpusVersion,
-		...(corpusMismatch ? { corpusMismatch } : {}),
+		corpusMismatch,
 		corpusRowsTotal: census.total,
 		corpusCensusTakenAt: takenAt,
 		configPath: options.configPath,

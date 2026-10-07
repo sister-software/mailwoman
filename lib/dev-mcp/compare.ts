@@ -249,6 +249,8 @@ async function compareMailwomanArms(
 			address_kind: item.addressKind,
 			status: item.status,
 			differed: !isIdentical(a, b),
+			identity_differed: null,
+			tier_differed: null,
 			grade,
 			a,
 			b,
@@ -281,7 +283,7 @@ async function compareMailwomanArms(
 		n: rows.length,
 		selection: set.selection,
 		eventLabel: "differed between the arms",
-		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+		populationN: set.populationN,
 	})
 
 	// A zero-difference result may mean no change, or no effective execution.
@@ -354,7 +356,7 @@ async function compareMailwomanArms(
 		graded,
 		significance: test,
 		power: changeReading,
-		...(options.stratifyBy ? { strata: stratify(rows, options.stratifyBy) } : {}),
+		strata: options.stratifyBy ? stratify(rows, options.stratifyBy) : null,
 		// Full changed-row list.
 		rows_changed: differed,
 		warnings: confounds.warnings,
@@ -655,8 +657,8 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			status: item.status,
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
 			// Optional identity and tier deltas are tracked separately from coordinate diffs.
-			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
-			...(tierDelta === null ? {} : { tier_differed: tierDelta }),
+			identity_differed: a.place_ids && b.place_ids ? a.place_ids.join(">") !== b.place_ids.join(">") : null,
+			tier_differed: tierDelta,
 			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,
@@ -694,7 +696,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		n: rows.length,
 		selection: set.selection,
 		eventLabel: "were classified differently by the two arms at one or more thresholds",
-		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+		populationN: set.populationN,
 	})
 
 	const confounds =
@@ -804,7 +806,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		arms_differed_on: { n: differed.length, of: rows.length },
 		identity_changed: {
 			n: rows.filter((row) => row.identity_differed === true).length,
-			of_comparable: rows.filter((row) => row.identity_differed !== undefined).length,
+			of_comparable: rows.filter((row) => row.identity_differed !== null).length,
 			note:
 				"Rows where both arms stated a place-identity chain and the chains differ. Separate from " +
 				"arms_differed_on: a wrong-instance swap under a stable coordinate counts HERE and not there. " +
@@ -813,7 +815,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		},
 		tier_changed: {
 			n: rows.filter((row) => row.tier_differed === true).length,
-			of_comparable: rows.filter((row) => row.tier_differed !== undefined).length,
+			of_comparable: rows.filter((row) => row.tier_differed !== null).length,
 			note:
 				"Rows where both arms answered with a result tier and the tiers differ (address_point → interpolated, say). " +
 				"Separate from arms_differed_on: a tier change under a stable coordinate is a different claim about the " +
@@ -857,7 +859,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		truth_precision_m: truthPrecision(graded),
 		...(identities["a"] ? { arm_a_identity: identities["a"] } : {}),
 		...(identities["b"] ? { arm_b_identity: identities["b"] } : {}),
-		...(options.stratifyBy ? { strata: stratifyGeo(rows, options.stratifyBy) } : {}),
+		strata: options.stratifyBy ? stratifyGeo(rows, options.stratifyBy) : null,
 		rows_changed: changedRows,
 		warnings,
 	}

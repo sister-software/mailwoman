@@ -22,9 +22,9 @@ import { mostSpecific } from "#tools/eval-harness/oa/resolver/tree-hits"
  * A missing value points to coverage or parsing.
  */
 export interface RowScore extends ArmOutcome {
-	resolvedLoc?: string
-	resolvedLocID?: number
-	resolvedReg?: string
+	resolvedLoc: string | null
+	resolvedLocID: number | null
+	resolvedReg: string | null
 }
 
 /**
@@ -53,8 +53,8 @@ export function scoreResolvedRow(row: OARow, resolved: Resolved[], localityMatch
 		regMatch: regionMatches(regResolved?.name ?? null, row.expected.region ?? null),
 		resolved: !!best,
 		err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
-		resolvedLoc: locRaw,
-		resolvedLocID: locNode?.id,
-		resolvedReg: regResolved?.name,
+		resolvedLoc: locRaw ?? null,
+		resolvedLocID: locNode?.id ?? null,
+		resolvedReg: regResolved?.name ?? null,
 	}
 }

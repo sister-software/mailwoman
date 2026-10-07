@@ -20,7 +20,7 @@ import {
 } from "#dev-mcp/counterfactual"
 import { resolveConfig } from "#dev-mcp/engine/registry"
 
-async function flipFor(setting: CounterfactualSetting, locale: string, country: string | undefined) {
+async function flipFor(setting: CounterfactualSetting, locale: string, country: string | null) {
 	return (await enumerateFlips(resolveConfig({ locale }), country)).flips.find((flip) => flip.setting === setting)
 }
 
@@ -48,7 +48,7 @@ describe("enumerateFlips — one setting at a time", () => {
 	})
 
 	it("skips the locale setting with a stated reason rather than omitting it", async () => {
-		const noCountry = await enumerateFlips(resolveConfig({}), undefined)
+		const noCountry = await enumerateFlips(resolveConfig({}), null)
 		const noOverlay = await enumerateFlips(resolveConfig({}), "JP")
 
 		expect(noCountry.flips.some((flip) => flip.setting === "locale")).toBe(false)

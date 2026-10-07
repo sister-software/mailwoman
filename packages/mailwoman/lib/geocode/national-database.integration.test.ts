@@ -23,6 +23,8 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 
 			return tree
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return { resolver, seen }
@@ -100,7 +102,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 
 		expect(typeof seen[0]?.streetCentroids).toBe("function")
 		expect(seen[0]?.streetCentroids?.("fr")).toBe(streetLookup)
-		expect(seen[0]?.streetCentroids?.("de")).toBeUndefined()
+		expect(seen[0]?.streetCentroids?.("de")).toBeNull()
 
 		expect(seen[0]?.streetCountryHints).toContain("fr")
 	})

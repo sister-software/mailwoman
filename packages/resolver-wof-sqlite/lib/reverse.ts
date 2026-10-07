@@ -160,23 +160,35 @@ interface CandidateRow {
 	lon: number
 }
 
+const ABSENT_CANDIDATE_FIELDS = {
+	parent_id: null,
+	distanceKm: null,
+	exactMatch: null,
+	prominence: null,
+	population: null,
+	referential: null,
+	encyclopedic: null,
+	importance: null,
+	bbox: null,
+	mismatch: null,
+	containedByQualifier: null,
+	regionScopeMiss: null,
+	variantAliasExempted: null,
+} as const satisfies Partial<PlaceCandidate>
+
 function toPlaceCandidate(row: CandidateRow, distanceKm: number | null = null): PlaceCandidate {
-	const c: PlaceCandidate = {
+	return {
+		...ABSENT_CANDIDATE_FIELDS,
 		id: row.id,
 		name: row.name,
 		placetype: row.placetype as WOFPlacetype,
 		country: row.country ?? "",
 		lat: row.lat,
 		lon: row.lon,
-		parent_id: row.parent_id ?? undefined,
+		parent_id: row.parent_id ?? null,
 		score: 0,
+		distanceKm,
 	}
-
-	if (distanceKm !== null) {
-		c.distanceKm = distanceKm
-	}
-
-	return c
 }
 
 export class WOFReverseGeocoder implements Disposable {
@@ -360,7 +372,13 @@ export class WOFReverseGeocoder implements Disposable {
 
 		for (const a of ancestorLineage(this.#admin, current.id)) {
 			if (!byID.has(a.id)) {
-				byID.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
+				byID.set(a.id, {
+					...ABSENT_CANDIDATE_FIELDS,
+					...a,
+					placetype: a.placetype as WOFPlacetype,
+					country: a.country ?? "",
+					score: 0,
+				})
 			}
 		}
 
@@ -369,7 +387,13 @@ export class WOFReverseGeocoder implements Disposable {
 
 			for (const a of ancestorLineage(this.#admin, winner.id)) {
 				if (!byID.has(a.id)) {
-					byID.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
+					byID.set(a.id, {
+						...ABSENT_CANDIDATE_FIELDS,
+						...a,
+						placetype: a.placetype as WOFPlacetype,
+						country: a.country ?? "",
+						score: 0,
+					})
 				}
 			}
 		}

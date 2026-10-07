@@ -28,9 +28,9 @@ export interface LayerReading {
 	 * A reading without a subject attaches to each building that an admitted membership
 	 * places in its extent, and to no building otherwise.
 	 */
-	subject?: EntityID
+	subject: EntityID | null
 	basis: CoverageBasis | null
-	surveyedAt?: ISODate
+	surveyedAt: ISODate | null
 	/**
 	 * `null` when the layer has no survey for the extent.
 	 */

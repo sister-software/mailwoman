@@ -99,13 +99,17 @@ describe("buildingFeatures: the five states", () => {
 			...DISTRICT_RECORDS,
 			availability: [
 				listing!,
-				{ ...listing!, extent: "example-cell:a", evidence: { source: SURVEY } },
+				{
+					...listing!,
+					extent: "example-cell:a",
+					evidence: { source: SURVEY, observedAt: null, validFrom: null, validTo: null },
+				},
 				{
 					...listing!,
 					from: "2026-01-01",
 					to: "2026-05-31",
 					extent: "example-district:north",
-					evidence: { source: PERMIT },
+					evidence: { source: PERMIT, observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		}
@@ -195,7 +199,12 @@ describe("buildingFeatures: the five states", () => {
 			...DISTRICT_RECORDS,
 			counts: [
 				...DISTRICT_RECORDS.counts,
-				{ ...DISTRICT_RECORDS.counts[0]!, id: "a-completed-survey", count: 26, evidence: { source: SURVEY } },
+				{
+					...DISTRICT_RECORDS.counts[0]!,
+					id: "a-completed-survey",
+					count: 26,
+					evidence: { source: SURVEY, observedAt: null, validFrom: null, validTo: null },
+				},
 			],
 		}
 

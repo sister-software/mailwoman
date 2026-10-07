@@ -105,26 +105,26 @@ export interface CoastalDesignation {
 	 * Cumulative erosion distance in meters, as published under this scenario.
 	 */
 	distanceM: number
-	shorelineManagementPlan?: { number: number; name: string; policyUnit: string }
+	shorelineManagementPlan: { number: number; name: string; policyUnit: string } | null
 	/**
 	 * The medium- and long-term policy with interpretations.
 	 *
 	 * The NFI scenarios assume no intervention, so they have no policy.
 	 */
-	policy?: {
+	policy: {
 		mediumTerm: string | null
 		mediumTermInterpretation: string | null
 		longTerm: string | null
 		longTermInterpretation: string | null
-	}
-	defenceType?: string
+	} | null
+	defenceType: string | null
 	/**
 	 * Publication year as published.
 	 *
 	 * Some source rows contain 0 with blank policy and defense fields.
 	 * The source does not explain them.
 	 */
-	publishedYear?: number
+	publishedYear: number | null
 	/**
 	 * How this polygon was reached.
 	 */
@@ -157,7 +157,7 @@ export interface CoastalErosionReading {
 	 * Its basis is always `source_present`, so neither its presence nor its
 	 * absence shows the location is safe.
 	 */
-	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
+	coverage: (CoverageCell & { h3CellIndex: string; resolution: number }) | null
 	/**
 	 * The H3 index cell that was probed.
 	 */
@@ -180,7 +180,7 @@ export interface CoastalGroundInstabilityReading {
 	kind: string
 	location: string | null
 	localAuthority: string | null
-	shorelineManagementPlan?: { number: number; name: string; policyUnits: string | null }
+	shorelineManagementPlan: { number: number; name: string; policyUnits: string | null } | null
 	rearScarpProbability: string | null
 }
 
@@ -331,7 +331,7 @@ export class CoastalErosionLookup implements Disposable {
 			scenario,
 			designations: resolved.designations,
 			containment: resolved.containment,
-			...(coverage ? { coverage } : {}),
+			coverage,
 			indexCellIndex: indexCell,
 			limits: NCERM_PRODUCT_LIMITS,
 			coverageLimit: NCERM_COVERAGE_LIMIT,
@@ -367,15 +367,10 @@ export class CoastalErosionLookup implements Disposable {
 				kind: row.kind,
 				location: row.location,
 				localAuthority: row.local_authority,
-				...(row.smp_no === null || row.smp_name === null
-					? {}
-					: {
-							shorelineManagementPlan: {
-								number: row.smp_no,
-								name: row.smp_name,
-								policyUnits: row.smp_policy_units,
-							},
-						}),
+				shorelineManagementPlan:
+					row.smp_no === null || row.smp_name === null
+						? null
+						: { number: row.smp_no, name: row.smp_name, policyUnits: row.smp_policy_units },
 				rearScarpProbability: row.rear_scarp_probability,
 			})
 		}
@@ -481,24 +476,22 @@ function toDesignation(area: AreaRow, containment: CoastalContainmentPath): Coas
 		areaID: area.area_id,
 		frontageID: area.frontage_id,
 		distanceM: area.distance_m,
-		...(area.smp_no === null || area.smp_name === null
-			? {}
-			: {
-					shorelineManagementPlan: { number: area.smp_no, name: area.smp_name, policyUnit: area.smp_pu ?? "" },
-				}),
-		// NFI rows have no policy, so the policy object is omitted when both policy fields are null.
-		...(area.mt_policy === null && area.lt_policy === null
-			? {}
-			: {
-					policy: {
+		shorelineManagementPlan:
+			area.smp_no === null || area.smp_name === null
+				? null
+				: { number: area.smp_no, name: area.smp_name, policyUnit: area.smp_pu ?? "" },
+		// NFI rows have no policy, so the policy is null when both policy fields are null.
+		policy:
+			area.mt_policy === null && area.lt_policy === null
+				? null
+				: {
 						mediumTerm: area.mt_policy,
 						mediumTermInterpretation: area.mt_policy_interp,
 						longTerm: area.lt_policy,
 						longTermInterpretation: area.lt_policy_interp,
 					},
-				}),
-		...(area.defence_type === null ? {} : { defenceType: area.defence_type }),
-		...(area.published_year === null ? {} : { publishedYear: area.published_year }),
+		defenceType: area.defence_type,
+		publishedYear: area.published_year,
 		containment,
 	}
 }

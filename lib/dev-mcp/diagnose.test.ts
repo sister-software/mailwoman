@@ -25,7 +25,7 @@ import {
 	type AccountInput,
 	type ExpectationReading,
 } from "#dev-mcp/diagnose"
-import type { ResolvedInput } from "#dev-mcp/input-sets"
+import { resolvedInput } from "#dev-mcp/input-sets"
 
 /**
  * A minimal parse trace, the same skeleton `census.test.ts` uses so the two files agree on what a trace is.
@@ -46,6 +46,12 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 			[1, 0],
 			[0, 1],
 		],
+		anchor: null,
+		gazetteer: null,
+		country: null,
+		localeLogits: null,
+		spanScores: null,
+		localeCountries: null,
 		detectedSystem: null,
 		systemSource: "off",
 		priors: [],
@@ -73,17 +79,30 @@ function lookup(overrides: Partial<ResolveNodeTrace> = {}): ResolveNodeTrace {
 		tag: "locality",
 		value: "Weimar",
 		placetype: "locality",
-		query: { limit: 10 },
+		query: { country: null, parentID: null, postcode: null, regionQualifier: null, limit: 10 },
 		checks: [],
 		candidates: [],
 		candidatesTruncated: 0,
 		picked: null,
+		reachableIn: null,
 		...overrides,
 	}
 }
 
 function candidate(id: number, name: string, ranks: Record<string, number>) {
-	return { id, name, country: "US", placetype: "locality", score: 1, ranks }
+	return {
+		id,
+		name,
+		country: "US",
+		placetype: "locality",
+		score: 1,
+		prominence: null,
+		importance: null,
+		population: null,
+		exactMatch: null,
+		containedByQualifier: null,
+		ranks,
+	}
 }
 
 function run(overrides: Partial<AccountInput> = {}): AccountInput {
@@ -113,7 +132,7 @@ function traceOf(overrides: Partial<NonNullable<AccountInput["trace"]>> = {}): N
 const NO_EXPECTATION: ExpectationReading = { source: "none", met: null, issues: [] }
 const FAILED_EXPECTATION: ExpectationReading = { source: "board_case", met: false, issues: ["coord 400km off"] }
 
-const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country: "DE" }
+const ITEM = resolvedInput({ id: "row-1", input: "Weimar, Thüringen", country: "DE" })
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
@@ -371,12 +390,12 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {
-		const item: ResolvedInput = {
+		const item = resolvedInput({
 			id: "row-bd",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
 			country: "BD",
 			expectComponents: { locality: "Dhaka", postcode: "1205", country: "Bangladesh" },
-		}
+		})
 
 		const parsedWithoutLocality = run({
 			result: {
@@ -393,12 +412,12 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("keeps unclassified when the expected tag EXISTS with a wrong value — that failure has a component to interrogate", () => {
-		const item: ResolvedInput = {
+		const item = resolvedInput({
 			id: "row-wrong-value",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
 			country: "BD",
 			expectComponents: { locality: "Dhaka" },
-		}
+		})
 
 		const parsedWithWrongLocality = run({
 			result: {
@@ -415,12 +434,12 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("keeps unclassified when the missing component's expected value is NOT in the input — nothing to mis-tag", () => {
-		const item: ResolvedInput = {
+		const item = resolvedInput({
 			id: "row-absent-surface",
 			input: "Somewhere Else Entirely",
 			country: "BD",
 			expectComponents: { locality: "Dhaka" },
-		}
+		})
 
 		expect(assembleAccount(item, run({ trace: traceOf() }), FAILED_EXPECTATION).shapes).toEqual(["unclassified"])
 	})
@@ -480,11 +499,13 @@ describe("assembleAccount — the terminal states", () => {
 
 describe("expectationCase", () => {
 	it("returns nothing for a row that asserts nothing — ungradeable is not passing", () => {
-		expect(expectationCase({ id: "0", input: "belleville" })).toBeNull()
+		expect(expectationCase(resolvedInput({ id: "0", input: "belleville" }))).toBeNull()
 	})
 
 	it("synthesizes a case for a corpus row with a coordinate but no seed", () => {
-		const built = expectationCase({ id: "p-1", input: "x", truthLat: 48.8, truthLon: 2.3, toleranceM: 250 })
+		const built = expectationCase(
+			resolvedInput({ id: "p-1", input: "x", truthLat: 48.8, truthLon: 2.3, toleranceM: 250 })
+		)
 
 		expect(built!.source).toBe("corpus_row")
 		expect(built!.table.expect_lat).toBe(48.8)
@@ -492,7 +513,7 @@ describe("expectationCase", () => {
 	})
 
 	it("leaves an unpinned tolerance null so the grader applies its own default", () => {
-		const built = expectationCase({ id: "p-2", input: "x", truthLat: 1, truthLon: 2 })
+		const built = expectationCase(resolvedInput({ id: "p-2", input: "x", truthLat: 1, truthLon: 2 }))
 
 		expect(built!.table.expect_tolerance_m).toBeNull()
 	})

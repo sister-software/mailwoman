@@ -24,7 +24,7 @@ const PARSE: NeuralParseTrace = {
 	decode: "viterbi",
 	repairs: [],
 	labels: ["O", "B-postcode"],
-	priors: [{ kind: "queryShape", applied: true }],
+	priors: [{ kind: "queryShape", applied: true, probePath: null, census: null, censusProbedParents: null }],
 	localeLogits: [1.5, -0.2],
 	localeCountries: ["US", "FR"],
 	logits: [[0.1, 0.2]],
@@ -32,6 +32,7 @@ const PARSE: NeuralParseTrace = {
 	anchor: { features: [[0, 0]], confidence: [0.5] },
 	gazetteer: { features: [[1, 0]], confidence: [1] },
 	country: { features: [[0, 1]], confidence: [0] },
+	spanScores: null,
 }
 
 describe("slimParseTrace", () => {

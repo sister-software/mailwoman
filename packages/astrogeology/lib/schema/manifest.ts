@@ -21,7 +21,7 @@ export const LockedSourceSchema = z.object({
 	bytes: z.number().int().positive(),
 	sha256: z.string().length(SHA256_HEX_LENGTH),
 	fetchedAt: z.iso.datetime(),
-	snapshot: z.iso.date().optional(),
+	snapshot: z.iso.date().nullable().default(null),
 })
 
 /**
@@ -49,7 +49,7 @@ export const SourceCoordinatesSchema = z.object({
 	longitudeRange: z.enum(["-180..180", "0..360"]),
 	latitudeType: z.enum(["planetocentric", "planetographic"]),
 	referenceBody: z.string(),
-	controlNetwork: z.string().optional(),
+	controlNetwork: z.string().nullable(),
 })
 
 /**
@@ -60,8 +60,8 @@ export const ResourceManifest = z.object({
 	url: z.url(),
 	sha256: z.string().length(SHA256_HEX_LENGTH),
 	bytes: z.number().int().positive(),
-	snapshot: z.string().optional(),
-	coordinates: SourceCoordinatesSchema.optional(),
+	snapshot: z.string().nullable(),
+	coordinates: SourceCoordinatesSchema,
 })
 
 /**

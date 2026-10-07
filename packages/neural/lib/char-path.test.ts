@@ -157,6 +157,10 @@ describe("NeuralAddressClassifier on the char path", () => {
 				return {
 					logits: Array.from({ length: units }, (_, i) => LABELS.map((label) => (label === PER_UNIT[i] ? 8 : 0))),
 					numLabels: LABELS.length,
+					localeLogits: null,
+					addressSystemLogits: null,
+					spanScores: null,
+					maxSpan: null,
 				}
 			},
 		}
@@ -197,7 +201,14 @@ describe("NeuralAddressClassifier on the char path", () => {
 					charEncoder: { vocabulary: new Map(Object.entries(VOCAB)), interface: INTERFACE },
 					runner: {
 						async infer() {
-							return { logits: [], numLabels: 0 }
+							return {
+								logits: [],
+								numLabels: 0,
+								localeLogits: null,
+								addressSystemLogits: null,
+								spanScores: null,
+								maxSpan: null,
+							}
 						},
 					},
 					labels: LABELS,

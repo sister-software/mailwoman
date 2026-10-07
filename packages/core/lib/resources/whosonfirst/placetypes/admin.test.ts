@@ -45,14 +45,14 @@ test("pluckPlacetypeSpec: passes through identity + resolves the wof→gn popula
 
 	// …else falls back to gn:population
 	expect(pluckPlacetypeSpec(baseProps({ "gn:population": 8_000_000 })).population).toBe(8_000_000)
-	expect(pluckPlacetypeSpec(baseProps()).population).toBeUndefined()
+	expect(pluckPlacetypeSpec(baseProps()).population).toBeNull()
 })
 
-test("pluckPlacetypeSpec: mz:is_current is tri-state (0/'0' → false, present → true, missing → undefined)", () => {
+test("pluckPlacetypeSpec: mz:is_current is tri-state (0/'0' → false, present → true, missing → null)", () => {
 	expect(pluckPlacetypeSpec(baseProps({ "mz:is_current": 1 })).isCurrent).toBe(true)
 	expect(pluckPlacetypeSpec(baseProps({ "mz:is_current": 0 })).isCurrent).toBe(false)
 	expect(pluckPlacetypeSpec(baseProps({ "mz:is_current": "0" })).isCurrent).toBe(false)
-	expect(pluckPlacetypeSpec(baseProps()).isCurrent).toBeUndefined()
+	expect(pluckPlacetypeSpec(baseProps()).isCurrent).toBeNull()
 })
 
 test("pluckPlacetypeSpec: lifecycle flags from edtf + superseded arrays", () => {

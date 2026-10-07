@@ -113,7 +113,7 @@ describe("isImplausibleResolution", () => {
 		const verdict = isImplausibleResolution(tree([node({ tag: "street", value: "Epleskogen" })], "Epleskogen 39A"))
 
 		expect(verdict.implausible).toBe(false)
-		expect(verdict.coordinate).toBeUndefined()
+		expect(verdict.coordinate).toBeNull()
 	})
 })
 

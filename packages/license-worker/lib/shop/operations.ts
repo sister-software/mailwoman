@@ -66,7 +66,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 		paymentLinks: Object.fromEntries(
 			SHOP_PLANS.flatMap((plan) => entryOf(plan.code, report.paymentLinks[plan.code].url))
 		),
-		...(report.portal.url ? { portalURL: report.portal.url } : {}),
+		...(report.portal.url === null ? {} : { portalURL: report.portal.url }),
 	})
 
 	if (isIdentical(next, current)) return null
@@ -87,7 +87,7 @@ const provisionOperation = defineOperation({
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: ProvisionInputSchema,
 	outputSchema: ProvisionReportSchema.extend({
-		written: z.string().optional(),
+		written: z.string().nullable(),
 	}),
 	async run(input, context) {
 		const apply = input.apply === true && !context.dryRun
@@ -113,7 +113,7 @@ const provisionOperation = defineOperation({
 
 		const written = apply ? await recordShopIDs(input.mode, report) : null
 
-		return { ...report, ...(written ? { written } : {}) }
+		return { ...report, written }
 	},
 })
 

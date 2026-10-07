@@ -214,6 +214,7 @@ export const exportNameAffixCheck: RepoCheck = {
 				file: pair.file,
 				line: pair.line,
 				message: `\`${pair.name}\` spells out \`${pair.contains}\`, exported from ${pair.containedIn.join(", ")}. Import that one, or keep both behind \`// ${AFFIX_IGNORE_MARKER} <reason>\`.`,
+				details: null,
 			})
 		}
 

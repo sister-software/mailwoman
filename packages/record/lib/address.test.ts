@@ -37,7 +37,7 @@ describe("toPostalAddress", () => {
 
 	it("skips the formatted form when format is false", () => {
 		const record = toPostalAddress(US, { format: false })
-		expect(record.formatted).toBeUndefined()
+		expect(record.formatted).toBeNull()
 		expect(record.canonicalKey).toBeTruthy()
 	})
 
@@ -47,7 +47,7 @@ describe("toPostalAddress", () => {
 	})
 
 	it("starts with no geocode", () => {
-		expect(toPostalAddress(US).geocode).toBeUndefined()
+		expect(toPostalAddress(US).geocode).toBeNull()
 	})
 })
 
@@ -60,13 +60,15 @@ describe("withGeocode", () => {
 			{ tag: "locality", value: "Portland", placeID: "101715829" },
 			{ tag: "region", value: "Oregon", placeID: "85688513" },
 		],
+		poBox: null,
+		multiUnit: null,
 	}
 
 	it("attaches a resolved geocode without mutating the original record", () => {
 		const base = toPostalAddress(US)
 		const located = withGeocode(base, geocode)
 
-		expect(base.geocode).toBeUndefined()
+		expect(base.geocode).toBeNull()
 		expect(located.geocode).toBe(geocode)
 		expect(located.geocode?.tier).toBe("address_point")
 		expect(located.canonicalKey).toBe(base.canonicalKey)
@@ -77,7 +79,9 @@ describe("withGeocode", () => {
 			coordinate: { latitude: 45.5, longitude: -122.6 },
 			tier: "interpolated",
 			uncertaintyMeters: 120,
+			hierarchy: null,
 			poBox: true,
+			multiUnit: null,
 		})
 
 		expect(located.geocode?.poBox).toBe(true)

@@ -80,6 +80,9 @@ describe("routeFeatures", () => {
 			publisher: "Synthetic example",
 			title: "Synthetic plant record published after the as-of date",
 			availableAt: "2027-01-05",
+			observedAt: null,
+			retrievedAt: null,
+			url: null,
 		}
 
 		const records = { ...DISTRICT_RECORDS, sources: [...DISTRICT_RECORDS.sources, later] }

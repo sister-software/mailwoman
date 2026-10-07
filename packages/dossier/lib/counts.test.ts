@@ -7,9 +7,10 @@
 import { describe, expect, test } from "vitest"
 
 import { countsByStage, totalUnits, type UnitCount, UnitStage } from "#counts"
+import type { Evidence } from "#links"
 import { ANNEX, COMPLETED20, COMPLETED22, HOUSE, OCCUPIED, PLANNED } from "#test/fixtures/example-house"
 
-const inspection = { source: "inspection-2022", observedAt: "2022-04-01" }
+const inspection: Evidence = { source: "inspection-2022", observedAt: "2022-04-01", validFrom: null, validTo: null }
 
 const SHARED: UnitCount[] = [
 	{

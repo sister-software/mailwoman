@@ -324,6 +324,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			// The layer joins only on `street_norm`.
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		await swapDatabaseIntoPlace(tmpOut, finalOut)

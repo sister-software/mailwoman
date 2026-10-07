@@ -22,12 +22,26 @@ function clinic(
 ): SourceRecord {
 	return {
 		id,
-		name: { given, family },
+		name: { prefix: null, given, middle: null, familyParticle: null, family, suffix: null, nickname: null },
+		source: null,
+		organization: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
 		address: {
 			components: {},
 			canonicalKey,
-			formatted,
-			geocode: { coordinate: { latitude, longitude }, tier: "address_point", uncertaintyMeters: 1 },
+			formatted: formatted ?? null,
+			raw: null,
+			geocode: {
+				coordinate: { latitude, longitude },
+				tier: "address_point",
+				uncertaintyMeters: 1,
+				hierarchy: null,
+				poBox: null,
+				multiUnit: null,
+			},
 		},
 	}
 }
@@ -102,13 +116,26 @@ describe("resolveEntities", () => {
 function coLocated(id: string, given: string, family: string): SourceRecord {
 	return {
 		id,
-		name: { given, family },
+		name: { prefix: null, given, middle: null, familyParticle: null, family, suffix: null, nickname: null },
+		source: null,
+		organization: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
 		address: {
 			components: {},
 			canonicalKey: "100 plaza dr",
 			raw: "100 Plaza Dr, Houston, TX",
 			formatted: "100 Plaza Dr, Houston, TX",
-			geocode: { coordinate: { latitude: 29.76, longitude: -95.37 }, tier: "address_point", uncertaintyMeters: 1 },
+			geocode: {
+				coordinate: { latitude: 29.76, longitude: -95.37 },
+				tier: "address_point",
+				uncertaintyMeters: 1,
+				hierarchy: null,
+				poBox: null,
+				multiUnit: null,
+			},
 		},
 	}
 }

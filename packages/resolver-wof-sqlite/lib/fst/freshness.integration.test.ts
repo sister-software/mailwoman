@@ -54,6 +54,8 @@ function fixtureMatcher(): FSTMatcher {
 					referential: 0.5,
 					lat: 1,
 					lon: 2,
+					encyclopedic: null,
+					crossCountryBranches: null,
 				},
 			],
 		},
@@ -76,6 +78,14 @@ function provenanceOf(overrides: Partial<FSTProvenance> = {}): FSTProvenance {
 		edgeCount: 2,
 		nameInsertions: 1,
 		importanceMatches: 0,
+		encyclopedicMatches: null,
+		importanceSource: null,
+		sourceDB: null,
+		sourceDBMD5: null,
+		sourceDBBytes: null,
+		modelCardVersion: null,
+		exclusionPolicy: null,
+		excludedInsertions: null,
 		...overrides,
 	}
 }
@@ -149,7 +159,7 @@ describe("peekFSTStampFields", () => {
 		const fields = await peekFSTStampFields(await writeFST("unstamped.bin"))
 
 		expect(fields?.formatVersion).toBe(FST_FORMAT_VERSION)
-		expect(fields?.provenance).toBeUndefined()
+		expect(fields?.provenance).toBeNull()
 	})
 
 	it("returns null for a non-FST file, a stub, and an absent path", async () => {
@@ -170,7 +180,7 @@ describe("peekFSTStampFields", () => {
 		// Truncate the JSON: the declared length now runs past EOF.
 		await writeLocalFile(bytes.subarray(0, -20), path)
 
-		expect((await peekFSTStampFields(path))?.provenance).toBeUndefined()
+		expect((await peekFSTStampFields(path))?.provenance).toBeNull()
 	})
 })
 

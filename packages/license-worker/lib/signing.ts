@@ -28,8 +28,8 @@ type SigningTrust = "register" | "sandbox"
 export interface SigningSelfTest {
 	status: SigningStatus
 	kid: string
-	trust?: SigningTrust
-	reason?: string
+	trust: SigningTrust | null
+	reason: string | null
 }
 
 /**
@@ -77,7 +77,7 @@ export async function signingSelfTest(env: LicenseWorkerEnv): Promise<SigningSel
 	const kid = env.LICENSE_SIGNING_KID
 	const trusted = await trustedPublicKey(env)
 
-	if ("reason" in trusted) return { status: "mismatch", kid, reason: trusted.reason }
+	if ("reason" in trusted) return { status: "mismatch", kid, trust: null, reason: trusted.reason }
 
 	try {
 		const probe = await encodeLicenseKey(
@@ -98,14 +98,15 @@ export async function signingSelfTest(env: LicenseWorkerEnv): Promise<SigningSel
 		})
 
 		if (verified.status !== "valid") {
-			return { status: "mismatch", kid, reason: `the private key does not sign for ${kid}` }
+			return { status: "mismatch", kid, trust: null, reason: `the private key does not sign for ${kid}` }
 		}
 
-		return { status: "ok", kid, trust: trusted.trust }
+		return { status: "ok", kid, trust: trusted.trust, reason: null }
 	} catch (error) {
 		return {
 			status: "mismatch",
 			kid,
+			trust: null,
 			reason: `the private key does not sign for ${kid}: ${error instanceof Error ? error.message : String(error)}`,
 		}
 	}

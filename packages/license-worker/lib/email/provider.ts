@@ -27,7 +27,7 @@ export interface LicenseEmail {
 	 * The first claim reads and clears it.
 	 * A resend before that claim therefore includes the secret.
 	 */
-	refreshSecret?: string
+	refreshSecret: string | null
 }
 
 export interface EmailProvider {

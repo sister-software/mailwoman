@@ -5,6 +5,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -16,6 +17,7 @@ const norm = backendNameKey
 
 const PLACES: ResolvedPlace[] = [
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 1,
 		name: "Kožljek",
 		placetype: "locality",
@@ -25,8 +27,18 @@ const PLACES: ResolvedPlace[] = [
 		score: 10,
 		exactMatch: true,
 	},
-	{ id: 900, name: "1382", placetype: "postalcode", country: "SI", lat: 45.82, lon: 14.42, score: 1 },
 	{
+		...EMPTY_PLACE_FIELDS,
+		id: 900,
+		name: "1382",
+		placetype: "postalcode",
+		country: "SI",
+		lat: 45.82,
+		lon: 14.42,
+		score: 1,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
 		id: 2,
 		name: "Kožljek",
 		placetype: "locality",

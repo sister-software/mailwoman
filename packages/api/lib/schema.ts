@@ -48,7 +48,7 @@ export const ParseOutcomeSchema = z
 		input: z.string(),
 		components: z.array(ParseComponentSchema),
 		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
-		debug: z.string().optional(),
+		debug: z.string().nullable(),
 	})
 	.openapi("ParseOutcome")
 
@@ -71,12 +71,12 @@ const GeocodeHierarchyEntrySchema = z
 		tag: z.string(),
 		value: z.string(),
 		name: z.string(),
-		lat: z.number().optional(),
-		lon: z.number().optional(),
-		placeID: z.string().optional(),
+		lat: z.number().nullable(),
+		lon: z.number().nullable(),
+		placeID: z.string().nullable(),
 		// Tri-state: true = the winner's ancestor chain vouches for this entry, false = resolved
-		// independently outside the winner's lineage, absent = unverifiable (absence is not false).
-		in_winner_lineage: z.boolean().optional(),
+		// independently outside the winner's lineage, null = unverifiable (null is not false).
+		in_winner_lineage: z.boolean().nullable(),
 	})
 	.openapi("GeocodeHierarchyEntry")
 
@@ -92,7 +92,7 @@ const GeocodeCandidateSchema = z
 		lat: z.number(),
 		lon: z.number(),
 		countryCode: z.string().nullable(),
-		placeID: z.string().optional(),
+		placeID: z.string().nullable(),
 	})
 	.openapi("GeocodeCandidate")
 
@@ -185,13 +185,13 @@ const QueryIntentMarkerSchema = z
  */
 const AuthoritativeMatchSchema = z.object({
 	provider_place_id: z.string(),
-	object_ids: z.record(z.string(), z.string()).optional(),
-	canonical_fields: z.record(z.string(), z.string()).optional(),
-	lat: z.number().optional(),
-	lon: z.number().optional(),
-	precision: z.string().optional(),
+	object_ids: z.record(z.string(), z.string()).nullable(),
+	canonical_fields: z.record(z.string(), z.string()).nullable(),
+	lat: z.number().nullable(),
+	lon: z.number().nullable(),
+	precision: z.string().nullable(),
 	match_status: z.enum(["exact", "approximate"]),
-	provider_score: z.number().optional(),
+	provider_score: z.number().nullable(),
 })
 
 const EpistemicStatusSchema = z.enum(["designated", "observed", "derived", "inferred", "unresolved"])
@@ -217,7 +217,7 @@ const EvidenceSchema = z.discriminatedUnion("kind", [
 		vintage: z.string(),
 		relationship: z.string(),
 		assertion: z.enum(["authoritative", "inferred"]),
-		score: z.number().optional(),
+		score: z.number().nullable(),
 	}),
 	z.object({ kind: z.literal("prior"), source: z.string(), label: z.string(), weight: z.number() }),
 ])
@@ -252,9 +252,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// What the evidence permits a consumer to claim about the coordinate, orthogonal to how it was produced.
 	// See `@mailwoman/evidence`'s `EpistemicStatus`.
 	epistemic_status: z.enum(["designated", "observed", "derived", "inferred", "unresolved"]),
-	// The derivation behind the answer, present only when the engine was asked to trace.
-	derivation: DerivationProjectionSchema.optional(),
-	// The fork→entity probe's answer, present only on the `venue` tier.
+	// The derivation behind the answer, null unless the engine was asked to trace.
+	derivation: DerivationProjectionSchema.nullable(),
+	// The fork→entity probe's answer, null except on the `venue` tier.
 	entity: z
 		.object({
 			name: z.string(),
@@ -262,7 +262,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 			confidence: z.number(),
 			country: z.string(),
 		})
-		.optional(),
+		.nullable(),
 	uncertainty_m: z.number().nullable(),
 	locality: z.string().nullable(),
 	region: z.string().nullable(),
@@ -281,52 +281,52 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// extract includes them (normalized locality key + postcode of the rooftop).
 	rooftop: z
 		.object({
-			localityNorm: z.string().optional(),
-			postcode: z.string().optional(),
+			localityNorm: z.string().nullable(),
+			postcode: z.string().nullable(),
 		})
-		.optional(),
+		.nullable(),
 	// The country the postcode-country coherence pass scoped the walk to, non-null only
 	// when it overrode the request's country prior.
 	postcode_country_scope: z.string().nullable(),
-	// The capital promotion's firing receipt: the promoted candidate's country, present only
-	// when the promotion changed some node's leading candidate.
-	capital_promotion: z.string().optional(),
-	// The variant-alias exemption's firing receipt, present only when the winning candidate
-	// reached the top because the exemption spared it the cross-country alias penalty.
-	variant_alias_exemption: z.literal(true).optional(),
+	// The capital promotion's firing receipt: the promoted candidate's country.
+	// It is null unless the promotion changed some node's leading candidate.
+	capital_promotion: z.string().nullable(),
+	// The variant-alias exemption's firing receipt.
+	// It is true when the exemption spared the winner the cross-country alias penalty, else null.
+	variant_alias_exemption: z.literal(true).nullable(),
 	// Query-intent advisories, always present.
 	// Empty means the vocabulary found no marker.
 	// Clients can ignore the array.
 	intent_markers: z.array(QueryIntentMarkerSchema),
 	// Flag-only admin-coherence verdicts: no code ranks or filters on them.
 	// Present whenever a winner resolved (both members always populated; `unstated` is the
-	// explicit no-qualifier claim), absent when no winner resolved to check against.
+	// explicit no-qualifier claim), null when no winner resolved to check against.
 	admin_coherence: z
 		.object({
 			region: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 			country: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 		})
-		.optional(),
+		.nullable(),
 	// A configured authoritative provider's answer, hand-modeled to match `mailwoman/authoritative.ts`'s
 	// wire shape (the engine-agnosticism boundary forbids importing it).
-	// Absent when no provider is configured; `refused` is the provider declining
+	// Null when no provider is configured; `refused` is the provider declining
 	// (distinct from a parse failure or a gazetteer miss) and `transport_error` is the
 	// provider being unreachable, reported rather than silently dropped.
 	authoritative: z
 		.object({
 			provider: z.string(),
 			status: z.enum(["matched", "ambiguous", "refused", "transport_error"]),
-			matches: z.array(AuthoritativeMatchSchema).optional(),
-			attribution: z.string().optional(),
-			license: z.string().optional(),
-			retrieved_at: z.string().optional(),
-			dataset_version: z.string().optional(),
-			error: z.string().optional(),
+			matches: z.array(AuthoritativeMatchSchema).nullable(),
+			attribution: z.string().nullable(),
+			license: z.string().nullable(),
+			retrieved_at: z.string().nullable(),
+			dataset_version: z.string().nullable(),
+			error: z.string().nullable(),
 		})
-		.optional(),
+		.nullable(),
 	// Spans the flat `components` map could not represent: it holds one value per tag, so a second
 	// `locality` span ceases to exist there and a null field cannot be told from a deleted one.
-	// Absent rather than empty when no component was dropped.
+	// Null rather than empty when no component was dropped.
 	dropped_components: z
 		.array(
 			z.object({
@@ -335,11 +335,11 @@ export const GeocodeOutcomeLikeSchema = z.object({
 				kept: z.string(),
 			})
 		)
-		.optional(),
+		.nullable(),
 	// The parse kept this component, but the answer did not follow it.
 	// Its value in `components` looks honored.
 	// No other field indicates that it points at a place far from the rest.
-	// Absent when the answer followed everything it parsed.
+	// Null when the answer followed everything it parsed.
 	unfollowed_components: z
 		.array(
 			z.object({
@@ -349,7 +349,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 				distance_km: z.number(),
 			})
 		)
-		.optional(),
+		.nullable(),
 })
 
 export type GeocodeOutcomeLike = z.infer<typeof GeocodeOutcomeLikeSchema>

@@ -99,7 +99,7 @@ export const exportsCheck: RepoCheck = {
 		const observedAllowedDuplicates = new Set<string>()
 
 		const unexpected = (file: string, message: string): void => {
-			diagnostics.push({ severity: DiagnosticSeverity.Error, message, file })
+			diagnostics.push({ severity: DiagnosticSeverity.Error, message, file, line: null, details: null })
 		}
 
 		for (const issue of report.issues) {
@@ -129,6 +129,9 @@ export const exportsCheck: RepoCheck = {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message: `stale duplicate-export allowlist entry ${expected}`,
+					file: null,
+					line: null,
+					details: null,
 				})
 			}
 		}

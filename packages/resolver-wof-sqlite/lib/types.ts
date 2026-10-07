@@ -45,69 +45,74 @@ export interface PlaceCandidate {
 	 * The place's depth-1 ancestor id from the ancestors sidecar, absent when the
 	 * artifact has no sidecar even for a place with a parent.
 	 */
-	parent_id?: number
+	parent_id: number | null
 	score: number
-	distanceKm?: number
+	distanceKm: number | null
 
 	/**
 	 * Whether the candidate's name or an alias exactly equals the query, used by a
 	 * later re-rank to stay within the exact-match tier.
 	 */
-	exactMatch?: boolean
+	exactMatch: boolean | null
 
 	/**
 	 * The population term plus the best proximity-bias term.
 	 *
 	 * The exact tier sorts by this value instead of population when the query has `near` or `bias`.
 	 */
-	prominence?: number
+	prominence: number | null
 
 	/**
 	 * The WOF `wof:population` value, absent when the population is unknown.
 	 */
-	population?: number
+	population: number | null
 
 	/**
 	 * The referential likelihood in [0, 1], derived from {@link PlaceCandidate.population}
 	 * and absent whenever it is.
 	 */
-	referential?: number
+	referential: number | null
 
 	/**
 	 * The encyclopedia-evidence importance in [0, 1], used for display only and present only
 	 * when the extract's `place_importance` table has the split columns.
 	 */
-	encyclopedic?: number
+	encyclopedic: number | null
 
 	/**
 	 * The blended toponym prior in [0, 1] that `rankByImportance` reads for bare toponyms,
 	 * set only by the candidate-table backend.
 	 */
-	importance?: number
+	importance: number | null
 
 	/**
 	 * The bounding box from the WOF `spr` extent columns, omitted when the schema lacks them.
 	 */
-	bbox?: LatLonBounds
+	bbox: LatLonBounds | null
 
 	/**
 	 * Set by the postcode path when the chosen locality is far from the postcode's own
 	 * locality. the candidate is still returned so callers can lower their confidence.
 	 */
-	mismatch?: boolean
+	mismatch: boolean | null
 
 	/**
 	 * Whether the ancestors sidecar places this candidate under the query's
 	 * {@link FindPlaceQuery.regionQualifier}, with `false` meaning the check ran
 	 * and an absent value meaning it did not.
 	 */
-	containedByQualifier?: boolean
+	containedByQualifier: boolean | null
+
+	/**
+	 * Set when the candidate lies outside the query's parent scope, so callers can demote it.
+	 */
+	regionScopeMiss: boolean | null
 
 	/**
 	 * Set when the variant exemption spared the candidate from the cross-country
 	 * alias penalty, by the candidate-table backend only.
 	 */
-	variantAliasExempted?: true
+	variantAliasExempted: true | null
 }
 
 /**

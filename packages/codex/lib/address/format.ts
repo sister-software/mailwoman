@@ -43,7 +43,7 @@ export interface FormatAddressOptions {
 	 *
 	 * A caller with the parse tree should pass the order explicitly.
 	 */
-	script?: AddressScript
+	script?: AddressScript | null
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
@@ -218,7 +218,7 @@ export function formatAddressRow(
 	// An explicit `script` overrides both derived checks.
 	// A dictionary with no letters identifies no register.
 	// The function also avoids an order that would drop a component in this country.
-	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : undefined
+	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : null
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
 	const layout = layoutForCountry(country, script)
 

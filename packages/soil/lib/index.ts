@@ -82,13 +82,13 @@ export interface SoilCapabilityDistribution {
 	 */
 	mappedShare: number
 	/**
-	 * The class with the largest share, absent when the cell has no class.
+	 * The class with the largest share, null when the cell has no class.
 	 *
 	 * A caller that reads `topClass` should also report `topClassShare`,
 	 * because the top class can hold a small plurality.
 	 */
-	topClass?: string
-	topClassShare?: number
+	topClass: string | null
+	topClassShare: number | null
 	/**
 	 * The weighting that produced these shares.
 	 */
@@ -125,21 +125,21 @@ export interface SoilSurveyAreaRecord {
 export interface SoilCapabilityReading {
 	kind: SoilReadingKind
 	/**
-	 * The cell's distribution, present on both designated kinds and absent on `unknown`.
+	 * The cell's distribution, present on both designated kinds and null on `unknown`.
 	 */
-	distribution?: SoilCapabilityDistribution
+	distribution: SoilCapabilityDistribution | null
 	/**
 	 * The authority's definition of the top class, from its vocabulary.
 	 */
-	topClassDefinition?: string
+	topClassDefinition: string | null
 	/**
 	 * The survey area that covers the location.
 	 */
-	surveyArea?: SoilSurveyAreaRecord
+	surveyArea: SoilSurveyAreaRecord | null
 	/**
 	 * The coverage row that supports the reading, when one exists.
 	 */
-	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
+	coverage: (CoverageCell & { h3CellIndex: string; resolution: number }) | null
 	/**
 	 * The H3 index cell that the lookup probed.
 	 */
@@ -233,6 +233,10 @@ export class SoilCapabilityLookup implements Disposable {
 		if (!coverage) {
 			return {
 				kind: SoilReadingKind.Unknown,
+				distribution: null,
+				topClassDefinition: null,
+				surveyArea: null,
+				coverage: null,
 				indexCellIndex: indexCell,
 				limits: SSURGO_PRODUCT_LIMITS,
 			}
@@ -258,6 +262,9 @@ export class SoilCapabilityLookup implements Disposable {
 			// has no delineation, so the location may be outside the survey.
 			return {
 				kind: SoilReadingKind.Unknown,
+				distribution: null,
+				topClassDefinition: null,
+				surveyArea: null,
 				coverage,
 				indexCellIndex: indexCell,
 				limits: SSURGO_PRODUCT_LIMITS,
@@ -271,20 +278,20 @@ export class SoilCapabilityLookup implements Disposable {
 			noDataShare: row.nodata_share,
 			otherShare: row.other_share,
 			mappedShare: row.mapped_share,
-			...(row.top_class ? { topClass: row.top_class } : {}),
-			...(row.top_class_share === null ? {} : { topClassShare: row.top_class_share }),
+			topClass: row.top_class || null,
+			topClassShare: row.top_class_share,
 			weighting: row.weighting,
 			delineations: row.delineations,
 		}
 
 		const surveyArea = this.#surveyAreaAt(latitude, longitude)
-		const definition = row.top_class ? this.#definitions.get(row.top_class) : undefined
+		const definition = (row.top_class ? this.#definitions.get(row.top_class) : null) ?? null
 
 		return {
 			kind: row.top_class ? SoilReadingKind.Designated : SoilReadingKind.DesignatedNoRating,
 			distribution,
-			...(definition ? { topClassDefinition: definition } : {}),
-			...(surveyArea ? { surveyArea } : {}),
+			topClassDefinition: definition || null,
+			surveyArea,
 			coverage,
 			indexCellIndex: indexCell,
 			limits: SSURGO_PRODUCT_LIMITS,

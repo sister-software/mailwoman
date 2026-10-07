@@ -108,7 +108,7 @@ class WOFResolver implements Resolver {
 
 	constructor(backend: ResolverBackend) {
 		this.#backend = backend
-		this.artifactCoverage = backend.artifactCoverage
+		this.artifactCoverage = backend.artifactCoverage ?? null
 		this.capabilityGaps = describeCapabilityGaps(backend)
 		reportCapabilityGaps(this.capabilityGaps)
 	}

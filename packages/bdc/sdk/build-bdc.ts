@@ -181,7 +181,7 @@ interface BDCStageRow {
 	geoid: string
 	provider_id: number
 	technology_code: number
-	location_id?: string
+	location_id: string
 	max_advertised_download_speed: number
 	max_advertised_upload_speed: number
 	low_latency: 0 | 1
@@ -515,6 +515,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION }, wofID: "wof_id" },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		let providersPopulated = 0

@@ -904,6 +904,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: UPRN_H3_RESOLUTION } },
 		createdAt: options.createdAt ?? now.toISOString(),
+		sourceRecords: null,
 	})
 
 	phase("meta")

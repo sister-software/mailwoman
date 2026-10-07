@@ -63,7 +63,7 @@ export interface ModelGraphRecord {
 	 *
 	 * A record that states no outputs and no reason would read as a graph with no outputs.
 	 */
-	unreadable?: string
+	unreadable: string | null
 }
 
 /**
@@ -100,6 +100,7 @@ export async function readModelGraph(modelPath: PathBuilderLike): Promise<ModelG
 			format: "ONNX",
 			outputs,
 			textEmittingOutput: outputs.some((output) => TEXT_CAPABLE_TYPES.has(output.type)),
+			unreadable: null,
 		}
 	} catch (error) {
 		return {

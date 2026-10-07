@@ -178,6 +178,8 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 				file,
 				message:
 					"No universal `box-sizing: border-box` reset. Without it `max-height` measures the content box, so any rule pairing a size with padding overflows its own cap.",
+				line: null,
+				details: null,
 			})
 		}
 
@@ -191,6 +193,8 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 				file,
 				message:
 					"No `button { color: inherit }` default. A button paints the user agent's `buttontext` otherwise, which is near-black inside a dark panel.",
+				line: null,
+				details: null,
 			})
 		}
 	}
@@ -210,6 +214,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 				file,
 				line: rule.line,
 				message: `\`${rule.selector}\` paints an interactive background and states no color, so its text takes whatever the user agent last decided.`,
+				details: null,
 			})
 		}
 
@@ -219,6 +224,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 				file,
 				line: rule.line,
 				message: `\`${rule.selector}\` sets \`border-radius\` in raw pixels. The radius scale is \`--radius-tick\`, \`--radius-tight\`, \`--radius-control\`, \`--radius-panel\` / \`--radius-sheet\` and \`--radius-pill\`; a seventh value nobody can name is how two surfaces meant to match stop matching.`,
+				details: null,
 			})
 		}
 
@@ -232,6 +238,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 					file,
 					line: rule.line,
 					message: `\`${rule.selector}\` declares \`${property}\` before \`-webkit-${property}\`. The minifier keeps the last of the pair, so the standard property is the one dropped from the bundle.`,
+					details: null,
 				})
 			}
 		}
@@ -253,6 +260,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 					line: rule.line,
 					message:
 						"A material fallback names a different set of surfaces than the material does, so a surface missing here keeps its transparency where the blur cannot run or the viewer asked for less of it.",
+					details: null,
 				})
 			}
 		}

@@ -71,6 +71,6 @@ test("makeTimezoneAnnotator: fills AnnotationSet.timezone", async () => {
 	using db = await fixtureDB()
 	using lookup = new TimezoneLookup({ database: db })
 	const annotate = makeTimezoneAnnotator(lookup)
-	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
+	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone", offsetSec: null, offsetString: null } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

@@ -39,7 +39,7 @@ const NUTS_3_LENGTH = 5
  * Derive the nested nuts levels from a nuts id (`"DE111"` → `{ level1:"DE1", level2:"DE11", level3:"DE111" }`).
  */
 export function nutsFromID(id: string): NUTS {
-	const nuts: NUTS = {}
+	const nuts: NUTS = { level1: null, level2: null, level3: null }
 
 	if (id.length >= NUTS_1_LENGTH) {
 		nuts.level1 = id.slice(0, 3)

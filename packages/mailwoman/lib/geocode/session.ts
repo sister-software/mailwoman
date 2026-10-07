@@ -464,8 +464,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			: await loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
 
 	const capitalLevel = capitals
-		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
-				capitals.levelOfPlace(place.name, place.country ?? null, place.lat, place.lon)
+		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
+				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)

@@ -243,8 +243,8 @@ export async function oaResolverEval(
 					reg: ns.regMatch,
 					resolved: ns.resolved,
 					err: ns.err,
-					...(ns.resolvedLoc === undefined ? {} : { resolvedLoc: ns.resolvedLoc }),
-					...(ns.resolvedReg === undefined ? {} : { resolvedReg: ns.resolvedReg }),
+					resolvedLoc: ns.resolvedLoc,
+					resolvedReg: ns.resolvedReg,
 				},
 			})
 		}

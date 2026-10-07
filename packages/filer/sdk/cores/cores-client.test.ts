@@ -40,6 +40,7 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 			contactAddress: "6050 Knology Way Attn: Regulatory Columbus, GA 31909-4962 United States",
 			contactEmail: "adrianna.maciejewska@wowinc.com",
 			contactPhone: "(860) 543-4996",
+			contactFax: null,
 			registrationDate: "06/24/2000 06:26:56 PM",
 			lastUpdated: "04/27/2026 06:34:17 AM",
 		})
@@ -53,11 +54,11 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 		expect(registration?.entityName).not.toBe(registration?.contactOrganization)
 	})
 
-	it("omits a field CORES left blank rather than emitting an empty string", async () => {
+	it("reports a field CORES left blank as null rather than an empty string", async () => {
 		const registration = parseCORESRegistration(KNOLOGY_FRN, await fixture("frn-0001753557-knology-wow.html"))
 
 		// The fixture has a fax row with an empty cell.
-		expect(registration).not.toHaveProperty("contactFax")
+		expect(registration).toHaveProperty("contactFax", null)
 	})
 
 	it("reads the `ContactPhone:` label, which the page ships without its space", async () => {

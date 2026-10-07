@@ -86,7 +86,7 @@ export interface SourcedIssue {
 	/**
 	 * For a duplicate identifier, the file that used the identifier first.
 	 */
-	otherFile?: string
+	otherFile: string | null
 }
 
 /**
@@ -151,7 +151,7 @@ interface MergeState {
 }
 
 function sourced(file: string, issues: readonly ValidationIssue[]): SourcedIssue[] {
-	return issues.map((issue) => ({ file, path: issue.path, code: issue.code, message: issue.message }))
+	return issues.map((issue) => ({ file, path: issue.path, code: issue.code, message: issue.message, otherFile: null }))
 }
 
 /**
@@ -169,6 +169,7 @@ function readSourceJSON(file: GeographicModelSourceFile, issues: SourcedIssue[])
 			path: "$",
 			code: LoadIssueCode.MalformedJSON,
 			message: error instanceof Error ? error.message : String(error),
+			otherFile: null,
 		})
 
 		return undefined
@@ -279,14 +280,14 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 	const claimant =
 		issue.code === ValidationIssueCode.DuplicateID && origin?.id
 			? state.firstClaims.get(origin.table)?.get(origin.id)
-			: undefined
+			: null
 
 	return {
 		file,
 		path: issue.path,
 		code: issue.code,
 		message: issue.message,
-		...(claimant ? { otherFile: claimant } : {}),
+		otherFile: claimant ?? null,
 	}
 }
 
@@ -315,6 +316,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 			path: "$",
 			code: LoadIssueCode.MissingField,
 			message: `a model directory carries \`${MODEL_MANIFEST_FILENAME}\`, holding the document's \`version\``,
+			otherFile: null,
 		})
 	}
 

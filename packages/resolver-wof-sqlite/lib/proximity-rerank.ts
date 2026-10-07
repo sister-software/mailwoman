@@ -74,7 +74,7 @@ export interface ProximityRerankable {
 	lat: number
 	lon: number
 	score: number
-	prominence?: number
+	prominence?: number | null
 }
 
 /**

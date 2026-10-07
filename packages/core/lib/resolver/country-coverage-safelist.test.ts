@@ -14,6 +14,8 @@ import { hardCountrySafelistFromCoverage, type CountryCoverageFact } from "#reso
 const FACT = (country: string, hardFilterSafe: boolean): CountryCoverageFact => ({
 	country,
 	hardFilterSafe,
+	hardResolveRate: null,
+	sampleSize: null,
 	measuredAt: "2026-01-01",
 	source: "unit fixture",
 })

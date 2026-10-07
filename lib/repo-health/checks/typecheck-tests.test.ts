@@ -69,7 +69,9 @@ describe("typecheckTestsCheck", () => {
 		mocks.run.mockRejectedValue(Object.assign(new Error("exit 2"), { code: 2, stdout: "", stderr: line }))
 		const { typecheckTestsCheck } = await import("#repo-health/checks/typecheck-tests")
 
-		expect(await typecheckTestsCheck.run(context)).toEqual([{ severity: "error", message: line, file: "packages/a" }])
+		expect(await typecheckTestsCheck.run(context)).toEqual([
+			{ severity: "error", message: line, file: "packages/a", line: null, details: null },
+		])
 	})
 
 	it("reports nonzero exits without TypeScript diagnostics and preserves stderr", async () => {

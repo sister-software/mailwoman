@@ -8,7 +8,7 @@ import { describe, expect, test } from "vitest"
 
 import type { LayerReading } from "#coverage"
 import { buildDossier } from "#dossier"
-import { CommercialEventKind } from "#events"
+import { CommercialEventKind, type ConstructionWindow } from "#events"
 import {
 	type AvailabilityCheck,
 	type CheckResult,
@@ -42,6 +42,8 @@ const STUDY: SourceRecord = {
 	title: "Exception outcome study",
 	observedAt: "2022-01-10",
 	availableAt: "2022-01-15",
+	url: null,
+	retrievedAt: null,
 }
 
 const LATER_SURVEY: SourceRecord = {
@@ -50,6 +52,8 @@ const LATER_SURVEY: SourceRecord = {
 	title: "Fiber survey",
 	observedAt: "2023-03-15",
 	availableAt: "2023-03-20",
+	url: null,
+	retrievedAt: null,
 }
 
 const DECISION_LOG: SourceRecord = {
@@ -58,6 +62,8 @@ const DECISION_LOG: SourceRecord = {
 	title: "Investigation log, June",
 	observedAt: "2022-06-01",
 	availableAt: "2022-06-05",
+	url: null,
+	retrievedAt: null,
 }
 
 const OUTCOME_LOG: SourceRecord = {
@@ -66,6 +72,8 @@ const OUTCOME_LOG: SourceRecord = {
 	title: "Investigation log, July",
 	observedAt: "2022-07-08",
 	availableAt: "2022-07-10",
+	url: null,
+	retrievedAt: null,
 }
 
 const ALL_KINDS: readonly ExplanationKind[] = ["identity", "access", "capacity", "installation", "route"]
@@ -83,7 +91,8 @@ function fiberReading(overrides: Partial<LayerReading> = {}): LayerReading {
 		basis: "source_present",
 		surveyedAt: "2022-03-15",
 		records: 0,
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+		subject: null,
 		...overrides,
 	}
 }
@@ -93,14 +102,28 @@ function fiberReading(overrides: Partial<LayerReading> = {}): LayerReading {
  */
 const NEARBY = fiberReading({ extent: "district-9", records: 4 })
 
-const OPEN_WINDOW = { subject: HOUSE, start: "2021-06-01", stage: "permit issued", evidence: { source: "permit-2021" } }
+const OPEN_WINDOW: ConstructionWindow = {
+	subject: HOUSE,
+	start: "2021-06-01",
+	end: null,
+	stage: "permit issued",
+	evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+}
 
 /**
  * The survey's statements that Example House lies in cell-9 and in district-9.
  */
 const HOUSE_MEMBERSHIPS = [
-	{ subject: HOUSE, extent: "cell-9", evidence: { source: "survey-2022" } },
-	{ subject: HOUSE, extent: "district-9", evidence: { source: "survey-2022" } },
+	{
+		subject: HOUSE,
+		extent: "cell-9",
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+	},
+	{
+		subject: HOUSE,
+		extent: "district-9",
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+	},
 ]
 
 /**
@@ -136,7 +159,7 @@ function explanationOf(result: CheckResult, kind: ExplanationKind): Explanation 
 }
 
 function fact(text: string, sources: readonly string[]): Statement {
-	return { kind: StatementKind.Fact, text, sources }
+	return { kind: StatementKind.Fact, text, sources, absence: false }
 }
 
 function probability(kind: ExplanationKind, value: number): ExplanationProbability {
@@ -145,7 +168,7 @@ function probability(kind: ExplanationKind, value: number): ExplanationProbabili
 		kind,
 		probability: value,
 		basis: `held in ${value * 10} of 10 comparable exceptions`,
-		evidence: { source: STUDY.id },
+		evidence: { source: STUDY.id, observedAt: null, validFrom: null, validTo: null },
 	}
 }
 
@@ -173,9 +196,10 @@ describe("explainCheck: identity, access, capacity, installation and route", () 
 					{
 						text: "Example House",
 						candidates: [
-							{ entity: HOUSE, evidence: { source: "survey-2022" } },
-							{ entity: ANNEX, evidence: { source: "permit-2021" } },
+							{ entity: HOUSE, evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null } },
+							{ entity: ANNEX, evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null } },
 						],
+						address: null,
 					},
 				],
 			})
@@ -189,6 +213,7 @@ describe("explainCheck: identity, access, capacity, installation and route", () 
 			kind: "hypothesis",
 			text: "Example House may not be among the premises the fiber source keys at cell-9.",
 			sources: [],
+			absence: false,
 		})
 
 		expect(identity.supporting).toEqual([
@@ -213,7 +238,7 @@ describe("explainCheck: identity, access, capacity, installation and route", () 
 						parties: [{ name: "Example Management Co", role: "manager" }],
 						scope: [NORTH],
 						date: "2022-05-10",
-						evidence: { source: "survey-2022" },
+						evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 			})
@@ -239,7 +264,7 @@ describe("explainCheck: identity, access, capacity, installation and route", () 
 						parties: [{ name: "Example Management Co", role: "manager" }],
 						scope: [NORTH],
 						date: "2022-03-01",
-						evidence: { source: "survey-2022" },
+						evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 			})
@@ -265,7 +290,7 @@ describe("explainCheck: identity, access, capacity, installation and route", () 
 						kind: ExplanationKind.Capacity,
 						applies: true,
 						statement: "Cabinet C-9 has no spare ports.",
-						evidence: { source: "survey-2022" },
+						evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 			})
@@ -391,7 +416,7 @@ describe("explainCheck: supporting, conflicting and missing records, and the inv
 						kind: ExplanationKind.Capacity,
 						applies: true,
 						statement: "Cabinet C-9 has no spare ports",
-						evidence: { source: "survey-2022" },
+						evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 					},
 					{
 						id: "b2",
@@ -399,7 +424,7 @@ describe("explainCheck: supporting, conflicting and missing records, and the inv
 						kind: ExplanationKind.Capacity,
 						applies: false,
 						statement: "Port 12 at cabinet C-9 is reserved for Example House",
-						evidence: { source: "inspection-2022" },
+						evidence: { source: "inspection-2022", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 			})
@@ -447,6 +472,7 @@ describe("explainCheck: the absence rule", () => {
 			kind: "deduction",
 			text: "A reading on a surveyed basis that holds no record supports exclusion, so the absence of fiber service at cell-9 on 2022-03-15 is established for the surveyed extent.",
 			sources: ["survey-2022"],
+			absence: false,
 		}
 
 		expect(result.status).toBe("surveyed_empty")
@@ -463,6 +489,7 @@ describe("explainCheck: the absence rule", () => {
 			kind: "deduction",
 			text: "A reading on a source_present basis that holds no record does not support exclusion, so the absence of fiber service at cell-9 on 2022-03-15 is unknown.",
 			sources: ["survey-2022"],
+			absence: false,
 		})
 
 		expect(result.exception!.unsupported).toContain("route")
@@ -502,6 +529,7 @@ describe("explainCheck: membership at the source's key", () => {
 				kind: "deduction",
 				text: "The fiber reading over cell-9 on 2022-03-15 holds records, so the check passes.",
 				sources: ["survey-2022"],
+				absence: false,
 			},
 		])
 	})
@@ -539,7 +567,11 @@ describe("explainCheck: a later reading that resolves the exception", () => {
 		readings: [
 			fiberReading(),
 			NEARBY,
-			fiberReading({ surveyedAt: "2023-03-15", records: 5, evidence: { source: "survey-2023" } }),
+			fiberReading({
+				surveyedAt: "2023-03-15",
+				records: 5,
+				evidence: { source: "survey-2023", observedAt: null, validFrom: null, validTo: null },
+			}),
 		],
 		windows: [OPEN_WINDOW],
 	})
@@ -556,6 +588,7 @@ describe("explainCheck: a later reading that resolves the exception", () => {
 				kind: "deduction",
 				text: "The fiber readings over cell-9 from 2023-03-15 hold records, so the check passes from 2023-03-15 and resolves the exception recorded on 2022-03-15. A reading dated 2023-03-15 does not establish whether any explanation held on 2022-03-15.",
 				sources: ["survey-2023"],
+				absence: false,
 			},
 		])
 	})
@@ -582,7 +615,8 @@ describe("explainCheck: statement kinds", () => {
 					investigated: ExplanationKind.Installation,
 					decision: "Request the certificate of occupancy",
 					decidedAt: "2022-06-01",
-					evidence: { source: DECISION_LOG.id },
+					evidence: { source: DECISION_LOG.id, observedAt: null, validFrom: null, validTo: null },
+					outcome: null,
 				},
 			],
 		})
@@ -634,6 +668,7 @@ describe("explainCheck: statement kinds", () => {
 				kind: "estimate",
 				text: "The probability that the installation explanation holds is 0.3 (held in 3 of 10 comparable exceptions).",
 				sources: ["outcome-study-2022"],
+				absence: false,
 			},
 		])
 	})
@@ -720,13 +755,13 @@ describe("explainCheck: decisions and outcomes", () => {
 				investigated: ExplanationKind.Installation,
 				decision: "Request the certificate of occupancy.",
 				decidedAt: "2022-06-01",
-				evidence: { source: DECISION_LOG.id },
+				evidence: { source: DECISION_LOG.id, observedAt: null, validFrom: null, validTo: null },
 				outcome: {
 					held: false,
 					at: "2022-07-08",
 					minutesSpent: 45,
 					baselineMinutes: 120,
-					evidence: { source: OUTCOME_LOG.id },
+					evidence: { source: OUTCOME_LOG.id, observedAt: null, validFrom: null, validTo: null },
 				},
 			},
 		],
@@ -736,6 +771,7 @@ describe("explainCheck: decisions and outcomes", () => {
 		kind: "decision",
 		text: 'On 2022-06-01 the operator decided to investigate installation: "Request the certificate of occupancy".',
 		sources: [DECISION_LOG.id],
+		absence: false,
 	}
 
 	test("a disposition is a decision, and its outcome waits for the outcome's own record", () => {
@@ -771,6 +807,7 @@ describe("one park point, the fiber check at its census block", () => {
 					kind: "deduction",
 					text: "A reading on a source_present basis that holds no record does not support exclusion, so the absence of fcc-bdc-fttp service at census-block:360470504012000 on 2022-06-30 is unknown.",
 					sources: ["fcc-bdc-fttp-j22"],
+					absence: false,
 				},
 			])
 
@@ -852,6 +889,7 @@ describe("one park point, the fiber check at its census block", () => {
 					kind: "deduction",
 					text: "The fcc-bdc-fttp readings over census-block:360470504012000 from 2025-12-31 hold records, so the check passes from 2025-12-31 and resolves the exception recorded on 2022-06-30. A reading dated 2025-12-31 does not establish whether any explanation held on 2022-06-30.",
 					sources: ["fcc-bdc-fttp-d25"],
+					absence: false,
 				},
 			])
 

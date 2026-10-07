@@ -12,7 +12,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import type { ResolvedPlace } from "@mailwoman/core/resolver"
+import { EMPTY_PLACE_FIELDS, type ResolvedPlace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
@@ -28,6 +28,7 @@ const node = (over: Partial<AddressNode> = {}): AddressNode => ({
 })
 
 const place = (over: Partial<ResolvedPlace> = {}): ResolvedPlace => ({
+	...EMPTY_PLACE_FIELDS,
 	id: 538_966_645,
 	name: "51349",
 	placetype: "postalcode",

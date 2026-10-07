@@ -92,7 +92,7 @@ export interface ArmRowResult {
 	 * A row carrying an error is a harness failure and is excluded from every metric
 	 * with its count reported, never folded into abstention.
 	 */
-	error?: string
+	error: string | null
 }
 
 /**
@@ -242,6 +242,7 @@ export async function runResolverArm(
 			confidence: picked ? traceMargin(picked) : 0,
 			mechanism: resolverMechanism(traces, picked),
 			evidence,
+			error: null,
 		}
 	} catch (error) {
 		return {
@@ -282,5 +283,6 @@ export function runBaselineArm(panel: SameDataPanelRow, row: SameDataFixtureRow)
 				? `exact:${selected.components.exact} country:${selected.components.countryQualifier} region:${selected.components.regionQualifier} similarity:${selected.components.similarity.toFixed(4)}`
 				: null,
 		evidence,
+		error: null,
 	}
 }

@@ -80,6 +80,7 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 					source: "neural",
 					source_id: cfg.id,
 					penalty,
+					metadata: null,
 				})
 			}
 

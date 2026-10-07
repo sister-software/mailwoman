@@ -42,7 +42,7 @@ export interface LayerManifest {
 	schemaVersion: number
 	tier: LayerTier
 	license: string
-	attribution?: string
+	attribution: string | null
 	source: string
 	sourceVintage: string
 	buildCmd: string
@@ -59,12 +59,12 @@ export interface LayerManifest {
 	 * Overture removes a release from its bucket once a newer one lands.
 	 * A build that filtered its input leaves no way to count what the input held.
 	 *
-	 * Absent means the build did not record it.
+	 * `null` means the build did not record it.
 	 * Every artifact built before this field has that state.
 	 *
 	 * A reader distinguishes that from a recorded zero and never reports the two the same way.
 	 */
-	sourceRecords?: Readonly<Record<string, number>>
+	sourceRecords: Readonly<Record<string, number>> | null
 }
 
 export interface CoverageCell {
@@ -184,7 +184,7 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
 		schemaVersion: Number(row.schema_version),
 		tier: String(row.tier) as LayerTier,
 		license: String(row.license),
-		...(row.attribution === null || row.attribution === undefined ? {} : { attribution: String(row.attribution) }),
+		attribution: row.attribution == null ? null : String(row.attribution),
 		source: String(row.source),
 		sourceVintage: String(row.source_vintage),
 		buildCmd: String(row.build_cmd),
@@ -192,6 +192,8 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
 		freshnessPolicy: String(row.freshness_policy) as LayerFreshnessPolicy,
 		spineKeys: parseJSONStrict<SpineKeys>(String(row.spine_keys)),
 		createdAt: String(row.created_at),
+		sourceRecords:
+			row.source_records == null ? null : parseJSONStrict<Record<string, number>>(String(row.source_records)),
 	}
 
 	assertManifestInvariants(manifest)
@@ -307,6 +309,7 @@ export function polygonLayerManifest(
 			h3: { column: product.cellColumn, resolution: options.indexResolution },
 		},
 		createdAt: options.createdAt,
+		sourceRecords: null,
 	}
 }
 
@@ -324,7 +327,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 			schema_version: manifest.schemaVersion,
 			tier: manifest.tier,
 			license: manifest.license,
-			attribution: manifest.attribution ?? null,
+			attribution: manifest.attribution,
 			source: manifest.source,
 			source_vintage: manifest.sourceVintage,
 			build_cmd: manifest.buildCmd,
@@ -332,7 +335,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 			freshness_policy: manifest.freshnessPolicy,
 			spine_keys: stringifyJSON(manifest.spineKeys),
 			created_at: manifest.createdAt,
-			source_records: manifest.sourceRecords === undefined ? null : stringifyJSON(manifest.sourceRecords),
+			source_records: manifest.sourceRecords === null ? null : stringifyJSON(manifest.sourceRecords),
 		})
 		.execute()
 }
@@ -355,7 +358,7 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		schemaVersion: row.schema_version,
 		tier: row.tier as LayerTier,
 		license: row.license,
-		...(row.attribution === null ? {} : { attribution: row.attribution }),
+		attribution: row.attribution,
 		source: row.source,
 		sourceVintage: row.source_vintage,
 		buildCmd: row.build_cmd,
@@ -364,11 +367,8 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		spineKeys: parseJSONStrict<SpineKeys>(row.spine_keys),
 		createdAt: row.created_at,
 		// NULL and a missing column both mean the build recorded no count.
-		// The key stays absent for either.
 		// An empty object would make the build appear to have counted its publishers and found none.
-		...(row.source_records === null || row.source_records === undefined
-			? {}
-			: { sourceRecords: parseJSONStrict<Record<string, number>>(row.source_records) }),
+		sourceRecords: row.source_records == null ? null : parseJSONStrict<Record<string, number>>(row.source_records),
 	}
 
 	assertManifestInvariants(manifest)

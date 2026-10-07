@@ -27,7 +27,7 @@ export interface ParsedAddressResult {
 	input: string
 	components: ParseComponent[]
 	tree: AddressTree
-	debug?: string
+	debug: string | null
 }
 
 export interface BatchResultFailure {

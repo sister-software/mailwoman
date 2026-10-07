@@ -67,6 +67,10 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		outcomeComparator: "component_map",
 		expect: "equivalent",
 		rowRef: "cases/de/regression.jsonl#de-r9-nippes-koeln",
+		status: null,
+		bugRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -326,11 +330,11 @@ describe("auditPunctuationSuite", () => {
 	})
 
 	it("rejects a row with no country — an unrouted row grades against a locale that is not its own", () => {
-		expect(auditPunctuationSuite([fixture({ context: undefined })])[0]).toContain("no context.caseCountry")
+		expect(auditPunctuationSuite([fixture({ context: null })])[0]).toContain("no context.caseCountry")
 	})
 
 	it("rejects a row with no committed source", () => {
-		expect(auditPunctuationSuite([fixture({ rowRef: undefined })])[0]).toContain("no rowRef")
+		expect(auditPunctuationSuite([fixture({ rowRef: null })])[0]).toContain("no rowRef")
 	})
 
 	it("rejects a relation other than equivalent", () => {
@@ -378,6 +382,9 @@ describe("a seeded punctuation regression", () => {
 				dependent_locality: commaless ? null : "Nippes",
 				unit: null,
 				postcode_country_scope: null,
+				capital_promotion: null,
+				variant_alias_exemption: null,
+				admin_coherence: null,
 				hierarchy: [],
 			},
 		} satisfies ConformanceOutcome

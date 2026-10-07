@@ -57,7 +57,7 @@ export interface WeightsRecipe {
 	locales: string[]
 	model: string
 	tokenizer: string
-	lineage?: string
+	lineage: string | null
 	softFeed: SoftFeedRecipe
 	/**
 	 * Files this recipe names for a locale.
@@ -167,7 +167,7 @@ export async function readWeightsRecipe(
 		locales: config.locales,
 		model,
 		tokenizer,
-		...(config.weights.lineage ? { lineage: config.weights.lineage } : {}),
+		lineage: config.weights.lineage || null,
 		softFeed,
 		linkableFor,
 		buildableFor,

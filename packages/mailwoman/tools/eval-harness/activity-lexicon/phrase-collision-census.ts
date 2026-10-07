@@ -189,7 +189,7 @@ export interface PhraseCollisionCensus {
 	censusID: "activity-phrase-collision-census"
 	generatedAt: string
 	lexicon: { lexiconID: string; version: string; declaredPhrases: number }
-	poiDatabase: { path: string; layerManifest?: LayerManifest; layerManifestNote?: string }
+	poiDatabase: { path: string; layerManifest: LayerManifest | null; layerManifestNote: string | null }
 	probes: {
 		distinct: number
 		byFamily: Record<ProbeFamily, number>
@@ -481,8 +481,8 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 		},
 		poiDatabase: {
 			path: options.databasePath.toString(),
-			...(manifest ? { layerManifest: manifest } : {}),
-			...(manifest ? {} : { layerManifestNote: error ?? "no layer_manifest row" }),
+			layerManifest: manifest ?? null,
+			layerManifestNote: manifest ? null : (error ?? "no layer_manifest row"),
 		},
 		probes: {
 			distinct: probes.length,

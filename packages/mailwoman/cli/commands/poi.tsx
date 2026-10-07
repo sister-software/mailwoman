@@ -177,7 +177,7 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 			[
 				(r.name ?? "(unnamed)").slice(0, 30).padEnd(31),
 				(r.categoryID ?? "-").slice(0, 18).padEnd(20),
-				(r.distanceM !== undefined ? String(Math.round(r.distanceM)) : "-").padStart(10),
+				(r.distanceM != null ? String(Math.round(r.distanceM)) : "-").padStart(10),
 				r.latitude.toFixed(6).padStart(12),
 				r.longitude.toFixed(6).padStart(12),
 			].join("  ") + formatAncestrySuffix(r.ancestry)

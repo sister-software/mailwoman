@@ -25,7 +25,10 @@ class FakeRunner implements NeuralRunner {
 		return {
 			logits: this.#canned,
 			numLabels: this.#canned[0]?.length ?? 0,
-			...(this.#localeLogits ? { localeLogits: this.#localeLogits } : {}),
+			localeLogits: this.#localeLogits ?? null,
+			addressSystemLogits: null,
+			spanScores: null,
+			maxSpan: null,
 		}
 	}
 }
@@ -100,7 +103,13 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const bare = await classifier.traceParse(text)
 		const queryShapePrior = bare.priors.find((p) => p.kind === "queryShape")
 
-		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
+		expect(queryShapePrior).toEqual({
+			kind: "queryShape",
+			applied: false,
+			probePath: null,
+			census: null,
+			censusProbedParents: null,
+		})
 
 		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
 	})
@@ -133,6 +142,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			kind: "placetypePair",
 			applied: true,
 			probePath: "segment",
+			census: null,
+			censusProbedParents: null,
 		})
 
 		const bareText = "Moelfre Abergele"
@@ -152,6 +163,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			kind: "placetypePair",
 			applied: true,
 			probePath: "anchored",
+			census: null,
+			censusProbedParents: null,
 		})
 
 		const inertTrace = await bareClassifier.traceParse(bareText, { spanProposer: false })
@@ -159,6 +172,9 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(inertTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: false,
+			probePath: null,
+			census: null,
+			censusProbedParents: null,
 		})
 	})
 
@@ -175,7 +191,14 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const traced = await classifier.traceParse(text, { queryShape: shape, spanProposer: false })
 
-		expect(traced.priors.find((p) => p.kind === "queryShape")).toEqual({ kind: "queryShape", applied: true })
+		expect(traced.priors.find((p) => p.kind === "queryShape")).toEqual({
+			kind: "queryShape",
+			applied: true,
+			probePath: null,
+			census: null,
+			censusProbedParents: null,
+		})
+
 		expect(traced.emissions).not.toEqual(traced.logits)
 	})
 

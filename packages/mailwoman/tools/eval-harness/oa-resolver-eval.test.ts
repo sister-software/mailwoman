@@ -84,8 +84,24 @@ describe("collectResolved", () => {
 		})
 
 		expect(collectResolved(tree(locality))).toEqual<Resolved[]>([
-			{ id: 85_921_881, name: "Oakland", value: "Oakland", placetype: "locality", lat: 37.8, lon: -122.2 },
-			{ id: 85_688_637, name: "California", value: "California", placetype: "region", lat: 37, lon: -120 },
+			{
+				id: 85_921_881,
+				name: "Oakland",
+				value: "Oakland",
+				placetype: "locality",
+				country: null,
+				lat: 37.8,
+				lon: -122.2,
+			},
+			{
+				id: 85_688_637,
+				name: "California",
+				value: "California",
+				placetype: "region",
+				country: null,
+				lat: 37,
+				lon: -120,
+			},
 		])
 	})
 
@@ -117,8 +133,16 @@ describe("collectResolved", () => {
 		})
 
 		expect(collectResolved(tree(berlin))).toEqual<Resolved[]>([
-			{ id: 85_682_571, name: "Berlin", value: "Berlin", placetype: "region", lat: 52.5, lon: 13.4 },
-			{ id: 101_748_283, name: "Berlin", value: "Berlin", placetype: "locality", lat: 52.51, lon: 13.41 },
+			{ id: 85_682_571, name: "Berlin", value: "Berlin", placetype: "region", country: null, lat: 52.5, lon: 13.4 },
+			{
+				id: 101_748_283,
+				name: "Berlin",
+				value: "Berlin",
+				placetype: "locality",
+				country: null,
+				lat: 52.51,
+				lon: 13.41,
+			},
 		])
 	})
 
@@ -130,9 +154,35 @@ describe("collectResolved", () => {
 })
 
 describe("mostSpecific", () => {
-	const region: Resolved = { id: 1, name: "California", value: "CA", placetype: "region", lat: 37, lon: -120 }
-	const county: Resolved = { id: 2, name: "Alameda", value: "Alameda", placetype: "county", lat: 37.6, lon: -122 }
-	const locality: Resolved = { id: 3, name: "Oakland", value: "Oakland", placetype: "locality", lat: 37.8, lon: -122.2 }
+	const region: Resolved = {
+		id: 1,
+		name: "California",
+		value: "CA",
+		placetype: "region",
+		country: null,
+		lat: 37,
+		lon: -120,
+	}
+
+	const county: Resolved = {
+		id: 2,
+		name: "Alameda",
+		value: "Alameda",
+		placetype: "county",
+		country: null,
+		lat: 37.6,
+		lon: -122,
+	}
+
+	const locality: Resolved = {
+		id: 3,
+		name: "Oakland",
+		value: "Oakland",
+		placetype: "locality",
+		country: null,
+		lat: 37.8,
+		lon: -122.2,
+	}
 
 	it("picks the finest placetype regardless of input order", () => {
 		expect(mostSpecific([region, locality, county])).toBe(locality)
@@ -144,14 +194,30 @@ describe("mostSpecific", () => {
 	})
 
 	it("keeps a ranked placetype over an unranked one", () => {
-		const unranked: Resolved = { id: 4, name: "???", value: "???", placetype: "not_a_placetype", lat: 0, lon: 0 }
+		const unranked: Resolved = {
+			id: 4,
+			name: "???",
+			value: "???",
+			placetype: "not_a_placetype",
+			country: null,
+			lat: 0,
+			lon: 0,
+		}
 
 		expect(mostSpecific([unranked, region])).toBe(region)
 		expect(mostSpecific([region, unranked])).toBe(region)
 	})
 
 	it("returns an unranked place only when nothing else resolved", () => {
-		const unranked: Resolved = { id: 4, name: "???", value: "???", placetype: "not_a_placetype", lat: 0, lon: 0 }
+		const unranked: Resolved = {
+			id: 4,
+			name: "???",
+			value: "???",
+			placetype: "not_a_placetype",
+			country: null,
+			lat: 0,
+			lon: 0,
+		}
 
 		expect(mostSpecific([unranked])).toBe(unranked)
 	})
@@ -163,6 +229,7 @@ describe("mostSpecific", () => {
 		name: "62701",
 		value: "62701",
 		placetype: "postalcode",
+		country: null,
 		lat: 39.8,
 		lon: -89.6,
 	}
@@ -172,6 +239,7 @@ describe("mostSpecific", () => {
 		name: "n70bt",
 		value: "N7 0BT",
 		placetype: "postalcode",
+		country: null,
 		lat: 51.55,
 		lon: -0.13,
 	}

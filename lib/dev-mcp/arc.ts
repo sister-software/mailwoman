@@ -38,7 +38,7 @@ export interface ArcLeg {
 	regressedInputs: string[]
 
 	improvedInputs: string[]
-	runID?: string
+	runID: string | null
 }
 
 /**
@@ -46,16 +46,16 @@ export interface ArcLeg {
  */
 export interface ArcResult {
 	shape: RunShape
-	control?: ArcLeg
-	null?: ArcLeg
+	control: ArcLeg | null
+	null: ArcLeg | null
 	candidate: ArcLeg
 
 	/**
 	 * The candidate's regressions minus the null leg's.
-	 * It is absent when no null leg ran.
+	 * It is `null` when no null leg ran.
 	 */
-	attributableRegressions?: number
-	attributableNet?: number
+	attributableRegressions: number | null
+	attributableNet: number | null
 
 	/**
 	 * False when the self-control leg disagreed with itself.
@@ -96,7 +96,7 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 		regressedByCountry: byCountry,
 		regressedInputs: regressedRows.map((row) => row.input),
 		improvedInputs: improvedRows.map((row) => row.input),
-		...(typeof result["run_id"] === "string" ? { runID: result["run_id"] } : {}),
+		runID: typeof result["run_id"] === "string" ? result["run_id"] : null,
 	}
 }
 
@@ -180,8 +180,8 @@ export function decideArc(
 		}))
 		.filter((entry) => entry.n > 0)
 
-	const attributableRegressions = nullLeg ? candidate.regressed - nullLeg.regressed : undefined
-	const attributableNet = nullLeg ? candidate.net - nullLeg.net : undefined
+	const attributableRegressions = nullLeg ? candidate.regressed - nullLeg.regressed : null
+	const attributableNet = nullLeg ? candidate.net - nullLeg.net : null
 
 	if (dRuleViolations.length) {
 		reasons.push(
@@ -192,7 +192,7 @@ export function decideArc(
 		)
 	}
 
-	if (attributableNet !== undefined && attributableNet <= 0) {
+	if (attributableNet !== null && attributableNet <= 0) {
 		reasons.push(
 			`Attributable net is ${attributableNet} (candidate ${candidate.net} minus null ${nullLeg?.net}). The change ` +
 				"has not bought back the cost of the fine-tune it rode in on."
@@ -207,11 +207,11 @@ export function decideArc(
 
 	return {
 		shape,
-		...(control ? { control } : {}),
-		...(nullLeg ? { null: nullLeg } : {}),
+		control,
+		null: nullLeg,
 		candidate,
-		...(attributableRegressions === undefined ? {} : { attributableRegressions }),
-		...(attributableNet === undefined ? {} : { attributableNet }),
+		attributableRegressions,
+		attributableNet,
 		attributable,
 		dRuleViolations,
 		verdict,
@@ -253,7 +253,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
  */
 export function summarizeArc(arc: ArcResult): string {
 	const attribution =
-		arc.attributableNet === undefined
+		arc.attributableNet === null
 			? arc.shape === "from-scratch"
 				? ", which is already the attributable number — a from-scratch run inherits no base. "
 				: ", with no null leg to attribute it against — treat as an upper bound. "
@@ -288,7 +288,7 @@ export function renderArc(arc: ArcResult): string {
 		)
 	}
 
-	if (arc.attributableNet !== undefined) {
+	if (arc.attributableNet !== null) {
 		lines.push(
 			"",
 			`attributable to the CHANGE: net ${arc.attributableNet}, regressions ${arc.attributableRegressions} ` +

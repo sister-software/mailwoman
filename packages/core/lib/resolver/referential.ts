@@ -81,8 +81,8 @@ export function referentialFromPopulation(population: number | null | undefined)
  * That position matches the existing order for a candidate with no population.
  */
 export interface ReferentiallyRankable {
-	referential?: number
-	population?: number
+	referential?: number | null
+	population?: number | null
 }
 
 /**

@@ -1,5 +1,6 @@
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -12,6 +13,7 @@ import {
 import { createWOFResolver } from "#resolve"
 
 const PC_75001_FR: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 421_307_175,
 	name: "75001",
 	placetype: "postalcode",
@@ -23,6 +25,7 @@ const PC_75001_FR: ResolvedPlace = {
 }
 
 const PC_75001_US: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 554_744_141,
 	name: "75001",
 	placetype: "postalcode",
@@ -34,6 +37,7 @@ const PC_75001_US: ResolvedPlace = {
 }
 
 const PC_75001_DE: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 421_285_019,
 	name: "75001",
 	placetype: "postalcode",
@@ -45,6 +49,7 @@ const PC_75001_DE: ResolvedPlace = {
 }
 
 const PARIS_FR: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 1_159_322_569,
 	name: "Paris",
 	placetype: "locality",
@@ -57,6 +62,7 @@ const PARIS_FR: ResolvedPlace = {
 }
 
 const PARIS_TX: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 101_725_293,
 	name: "Paris",
 	placetype: "locality",
@@ -69,6 +75,7 @@ const PARIS_TX: ResolvedPlace = {
 }
 
 const PARIS_TN: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 101_722_715,
 	name: "Paris",
 	placetype: "locality",
@@ -81,6 +88,7 @@ const PARIS_TN: ResolvedPlace = {
 }
 
 const ADDISON_TX: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 101_725_671,
 	name: "Addison",
 	placetype: "locality",
@@ -93,6 +101,7 @@ const ADDISON_TX: ResolvedPlace = {
 }
 
 const PC_10115_DE: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_001,
 	name: "10115",
 	placetype: "postalcode",
@@ -104,6 +113,7 @@ const PC_10115_DE: ResolvedPlace = {
 }
 
 const PC_10115_US: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_002,
 	name: "10115",
 	placetype: "postalcode",
@@ -115,6 +125,7 @@ const PC_10115_US: ResolvedPlace = {
 }
 
 const BERLIN_DE: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 101_909_779,
 	name: "Berlin",
 	placetype: "locality",
@@ -127,6 +138,7 @@ const BERLIN_DE: ResolvedPlace = {
 }
 
 const BERLIN_NH: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_010,
 	name: "Berlin",
 	placetype: "locality",
@@ -139,6 +151,7 @@ const BERLIN_NH: ResolvedPlace = {
 }
 
 const PC_62701_US: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_020,
 	name: "62701",
 	placetype: "postalcode",
@@ -150,6 +163,7 @@ const PC_62701_US: ResolvedPlace = {
 }
 
 const SPRINGFIELD_IL: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 85_940_429,
 	name: "Springfield",
 	placetype: "locality",
@@ -162,6 +176,7 @@ const SPRINGFIELD_IL: ResolvedPlace = {
 }
 
 const PC_SW1A_GB: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_030,
 	name: "SW1A 1AA",
 	placetype: "postalcode",
@@ -173,6 +188,7 @@ const PC_SW1A_GB: ResolvedPlace = {
 }
 
 const LONDON_GB: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_031,
 	name: "London",
 	placetype: "locality",
@@ -185,6 +201,7 @@ const LONDON_GB: ResolvedPlace = {
 }
 
 const LONDON_OH: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_032,
 	name: "London",
 	placetype: "locality",
@@ -197,6 +214,7 @@ const LONDON_OH: ResolvedPlace = {
 }
 
 const PC_37901_CZ: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_100,
 	name: "37901",
 	placetype: "postalcode",
@@ -208,6 +226,7 @@ const PC_37901_CZ: ResolvedPlace = {
 }
 
 const PC_37901_US: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_101,
 	name: "37901",
 	placetype: "postalcode",
@@ -219,6 +238,7 @@ const PC_37901_US: ResolvedPlace = {
 }
 
 const TREBON_CZ: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_102,
 	name: "Třeboň",
 	placetype: "locality",
@@ -231,6 +251,7 @@ const TREBON_CZ: ResolvedPlace = {
 }
 
 const PC_13000_CZ: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_110,
 	name: "13000",
 	placetype: "postalcode",
@@ -242,6 +263,7 @@ const PC_13000_CZ: ResolvedPlace = {
 }
 
 const PC_6060_NL: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_120,
 	name: "6060",
 	placetype: "postalcode",
@@ -253,6 +275,7 @@ const PC_6060_NL: ResolvedPlace = {
 }
 
 const PC_6060_AT: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_121,
 	name: "6060",
 	placetype: "postalcode",
@@ -264,6 +287,7 @@ const PC_6060_AT: ResolvedPlace = {
 }
 
 const SARNEN_CH: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900_122,
 	name: "Sarnen",
 	placetype: "locality",
@@ -485,6 +509,7 @@ describe("findPostcodeCountryScope", () => {
 
 	it("proposes a country with no codex address system when the GAZETTEER holds the postcode there", async () => {
 		const plPostcode: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 8_000_048_250,
 			name: "75001",
 			placetype: "postalcode",
@@ -496,6 +521,7 @@ describe("findPostcodeCountryScope", () => {
 		}
 
 		const koszalin: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_040,
 			name: "Koszalin",
 			placetype: "locality",
@@ -567,8 +593,8 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 		expect(scope?.country).toBe("CH")
 		expect(scope?.evidence).toBe("locality")
 		expect(scope?.localityPlace?.id).toBe(SARNEN_CH.id)
-		expect(scope?.postcodePlace).toBeUndefined()
-		expect(scope?.distanceKm).toBeUndefined()
+		expect(scope?.postcodePlace).toBeNull()
+		expect(scope?.distanceKm).toBeNull()
 	})
 
 	it("Scopes on the POSTCODE alone when the locality is in no gazetteer (13000 / Praha 3 → CZ)", async () => {
@@ -586,6 +612,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 
 	it("abstains when the locality names more than one country (Charleroi BE/US)", async () => {
 		const charleroiBE: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_130,
 			name: "Charleroi",
 			placetype: "locality",
@@ -598,6 +625,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 		}
 
 		const charleroiUS: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_131,
 			name: "Charleroi",
 			placetype: "locality",
@@ -621,6 +649,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 
 	it("abstains when the DEFAULT country holds the locality (a domestic address whose ZIP is missing)", async () => {
 		const viennaUS: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_140,
 			name: "Vienna",
 			placetype: "locality",
@@ -633,6 +662,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 		}
 
 		const viennaAT: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_141,
 			name: "Vienna",
 			placetype: "locality",
@@ -656,6 +686,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 
 	it("abstains when the DEFAULT country holds the postcode (a domestic address whose city is unlisted)", async () => {
 		const zipUS: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_150,
 			name: "62701",
 			placetype: "postalcode",
@@ -678,6 +709,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 
 	it("never scopes to a country whose own postcode row CONTRADICTS the locality", async () => {
 		const pc6060CH: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_160,
 			name: "6060",
 			placetype: "postalcode",
@@ -713,6 +745,7 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 
 describe("findPostcodeCountryScope — multi-value locality fallthrough", () => {
 	const PC_28023_ES: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 900_200,
 		name: "28023",
 		placetype: "postalcode",
@@ -724,6 +757,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 	}
 
 	const PC_28023_US: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 900_201,
 		name: "28023",
 		placetype: "postalcode",
@@ -735,6 +769,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 	}
 
 	const MADRID_ES: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 900_202,
 		name: "Madrid",
 		placetype: "locality",
@@ -747,6 +782,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 	}
 
 	const MADRID_IA: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
 		id: 900_203,
 		name: "Madrid",
 		placetype: "locality",
@@ -785,6 +821,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 
 	it("A DOMESTIC value neutralizes itself, not its siblings — Green Point/Cape Town → ZA (rung 4a)", async () => {
 		const greenPointPA: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_220,
 			name: "Green Point",
 			placetype: "locality",
@@ -796,6 +833,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const greenPointAU: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_221,
 			name: "Green Point",
 			placetype: "locality",
@@ -808,6 +846,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const capeTownZA: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_222,
 			name: "Cape Town",
 			placetype: "locality",
@@ -820,6 +859,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const pc8001AU: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_223,
 			name: "8001",
 			placetype: "postalcode",
@@ -854,6 +894,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 
 	it("a TIE on a later value is a hard abstention, never a fall-through to the single-sided rungs", async () => {
 		const zzvNO: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_210,
 			name: "Zzv",
 			placetype: "locality",
@@ -866,6 +907,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const pc20000HR: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_211,
 			name: "20000",
 			placetype: "postalcode",
@@ -877,6 +919,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const pc20000RS: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_212,
 			name: "20000",
 			placetype: "postalcode",
@@ -888,6 +931,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const mirakolHR: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_213,
 			name: "Mirakol",
 			placetype: "locality",
@@ -900,6 +944,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		}
 
 		const mirakolRS: ResolvedPlace = {
+			...EMPTY_PLACE_FIELDS,
 			id: 900_214,
 			name: "Mirakol",
 			placetype: "locality",

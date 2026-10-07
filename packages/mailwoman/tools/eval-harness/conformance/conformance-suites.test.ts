@@ -62,8 +62,14 @@ describe("the conformance suite register", () => {
 			law: "no-such-law",
 			base: "Portland, OR",
 			variant: "Portland, OR",
+			context: null,
 			outcomeComparator: "resolution_identity",
 			expect: "equivalent",
+			status: null,
+			bugRef: null,
+			rowRef: null,
+			toleranceM: null,
+			note: null,
 		}
 
 		expect(suiteForLaw(unregistered.law)).toBeNull()

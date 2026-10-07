@@ -211,6 +211,8 @@ async function openemptyschemadb(): Promise<DatabaseClient<layerschemadatabase>>
 		freshnessPolicy: "sealed",
 		spineKeys: { h3: { column: "h3_cell", resolution: 6 } },
 		createdAt: "2026-07-30T00:00:00Z",
+		attribution: null,
+		sourceRecords: null,
 	})
 
 	return kdb

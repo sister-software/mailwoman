@@ -193,6 +193,7 @@ async function writeFixtureUPRNDatabase(dir: PathBuilder): Promise<PathBuilder> 
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: "2026-09-03T00:00:00.000Z",
+		sourceRecords: null,
 	})
 
 	await writeLayerCoverage(kdb, [{ h3Cell: 1, completeness: 1, basis: CoverageBasis.Designated, observedRows: 3 }])

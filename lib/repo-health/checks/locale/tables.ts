@@ -172,6 +172,7 @@ export const localeTablesCheck: RepoCheck = {
 						message: `${table.name} maps ${entry.country} to ${entry.locale}, whose region is ${region} — a table read by country key routes that country's rows through another country's artifact`,
 						file: table.file,
 						line: entry.line,
+						details: null,
 					})
 				}
 			}

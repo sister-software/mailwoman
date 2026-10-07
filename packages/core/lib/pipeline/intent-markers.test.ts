@@ -117,7 +117,7 @@ describe("the POI branch accepts poi_category", () => {
 
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),
-			classifyKind: kindStage({ kind: "poi_category", confidence: 0.93, alternatives: [] }),
+			classifyKind: kindStage({ kind: "poi_category", confidence: 0.93, alternatives: [], intentMarkers: null }),
 			poiIntent: async () => outcome,
 		}
 
@@ -130,7 +130,7 @@ describe("the POI branch accepts poi_category", () => {
 	test("and still falls through to the full pipeline on a null outcome, exactly as poi_query does", async () => {
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),
-			classifyKind: kindStage({ kind: "poi_category", confidence: 0.93, alternatives: [] }),
+			classifyKind: kindStage({ kind: "poi_category", confidence: 0.93, alternatives: [], intentMarkers: null }),
 			poiIntent: async () => null,
 		}
 

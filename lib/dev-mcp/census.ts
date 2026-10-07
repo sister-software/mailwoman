@@ -249,7 +249,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		n: aggregate.n,
 		selection: set.selection,
 		eventLabel: "were parsed with every present evidence channel silent",
-		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+		populationN: set.populationN,
 	})
 
 	const inertSentence = aggregate.inert.length

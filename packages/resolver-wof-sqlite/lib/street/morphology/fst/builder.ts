@@ -223,11 +223,12 @@ export async function buildStreetMorphologyFST(
 			// (Avenue is almost never anything but street-typing).
 			// The morphology prior caps bias separately.
 			// This value just feeds the cap formula `referential * cap`.
-			// No encyclopedic field — a street affix is not a place and has no article.
-			// Absence here is the correct statement.
+			// No encyclopedic score — a street affix is not a place and has no article.
 			referential: 1,
+			encyclopedic: null,
 			lat: 0,
 			lon: 0,
+			crossCountryBranches: null,
 		}
 
 		for (const variant of variants) {
@@ -260,7 +261,14 @@ export async function buildStreetMorphologyFST(
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: 0, // No importance scoring for morphology — fixed at 1.0.
+		encyclopedicMatches: null,
+		importanceSource: null,
 		sourceDB: dictionariesDir.toString(),
+		sourceDBMD5: null,
+		sourceDBBytes: null,
+		modelCardVersion: null,
+		exclusionPolicy: null,
+		excludedInsertions: null,
 	}
 
 	return {

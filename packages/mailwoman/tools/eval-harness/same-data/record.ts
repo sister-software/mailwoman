@@ -104,7 +104,7 @@ export interface RecordCensus {
 	 * The recorder writes the row.
 	 * The run receipt records the count.
 	 */
-	error?: string
+	error: string | null
 }
 
 export interface RecordInputs {
@@ -239,7 +239,7 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 			lookups: recorded.length,
 			candidates: recorded.reduce((total, lookup) => total + lookup.candidates.length, 0),
 			removedGold,
-			...(recordingError ? { error: recordingError } : {}),
+			error: recordingError || null,
 		})
 	}
 

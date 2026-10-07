@@ -20,7 +20,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const query = { street: "Main St", number: "100", postcode: "03301" }
+const query = { street: "Main St", number: "100", postcode: "03301", bbox: null }
 
 async function tablelessDBFile(): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("mw-empty-extract-")).path

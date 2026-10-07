@@ -40,5 +40,16 @@ export function featureFromTileProperties(
 
 	if (!parsed.success) return null
 
-	return { ...parsed.data, centerLon: center.longitude, centerLat: center.latitude }
+	const { featureTypeCode, diameterKm, origin, approvalStatus, approvalDate, ...required } = parsed.data
+
+	return {
+		...required,
+		featureTypeCode: featureTypeCode ?? null,
+		diameterKm: diameterKm ?? null,
+		origin: origin ?? null,
+		approvalStatus: approvalStatus ?? null,
+		approvalDate: approvalDate ?? null,
+		centerLon: center.longitude,
+		centerLat: center.latitude,
+	}
 }

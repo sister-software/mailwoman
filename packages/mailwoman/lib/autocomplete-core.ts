@@ -75,7 +75,7 @@ export async function runAutocomplete(
 		placetype: suggestion.placetype,
 		wofID: suggestion.wofID,
 		referential: suggestion.referential,
-		...(suggestion.encyclopedic === undefined ? {} : { encyclopedic: suggestion.encyclopedic }),
+		...(suggestion.encyclopedic === null ? {} : { encyclopedic: suggestion.encyclopedic }),
 		completionTokens: suggestion.completionTokens,
 	}))
 }

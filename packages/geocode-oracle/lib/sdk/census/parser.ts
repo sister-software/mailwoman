@@ -140,6 +140,9 @@ export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match:
 		coordinate,
 		tier: CENSUS_RESOLUTION_TIER,
 		uncertaintyMeters: null,
+		hierarchy: null,
+		poBox: null,
+		multiUnit: null,
 	}
 
 	const address = withGeocode(toPostalAddress(components, { country: "US", raw: match.matchedAddress }), geocode)

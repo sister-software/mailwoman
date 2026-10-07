@@ -1,4 +1,5 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -12,6 +13,7 @@ type FixturePlace = ResolvedPlace & { aliases?: string[] }
 
 const PLACES: FixturePlace[] = [
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 1,
 		name: "Grudziądz",
 		placetype: "locality",
@@ -23,6 +25,7 @@ const PLACES: FixturePlace[] = [
 	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 2,
 		name: "Tomaszów",
 		placetype: "locality",
@@ -33,6 +36,7 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 3,
 		name: "Tomaszów Mazowiecki",
 		placetype: "locality",
@@ -43,9 +47,19 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 
-	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 900,
+		name: "97-200",
+		placetype: "postalcode",
+		country: "PL",
+		lat: 51.53,
+		lon: 20.01,
+		score: 1,
+	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 10,
 		name: "Springfield",
 		placetype: "locality",
@@ -57,6 +71,7 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 11,
 		name: "Springfield",
 		placetype: "locality",
@@ -68,6 +83,7 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 12,
 		name: "Springfield",
 		placetype: "locality",
@@ -80,6 +96,7 @@ const PLACES: FixturePlace[] = [
 	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 13,
 		name: "Springfield",
 		placetype: "locality",
@@ -91,9 +108,19 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 
-	{ id: 901, name: "62701", placetype: "postalcode", country: "US", lat: 39.79, lon: -89.65, score: 1 },
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 901,
+		name: "62701",
+		placetype: "postalcode",
+		country: "US",
+		lat: 39.79,
+		lon: -89.65,
+		score: 1,
+	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 20,
 		name: "Grudziądzek",
 		placetype: "locality",
@@ -105,6 +132,7 @@ const PLACES: FixturePlace[] = [
 	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 30,
 		name: "Москва",
 		aliases: ["Moscow"],
@@ -117,6 +145,7 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 31,
 		name: "Moscow",
 		placetype: "locality",
@@ -128,6 +157,7 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 32,
 		name: "Moscow",
 		placetype: "locality",
@@ -139,9 +169,19 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 
-	{ id: 902, name: "83843", placetype: "postalcode", country: "US", lat: 46.73, lon: -116.99, score: 1 },
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 902,
+		name: "83843",
+		placetype: "postalcode",
+		country: "US",
+		lat: 46.73,
+		lon: -116.99,
+		score: 1,
+	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 40,
 		name: "New York",
 		aliases: ["New York City"],
@@ -154,8 +194,19 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 
-	{ id: 60, name: "Ave", placetype: "locality", country: "FR", lat: 43.7, lon: 4.6, score: 2, exactMatch: true },
 	{
+		...EMPTY_PLACE_FIELDS,
+		id: 60,
+		name: "Ave",
+		placetype: "locality",
+		country: "FR",
+		lat: 43.7,
+		lon: 4.6,
+		score: 2,
+		exactMatch: true,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
 		id: 61,
 		name: "Eden Prairie",
 		placetype: "locality",
@@ -166,8 +217,19 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 
-	{ id: 50, name: "Wa", placetype: "locality", country: "GH", lat: 10.06, lon: -2.5, score: 20, exactMatch: true },
 	{
+		...EMPTY_PLACE_FIELDS,
+		id: 50,
+		name: "Wa",
+		placetype: "locality",
+		country: "GH",
+		lat: 10.06,
+		lon: -2.5,
+		score: 20,
+		exactMatch: true,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
 		id: 51,
 		name: "Sammamish",
 		placetype: "locality",
@@ -179,6 +241,7 @@ const PLACES: FixturePlace[] = [
 	},
 
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 60,
 		name: "Worth",
 		placetype: "locality",

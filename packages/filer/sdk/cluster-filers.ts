@@ -312,7 +312,17 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 			attributes.providerID = providerCodes
 		}
 
-		records.push({ id: nodeID, organization, attributes })
+		records.push({
+			id: nodeID,
+			source: null,
+			name: null,
+			organization,
+			address: null,
+			phone: null,
+			email: null,
+			attributes,
+			raw: null,
+		})
 	}
 
 	return records

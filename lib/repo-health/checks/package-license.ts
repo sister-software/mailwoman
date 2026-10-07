@@ -35,6 +35,8 @@ async function readDeclaredLicense(repoRoot: string, file: string): Promise<stri
 			severity: DiagnosticSeverity.Error,
 			message: `${file} declares no "license" string, so the workspace's source states no terms and a published one reaches npm that way`,
 			file,
+			line: null,
+			details: null,
 		}
 	}
 
@@ -55,6 +57,8 @@ function admissibilityDiagnostic(expression: string, file: string): Diagnostic |
 			severity: DiagnosticSeverity.Error,
 			message: error instanceof Error ? error.message : String(error),
 			file,
+			line: null,
+			details: null,
 		}
 	}
 }
@@ -103,6 +107,8 @@ export const packageLicenseCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${workspace} declares "${declared}" where the root declares "${rootDeclared}" — npm shows the workspace's field, so a consumer reads the narrower terms`,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 		}

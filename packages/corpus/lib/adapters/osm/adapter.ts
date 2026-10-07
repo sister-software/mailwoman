@@ -60,17 +60,17 @@ export const OSM_ATTRIBUTION =
  * The per-row shape `@mailwoman/osm`'s `emit-corpus-jsonl` writes.
  */
 interface OSMCorpusRow {
-	street?: string
-	number?: string
-	postcode?: string
-	suburb?: string
-	city?: string
-	unit?: string
-	place?: string
-	subdistrict?: string
-	district?: string
-	province?: string
-	country?: string
+	street?: string | null
+	number?: string | null
+	postcode?: string | null
+	suburb?: string | null
+	city?: string | null
+	unit?: string | null
+	place?: string | null
+	subdistrict?: string | null
+	district?: string | null
+	province?: string | null
+	country?: string | null
 }
 
 const MAX_STREET_WORDS = 8

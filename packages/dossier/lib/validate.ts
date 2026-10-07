@@ -63,7 +63,7 @@ export interface ValidationIssue {
 	severity: "error" | "warning"
 	code: string
 	message: string
-	ref?: string
+	ref: string | null
 }
 
 /**
@@ -98,7 +98,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 			availableAt: source.availableAt,
 			retrievedAt: source.retrievedAt,
 		})) {
-			if (value !== undefined && !isISODate(value)) {
+			if (value !== null && !isISODate(value)) {
 				issues.push({
 					severity: "error",
 					code: "malformed_date",
@@ -108,7 +108,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 			}
 		}
 
-		if (source.availableAt === undefined) {
+		if (source.availableAt === null) {
 			issues.push({
 				severity: "warning",
 				code: "source_without_available_date",
@@ -223,7 +223,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		event.scope.forEach((entity) => checkEntity(event.id, entity))
 		checkDate(event.id, "date", event.date)
 
-		if (event.date === undefined) {
+		if (event.date === null) {
 			issues.push({
 				severity: "warning",
 				code: "event_without_date",
@@ -281,7 +281,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 
 		checkSource(ref, reading.evidence.source)
 
-		if (reading.subject !== undefined) {
+		if (reading.subject !== null) {
 			checkBuilding(ref, "reading", reading.subject)
 		}
 	})

@@ -667,6 +667,7 @@ export const debtCheck: RepoCheck = {
 					message: `${name} is ${count} and has no baseline entry — record one with \`mwops health baseline debt\``,
 					file,
 					details: listSites(sites[name]),
+					line: null,
 				})
 			} else if (count > recorded) {
 				diagnostics.push({
@@ -674,12 +675,15 @@ export const debtCheck: RepoCheck = {
 					message: `Repository debt grew: ${name} ${recorded} → ${count}`,
 					file,
 					details: listSites(sites[name]),
+					line: null,
 				})
 			} else if (count < recorded) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Warning,
 					message: `${name} fell ${recorded} → ${count}; ratchet the baseline with \`mwops health baseline debt\``,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 		}

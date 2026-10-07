@@ -22,7 +22,7 @@ export interface FeaturePanelProps {
 }
 
 export function FeaturePanel({ feature, latitudeType, onClose }: FeaturePanelProps) {
-	const diameter = formatDiameter(feature.diameterKm ?? null)
+	const diameter = formatDiameter(feature.diameterKm)
 
 	return (
 		<MapSheet title={feature.name} onClose={onClose} className="feature-panel">

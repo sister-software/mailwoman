@@ -97,7 +97,7 @@ interface OverlayOriginal {
 	/**
 	 * What the previous manifest recorded, where that differs from {@link OverlayOriginal.source}.
 	 */
-	retiredSource?: string
+	retiredSource: string | null
 	/**
 	 * The splits that held this file in the previous corpus.
 	 * They show whether it was routed before.
@@ -207,7 +207,7 @@ for (const [stem, entry] of [...grouped].toSorted(([a], [b]) => a.localeCompare(
 	originals.push({
 		stem,
 		source: current ?? recorded,
-		...(current && current !== recorded ? { retiredSource: recorded } : {}),
+		retiredSource: current && current !== recorded ? recorded : null,
 		previousSplits: [...entry.splits].toSorted(),
 		previousRows: entry.rows,
 		unsplitPath,

@@ -291,7 +291,7 @@ export interface NIAcquisitionSidecar {
 	 * True when the sidecar was rebuilt for an existing response.
 	 * `retrievedAt` is then the file's mtime.
 	 */
-	reconstructed?: boolean
+	reconstructed: boolean
 }
 
 async function writeAcquisitionSidecar(
@@ -316,7 +316,7 @@ async function writeAcquisitionSidecar(
 		licenseURL: OSM_LICENSE_URL,
 		attribution: OSM_ATTRIBUTION,
 		tier: "build-local",
-		...(input.reconstructed ? { reconstructed: true } : {}),
+		reconstructed: input.reconstructed ?? false,
 	}
 
 	await writeLocalJSONFile(sidecar, path)

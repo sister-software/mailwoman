@@ -55,7 +55,7 @@ function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): Q
 
 	const top = scored[0] ?? { kind: "vague" as QueryKind, confidence: 0.3 }
 
-	return { kind: top.kind, confidence: top.confidence, alternatives: scored.slice(1) }
+	return { kind: top.kind, confidence: top.confidence, alternatives: scored.slice(1), intentMarkers: null }
 }
 
 /**

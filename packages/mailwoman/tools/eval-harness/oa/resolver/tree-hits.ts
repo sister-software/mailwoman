@@ -27,7 +27,7 @@ export interface Resolved {
 	 *
 	 * Read only for a `postalcode`, whose rank against the locality is per-address-system.
 	 */
-	country?: string
+	country: string | null
 	lat: number
 	lon: number
 }
@@ -76,6 +76,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 				name,
 				value: String(n.value ?? ""),
 				placetype,
+				country: null,
 				lat: n.lat,
 				lon: n.lon,
 			})
@@ -102,9 +103,10 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 					name,
 					value: String(n.value ?? ""),
 					placetype,
-					...(typeof interp.metadata?.["resolver_country"] === "string"
-						? { country: interp.metadata["resolver_country"] as string }
-						: {}),
+					country:
+						typeof interp.metadata?.["resolver_country"] === "string"
+							? (interp.metadata["resolver_country"] as string)
+							: null,
 					lat: interp.lat,
 					lon: interp.lon,
 				})
@@ -135,7 +137,7 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 		placetype: r.placetype,
 		value: r.value,
 		resolverName: r.name,
-		...(r.country ? { country: r.country } : {}),
+		country: r.country ?? undefined,
 	}))
 }
 

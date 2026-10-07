@@ -8,7 +8,7 @@
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**
@@ -130,6 +130,7 @@ const PIN_RANK_POSTCODE_FIRST = 6
 export class CandidateResolverBackend implements ResolverBackend {
 	readonly #lookup: MailwomanLookupLike
 	readonly #meta = new Map<number, CandidateMeta>()
+	readonly artifactCoverage = null
 
 	constructor(lookup: MailwomanLookupLike) {
 		this.#lookup = lookup
@@ -178,15 +179,15 @@ export class CandidateResolverBackend implements ResolverBackend {
 			this.#meta.set(h.id, { bbox: h.bbox, country: h.country, placetype: h.placetype })
 
 			return {
+				...EMPTY_PLACE_FIELDS,
 				id: h.id,
 				name: h.name,
 				placetype: h.placetype,
 				lat: h.lat,
 				lon: h.lon,
 				score: h.score,
-				// ResolvedPlace requires a country; "" matches no ISO code, so coherence passes treat it as un-scopable.
-				country: h.country ?? "",
-				exactMatch: h.exactMatch,
+				country: h.country ?? null,
+				exactMatch: h.exactMatch ?? null,
 			}
 		})
 	}

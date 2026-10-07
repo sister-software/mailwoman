@@ -43,7 +43,7 @@ export {
 
 export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
 
-export { hardCountrySafelistFromCoverage } from "#resolver/types"
+export { EMPTY_PLACE_FIELDS, hardCountrySafelistFromCoverage } from "#resolver/types"
 
 export type {
 	AddressPointHit,

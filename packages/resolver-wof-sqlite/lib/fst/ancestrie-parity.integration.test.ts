@@ -121,7 +121,7 @@ function addSuggestion(
 		name: entry.name,
 		placetype: entry.placetype,
 		referential: entry.referential,
-		...(entry.encyclopedic === undefined ? {} : { encyclopedic: entry.encyclopedic }),
+		encyclopedic: entry.encyclopedic,
 		wofID: entry.wofID,
 		parentChain: entry.parentChain,
 		matchDepth,
@@ -181,6 +181,8 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 		parentChain: [],
 		lat: referential * 10,
 		lon: -referential * 10,
+		encyclopedic: null,
+		crossCountryBranches: null,
 		...extra,
 	})
 

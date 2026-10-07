@@ -218,9 +218,15 @@ async function gatherWeights(deps: DoctorDeps): Promise<WeightsObservation> {
 			resolved,
 			modelSize: await deps.fileSize(resolved.modelPath),
 			tokenizerSize: await deps.fileSize(resolved.tokenizerPath),
+			error: null,
 		}
 	} catch (error) {
-		return { error: error instanceof Error ? error.message : String(error) }
+		return {
+			resolved: null,
+			modelSize: null,
+			tokenizerSize: null,
+			error: error instanceof Error ? error.message : String(error),
+		}
 	}
 }
 
@@ -232,6 +238,8 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	if (envCandidate) {
 		return {
 			envCandidate: { path: envCandidate, sizeBytes: await deps.fileSize(envCandidate) },
+			conventionCandidate: null,
+			wofDatabase: null,
 			probed: [envCandidate],
 		}
 	}
@@ -240,7 +248,12 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	const databases = deps.wofExtractPaths()
 
 	if (convention) {
-		return { conventionCandidate: convention, probed: [convention, ...databases] }
+		return {
+			envCandidate: null,
+			conventionCandidate: convention,
+			wofDatabase: null,
+			probed: [convention, ...databases],
+		}
 	}
 
 	let existing: string | null = null
@@ -254,21 +267,26 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	}
 
 	if (existing) {
-		return { wofDatabase: { path: existing, sizeBytes: await deps.fileSize(existing) }, probed: databases }
+		return {
+			envCandidate: null,
+			conventionCandidate: null,
+			wofDatabase: { path: existing, sizeBytes: await deps.fileSize(existing) },
+			probed: databases,
+		}
 	}
 
-	return { probed: databases }
+	return { envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: databases }
 }
 
 async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 	const path = deps.poiPath()
 
-	if (!(await deps.exists(path))) return { path, exists: false }
+	if (!(await deps.exists(path))) return { path, exists: false, manifest: null, error: null }
 
 	try {
-		return { path, exists: true, manifest: await deps.readLayerIdentity(path) }
+		return { path, exists: true, manifest: await deps.readLayerIdentity(path), error: null }
 	} catch (error) {
-		return { path, exists: true, error: error instanceof Error ? error.message : String(error) }
+		return { path, exists: true, manifest: null, error: error instanceof Error ? error.message : String(error) }
 	}
 }
 
@@ -280,13 +298,18 @@ async function gatherLayerLicense(deps: DoctorDeps, layer: LayerDatabaseRef): Pr
 	if (!(await deps.exists(layer.path))) {
 		const alternates = await deps.layerAlternates(layer.id)
 
-		return alternates.length ? { ...layer, alternates } : null
+		return alternates.length ? { ...layer, manifest: null, error: null, alternates } : null
 	}
 
 	try {
-		return { ...layer, manifest: await deps.readLayerIdentity(layer.path) }
+		return { ...layer, manifest: await deps.readLayerIdentity(layer.path), error: null, alternates: null }
 	} catch (error) {
-		return { ...layer, error: error instanceof Error ? error.message : String(error) }
+		return {
+			...layer,
+			manifest: null,
+			error: error instanceof Error ? error.message : String(error),
+			alternates: null,
+		}
 	}
 }
 
@@ -298,7 +321,7 @@ async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCh
 
 		return localeOverlayCheck({ locale, packageName, resolved: true, source: resolved.source })
 	} catch {
-		return localeOverlayCheck({ locale, packageName, resolved: false })
+		return localeOverlayCheck({ locale, packageName, resolved: false, source: null })
 	}
 }
 
@@ -345,9 +368,9 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 
 	const runtimeLicense = runtimeLicenseCheck({
 		expression: await deps.runtimeLicense(),
-		...(key ? { key } : {}),
-		...(publication ? { publication } : {}),
-		...(lidStatus ? { lidStatus } : {}),
+		key: key ?? null,
+		publication: publication ?? null,
+		lidStatus: lidStatus ?? null,
 	})
 
 	const layerObservations = (
@@ -395,6 +418,8 @@ async function gatherObligationPosture(
 			id: "obligation-posture",
 			label: "Obligation posture",
 			core: false,
+			consequence: null,
+			license: null,
 			status: CheckStatus.Degraded,
 			detail: `MAILWOMAN_REFUSE_OBLIGATIONS could not be read: ${error instanceof Error ? error.message : String(error)}`,
 			fix: "set MAILWOMAN_REFUSE_OBLIGATIONS to a comma-separated list of share-alike, unresolved",
@@ -439,7 +464,7 @@ export interface EnvironmentEntry {
 	 * so an unset variable is distinguishable from an absent row.
 	 */
 	value: string | null
-	source?: string
+	source: string | null
 }
 
 /**
@@ -452,7 +477,7 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 
 	const entries: EnvironmentEntry[] = [
 		{ key: "node", value: `v${deps.nodeVersion}`, source: `engines ${deps.enginesFloor}` },
-		{ key: "platform", value: `${process.platform}-${process.arch}` },
+		{ key: "platform", value: `${process.platform}-${process.arch}`, source: null },
 		{ key: "MAILWOMAN_DATA_ROOT", value: $public.MAILWOMAN_DATA_ROOT, source: root.fromEnv ? "env" : "unset" },
 		{ key: "data root (resolved)", value: root.path, source: root.fromEnv ? "env" : "default" },
 		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB ?? null, source: "env" },

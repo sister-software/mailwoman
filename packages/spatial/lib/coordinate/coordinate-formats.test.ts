@@ -63,8 +63,8 @@ test("sunTimes: NYC summer solstice — sunrise ~09:26 UTC, ordered, ~15h day", 
 
 test("sunTimes: polar day has no sunrise/sunset, only solar noon", () => {
 	const s = sunTimes(80, 0, new Date("2026-06-21T12:00:00Z"))
-	expect(s.rise).toBeUndefined()
-	expect(s.set).toBeUndefined()
+	expect(s.rise).toBeNull()
+	expect(s.set).toBeNull()
 	expect(typeof s.noon).toBe("number")
 })
 

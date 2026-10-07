@@ -6,7 +6,20 @@
 
 import { describe, expect, it } from "vitest"
 
-import { formatPersonName, parsePersonName } from "#name"
+import { formatPersonName, type PersonName, parsePersonName } from "#name"
+
+function nameOf(parts: Partial<PersonName>): PersonName {
+	return {
+		prefix: null,
+		given: null,
+		middle: null,
+		family: null,
+		familyParticle: null,
+		suffix: null,
+		nickname: null,
+		...parts,
+	}
+}
 
 describe("parsePersonName", () => {
 	it("returns null for empty input", () => {
@@ -16,60 +29,66 @@ describe("parsePersonName", () => {
 	})
 
 	it("parses a simple given + family name", () => {
-		expect(parsePersonName("John Smith")).toEqual({ given: "John", family: "Smith" })
+		expect(parsePersonName("John Smith")).toEqual(nameOf({ given: "John", family: "Smith" }))
 	})
 
 	it("treats a lone token as a given name", () => {
-		expect(parsePersonName("Madonna")).toEqual({ given: "Madonna" })
+		expect(parsePersonName("Madonna")).toEqual(nameOf({ given: "Madonna" }))
 	})
 
 	it("assigns the inner token(s) to the middle name", () => {
-		expect(parsePersonName("Mary Ann Smith")).toEqual({ given: "Mary", middle: "Ann", family: "Smith" })
+		expect(parsePersonName("Mary Ann Smith")).toEqual(nameOf({ given: "Mary", middle: "Ann", family: "Smith" }))
 	})
 
 	it("inverts 'Last, First'", () => {
-		expect(parsePersonName("Smith, John")).toEqual({ given: "John", family: "Smith" })
+		expect(parsePersonName("Smith, John")).toEqual(nameOf({ given: "John", family: "Smith" }))
 	})
 
 	it("keeps order when the comma tail is a suffix", () => {
-		expect(parsePersonName("John Smith, Jr.")).toEqual({ given: "John", family: "Smith", suffix: "Jr." })
+		expect(parsePersonName("John Smith, Jr.")).toEqual(nameOf({ given: "John", family: "Smith", suffix: "Jr." }))
 	})
 
 	it("extracts a quoted nickname and a leading title", () => {
-		expect(parsePersonName('Mr George "Gob" Bluth II')).toEqual({
-			prefix: "Mr",
-			given: "George",
-			nickname: "Gob",
-			family: "Bluth",
-			suffix: "II",
-		})
+		expect(parsePersonName('Mr George "Gob" Bluth II')).toEqual(
+			nameOf({
+				prefix: "Mr",
+				given: "George",
+				nickname: "Gob",
+				family: "Bluth",
+				suffix: "II",
+			})
+		)
 	})
 
 	it("extracts a parenthetical nickname", () => {
-		expect(parsePersonName("James (Jim) Gordon")).toEqual({ given: "James", nickname: "Jim", family: "Gordon" })
+		expect(parsePersonName("James (Jim) Gordon")).toEqual(nameOf({ given: "James", nickname: "Jim", family: "Gordon" }))
 	})
 
 	it("stores the surname particle separately (de la Vega)", () => {
-		expect(parsePersonName("Dr. Juan Q. Xavier de la Vega III")).toEqual({
-			prefix: "Dr.",
-			given: "Juan",
-			middle: "Q. Xavier",
-			familyParticle: "de la",
-			family: "Vega",
-			suffix: "III",
-		})
+		expect(parsePersonName("Dr. Juan Q. Xavier de la Vega III")).toEqual(
+			nameOf({
+				prefix: "Dr.",
+				given: "Juan",
+				middle: "Q. Xavier",
+				familyParticle: "de la",
+				family: "Vega",
+				suffix: "III",
+			})
+		)
 	})
 
 	it("handles a multi-token particle after inversion (van der Berg)", () => {
-		expect(parsePersonName("van der Berg, Johan")).toEqual({
-			given: "Johan",
-			familyParticle: "van der",
-			family: "Berg",
-		})
+		expect(parsePersonName("van der Berg, Johan")).toEqual(
+			nameOf({
+				given: "Johan",
+				familyParticle: "van der",
+				family: "Berg",
+			})
+		)
 	})
 
 	it("does not treat a trailing particle-looking token as a particle", () => {
-		expect(parsePersonName("Robert Di")).toEqual({ given: "Robert", family: "Di" })
+		expect(parsePersonName("Robert Di")).toEqual(nameOf({ given: "Robert", family: "Di" }))
 	})
 })
 

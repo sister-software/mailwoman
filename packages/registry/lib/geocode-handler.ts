@@ -30,7 +30,7 @@ export function makeGeocodeHandler(
 
 		if (!addressValue) return record
 
-		const address = (await geocode(addressValue)) ?? undefined
+		const address = (await geocode(addressValue)) ?? null
 
 		return { ...record, address }
 	}

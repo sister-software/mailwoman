@@ -1,4 +1,5 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { PostcodePrefixIndexLike, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -50,6 +51,9 @@ const gbAncestryOnlyIndex: PostcodePrefixIndexLike = {
 						{ placetype: "locality", wofID: 200_875_281, name: "Belfast" },
 					],
 					unitCount: 411,
+					lat: null,
+					lon: null,
+					radiusP95Km: null,
 				}
 			: null,
 }
@@ -177,7 +181,14 @@ describe("B3-5 — structural consumption without model imports", () => {
 			country: "GB",
 			probe: (prefix) =>
 				prefix === "SW1A"
-					? { prefix, ancestors: [{ placetype: "country", wofID: 1, name: "United Kingdom" }], unitCount: 88 }
+					? {
+							prefix,
+							ancestors: [{ placetype: "country", wofID: 1, name: "United Kingdom" }],
+							unitCount: 88,
+							lat: null,
+							lon: null,
+							radiusP95Km: null,
+						}
 					: null,
 		}
 
@@ -198,6 +209,7 @@ describe("B3-5 — structural consumption without model imports", () => {
 				query.placetype === "postalcode"
 					? [
 							{
+								...EMPTY_PLACE_FIELDS,
 								id: 555,
 								name: "BT9 5GS",
 								placetype: "postalcode",

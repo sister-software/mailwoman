@@ -5,16 +5,16 @@
  *
  *   The parse result as a client renders it. The browser runtime produces it after classify + resolve.
  *   `@mailwoman/react` takes it as input. One definition prevents the producer and renderer from
- *   drifting apart. Every field a stage may leave unset is optional here. A renderer that needs a value it
+ *   drifting apart. Every field a stage may leave unset is `null` here. A renderer that needs a value it
  *   cannot see shows absence rather than a default.
  */
 
 export interface ParsedComponent {
 	tag: string
-	value?: unknown
-	confidence?: number
-	start?: number
-	end?: number
+	value: unknown
+	confidence: number | null
+	start: number | null
+	end: number | null
 }
 
 export interface ResolvedPlaceView {
@@ -24,15 +24,15 @@ export interface ResolvedPlaceView {
 	lat: number
 	lon: number
 	score: number
-	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 	/**
 	 * How the coordinate was reached when a street-tier lookup answered: a rooftop point,
 	 * or an interpolation along the segment.
 	 *
-	 * Absent for a gazetteer place.
+	 * `null` for a gazetteer place.
 	 */
-	tier?: "address_point" | "interpolated"
-	uncertaintyM?: number
+	tier: "address_point" | "interpolated" | null
+	uncertaintyM: number | null
 }
 
 export interface DualRoleView {
@@ -46,7 +46,7 @@ export interface DualRoleView {
 export interface StageTiming {
 	shape: number
 	classify: number
-	resolve?: number
+	resolve: number | null
 }
 
 export interface FSTProvenance {
@@ -77,11 +77,11 @@ export interface ParseResult {
 	 */
 	tree: unknown
 	nodes: ParsedComponent[]
-	kindResult?: KindView
-	timing?: StageTiming
+	kindResult: KindView | null
+	timing: StageTiming | null
 	resolved: ResolvedPlaceView | null
 	candidates: ResolvedPlaceView[]
 	fstActive: boolean
-	fstProvenance?: FSTProvenance | null
-	dualRoles?: DualRoleView[]
+	fstProvenance: FSTProvenance | null
+	dualRoles: DualRoleView[] | null
 }

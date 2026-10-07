@@ -28,7 +28,7 @@ export interface AddressPiece {
 	 * Marks a line break that the layout declared soft.
 	 * Soft breaks still have the text `"\n"`.
 	 */
-	readonly softBreak?: true
+	readonly softBreak: boolean
 }
 
 /**
@@ -60,7 +60,7 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
 	if (isSlot(atom)) {
 		const text = components[atom.tag]?.trim()
 
-		return text ? [{ tag: atom.tag, text }] : null
+		return text ? [{ tag: atom.tag, text, softBreak: false }] : null
 	}
 
 	if (isAlternation(atom)) {
@@ -99,7 +99,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 	const flush = (): void => {
 		if (!pending.length) return
 
-		out.push({ tag: null, text: strongestConnector(pending) })
+		out.push({ tag: null, text: strongestConnector(pending), softBreak: false })
 		pending = []
 	}
 
@@ -146,7 +146,7 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
 
 		const before: AddressPiece = layout.softBreakBefore?.has(line.index)
 			? { tag: null, text: "\n", softBreak: true }
-			: { tag: null, text: "\n" }
+			: { tag: null, text: "\n", softBreak: false }
 
 		return [before, ...line.pieces]
 	})

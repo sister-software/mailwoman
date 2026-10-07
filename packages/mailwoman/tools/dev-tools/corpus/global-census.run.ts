@@ -148,11 +148,11 @@ interface Census {
 	rowStrata: RowStratum[]
 	componentStrata: ComponentStratum[]
 	/**
-	 * Absent when no `--config` was given.
+	 * Null when no `--config` was given.
 	 *
 	 * That is a census without an admission reading rather than a census reporting no deficit.
 	 */
-	deficits?: Deficits
+	deficits: Deficits | null
 }
 
 /**
@@ -234,6 +234,7 @@ const census: Census = {
 	finishedFiles: [...finished],
 	rowStrata: [],
 	componentStrata: [],
+	deficits: null,
 }
 
 /**

@@ -143,8 +143,8 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 				lat: view.getFloat32(pp + 16, true),
 				lon: view.getFloat32(pp + 20, true),
 				parentChain,
-				...(hasAmbiguity ? { crossCountryBranches: view.getUint8(pp + 6) } : {}),
-				...(hasEncyclopedic ? { encyclopedic: view.getFloat32(pp + ENCYCLOPEDIC_OFFSET, true) } : {}),
+				crossCountryBranches: hasAmbiguity ? view.getUint8(pp + 6) : null,
+				encyclopedic: hasEncyclopedic ? view.getFloat32(pp + ENCYCLOPEDIC_OFFSET, true) : null,
 			}
 		}
 

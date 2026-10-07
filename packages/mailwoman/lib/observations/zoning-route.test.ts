@@ -64,13 +64,15 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 				}),
 			],
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return {
 		classifier,
 		resolver,
 		placeCountry: false,
-		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [] }),
+		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [], intentMarkers: null }),
 	}
 }
 

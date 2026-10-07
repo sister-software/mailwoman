@@ -115,6 +115,7 @@ const KE_COVERAGE: CountryCoverage = {
 	corpusRows: 0,
 	corpusStreetRows: 0,
 	admitted: true,
+	weightsPackage: null,
 	gazetteerPlaces: 10,
 	geocodeTier: "locality",
 	boardRows: 3,

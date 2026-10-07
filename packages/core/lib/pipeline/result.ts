@@ -56,9 +56,9 @@ export interface PipelineResult {
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
 	/**
-	 * Present only when the poi-intent stage produced an outcome.
+	 * The poi-intent stage's outcome, or `null` when it produced none.
 	 */
-	poiIntent?: POIIntentOutcome
+	poiIntent: POIIntentOutcome | null
 	timing: PipelineTiming
 	/**
 	 * Every stage crash the coordinator caught and degraded past, in order.

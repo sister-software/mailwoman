@@ -118,9 +118,9 @@ export interface ReportLine {
 	kind: ReportLineKind
 	/**
 	 * The building whose section holds the line.
-	 * A line outside every building's section has none.
+	 * A line outside every building's section has `null`.
 	 */
-	building?: EntityID
+	building: EntityID | null
 	/**
 	 * The source records behind the line, each once, in the order the line first cites them.
 	 *
@@ -143,7 +143,7 @@ function line(
 	text: string,
 	sources: readonly SourceRecordID[] = []
 ): ReportLine {
-	return { text, part, kind, sources: distinctSources(sources) }
+	return { text, part, kind, building: null, sources: distinctSources(sources) }
 }
 
 function heading(part: ReportPart, text: string): ReportLine {
@@ -580,7 +580,7 @@ function claimRecords(claim: Claim, sources: ReadonlyMap<SourceRecordID, SourceR
 function readingLine(reading: {
 	layer: string
 	extent: string
-	surveyedAt?: string
+	surveyedAt: string | null
 	class: LayerReadingClass
 }): string {
 	const vintage = reading.surveyedAt ? ` as of ${reading.surveyedAt}` : ""

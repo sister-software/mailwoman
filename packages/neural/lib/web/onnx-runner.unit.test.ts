@@ -273,13 +273,13 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(result.spanScores![1]![0]).toEqual([100, 101, 102])
 	})
 
-	test("spanScores is absent (undefined) on pre-v3 graphs — the BIO path is unaffected", async () => {
+	test("spanScores is null on pre-v3 graphs — the BIO path is unaffected", async () => {
 		mockSession(["input_ids", "attention_mask"])
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		const result = await runner.infer([5])
-		expect(result.spanScores).toBeUndefined()
-		expect(result.maxSpan).toBeUndefined()
+		expect(result.spanScores).toBeNull()
+		expect(result.maxSpan).toBeNull()
 	})
 
 	test("localeLogits is absent (undefined) on graphs without the locale head", async () => {
@@ -287,7 +287,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		const result = await runner.infer([5])
-		expect(result.localeLogits).toBeUndefined()
+		expect(result.localeLogits).toBeNull()
 	})
 
 	test("inputNames is null before the session exists and populated after", async () => {

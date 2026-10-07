@@ -445,6 +445,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			freshnessPolicy: "sealed",
 			spineKeys: { h3: { column: "h3_cell", resolution: POI_H3_RESOLUTION } },
 			createdAt: opts.createdAt ?? new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		coverageCells = opts.coverageCellsOverride

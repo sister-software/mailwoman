@@ -64,6 +64,7 @@ describe("corroborateCIK — pins", () => {
 		expect(corroborateCIK(cik("0001514416"), "7372", { pinnedCIKs })).toEqual({
 			corroborated: true,
 			basis: CIKCorroborationBasis.Pinned,
+			sic: null,
 		})
 	})
 
@@ -87,6 +88,7 @@ describe("corroborateCIK — abstention is not denial", () => {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({
 				corroborated: false,
 				basis: CIKCorroborationBasis.NoSIC,
+				sic: null,
 			})
 		}
 	})

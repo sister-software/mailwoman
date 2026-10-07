@@ -66,9 +66,9 @@ export interface StoredRun {
 	engine_id: string | null
 	input_set_id: string | null
 	/**
-	 * Per-arm replay indices keyed by the arm's label, absent for a run no arm can replay.
+	 * Per-arm replay indices keyed by the arm's label, `null` for a run no arm can replay.
 	 */
-	answers?: Record<string, RecordedAnswer[]>
+	answers: Record<string, RecordedAnswer[]> | null
 	payload: unknown
 }
 

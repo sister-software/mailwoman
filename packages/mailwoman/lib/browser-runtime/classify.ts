@@ -26,7 +26,17 @@ import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/t
 export function projectCascadeHits(
 	hits: ReadonlyArray<{ id: number; name: string; placetype: string; lat: number; lon: number; score: number }>
 ): ResolvedPlaceView[] {
-	return hits.map((c) => ({ id: c.id, name: c.name, placetype: c.placetype, lat: c.lat, lon: c.lon, score: c.score }))
+	return hits.map((c) => ({
+		id: c.id,
+		name: c.name,
+		placetype: c.placetype,
+		lat: c.lat,
+		lon: c.lon,
+		score: c.score,
+		bbox: null,
+		tier: null,
+		uncertaintyM: null,
+	}))
 }
 
 /**

@@ -173,15 +173,25 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 export interface LintFlag {
 	check: string
 	severity: "error" | "warn"
-	token?: string
-	bigram?: string
-	outputLabel?: string
-	corpusLabel?: string
-	outputCount?: number
-	corpusCount?: number
+	token: string | null
+	bigram: string | null
+	outputLabel: string | null
+	corpusLabel: string | null
+	outputCount: number | null
+	corpusCount: number | null
 	detail: string
-	ruleID?: string
+	ruleID: string | null
 }
+
+const EMPTY_FLAG_FIELDS = {
+	token: null,
+	bigram: null,
+	outputLabel: null,
+	corpusLabel: null,
+	outputCount: null,
+	corpusCount: null,
+	ruleID: null,
+} as const satisfies Partial<LintFlag>
 
 /**
  * Findings summary returned by {@linkcode lintRecipeOutput}.
@@ -213,6 +223,7 @@ function checkDistributionOutliers(output: RecipeOutputStats, corpus: CorpusStat
 			corpusMaj.total >= CORPUS_MIN_COUNT
 		) {
 			flags.push({
+				...EMPTY_FLAG_FIELDS,
 				check: "distribution-outlier",
 				severity: "error",
 				token,
@@ -244,6 +255,7 @@ function checkLabelVacuum(output: RecipeOutputStats, corpus: CorpusStats): LintF
 
 			if (corpusLabelMap[label] === undefined || corpusLabelMap[label] === 0) {
 				flags.push({
+					...EMPTY_FLAG_FIELDS,
 					check: "label-vacuum",
 					severity: "error",
 					token,
@@ -279,6 +291,7 @@ function checkBigramCollisions(output: RecipeOutputStats, corpus: CorpusStats): 
 			const renderCorpusLabel = corpusMaj.label.split(SEP).join(" → ")
 
 			flags.push({
+				...EMPTY_FLAG_FIELDS,
 				check: "bigram-collision",
 				severity: "error",
 				bigram: renderBigram,
@@ -309,6 +322,7 @@ function checkRules(output: RecipeOutputStats, rulesFile: LintRulesFile): LintFl
 			for (const [label, count] of labelMap) {
 				if (rule.forbidden_labels.includes(label) && count >= FORBIDDEN_LABEL_REPORT_THRESHOLD) {
 					flags.push({
+						...EMPTY_FLAG_FIELDS,
 						check: "anti-pattern-rule",
 						severity: rule.severity,
 						ruleID: rule.id,
@@ -330,6 +344,7 @@ function checkSanity(output: RecipeOutputStats): LintFlag[] {
 
 	if (output.truncatedRows > 0) {
 		flags.push({
+			...EMPTY_FLAG_FIELDS,
 			check: "truncated-rows",
 			severity: "error",
 			detail: `${output.truncatedRows} row(s) have tokens.length !== labels.length. Pipeline alignment bug.`,
@@ -340,6 +355,7 @@ function checkSanity(output: RecipeOutputStats): LintFlag[] {
 
 	if (allORatio >= ALL_O_RATIO_CEILING) {
 		flags.push({
+			...EMPTY_FLAG_FIELDS,
 			check: "all-O-output",
 			severity: "warn",
 			detail: `${output.allORows}/${output.rowCount} rows (${(allORatio * 100).toFixed(0)}%) are entirely O-labeled. The recipe output contributes no signal.`,

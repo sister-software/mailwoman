@@ -37,21 +37,21 @@ export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confid
 export interface SpanDelta {
 	kind: SpanDeltaKind
 	/**
-	 * The tag on each side: equal unless `kind` is `retagged`, and one side is absent for `added`/`removed`.
+	 * The tag on each side: equal unless `kind` is `retagged`, and one side is `null` for `added`/`removed`.
 	 */
-	tagBefore?: string
-	tagAfter?: string
-	valueBefore?: string
-	valueAfter?: string
-	spanBefore?: [number, number]
-	spanAfter?: [number, number]
-	confidenceBefore?: number
-	confidenceAfter?: number
+	tagBefore: string | null
+	tagAfter: string | null
+	valueBefore: string | null
+	valueAfter: string | null
+	spanBefore: [number, number] | null
+	spanAfter: [number, number] | null
+	confidenceBefore: number | null
+	confidenceAfter: number | null
 	/**
-	 * `after - before`, present only when both sides are.
+	 * `after - before`, `null` unless both sides are present.
 	 * Negative means the arm under test is less sure.
 	 */
-	confidenceDelta?: number
+	confidenceDelta: number | null
 	/**
 	 * Where the assertion came from — `rule`, `neural`, `resolver`.
 	 *
@@ -59,10 +59,10 @@ export interface SpanDelta {
 	 * That change removes its gazetteer backing.
 	 * A tag-level diff cannot show it.
 	 */
-	sourceBefore?: string
-	sourceAfter?: string
-	sourceIDBefore?: string
-	sourceIDAfter?: string
+	sourceBefore: string | null
+	sourceAfter: string | null
+	sourceIDBefore: string | null
+	sourceIDAfter: string | null
 }
 
 /**
@@ -84,8 +84,8 @@ export interface ParseDiff {
 	 * A parse that changed no other component but moved its country confidence across
 	 * the scope threshold will geocode somewhere else entirely.
 	 */
-	localeCountryBefore?: { country: string; confidence: number }
-	localeCountryAfter?: { country: string; confidence: number }
+	localeCountryBefore: { country: string; confidence: number } | null
+	localeCountryAfter: { country: string; confidence: number } | null
 	/**
 	 * True when no span changed and the locale call is identical — the arms agree on this input.
 	 */
@@ -98,8 +98,8 @@ interface Flat {
 	start: number
 	end: number
 	confidence: number
-	source?: string
-	sourceID?: string
+	source: string | null
+	sourceID: string | null
 }
 
 function toFlat(tree: AddressTree | null | undefined): Flat[] {
@@ -109,8 +109,8 @@ function toFlat(tree: AddressTree | null | undefined): Flat[] {
 		start: node.start,
 		end: node.end,
 		confidence: node.confidence,
-		...(node.source === undefined ? {} : { source: node.source }),
-		...(node.sourceID === undefined ? {} : { sourceID: node.sourceID }),
+		source: node.source ?? null,
+		sourceID: node.sourceID ?? null,
 	}))
 }
 
@@ -201,10 +201,10 @@ export function diffParse(
 			confidenceBefore: left.confidence,
 			confidenceAfter: right.confidence,
 			confidenceDelta: right.confidence - left.confidence,
-			...(left.source === undefined ? {} : { sourceBefore: left.source }),
-			...(right.source === undefined ? {} : { sourceAfter: right.source }),
-			...(left.sourceID === undefined ? {} : { sourceIDBefore: left.sourceID }),
-			...(right.sourceID === undefined ? {} : { sourceIDAfter: right.sourceID }),
+			sourceBefore: left.source,
+			sourceAfter: right.source,
+			sourceIDBefore: left.sourceID,
+			sourceIDAfter: right.sourceID,
 		})
 	}
 
@@ -214,10 +214,18 @@ export function diffParse(
 		spans.push({
 			kind: "removed",
 			tagBefore: left.tag,
+			tagAfter: null,
 			valueBefore: left.value,
+			valueAfter: null,
 			spanBefore: [left.start, left.end],
+			spanAfter: null,
 			confidenceBefore: left.confidence,
-			...(left.source === undefined ? {} : { sourceBefore: left.source }),
+			confidenceAfter: null,
+			confidenceDelta: null,
+			sourceBefore: left.source,
+			sourceAfter: null,
+			sourceIDBefore: left.sourceID,
+			sourceIDAfter: null,
 		})
 	}
 
@@ -226,11 +234,19 @@ export function diffParse(
 
 		spans.push({
 			kind: "added",
+			tagBefore: null,
 			tagAfter: right.tag,
+			valueBefore: null,
 			valueAfter: right.value,
+			spanBefore: null,
 			spanAfter: [right.start, right.end],
+			confidenceBefore: null,
 			confidenceAfter: right.confidence,
-			...(right.source === undefined ? {} : { sourceAfter: right.source }),
+			confidenceDelta: null,
+			sourceBefore: null,
+			sourceAfter: right.source,
+			sourceIDBefore: null,
+			sourceIDAfter: right.sourceID,
 		})
 	}
 
@@ -243,8 +259,8 @@ export function diffParse(
 	return {
 		input,
 		spans,
-		...(locale?.before ? { localeCountryBefore: locale.before } : {}),
-		...(locale?.after ? { localeCountryAfter: locale.after } : {}),
+		localeCountryBefore: locale?.before ?? null,
+		localeCountryAfter: locale?.after ?? null,
 		identical: !spans.some(isChange) && !localeMoved,
 	}
 }
@@ -269,7 +285,7 @@ export function renderParseDiff(diff: ParseDiff, options: { context?: boolean } 
 		return lines.join("\n")
 	}
 
-	const conf = (value?: number): string => (value === undefined ? "—" : value.toFixed(2))
+	const conf = (value: number | null): string => (value === null ? "—" : value.toFixed(2))
 
 	for (const span of diff.spans) {
 		if (span.kind === "unchanged" && !options.context) continue
@@ -331,7 +347,7 @@ export function renderParseDiff(diff: ParseDiff, options: { context?: boolean } 
 
 		if (moved) {
 			lines.push(
-				`  ! locale country ${lb?.country ?? "—"} (${conf(lb?.confidence)}) → ${la?.country ?? "—"} (${conf(la?.confidence)})`
+				`  ! locale country ${lb?.country ?? "—"} (${conf(lb?.confidence ?? null)}) → ${la?.country ?? "—"} (${conf(la?.confidence ?? null)})`
 			)
 		}
 	}

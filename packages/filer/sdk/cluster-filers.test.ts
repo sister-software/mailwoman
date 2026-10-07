@@ -6,6 +6,7 @@
  *   Tests authoritative and inferred clustering against in-memory fixtures.
  */
 
+import type { SourceRecord } from "@mailwoman/registry"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
@@ -203,35 +204,46 @@ async function seedDisjointNamedPair(
 		.execute()
 }
 
+function sourceRecord(id: string, attributes: Record<string, string> | null): SourceRecord {
+	return {
+		id,
+		source: null,
+		name: null,
+		organization: null,
+		address: null,
+		phone: null,
+		email: null,
+		attributes,
+		raw: null,
+	}
+}
+
 describe("hasSharedIdentifier — the hard veto's core predicate", () => {
 	it("is true when two records share a code on ANY of frn/form499ID/providerID", () => {
 		expect(
 			hasSharedIdentifier(
-				{ id: "x", attributes: { frn: "1234567890", form499ID: "100" } },
-				{ id: "y", attributes: { frn: "1234567890", form499ID: "200" } }
+				sourceRecord("x", { frn: "1234567890", form499ID: "100" }),
+				sourceRecord("y", { frn: "1234567890", form499ID: "200" })
 			)
 		).toBe(true)
 
 		expect(
-			hasSharedIdentifier(
-				{ id: "x", attributes: { providerID: "100 200" } },
-				{ id: "y", attributes: { providerID: "200 300" } }
-			)
+			hasSharedIdentifier(sourceRecord("x", { providerID: "100 200" }), sourceRecord("y", { providerID: "200 300" }))
 		).toBe(true)
 	})
 
 	it("is false when every populated type is disjoint on both sides — the false-positive shape", () => {
 		expect(
 			hasSharedIdentifier(
-				{ id: "x", attributes: { frn: "1111111111", form499ID: "100" } },
-				{ id: "y", attributes: { frn: "2222222222", form499ID: "200" } }
+				sourceRecord("x", { frn: "1111111111", form499ID: "100" }),
+				sourceRecord("y", { frn: "2222222222", form499ID: "200" })
 			)
 		).toBe(false)
 	})
 
 	it("is false (not true) when identifier data is simply MISSING on one or both sides — silence is not evidence", () => {
-		expect(hasSharedIdentifier({ id: "x", attributes: {} }, { id: "y", attributes: { frn: "1111111111" } })).toBe(false)
-		expect(hasSharedIdentifier({ id: "x" }, { id: "y" })).toBe(false)
+		expect(hasSharedIdentifier(sourceRecord("x", {}), sourceRecord("y", { frn: "1111111111" }))).toBe(false)
+		expect(hasSharedIdentifier(sourceRecord("x", null), sourceRecord("y", null))).toBe(false)
 	})
 })
 

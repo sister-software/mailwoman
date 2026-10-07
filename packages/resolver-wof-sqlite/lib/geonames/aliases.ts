@@ -63,7 +63,7 @@ export interface GeonamesIngestProgress {
 	 *
 	 * It distinguishes a sparse source from aliases that the fold discarded.
 	 */
-	aliasesRefused?: number
+	aliasesRefused: number | null
 }
 
 /**
@@ -211,7 +211,7 @@ export async function ingestGeonamesAliases(
 		const file = resolvePathBuilder(geonamesDir, `${cc}.txt`)
 
 		if (!(await pathExists(file))) {
-			report({ country: cc, places: 0, skipped: true }, file)
+			report({ country: cc, places: 0, skipped: true, aliasesRefused: null }, file)
 
 			continue
 		}

@@ -18,21 +18,21 @@ export interface SmokeRowExpect {
 	/**
 	 * WOF place ID that the top cascade hit must include.
 	 */
-	id?: number
+	id: number | null
 	/**
 	 * Place name for human cross-checking.
 	 * The eval does not grade it.
 	 */
-	name?: string
+	name: string | null
 	/**
 	 * Placetype for human cross-checking.
 	 * The eval does not grade it.
 	 */
-	placetype?: string
+	placetype: string | null
 	/**
 	 * Whether the cascade finds no WOF row and the demo's anchor-centroid fallback must produce the hit.
 	 */
-	anchor_centroid?: boolean
+	anchor_centroid: boolean | null
 }
 
 /**
@@ -44,11 +44,11 @@ export interface SmokeRow {
 	/**
 	 * Reason the row exists, such as the failure mode it guards against.
 	 */
-	note?: string
+	note: string | null
 	/**
 	 * Issue, preset, or report that the row came from.
 	 */
-	source?: string
+	source: string | null
 }
 
 const EXPECT_KEYS = new Set(["id", "name", "placetype", "anchor_centroid"])
@@ -168,13 +168,13 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 		rows.push({
 			input: row.input,
 			expect: {
-				...(typeof expect.id === "number" ? { id: expect.id } : {}),
-				...(typeof expect.name === "string" ? { name: expect.name } : {}),
-				...(typeof expect.placetype === "string" ? { placetype: expect.placetype } : {}),
-				...(expect.anchor_centroid === true ? { anchor_centroid: true } : {}),
+				id: typeof expect.id === "number" ? expect.id : null,
+				name: typeof expect.name === "string" ? expect.name : null,
+				placetype: typeof expect.placetype === "string" ? expect.placetype : null,
+				anchor_centroid: expect.anchor_centroid === true ? true : null,
 			},
-			...(typeof row.note === "string" ? { note: row.note } : {}),
-			...(typeof row.source === "string" ? { source: row.source } : {}),
+			note: typeof row.note === "string" ? row.note : null,
+			source: typeof row.source === "string" ? row.source : null,
 		})
 	}
 

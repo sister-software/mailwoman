@@ -148,7 +148,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
  */
 export interface POIBoardOutcome {
 	path: PipelineResult["path"]
-	poiIntent?: POIIntentOutcome
+	poiIntent: POIIntentOutcome | null
 }
 
 /**
@@ -164,8 +164,8 @@ export interface CaseGrade {
 	 * Distance in kilometers from the fixture's `anchorGold` to the nearest result.
 	 * Only `results` rows with at least one result set it.
 	 */
-	nearestKm?: number
-	resultCount?: number
+	nearestKm: number | null
+	resultCount: number | null
 }
 
 /**
@@ -173,7 +173,7 @@ export interface CaseGrade {
  * It performs no I/O.
  */
 export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): CaseGrade {
-	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent !== undefined
+	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent != null
 	const expect = fixture.expect
 
 	if (expect.kind === "address") {
@@ -184,6 +184,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 					expectKind: "address",
 					pass: false,
 					detail: `expected the address path, but the poi branch claimed it (${outcome.poiIntent?.type})`,
+					nearestKm: null,
+					resultCount: null,
 				}
 			: {
 					id: fixture.id,
@@ -191,6 +193,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 					expectKind: "address",
 					pass: true,
 					detail: "address path (no poi claim)",
+					nearestKm: null,
+					resultCount: null,
 				}
 	}
 
@@ -201,6 +205,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			expectKind: expect.kind,
 			pass: false,
 			detail: `expected a poi outcome (${expect.kind}), got path=${outcome.path} (no poi intent)`,
+			nearestKm: null,
+			resultCount: null,
 		}
 	}
 
@@ -214,6 +220,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 				expectKind: "abstain",
 				pass: false,
 				detail: `expected abstain(${expect.reason}), got type=intent (${poiOutcome.results?.length ?? 0} results)`,
+				nearestKm: null,
+				resultCount: null,
 			}
 		}
 
@@ -227,6 +235,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			detail: pass
 				? `abstain: ${poiOutcome.reason}`
 				: `expected abstain(${expect.reason}), got abstain(${poiOutcome.reason})`,
+			nearestKm: null,
+			resultCount: null,
 		}
 	}
 
@@ -241,6 +251,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			expectKind: "results",
 			pass: false,
 			detail: `expected results (${expectedLabel}), got abstain(${poiOutcome.reason})`,
+			nearestKm: null,
+			resultCount: null,
 		}
 	}
 
@@ -253,6 +265,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			expectKind: "results",
 			pass: false,
 			detail: `expected ≥1 result (${expectedLabel}), got 0`,
+			nearestKm: null,
 			resultCount: 0,
 		}
 	}
@@ -310,8 +323,8 @@ export interface TrackedCase {
 	 * Issue that holds the row's diagnosis. {@linkcode auditFixtures} rejects a tracked row without one.
 	 */
 	bugRef: string
-	rowRef?: string
-	note?: string
+	rowRef: string | null
+	note: string | null
 	/**
 	 * Whether the tracked row passed.
 	 * The report tells the reader to promote such rows.
@@ -355,8 +368,8 @@ export function partitionCases(fixtures: readonly POIBoardFixture[], grades: rea
 			grade,
 			status: fixtureStatus(fixture),
 			bugRef: fixture.bugRef ?? "",
-			...(fixture.rowRef ? { rowRef: fixture.rowRef } : {}),
-			...(fixture.note ? { note: fixture.note } : {}),
+			rowRef: fixture.rowRef || null,
+			note: fixture.note || null,
 			holding: grade.pass,
 		})
 	}
@@ -585,11 +598,11 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 	for (const fixture of fixtures) {
 		const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 		const result = await pipeline(fixture.query, runOpts)
-		const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
+		const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent ?? null }
 		const grade = gradeCase(fixture, outcome)
 		cases.push(grade)
 
-		if (grade.nearestKm !== undefined) {
+		if (grade.nearestKm !== null) {
 			nearestKms.push(grade.nearestKm)
 		}
 

@@ -16,7 +16,7 @@ const observed: Claim<number> = {
 	predicate: "storeys",
 	value: 13,
 	status: "observed",
-	evidence: { source: "permit-2021", observedAt: "2021-05-10" },
+	evidence: { source: "permit-2021", observedAt: "2021-05-10", validFrom: null, validTo: null },
 }
 
 const inferred: Claim<string> = {
@@ -28,7 +28,7 @@ const inferred: Claim<string> = {
 	status: "inferred",
 	derivedFrom: ["c1"],
 	explanation: "A cabinet within 40 m is an observation of proximity, and connection requires its own record.",
-	evidence: { source: "survey-2022" },
+	evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 }
 
 describe("Claim", () => {
@@ -60,7 +60,7 @@ describe("admittedClaims", () => {
 		id: "grandchild",
 		status: "derived",
 		derivedFrom: ["child", "own"],
-		evidence: { source: "early" },
+		evidence: { source: "early", observedAt: null, validFrom: null, validTo: null },
 	}
 
 	const child: Claim = {
@@ -69,11 +69,23 @@ describe("admittedClaims", () => {
 		status: "inferred",
 		derivedFrom: ["parent"],
 		explanation: "A riser shown on the parent's plan may not reach the roof.",
-		evidence: { source: "early" },
+		evidence: { source: "early", observedAt: null, validFrom: null, validTo: null },
 	}
 
-	const parent: Claim = { ...base, id: "parent", status: "observed", evidence: { source: "late" } }
-	const own: Claim = { ...base, id: "own", status: "designated", evidence: { source: "early" } }
+	const parent: Claim = {
+		...base,
+		id: "parent",
+		status: "observed",
+		evidence: { source: "late", observedAt: null, validFrom: null, validTo: null },
+	}
+
+	const own: Claim = {
+		...base,
+		id: "own",
+		status: "designated",
+		evidence: { source: "early", observedAt: null, validFrom: null, validTo: null },
+	}
+
 	const claims = [grandchild, child, parent, own]
 
 	test("admits every claim, in the supplied order, when every source is admitted", () => {

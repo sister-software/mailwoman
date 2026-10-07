@@ -61,7 +61,8 @@ export interface SearchResponse {
 	query: string
 	/**
 	 * The text actually searched when a token was corrected against the vocabulary.
+	 * It is `null` when no token was.
 	 */
-	corrected?: string
+	corrected: string | null
 	hits: SearchHit[]
 }

@@ -76,15 +76,15 @@ export interface ParseTraceLike {
 	text: string
 	caseNormalized: boolean
 	pieces: TracePieceLike[]
-	anchor?: TraceChannelLike
-	gazetteer?: TraceChannelLike
+	anchor: TraceChannelLike | null
+	gazetteer: TraceChannelLike | null
 	logits: number[][]
-	localeLogits?: number[]
+	localeLogits: number[] | null
 	/**
 	 * The locale-head axis, a country code per `localeLogits` index.
 	 * Never hardcode the order.
 	 */
-	localeCountries?: string[]
+	localeCountries: string[] | null
 	detectedSystem: string | null
 	systemSource: "off" | "auto" | "pinned"
 	priors: Array<{ kind: string; applied: boolean }>

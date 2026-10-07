@@ -117,7 +117,7 @@ export interface AuDeliveryServiceMatch {
 	/**
 	 * The delivery-service number, when present.
 	 */
-	id?: string
+	id: string | null
 	/**
 	 * Whether the designator is a legacy type.
 	 */
@@ -143,7 +143,7 @@ export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch |
 		return {
 			matched: m[1]!.trim(),
 			designator: abbreviation,
-			...(m[2] ? { id: m[2] } : {}),
+			id: m[2] || null,
 			legacy: info.legacy,
 		}
 	}

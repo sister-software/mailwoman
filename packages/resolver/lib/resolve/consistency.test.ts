@@ -9,12 +9,14 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { createWOFResolver, DEFAULT_POSTCODE_MAX_MOVE_KM } from "#resolve"
 
 const PC = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900,
 	name: "75001",
 	placetype: "postalcode",
@@ -26,6 +28,7 @@ const PC = {
 }
 
 const SP_FAR = {
+	...EMPTY_PLACE_FIELDS,
 	id: 1,
 	name: "Saint-Pierre",
 	placetype: "locality",
@@ -38,6 +41,7 @@ const SP_FAR = {
 
 // ~600 km from PC
 const SP_NEAR = {
+	...EMPTY_PLACE_FIELDS,
 	id: 2,
 	name: "Saint-Pierre",
 	placetype: "locality",

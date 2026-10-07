@@ -60,12 +60,12 @@ export interface CreatePostalAddressIDInput {
 	 * Derive it from ZIP when omitted.
 	 * Use `xx` when no state can be derived.
 	 */
-	state?: string
+	state?: string | null
 	/**
 	 * H3 resolution for the cell.
 	 * Defaults to {@link ADDRESS_H3_RESOLUTION}.
 	 */
-	resolution?: number
+	resolution?: number | null
 }
 
 /**

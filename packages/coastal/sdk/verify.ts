@@ -69,9 +69,9 @@ export interface AgreementRow {
 	 * rendering the same edge differently.
 	 *
 	 * A receipt without the distance forces a re-run.
-	 * `undefined` means the service returned no polygon at all near the point.
+	 * `null` means the service returned no polygon at all near the point.
 	 */
-	nearestEdgeMetres?: number
+	nearestEdgeMetres: number | null
 }
 
 /**
@@ -169,14 +169,14 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 
 			const localInside = local.kind === CoastalReadingKind.Designated
 
-			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = service.nearestEdgeMetres !== null && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			agreement.push({
 				...point,
 				local,
 				serviceInside: service.inside,
 				outcome: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
+				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
@@ -218,7 +218,7 @@ async function readServiceContainment(
 	latitude: number,
 	longitude: number,
 	scenarioKey: string
-): Promise<{ inside: boolean; nearestEdgeMetres?: number }> {
+): Promise<{ inside: boolean; nearestEdgeMetres: number | null }> {
 	const features = await readServiceFeatures(latitude, longitude, scenarioKey)
 
 	let nearest = Infinity
@@ -240,5 +240,5 @@ async function readServiceContainment(
 		}
 	}
 
-	return Number.isFinite(nearest) ? { inside, nearestEdgeMetres: nearest } : { inside }
+	return { inside, nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null }
 }

@@ -26,8 +26,16 @@ describe("two frontages", () => {
 		const resolved = ALIASES.map(resolveAlias)
 
 		expect(resolved).toEqual([
-			{ kind: "resolved", entity: NORTH, evidence: { source: "survey-2022", observedAt: "2022-03-15" } },
-			{ kind: "resolved", entity: SOUTH, evidence: { source: "survey-2022", observedAt: "2022-03-15" } },
+			{
+				kind: "resolved",
+				entity: NORTH,
+				evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
+			},
+			{
+				kind: "resolved",
+				entity: SOUTH,
+				evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
+			},
 		])
 
 		expect(entrancesOf(HOUSE, CONTAINMENT).map((link) => link.child)).toEqual([NORTH, SOUTH])
@@ -39,13 +47,17 @@ describe("two frontages", () => {
 	})
 
 	test("an alias with two candidates is ambiguous and keeps both", () => {
-		const alias = { text: "Example House", candidates: [...ALIASES[0]!.candidates, ...ALIASES[1]!.candidates] }
+		const alias = {
+			text: "Example House",
+			address: null,
+			candidates: [...ALIASES[0]!.candidates, ...ALIASES[1]!.candidates],
+		}
 
 		expect(resolveAlias(alias)).toEqual({ kind: "ambiguous", candidates: alias.candidates })
 	})
 
 	test("an alias with no candidate is unlinked", () => {
-		expect(resolveAlias({ text: "Nowhere House", candidates: [] })).toEqual({ kind: "unlinked" })
+		expect(resolveAlias({ text: "Nowhere House", candidates: [], address: null })).toEqual({ kind: "unlinked" })
 	})
 })
 
@@ -54,7 +66,11 @@ describe("shared parcel", () => {
 		expect(buildingsOn(PARCEL, CONTAINMENT).map((link) => link.child)).toEqual([HOUSE, ANNEX])
 
 		expect(entityIndex(ENTITIES).get(ANNEX)?.externalIDs).toEqual([
-			{ namespace: "example:bin", value: "1002", evidence: { source: "permit-2021", observedAt: "2021-05-10" } },
+			{
+				namespace: "example:bin",
+				value: "1002",
+				evidence: { source: "permit-2021", observedAt: "2021-05-10", validFrom: null, validTo: null },
+			},
 		])
 	})
 })

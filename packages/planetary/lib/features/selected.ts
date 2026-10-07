@@ -14,19 +14,19 @@ export interface SelectedFeature {
 	id: string
 	name: string
 	featureType: string
-	featureTypeCode?: string
-	diameterKm?: number
+	featureTypeCode: string | null
+	diameterKm: number | null
 	/**
 	 * East-positive, −180..180.
 	 */
 	centerLon: number
 	centerLat: number
-	origin?: string
-	approvalStatus?: string
+	origin: string | null
+	approvalStatus: string | null
 	/**
 	 * `yyyy-MM-DD`.
 	 */
-	approvalDate?: string
+	approvalDate: string | null
 }
 
 const COORDINATE_DECIMALS = 4

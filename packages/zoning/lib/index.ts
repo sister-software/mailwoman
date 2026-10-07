@@ -136,7 +136,7 @@ export interface ZoningDesignation {
 	 * The crosswalk is stored per polygon because one local code can map to several
 	 * generic types, so it cannot be derived from `localCode`.
 	 */
-	crosswalk?: {
+	crosswalk: {
 		scheme: string
 		code: string
 		description: string | null
@@ -147,14 +147,14 @@ export interface ZoningDesignation {
 		/**
 		 * The publisher's label for `code` from its declared domain.
 		 *
-		 * It is absent for a code that the publisher uses without declaring.
+		 * It is null for a code that the publisher uses without declaring.
 		 */
-		label?: string
+		label: string | null
 		/**
 		 * Whether the publisher declares this code in its own domain.
 		 */
 		declared: boolean
-	}
+	} | null
 	/**
 	 * One of {@link ProvenanceGrade}.
 	 *
@@ -192,7 +192,7 @@ export interface ZoningReading {
 	 * Its basis is always `source_present`, which only shows that the source has data nearby.
 	 * Neither a present nor an absent coverage row means the location is unrestricted.
 	 */
-	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
+	coverage: (CoverageCell & { h3CellIndex: string; resolution: number }) | null
 	/**
 	 * The H3 index cell that the lookup probed.
 	 */
@@ -227,9 +227,9 @@ export interface ZoningLayerIdentity {
 	 */
 	jurisdictions: ReadonlyMap<string, ZoningJurisdiction>
 	/**
-	 * The crosswalk scheme of this layer's rows, or `undefined` when the publisher ships none.
+	 * The crosswalk scheme of this layer's rows, or `null` when the publisher ships none.
 	 */
-	crosswalkScheme?: string
+	crosswalkScheme: string | null
 	/**
 	 * The authority's footprint statements.
 	 *
@@ -341,7 +341,7 @@ export class ZoningLookup implements Disposable {
 			kind: resolved.designations.length ? ZoningReadingKind.Designated : ZoningReadingKind.Unknown,
 			designations: resolved.designations,
 			containment: resolved.containment,
-			...(coverage ? { coverage } : {}),
+			coverage,
 			indexCellIndex: indexCell,
 			limits: GZT_PRODUCT_LIMITS,
 			coverageLimit: GZT_COVERAGE_LIMIT,
@@ -451,18 +451,17 @@ export class ZoningLookup implements Disposable {
 			localCode: area.local_code,
 			localDescription: area.local_description,
 			localCodeURL: area.local_code_url,
-			...(area.crosswalk_code === null || area.crosswalk_scheme === null
-				? {}
-				: {
-						crosswalk: {
+			crosswalk:
+				area.crosswalk_code === null || area.crosswalk_scheme === null
+					? null
+					: {
 							scheme: area.crosswalk_scheme,
 							code: area.crosswalk_code,
 							description: area.crosswalk_description,
 							rollup: area.crosswalk_rollup,
-							...(term ? { label: term.label } : {}),
+							label: term?.label ?? null,
 							declared: term?.declared ?? false,
 						},
-					}),
 			provenanceGrade: area.provenance_grade,
 			jurisdiction,
 			plan: {
@@ -572,7 +571,7 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 				},
 			])
 		),
-		...(crosswalkScheme[0] ? { crosswalkScheme: crosswalkScheme[0] } : {}),
+		crosswalkScheme: crosswalkScheme[0] || null,
 		mappedExtents: extentRows.map((extentRow) => ({
 			extentID: String(extentRow.extent_id),
 			source: String(extentRow.source),

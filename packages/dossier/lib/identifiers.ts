@@ -38,7 +38,7 @@ export interface ExternalID {
 	 * An identifier without evidence is shown with the words `source unstated`,
 	 * and `validateRecords` reports it as a warning.
 	 */
-	evidence?: Evidence
+	evidence: Evidence | null
 }
 
 /**

@@ -63,7 +63,7 @@ interface ParsedFeature {
 	isSuperseding: number
 	lastmodified: number
 	concordances: Record<string, string | number>
-	pointChoice?: PointChoice
+	pointChoice: PointChoice | null
 	names: Array<{ name: string; language: string; privateuse: string; official: number }>
 }
 
@@ -167,7 +167,7 @@ async function parseFeature(
 		isSuperseding: (props["wof:supersedes"]?.length ?? 0) > 0 ? 1 : 0,
 		lastmodified: typeof props["wof:lastmodified"] === "number" ? props["wof:lastmodified"] : 0,
 		concordances: props["wof:concordances"] ?? {},
-		...(pointChoice ? { pointChoice } : {}),
+		pointChoice,
 		names,
 	}
 }

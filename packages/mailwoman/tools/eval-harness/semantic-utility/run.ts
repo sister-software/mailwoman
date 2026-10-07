@@ -165,7 +165,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 	for (const control of controls) {
 		const outcome = await gradeRow(pipeline, definition, control, "control")
 
-		rows.push({ ...outcome, group: groupByID.get(control.id) })
+		rows.push({ ...outcome, group: groupByID.get(control.id) ?? null })
 		semanticObservations.push(...drainObservations(route ?? null, control.id))
 	}
 
@@ -205,15 +205,16 @@ async function gradeRow(
 ): Promise<ProbeRowOutcome> {
 	const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 	const result = await pipeline(fixture.query, runOpts)
-	const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
+	const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent ?? null }
 	const shape = poiOutcomeShape(outcome)
 
 	return {
 		id: fixture.id,
 		role,
+		group: null,
 		query: fixture.query,
 		shape,
-		...(outcome.poiIntent?.type === "abstain" ? { abstainReason: outcome.poiIntent.reason } : {}),
+		abstainReason: outcome.poiIntent?.type === "abstain" ? outcome.poiIntent.reason : null,
 		grade: gradeWithComparator(definition.outcomeComparator, fixture, outcome),
 	}
 }

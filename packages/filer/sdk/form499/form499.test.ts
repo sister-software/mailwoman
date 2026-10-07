@@ -134,6 +134,8 @@ describe("classifyFiler", () => {
 			dcAgentTelephone: "",
 			dcAgentEmailAddress: "",
 			dcAgentAddress: "",
+			lifecycle: null,
+			operatingStates: null,
 			...overrides,
 		}
 	}

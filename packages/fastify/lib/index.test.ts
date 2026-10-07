@@ -34,8 +34,6 @@ function localityNode(value: string, lat: number, lon: number): AddressNode {
 
 /**
  * Build a fake pipeline whose result is fixed except for the echoed input.
- *
- * `poiIntent` is attached when supplied.
  */
 function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline {
 	return async (raw: string, _opts?: PipelineOpts): Promise<PipelineResult> => {
@@ -46,11 +44,12 @@ function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline 
 			normalized: { raw, normalized: raw },
 			queryShape: { knownFormats: [] },
 			locale: { locale: "en-US", confidence: 1, alternatives: [], source: "detected" },
-			kind: { kind: "structured_address", confidence: 1, alternatives: [] },
+			kind: { kind: "structured_address", confidence: 1, alternatives: [], intentMarkers: null },
 			phraseProposals: [],
 			tree,
 			timing: {},
 			faults: [],
+			poiIntent: null,
 			intentMarkers: [],
 			path: "full",
 			...overrides,

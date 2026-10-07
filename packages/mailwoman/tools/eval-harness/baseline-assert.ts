@@ -73,13 +73,13 @@ export interface BaselineViolation {
 	 */
 	kind: "deviation" | "unregistered"
 	observed: number
-	expected?: number
+	expected: number | null
 	/**
 	 * Signed relative deviation, negative when the observation read low.
 	 */
-	deviationRel?: number
-	tolerance?: number
-	baseline?: RegisteredBaseline
+	deviationRel: number | null
+	tolerance: number | null
+	baseline: RegisteredBaseline | null
 }
 
 export interface BaselineVerdict {
@@ -165,7 +165,15 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 		const baseline = await findBaseline(observation.id)
 
 		if (!baseline) {
-			violations.push({ id: observation.id, kind: "unregistered", observed: observation.observed })
+			violations.push({
+				id: observation.id,
+				kind: "unregistered",
+				observed: observation.observed,
+				expected: null,
+				deviationRel: null,
+				tolerance: null,
+				baseline: null,
+			})
 
 			continue
 		}
@@ -184,6 +192,7 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 					kind: "deviation",
 					observed: observation.observed,
 					expected: baseline.value,
+					deviationRel: null,
 					tolerance: toleranceAbs,
 					baseline,
 				})
@@ -248,7 +257,7 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 			continue
 		}
 
-		const percent = violation.deviationRel === undefined ? "n/a" : `${(violation.deviationRel * 100).toFixed(1)}%`
+		const percent = violation.deviationRel === null ? "n/a" : `${(violation.deviationRel * 100).toFixed(1)}%`
 		const direction = (violation.deviationRel ?? 0) < 0 ? "LOW" : "HIGH"
 
 		lines.push(

@@ -54,6 +54,7 @@ export function toFeature(
 			organization: rep.organization?.canonical ?? null,
 			address: rep.address?.formatted ?? null,
 			geocodeTier: rep.address?.geocode?.tier ?? null,
+			bucket: null,
 			...extra,
 		},
 	}

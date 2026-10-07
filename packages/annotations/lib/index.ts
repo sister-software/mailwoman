@@ -27,8 +27,8 @@ export interface Mercator {
  */
 export interface CurrencyInfo {
 	isoCode: string
-	name?: string
-	symbol?: string
+	name: string | null
+	symbol: string | null
 }
 
 /**
@@ -36,75 +36,75 @@ export interface CurrencyInfo {
  */
 export interface TimezoneInfo {
 	name: string
-	offsetSec?: number
-	offsetString?: string
+	offsetSec: number | null
+	offsetString: string | null
 }
 
 /**
  * Solar event times, epoch seconds (UTC) for the queried date.
  */
 export interface SunTimes {
-	rise?: number
-	set?: number
-	noon?: number
+	rise: number | null
+	set: number | null
+	noon: number | null
 }
 
 /**
  * ISO 3166 codes for the resolved country.
  */
 export interface Iso3166 {
-	alpha2?: string
-	alpha3?: string
-	numeric?: string
+	alpha2: string | null
+	alpha3: string | null
+	numeric: string | null
 }
 
 /**
  * EU nuts statistical-region codes.
  */
 export interface NUTS {
-	level1?: string
-	level2?: string
-	level3?: string
+	level1: string | null
+	level2: string | null
+	level3: string | null
 }
 
 /**
  * The native enrichment set the serializers map from.
  */
 export interface AnnotationSet {
-	dms?: DMS
-	mgrs?: string
-	maidenhead?: string
-	geohash?: string
-	mercator?: Mercator
+	dms: DMS | null
+	mgrs: string | null
+	maidenhead: string | null
+	geohash: string | null
+	mercator: Mercator | null
 	/**
 	 * Initial direction (degrees) to Mecca.
 	 */
-	qiblaBearing?: number
-	sun?: SunTimes
+	qiblaBearing: number | null
+	sun: SunTimes | null
 	/**
 	 * E.164 country calling code (e.g. 1, 44).
 	 */
-	callingCode?: number
-	currency?: CurrencyInfo
+	callingCode: number | null
+	currency: CurrencyInfo | null
 	/**
 	 * Country flag emoji.
 	 */
-	flag?: string
-	timezone?: TimezoneInfo
-	iso3166?: Iso3166
-	nuts?: NUTS
+	flag: string | null
+	timezone: TimezoneInfo | null
+	iso3166: Iso3166 | null
+	nuts: NUTS | null
 	/**
 	 * UN/locode, e.g. "US NYC".
 	 */
-	unLocode?: string
+	unLocode: string | null
 	/**
 	 * US county FIPS.
 	 */
-	fips?: string
+	fips: string | null
 	/**
 	 * Wikidata QID.
 	 */
-	wikidata?: string
+	wikidata: string | null
 }
 
 /**
@@ -121,22 +121,46 @@ export interface AnnotatorInput {
 	 * ISO 3166-1 alpha-2 of the resolved country when known.
 	 * Country-reference annotators use this value.
 	 */
-	countryCode?: string
+	countryCode?: string | null
 	/**
 	 * The resolved place's name (locality) when known.
 	 * Name-keyed annotators (UN/locode) use this value.
 	 */
-	placeName?: string
+	placeName?: string | null
 	/**
 	 * The queried date for time-dependent annotations (sun times), defaulting to "now" per annotator.
 	 */
-	date?: Date
+	date?: Date | null
 }
 
 /**
  * A unit of enrichment: takes a coordinate/place, returns the fields of the set it can fill.
  */
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
+
+/**
+ * An annotation set with every field null, the base each composed run fills.
+ */
+export function emptyAnnotationSet(): AnnotationSet {
+	return {
+		dms: null,
+		mgrs: null,
+		maidenhead: null,
+		geohash: null,
+		mercator: null,
+		qiblaBearing: null,
+		sun: null,
+		callingCode: null,
+		currency: null,
+		flag: null,
+		timezone: null,
+		iso3166: null,
+		nuts: null,
+		unLocode: null,
+		fips: null,
+		wikidata: null,
+	}
+}
 
 /**
  * Compose a set of annotators into a runner that merges their fields, skipping any annotator that throws.
@@ -153,7 +177,7 @@ export function composeAnnotators(annotators: Annotator[]): (input: AnnotatorInp
 			})
 		)
 
-		return Object.assign({}, ...parts) as AnnotationSet
+		return Object.assign(emptyAnnotationSet(), ...parts) as AnnotationSet
 	}
 }
 
@@ -357,7 +381,7 @@ export interface SchemaOrgInput {
 	/**
 	 * ISO-3166 alpha-2 in any case, emitted uppercased as `addressCountry`.
 	 */
-	countryCode?: string
+	countryCode?: string | null
 }
 
 /**

@@ -167,7 +167,7 @@ describe("scenario scoping", () => {
 		const underNFI = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, NFI)
 		const underSMP = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, SMP)
 
-		expect(underNFI.designations[0]!.policy).toBeUndefined()
+		expect(underNFI.designations[0]!.policy).toBeNull()
 		expect(underSMP.designations[0]!.policy?.mediumTermInterpretation).toBe("Erosion restricted")
 	})
 

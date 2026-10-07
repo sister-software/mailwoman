@@ -1,5 +1,5 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
+import { EMPTY_PLACE_FIELDS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier } from "#geocode"
@@ -17,6 +17,8 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 
 			return tree
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return { resolver, seen }
@@ -128,6 +130,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 			dominant
 				? [
 						{
+							...EMPTY_PLACE_FIELDS,
 							id: 1,
 							name: "x",
 							placetype: "locality",
@@ -135,7 +138,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 							lat: 45,
 							lon: -73,
 							score: 9,
-							...(dominant.exactMatch === undefined ? {} : { exactMatch: dominant.exactMatch }),
+							exactMatch: dominant.exactMatch ?? null,
 						},
 					]
 				: []

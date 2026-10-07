@@ -20,7 +20,7 @@ export interface LegTiming {
 	/**
 	 * Which arm ran it — `fp32`, `int8`, or absent for a leg that runs once on the ship artifact.
 	 */
-	tag?: string
+	tag: string | null
 	wallMs: number
 }
 
@@ -56,7 +56,7 @@ export class LegProfile implements AsyncDisposable {
 		try {
 			return await work()
 		} finally {
-			this.#timings.push({ leg, ...(tag ? { tag } : {}), wallMs: Math.round(performance.now() - startedAt) })
+			this.#timings.push({ leg, tag: tag ?? null, wallMs: Math.round(performance.now() - startedAt) })
 		}
 	}
 

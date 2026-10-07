@@ -320,6 +320,17 @@ export function loadCoincidentLocalities<DB>(db: DatabaseClient<DB>): Map<number
 				relationshipType: r.relationshipType,
 				population: r.population,
 				distanceKm: r.distanceKm,
+				parent_id: null,
+				prominence: null,
+				referential: null,
+				encyclopedic: null,
+				importance: null,
+				exactMatch: null,
+				mismatch: null,
+				resolutionQuality: null,
+				containedByQualifier: null,
+				regionScopeMiss: null,
+				variantAliasExempted: null,
 			}
 
 			const list = map.get(r.adminID)

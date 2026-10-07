@@ -301,7 +301,7 @@ describe("POILookup", () => {
 		expect(hits.some((h) => h.name === "Pier 39")).toBe(true)
 		const pier = hits.find((h) => h.name === "Pier 39")!
 		expect(pier.categoryID).toBeNull()
-		expect(pier.distanceM).toBeUndefined()
+		expect(pier.distanceM).toBeNull()
 	})
 
 	test("name FTS still sorts by distance when a center is given", () => {
