@@ -114,9 +114,9 @@ export interface DemoCascadeSmokeResult {
 interface RowResult {
 	input: string
 	expected: SmokeRow["expect"]
-	actual: { id: number; name: string; placetype: string; anchorCentroid?: boolean } | null
+	actual: { id: number; name: string; placetype: string; anchorCentroid: boolean } | null
 	pass: boolean
-	note?: string
+	note: string | null
 }
 
 /**
@@ -272,13 +272,13 @@ export async function demoCascadeSmoke(
 		const top = hits[0]
 
 		const actual = top
-			? { id: top.id, name: top.name, placetype: String(top.placetype) }
+			? { id: top.id, name: top.name, placetype: String(top.placetype), anchorCentroid: false }
 			: anchorCentroid
 				? { id: 0, name: `${postcodeNode?.value} (anchor centroid)`, placetype: "postcode", anchorCentroid: true }
 				: null
 
 		const pass = row.expect.anchor_centroid === true ? anchorCentroid : top?.id === row.expect.id
-		results.push({ input: row.input, expected: row.expect, actual, pass, ...(row.note ? { note: row.note } : {}) })
+		results.push({ input: row.input, expected: row.expect, actual, pass, note: row.note })
 
 		if (EXPLAIN) {
 			reportError(`\n-- ${stringifyJSON(row.input)}`)

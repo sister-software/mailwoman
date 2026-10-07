@@ -10,42 +10,42 @@ import { type AddressNode, type AddressTree, firstNodeWhere, walkNodes } from "@
 import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 
 /**
- * Returns the uppercased first `resolver_country` stamp in the tree, or undefined when no node has one.
+ * Returns the uppercased first `resolver_country` stamp in the tree, or null when no node has one.
  */
-export function resolvedCountryOf(tree: AddressTree): string | undefined {
+export function resolvedCountryOf(tree: AddressTree): string | null {
 	for (const n of walkNodes(tree.roots)) {
 		const c = (n.metadata?.["resolver_country"] as string | undefined)?.trim()
 
 		if (c) return c.toUpperCase()
 	}
 
-	return undefined
+	return null
 }
 
 /**
  * Returns the promoted candidate's country from the `capital_promotion` stamp.
  *
  * It returns `"unknown"` for a stamp without a country.
- * It returns `undefined` when capital promotion changed no node's winner.
+ * It returns `null` when capital promotion changed no node's winner.
  */
-export function capitalPromotionOf(tree: AddressTree): string | undefined {
+export function capitalPromotionOf(tree: AddressTree): string | null {
 	for (const n of walkNodes(tree.roots)) {
 		const stamp = n.metadata?.["capital_promotion"]
 
-		if (typeof stamp === "string" && stamp.length) return stamp
+		if (typeof stamp === "string" && stamp) return stamp
 
 		if (stamp === true) return "unknown"
 	}
 
-	return undefined
+	return null
 }
 
 /**
  * Returns `true` when the variant-alias exemption selected a node's winner.
- * Returns `undefined` otherwise.
+ * Returns `null` otherwise.
  */
-export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
-	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? true : undefined
+export function variantAliasExemptionOf(tree: AddressTree): true | null {
+	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? true : null
 }
 
 /**
@@ -54,23 +54,23 @@ export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
  * It reads the `postcode_country_scope` stamp, then the `explicit_country_scope` stamp.
  * The explicit stamp lets a tree scoped correctly from the start still load its country's rooftop database.
  *
- * The function returns `undefined` when neither stamp is present.
+ * The function returns `null` when neither stamp is present.
  */
-export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
+export function postcodeCountryScopeOf(tree: AddressTree): string | null {
 	for (const n of walkNodes(tree.roots)) {
 		const scope = n.metadata?.["postcode_country_scope"] ?? n.metadata?.["explicit_country_scope"]
 
-		if (typeof scope === "string" && scope.length) return scope
+		if (typeof scope === "string" && scope) return scope
 	}
 
-	return undefined
+	return null
 }
 
 /**
- * Returns the value of the first `postcode` node in a parsed tree, or undefined.
+ * Returns the value of the first `postcode` node in a parsed tree, or null.
  */
-export function treePostcodeValue(tree: AddressTree): string | undefined {
-	return firstNodeWhere(tree.roots, (node) => node.tag === "postcode")?.value
+export function treePostcodeValue(tree: AddressTree): string | null {
+	return firstNodeWhere(tree.roots, (node) => node.tag === "postcode")?.value ?? null
 }
 
 /**
@@ -92,7 +92,7 @@ export function recognizeBarePostcode(tree: AddressTree): AddressTree {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "postcode") return tree
 
-		if (n.value.trim().length) {
+		if (n.value.trim()) {
 			valued.push(n)
 		}
 	}

@@ -73,7 +73,7 @@ function firstColumn(row: Record<string, string | undefined>, ...names: readonly
 	for (const name of names) {
 		const value = row[name]
 
-		if (value !== undefined && value !== null) return String(value).trim()
+		if (value) return String(value).trim()
 	}
 
 	return ""

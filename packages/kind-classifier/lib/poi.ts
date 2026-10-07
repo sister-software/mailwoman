@@ -9,7 +9,7 @@
  * Spec §3.1.
  */
 
-import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
 /**
  * Comma-segment ceiling for a POI-led query.
  *
@@ -78,14 +78,10 @@ export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray
 
 export type POISpatialRelation = "comma" | "near" | "in" | "at" | "around" | "to"
 
-export interface POIQuerySpan {
-	text: string
-	/**
-	 * Half-open character offsets into the normalized input.
-	 */
-	start: number
-	end: number
-}
+/**
+ * A span of the normalized input, with half-open character offsets.
+ */
+export type POIQuerySpan = TextSpan
 
 /**
  * Which lexicon this hit came from.
@@ -111,13 +107,13 @@ export interface POISubjectMatch {
 	/**
 	 * The relation crossing from the subject span to the anchor span.
 	 */
-	relation?: POISpatialRelation
-	relationSpan?: POIQuerySpan
+	relation: POISpatialRelation | null
+	relationSpan: POIQuerySpan | null
 	/**
 	 * The anchor remainder after the separator; `""` when the whole input matched.
 	 */
 	remainder: string
-	anchorSpan?: POIQuerySpan
+	anchorSpan: POIQuerySpan | null
 }
 
 /**
@@ -168,17 +164,13 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  *
  * The winning candidate's hits are listed per {@link reachedMatches}.
  */
-export function matchPOISubject(
-	text: string,
-	locale: string | undefined,
-	lookup: POIPhraseLookup
-): POISubjectMatch | null {
+export function matchPOISubject(text: string, locale: string | null, lookup: POIPhraseLookup): POISubjectMatch | null {
 	const trimmed = text.trim()
 	const inputStart = text.indexOf(trimmed)
 
 	if (!trimmed) return null
 
-	const whole = lookup(trimmed, locale)
+	const whole = lookup(trimmed, locale ?? undefined)
 
 	if (whole.length) {
 		const matches = reachedMatches(whole)
@@ -188,7 +180,10 @@ export function matchPOISubject(
 			matches,
 			subject: trimmed,
 			subjectSpan: { text: trimmed, start: inputStart, end: inputStart + trimmed.length },
+			relation: null,
+			relationSpan: null,
 			remainder: "",
+			anchorSpan: null,
 		}
 	}
 
@@ -201,7 +196,7 @@ export function matchPOISubject(
 		// Whitespace-only split rather than `wordsOf`, because a comma inside a subject is real content.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
-		const hits = lookup(subject, locale)
+		const hits = lookup(subject, locale ?? undefined)
 
 		if (!hits.length) continue
 
@@ -255,7 +250,7 @@ export function createScorePOIQuery(
 	locale?: string
 ): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
 	return (input, shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
 
 		if (!matched) return 0
 
@@ -297,7 +292,7 @@ export function createScorePOICategory(
 	locale?: string
 ): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
 	return (input, _shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
 
 		if (!matched || matched.remainder !== "") return 0
 
@@ -312,11 +307,7 @@ export function createScorePOICategory(
  * `null` when the input is not a bare category, under the same conditions as
  * {@link createScorePOICategory} so the two cannot disagree.
  */
-export function matchPOICategory(
-	text: string,
-	locale: string | undefined,
-	lookup: POIPhraseLookup
-): POIPhraseMatch | null {
+export function matchPOICategory(text: string, locale: string | null, lookup: POIPhraseLookup): POIPhraseMatch | null {
 	const matched = matchPOISubject(text, locale, lookup)
 
 	if (!matched || matched.remainder !== "") return null

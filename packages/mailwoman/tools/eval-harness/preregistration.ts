@@ -266,8 +266,8 @@ export interface PreregisteredArtifactIdentity extends WeightsIdentity {
 	 *
 	 * When it is missing, `poiLayerManifestNote` records the reason.
 	 */
-	poiLayerManifest?: LayerManifest
-	poiLayerManifestNote?: string
+	poiLayerManifest: LayerManifest | null
+	poiLayerManifestNote: string | null
 	resolverBackend: POIBoardResolverBackend
 }
 
@@ -283,10 +283,8 @@ export async function readArtifactIdentity(
 
 	return {
 		poiDatabasePath: db,
-		...(probed.manifest ? { poiLayerManifest: probed.manifest } : {}),
-		...(probed.manifest
-			? {}
-			: { poiLayerManifestNote: probed.error ?? "the database carries no layer_manifest table" }),
+		poiLayerManifest: probed.manifest ?? null,
+		poiLayerManifestNote: probed.manifest ? null : (probed.error ?? "the database carries no layer_manifest table"),
 		resolverBackend: backend,
 		...(await readWeightsIdentity(options)),
 	}

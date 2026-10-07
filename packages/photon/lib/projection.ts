@@ -139,7 +139,7 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 		props.postcode = input.postcode
 	}
 
-	if (input.country?.name && props.country == null) {
+	if (input.country?.name && !props.country) {
 		props.country = input.country.name
 	}
 

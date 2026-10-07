@@ -49,7 +49,7 @@ describe("countryRepoNames", () => {
 	})
 
 	it("is empty when the flag is absent", () => {
-		expect(countryRepoNames(undefined)).toEqual([])
+		expect(countryRepoNames(null)).toEqual([])
 	})
 })
 

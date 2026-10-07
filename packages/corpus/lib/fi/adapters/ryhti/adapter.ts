@@ -182,7 +182,7 @@ interface NamedSurface {
 }
 
 /**
- * The surface to emit for one record, or `undefined` for a record with no street.
+ * The surface to emit for one record, or `null` for a record with no street.
  *
  * On Åland the Swedish columns are preferred, and the Finnish ones are read as Swedish.
  * That is the language they hold there.
@@ -195,7 +195,7 @@ interface NamedSurface {
  * Seven mainland rows publish an `address_swe` of a bare number with an empty `address_name_swe`.
  * This refuses them rather than giving them an empty street.
  */
-function surfaceOf(record: RyhtiRow, country: string): NamedSurface | undefined {
+function surfaceOf(record: RyhtiRow, country: string): NamedSurface | null {
 	const finnish = {
 		street: (record.address_name_fin ?? "").trim(),
 		locality: (record.postal_office_fin ?? "").trim(),
@@ -209,12 +209,12 @@ function surfaceOf(record: RyhtiRow, country: string): NamedSurface | undefined 
 	if (country === "AX") {
 		const preferred = swedish.street ? swedish : finnish
 
-		return preferred.street ? { ...preferred, language: "sv" } : undefined
+		return preferred.street ? { ...preferred, language: "sv" } : null
 	}
 
 	if (finnish.street) return { ...finnish, language: "fi" }
 
-	return swedish.street ? { ...swedish, language: "sv" } : undefined
+	return swedish.street ? { ...swedish, language: "sv" } : null
 }
 
 export function createRyhtiAdapter(): CorpusAdapter {

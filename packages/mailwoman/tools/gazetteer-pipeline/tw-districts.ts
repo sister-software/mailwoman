@@ -123,11 +123,11 @@ export interface TaiwanRegionName {
  *    gives the region that became a special municipality after the record was written).
  *
  * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
- * `undefined` is a real absence.
+ * `null` is a real absence.
  *
  * A 縣市 the admin artifact does not know — and the caller reports it rather than guessing.
  */
-export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | undefined {
+export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | null {
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")
 	const wanted = fold(regionName)
 
@@ -147,7 +147,7 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 
 	const stem = wanted.replace(/[縣市]$/u, "")
 
-	return stem !== wanted ? byName(stem) : undefined
+	return stem !== wanted ? (byName(stem) ?? null) : null
 }
 
 /**
@@ -324,15 +324,16 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	const groups = await readDistrictGroups(parquetPath, opts.threads)
 
 	let regions: TaiwanRegionName[]
-	let countryID: number | undefined
+	let countryID: number | null
 
 	{
 		using admin = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 		regions = readTaiwanRegions(admin)
 
-		countryID = getRow<{ id: number }>(
-			admin.prepare("SELECT id FROM spr WHERE country = 'TW' AND placetype = 'country' AND is_current != 0 LIMIT 1")
-		)?.id
+		countryID =
+			getRow<{ id: number }>(
+				admin.prepare("SELECT id FROM spr WHERE country = 'TW' AND placetype = 'country' AND is_current != 0 LIMIT 1")
+			)?.id ?? null
 	}
 
 	if (!regions.length) {
@@ -390,7 +391,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 				namesInsert.run(id, name, i === 0 ? 1 : 0)
 			}
 
-			if (regionID === undefined) {
+			if (regionID === null) {
 				unmatched.set(g.region, (unmatched.get(g.region) ?? 0) + 1)
 			} else {
 				ancestorInsert.run(id, regionID, "region")

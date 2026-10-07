@@ -178,7 +178,7 @@ export function withTakeRate(prepared: PreparedScenario, takeRateBasisPoints: nu
 export function breakEvenTakeRate(prepared: PreparedScenario): BreakEvenTakeRate {
 	const { scenario } = prepared
 	const month = scenario.takeRateMonth
-	let last: CashFlowTable | undefined
+	let last: CashFlowTable | null = null
 
 	for (let basisPoints = 0; basisPoints <= BASIS_POINTS_PER_WHOLE; basisPoints++) {
 		last = projectCashFlow(withTakeRate(prepared, basisPoints))

@@ -33,6 +33,6 @@ export const storageOperations: ReadonlyArray<StorageOperation<unknown, unknown>
 /**
  * Look a storage operation up by its bare name (`prepare`) or its dotted id (`storage.prepare`).
  */
-export function findStorageOperation(name: string): StorageOperation<unknown, unknown> | undefined {
+export function findStorageOperation(name: string): StorageOperation<unknown, unknown> | null {
 	return findOperation(storageOperations, "storage", name)
 }

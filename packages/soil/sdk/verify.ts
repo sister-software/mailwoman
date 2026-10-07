@@ -43,7 +43,7 @@ export interface SoilAgreementRow {
 	 * Included on every row because it separates a real defect from two channels
 	 * rendering the same edge differently.
 	 */
-	nearestEdgeMetres?: number
+	nearestEdgeMetres: number | null
 }
 
 /**
@@ -127,14 +127,14 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 			const local = localDelineationAt(database, resolutions, indexResolution, point.latitude, point.longitude)
 			const serviceMukey = (await options.client.mukeyAtPoint(point.latitude, point.longitude)) ?? null
 
-			const nearEdge = local.nearestEdgeMetres !== undefined && local.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = local.nearestEdgeMetres !== null && local.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			agreement.push({
 				...point,
 				localMukey: local.mukey,
 				serviceMukey,
 				outcome: local.mukey === serviceMukey ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(local.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: local.nearestEdgeMetres }),
+				nearestEdgeMetres: local.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
@@ -214,7 +214,7 @@ function localDelineationAt(
 	indexResolution: number,
 	latitude: number,
 	longitude: number
-): { mukey: string | null; nearestEdgeMetres?: number } {
+): { mukey: string | null; nearestEdgeMetres: number | null } {
 	const candidates = candidateDelineations(database, resolutions, indexResolution, latitude, longitude)
 
 	let mukey: string | null = null
@@ -227,12 +227,12 @@ function localDelineationAt(
 			nearest = distance
 		}
 
-		if (mukey === null && pointInEncodedRings(candidate.rings, longitude, latitude)) {
+		if (!mukey && pointInEncodedRings(candidate.rings, longitude, latitude)) {
 			mukey = candidate.mukey
 		}
 	}
 
-	return Number.isFinite(nearest) ? { mukey, nearestEdgeMetres: nearest } : { mukey }
+	return { mukey, nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null }
 }
 
 /**

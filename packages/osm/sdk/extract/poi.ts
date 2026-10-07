@@ -31,12 +31,9 @@
  *   empty result rather than an error. A custom `OSM_CONFIG_FILE` that un-promotes a key on either
  *   list would break the bare-column assumption. not a concern for the shipped default.
  *
- *   `POISourceRow` is declared locally here (structurally identical to the exported interface of the
- *   same name in `mailwoman/gazetteer-pipeline/poi/build-poi.ts`) rather than imported: `@mailwoman/osm`
- *   is a dependency OF the top-level `mailwoman` package (which owns the gazetteer pipeline), never the
- *   reverse — importing it here would invert the workspace dependency graph. `build-poi.ts`'s `--source osm`
- *   build branch sits on the correct side of that edge. TS structural typing
- *   accepts this row with no cast, so the two are wired together directly.
+ *   `POISourceRow` is declared here and the `mailwoman` gazetteer pipeline imports it: `@mailwoman/osm`
+ *   is a dependency OF the top-level `mailwoman` package, never the reverse, so this side of the edge
+ *   is the row's one home.
  *
  *   `country` has no representation on a bare OSM feature (a Geofabrik extract's country isn't a
  *   feature property) and this module's `extractOSMPOIs(pbfPath, rules?)` signature takes no
@@ -58,11 +55,8 @@ import {
 } from "#sdk/tag-columns"
 
 /**
- * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s
- * injected-rows injection point consumes.
- *
- * Structurally identical to `POISourceRow` in `mailwoman/gazetteer-pipeline/poi/build-poi.ts` —
- * kept as a local copy per this module's header docstring (dependency-direction note).
+ * One POI row in the flat shape `mailwoman`'s `buildPOIDatabase` loads,
+ * decoded here from an Overture Places or OSM feature.
  */
 export interface POISourceRow {
 	name: string | null
@@ -272,7 +266,7 @@ function toPOISourceRow(
 
 	if (!categoryID) return null
 
-	const pt = representativePoint(feature.geometry)
+	const pt = representativePoint(feature.geometry ?? null)
 
 	if (!pt) return null
 

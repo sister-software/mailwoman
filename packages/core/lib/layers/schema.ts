@@ -95,6 +95,30 @@ export interface LayerManifestTable {
 	source_records?: string | null
 }
 
+/**
+ * The authority's own statement of what it mapped, one row per statement.
+ *
+ * A layer reads its mapped extent from this statement rather than from the union of its polygons,
+ * because the union of the areas it holds differs from the area the authority surveyed.
+ */
+export interface MappedExtentTable {
+	extent_id: string
+	/**
+	 * Which published product this footprint came from.
+	 */
+	source: string
+	/**
+	 * The coverage statement, verbatim.
+	 */
+	statement: string
+	statement_url: string
+	effective_date: string | null
+	min_lat: number
+	min_lon: number
+	max_lat: number
+	max_lon: number
+}
+
 // Owned by @mailwoman/evidence so bdc, resolver and filer can check on the same function
 // rather than on matching copies of the same three strings.
 // The layer_coverage schema and its IO stay here.
@@ -174,7 +198,7 @@ export async function createLayerManifestTable(db: layerschemahandle): Promise<v
 		.addColumn("spine_keys", "text", (c) => c.notNull())
 		.addColumn("created_at", "text", (c) => c.notNull())
 		// Keep the column nullable for artifacts built before it existed.
-		// Those artifacts read NULL. `readLayerManifest` leaves `sourceRecords` absent.
+		// Those artifacts read NULL, and `readLayerManifest` returns `sourceRecords: null`.
 		// A build that counted records and found no publishers writes `{}`.
 		.addColumn("source_records", "text")
 		.execute()

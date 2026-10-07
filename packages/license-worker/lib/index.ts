@@ -32,7 +32,7 @@ interface IsolateState {
 	selfTest: Promise<SigningSelfTest>
 }
 
-let isolate: IsolateState | undefined
+let isolate: IsolateState | null = null
 
 function isolateState(env: LicenseWorkerEnv): IsolateState {
 	if (isolate) return isolate

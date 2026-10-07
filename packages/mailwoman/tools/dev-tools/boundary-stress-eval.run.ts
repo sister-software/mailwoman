@@ -105,7 +105,7 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 	const perKey: Record<string, { hit: number; n: number }> = {}
 
 	for (let i = 0; i < N; i++) {
-		const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: template })
+		const row = synthesizeBoundaryStressRow(null, { random, forceTemplate: template })
 		const json = decodeAsJSON(await classifier.parse(row.raw, { postcodeRepair: true })) as Record<string, unknown>
 		const got: Record<string, string> = {}
 

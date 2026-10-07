@@ -113,7 +113,7 @@ function baseOpts(fetchImpl: typeof fetch, pairIndexURLs: readonly string[], cou
 		streetTypeLexiconURL: null,
 		localitySurfaceLexiconURL: null,
 		pairIndexURLs,
-		...(country !== undefined ? { country } : {}),
+		...(country ? { country } : {}),
 		runner: { useWebGPU: false },
 		fetchImpl,
 	}
@@ -128,7 +128,7 @@ beforeEach(() => {
 
 describe("resolvePairIndexCountry", () => {
 	test("mirrors the node localeCountry derivation, widened to accept a bare country code", () => {
-		expect(resolvePairIndexCountry(undefined)).toBe("us")
+		expect(resolvePairIndexCountry(null)).toBe("us")
 		expect(resolvePairIndexCountry("en-gb")).toBe("gb")
 		expect(resolvePairIndexCountry("EN-GB")).toBe("gb")
 		expect(resolvePairIndexCountry("gb")).toBe("gb")
@@ -268,12 +268,12 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 
 		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toEqual({ index: gbResolver })
 
-		expect(result.selectPairIndexForText("350 5th Ave, New York, NY 10118")).toBeUndefined()
+		expect(result.selectPairIndexForText("350 5th Ave, New York, NY 10118")).toBeNull()
 
 		expect(result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })).toEqual({ index: gbResolver })
 	})
 
-	test("Neither pairIndexURLs at all → empty exposure nor placetypePair config; selectPairIndexForText yields undefined", async () => {
+	test("Neither pairIndexURLs at all → empty exposure nor placetypePair config; selectPairIndexForText yields null", async () => {
 		const fetchImpl = makeFetch(() => dummyBytes)
 
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, []))
@@ -281,6 +281,6 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 		expect(result.classifier).toBeDefined()
 		expect(result.pairIndexes).toEqual([])
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toBeUndefined()
+		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toBeNull()
 	})
 })

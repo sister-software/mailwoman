@@ -71,7 +71,7 @@ export interface CrossDatasetCorrelationOptions {
 	outGeojson?: string
 }
 
-function composeAddress(row: Record<string, string>, columns: string | string[] | undefined): string {
+function composeAddress(row: Record<string, string>, columns: string | string[] | null | undefined): string {
 	if (!columns) return ""
 	const list = Array.isArray(columns) ? columns : [columns]
 

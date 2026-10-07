@@ -20,12 +20,18 @@ describe("entityID", () => {
 
 describe("sameExternalID", () => {
 	test("compares namespace and value exactly", () => {
-		expect(sameExternalID({ namespace: "nyc:bin", value: "3000001" }, { namespace: "nyc:bin", value: "3000001" })).toBe(
-			true
-		)
+		expect(
+			sameExternalID(
+				{ namespace: "nyc:bin", value: "3000001", evidence: null },
+				{ namespace: "nyc:bin", value: "3000001", evidence: null }
+			)
+		).toBe(true)
 
-		expect(sameExternalID({ namespace: "nyc:bin", value: "3000001" }, { namespace: "nyc:bbl", value: "3000001" })).toBe(
-			false
-		)
+		expect(
+			sameExternalID(
+				{ namespace: "nyc:bin", value: "3000001", evidence: null },
+				{ namespace: "nyc:bbl", value: "3000001", evidence: null }
+			)
+		).toBe(false)
 	})
 })

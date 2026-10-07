@@ -91,7 +91,7 @@ export interface RecipeSource {
 	/**
 	 * Why the producer's path does not fully explain the placement.
 	 */
-	note?: string
+	note: string | null
 }
 
 /**
@@ -107,7 +107,7 @@ function entries(
 		current: `${prefix}-${tail}`,
 		operation,
 		producer,
-		...(note ? { note } : {}),
+		note: note || null,
 	}))
 }
 
@@ -164,6 +164,7 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		current: "rendered-de",
 		operation: SourceOperation.Rendered,
 		producer: "de/recipes/locale.ts",
+		note: null,
 	},
 	// Three tails include the word `fragment` themselves.
 	// It folds into the prefix instead of repeating.
@@ -183,12 +184,14 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		current: "fragment-fr",
 		operation: SourceOperation.Fragment,
 		producer: "fr/recipes/fragment.ts",
+		note: null,
 	},
 	{
 		retired: "synth-no-fragment",
 		current: "fragment-no",
 		operation: SourceOperation.Fragment,
 		producer: "no/recipes/fragment.ts",
+		note: null,
 	},
 	...entries(SourceOperation.Fragment, "fragment", [
 		["fr-bare-street", "fr/recipes/bare-street.ts"],

@@ -145,15 +145,15 @@ function expiryInstant(expires: string): Date {
  * Decodes a token's payload without verifying its signature.
  * Use the result only for display.
  */
-export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | undefined {
+export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | null {
 	const parts = token.trim().split(".")
 
-	if (parts.length !== LICENSE_KEY_PARTS || parts[0] !== LICENSE_KEY_PREFIX) return undefined
+	if (parts.length !== LICENSE_KEY_PARTS || parts[0] !== LICENSE_KEY_PREFIX) return null
 
 	try {
 		return LicenseKeyPayloadSchema.parse(parseJSONStrict(utf8Text(fromBase64URL(parts[1] ?? ""))))
 	} catch {
-		return undefined
+		return null
 	}
 }
 

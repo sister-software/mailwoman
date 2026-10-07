@@ -37,6 +37,8 @@ function testDeps(): GeocodeDeps {
 				node({ tag: "postcode", value: "TT1 1TT" }),
 			],
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return { classifier, resolver, placeCountry: false }
@@ -87,6 +89,10 @@ describe(": the authoritative provider block on GeocodeResult", () => {
 							{ ...first, providerPlaceID: "fixture-place-0001" },
 							{ ...first, providerPlaceID: "fixture-place-0002", matchStatus: "approximate" },
 						],
+						attribution: null,
+						license: null,
+						retrievedAt: null,
+						datasetVersion: null,
 					},
 				},
 			],
@@ -104,13 +110,13 @@ describe(": the authoritative provider block on GeocodeResult", () => {
 		expect(result.authoritative!.matches![1]!.match_status).toBe("approximate")
 	})
 
-	it("A refusal is a spoken outcome: status `refused` without matches field, and the open answer stands", async () => {
+	it("A refusal is a spoken outcome: status `refused` with null matches, and the open answer stands", async () => {
 		const provider = createFixtureAuthoritativeProvider({ rules: [] })
 
 		const result = await geocodeAddress(INPUT, { ...testDeps(), authoritativeProvider: provider })
 
 		expect(result.authoritative!.status).toBe("refused")
-		expect(result.authoritative!.matches).toBeUndefined()
+		expect(result.authoritative!.matches).toBeNull()
 
 		expect(result.locality).toBe("Testtown")
 		expect(result.lat).toBe(51.5)
@@ -129,13 +135,18 @@ describe(": the authoritative provider block on GeocodeResult", () => {
 		expect(result.authoritative).toEqual({
 			provider: "flaky",
 			status: "transport_error",
+			matches: null,
+			attribution: null,
+			license: null,
+			retrieved_at: null,
+			dataset_version: null,
 			error: "connect ETIMEDOUT",
 		})
 
 		expect(result.lat).toBe(51.5)
 	})
 
-	it("No provider configured → no block, and the result is deep-equal to a provider run minus the block", async () => {
+	it("No provider configured → a null block, and the result is deep-equal to a provider run minus the block", async () => {
 		const provider = createFixtureAuthoritativeProvider({
 			rules: [{ matchOn: "example terrace", response: fixtureExactMatch() }],
 		})
@@ -143,12 +154,12 @@ describe(": the authoritative provider block on GeocodeResult", () => {
 		const bare = await geocodeAddress(INPUT, testDeps())
 		const withProvider = await geocodeAddress(INPUT, { ...testDeps(), authoritativeProvider: provider })
 
-		expect(bare.authoritative).toBeUndefined()
+		expect(bare.authoritative).toBeNull()
 
 		const { authoritative, ...rest } = withProvider
 
-		expect(authoritative).toBeDefined()
-		expect(rest).toEqual(bare)
+		expect(authoritative).not.toBeNull()
+		expect({ ...rest, authoritative: null }).toEqual(bare)
 	})
 
 	it("the provider receives the assembled evidence: components, both query forms, and the resolved country", async () => {
@@ -160,8 +171,8 @@ describe(": the authoritative provider block on GeocodeResult", () => {
 		expect(log).toHaveLength(1)
 		expect(log[0]!.rawQuery).toBe(INPUT)
 		expect(log[0]!.normalizedQuery.length).toBeGreaterThan(0)
-		expect(log[0]!.components).toContainEqual({ tag: "locality", value: "Testtown" })
-		expect(log[0]!.components).toContainEqual({ tag: "postcode", value: "TT1 1TT" })
+		expect(log[0]!.components).toContainEqual({ tag: "locality", value: "Testtown", start: null, end: null })
+		expect(log[0]!.components).toContainEqual({ tag: "postcode", value: "TT1 1TT", start: null, end: null })
 		expect(log[0]!.countryCode).toBe("GB")
 	})
 })

@@ -115,7 +115,7 @@ export interface FoldTerms {
 	 * or states prose that resolves to no expression.
 	 */
 	license: string | null
-	error?: string
+	error: string | null
 }
 
 /**
@@ -189,7 +189,15 @@ export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
 export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
 	const pathString = path.toString()
 	const name = basename(pathString, ".db")
-	const none: FoldTerms = { path: pathString, name, recordedIn: FoldTermsRecord.None, tier: null, license: null }
+
+	const none: FoldTerms = {
+		path: pathString,
+		name,
+		recordedIn: FoldTermsRecord.None,
+		tier: null,
+		license: null,
+		error: null,
+	}
 
 	if (!(await pathExists(path))) return { ...none, error: "not found" }
 
@@ -204,6 +212,7 @@ export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
 			recordedIn: FoldTermsRecord.LayerManifest,
 			tier: probed.manifest.tier ?? null,
 			license: probed.manifest.license ? readLicenseRecord(probed.manifest.license).expression : null,
+			error: null,
 		}
 	}
 
@@ -228,6 +237,7 @@ export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
 				recordedIn: table,
 				tier: typeof tier === "string" ? tier : null,
 				license: typeof license === "string" ? readLicenseRecord(license).expression : null,
+				error: null,
 			}
 		}
 
@@ -303,5 +313,6 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		// The id means something only against a known ancestor.
 		spineKeys: { wofID: "spr_id" },
 		createdAt: input.createdAt,
+		sourceRecords: null,
 	}
 }

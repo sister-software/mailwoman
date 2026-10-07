@@ -47,7 +47,7 @@ export async function mailwomanCLIPath(): Promise<string> {
 	return resolvePackagePath("mailwoman", entry)
 }
 
-let manifest: Promise<MailwomanManifest> | undefined
+let manifest: Promise<MailwomanManifest> | null = null
 
 /**
  * Read by package self-reference so the same file answers from the source tree,

@@ -88,11 +88,11 @@ export interface LoadResult {
 
 	/**
 	 * Returns a `placetypePair` option for the loaded index whose country matches the
-	 * country detected from `text`, or `undefined` when none matches.
+	 * country detected from `text`, or `null` when none matches.
 	 *
 	 * A locale or country code in `opts.country` skips detection for that call.
 	 */
-	selectPairIndexForText: (text: string, opts?: { country?: string }) => PlacetypePairPriorOpts | undefined
+	selectPairIndexForText: (text: string, opts?: { country?: string }) => PlacetypePairPriorOpts | null
 }
 
 /**
@@ -239,7 +239,7 @@ export interface LoadFromURLsOptions {
 async function loadPostcodeAnchorLookup(
 	urls: readonly string[],
 	fetchImpl: typeof fetch
-): Promise<AnchorLookup | undefined> {
+): Promise<AnchorLookup | null> {
 	const settled = await Promise.all(
 		urls.map(async (url): Promise<AnchorLookup | null> => {
 			try {
@@ -258,7 +258,7 @@ async function loadPostcodeAnchorLookup(
 
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
-	return lookups.length ? mergeAnchorLookups(lookups) : undefined
+	return lookups.length ? mergeAnchorLookups(lookups) : null
 }
 
 /**
@@ -279,19 +279,19 @@ export function defaultCountryLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "country-surface-lexicon-v1.json")
 }
 
-function defaultStreetTypeLexiconURL(modelURL: string, declaredName?: string): string {
+function defaultStreetTypeLexiconURL(modelURL: string, declaredName: string | null): string {
 	return siblingURL(modelURL, declaredName ?? "street-type-lexicon-v3.json")
 }
 
-function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName?: string): string {
+function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName: string | null): string {
 	return siblingURL(modelURL, declaredName ?? "locality-surface-lexicon-v6.json")
 }
 
-function declaredLexiconName(card: Record<string, unknown> | null, channel: string): string | undefined {
+function declaredLexiconName(card: Record<string, unknown> | null, channel: string): string | null {
 	const requires = card?.requires as Record<string, { lexicon?: unknown }> | undefined
 	const name = requires?.[channel]?.lexicon
 
-	return typeof name === "string" && name.length ? name : undefined
+	return typeof name === "string" && name ? name : null
 }
 
 /**
@@ -309,7 +309,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const modelCard = opts.modelCardURL ? await fetchModelCardJSON(opts.modelCardURL, fetchImpl) : null
 	const labels = modelCard ? labelsFromModelCard(modelCard, opts.modelCardURL!) : null
-	const encoder = encoderDescriptorFromCard(modelCard ?? undefined, opts.modelCardURL ?? "(no card)")
+	const encoder = encoderDescriptorFromCard(modelCard, opts.modelCardURL ?? "(no card)")
 
 	if (encoder.kind === "char") {
 		return loadCharClassifierFromURLs(opts, encoder, labels, fetchImpl)
@@ -353,15 +353,15 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		WebONNXRunner.fromBytes(modelBytes, opts.runner),
 		opts.postcodeBinaryURLs?.length
 			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
-			: Promise.resolve<AnchorLookup | undefined>(undefined),
+			: Promise.resolve<AnchorLookup | null>(null),
 		opts.pairIndexURLs?.length
 			? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
 			: Promise.resolve<LoadedPairIndex[]>([]),
 	])
 
-	let configPairIndex: PairIndexResolver | undefined
+	let configPairIndex: PairIndexResolver | null = null
 
-	if (opts.country != null && pairIndexes.length) {
+	if (opts.country && pairIndexes.length) {
 		const pinnedCountry = resolvePairIndexCountry(opts.country)
 		const pinned = pairIndexes.find((index) => index.country === pinnedCountry)
 
@@ -376,9 +376,9 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		}
 	}
 
-	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
+	const conventions = opts.addressSystemConventions === null ? null : (opts.addressSystemConventions ?? "auto")
 
-	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : undefined
+	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : null
 
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
@@ -432,7 +432,7 @@ function warnOnUnfedTrainedChannels(
 		streetTypeLexiconURL: string | null
 		localitySurfaceLexicon: GazetteerLexicon | null
 		localitySurfaceLexiconURL: string | null
-		postcodeAnchorLookup: AnchorLookup | undefined
+		postcodeAnchorLookup: AnchorLookup | null
 	}
 ): void {
 	const inputNames = runner.inputNames
@@ -630,7 +630,7 @@ async function loadCharClassifierFromURLs(
 		labels,
 		pairIndexes: [],
 
-		selectPairIndexForText: () => undefined,
+		selectPairIndexForText: () => null,
 
 		release: () => runner.release(),
 	}

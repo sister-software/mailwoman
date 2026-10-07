@@ -41,13 +41,13 @@ function unwrap(expression: ts.Expression): ts.Expression {
 	return current
 }
 
-function propertyName(property: ts.ObjectLiteralElementLike): string | undefined {
+function propertyName(property: ts.ObjectLiteralElementLike): string | null {
 	return property.name && (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))
 		? property.name.text
-		: undefined
+		: null
 }
 
-function commandSpec(source: ts.SourceFile): ts.ObjectLiteralExpression | undefined {
+function commandSpec(source: ts.SourceFile): ts.ObjectLiteralExpression | null {
 	for (const statement of source.statements) {
 		if (!ts.isVariableStatement(statement) || !statement.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword))
 			continue
@@ -60,7 +60,7 @@ function commandSpec(source: ts.SourceFile): ts.ObjectLiteralExpression | undefi
 		}
 	}
 
-	return undefined
+	return null
 }
 
 describe("command option names never collide with root flags", () => {

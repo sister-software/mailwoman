@@ -56,7 +56,7 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
  *   regional cannot be reached without knowing the region.
  */
 export function resolveLocaleScope(
-	locales: ReadonlyArray<string> | undefined,
+	locales: ReadonlyArray<string> | null,
 	locale: string | undefined
 ): LocaleScopeMatch | null {
 	if (!locales) return { scope: "unscoped", confidence: 1 }

@@ -163,7 +163,7 @@ describe("the layer interface's read of these cells", () => {
 		}
 	})
 
-	it("still answers undefined — not zero — for a cell outside the pilot region", async () => {
+	it("still answers null — not zero — for a cell outside the pilot region", async () => {
 		using db = await openCoverageDB()
 		const subject = rows(5, (i) => `Pharmacie ${i}`)
 		const { cells } = buildExclusionCoverage({ geometry: REGION, resolution: RESOLUTION, subject, reference: subject })
@@ -174,7 +174,7 @@ describe("the layer interface's read of these cells", () => {
 		const outside = shortCellToInt(latLngToCell(35.68, 139.76, RESOLUTION) as H3Cell)
 
 		expect(cells.some((cell) => cell.h3Cell === outside)).toBe(false)
-		expect(await readLayerCoverage(db, outside)).toBeUndefined()
+		expect(await readLayerCoverage(db, outside)).toBeNull()
 	})
 
 	it("answers supportsExclusion false for the source-present cells the rest of the pipeline writes", async () => {

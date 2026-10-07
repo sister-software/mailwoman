@@ -29,17 +29,17 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	 * The place's bounding box.
 	 * Postcodes located by an anchor centroid have none.
 	 */
-	bbox?: LatLonBounds
+	bbox: LatLonBounds | null
 
 	/**
 	 * The street-level tier, set only for results from address points or interpolation.
 	 */
-	tier?: PlaceTier
+	tier: PlaceTier | null
 
 	/**
 	 * The uncertainty radius in meters of a street-level result, drawn as a circle when `tier` is set.
 	 */
-	uncertaintyM?: number
+	uncertaintyM: number | null
 
 	/**
 	 * The admin polygon, if the host has already fetched it.

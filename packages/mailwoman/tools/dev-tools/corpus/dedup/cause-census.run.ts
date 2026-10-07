@@ -396,7 +396,7 @@ async function censusCanonicalFields(plan: CensusPlan, index: GroupIndex): Promi
 		for (let field = 0; field < TRACKED_FIELDS.length; field++) {
 			const at = slot * TRACKED_FIELDS.length + field
 			const value = row[TRACKED_FIELDS[field]!]
-			const valueHash = hash32(value === undefined || value === null ? "\u0000absent" : String(value))
+			const valueHash = hash32(value ? String(value) : "\u0000absent")
 
 			if (first) {
 				fieldHashes[at] = valueHash

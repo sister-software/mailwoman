@@ -122,17 +122,17 @@ export function claimFailures(device: BlockDevice, claim: DeviceClaim): readonly
  *
  * Returned as a bare device name (`nvme0n1`) because that is what `lsblk --output NAME` reports.
  */
-export async function rootDeviceName(): Promise<string | undefined> {
+export async function rootDeviceName(): Promise<string | null> {
 	const probe = await $({ nothrow: true, quiet: true })`findmnt --noheadings --output SOURCE --target /`
 
-	if (probe.exitCode !== 0) return undefined
+	if (probe.exitCode !== 0) return null
 
 	const source = probe.stdout.trim()
 
-	if (!source.startsWith("/dev/")) return undefined
+	if (!source.startsWith("/dev/")) return null
 
 	const resolved = await $({ nothrow: true, quiet: true })`lsblk --noheadings --output PKNAME ${source}`
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `lsblk PKNAME` for one device is a single line.
-	return resolved.exitCode === 0 ? resolved.stdout.trim().split("\n")[0]?.trim() || undefined : undefined
+	return resolved.exitCode === 0 ? resolved.stdout.trim().split("\n")[0]?.trim() || null : null
 }

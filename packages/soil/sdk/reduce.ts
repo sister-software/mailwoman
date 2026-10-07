@@ -208,7 +208,7 @@ function candidateAt(
 	candidates: ReadonlyArray<CellCandidate>,
 	latitude: number,
 	longitude: number
-): CellCandidate | undefined {
+): CellCandidate | null {
 	for (const candidate of candidates) {
 		if (
 			longitude < candidate.minLon ||
@@ -222,7 +222,7 @@ function candidateAt(
 		if (pointInEncodedRings(candidate.rings, longitude, latitude)) return candidate
 	}
 
-	return undefined
+	return null
 }
 
 /**

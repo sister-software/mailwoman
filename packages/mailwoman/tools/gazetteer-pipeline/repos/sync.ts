@@ -66,30 +66,30 @@ export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction]
 /**
  * The observable state of one checkout.
  *
- * `undefined` means the checkout could not answer the question.
+ * `null` means the checkout could not answer the question.
  * A negative answer has a known value.
  */
 export interface CloneState {
 	exists: boolean
 	isRepository: boolean
 	/**
-	 * `origin`'s fetch URL, or `undefined` when the remote is absent.
+	 * `origin`'s fetch URL, or `null` when the remote is absent.
 	 */
-	originURL?: string
-	dirty?: boolean
+	originURL: string | null
+	dirty: boolean | null
 	/**
 	 * Commits on head that the tracked upstream lacks.
 	 *
-	 * `undefined` when no upstream is tracked.
+	 * `null` when no upstream is tracked.
 	 */
-	ahead?: number
-	behind?: number
-	shallow?: boolean
-	head?: string
+	ahead: number | null
+	behind: number | null
+	shallow: boolean | null
+	head: string | null
 	/**
 	 * Committer date of head, ISO-8601 — the vintage a build step cannot otherwise see.
 	 */
-	headDate?: string
+	headDate: string | null
 }
 
 export interface RepoSyncPlan {
@@ -111,7 +111,7 @@ export interface RepoSyncPlan {
  * and `https://github.com/org/repo`, with or without a `.git` suffix.
  * A string comparison would report a spurious re-point for a clone that is already correct.
  */
-export function sameRemote(a: string | undefined, b: string | undefined): boolean {
+export function sameRemote(a: string | null, b: string | null): boolean {
 	if (!a || !b) return false
 
 	const normalize = (url: string): string =>
@@ -159,7 +159,7 @@ export function planRepoSync(origin: RepoOrigin, directory: string, state: Clone
 		)
 	}
 
-	if (!sameRemote(state.originURL, origin.url)) {
+	if (!sameRemote(state.originURL ?? null, origin.url)) {
 		return plan(
 			SyncAction.RepointRequired,
 			`origin is ${state.originURL ?? "absent"} but ${origin.source} is ${origin.url} — ${origin.reason}`
@@ -181,20 +181,30 @@ function git(cwd: string, args: string[]): string {
  * Each probe is independently guarded: a repo with no tracked upstream still reports its remote
  * and vintage, rather than collapsing to "unknown" because one question had no answer.
  */
+const UNINSPECTED = {
+	originURL: null,
+	dirty: null,
+	ahead: null,
+	behind: null,
+	shallow: null,
+	head: null,
+	headDate: null,
+} as const satisfies Partial<CloneState>
+
 export async function inspectClone(directory: string): Promise<CloneState> {
-	if (!(await pathExists(directory))) return { exists: false, isRepository: false }
+	if (!(await pathExists(directory))) return { exists: false, isRepository: false, ...UNINSPECTED }
 
 	try {
 		git(directory, ["rev-parse", "--git-dir"])
 	} catch {
-		return { exists: true, isRepository: false }
+		return { exists: true, isRepository: false, ...UNINSPECTED }
 	}
 
-	const read = (args: string[]): string | undefined => {
+	const read = (args: string[]): string | null => {
 		try {
 			return git(directory, args)
 		} catch {
-			return undefined
+			return null
 		}
 	}
 
@@ -205,21 +215,19 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
-		(branch && branch !== "HEAD"
-			? read(["rev-list", "--left-right", "--count", `HEAD...origin/${branch}`])
-			: undefined) ??
+		(branch && branch !== "HEAD" ? read(["rev-list", "--left-right", "--count", `HEAD...origin/${branch}`]) : null) ??
 		read(["rev-list", "--left-right", "--count", "HEAD...origin/HEAD"]) ??
 		read(["rev-list", "--left-right", "--count", "HEAD...@{u}"])
 
-	const [ahead, behind] = counts ? counts.split(/\s+/).map(Number) : [undefined, undefined]
+	const [ahead, behind] = counts ? counts.split(/\s+/).map(Number) : [null, null]
 
 	return {
 		exists: true,
 		isRepository: true,
 		originURL: read(["remote", "get-url", "origin"]),
 		dirty: read(["status", "--porcelain"]) !== "",
-		...(ahead === undefined ? {} : { ahead }),
-		...(behind === undefined ? {} : { behind }),
+		ahead: ahead ?? null,
+		behind: behind ?? null,
 		shallow: read(["rev-parse", "--is-shallow-repository"]) === "true",
 		head: read(["rev-parse", "--short", "HEAD"]),
 		headDate: read(["log", "-1", "--format=%cI"]),
@@ -252,8 +260,7 @@ export async function planReposSync(options: {
 				// A full clone keeps complete history.
 				git(directory, ["fetch", "--quiet", "origin"])
 			} catch {
-				// An unreachable remote is reported through `behind: undefined`
-				// rather than aborting the whole sweep.
+				// An unreachable remote is reported through `behind: null` rather than aborting the whole sweep.
 				// One dead remote must not hide the other repos' verdicts.
 			}
 		}

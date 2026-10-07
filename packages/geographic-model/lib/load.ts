@@ -86,7 +86,7 @@ export interface SourcedIssue {
 	/**
 	 * For a duplicate identifier, the file that used the identifier first.
 	 */
-	otherFile?: string
+	otherFile: string | null
 }
 
 /**
@@ -135,7 +135,7 @@ interface RecordOrigin {
 	 * Identifiers are unique within a table.
 	 */
 	table: string
-	id?: string
+	id: string | null
 }
 
 interface MergeState {
@@ -147,11 +147,11 @@ interface MergeState {
 	 * The validator reports only the second use.
 	 */
 	firstClaims: Map<string, Map<string, string>>
-	version?: string
+	version: string | null
 }
 
 function sourced(file: string, issues: readonly ValidationIssue[]): SourcedIssue[] {
-	return issues.map((issue) => ({ file, path: issue.path, code: issue.code, message: issue.message }))
+	return issues.map((issue) => ({ file, path: issue.path, code: issue.code, message: issue.message, otherFile: null }))
 }
 
 /**
@@ -169,14 +169,15 @@ function readSourceJSON(file: GeographicModelSourceFile, issues: SourcedIssue[])
 			path: "$",
 			code: LoadIssueCode.MalformedJSON,
 			message: error instanceof Error ? error.message : String(error),
+			otherFile: null,
 		})
 
 		return undefined
 	}
 }
 
-function claim(state: MergeState, table: string, id: string | undefined, file: string): void {
-	if (id === undefined) return
+function claim(state: MergeState, table: string, id: string | null, file: string): void {
+	if (!id) return
 
 	const claims = state.firstClaims.get(table) ?? new Map<string, string>()
 
@@ -187,10 +188,10 @@ function claim(state: MergeState, table: string, id: string | undefined, file: s
 	}
 }
 
-function recordID(entry: unknown): string | undefined {
-	if (!isPlainObject(entry)) return undefined
+function recordID(entry: unknown): string | null {
+	if (!isPlainObject(entry)) return null
 
-	return typeof entry.id === "string" ? entry.id : undefined
+	return typeof entry.id === "string" ? entry.id : null
 }
 
 function readManifestFile(state: MergeState, file: GeographicModelSourceFile, value: unknown): void {
@@ -279,14 +280,14 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 	const claimant =
 		issue.code === ValidationIssueCode.DuplicateID && origin?.id
 			? state.firstClaims.get(origin.table)?.get(origin.id)
-			: undefined
+			: null
 
 	return {
 		file,
 		path: issue.path,
 		code: issue.code,
 		message: issue.message,
-		...(claimant ? { otherFile: claimant } : {}),
+		otherFile: claimant ?? null,
 	}
 }
 
@@ -303,6 +304,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 		tables: { relations: [], concepts: [], mappings: [], observations: [], derivedFacts: [] },
 		origins: new Map(),
 		firstClaims: new Map(),
+		version: null,
 	}
 
 	const ordered = files.toSorted((left, right) => compareIdentifiers(left.path, right.path))
@@ -314,6 +316,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 			path: "$",
 			code: LoadIssueCode.MissingField,
 			message: `a model directory carries \`${MODEL_MANIFEST_FILENAME}\`, holding the document's \`version\``,
+			otherFile: null,
 		})
 	}
 

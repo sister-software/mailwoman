@@ -271,7 +271,7 @@ export class PairIndexResolver {
 		const resolveTag = (idx: number, field: "tagIdx" | "parentTagIdx"): ComponentTag => {
 			const name = header.tagTable[idx]
 
-			if (name === undefined) {
+			if (!name) {
 				throw new Error(`pair index: ${field} ${idx} is outside the header's tagTable (${header.tagTable.length})`)
 			}
 
@@ -307,10 +307,10 @@ export class PairIndexResolver {
 	}
 
 	/**
-	 * Returns the edge for a folded (child, parent) pair, or `undefined` when the index has no entry for it.
+	 * Returns the edge for a folded (child, parent) pair, or `null` when the index has no entry for it.
 	 */
-	probe(childFolded: string, parentFolded: string): PairEdge | undefined {
-		return this.#probeMap.get(pairKey(childFolded, parentFolded))
+	probe(childFolded: string, parentFolded: string): PairEdge | null {
+		return this.#probeMap.get(pairKey(childFolded, parentFolded)) ?? null
 	}
 
 	/**
@@ -330,17 +330,17 @@ export class PairIndexResolver {
 	}
 
 	/**
-	 * The header's transition bonus, or `undefined` when the index applies no transition term.
+	 * The header's transition bonus, or `null` when the index applies no transition term.
 	 */
-	get transitionBeta(): number | undefined {
-		return this.header.transitionBeta
+	get transitionBeta(): number | null {
+		return this.header.transitionBeta ?? null
 	}
 
 	/**
-	 * The header's parent bias magnitude, or `undefined` when the index applies no parent bias.
+	 * The header's parent bias magnitude, or `null` when the index applies no parent bias.
 	 */
-	get parentDelta(): number | undefined {
-		return this.header.parentDelta
+	get parentDelta(): number | null {
+		return this.header.parentDelta ?? null
 	}
 }
 
@@ -351,9 +351,9 @@ export class PairIndexResolver {
  * An absent `transitionBeta` means the index applies no transition bonus.
  */
 export interface PairIndexLike {
-	probe(child: string, parent: string): PairEdge | undefined
+	probe(child: string, parent: string): PairEdge | null
 	readonly delta?: number
-	readonly transitionBeta?: number
+	readonly transitionBeta?: number | null
 
 	/**
 	 * The parent bias magnitude.
@@ -361,7 +361,7 @@ export interface PairIndexLike {
 	 * An absent value means no parent bias.
 	 * `PlacetypePairPriorOpts.parentDelta` overrides it.
 	 */
-	readonly parentDelta?: number
+	readonly parentDelta?: number | null
 
 	/**
 	 * The ISO country code.

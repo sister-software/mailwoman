@@ -170,7 +170,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 			const parsed = tryParsingJSON<StorageValue>(raw)
 
-			if (parsed === null) {
+			if (!parsed) {
 				// A truncated or hand-edited entry is a miss rather than a crash — re-fetching is always safe.
 				logger.warn(`Discarding an unreadable cache entry for ${key}.`)
 
@@ -191,7 +191,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 			const serialized = serializeIfValid(key, value)
 
-			if (serialized === null) {
+			if (!serialized) {
 				// Drop any older entry too: the interceptor is telling us this key's content just changed.
 				// A superseded body would turn this changed response into a stale cache hit.
 				await removeEntry(key)

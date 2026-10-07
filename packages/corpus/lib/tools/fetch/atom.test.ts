@@ -156,9 +156,9 @@ describe("linkWithRel", () => {
 		expect(linkWithRel(feed.links, "NEXT")?.href).toBe("https://services.cuzk.gov.cz/gml/inspire/ad/epsg-4258")
 	})
 
-	it("answers undefined for a relation the collection does not carry", async () => {
+	it("answers null for a relation the collection does not carry", async () => {
 		const feed = await readAtomFeed(feedChunks(CZ_SERVICE_XML))
 
-		expect(linkWithRel(feed.links, "enclosure")).toBeUndefined()
+		expect(linkWithRel(feed.links, "enclosure")).toBeNull()
 	})
 })

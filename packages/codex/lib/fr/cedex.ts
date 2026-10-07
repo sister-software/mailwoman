@@ -24,9 +24,9 @@ export interface CedexMatch {
 	start: number
 	end: number
 	/**
-	 * The office number when present ("08"), undefined for bare cedex.
+	 * The office number when present ("08"), null for bare cedex.
 	 */
-	office?: string
+	office: string | null
 }
 
 /**
@@ -44,7 +44,7 @@ export function matchCedex(text: string): CedexMatch | null {
 			matched: m[0],
 			start: m.index,
 			end: m.index + m[0].length,
-			...(m[1] ? { office: m[1] } : {}),
+			office: m[1] || null,
 		}
 	}
 

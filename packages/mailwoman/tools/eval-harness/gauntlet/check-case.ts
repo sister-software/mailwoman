@@ -102,7 +102,7 @@ export function scriptRenderings(value: string): string[] {
 	for (const char of value) {
 		const charFamily = scriptFamilyOf(char)
 
-		if (charFamily === null) {
+		if (!charFamily) {
 			pending.push(char)
 
 			continue
@@ -160,8 +160,8 @@ function missingRenderings(got: string, required: readonly string[]): string[] {
  * would be wrong because it echoes the parsed query span, while `hierarchy[].name` is the
  * gazetteer's canonical `resolver_name`, the only field that can disagree with the input.
  */
-function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] | undefined {
-	return r.hierarchy[0]
+function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] | null {
+	return r.hierarchy[0] ?? null
 }
 
 /**
@@ -197,11 +197,11 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 		}
 	}
 
-	if (c.expect_tier != null && r.tier !== c.expect_tier) {
+	if (c.expect_tier && r.tier !== c.expect_tier) {
 		issues.push(`tier ${r.tier} ≠ ${c.expect_tier}`)
 	}
 
-	if (c.expect_place_id != null || c.expect_place_name != null) {
+	if (c.expect_place_id || c.expect_place_name) {
 		const place = resolvedPlace(r)
 
 		if (!place) {
@@ -211,12 +211,12 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 		} else {
 			// Case-insensitive, matching the component check: casing is the gazetteer's business,
 			// as `resolver_name` is proper-cased canonical.
-			if (c.expect_place_name != null && place.name.toLowerCase() !== c.expect_place_name.toLowerCase()) {
+			if (c.expect_place_name && place.name.toLowerCase() !== c.expect_place_name.toLowerCase()) {
 				issues.push(`place name "${place.name}" ≠ "${c.expect_place_name}"`)
 			}
 
 			// Exact, unlike the name: a place id is an opaque key rather than prose.
-			if (c.expect_place_id != null && place.placeID !== c.expect_place_id) {
+			if (c.expect_place_id && place.placeID !== c.expect_place_id) {
 				issues.push(`place id "${place.placeID ?? null}" ≠ "${c.expect_place_id}"`)
 			}
 		}
@@ -224,16 +224,15 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	// Parsed ahead of the expect_components loop because its keys take precedence there;
 	// `undefined` is tolerated alongside null because an older regression.db has no such column.
-	const renderinginterface =
-		c.expect_component_renderings != null
-			? tryParsingJSON<Record<string, string[]>>(c.expect_component_renderings)
-			: null
+	const renderinginterface = c.expect_component_renderings
+		? tryParsingJSON<Record<string, string[]>>(c.expect_component_renderings)
+		: null
 
-	if (c.expect_component_renderings != null && !renderinginterface) {
+	if (c.expect_component_renderings && !renderinginterface) {
 		issues.push(`expect_component_renderings is not valid JSON (corrupt regression.db row?)`)
 	}
 
-	if (c.expect_components != null) {
+	if (c.expect_components) {
 		// From our own builder's JSON.stringify, so malformed means a corrupt DB row — surface
 		// it as a per-case issue rather than letting a raw SyntaxError kill the whole check.
 		const exp = tryParsingJSON<Record<string, string>>(c.expect_components)

@@ -115,7 +115,7 @@ async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<nu
 		child.on("error", (err) => rej(new Error(`mailwoman-mcp failed to spawn (${binPath}): ${(err as Error).message}`)))
 	})
 
-	let overallTimer: NodeJS.Timeout | undefined
+	let overallTimer: NodeJS.Timeout | null = null
 
 	const timedOut = new Promise<never>((_, rej) => {
 		overallTimer = setTimeout(() => {
@@ -187,7 +187,7 @@ async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<nu
 		}
 
 		child.stdin.end()
-		let shutdownTimer: NodeJS.Timeout | undefined
+		let shutdownTimer: NodeJS.Timeout | null = null
 
 		const exitCode = await Promise.race([
 			exited,
@@ -198,7 +198,7 @@ async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<nu
 					rej(new Error(`mailwoman-mcp did not exit within the shutdown window; stderr:\n${stderr}`))
 				}, 5000)
 			}),
-		]).finally(() => clearTimeout(shutdownTimer))
+		]).finally(() => clearTimeout(shutdownTimer ?? undefined))
 
 		if (exitCode !== 0 && exitCode !== null) {
 			throw new Error(`mailwoman-mcp exited non-zero (${exitCode}) on stdin close; stderr:\n${stderr}`)
@@ -206,9 +206,9 @@ async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<nu
 
 		return tools.length
 	} finally {
-		clearTimeout(overallTimer)
+		clearTimeout(overallTimer ?? undefined)
 
-		if (child.exitCode === null && child.signalCode === null) {
+		if (child.exitCode === null && !child.signalCode) {
 			child.kill("SIGKILL")
 		}
 	}

@@ -118,7 +118,7 @@ function toRecord(feature: {
 	const housenumber = p["housenumber"]
 
 	if (housenumber == null || housenumber === "") return null
-	const pt = representativePoint(feature.geometry)
+	const pt = representativePoint(feature.geometry ?? null)
 
 	if (!pt) return null
 

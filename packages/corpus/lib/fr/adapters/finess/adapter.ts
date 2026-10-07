@@ -389,7 +389,7 @@ function readStreet(
 	if (word === undefined) return { refused: FinessRefusal.VoieTypeUnknown }
 
 	// With no code, or a code that adds no word, the name holds whatever type word it has.
-	if (word === null) {
+	if (!word) {
 		const split = splitFrenchStreetType(name)
 
 		if (split?.street) {

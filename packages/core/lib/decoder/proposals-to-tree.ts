@@ -64,6 +64,7 @@ export function treeToProposals(
 				source,
 				source_id: sourceID ?? node.sourceID ?? source,
 				penalty: 0,
+				metadata: null,
 			})
 		}
 

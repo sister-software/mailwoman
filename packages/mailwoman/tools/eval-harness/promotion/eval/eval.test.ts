@@ -41,7 +41,7 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 				return false
 			}
 
-			if (segment === undefined) return p === parts.length
+			if (!segment) return p === parts.length
 
 			if (p >= parts.length || !segmentMatches(segment, parts[p]!)) return false
 		}

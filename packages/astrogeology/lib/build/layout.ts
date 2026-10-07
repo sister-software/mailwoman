@@ -42,6 +42,6 @@ export function buildOutputs(body: BuildableBodyID): BuildOutputNames {
  * The output directory for a body's build.
  * The `--out` flag overrides the default.
  */
-export function buildDirectory(body: BuildableBodyID, out: string | undefined): string {
+export function buildDirectory(body: BuildableBodyID, out: string | null): string {
 	return out ?? dataRootPath("astrogeology", body, "build").toString()
 }

@@ -131,7 +131,7 @@ export interface AuLevelDesignatorMatch {
 	/**
 	 * The floor identifier, when present, such as "3" or "B2".
 	 */
-	identifier?: string
+	identifier: string | null
 }
 
 /**
@@ -178,7 +178,7 @@ export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch |
 		return {
 			matched: m[1]!.trim(),
 			code,
-			...(m[2] ? { identifier: m[2] } : {}),
+			identifier: m[2] || null,
 		}
 	}
 

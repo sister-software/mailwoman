@@ -20,7 +20,7 @@ import type { PostcodeLocalityDatabase } from "mailwoman/locality-postcode-schem
  */
 const POSTCODE_LOCALITY_SUFFIXES = ["fr", "de", "jp", "intl"] as const
 
-export type LocalityPostcodeLookup = (wofID: number, countryCode: string | null) => string | undefined
+export type LocalityPostcodeLookup = (wofID: number, countryCode: string | null) => string | null
 
 export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLookup> {
 	const statements = new Map<string, ReturnType<DatabaseClient["prepare"]>>()
@@ -57,9 +57,9 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 
 			if (rows.length === 1) return rows[0]!.postcode
 
-			if (rows.length > 1) return undefined // ambiguous — abstain, never guess
+			if (rows.length > 1) return null // ambiguous — abstain, never guess
 		}
 
-		return undefined
+		return null
 	}
 }

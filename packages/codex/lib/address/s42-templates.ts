@@ -166,7 +166,7 @@ const COHORT_2010 = new Set(S42_COHORT_2010_ADDITIONS)
  * `null` states that no approved crosswalk exists for that country.
  * It does not state that the country lacks an addressing system.
  */
-export function s42CohortForJurisdiction(iso2: string | null | undefined): S42Cohort | null {
+export function s42CohortForJurisdiction(iso2: string | null): S42Cohort | null {
 	if (!iso2) return null
 
 	const code = iso2.trim().toUpperCase()

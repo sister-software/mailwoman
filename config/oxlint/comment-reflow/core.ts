@@ -170,7 +170,7 @@ function balancedEnd(text: string, start: number, open: string, close: string, q
 		if (character === close && --depth === 0) return i + 1
 	}
 
-	return undefined
+	return null
 }
 
 const SPACE = " ".charCodeAt(0)
@@ -207,9 +207,9 @@ function isWhitespaceAt(text: string, index: number): boolean {
  * A word is always a contiguous slice of `text`, so the tokenizer tracks
  * where each began and slices once at its end.
  *
- * The result is `undefined` when a span or a bracket is left open.
+ * The result is `null` when a span or a bracket is left open.
  */
-function words(text: string): string[] | undefined {
+function words(text: string): string[] | null {
 	const result: string[] = []
 	let wordStart = -1
 
@@ -230,7 +230,7 @@ function words(text: string): string[] | undefined {
 		}
 
 		const character = text[i]!
-		let end: number | undefined
+		let end: number | null = null
 
 		if (character === "`") {
 			let delimiterEnd = i + 1
@@ -242,21 +242,21 @@ function words(text: string): string[] | undefined {
 			const delimiter = text.slice(i, delimiterEnd)
 			const close = text.indexOf(delimiter, delimiterEnd)
 
-			if (close === -1) return undefined
+			if (close === -1) return null
 			end = close + delimiter.length
 		} else if (text.startsWith("{@", i)) {
 			end = balancedEnd(text, i, "{", "}")
 
-			if (!end) return undefined
+			if (!end) return null
 		} else if (character === "[") {
 			end = balancedEnd(text, i, "[", "]")
 
-			if (!end) return undefined
+			if (!end) return null
 
 			if (text[end] === "(" || text[end] === "[") {
 				end = balancedEnd(text, end, text[end]!, text[end] === "(" ? ")" : "]")
 
-				if (!end) return undefined
+				if (!end) return null
 			}
 		}
 
@@ -493,7 +493,7 @@ function splitSentences(text: string): string[] {
 
 		const next = tokens[i + 1]
 
-		if (next === undefined || depth > 0) continue
+		if (!next || depth > 0) continue
 
 		if (!/[.!?][)"'\]`]*$/.test(token) || ABBREVIATIONS.test(token)) continue
 
@@ -551,7 +551,7 @@ function wrapProse(text: string, limits: WrapLimits, first = "", continuation = 
 	for (const [index, sentence] of sentences.entries()) {
 		const wrapped = wrap(sentence, limits, index === 0 ? first : continuation, continuation)
 
-		if (!wrapped) return undefined
+		if (!wrapped) return null
 		lines.push(...wrapped)
 	}
 
@@ -561,7 +561,7 @@ function wrapProse(text: string, limits: WrapLimits, first = "", continuation = 
 function wrap(text: string, limits: WrapLimits, first = "", continuation = "") {
 	const tokens = words(text)
 
-	if (!tokens) return undefined
+	if (!tokens) return null
 
 	if (!tokens.length) return [first.trimEnd()]
 	const firstWidth = columns(first, limits.tabWidth)
@@ -579,19 +579,19 @@ function wrap(text: string, limits: WrapLimits, first = "", continuation = "") {
 	return lines
 }
 
-function tagParts(line: string): { prefix: string; description: string } | undefined {
+function tagParts(line: string): { prefix: string; description: string } | null {
 	const match =
 		/^@(param|arg|argument|property|prop|returns?|throws?|exception|description|desc|summary|remarks|deprecated)\b\s*/.exec(
 			line
 		)
 
-	if (!match) return undefined
+	if (!match) return null
 	let end = match[0].length
 
 	if (line[end] === "{") {
 		const typeEnd = balancedEnd(line, end, "{", "}", true)
 
-		if (!typeEnd) return undefined
+		if (!typeEnd) return null
 		end = typeEnd
 
 		while (line[end] === " " || line[end] === "\t") {
@@ -603,12 +603,12 @@ function tagParts(line: string): { prefix: string; description: string } | undef
 		if (line[end] === "[") {
 			const nameEnd = balancedEnd(line, end, "[", "]", true)
 
-			if (!nameEnd) return undefined
+			if (!nameEnd) return null
 			end = nameEnd
 		} else {
 			const name = /^[\w.$]+/.exec(line.slice(end))
 
-			if (!name) return undefined
+			if (!name) return null
 			end += name[0].length
 		}
 
@@ -665,7 +665,7 @@ function reflowText(
 	shape: ParagraphShape = { paragraphs: false, perParagraph: defaultOptions.paragraphSentences }
 ): string[] {
 	const output: string[] = []
-	let fence: { marker: string; length: number } | undefined
+	let fence: { marker: string; length: number } | null = null
 	let opaqueTag = false
 	// The block's opening paragraph contains the lead sentence by itself.
 	let leadPending = true
@@ -683,7 +683,7 @@ function reflowText(
 				fenceMatch[1]!.length >= fence.length &&
 				line.trim() === fenceMatch[1]
 			) {
-				fence = undefined
+				fence = null
 			}
 
 			i++
@@ -713,9 +713,7 @@ function reflowText(
 
 				const text = [parts.description, ...lines.slice(i + 1, end).map((value) => value.trim())].join(" ")
 
-				const completeMarkup = [parts.description, ...lines.slice(i + 1, end)].every(
-					(value) => words(value) !== undefined
-				)
+				const completeMarkup = [parts.description, ...lines.slice(i + 1, end)].every((value) => words(value) !== null)
 
 				// A tag's continuation sits flush with the star rather than indented under
 				// the tag, because that is where oxfmt puts it.
@@ -756,7 +754,7 @@ function reflowText(
 			}
 
 			const text = [list[2]!, ...lines.slice(i + 1, end).map((value) => value.trim())].join(" ")
-			const completeMarkup = [list[2]!, ...lines.slice(i + 1, end)].every((value) => words(value) !== undefined)
+			const completeMarkup = [list[2]!, ...lines.slice(i + 1, end)].every((value) => words(value) !== null)
 
 			output.push(
 				...((completeMarkup ? wrapProse(text, limits, prefix, continuation) : undefined) ?? lines.slice(i, end))
@@ -793,7 +791,7 @@ function reflowText(
 			.map((value) => value.trim())
 			.join(" ")
 
-		const completeInlineMarkup = lines.slice(i, end).every((value) => words(value) !== undefined)
+		const completeInlineMarkup = lines.slice(i, end).every((value) => words(value) !== null)
 
 		const groups = completeInlineMarkup
 			? groupSentences(splitSentences(text), shape.perParagraph, shape.paragraphs && leadPending)
@@ -906,7 +904,7 @@ export function reflowBlockComment(
 	const body = raw.slice(opening.length, -2)
 	const original = body.split(/\r\n|\n/)
 	let lines: string[]
-	let plainPrefix: string | undefined
+	let plainPrefix: string | null = null
 
 	if (original.length === 1) {
 		// The formatter preserves single-line metadata and examples because expansion can change parser semantics.
@@ -935,7 +933,7 @@ export function reflowBlockComment(
 	const formatted = reflowText(lines, limitsFor(options, overhead), jsdoc, {
 		// A `/* */` block whose body is indented prose keeps its own layout.
 		// Only a starred block takes the shape.
-		paragraphs: plainPrefix === undefined && original.length > 1,
+		paragraphs: plainPrefix === null && original.length > 1,
 		perParagraph: options.paragraphSentences,
 	})
 
@@ -946,7 +944,7 @@ export function reflowBlockComment(
 	)
 		return raw
 
-	if (plainPrefix !== undefined)
+	if (plainPrefix)
 		return [opening, ...formatted.map((line) => (line ? plainPrefix + line : "")), indent + " */"].join(eol)
 
 	return [opening, ...formatted.map((line) => indent + (line ? ` * ${line}` : " *")), indent + " */"].join(eol)

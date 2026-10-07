@@ -161,14 +161,14 @@ interface ReferencedValue {
 	readonly type: string
 
 	/**
-	 * The street name, place name or postcode the feature states.
+	 * The street name, place name or postcode the feature states, null when it states none.
 	 */
-	readonly value?: string
+	readonly value: string | null
 
 	/**
 	 * The administrative level an `ad:AdminUnitName` states, such as `4thOrder`.
 	 */
-	readonly level?: string
+	readonly level: string | null
 }
 
 /**
@@ -176,18 +176,18 @@ interface ReferencedValue {
  */
 function referencedValue(feature: MarkupElement): ReferencedValue {
 	if (feature.name === "ad:ThoroughfareName") {
-		return { type: feature.name, value: thoroughfareName(feature) }
+		return { type: feature.name, value: thoroughfareName(feature), level: null }
 	}
 
 	if (feature.name === "ad:PostalDescriptor") {
-		return { type: feature.name, value: postalDescriptorCode(feature) }
+		return { type: feature.name, value: postalDescriptorCode(feature), level: null }
 	}
 
 	if (feature.name === "ad:AdminUnitName") {
 		return { type: feature.name, value: placeName(feature), level: adminUnitLevel(feature) }
 	}
 
-	return { type: feature.name, value: placeName(feature) }
+	return { type: feature.name, value: placeName(feature), level: null }
 }
 
 /**
@@ -197,12 +197,12 @@ function referencedValue(feature: MarkupElement): ReferencedValue {
  * number, and the two are joined by a solidus where it does.
  * The table in this module's header reads that off three records of the publisher's `ra:address` layer.
  *
- * @returns The number, or undefined when the publisher states no `addressNumber`.
+ * @returns The number, or null when the publisher states no `addressNumber`.
  */
-export function slovakHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | undefined {
+export function slovakHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | null {
 	const descriptive = designator(byType, "addressNumber")
 
-	if (!descriptive) return undefined
+	if (!descriptive) return null
 
 	const orientation = designator(byType, "buildingIdentifier")
 
@@ -274,26 +274,23 @@ export function createSKInspireAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or `undefined` when it holds too little to render.
+ * One address's row, or `null` when it holds too little to render.
  *
  * The component index is complete before this is called, so a reference that
  * resolves to no feature raises rather than being deferred.
  */
-function composeRow(
-	address: MarkupElement,
-	referenced: ReadonlyMap<string, ReferencedValue>
-): CanonicalRow | undefined {
-	const addressID = address.attributes["gml:id"]?.trim()
+function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, ReferencedValue>): CanonicalRow | null {
+	const addressID = address.attributes["gml:id"]?.trim() ?? null
 	const voided = voidDesignatorTypes(address)
 
 	for (const type of ["addressNumber", "buildingIdentifier"]) {
 		if (voided.has(type)) throw new VoidDesignatorError(SK_INSPIRE_ADAPTER_ID, addressID, type)
 	}
 
-	let street: string | undefined
-	let postcode: string | undefined
-	let municipality: string | undefined
-	let settlement: string | undefined
+	let street: string | null = null
+	let postcode: string | null = null
+	let municipality: string | null = null
+	let settlement: string | null = null
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
@@ -314,7 +311,7 @@ function composeRow(
 
 	const place = municipality ?? settlement
 
-	if (!place) return undefined
+	if (!place) return null
 
 	const components: CanonicalRow["components"] = {}
 	const house = slovakHouseNumber(designatorsByType(address))
@@ -341,7 +338,7 @@ function composeRow(
 
 	const rendered = formatAddressRow(components, "SK", { singleLine: true })
 
-	if (!rendered) return undefined
+	if (!rendered) return null
 
 	const { raw, components: aligned } = rendered
 

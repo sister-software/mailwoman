@@ -137,7 +137,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			adminDB,
 			out,
 			postcodeDatabases: databases,
-			importanceDB,
+			importanceDB: importanceDB ?? undefined,
 			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
@@ -146,7 +146,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			`gazetteer: ${out}`,
 			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode + ${r.postcodeAliases.toLocaleString()} postcode-alias (from ${r.places.toLocaleString()} places)`,
 			`ancestors: ${r.ancestorRows.toLocaleString()} closure rows across ${r.ancestorPlaces.toLocaleString()} places; ${r.intervalPlaces.toLocaleString()} interval labels`,
-			r.importanceScored === undefined
+			r.importanceScored === null
 				? "importance: not joined (no score source) — the column is empty"
 				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceFiltered?.toLocaleString() ?? 0} refused as a different same-name place`,
 			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,

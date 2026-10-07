@@ -60,6 +60,9 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 		dependent_locality: null,
 		unit: null,
 		postcode_country_scope: null,
+		capital_promotion: null,
+		variant_alias_exemption: null,
+		admin_coherence: null,
 		hierarchy: [],
 		...over,
 	}
@@ -136,7 +139,7 @@ describe("the place-identity check (#1507)", () => {
 
 		const r = result({
 			locality: "Gaborone",
-			hierarchy: [{ tag: "locality", name: "Gaborone", placeID: "wof:9000000121151" }],
+			hierarchy: [{ tag: "locality", name: "Gaborone", placeID: "wof:9000000121151", lat: null, lon: null }],
 		})
 
 		expect(checkCase(c, r)).toEqual([])
@@ -152,7 +155,7 @@ describe("the place-identity check (#1507)", () => {
 
 		const r = result({
 			locality: "Gaborone",
-			hierarchy: [{ tag: "locality", name: "Aichegg", placeID: "wof:9000000121151" }],
+			hierarchy: [{ tag: "locality", name: "Aichegg", placeID: "wof:9000000121151", lat: null, lon: null }],
 		})
 
 		expect(checkCase(c, r)).toEqual([`place name "Aichegg" ≠ "Gaborone"`])
@@ -160,14 +163,17 @@ describe("the place-identity check (#1507)", () => {
 
 	it("fails a mismatched place id exactly, without case folding", () => {
 		const c = storedCase({ expect_place_id: "wof:101750367" })
-		const r = result({ hierarchy: [{ tag: "locality", name: "Gaborone", placeID: "WOF:101750367" }] })
+
+		const r = result({
+			hierarchy: [{ tag: "locality", name: "Gaborone", placeID: "WOF:101750367", lat: null, lon: null }],
+		})
 
 		expect(checkCase(c, r)).toEqual([`place id "WOF:101750367" ≠ "wof:101750367"`])
 	})
 
 	it("reports an undecorated node's absent id rather than pretending it matched", () => {
 		const c = storedCase({ expect_place_id: "wof:101750367" })
-		const r = result({ hierarchy: [{ tag: "locality", name: "Gaborone" }] })
+		const r = result({ hierarchy: [{ tag: "locality", name: "Gaborone", placeID: null, lat: null, lon: null }] })
 
 		expect(checkCase(c, r)).toEqual([`place id "null" ≠ "wof:101750367"`])
 	})
@@ -183,8 +189,8 @@ describe("the place-identity check (#1507)", () => {
 
 		const r = result({
 			hierarchy: [
-				{ tag: "locality", name: "Gaborone", placeID: "wof:101750367" },
-				{ tag: "country", name: "Botswana", placeID: "wof:85632505" },
+				{ tag: "locality", name: "Gaborone", placeID: "wof:101750367", lat: null, lon: null },
+				{ tag: "country", name: "Botswana", placeID: "wof:85632505", lat: null, lon: null },
 			],
 		})
 
@@ -192,7 +198,9 @@ describe("the place-identity check (#1507)", () => {
 	})
 
 	it("stays silent for the rows that assert neither — the zero-adoption case", () => {
-		const r = result({ hierarchy: [{ tag: "locality", name: "Aichegg", placeID: "wof:9000000121151" }] })
+		const r = result({
+			hierarchy: [{ tag: "locality", name: "Aichegg", placeID: "wof:9000000121151", lat: null, lon: null }],
+		})
 
 		expect(checkCase(storedCase(), r)).toEqual([])
 	})

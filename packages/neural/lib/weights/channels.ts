@@ -114,30 +114,30 @@ export interface DeclaredArtifact {
  * Only the package's own card is read.
  * An overlay without a card makes no claim about its files and must not inherit the base package's list.
  *
- * @returns `undefined` when the package has no card, the card has no `files` block,
+ * @returns `null` when the package has no card, the card has no `files` block,
  * or none of `keys` appears there.
  */
 export async function readDeclaredArtifactFile(
-	packageDir: PathBuilderLike | undefined,
+	packageDir: PathBuilderLike | null | undefined,
 	keys: readonly string[] = ANCHOR_ARTIFACT_CARD_KEYS
-): Promise<DeclaredArtifact | undefined> {
-	if (!packageDir) return undefined
+): Promise<DeclaredArtifact | null> {
+	if (!packageDir) return null
 
 	const cardPath = resolvePath(packageDir, "model-card.json")
 
-	if (!(await pathExists(cardPath))) return undefined
+	if (!(await pathExists(cardPath))) return null
 
 	let parsed: unknown
 
 	try {
 		parsed = tryParsingJSON(await readLocalTextFile(cardPath))
 	} catch {
-		return undefined
+		return null
 	}
 
 	const files = (parsed as { files?: unknown } | null)?.files
 
-	if (typeof files !== "object" || files === null || Array.isArray(files)) return undefined
+	if (typeof files !== "object" || !files || Array.isArray(files)) return null
 
 	for (const key of keys) {
 		const file = (files as Record<string, unknown>)[key]
@@ -150,30 +150,30 @@ export async function readDeclaredArtifactFile(
 		return { key, file, path, present: await pathExists(path) }
 	}
 
-	return undefined
+	return null
 }
 
 /**
  * Reads a `model-card.json` into a plain object.
  *
- * It returns `undefined` when the card is absent, unreadable or not an object.
+ * It returns `null` when the card is absent, unreadable or not an object.
  * Each caller validates its own field and throws when that field is present but malformed.
  */
 async function readModelCardObject(
-	modelCardPath: PathBuilderLike | undefined
-): Promise<Record<string, unknown> | undefined> {
-	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<Record<string, unknown> | null> {
+	if (!modelCardPath || !(await pathExists(modelCardPath))) return null
 	let raw: string
 
 	try {
 		raw = await readLocalTextFile(modelCardPath)
 	} catch {
-		return undefined
+		return null
 	}
 
 	const parsed = tryParsingJSON(raw)
 
-	if (typeof parsed !== "object" || parsed === null) return undefined
+	if (typeof parsed !== "object" || !parsed) return null
 
 	return parsed as Record<string, unknown>
 }
@@ -224,17 +224,17 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
 
 /**
  * Returns the reason an unfed anchor channel deserves a warning for this package,
- * or `undefined` when it does not.
+ * or `null` when it does not.
  *
  * A package whose card lists an anchor file that is missing or empty is broken, so it gets a warning.
  * A package whose card lists no anchor file has chosen not to ship one, so it gets none.
  *
  * The `requires` block cannot decide this because overlays inherit it from the base model.
  */
-export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined): Promise<string | undefined> {
+export async function unfedAnchorDetail(packageDir: PathBuilderLike | null | undefined): Promise<string | null> {
 	const declared = await readDeclaredArtifactFile(packageDir)
 
-	if (!declared) return undefined
+	if (!declared) return null
 
 	return declared.present
 		? `its declared files.${declared.key} (${declared.file}) parsed EMPTY`
@@ -249,29 +249,31 @@ export type { EncoderDescriptor } from "#char-encoder"
 /**
  * Reads the `encoder` block from a model card file with `encoderDescriptorFromCard`.
  */
-export async function readEncoderFromModelCard(modelCardPath: PathBuilderLike | undefined): Promise<EncoderDescriptor> {
+export async function readEncoderFromModelCard(
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<EncoderDescriptor> {
 	return encoderDescriptorFromCard(await readModelCardObject(modelCardPath), modelCardPath?.toString() ?? "model card")
 }
 
 /**
  * Reads the `requires` block from a `model-card.json`.
  *
- * It returns `undefined` when the card is absent, unreadable or has no `requires` field.
+ * It returns `null` when the card is absent, unreadable or has no `requires` field.
  * Callers then infer the required channels with `inferRequiredChannelsFromInputs`.
  *
  * @throws When the field is present but malformed, such as a channel entry with a non-boolean `required`.
  */
 export async function readRequiredChannels(
-	modelCardPath: PathBuilderLike | undefined
-): Promise<RequiredChannels | undefined> {
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<RequiredChannels | null> {
 	const card = await readModelCardObject(modelCardPath)
 
-	if (!card) return undefined
+	if (!card) return null
 	const requires = card.requires
 
-	if (requires === undefined) return undefined
+	if (requires === undefined) return null
 
-	if (typeof requires !== "object" || requires === null || Array.isArray(requires)) {
+	if (typeof requires !== "object" || !requires || Array.isArray(requires)) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires\` field — ` +
 				`expected an object, got ${stringifyJSON(requires)}.`
@@ -294,11 +296,7 @@ export async function readRequiredChannels(
 
 		if (entry === undefined) continue
 
-		if (
-			typeof entry !== "object" ||
-			entry === null ||
-			typeof (entry as { required?: unknown }).required !== "boolean"
-		) {
+		if (typeof entry !== "object" || !entry || typeof (entry as { required?: unknown }).required !== "boolean") {
 			throw new Error(
 				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}\` entry — ` +
 					`expected { required: boolean }, got ${stringifyJSON(entry)}.`
@@ -368,7 +366,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
 /**
  * Reads the `capabilities` block from a `model-card.json`.
  *
- * It returns `undefined` when the card is absent, unreadable or has no `capabilities` field.
+ * It returns `null` when the card is absent, unreadable or has no `capabilities` field.
  * The delta check is then skipped.
  *
  * Malformed cells inside the block are ignored by `lookupTagCapability`.
@@ -376,16 +374,16 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * @throws When the field is present but is not an object.
  */
 export async function readCapabilityManifest(
-	modelCardPath: PathBuilderLike | undefined
-): Promise<CapabilityManifest | undefined> {
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<CapabilityManifest | null> {
 	const card = await readModelCardObject(modelCardPath)
 
-	if (!card) return undefined
+	if (!card) return null
 	const capabilities = card.capabilities
 
-	if (capabilities === undefined) return undefined
+	if (capabilities === undefined) return null
 
-	if (typeof capabilities !== "object" || capabilities === null || Array.isArray(capabilities)) {
+	if (typeof capabilities !== "object" || !capabilities || Array.isArray(capabilities)) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`capabilities\` field — ` +
 				`expected an object, got ${stringifyJSON(capabilities)}.`
@@ -396,25 +394,25 @@ export async function readCapabilityManifest(
 }
 
 /**
- * Returns `capabilities[tier][system][tag]`, or `undefined` for a missing or malformed cell.
+ * Returns `capabilities[tier][system][tag]`, or `null` for a missing or malformed cell.
  *
  * The scorer treats an uncertified tag as safe to mask.
  */
 export function lookupTagCapability(
-	manifest: CapabilityManifest | undefined,
+	manifest: CapabilityManifest | null,
 	tier: string,
 	system: string,
 	tag: string
-): TagCapability | undefined {
+): TagCapability | null {
 	const tierCell = manifest?.[tier]
 
-	if (!tierCell || typeof tierCell !== "object") return undefined
+	if (!tierCell || typeof tierCell !== "object") return null
 	const systemCell = tierCell[system]
 
-	if (!systemCell || typeof systemCell !== "object") return undefined
+	if (!systemCell || typeof systemCell !== "object") return null
 	const cap = systemCell[tag]
 
-	if (!cap || typeof cap !== "object" || typeof (cap as TagCapability).maskOffF1 !== "number") return undefined
+	if (!cap || typeof cap !== "object" || typeof (cap as TagCapability).maskOffF1 !== "number") return null
 
 	return cap as TagCapability
 }
@@ -431,30 +429,30 @@ export interface CRFTransitions {
 /**
  * Reads learned CRF transition scores from `crf-transitions.json`.
  *
- * @returns `undefined` when the file is missing or malformed.
+ * @returns `null` when the file is missing or malformed.
  * Callers then use only the structural BIO mask.
  */
-export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): Promise<CRFTransitions | undefined> {
-	if (!crfPath || !(await pathExists(crfPath))) return undefined
+export async function readCRFTransitions(crfPath: PathBuilderLike | null | undefined): Promise<CRFTransitions | null> {
+	if (!crfPath || !(await pathExists(crfPath))) return null
 	let raw: string
 
 	try {
 		raw = await readLocalTextFile(crfPath)
 	} catch {
-		return undefined
+		return null
 	}
 
 	const parsed = tryParsingJSON(raw)
 
-	if (typeof parsed !== "object" || parsed === null) return undefined
+	if (typeof parsed !== "object" || !parsed) return null
 	const obj = parsed as Record<string, unknown>
 	const transitions = obj.transitions
 	const start = obj.start_transitions
 	const end = obj.end_transitions
 
-	if (!Array.isArray(transitions) || !Array.isArray(start) || !Array.isArray(end)) return undefined
+	if (!Array.isArray(transitions) || !Array.isArray(start) || !Array.isArray(end)) return null
 
-	if (!transitions.length || !start.length || !end.length) return undefined
+	if (!transitions.length || !start.length || !end.length) return null
 
 	return {
 		transitions: transitions as number[][],
@@ -466,20 +464,20 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): 
 /**
  * Reads the `labels` array from a `model-card.json` file.
  *
- * It returns `undefined` when the file is missing, unreadable or has no `labels` field.
+ * It returns `null` when the file is missing, unreadable or has no `labels` field.
  * Callers then use their built-in default labels.
  *
  * @throws When `labels` is present but is not a non-empty array of strings.
  */
 export async function readLabelsFromModelCard(
-	modelCardPath: PathBuilderLike | undefined
-): Promise<readonly string[] | undefined> {
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<readonly string[] | null> {
 	const card = await readModelCardObject(modelCardPath)
 
-	if (!card) return undefined
+	if (!card) return null
 	const labels = card.labels
 
-	if (labels === undefined) return undefined
+	if (labels === undefined) return null
 
 	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
@@ -494,17 +492,17 @@ export async function readLabelsFromModelCard(
 /**
  * Reads the `address_systems` table from a `model-card.json` file.
  *
- * It returns `undefined` when the file is missing or the card has no such field.
+ * It returns `null` when the file is missing or the card has no such field.
  * That covers every model trained without the address-system head or the locale hint.
  *
  * @throws When the field is present but malformed.
  */
 export async function readAddressSystemsFromModelCard(
-	modelCardPath: PathBuilderLike | undefined
-): Promise<AddressSystemTable | undefined> {
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<AddressSystemTable | null> {
 	const card = await readModelCardObject(modelCardPath)
 
-	return card ? parseAddressSystemTable(card.address_systems, String(modelCardPath)) : undefined
+	return card ? parseAddressSystemTable(card.address_systems, String(modelCardPath)) : null
 }
 
 /**
@@ -552,7 +550,7 @@ async function assertNoOrphanedCharVocab(dir: PathBuilderLike, cardPath: PathBui
  */
 export async function resolveCharVocab(
 	packageDir: PathBuilderLike,
-	baseDir: PathBuilderLike | undefined,
+	baseDir: PathBuilderLike | null,
 	fileName: string
 ): Promise<string> {
 	const own = resolvePath(packageDir, fileName)

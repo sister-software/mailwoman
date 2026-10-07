@@ -55,8 +55,8 @@ export interface ReleasePlan {
 		 * The bucket directory a `hf` artifact is read from when it is not `destinations.hfBase` —
 		 * a character-path family's own directory.
 		 */
-		base?: string
-		expectedMD5?: string
+		base: string | null
+		expectedMD5: string | null
 	}>
 	destinations: ReleasePlanDestinations
 	planDigest: string
@@ -86,8 +86,8 @@ export async function computeReleasePlan(repoRoot: string): Promise<ReleasePlan>
 		workspace: artifact.workspace,
 		filename: artifact.filename,
 		origin: artifact.origin.kind,
-		...(artifact.origin.kind === "hf" && artifact.origin.base !== hfBase ? { base: artifact.origin.base } : {}),
-		...(artifact.expectedMD5 ? { expectedMD5: artifact.expectedMD5 } : {}),
+		base: artifact.origin.kind === "hf" && artifact.origin.base !== hfBase ? artifact.origin.base : null,
+		expectedMD5: artifact.expectedMD5 || null,
 	}))
 
 	const body = {

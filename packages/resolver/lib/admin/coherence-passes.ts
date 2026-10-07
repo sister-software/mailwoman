@@ -13,10 +13,10 @@ import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 
 const REGION_LINEAGE_PLACETYPES: ReadonlySet<string> = new Set(PLACETYPE_FILTER_GROUPS["region"] ?? ["region"])
 
-function placeIDValue(node: AddressNode): string | undefined {
+function placeIDValue(node: AddressNode): string | null {
 	const match = /^[a-z]+:(.+)$/u.exec(node.placeID ?? "")
 
-	return match?.[1]
+	return match?.[1] ?? null
 }
 
 /**
@@ -28,7 +28,7 @@ function placeIDValue(node: AddressNode): string | undefined {
  */
 export function applyParentFallbackContradiction(roots: readonly AddressNode[]): void {
 	const visit = (node: AddressNode, regionAncestor: AddressNode | null): void => {
-		const regionHere = node.tag === "region" && placeIDValue(node) !== undefined ? node : regionAncestor
+		const regionHere = node.tag === "region" && placeIDValue(node) ? node : regionAncestor
 
 		if (regionHere && node !== regionHere && node.metadata?.["parent_fallback"] === true) {
 			const regionID = placeIDValue(regionHere)
@@ -39,7 +39,7 @@ export function applyParentFallbackContradiction(roots: readonly AddressNode[]):
 
 			const regions = (ancestors ?? []).filter((a) => REGION_LINEAGE_PLACETYPES.has(a.placetype))
 
-			if (regionID !== undefined && regions.length && !regions.some((a) => String(a.id) === regionID)) {
+			if (regionID && regions.length && !regions.some((a) => String(a.id) === regionID)) {
 				delete node.lat
 				delete node.lon
 				delete node.placeID
@@ -83,7 +83,7 @@ export async function applyAdminCoherence(roots: readonly AddressNode[], backend
 			regionHere &&
 			(node.tag === "locality" || node.tag === "dependent_locality") &&
 			!isResolvedWithCoord(node) &&
-			node.value.trim().length
+			node.value.trim()
 		) {
 			await reconcileAdminPair(regionHere, node, backend)
 		}
@@ -103,7 +103,7 @@ async function reconcileAdminPair(
 	localityNode: AddressNode,
 	backend: ResolverBackend
 ): Promise<void> {
-	const regionCands = ((regionNode.alternatives as ResolvedPlace[] | undefined) ?? []).filter((r) => r.exactMatch)
+	const regionCands = ((regionNode.alternatives as ResolvedPlace[] | null) ?? []).filter((r) => r.exactMatch)
 
 	for (const region of regionCands) {
 		const scoped = await backend.findPlace({
@@ -232,7 +232,7 @@ export async function applyExplicitCountryCoherence(
 	backend: ResolverBackend
 ): Promise<void> {
 	const visit = async (node: AddressNode, countryToken: AddressNode | null, regionAbove: boolean): Promise<void> => {
-		const countryHere = node.tag === "country" && node.value.trim().length ? node : countryToken
+		const countryHere = node.tag === "country" && node.value.trim() ? node : countryToken
 
 		const regionHere = regionAbove || ((node.tag === "region" || node.tag === "subregion") && isResolvedWithCoord(node))
 
@@ -302,7 +302,7 @@ export async function applyRegionCountryCoherence(
 			regionHere &&
 			!isResolvedWithCoord(regionHere) &&
 			(node.tag === "locality" || node.tag === "dependent_locality") &&
-			node.value.trim().length
+			node.value.trim()
 		) {
 			await reconcileRegionCountry(regionHere, node, backend, defaultCountry)
 		}
@@ -329,7 +329,7 @@ async function reconcileRegionCountry(
 
 	if (sub.country.toUpperCase() === defaultCountry.toUpperCase()) return
 
-	const localityCountry = (localityNode.metadata?.["resolver_country"] as string | undefined)?.toUpperCase()
+	const localityCountry = (localityNode.metadata?.["resolver_country"] as string | null)?.toUpperCase()
 
 	if (localityCountry === sub.country.toUpperCase()) return
 

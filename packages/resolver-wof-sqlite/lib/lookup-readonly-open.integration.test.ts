@@ -36,7 +36,7 @@ vi.mock("node:sqlite", async (importOriginal) => {
 			spy.opens.push({ path, readOnly: options?.readOnly })
 
 			// node:sqlite rejects an explicit `undefined` options arg, so forward only when actually passed.
-			if (options === undefined) {
+			if (!options) {
 				super(path)
 			} else {
 				super(path, options)
@@ -91,11 +91,11 @@ function seedFixture(path: PathBuilder): void {
 /**
  * The readOnly option recorded for the main-extract open of `path` (asserts exactly one such open).
  */
-function readOnlyForOpenOf(path: PathBuilder): boolean | undefined {
+function readOnlyForOpenOf(path: PathBuilder): boolean | null {
 	const opens = spy.opens.filter((o) => o.path === path.toString())
 	expect(opens).toHaveLength(1)
 
-	return opens[0]!.readOnly
+	return opens[0]!.readOnly ?? null
 }
 
 describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {

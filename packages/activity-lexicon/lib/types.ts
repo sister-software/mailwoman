@@ -136,25 +136,3 @@ export interface ActivityPhraseLexicon {
 	provenance: SourceProvenance
 	phrases: ActivityPhraseEntry[]
 }
-
-/**
- * How an entry's locales matched the query locale.
- *
- * - `unscoped`: the entry declares no locales and matches any locale.
- * - `exact`: the entry declares the query's locale tag.
- * - `language`: only the language subtag matches.
- *   This is weaker evidence for a regional phrase.
- */
-export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
-
-/**
- * One entry matched under one locale.
- */
-export interface ActivityPhraseLocaleMatch {
-	scope: ActivityPhraseLocaleScope
-	/**
-	 * `1` for `unscoped` and `exact`, `0.5` for `language`.
-	 * These values match `@mailwoman/variant-aliases`.
-	 */
-	confidence: number
-}

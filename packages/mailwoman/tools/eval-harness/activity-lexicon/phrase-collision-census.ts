@@ -189,7 +189,7 @@ export interface PhraseCollisionCensus {
 	censusID: "activity-phrase-collision-census"
 	generatedAt: string
 	lexicon: { lexiconID: string; version: string; declaredPhrases: number }
-	poiDatabase: { path: string; layerManifest?: LayerManifest; layerManifestNote?: string }
+	poiDatabase: { path: string; layerManifest: LayerManifest | null; layerManifestNote: string | null }
 	probes: {
 		distinct: number
 		byFamily: Record<ProbeFamily, number>
@@ -308,7 +308,7 @@ export function classifyVenueName(name: string, probe: string): VenueNameVerdict
 export function candidateSubjects(input: string): string[] {
 	const asked: string[] = []
 
-	matchPOISubject(input, undefined, (phrase) => {
+	matchPOISubject(input, null, (phrase) => {
 		asked.push(phrase)
 
 		return []
@@ -432,7 +432,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 
 		const probeTokens = tokenize(probe)
 		const seen = new Set<string>()
-		let claimed: boolean | undefined
+		let claimed: boolean | null = null
 
 		for (const { venue, tokens } of tokenized) {
 			if (!venue.name || seen.has(venue.name)) continue
@@ -481,8 +481,8 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 		},
 		poiDatabase: {
 			path: options.databasePath.toString(),
-			...(manifest ? { layerManifest: manifest } : {}),
-			...(manifest ? {} : { layerManifestNote: error ?? "no layer_manifest row" }),
+			layerManifest: manifest ?? null,
+			layerManifestNote: manifest ? null : (error ?? "no layer_manifest row"),
 		},
 		probes: {
 			distinct: probes.length,

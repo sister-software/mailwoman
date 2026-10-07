@@ -270,7 +270,7 @@ export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroPr
 
 		const fromHref = PROVINCE_FEED_CODE.exec(link.href)?.[1]
 
-		if (fromHref !== undefined && fromHref !== code) {
+		if (fromHref && fromHref !== code) {
 			throw new Error(
 				`${ES_CATASTRO_SERVICE_FEED_URL}: the entry titled ${stringifyJSON(entry.title)} states province ` +
 					`${code} in its title and links ${link.href}, which names province ${fromHref}`
@@ -477,7 +477,7 @@ export interface HarvestESCatastroOptions {
  * as long as the feed stayed silent.
  */
 async function isCurrent(
-	recorded: ESCatastroArchiveEntry | undefined,
+	recorded: ESCatastroArchiveEntry | null,
 	dataset: ESCatastroMunicipalityDataset,
 	path: PathBuilderLike,
 	verifyDigests: boolean
@@ -600,7 +600,7 @@ export async function harvestESCatastro(
 	let municipalitiesListed = 0
 	let provincesHarvested = 0
 	const failedCodes: string[] = [...provinces.unknown]
-	const requested = options.municipalities === undefined ? undefined : new Set(options.municipalities)
+	const requested = options.municipalities ? new Set(options.municipalities) : undefined
 	const found = new Set<string>()
 
 	const writeHarvestManifest = async (): Promise<void> => {
@@ -652,7 +652,7 @@ export async function harvestESCatastro(
 
 			const dest = destDir(dataset.filename)
 
-			if (await isCurrent(files.get(dataset.filename), dataset, dest, options.verifyDigests ?? false)) {
+			if (await isCurrent(files.get(dataset.filename) ?? null, dataset, dest, options.verifyDigests ?? false)) {
 				skipped++
 
 				continue

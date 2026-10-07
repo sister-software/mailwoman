@@ -36,8 +36,8 @@ export interface POIBrandLookup {
 	/**
 	 * Returns the brand with the most rows among exact-phrase matches for `name`, if any.
 	 */
-	resolveBrandName(name: string): BrandRecord | undefined
-	getBrand(wikidata: string): BrandRecord | undefined
+	resolveBrandName(name: string): BrandRecord | null
+	getBrand(wikidata: string): BrandRecord | null
 	getAllBrands(): ReadonlyArray<BrandRecord>
 }
 
@@ -84,12 +84,12 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 		)
 	}
 
-	function resolveBrandName(name: string): BrandRecord | undefined {
-		return lookupPOIBrand(name)[0]?.brand
+	function resolveBrandName(name: string): BrandRecord | null {
+		return lookupPOIBrand(name)[0]?.brand ?? null
 	}
 
-	function getBrand(wikidata: string): BrandRecord | undefined {
-		return byWikidata.get(wikidata)
+	function getBrand(wikidata: string): BrandRecord | null {
+		return byWikidata.get(wikidata) ?? null
 	}
 
 	function getAllBrands(): ReadonlyArray<BrandRecord> {

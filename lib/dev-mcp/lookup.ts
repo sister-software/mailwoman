@@ -84,7 +84,16 @@ export interface LookupRow {
 	/**
 	 * A reading of this row in words, for cases where the shape by itself misleads.
 	 */
-	note?: string
+	note: string | null
+}
+
+/**
+ * One locale's reading in a sweep.
+ */
+export interface LocaleLookup {
+	artifact: string | null
+	rows: LookupRow[]
+	unavailable_reason: string | null
 }
 
 export interface LookupResult {
@@ -92,22 +101,22 @@ export interface LookupResult {
 	rows: LookupRow[]
 	/**
 	 * The resolved path plus whatever else decides the reading
-	 * (the locale and declared span mode for the anchor, the engine for the FST); absent
+	 * (the locale and declared span mode for the anchor, the engine for the FST); `null`
 	 * when there was no artifact to name, such as `codex`/`normalize`.
 	 */
-	provenance?: Record<string, unknown>
+	provenance: Record<string, unknown> | null
 	/**
-	 * Absent when the artifact could not be opened — reported rather than degraded, because
+	 * Non-null when the artifact could not be opened — reported rather than degraded, because
 	 * answering "no" to every query because a file is missing is the worst possible answer.
 	 */
-	unavailable_reason?: string
+	unavailable_reason: string | null
 	/**
-	 * Present instead of `rows` for a sweep.
+	 * Non-null instead of `rows` for a sweep.
 	 *
 	 * A locale whose artifact is missing includes its own `unavailable_reason` rather than dropping
 	 * out, because a locale absent from the map would read as one the source did not know.
 	 */
-	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>
+	by_locale: Record<string, LocaleLookup> | null
 	notes: string[]
 }
 
@@ -179,9 +188,10 @@ export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupR
 			query,
 			hit: accepted,
 			entries: accepted ? [{ generic: true, tokens }] : null,
-			...(tokens.length > 1
-				? { note: `Walked as ${tokens.length} tokens; this source answers about single generic street words.` }
-				: {}),
+			note:
+				tokens.length > 1
+					? `Walked as ${tokens.length} tokens; this source answers about single generic street words.`
+					: null,
 		}
 	})
 }
@@ -200,9 +210,10 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 			query,
 			hit: true,
 			entries: [{ normalized, changed: normalized !== query }],
-			...(normalized === query
-				? {}
-				: { note: `Normalization changed the input — downstream sources see ${stringifyJSON(normalized)}.` }),
+			note:
+				normalized === query
+					? null
+					: `Normalization changed the input — downstream sources see ${stringifyJSON(normalized)}.`,
 		}
 	})
 }
@@ -213,7 +224,7 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
  * correctly-sealed artifact and succeed on one that was not.
  */
 export async function openSealedArtifact<DB>(
-	path: string | undefined
+	path: string | null
 ): Promise<{ db: DatabaseClient<DB> } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }
 
@@ -230,7 +241,7 @@ export async function openSealedArtifact<DB>(
  * Load an FST artifact, reporting a missing file as unavailable rather than as a source with no entry.
  */
 export async function loadFSTArtifact(
-	path: PathBuilderLike | undefined,
+	path: PathBuilderLike | null,
 	deserialize: (buffer: Buffer) => FSTLike
 ): Promise<{ fst: FSTLike } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }

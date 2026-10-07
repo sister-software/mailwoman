@@ -141,7 +141,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		cacheRoot: options.weightsCacheRoot,
 	})
 
-	let fstGazetteer: FSTMatcher | undefined
+	let fstGazetteer: FSTMatcher | null = null
 
 	if (options.gazetteerPrior !== false) {
 		// The runtime loads the FST that sits beside the classifier's weights, so the eval does too.
@@ -161,7 +161,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		}
 	}
 
-	let fstStreetMorphology: FSTMatcher | undefined
+	let fstStreetMorphology: FSTMatcher | null = null
 
 	if (options.streetMorphology) {
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street")
@@ -187,7 +187,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
 				queryShape: computeQueryShape(fixture.input),
-				fstStreetMorphology,
+				...(fstStreetMorphology ? { fstStreetMorphology } : {}),
 				...(fstGazetteer ? { fst: fstGazetteer } : {}),
 				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})

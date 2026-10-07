@@ -75,7 +75,7 @@ export async function generateLanguageTypes(
 		const labelsConcatenated = columns[2] as string
 		// The two 639-2 forms agree for 163 languages.
 		// The 20 languages with differing forms receive a distinct code.
-		const alpha3t = (columns[3] as string | undefined) ?? ""
+		const alpha3t = (columns[3] as string | null) ?? ""
 
 		const labels = labelsConcatenated.split("; ")
 

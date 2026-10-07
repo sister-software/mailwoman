@@ -63,7 +63,7 @@ const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 /**
  * Converts a parsed country to alpha-2, or returns null when it cannot be mapped.
  */
-function codeOf(surface: string | null | undefined): string | null {
+function codeOf(surface: string | null): string | null {
 	if (!surface) return null
 
 	const folded = surface.trim().toLowerCase().replaceAll(/[.,]/gu, "")

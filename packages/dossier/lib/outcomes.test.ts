@@ -21,8 +21,14 @@ function disposition(id: string, outcome?: Omit<OperatorOutcome, "at" | "evidenc
 		investigated: ExplanationKind.Route,
 		decision: "Request the provider's plant record for cell-9",
 		decidedAt: "2022-06-01",
-		evidence: { source: "operator-log" },
-		outcome: outcome && { ...outcome, at: "2022-06-20", evidence: { source: `outcome-${id}` } },
+		evidence: { source: "operator-log", observedAt: null, validFrom: null, validTo: null },
+		outcome: outcome
+			? {
+					...outcome,
+					at: "2022-06-20",
+					evidence: { source: `outcome-${id}`, observedAt: null, validFrom: null, validTo: null },
+				}
+			: null,
 	}
 }
 
@@ -42,7 +48,13 @@ describe("reportOutcomes", () => {
 
 	test("dispositions that await an outcome are counted with their records and leave both measures unknown", () => {
 		expect(
-			reportOutcomes([disposition("d1"), { ...disposition("d2"), evidence: { source: "operator-log-2" } }])
+			reportOutcomes([
+				disposition("d1"),
+				{
+					...disposition("d2"),
+					evidence: { source: "operator-log-2", observedAt: null, validFrom: null, validTo: null },
+				},
+			])
 		).toMatchObject({
 			dispositions: 2,
 			pending: 2,
@@ -54,9 +66,9 @@ describe("reportOutcomes", () => {
 
 	test("blocker accuracy counts the investigated explanations that held over every recorded outcome", () => {
 		const report = reportOutcomes([
-			disposition("d1", { held: true }),
-			disposition("d2", { held: false }),
-			disposition("d3", { held: true }),
+			disposition("d1", { held: true, minutesSpent: null, baselineMinutes: null }),
+			disposition("d2", { held: false, minutesSpent: null, baselineMinutes: null }),
+			disposition("d3", { held: true, minutesSpent: null, baselineMinutes: null }),
 			disposition("d4"),
 		])
 
@@ -74,7 +86,7 @@ describe("reportOutcomes", () => {
 		const report = reportOutcomes([
 			disposition("d1", { held: true, minutesSpent: 30, baselineMinutes: 90 }),
 			disposition("d2", { held: false, minutesSpent: 50, baselineMinutes: 40 }),
-			disposition("d3", { held: true, minutesSpent: 20 }),
+			disposition("d3", { held: true, minutesSpent: 20, baselineMinutes: null }),
 		])
 
 		expect(report.timeSaved).toEqual({
@@ -93,7 +105,7 @@ describe("outcomeStatements", () => {
 		const statements = outcomeStatements(
 			reportOutcomes([
 				disposition("d1", { held: true, minutesSpent: 30, baselineMinutes: 90 }),
-				disposition("d2", { held: false }),
+				disposition("d2", { held: false, minutesSpent: null, baselineMinutes: null }),
 				disposition("d3"),
 			])
 		)
@@ -103,13 +115,15 @@ describe("outcomeStatements", () => {
 				kind: "estimate",
 				text: "The investigated explanation held in 1 of 2 dispositions with a recorded outcome.",
 				sources: ["outcome-d1", "outcome-d2"],
+				absence: false,
 			},
 			{
 				kind: "estimate",
 				text: "Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times.",
 				sources: ["outcome-d1"],
+				absence: false,
 			},
-			{ kind: "fact", text: "1 of 3 dispositions awaits an outcome.", sources: ["operator-log"] },
+			{ kind: "fact", text: "1 of 3 dispositions awaits an outcome.", sources: ["operator-log"], absence: false },
 		])
 	})
 
@@ -120,6 +134,7 @@ describe("outcomeStatements", () => {
 			kind: "estimate",
 			text: "Against the operator's baselines, the investigations took 10 minutes longer over 1 outcome that records both times.",
 			sources: ["outcome-d1"],
+			absence: false,
 		})
 	})
 

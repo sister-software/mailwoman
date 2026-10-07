@@ -14,7 +14,7 @@ export interface PlanetaryCoordinateMetadata {
 	longitudeRange: "-180..180" | "0..360"
 	latitudeType: "planetocentric" | "planetographic"
 	referenceBody: string
-	controlNetwork?: string
+	controlNetwork: string | null
 }
 
 export interface PlanetaryBody {

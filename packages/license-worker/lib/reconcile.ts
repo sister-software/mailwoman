@@ -147,7 +147,7 @@ export async function reconcileLedger(
 		try {
 			const next = await stateStripeSays(deps.stripe, deps, license, subscription)
 
-			if (next === undefined || next.state === license.license_state) continue
+			if (!next || next.state === license.license_state) continue
 
 			await setLicenseState(
 				deps.ledger,
@@ -192,14 +192,14 @@ async function mintIfUnminted(
 
 interface Correction {
 	state: LicenseState
-	paymentState?: string
+	paymentState: string | null
 }
 
-async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<string | undefined> {
+async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<string | null> {
 	const payments = await stripe.invoicePayments.list({ invoice: invoiceID, limit: 1 })
 	const payment = payments.data[0]?.payment
 
-	return typeof payment?.payment_intent === "string" ? payment.payment_intent : payment?.payment_intent?.id
+	return typeof payment?.payment_intent === "string" ? payment.payment_intent : (payment?.payment_intent?.id ?? null)
 }
 
 /**
@@ -229,7 +229,7 @@ async function stateStripeSays(
 	deps: FulfilDependencies,
 	license: LicenseRow,
 	subscription: Stripe.Subscription
-): Promise<Correction | undefined> {
+): Promise<Correction | null> {
 	const token = await currentToken(deps.ledger, license.lid)
 	const today = todayUTC(deps.now)
 
@@ -239,22 +239,27 @@ async function stateStripeSays(
 		}
 
 		return {
-			state: licenseStateAfterSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
+			state: licenseStateAfterSubscription(license.license_state, subscription, {
+				graceUntil: token?.expires ?? null,
+				today,
+			}),
+			paymentState: null,
 		}
 	}
 
-	if (license.payment_state !== PAYMENT_STATE_DISPUTED || !token) return undefined
+	if (license.payment_state !== PAYMENT_STATE_DISPUTED || !token) return null
 
 	const paymentIntent = await paymentIntentOf(stripe, token.invoice_id)
 
-	if (!paymentIntent) return undefined
+	if (!paymentIntent) return null
 
 	const disputes = await stripe.disputes.list({ payment_intent: paymentIntent, limit: 1 })
 	const dispute = disputes.data[0]
 
-	if (dispute?.status !== "won") return undefined
+	if (dispute?.status !== "won") return null
 
 	return {
 		state: licenseStateAfterSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
+		paymentState: null,
 	}
 }

@@ -67,7 +67,7 @@ afterAll(async () => {
 	await scratch[Symbol.asyncDispose]()
 })
 
-let indexedCandidate: Promise<PathBuilder> | undefined
+let indexedCandidate: Promise<PathBuilder> | null = null
 
 /**
  * A copy of the candidate artifact with the postal-city side-index attached.

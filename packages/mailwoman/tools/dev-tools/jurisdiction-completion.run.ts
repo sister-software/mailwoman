@@ -72,7 +72,7 @@ interface JurisdictionRow {
 	gazetteerPlaces: number
 	geocodeTier: CountryCoverage["geocodeTier"]
 	boardRows: number
-	weightsPackage?: string
+	weightsPackage: string | null
 }
 
 const config = resolveTrainingConfig(await readScopeConfig(), { requested: values.config })
@@ -119,7 +119,7 @@ function rowFor(code: string, joinsTo: string, subJurisdiction: boolean): Jurisd
 		gazetteerPlaces: subJurisdiction ? 0 : (c?.gazetteerPlaces ?? 0),
 		geocodeTier: subJurisdiction ? "none" : (c?.geocodeTier ?? "none"),
 		boardRows: subJurisdiction ? 0 : (c?.boardRows ?? 0),
-		...(c?.weightsPackage && !subJurisdiction ? { weightsPackage: c.weightsPackage } : {}),
+		weightsPackage: (!subJurisdiction && c?.weightsPackage) || null,
 	}
 }
 

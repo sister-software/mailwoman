@@ -76,7 +76,7 @@ export function parseGazetteerLexicon(raw: {
 	}
 
 	for (const field of ["bits", "entries", "code_entries"] as const) {
-		if (typeof raw[field] !== "object" || raw[field] === null) {
+		if (typeof raw[field] !== "object" || !raw[field]) {
 			throw new Error(`gazetteer lexicon: ${field} must be an object`)
 		}
 	}
@@ -150,7 +150,7 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 	const words: NormWord[] = []
 	let m: RegExpExecArray | null
 
-	while ((m = wordRe.exec(text)) !== null) {
+	while ((m = wordRe.exec(text))) {
 		const surface = m[0]
 		const stripped = stripWord(surface)
 

@@ -71,6 +71,9 @@ export function createFixtureAuthoritativeProvider(
 				status: AuthoritativeResponseStatus.Refused,
 				matches: [],
 				attribution: FIXTURE_ATTRIBUTION,
+				license: null,
+				retrievedAt: null,
+				datasetVersion: null,
 			}
 		},
 	}
@@ -101,6 +104,7 @@ export function fixtureExactMatch(overrides: Partial<AuthoritativeMatch> = {}): 
 		],
 		attribution: FIXTURE_ATTRIBUTION,
 		license: "fixture-terms-v1",
+		retrievedAt: null,
 		datasetVersion: "fixture-2026-08",
 	}
 }

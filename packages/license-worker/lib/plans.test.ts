@@ -26,7 +26,7 @@ describe("the plan catalog", () => {
 	})
 
 	it("answers nothing for a Price it was not configured with", () => {
-		expect(planForPrice(worker, "price_somebody_elses")).toBeUndefined()
+		expect(planForPrice(worker, "price_somebody_elses")).toBeNull()
 	})
 
 	it("carries a 14-day grace on every plan, and no agreement version: that is the license's, recorded at purchase", () => {

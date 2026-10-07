@@ -273,7 +273,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 					describeRow: (row) =>
 						`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind} via ` +
 						`${row.local.containment}, service ${row.serviceInside ? "inside" : "outside"}, ` +
-						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
+						`${row.nearestEdgeMetres === null ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
 				})
 			)
 		}

@@ -262,7 +262,7 @@ export interface BuildSourceRegisterOptions {
 	sourceVersion?: string
 }
 
-function required(value: string | undefined, field: string, row: number): string {
+function required(value: string | null | undefined, field: string, row: number): string {
 	const trimmed = (value ?? "").trim()
 
 	if (!trimmed) throw new Error(`row ${row}: ${field} is empty, and the register has nowhere to put an unnamed value`)
@@ -543,17 +543,17 @@ async function readSources(
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 
 /**
- * A column's value, or `undefined` when the research pass left it unresolved.
+ * A column's value, or `null` when the research pass left it unresolved.
  *
  * Every value outside the placeholder set is returned, so a value somebody fills in
  * later reaches the register or fails the build rather than being lost.
  */
-export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
+export function readUnresolvedColumn(value: string | null | undefined, column: string, row: number): string | null {
 	const trimmed = (value ?? "").trim()
 
-	if (!trimmed) return undefined
+	if (!trimmed) return null
 
-	if (UNRESOLVED_COLUMN_PLACEHOLDERS.has(trimmed.toLowerCase())) return undefined
+	if (UNRESOLVED_COLUMN_PLACEHOLDERS.has(trimmed.toLowerCase())) return null
 
 	if (column === "address_role" && !ADDRESS_ROLE_BY_NAME[trimmed.toLowerCase()]) {
 		throw new Error(
@@ -685,7 +685,7 @@ export function applySourceResolutions(
  * because reading it as empty would silently drop somebody's recorded work.
  * This function validates no decision it reads, because `auditAddressSourceRegister` already does.
  */
-async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
+async function readLicenseDecisions(decisionsPath: PathBuilderLike | null): Promise<Map<string, LicenseDecision>> {
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
 
 	return resolveRecordedDecisions(await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath))
@@ -766,7 +766,7 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 		})
 		.toSorted((left, right) => left.licenseID.localeCompare(right.licenseID))
 
-	const licenses = applyLicenseDecisions(generated, await readLicenseDecisions(options.decisionsPath))
+	const licenses = applyLicenseDecisions(generated, await readLicenseDecisions(options.decisionsPath ?? null))
 
 	const register: AddressSourceRegister = {
 		registerID: "address-source-register",

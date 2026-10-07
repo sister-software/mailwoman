@@ -88,8 +88,8 @@ function parseRow(row: CSVRecord): Address | null {
 	const street = row.STREET ?? ""
 	const city = row.CITY ?? ""
 	const cp = row.POSTCODE ?? ""
-	const lat = pyFloat(row.LAT)
-	const lon = pyFloat(row.LON)
+	const lat = pyFloat(row.LAT ?? null)
+	const lon = pyFloat(row.LON ?? null)
 
 	if (lat === null || lon === null) return null
 

@@ -59,7 +59,7 @@ describe("tierDiffered", () => {
 	})
 
 	it("is incomparable, not equal, when an arm did not answer or states no tier", () => {
-		expect(tierDiffered(ROOFTOP, NO_ANSWER)).toBeUndefined()
-		expect(tierDiffered(ROOFTOP, { ...INTERPOLATED, resultType: null })).toBeUndefined()
+		expect(tierDiffered(ROOFTOP, NO_ANSWER)).toBeNull()
+		expect(tierDiffered(ROOFTOP, { ...INTERPOLATED, resultType: null })).toBeNull()
 	})
 })

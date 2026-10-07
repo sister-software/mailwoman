@@ -60,7 +60,7 @@ const SINGLE_COUNTRY_SHAPES: ReadonlyArray<readonly [re: RegExp, country: string
 /**
  * The country a parsed postcode's format implies, or null.
  */
-export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
+export function countryFromPostcodeFormat(postcode: string | null | undefined): string | null {
 	const p = postcode?.trim()
 
 	if (!p) return null
@@ -103,7 +103,7 @@ const NL_PC6: RegExp = wholePostcodeShape("NL")
  * claim, so a consumer applies it only to a tree that is a bare postcode, where the
  * street-fragment collision the single-country list must exclude cannot arise.
  */
-export function countriesFromPostcodeFormat(postcode: string | undefined): readonly string[] {
+export function countriesFromPostcodeFormat(postcode: string | null | undefined): readonly string[] {
 	const p = postcode?.trim()
 
 	if (!p) return []

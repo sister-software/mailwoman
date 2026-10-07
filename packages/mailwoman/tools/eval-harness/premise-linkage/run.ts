@@ -86,7 +86,7 @@ const OUTCOME_RANK: Readonly<Record<string, number>> = {
  */
 export interface PremiseLinkageGrade {
 	outcome: PremiseLinkageOutcome
-	failureCategory?: PremiseLinkageFailureCategory
+	failureCategory: PremiseLinkageFailureCategory | null
 }
 
 /**
@@ -94,7 +94,7 @@ export interface PremiseLinkageGrade {
  * The only place an outcome is decided.
  */
 export function outcomeFor(
-	assertion: AuthoritativeAssertion | undefined,
+	assertion: AuthoritativeAssertion | null,
 	expected: PremiseLinkageObjectID
 ): PremiseLinkageGrade {
 	if (!assertion) {
@@ -128,14 +128,14 @@ export function outcomeFor(
 	const committed = assertion.matches?.[0]
 	const observed = committed?.object_ids?.[expected.scheme]
 
-	if (observed === undefined) {
+	if (!observed) {
 		return {
 			outcome: PremiseLinkageOutcome.Errored,
 			failureCategory: PremiseLinkageFailureCategory.SchemeAbsent,
 		}
 	}
 
-	if (observed === expected.id) return { outcome: PremiseLinkageOutcome.Exact }
+	if (observed === expected.id) return { outcome: PremiseLinkageOutcome.Exact, failureCategory: null }
 
 	return {
 		outcome: PremiseLinkageOutcome.Wrong,
@@ -149,15 +149,15 @@ export function outcomeFor(
  */
 function gradedCoordinate(
 	result: GeocodeResult,
-	assertion: AuthoritativeAssertion | undefined
-): { lat: number; lon: number } | undefined {
-	const committed = assertion?.status === "matched" ? assertion.matches?.[0] : undefined
+	assertion: AuthoritativeAssertion | null
+): { lat: number; lon: number } | null {
+	const committed = assertion?.status === "matched" ? assertion.matches?.[0] : null
 
-	if (committed?.lat !== undefined && committed.lon !== undefined) {
+	if (committed?.lat != null && committed.lon != null) {
 		return { lat: committed.lat, lon: committed.lon }
 	}
 
-	if (result.lat === null || result.lon === null) return undefined
+	if (result.lat === null || result.lon === null) return null
 
 	return { lat: result.lat, lon: result.lon }
 }
@@ -165,17 +165,17 @@ function gradedCoordinate(
 function coordinateErrorFor(
 	row: PremiseLinkageInputRow,
 	result: GeocodeResult,
-	assertion: AuthoritativeAssertion | undefined
-): number | undefined {
+	assertion: AuthoritativeAssertion | null
+): number | null {
 	// Three independent conditions exclude a row from the coordinate table: terms forbid
 	// publication, the row lacks a truth coordinate, or the arm produced no coordinate.
 	// The aggregate does not count these cases as zero.
-	if (!row.coordinatePublishable) return undefined
+	if (!row.coordinatePublishable) return null
 
-	if (row.expectedLat === undefined || row.expectedLon === undefined) return undefined
+	if (row.expectedLat === null || row.expectedLon === null) return null
 	const answered = gradedCoordinate(result, assertion)
 
-	if (!answered) return undefined
+	if (!answered) return null
 
 	return haversineKm(row.expectedLat, row.expectedLon, answered.lat, answered.lon) * METERS_PER_KM
 }
@@ -187,8 +187,8 @@ function gradeRow(
 	mailwomanVersion: string
 ): PremiseLinkageResultRow {
 	const assertion = result.authoritative
-	const grade = outcomeFor(assertion, row.expectedObjectID)
-	const coordinateErrorM = coordinateErrorFor(row, result, assertion)
+	const grade = outcomeFor(assertion ?? null, row.expectedObjectID)
+	const coordinateErrorM = coordinateErrorFor(row, result, assertion ?? null)
 
 	return {
 		caseID,
@@ -200,11 +200,11 @@ function gradeRow(
 		hasHistoricalAlias: row.hasHistoricalAlias,
 		outcome: grade.outcome,
 		coordinatePublishable: row.coordinatePublishable,
-		...(coordinateErrorM === undefined ? {} : { coordinateErrorM }),
+		coordinateErrorM,
 		providerName: assertion?.provider ?? OPEN_PROVIDER_NAME,
-		...(assertion?.dataset_version === undefined ? {} : { providerDatasetVersion: assertion.dataset_version }),
+		providerDatasetVersion: assertion?.dataset_version ?? null,
 		mailwomanVersion,
-		...(grade.failureCategory === undefined ? {} : { failureCategory: grade.failureCategory }),
+		failureCategory: grade.failureCategory,
 	}
 }
 
@@ -272,7 +272,7 @@ function coordinateThresholdsFor(
 	rows: readonly PremiseLinkageResultRow[],
 	thresholds: readonly number[]
 ): PremiseLinkageCoordinateThreshold[] {
-	const measured = rows.filter((row) => row.coordinateErrorM !== undefined)
+	const measured = rows.filter((row) => row.coordinateErrorM !== null)
 
 	return thresholds.map((thresholdM) => ({
 		thresholdM,
@@ -290,7 +290,7 @@ function aggregateArm(
 	thresholds: readonly number[]
 ): PremiseLinkageArmReport {
 	const providerName = rows[0]?.providerName ?? OPEN_PROVIDER_NAME
-	const datasetVersion = rows.find((row) => row.providerDatasetVersion !== undefined)?.providerDatasetVersion
+	const datasetVersion = rows.find((row) => row.providerDatasetVersion !== null)?.providerDatasetVersion ?? null
 	const perClass: Partial<Record<PremiseLinkageInputShapeClass, PremiseLinkageRates>> = {}
 
 	for (const shapeClass of PREMISE_LINKAGE_SHAPE_CLASSES) {
@@ -306,7 +306,7 @@ function aggregateArm(
 	return {
 		arm,
 		providerName,
-		...(datasetVersion === undefined ? {} : { providerDatasetVersion: datasetVersion }),
+		providerDatasetVersion: datasetVersion,
 		rowsRead: rows.length,
 		erroredOverAll: count(countWhere(rows, isErrored), rows.length),
 		overall: ratesFor(rows, policy),
@@ -433,7 +433,7 @@ export async function runPremiseLinkage(options: PremiseLinkageRunOptions): Prom
 }
 
 function hasRunConfigShape(value: unknown): value is PremiseLinkageRunConfig {
-	if (typeof value !== "object" || value === null) return false
+	if (typeof value !== "object" || !value) return false
 
 	return "adapter" in value && "deps" in value && "authoritativeProvider" in value
 }

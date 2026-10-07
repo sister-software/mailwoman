@@ -127,7 +127,7 @@ const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
  * survive to {@link BANAddrRecord.lieuDit}.
  * Exported for testing.
  */
-export function cleanLieuDit(raw: string | undefined, commune: string | null): string | null {
+export function cleanLieuDit(raw: string | null, commune: string | null): string | null {
 	const trimmed = raw?.trim()
 
 	if (!trimmed) return null
@@ -209,7 +209,7 @@ export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGene
 		const rep = row.rep
 		const postcode = row.code_postal
 		const city = row.nom_commune
-		const lieuDit = cleanLieuDit(row.nom_ld, city || null)
+		const lieuDit = cleanLieuDit(row.nom_ld ?? null, city || null)
 
 		const certification = row.certification_commune
 

@@ -68,9 +68,7 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	if (!response.ok || !response.body) {
 		const explanation = options.describeStatus?.(response.status)
 
-		throw new Error(
-			`${options.context}: ${options.url} answered HTTP ${response.status}${explanation === undefined ? "" : explanation}`
-		)
+		throw new Error(`${options.context}: ${options.url} answered HTTP ${response.status}${explanation ?? ""}`)
 	}
 
 	options.onResponse?.(response)

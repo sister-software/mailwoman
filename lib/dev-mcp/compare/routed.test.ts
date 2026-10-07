@@ -73,7 +73,10 @@ describe("mwdev_compare — production board routing", () => {
 							dependent_locality: null,
 							unit: null,
 							postcode_country_scope: null,
+							capital_promotion: null,
+							variant_alias_exemption: null,
 							hierarchy: [],
+							admin_coherence: null,
 						}),
 						[Symbol.dispose]: () => {
 							closes += 1

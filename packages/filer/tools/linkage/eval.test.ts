@@ -64,7 +64,7 @@ const INJECTED_FAMILY_ID = "cik:0001234567"
 /**
  * The eval run that the tests share, because each run builds two databases.
  */
-let cached: Promise<FilerLinkageEvalResult> | undefined
+let cached: Promise<FilerLinkageEvalResult> | null = null
 
 async function runEval(): Promise<FilerLinkageEvalResult> {
 	// A cached promise keeps concurrent callers from starting a second run.

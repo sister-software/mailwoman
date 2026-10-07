@@ -277,6 +277,8 @@ export const prefixDirectoriesCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				file: group.members[0]!.path,
 				message: `${group.members.length} siblings in ${group.directory}/ share the "${group.prefix}-" prefix (${describe(group)}). Move them under ${group.directory}/${group.prefix}/ — \`mwops health fix ${CHECK_ID}\` does it.`,
+				line: null,
+				details: null,
 			})
 		)
 	},

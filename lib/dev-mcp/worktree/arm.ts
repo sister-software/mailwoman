@@ -132,7 +132,7 @@ const answers = []
 for (const input of request.inputs) {
 	try {
 		const { result } = await session.geocode(input)
-		answers.push({ input, lat: result.lat, lon: result.lon, tier: result.resolution_tier, components: result.components })
+		answers.push({ input, lat: result.lat, lon: result.lon, tier: result.resolution_tier, components: result.components, error: null })
 	} catch (error) {
 		answers.push({ input, lat: null, lon: null, tier: null, components: {}, error: String(error && error.message) })
 	}
@@ -151,7 +151,7 @@ interface WorktreeAnswer {
 	lon: number | null
 	tier: string | null
 	components: Record<string, string>
-	error?: string
+	error: string | null
 }
 
 /**

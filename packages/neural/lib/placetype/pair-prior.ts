@@ -145,15 +145,15 @@ export interface PlacetypePairPriorResult {
 type CensusParentRecorder = (parent: CandidateWindow) => void
 
 /**
- * Build the census recorder, or `undefined` when census/trace is missing.
+ * Build the census recorder, or `null` when census/trace is missing.
  *
  * Dedupes parent surfaces and records probes/hits in the trace object.
  */
 function makeCensusParentRecorder(
-	census: PlacetypeCensusLike | undefined,
-	trace: PlacetypePairProbeTrace | undefined
-): CensusParentRecorder | undefined {
-	if (!census || !trace) return undefined
+	census: PlacetypeCensusLike | null,
+	trace: PlacetypePairProbeTrace | null
+): CensusParentRecorder | null {
+	if (!census || !trace) return null
 
 	const observations: PlacetypeCensusObservation[] = (trace.censusObservations ??= [])
 	const seen = new Set<string>()
@@ -200,8 +200,8 @@ function probeWindowPair(
 	index: PairIndexLike,
 	x: CandidateWindow,
 	y: CandidateWindow,
-	recordCensusParent?: CensusParentRecorder
-): PairEdge | undefined {
+	recordCensusParent: CensusParentRecorder | null
+): PairEdge | null {
 	recordCensusParent?.(y)
 
 	const xKeys = x.key === x.concatKey ? [x.key] : [x.key, x.concatKey]
@@ -215,7 +215,7 @@ function probeWindowPair(
 		}
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -282,8 +282,8 @@ function probeAnchoredAdjacentPair(
 	index: PairIndexLike,
 	nonEmptyGroups: readonly WordGroup[],
 	parentEnd: number,
-	recordCensusParent?: CensusParentRecorder
-): { child: CandidateWindow; parent: CandidateWindow; edge: PairEdge } | undefined {
+	recordCensusParent: CensusParentRecorder | null
+): { child: CandidateWindow; parent: CandidateWindow; edge: PairEdge } | null {
 	// Parent length must leave at least one word for a child.
 	const maxParentLen = Math.min(WINDOW_MAX_WORDS, parentEnd)
 
@@ -304,7 +304,7 @@ function probeAnchoredAdjacentPair(
 		}
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -328,7 +328,7 @@ function isMarkerSuppressed(
 /**
  * Append a fired child tag to trace (no-op without trace).
  */
-function recordFiredChildTag(trace: PlacetypePairProbeTrace | undefined, tag: ComponentTag): void {
+function recordFiredChildTag(trace: PlacetypePairProbeTrace | null, tag: ComponentTag): void {
 	if (!trace) return
 
 	trace.firedChildTags ??= []
@@ -388,12 +388,12 @@ function applyWindowBias(
 	window: CandidateWindow,
 	tag: ComponentTag,
 	bias: number,
-	transitionBeta: number | undefined,
+	transitionBeta: number | null,
 	adjustments: TransitionAdjustment[]
 ): void {
 	if (!writeSpanBias(matrix, labelToCol, window.pieceIndices, tag, bias)) return
 
-	if (transitionBeta === undefined || !window.pieceIndices.length) return
+	if (transitionBeta === null || !window.pieceIndices.length) return
 
 	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
 
@@ -412,7 +412,7 @@ function applyWindowBias(
  * Build emission bias matrix and optional transition adjustments from pair-index hits.
  */
 export function buildPlacetypePairPriors(
-	opts: PlacetypePairPriorOpts | undefined,
+	opts: PlacetypePairPriorOpts | null,
 	pieces: ReadonlyArray<TokenLike & { piece: string }>,
 	labels: ReadonlyArray<string>
 ): PlacetypePairPriorResult {
@@ -425,12 +425,12 @@ export function buildPlacetypePairPriors(
 
 	const { index } = opts
 	const bias = index.delta ?? opts.biasScale ?? DEFAULT_DELTA
-	const transitionBeta = index.transitionBeta
+	const transitionBeta = index.transitionBeta ?? null
 	// Explicit option overrides header value.
-	const parentDelta = opts.parentDelta ?? index.parentDelta
+	const parentDelta = opts.parentDelta ?? index.parentDelta ?? null
 
 	// Census recorder is inert when census/trace is missing.
-	const recordCensusParent = makeCensusParentRecorder(opts.census, opts.probeTrace)
+	const recordCensusParent = makeCensusParentRecorder(opts.census ?? null, opts.probeTrace ?? null)
 
 	const labelToCol = labelColumnIndex(labels)
 
@@ -444,13 +444,13 @@ export function buildPlacetypePairPriors(
 	const needsSegments = probeMode === "segment" || probeMode === "auto"
 	const groupSegments = needsSegments ? computeGroupSegments(nonEmptyGroups, pieces, opts.inputText) : undefined
 	// Segment path may strip trailing same-field postcode from parent key.
-	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country) : undefined
+	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country ?? null) : null
 
 	// Leading-postcode handling is enabled only for configured countries.
 	const leadingPostcodeShape =
 		needsSegments && index.country && LEADING_POSTCODE_COUNTRIES.has(index.country.toLowerCase())
 			? parentPostcodeShape
-			: undefined
+			: null
 
 	const segmentWindows = groupSegments
 		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape, leadingPostcodeShape)
@@ -466,7 +466,7 @@ export function buildPlacetypePairPriors(
 		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd, recordCensusParent)
 
 		if (hit) {
-			recordFiredChildTag(opts.probeTrace, hit.edge.tag)
+			recordFiredChildTag(opts.probeTrace ?? null, hit.edge.tag)
 
 			applyWindowBias(
 				nonEmptyGroups,
@@ -479,7 +479,7 @@ export function buildPlacetypePairPriors(
 				transitionAdjustments
 			)
 
-			if (parentDelta !== undefined) {
+			if (parentDelta !== null) {
 				applyParentTagBias(matrix, labelToCol, hit.parent, hit.edge.parentTag, parentDelta)
 			}
 
@@ -507,9 +507,9 @@ export function buildPlacetypePairPriors(
 		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : undefined
 		const isIdentityRepeat = previous !== undefined && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
 
-		let matchedEdge: PairEdge | undefined
+		let matchedEdge: PairEdge | null = null
 		// Keep parent window from hit for optional parent bias.
-		let matchedParent: CandidateWindow | undefined
+		let matchedParent: CandidateWindow | null = null
 
 		for (const y of windows) {
 			if (!disjoint(x, y)) continue
@@ -528,11 +528,11 @@ export function buildPlacetypePairPriors(
 
 		if (!matchedEdge) continue
 
-		recordFiredChildTag(opts.probeTrace, matchedEdge.tag)
+		recordFiredChildTag(opts.probeTrace ?? null, matchedEdge.tag)
 
 		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedEdge.tag, bias, transitionBeta, transitionAdjustments)
 
-		if (parentDelta !== undefined) {
+		if (parentDelta !== null) {
 			applyParentTagBias(matrix, labelToCol, matchedParent!, matchedEdge.parentTag, parentDelta)
 		}
 

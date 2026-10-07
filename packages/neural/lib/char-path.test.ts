@@ -71,7 +71,7 @@ describe("readEncoderFromModelCard", () => {
 			ctxChars: 2,
 		})
 
-		expect(await readEncoderFromModelCard(undefined)).toEqual({ kind: "sentencepiece" })
+		expect(await readEncoderFromModelCard(null)).toEqual({ kind: "sentencepiece" })
 	})
 
 	it("refuses a char card missing part of the interface rather than guessing a window", async () => {
@@ -157,6 +157,10 @@ describe("NeuralAddressClassifier on the char path", () => {
 				return {
 					logits: Array.from({ length: units }, (_, i) => LABELS.map((label) => (label === PER_UNIT[i] ? 8 : 0))),
 					numLabels: LABELS.length,
+					localeLogits: null,
+					addressSystemLogits: null,
+					spanScores: null,
+					maxSpan: null,
 				}
 			},
 		}
@@ -197,7 +201,14 @@ describe("NeuralAddressClassifier on the char path", () => {
 					charEncoder: { vocabulary: new Map(Object.entries(VOCAB)), interface: INTERFACE },
 					runner: {
 						async infer() {
-							return { logits: [], numLabels: 0 }
+							return {
+								logits: [],
+								numLabels: 0,
+								localeLogits: null,
+								addressSystemLogits: null,
+								spanScores: null,
+								maxSpan: null,
+							}
 						},
 					},
 					labels: LABELS,
@@ -267,7 +278,7 @@ describe("script-family fallback", () => {
 	})
 
 	it("has no family base for a Latin locale", () => {
-		expect(scriptFamilyBase("en-US")).toBeUndefined()
+		expect(scriptFamilyBase("en-US")).toBeNull()
 		expect(scriptFamilyBase("zh-CN")).toBe("cjk")
 	})
 })

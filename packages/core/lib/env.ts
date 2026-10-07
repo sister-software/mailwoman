@@ -56,8 +56,8 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 		// Keep the object wrapper so validation issues still identify the environment variable by name.
 		const fieldSchema = schema.pick({ [key]: true } as Parameters<typeof schema.pick>[0])
 
-		let previous: string | undefined
-		let cached: ReturnType<typeof fieldSchema.safeParse> | undefined
+		let previous: string | null = null
+		let cached: ReturnType<typeof fieldSchema.safeParse> | null = null
 
 		Object.defineProperty(view, key, {
 			enumerable: true,
@@ -65,9 +65,9 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 				// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
 				const raw = process.env[key]
 
-				if (!cached || raw !== previous) {
+				if (!cached || (raw ?? null) !== previous) {
 					cached = fieldSchema.safeParse({ [key]: raw })
-					previous = raw
+					previous = raw ?? null
 				}
 
 				if (!cached.success) throw cached.error

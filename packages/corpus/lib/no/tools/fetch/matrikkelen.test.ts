@@ -108,7 +108,7 @@ describe("matrikkelenInputPath", () => {
 
 describe("matrikkelenAreasFor", () => {
 	it("takes both areas when a caller names none", () => {
-		expect(matrikkelenAreasFor(undefined)).toEqual(MATRIKKELEN_AREAS)
+		expect(matrikkelenAreasFor(null)).toEqual(MATRIKKELEN_AREAS)
 		expect(matrikkelenAreasFor([])).toEqual(MATRIKKELEN_AREAS)
 	})
 
@@ -176,17 +176,17 @@ describe("recordedMatrikkelenArea", () => {
 	})
 
 	it("reads no entry where the manifest holds none for the area", () => {
-		expect(recordedMatrikkelenArea(undefined)).toBeUndefined()
+		expect(recordedMatrikkelenArea(null)).toBeNull()
 	})
 
 	it("reads no entry where the recorded run stated no last-modified, so the skip is not decided from it", () => {
-		expect(recordedMatrikkelenArea(recordedSvalbard({ last_modified: null }))).toBeUndefined()
+		expect(recordedMatrikkelenArea(recordedSvalbard({ last_modified: null }))).toBeNull()
 	})
 
 	it("reads no entry from a manifest written before the area fields existed", () => {
 		const { area_code: _area, member_bytes: _bytes, ...older } = recordedSvalbard()
 
-		expect(recordedMatrikkelenArea(older)).toBeUndefined()
+		expect(recordedMatrikkelenArea(older)).toBeNull()
 	})
 })
 

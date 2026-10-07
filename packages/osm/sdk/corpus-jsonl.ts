@@ -22,24 +22,24 @@ import { extractAddrPoints, type OSMAddrRecord, type OSMExtractTally } from "#sd
  */
 export interface OSMCorpusRow {
 	/**
-	 * `addr:street`, absent on a streetless record.
+	 * `addr:street`, null on a streetless record.
 	 *
 	 * The `osm` corpus adapter decides whether a streetless record is an address.
 	 */
-	street?: string
+	street: string | null
 	number: string
-	postcode?: string
-	suburb?: string
-	city?: string
-	unit?: string
-	place?: string
-	subdistrict?: string
-	district?: string
-	province?: string
+	postcode: string | null
+	suburb: string | null
+	city: string | null
+	unit: string | null
+	place: string | null
+	subdistrict: string | null
+	district: string | null
+	province: string | null
 	/**
 	 * `addr:country`, where the mapper tagged one.
 	 */
-	country?: string
+	country: string | null
 	lat: number
 	lon: number
 }
@@ -69,31 +69,24 @@ export interface OSMCorpusJSONLStats {
 }
 
 /**
- * Project an extract record onto the corpus row, dropping the absent tags.
+ * Project an extract record onto the corpus row.
  */
 export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow {
-	const row: OSMCorpusRow = { number: record.housenumber, lat: record.lat, lon: record.lon }
-
-	for (const key of [
-		"street",
-		"postcode",
-		"suburb",
-		"city",
-		"unit",
-		"place",
-		"subdistrict",
-		"district",
-		"province",
-		"country",
-	] as const) {
-		const value = record[key]
-
-		if (value !== null) {
-			row[key] = value
-		}
+	return {
+		street: record.street,
+		number: record.housenumber,
+		postcode: record.postcode,
+		suburb: record.suburb,
+		city: record.city,
+		unit: record.unit,
+		place: record.place,
+		subdistrict: record.subdistrict,
+		district: record.district,
+		province: record.province,
+		country: record.country,
+		lat: record.lat,
+		lon: record.lon,
 	}
-
-	return row
 }
 
 /**
@@ -125,7 +118,7 @@ export async function writeOSMCorpusJSONL(
 			continue
 		}
 
-		if (record.street === null) {
+		if (!record.street) {
 			stats.noStreet++
 		}
 

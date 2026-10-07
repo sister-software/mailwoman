@@ -28,10 +28,10 @@ function stubClassifier(name: string, encoder: "sentencepiece" | "char") {
 		encoder,
 		parse: vi.fn<RoutableClassifier["parse"]>(async (text) => tree(`${name}:${text}`)),
 		traceParse: vi.fn<RoutableClassifier["traceParse"]>(),
-		fstPath: undefined,
-		streetMorphologyPath: undefined,
-		resolvedWeights: undefined,
-		spanGrammar: undefined,
+		fstPath: null,
+		streetMorphologyPath: null,
+		resolvedWeights: null,
+		spanGrammar: null,
 	} satisfies RoutableClassifier
 }
 
@@ -40,7 +40,7 @@ describe("scriptFamilyForText", () => {
 		expect(scriptFamilyForText("富山県中新川郡上市町大岩148-7")).toBe("cjk")
 		expect(scriptFamilyForText("りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57")).toBe("cjk")
 		expect(scriptFamilyForText("부산광역시 해운대구 반송로 910-1")).toBe("cjk")
-		expect(scriptFamilyForText("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY")).toBeUndefined()
+		expect(scriptFamilyForText("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY")).toBeNull()
 	})
 
 	it("names the family for a Han address line beside Latin segments", () => {
@@ -59,23 +59,23 @@ describe("scriptFamilyForText", () => {
 		// These four make the segment reading narrower than "any family script in the input".
 		// The name shares its segment with surrounding Latin words. and the character model reads those by
 		// codepoint — `Far East Chinese 口福羊汤` came back as `country: "Chi"`, `region: "Far East"`.
-		expect(scriptFamilyForText("Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS")).toBeUndefined()
+		expect(scriptFamilyForText("Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS")).toBeNull()
 
 		expect(
 			scriptFamilyForText(
 				"Four Seasons Inn四季酒家, New Smithfield Market, Unit, M8, Manchester M11 2WW, United Kingdom"
 			)
-		).toBeUndefined()
+		).toBeNull()
 
-		expect(scriptFamilyForText("SOKCHO 牛者, 6 Rue d'Antin, 75002 Paris")).toBeUndefined()
-		expect(scriptFamilyForText("JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris")).toBeUndefined()
+		expect(scriptFamilyForText("SOKCHO 牛者, 6 Rue d'Antin, 75002 Paris")).toBeNull()
+		expect(scriptFamilyForText("JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris")).toBeNull()
 	})
 
 	it("does not reach a Han line separated from its Latin province by whitespace alone", () => {
 		// The stated cost of reading commas: this row has no segment of its own.
 		// A whitespace reading would reach it and would also re-admit the venue names above.
-		expect(scriptFamilyForText("六分场七队 Hunan")).toBeUndefined()
-		expect(scriptFamilyForText("一分场一队 Hunan China")).toBeUndefined()
+		expect(scriptFamilyForText("六分场七队 Hunan")).toBeNull()
+		expect(scriptFamilyForText("一分场一队 Hunan China")).toBeNull()
 	})
 })
 
@@ -107,7 +107,7 @@ describe("routeFamilyWithLeadingRun", () => {
 	]
 
 	it.each(HAN_LED)("names the character family for a Han-led line the shipped router abstains on: %s", (input) => {
-		expect(scriptFamilyForText(input)).toBeUndefined()
+		expect(scriptFamilyForText(input)).toBeNull()
 		expect(routeFamilyWithLeadingRun(input).family).toBe("cjk")
 	})
 
@@ -129,7 +129,7 @@ describe("routeFamilyWithLeadingRun", () => {
 			"4-chōme-12-10 Jingūmae, Shibuya, Tokyo 150-0001, Japan",
 			"Rinrin, 3 Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan",
 		]) {
-			expect(routeFamilyWithLeadingRun(input).family).toBeUndefined()
+			expect(routeFamilyWithLeadingRun(input).family).toBeNull()
 		}
 	})
 

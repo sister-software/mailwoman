@@ -65,7 +65,7 @@ const ValeSurfaceConfigPath = {
 	"docs-vocab": ".vale-vocab.ini",
 } as const satisfies Record<Surface, string>
 
-export function assertSurfaceArg(input: string | undefined): asserts input is Surface {
+export function assertSurfaceArg(input: string | null): asserts input is Surface {
 	if (!input || !Object.hasOwn(ValeSurfaceConfigPath, input)) {
 		throw new Error(
 			`Usage: node config/vale/lint-prose.ts <${Object.keys(ValeSurfaceConfigPath).join("|")}> [path ...]`

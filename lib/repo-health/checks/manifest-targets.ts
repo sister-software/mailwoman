@@ -103,7 +103,7 @@ async function readCompileScope(repoRoot: string, workspace: string): Promise<Co
 	return scope
 }
 
-function* targetStrings(value: ExportValue | undefined): Generator<string> {
+function* targetStrings(value: ExportValue | null): Generator<string> {
 	if (typeof value === "string") {
 		yield value
 	} else if (Array.isArray(value)) {
@@ -231,6 +231,8 @@ function judgeTarget(
 			message: under.length
 				? `${field}["${subpath}"] → ${target}: ${workspace}/tsconfig.json compiles none of the ${under.length} tracked files under ${directory}, so nothing emits the target`
 				: `${field}["${subpath}"] → ${target}: no tracked file under ${directory}`,
+			line: null,
+			details: null,
 		}
 	}
 
@@ -242,6 +244,8 @@ function judgeTarget(
 			severity: DiagnosticSeverity.Error,
 			file,
 			message: `${field}["${subpath}"] → ${target}: none of ${candidates.join(", ")} is tracked`,
+			line: null,
+			details: null,
 		}
 	}
 
@@ -251,6 +255,8 @@ function judgeTarget(
 		severity: DiagnosticSeverity.Error,
 		file,
 		message: `${field}["${subpath}"] → ${target}: ${source} is tracked, but ${workspace}/tsconfig.json does not compile it (include/exclude), so nothing emits the target`,
+		line: null,
+		details: null,
 	}
 }
 

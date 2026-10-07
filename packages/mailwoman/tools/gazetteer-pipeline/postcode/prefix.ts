@@ -19,8 +19,8 @@
 
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"
 import { isZipCode } from "@mailwoman/codex/us"
+import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { percentile } from "@mailwoman/core/stats"
-import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/neural/postcode"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -312,7 +312,14 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 			borderStraddlingPrefixes.push(prefix)
 		}
 
-		const node: PostcodePrefixNode = { prefix, ancestors, unitCount: members.length }
+		const node: PostcodePrefixNode = {
+			prefix,
+			ancestors,
+			lat: null,
+			lon: null,
+			radiusP95Km: null,
+			unitCount: members.length,
+		}
 
 		if (coordinateTier === "centroid") {
 			let sumLat = 0
@@ -527,7 +534,14 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 			straddling.push(prefix)
 		}
 
-		const node: PostcodePrefixNode = { prefix, ancestors, unitCount: group.units }
+		const node: PostcodePrefixNode = {
+			prefix,
+			ancestors,
+			lat: null,
+			lon: null,
+			radiusP95Km: null,
+			unitCount: group.units,
+		}
 
 		if (group.clean.length) {
 			const { lat, lon, radiusP95Km } = centroidWithRadius(group.clean)
@@ -541,7 +555,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 		nodes.push(node)
 	}
 
-	const withCoordinate = nodes.filter((node) => node.lat !== undefined).length
+	const withCoordinate = nodes.filter((node) => node.lat !== null).length
 
 	return {
 		nodes,

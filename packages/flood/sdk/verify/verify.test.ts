@@ -28,7 +28,7 @@ function scriptedService(zone: string | null | undefined, offsetDegrees = 0): Se
 			? []
 			: [
 					{
-						properties: zone === undefined ? {} : { flood_zone: zone },
+						properties: zone ? { flood_zone: zone } : {},
 						geometry: {
 							type: "Polygon",
 							coordinates: [
@@ -114,7 +114,7 @@ describe("verifyFloodDatabase", () => {
 		})
 
 		expect(result.agreement[0]!.service).toBeNull()
-		expect(result.agreement[0]!.nearestEdgeMetres).toBeUndefined()
+		expect(result.agreement[0]!.nearestEdgeMetres).toBeNull()
 		expect(result.disagreed).toBe(1)
 	})
 

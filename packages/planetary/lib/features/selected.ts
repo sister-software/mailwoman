@@ -14,19 +14,19 @@ export interface SelectedFeature {
 	id: string
 	name: string
 	featureType: string
-	featureTypeCode?: string
-	diameterKm?: number
+	featureTypeCode: string | null
+	diameterKm: number | null
 	/**
 	 * East-positive, −180..180.
 	 */
 	centerLon: number
 	centerLat: number
-	origin?: string
-	approvalStatus?: string
+	origin: string | null
+	approvalStatus: string | null
 	/**
 	 * `yyyy-MM-DD`.
 	 */
-	approvalDate?: string
+	approvalDate: string | null
 }
 
 const COORDINATE_DECIMALS = 4
@@ -47,8 +47,8 @@ export function formatCoordinates(centerLon: number, centerLat: number): string 
 /**
  * A diameter as the panel prints it, or null when the source gives none.
  */
-export function formatDiameter(diameterKm: number | undefined): string | null {
-	if (diameterKm === undefined) return null
+export function formatDiameter(diameterKm: number | null): string | null {
+	if (diameterKm === null) return null
 
 	return `${diameterKm.toLocaleString("en-US", { maximumFractionDigits: 2 })} km`
 }

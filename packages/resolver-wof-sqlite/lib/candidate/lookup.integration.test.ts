@@ -482,7 +482,7 @@ describe("RankByPrimaryPreference firing mark (variantExempted)", () => {
 		neg_rank,
 		is_primary,
 		country_id,
-		...(name_role === undefined ? {} : { name_role }),
+		...(name_role ? { name_role } : {}),
 	})
 
 	test("a cross-country variant the exemption spares carries the mark and no penalty", () => {
@@ -896,8 +896,7 @@ describe("WOFCandidateTableLookup — importance", () => {
 		const hits = await lk.findPlace({ text: "Lenk", placetype: "locality", limit: 5 })
 		expect(hits).toHaveLength(1)
 
-		expect(hits[0]!.importance).toBeUndefined()
-		expect("importance" in hits[0]!).toBe(false)
+		expect(hits[0]!.importance).toBeNull()
 	})
 
 	test("an artifact built WITHOUT a score source reports no fame anywhere", async () => {
@@ -905,7 +904,7 @@ describe("WOFCandidateTableLookup — importance", () => {
 
 		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
 		expect(hits).toHaveLength(2)
-		expect(hits.every((h) => h.importance === undefined)).toBe(true)
+		expect(hits.every((h) => h.importance === null)).toBe(true)
 	})
 
 	test("an artifact PREDATING the column still resolves — the probe is existence-restricted", async () => {
@@ -919,7 +918,7 @@ describe("WOFCandidateTableLookup — importance", () => {
 		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
 		expect(hits).toHaveLength(2)
 		expect(hits[0]!.country).toBe("RU")
-		expect(hits.every((h) => h.importance === undefined)).toBe(true)
+		expect(hits.every((h) => h.importance === null)).toBe(true)
 	})
 })
 
@@ -1139,7 +1138,7 @@ describe("Admin-containment re-rank through findPlace ( stage 2)", () => {
 		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
 		expect(hits.map((h) => h.id)).toEqual([902, 901])
-		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
+		expect(hits.every((h) => h.containedByQualifier === null)).toBe(true)
 	})
 
 	test("No qualifier on the query → no stamps, byte-identical to the incumbent path", async () => {
@@ -1148,6 +1147,6 @@ describe("Admin-containment re-rank through findPlace ( stage 2)", () => {
 		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
 
 		expect(hits.map((h) => h.id)).toEqual([902, 901])
-		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
+		expect(hits.every((h) => h.containedByQualifier === null)).toBe(true)
 	})
 })

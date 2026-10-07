@@ -64,13 +64,15 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 				}),
 			],
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return {
 		classifier,
 		resolver,
 		placeCountry: false,
-		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [] }),
+		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -274,7 +276,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 		const route = createZoningDesignationRoute({ databasePath })
 
 		try {
-			const decision = route.observe(null, undefined)
+			const decision = route.observe(null, null)
 
 			expect(decision.fired).toBe(false)
 

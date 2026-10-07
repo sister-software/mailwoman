@@ -1,4 +1,5 @@
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { TextSpan } from "@mailwoman/query-shape"
 
 import { familyFallbackFor } from "#weights/families"
 
@@ -39,18 +40,6 @@ export interface CharEncoderInterface {
 	ctxChars: number
 }
 
-export interface CharUnit {
-	/**
-	 * The unit's text — one code point in char mode.
-	 */
-	text: string
-	/**
-	 * UTF-16 offsets into the original string, so a decoded span can be read back out of the input as typed.
-	 */
-	start: number
-	end: number
-}
-
 export interface CharEncoding {
 	/**
 	 * `(S, W)` code-point ids, row-major, padded to S.
@@ -63,7 +52,7 @@ export interface CharEncoding {
 	/**
 	 * The real units, in order — the token list the decoder receives (length ≤ S).
 	 */
-	units: CharUnit[]
+	units: TextSpan[]
 }
 
 /**
@@ -79,7 +68,7 @@ export function encodeCharUnits(
 	const codePoints = Array.from(raw)
 	const kept = codePoints.slice(0, maxUnits)
 	const charIDs: number[][] = []
-	const units: CharUnit[] = []
+	const units: TextSpan[] = []
 	let offset = 0
 
 	for (const [index, codePoint] of kept.entries()) {
@@ -116,7 +105,7 @@ export function encodeCharUnits(
  * because a malformed vocabulary encodes every character as UNK.
  */
 export function parseCharVocabulary(parsed: unknown, source: string): CharVocabulary {
-	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+	if (typeof parsed !== "object" || !parsed || Array.isArray(parsed)) {
 		throw new TypeError(`char vocabulary ${source}: expected a { character: id } map`)
 	}
 
@@ -159,10 +148,7 @@ export type EncoderDescriptor =
  * vocabulary sibling or the `(S, W, ctx)` interface rather than defaulting a value
  * that would encode every row differently from training.
  */
-export function encoderDescriptorFromCard(
-	card: Record<string, unknown> | undefined,
-	source: string
-): EncoderDescriptor {
+export function encoderDescriptorFromCard(card: Record<string, unknown> | null, source: string): EncoderDescriptor {
 	const encoder = card?.encoder
 
 	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
@@ -203,6 +189,6 @@ export function encoderDescriptorFromCard(
  * the CJK char-path base for Japanese, Chinese and Korean — delegating to
  * `#weights/families` so the language set has one home.
  */
-export function scriptFamilyBase(locale: string): string | undefined {
+export function scriptFamilyBase(locale: string): string | null {
 	return familyFallbackFor(locale)
 }

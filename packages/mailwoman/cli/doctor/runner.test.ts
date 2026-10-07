@@ -36,7 +36,7 @@ function healthyDeps(): DoctorDeps {
 		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
 		layerAlternates: async () => [],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
-		licenseKey: async () => undefined,
+		licenseKey: async () => null,
 		confirmLicenseKeyPublished: async () => "unreachable",
 		checkLicenseStatus: async () => "unknown",
 		refusedObligations: () => [],
@@ -110,8 +110,8 @@ describe("runDoctor (injected boundaries)", () => {
 	it("gazetteer discovery falls back to a WOF database only when NO candidate.db is reachable", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			envCandidatePath: async () => undefined,
-			conventionCandidatePath: async () => undefined,
+			envCandidatePath: async () => null,
+			conventionCandidatePath: async () => null,
 			exists: async (p) => p === "/data/wof/admin.db",
 		})
 
@@ -124,7 +124,7 @@ describe("runDoctor (injected boundaries)", () => {
 		const report = await runDoctor({
 			...healthyDeps(),
 
-			envCandidatePath: async () => undefined,
+			envCandidatePath: async () => null,
 			exists: async () => false,
 			conventionCandidatePath: async () => "/data/wof/candidate.db",
 			readLayerIdentity: async () => {
@@ -135,15 +135,15 @@ describe("runDoctor (injected boundaries)", () => {
 		const gaz = byID(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.OK)
 		expect(gaz.detail).toContain("/data/wof/candidate.db")
-		expect(gaz.fix).toBeUndefined()
+		expect(gaz.fix).toBeNull()
 		expect(report.exitCode).toBe(0)
 	})
 
 	it("No gazetteer at all → optional missing, exit still 0 (core intact)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			envCandidatePath: async () => undefined,
-			conventionCandidatePath: async () => undefined,
+			envCandidatePath: async () => null,
+			conventionCandidatePath: async () => null,
 			exists: async () => false,
 			readLayerIdentity: async () => {
 				throw new Error("unreachable — poi path does not exist")
@@ -166,6 +166,12 @@ describe("runDoctor (injected boundaries)", () => {
 			applied: "AGPL-3.0-only",
 			obligations: ["attribution", "share_alike", "source_offer"],
 			recognized: true,
+			attribution: null,
+			licensee: null,
+			keyID: null,
+			keyStatus: null,
+			lid: null,
+			lidStatus: null,
 		})
 
 		expect(poi.license).toEqual({
@@ -175,6 +181,11 @@ describe("runDoctor (injected boundaries)", () => {
 			obligations: ["attribution"],
 			recognized: true,
 			attribution: "Overture Maps Foundation",
+			licensee: null,
+			keyID: null,
+			keyStatus: null,
+			lid: null,
+			lidStatus: null,
 		})
 	})
 
@@ -313,7 +324,7 @@ describe("runDoctor (injected boundaries)", () => {
 			},
 		})
 
-		expect(byID(handIssued.checks, "license-mailwoman").license).not.toHaveProperty("lidStatus")
+		expect(byID(handIssued.checks, "license-mailwoman").license).toHaveProperty("lidStatus", null)
 	})
 
 	it("license posture: an expired, unknown or retired key reports its reason and the open-source branch applies", async () => {
@@ -451,11 +462,11 @@ describe("describeEnvironment (--verbose)", () => {
 	})
 
 	it("keys with no value are present and marked, never dropped", async () => {
-		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: async () => undefined })
+		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: async () => null })
 		const convention = entries.find((entry) => entry.key === "candidate.db (convention)")
 
 		expect(convention).toBeDefined()
-		expect(convention?.value).toBeUndefined()
+		expect(convention?.value).toBeNull()
 	})
 
 	it("an unresolvable weights package is reported, not thrown", async () => {
@@ -467,7 +478,7 @@ describe("describeEnvironment (--verbose)", () => {
 		})
 
 		const weights = entries.find((entry) => entry.key === "weights")
-		expect(weights?.value).toBeUndefined()
+		expect(weights?.value).toBeNull()
 		expect(weights?.source).toContain("unresolvable")
 	})
 })

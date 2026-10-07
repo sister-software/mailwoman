@@ -111,10 +111,10 @@ export function elementTexts(markup: string, name: string, options: MarkupQueryO
 }
 
 /**
- * The text of the first element with the tag `name`, or `undefined` when the document states none.
+ * The text of the first element with the tag `name`, or `null` when the document states none.
  */
-export function elementText(markup: string, name: string, options: MarkupQueryOptions = {}): string | undefined {
-	return elementTexts(markup, name, options).at(0)
+export function elementText(markup: string, name: string, options: MarkupQueryOptions = {}): string | null {
+	return elementTexts(markup, name, options).at(0) ?? null
 }
 
 /**
@@ -125,11 +125,11 @@ export function elementText(markup: string, name: string, options: MarkupQueryOp
  *
  * A regex over the whole body cannot distinguish that count from a repeated descendant value.
  */
-export function rootAttribute(markup: string, attribute: string, options: MarkupQueryOptions = {}): string | undefined {
+export function rootAttribute(markup: string, attribute: string, options: MarkupQueryOptions = {}): string | null {
 	const document = parseDocument(markup, { decodeEntities: true, xmlMode: options.xml ?? false })
 	const root = findAll(() => true, document).at(0)
 
-	if (!root) return undefined
+	if (!root) return null
 
 	const wanted = attribute.toLowerCase()
 
@@ -137,5 +137,5 @@ export function rootAttribute(markup: string, attribute: string, options: Markup
 		if (localName(key) === wanted) return value
 	}
 
-	return undefined
+	return null
 }

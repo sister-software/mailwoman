@@ -177,7 +177,7 @@ function importDrift(imports: Readonly<Record<string, ExportValue>>, roots: read
 async function readRootDirectory(repoRoot: string, workspace: string, tracked: ReadonlySet<string>) {
 	const configFile = `${workspace}/tsconfig.json`
 
-	if (!tracked.has(configFile)) return undefined
+	if (!tracked.has(configFile)) return null
 
 	const path = resolvePath(repoRoot, configFile)
 	const { config } = ts.parseConfigFileTextToJson(path.toString(), await readLocalTextFile(path))
@@ -267,6 +267,7 @@ export const workspaceExportsCheck: RepoCheck = {
 						? `exports lists ${removable.length} key(s) that its patterns already express. \`mwops health fix ${EXPORTS_CHECK_ID}\` rewrites the map and every importer.`
 						: `imports lacks the "#<root>/*" key of ${missingImports.length} source root(s). \`mwops health fix ${EXPORTS_CHECK_ID}\` adds it.`,
 				details: [...removable, ...missingImports.map((root) => `#${root}/*`)],
+				line: null,
 			})
 		}
 
@@ -390,6 +391,7 @@ export const workspaceFilesCheck: RepoCheck = {
 			file: manifestFile,
 			message: `files needs ${unscoped.length} change(s): a glob reaching TypeScript outside its source roots, a missing source root, or a missing test negation. \`mwops health fix ${FILES_CHECK_ID}\` makes them.`,
 			details: unscoped,
+			line: null,
 		}))
 	},
 }

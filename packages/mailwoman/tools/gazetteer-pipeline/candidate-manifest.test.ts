@@ -124,9 +124,9 @@ describe("readFoldTerms — where a fold recorded its terms", () => {
 		const absent = await readFoldTerms(root("absent.db"))
 
 		expect(none).toMatchObject({ recordedIn: FoldTermsRecord.None, tier: null, license: null })
-		expect(none.error).toBeUndefined()
+		expect(none.error).toBeNull()
 		expect(broken.recordedIn).toBe(FoldTermsRecord.None)
-		expect(broken.error).toBeDefined()
+		expect(broken.error).not.toBeNull()
 		expect(absent.error).toBe("not found")
 	})
 })
@@ -136,10 +136,10 @@ describe("foldsRefusingPublication", () => {
 		const base = { path: "/x", name: "x", recordedIn: FoldTermsRecord.Meta, license: null }
 
 		const refusing = foldsRefusingPublication([
-			{ ...base, tier: "build-local" },
-			{ ...base, tier: "private" },
-			{ ...base, tier: "shipped" },
-			{ ...base, tier: null },
+			{ ...base, tier: "build-local", error: null },
+			{ ...base, tier: "private", error: null },
+			{ ...base, tier: "shipped", error: null },
+			{ ...base, tier: null, error: null },
 		])
 
 		expect(refusing.map((fold) => fold.tier)).toEqual(["build-local", "private"])

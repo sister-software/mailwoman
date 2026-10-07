@@ -28,6 +28,7 @@
  *   stricter than its stated value and report a rendering difference as a conversion defect.
  */
 
+import type { OutsideCoverageRow } from "@mailwoman/core/layers"
 import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
 import type { PathBuilderLike } from "path-ts"
 
@@ -69,25 +70,9 @@ export interface AgreementRow {
 	 * rendering the same edge differently.
 	 *
 	 * A receipt without the distance forces a re-run.
-	 * `undefined` means the service returned no polygon at all near the point.
+	 * `null` means the service returned no polygon at all near the point.
 	 */
-	nearestEdgeMetres?: number
-}
-
-/**
- * The negative half: a point this product's mapping does not reach.
- */
-export interface OutsideRow {
-	label: string
-	latitude: number
-	longitude: number
-	kind: string
-	designations: number
-	/**
-	 * True when the artifact answered `unknown` with no designation.
-	 * The only acceptable reading here.
-	 */
-	passed: boolean
+	nearestEdgeMetres: number | null
 }
 
 export interface VerifyCoastalResult {
@@ -95,7 +80,7 @@ export interface VerifyCoastalResult {
 	agreed: number
 	disagreed: number
 	boundaryTolerance: number
-	outside: OutsideRow[]
+	outside: OutsideCoverageRow[]
 	outsidePassed: number
 }
 
@@ -169,20 +154,20 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 
 			const localInside = local.kind === CoastalReadingKind.Designated
 
-			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = service.nearestEdgeMetres !== null && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			agreement.push({
 				...point,
 				local,
 				serviceInside: service.inside,
 				outcome: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
+				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
 		}
 
-		const outside: OutsideRow[] = []
+		const outside: OutsideCoverageRow[] = []
 
 		for (const point of options.outsidePoints ?? OUTSIDE_MAPPING_POINTS) {
 			const reading = lookup.lookup(point.latitude, point.longitude, options.outsideScenarioKey)
@@ -218,7 +203,7 @@ async function readServiceContainment(
 	latitude: number,
 	longitude: number,
 	scenarioKey: string
-): Promise<{ inside: boolean; nearestEdgeMetres?: number }> {
+): Promise<{ inside: boolean; nearestEdgeMetres: number | null }> {
 	const features = await readServiceFeatures(latitude, longitude, scenarioKey)
 
 	let nearest = Infinity
@@ -240,5 +225,5 @@ async function readServiceContainment(
 		}
 	}
 
-	return Number.isFinite(nearest) ? { inside, nearestEdgeMetres: nearest } : { inside }
+	return { inside, nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null }
 }

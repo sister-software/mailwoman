@@ -42,7 +42,7 @@ export function reportOutcomes(dispositions: readonly OperatorDisposition[]): Ou
 	const outcomes = dispositions.flatMap((disposition) => (disposition.outcome ? [disposition.outcome] : []))
 
 	const timed = outcomes.flatMap((outcome) =>
-		outcome.minutesSpent !== undefined && outcome.baselineMinutes !== undefined
+		outcome.minutesSpent !== null && outcome.baselineMinutes !== null
 			? [{ saved: outcome.baselineMinutes - outcome.minutesSpent, source: outcome.evidence.source }]
 			: []
 	)
@@ -89,6 +89,7 @@ export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 			kind: StatementKind.Estimate,
 			text: `The investigated explanation held in ${blockerAccuracy.held} of ${blockerAccuracy.denominator} dispositions with a recorded outcome.`,
 			sources: blockerAccuracy.sources,
+			absence: false,
 		})
 	} else {
 		statements.push({
@@ -109,6 +110,7 @@ export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 			kind: StatementKind.Estimate,
 			text: `Against the operator's baselines, the investigations ${change} over ${outcomes}.`,
 			sources: timeSaved.sources,
+			absence: false,
 		})
 	} else {
 		statements.push({
@@ -124,6 +126,7 @@ export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 			kind: StatementKind.Fact,
 			text: `${report.pending} of ${report.dispositions} dispositions ${report.pending === 1 ? "awaits" : "await"} an outcome.`,
 			sources: report.pendingSources,
+			absence: false,
 		})
 	}
 

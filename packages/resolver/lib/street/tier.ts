@@ -66,12 +66,12 @@ function pairGap(pair: { street: AddressNode; houseNumber: AddressNode }): numbe
 	return houseNumber.start - street.end + 1
 }
 
-function firstOfTag(roots: readonly AddressNode[], tag: AddressNode["tag"]): AddressNode | undefined {
+function firstOfTag(roots: readonly AddressNode[], tag: AddressNode["tag"]): AddressNode | null {
 	for (const node of walkNodes(roots)) {
 		if (node.tag === tag && node.value.trim()) return node
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -94,7 +94,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 
 	if (pairs.some((pair) => pair.street.metadata?.["resolution_tier"] === "address_point")) return
 
-	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
+	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null = null
 
 	if (bboxFallback && localityNode?.lat != null && localityNode.lon != null) {
 		bbox = {
@@ -105,9 +105,9 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 		}
 	}
 
-	let street: AddressNode | undefined
-	let houseNumber: AddressNode | undefined
-	let hit: ReturnType<AddressPointLookup["find"]> | undefined
+	let street: AddressNode | null = null
+	let houseNumber: AddressNode | null = null
+	let hit: ReturnType<AddressPointLookup["find"]> | null = null
 
 	for (const pair of pairs) {
 		hit = lookup.find({
@@ -139,9 +139,8 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			lon: hit.lon,
 			source: hit.source,
 			release: hit.release,
-
-			...(hit.localityNorm ? { locality_norm: hit.localityNorm } : {}),
-			...(hit.postcode ? { postcode: hit.postcode } : {}),
+			locality_norm: hit.localityNorm || null,
+			postcode: hit.postcode || null,
 		},
 		resolution_tier: "address_point",
 	}
@@ -173,9 +172,9 @@ export function applyInterpolation(
 
 	const near = postcode ? undefined : localityCoord
 
-	let street: AddressNode | undefined
-	let houseNumber: AddressNode | undefined
-	let hit: ReturnType<InterpolationLookup["find"]> | undefined
+	let street: AddressNode | null = null
+	let houseNumber: AddressNode | null = null
+	let hit: ReturnType<InterpolationLookup["find"]> | null = null
 
 	for (const pair of pairs) {
 		hit = lookup.find({
@@ -207,8 +206,8 @@ export function applyInterpolation(
 		uncertainty_m: calibrated,
 		...(factor ? { uncertainty_raw_m: hit.uncertaintyM, uncertainty_calibration: factor } : {}),
 		interpolation_method: hit.method,
-		...(hit.parityMatched !== undefined ? { parity_matched: hit.parityMatched } : {}),
-		...(hit.bracket !== undefined ? { interpolation_bracket: hit.bracket } : {}),
+		...(hit.parityMatched != null ? { parity_matched: hit.parityMatched } : {}),
+		...(hit.bracket ? { interpolation_bracket: hit.bracket } : {}),
 	}
 }
 
@@ -232,12 +231,12 @@ function foldVoieTokens(s: string): string[] {
 function isVoieShaped(s: string): boolean {
 	const first = foldVoieTokens(s)[0]
 
-	if (first === undefined) return false
+	if (!first) return false
 
 	return isFrenchStreetWord(first) || FR_GENEROUS_VOIE_TOKENS.has(first)
 }
 
-function pushCandidate(list: string[], v: string | undefined, cap: number): void {
+function pushCandidate(list: string[], v: string | null, cap: number): void {
 	const t = v?.trim()
 
 	if (t && list.length < cap && !list.includes(t)) {
@@ -251,12 +250,12 @@ function pushCandidate(list: string[], v: string | undefined, cap: number): void
 export function applyStreetCentroid(
 	roots: AddressNode[],
 	raw: string,
-	provider: (country: string) => StreetCentroidLookup | undefined,
+	provider: (country: string) => StreetCentroidLookup | null | undefined,
 	hints: readonly string[]
 ): void {
-	let streetNode: AddressNode | undefined
+	let streetNode: AddressNode | null = null
 	let houseNumber = false
-	let postcode: string | undefined
+	let postcode: string | null = null
 
 	const adminValues: string[] = []
 	const resolvedCountries: string[] = []
@@ -346,13 +345,13 @@ export function applyStreetCentroid(
 	for (const lookup of lookups) {
 		for (const street of thoroughfares) {
 			let hit = postcode ? lookup.find({ street, postcode }) : null
-			let matchedCommune: string | undefined
+			let matchedCommune: string | null = null
 
 			for (let i = 0; !hit && i < communes.length; i++) {
 				hit = lookup.find({ street, locality: communes[i]! })
 
 				if (hit) {
-					matchedCommune = communes[i]
+					matchedCommune = communes[i] ?? null
 				}
 			}
 

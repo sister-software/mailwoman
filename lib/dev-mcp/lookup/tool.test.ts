@@ -72,14 +72,14 @@ describe("runLookup", () => {
 	it("answers codex without an artifact, so it can never be unavailable", async () => {
 		const result = await runLookup(noRegistry, { source: "codex", queries: ["90210", "Zzzz"] })
 
-		expect(result.unavailable_reason).toBeUndefined()
+		expect(result.unavailable_reason).toBeNull()
 		expect(result.rows.map((row) => row.hit)).toEqual([true, false])
 	})
 
 	it("answers normalize without an artifact too", async () => {
 		const result = await runLookup(noRegistry, { source: "normalize", queries: ["  spaced   out  "] })
 
-		expect(result.unavailable_reason).toBeUndefined()
+		expect(result.unavailable_reason).toBeNull()
 		expect(result.rows[0]).toMatchObject({ hit: true })
 	})
 })

@@ -135,8 +135,8 @@ describe("license key", () => {
 
 	it("decodes a token's payload as written, without trusting it, and answers nothing for a malformed token", () => {
 		expect(decodeLicenseKeyPayload(legacy.token)).toMatchObject({ kid: legacy.kid, licensee: expect.any(String) })
-		expect(decodeLicenseKeyPayload("mwl1.not-base64url.sig")).toBeUndefined()
-		expect(decodeLicenseKeyPayload("mwl2.a.b")).toBeUndefined()
-		expect(decodeLicenseKeyPayload("two.parts")).toBeUndefined()
+		expect(decodeLicenseKeyPayload("mwl1.not-base64url.sig")).toBeNull()
+		expect(decodeLicenseKeyPayload("mwl2.a.b")).toBeNull()
+		expect(decodeLicenseKeyPayload("two.parts")).toBeNull()
 	})
 })

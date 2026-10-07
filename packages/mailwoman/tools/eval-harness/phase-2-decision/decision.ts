@@ -699,7 +699,7 @@ export interface Phase2CheckOutcome {
 	id: string
 	lane: string
 	role: Phase2CheckRole
-	tier?: Phase2TargetTier
+	tier: Phase2TargetTier | null
 	measurement: Phase2Measurement
 	observed: number
 	denominator: number
@@ -751,7 +751,7 @@ export function evaluatePhase2Checks(
 			id: check.id,
 			lane: check.lane,
 			role: check.role,
-			...(check.tier ? { tier: check.tier } : {}),
+			tier: check.tier ?? null,
 			measurement: check.measurement,
 			observed: reading.observed,
 			denominator: check.denominator,

@@ -21,7 +21,7 @@ describe("the signing self-test", () => {
 		// In a sandbox the worker vouches for itself, so an end-to-end run can mint.
 		const { env: worker, kid } = await envWithSigningKey(base)
 
-		expect(await signingSelfTest(worker)).toEqual({ status: "ok", kid, trust: "sandbox" })
+		expect(await signingSelfTest(worker)).toEqual({ status: "ok", kid, trust: "sandbox", reason: null })
 
 		expect(await signingSelfTest({ ...worker, liveMode: true })).toMatchObject({
 			status: "mismatch",

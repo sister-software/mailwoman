@@ -125,7 +125,7 @@ describe("the positive half", () => {
 
 		expect(verified.disagreed).toBe(1)
 		// No polygon appears near the point, so the result omits an edge distance instead of reporting zero.
-		expect(verified.agreement[0]!.nearestEdgeMetres).toBeUndefined()
+		expect(verified.agreement[0]!.nearestEdgeMetres).toBeNull()
 	})
 
 	it("tolerates a point a few centimeters outside the service's rendering of the same edge", async () => {

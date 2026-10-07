@@ -28,10 +28,10 @@ import {
 export interface ParsedSubsidiary {
 	name: string
 	/**
-	 * Omitted rather than an empty string when Exhibit 21 gave no jurisdiction for this row/line.
+	 * `null` rather than an empty string when Exhibit 21 gave no jurisdiction for this row/line.
 	 * Decision 6 forbids guessing an absent jurisdiction.
 	 */
-	jurisdiction?: string
+	jurisdiction: string | null
 }
 
 /**
@@ -254,7 +254,7 @@ function subsidiariesFromTable(
 			if (name) {
 				const jurisdiction = row[mapping.jurisdiction]?.text ?? ""
 
-				subsidiaries.push(jurisdiction ? { name, jurisdiction } : { name })
+				subsidiaries.push({ name, jurisdiction: jurisdiction || null })
 
 				continue
 			}
@@ -282,7 +282,7 @@ function subsidiariesFromTable(
 
 		const [name, jurisdiction] = nonBlank as [string, string?]
 
-		subsidiaries.push(jurisdiction ? { name, jurisdiction } : { name })
+		subsidiaries.push({ name, jurisdiction: jurisdiction || null })
 	}
 
 	return { subsidiaries, unparseable, mapping }
@@ -500,9 +500,7 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 			continue
 		}
 
-		subsidiaries.push(
-			candidate.jurisdiction ? { name: candidate.name, jurisdiction: candidate.jurisdiction } : { name: candidate.name }
-		)
+		subsidiaries.push({ name: candidate.name, jurisdiction: candidate.jurisdiction || null })
 	}
 
 	return { subsidiaries, unparseable }
@@ -529,7 +527,7 @@ export function parseExhibit21(html: string): ParsedExhibit21 {
 	const window = documentWindow(html)
 	const tableRows = extractTableRows(window)
 
-	if (tableRows !== null && !isEntirelyBlankTable(tableRows)) {
+	if (tableRows && !isEntirelyBlankTable(tableRows)) {
 		return subsidiariesFromTableRows(tableRows)
 	}
 

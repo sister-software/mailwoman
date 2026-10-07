@@ -411,7 +411,7 @@ const TRAILING_NUMBER_PERIOD = /(\d[\dA-Za-z/-]*)\.$/u
 /**
  * A published value with whitespace collapsed, or an empty string for an absent or placeholder value.
  */
-function fieldValue(value: string | undefined): string {
+function fieldValue(value: string | null | undefined): string {
 	const trimmed = (value ?? "").replaceAll(/\s+/gu, " ").trim()
 
 	return isPlaceholderValue(trimmed) ? "" : trimmed
@@ -462,7 +462,7 @@ const numberOrderCache = new Map<string, boolean | null>()
  *
  * @returns `null` where the layout prints no street line.
  */
-export function houseNumberLeadsStreet(country: string, script?: AddressScript): boolean | null {
+export function houseNumberLeadsStreet(country: string, script: AddressScript | null = null): boolean | null {
 	const key = `${country}:${script ?? ""}`
 	const cached = numberOrderCache.get(key)
 
@@ -618,7 +618,7 @@ function placeStreetNumber(
 	line: string,
 	addressNumber: string,
 	country: string,
-	script: AddressScript | undefined
+	script: AddressScript | null
 ): { street: string; house_number?: string } | { refused: GLEIFRefusal } {
 	const unplacedDigit = (street: string): boolean => /\d/u.test(street.replaceAll(ORDINAL_TOKEN, ""))
 

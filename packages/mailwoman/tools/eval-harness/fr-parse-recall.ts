@@ -302,7 +302,7 @@ export async function frParseRecall(
 		pass: true,
 	}
 
-	if (args.floor !== undefined) {
+	if (args.floor) {
 		const floor = Number(args.floor)
 
 		if (bareRate < floor) {

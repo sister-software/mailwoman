@@ -104,7 +104,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 function parseHn(raw: unknown): number | null {
-	if (raw === null || raw === undefined) return null
+	if (raw === null || !raw) return null
 	const s = String(raw).trim()
 
 	if (!/^\d+$/.test(s)) return null
@@ -280,7 +280,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 							Math.min(from, to),
 							Math.max(from, to),
 							parity,
-							zip === null || zip === undefined ? null : String(zip),
+							zip ? String(zip) : null,
 							countyFips,
 							streetRaw,
 							polyline,
@@ -324,6 +324,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			// The layer joins only on `street_norm`.
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		await swapDatabaseIntoPlace(tmpOut, finalOut)

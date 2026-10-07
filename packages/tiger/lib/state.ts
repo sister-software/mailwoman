@@ -365,7 +365,7 @@ export const AdminLevel1CodeToAbbreviation = {
 /**
  * Type-predicate to determine if a given string is a valid state FIPS code.
  */
-export function isStateFIPSCode(code: string | null | undefined): code is FIPSStateCode {
+export function isStateFIPSCode(code: string | null): code is FIPSStateCode {
 	if (!code || typeof code !== "string") return false
 
 	return Object.hasOwn(FIPSStateCodeToAbbreviation, code)
@@ -374,7 +374,7 @@ export function isStateFIPSCode(code: string | null | undefined): code is FIPSSt
 /**
  * Type-predicate to determine if a given string is a valid territory FIPS code.
  */
-export function isTerritoryFIPSCode(code: string | null | undefined): code is FIPSTerritoryCode {
+export function isTerritoryFIPSCode(code: string | null): code is FIPSTerritoryCode {
 	if (!code || typeof code !== "string") return false
 
 	return Object.hasOwn(FIPSTerritoryCodeToAbbreviation, code)
@@ -385,7 +385,7 @@ export function isTerritoryFIPSCode(code: string | null | undefined): code is FI
  *
  * This includes both states and territories.
  */
-export function isAdminLevel1FIPSCode(code: string | null | undefined): code is AdminLevel1Code {
+export function isAdminLevel1FIPSCode(code: string | null): code is AdminLevel1Code {
 	return isStateFIPSCode(code) || isTerritoryFIPSCode(code)
 }
 

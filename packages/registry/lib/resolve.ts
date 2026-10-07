@@ -292,10 +292,10 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
  */
 export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	return [
-		geoCellKey((r) => r.address?.geocode?.coordinate),
-		exactKey((r) => r.address?.canonicalKey),
-		exactKey((r) => r.phone),
-		exactKey((r) => r.email),
+		geoCellKey((r) => r.address?.geocode?.coordinate ?? null),
+		exactKey((r) => r.address?.canonicalKey ?? null),
+		exactKey((r) => r.phone ?? null),
+		exactKey((r) => r.email ?? null),
 	]
 }
 
@@ -560,7 +560,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			id: `entity-${i}`,
 			records: group,
 			representative: rep,
-			coordinate: rep.address?.geocode?.coordinate ?? undefined,
+			coordinate: rep.address?.geocode?.coordinate ?? null,
 			cohesion: group.length > 1 && minIntraWeight[i]! !== Infinity ? minIntraWeight[i]! : null,
 		}
 	})

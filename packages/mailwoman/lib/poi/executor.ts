@@ -6,6 +6,7 @@
 
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { WOFAncestor } from "@mailwoman/core/resolver"
 import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
 
 /**
@@ -17,22 +18,13 @@ export interface POIExecutorLookup {
 }
 
 /**
- * One place in a POI result's `ancestry`, which lists places deepest first.
- */
-export interface POIAncestryEntry {
-	placetype: string
-	name: string
-	wofID: number
-}
-
-/**
  * Dependencies for {@link createPOIExecutor}.
  */
 export interface POIExecutorOpts {
 	/**
 	 * The poi.db search, or `undefined` for the executor to return intents without searching.
 	 */
-	lookup: POIExecutorLookup | undefined
+	lookup: POIExecutorLookup | null
 
 	/**
 	 * Whether a category requires a locally built layer, injected so this module avoids the taxonomy lexicon.
@@ -52,7 +44,7 @@ export interface POIExecutorOpts {
 	 * The lookup must be synchronous.
 	 * Results get no `ancestry` key when it is missing or returns no entries.
 	 */
-	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
+	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<WOFAncestor> | null
 }
 
 /**
@@ -81,9 +73,11 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		}
 
 		if (subject.kind === "name") {
+			const center = resolvePOISearchCenter(intent)
+
 			const results = lookup.search({
 				name: subject.text,
-				center: resolvePOISearchCenter(intent),
+				...(center ? { center } : {}),
 				limit: intent.limit,
 			})
 
@@ -121,9 +115,9 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			intent,
 
 			results: results.map((hit) => {
-				const canonical = hit.categoryID === null ? undefined : canonicalByLeaf.get(hit.categoryID)
+				const canonical = hit.categoryID ? canonicalByLeaf.get(hit.categoryID) : undefined
 
-				return canonical === undefined ? toResult(hit) : { ...toResult(hit), categoryID: canonical }
+				return canonical ? { ...toResult(hit), categoryID: canonical } : toResult(hit)
 			}),
 		}
 	}
@@ -157,7 +151,7 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
  * Returns the center of a POI search: the first child of an anchor root with a coordinate,
  * else the first root with one, else the caller's `biasPoint`.
  */
-export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; longitude: number } | undefined {
+export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; longitude: number } | null {
 	const tree = intent.anchor?.tree
 
 	if (tree) {
@@ -166,7 +160,7 @@ export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; l
 		if (node) return { latitude: node.lat!, longitude: node.lon! }
 	}
 
-	return intent.anchor?.biasPoint
+	return intent.anchor?.biasPoint ?? null
 }
 
 /**
@@ -186,17 +180,17 @@ export function resolvePOIAnchorCountry(intent: POIIntent): string | null {
 
 	const country = stamped?.metadata?.["resolver_country"]
 
-	return typeof country === "string" && country.length ? country.toUpperCase() : null
+	return typeof country === "string" && country ? country.toUpperCase() : null
 }
 
-function deepestGeoNode(roots: AddressNode[]): AddressNode | undefined {
+function deepestGeoNode(roots: AddressNode[]): AddressNode | null {
 	for (const root of roots) {
 		for (const child of root.children) {
 			if (typeof child.lat === "number" && typeof child.lon === "number") return child
 		}
 	}
 
-	return roots.find((root) => typeof root.lat === "number" && typeof root.lon === "number")
+	return roots.find((root) => typeof root.lat === "number" && typeof root.lon === "number") ?? null
 }
 
 function toPOIResult(hit: POISearchHit): POIResult {
@@ -209,6 +203,6 @@ function toPOIResult(hit: POISearchHit): POIResult {
 		country: hit.country,
 		confidence: hit.confidence,
 		gersID: hit.gersID,
-		...(hit.distanceM !== undefined ? { distanceM: hit.distanceM } : {}),
+		...(hit.distanceM !== null ? { distanceM: hit.distanceM } : {}),
 	}
 }

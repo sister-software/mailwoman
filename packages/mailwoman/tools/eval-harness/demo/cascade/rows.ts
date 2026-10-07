@@ -18,21 +18,21 @@ export interface SmokeRowExpect {
 	/**
 	 * WOF place ID that the top cascade hit must include.
 	 */
-	id?: number
+	id: number | null
 	/**
 	 * Place name for human cross-checking.
 	 * The eval does not grade it.
 	 */
-	name?: string
+	name: string | null
 	/**
 	 * Placetype for human cross-checking.
 	 * The eval does not grade it.
 	 */
-	placetype?: string
+	placetype: string | null
 	/**
 	 * Whether the cascade finds no WOF row and the demo's anchor-centroid fallback must produce the hit.
 	 */
-	anchor_centroid?: boolean
+	anchor_centroid: boolean | null
 }
 
 /**
@@ -44,11 +44,11 @@ export interface SmokeRow {
 	/**
 	 * Reason the row exists, such as the failure mode it guards against.
 	 */
-	note?: string
+	note: string | null
 	/**
 	 * Issue, preset, or report that the row came from.
 	 */
-	source?: string
+	source: string | null
 }
 
 const EXPECT_KEYS = new Set(["id", "name", "placetype", "anchor_centroid"])
@@ -63,7 +63,7 @@ class SmokeRowError extends Error {
 	constructor(sourceLabel: string, rowNumber: number, detail: string, rowText?: string) {
 		super(
 			`${sourceLabel}: row ${rowNumber} is malformed — ${detail}` +
-				(rowText !== undefined
+				(rowText
 					? `\n  row: ${rowText.length > ERROR_ROW_ECHO_LIMIT ? rowText.slice(0, ERROR_ROW_ECHO_LIMIT) + "…" : rowText}`
 					: "")
 		)
@@ -99,7 +99,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			throw new SmokeRowError(sourceLabel, rowNumber, `invalid JSON (${(error as Error).message})`, line)
 		}
 
-		if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		if (typeof parsed !== "object" || !parsed || Array.isArray(parsed)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "row must be a JSON object", line)
 		}
 
@@ -115,7 +115,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`input` must be a non-empty string", line)
 		}
 
-		if (typeof row.expect !== "object" || row.expect === null || Array.isArray(row.expect)) {
+		if (typeof row.expect !== "object" || !row.expect || Array.isArray(row.expect)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`expect` must be an object", line)
 		}
 
@@ -168,13 +168,13 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 		rows.push({
 			input: row.input,
 			expect: {
-				...(typeof expect.id === "number" ? { id: expect.id } : {}),
-				...(typeof expect.name === "string" ? { name: expect.name } : {}),
-				...(typeof expect.placetype === "string" ? { placetype: expect.placetype } : {}),
-				...(expect.anchor_centroid === true ? { anchor_centroid: true } : {}),
+				id: typeof expect.id === "number" ? expect.id : null,
+				name: typeof expect.name === "string" ? expect.name : null,
+				placetype: typeof expect.placetype === "string" ? expect.placetype : null,
+				anchor_centroid: expect.anchor_centroid === true ? true : null,
 			},
-			...(typeof row.note === "string" ? { note: row.note } : {}),
-			...(typeof row.source === "string" ? { source: row.source } : {}),
+			note: typeof row.note === "string" ? row.note : null,
+			source: typeof row.source === "string" ? row.source : null,
 		})
 	}
 

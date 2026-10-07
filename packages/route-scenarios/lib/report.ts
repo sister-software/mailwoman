@@ -459,9 +459,9 @@ export function renderScenarioReport(report: ScenarioReport): string {
 			view.reconciles
 				? `- In each of the ${view.rows.length} months, the net cash flow minus that month's financing flows equals the project cash flow.`
 				: "- The financing view does not reconcile to the project table.",
-			view.fundingGap === null
-				? "- Funding gap: none. The cash balance stays at or above zero in every month."
-				: `- Funding gap: the cash balance falls to ${money(view.fundingGap.balance)} in ${months(view.fundingGap.month)}.`,
+			view.fundingGap
+				? `- Funding gap: the cash balance falls to ${money(view.fundingGap.balance)} in ${months(view.fundingGap.month)}.`
+				: "- Funding gap: none. The cash balance stays at or above zero in every month.",
 			""
 		)
 	}

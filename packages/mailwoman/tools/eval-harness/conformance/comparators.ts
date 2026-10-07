@@ -247,9 +247,9 @@ function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceO
 		const before = a[tag]
 		const after = b[tag]
 
-		if (before === undefined) {
+		if (!before) {
 			differences.push(`${tag}: ∅ → "${after}"`)
-		} else if (after === undefined) {
+		} else if (!after) {
 			differences.push(`${tag}: "${before}" → ∅`)
 		} else if (!componentMatches(after, before)) {
 			differences.push(`${tag}: "${before}" → "${after}"`)

@@ -65,7 +65,7 @@ describe("adminLadderFor", () => {
 		expect(adminLadderFor(NL_PC6)).toBe(ADMIN_LADDER_POSTCODE_FIRST)
 		expect(adminLadderFor(GB_OUTWARD)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(US_ZIP)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
-		expect(adminLadderFor(undefined)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor(null)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
 	it("carries the same rungs on both arms", () => {

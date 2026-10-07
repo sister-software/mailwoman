@@ -16,6 +16,7 @@
  *   {@link createPostcodeLocalityTable}, so the positional order cannot drift from the DDL.
  */
 
+import type { KeyValueMetaTable } from "@mailwoman/sqlite/database-schema"
 import type { Kysely } from "kysely"
 
 /**
@@ -41,22 +42,11 @@ export interface PostcodeLocalityTable {
 }
 
 /**
- * Provenance / license / build-statistics key-value pairs.
- *
- * Every database has one.
- * Its contents are specific to the builder.
- */
-export interface PostcodeLocalityMetaTable {
-	key: string
-	value: string | null
-}
-
-/**
  * The database schema for `new DatabaseClient<PostcodeLocalityDatabase>(…)`.
  */
 export interface PostcodeLocalityDatabase {
 	postcode_locality: PostcodeLocalityTable
-	meta: PostcodeLocalityMetaTable
+	meta: KeyValueMetaTable
 }
 
 /**

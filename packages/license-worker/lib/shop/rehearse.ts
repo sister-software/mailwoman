@@ -168,11 +168,11 @@ export async function advanceRehearsal(stripe: Stripe, input: AdvanceRehearsalIn
 	const attempts = input.attempts ?? DEFAULT_ATTEMPTS
 	const log = input.log ?? (() => {})
 
-	const waitFor = async <T>(what: string, read: () => Promise<T | undefined>): Promise<T> => {
+	const waitFor = async <T>(what: string, read: () => Promise<T | null>): Promise<T> => {
 		for (let attempt = 0; attempt < attempts; attempt++) {
 			const value = await read()
 
-			if (value !== undefined) return value
+			if (value !== null) return value
 
 			await sleep(pollMs)
 		}
@@ -180,14 +180,14 @@ export async function advanceRehearsal(stripe: Stripe, input: AdvanceRehearsalIn
 		throw new Error(`gave up waiting for ${what} after ${attempts} polls`)
 	}
 
-	const issuedClaim = async (after?: TokenDates): Promise<TokenDates | undefined> => {
+	const issuedClaim = async (after?: TokenDates): Promise<TokenDates | null> => {
 		const claim = await readClaim(fetchFn, input.workerOrigin, input.session)
 
 		if (claim.status === "revoked") throw new Error(`the license behind ${input.session} is revoked`)
 
-		if (claim.status !== "issued") return undefined
+		if (claim.status !== "issued") return null
 
-		return after && claim.expires === after.expires ? undefined : { issued: claim.issued, expires: claim.expires }
+		return after && claim.expires === after.expires ? null : { issued: claim.issued, expires: claim.expires }
 	}
 
 	const session = await stripe.checkout.sessions.retrieve(input.session)
@@ -197,7 +197,7 @@ export async function advanceRehearsal(stripe: Stripe, input: AdvanceRehearsalIn
 	if (!subscriptionID || !customerID) throw new Error(`${input.session} is not a paid subscription session`)
 
 	const customer = await stripe.customers.retrieve(customerID)
-	const clockID = customer.deleted ? undefined : idOf(customer.test_clock)
+	const clockID = customer.deleted ? null : idOf(customer.test_clock)
 
 	if (!clockID) throw new Error(`customer ${customerID} is not on a test clock; start the rehearsal with shop rehearse`)
 
@@ -216,7 +216,7 @@ export async function advanceRehearsal(stripe: Stripe, input: AdvanceRehearsalIn
 
 		if (state.status === "internal_failure") throw new Error(`test clock ${clockID} failed to advance`)
 
-		return state.status === "ready" ? state : undefined
+		return state.status === "ready" ? state : null
 	})
 
 	const renewed = await waitFor("the renewal token", () => issuedClaim(first))

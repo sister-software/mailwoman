@@ -57,7 +57,7 @@ const COUNTRY_PLACETYPE_OVERRIDES: Readonly<Record<string, PlacetypeMap>> = {
  * A country without overrides gets the {@link DEFAULT_PLACETYPE_MAP} object itself,
  * so callers can compare by identity to see whether the map changed.
  */
-export function placetypeMapForCountry(countryCode: string | null | undefined): PlacetypeMap {
+export function placetypeMapForCountry(countryCode: string | null): PlacetypeMap {
 	const overrides = countryCode ? COUNTRY_PLACETYPE_OVERRIDES[countryCode.toLowerCase()] : undefined
 
 	return overrides ? { ...DEFAULT_PLACETYPE_MAP, ...overrides } : DEFAULT_PLACETYPE_MAP

@@ -27,19 +27,35 @@ import type { ResolvedEntity, SourceRecord } from "#types"
 function record(id: string, latitude?: number, longitude?: number): SourceRecord {
 	return {
 		id,
+		source: null,
+		name: null,
+		organization: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
 		address:
 			latitude === undefined || longitude === undefined
-				? { components: {}, canonicalKey: `k-${id}` }
+				? { components: {}, canonicalKey: `k-${id}`, formatted: null, geocode: null, raw: null }
 				: {
 						components: {},
 						canonicalKey: `k-${id}`,
-						geocode: { coordinate: { latitude, longitude }, tier: "address_point", uncertaintyMeters: 1 },
+						formatted: null,
+						raw: null,
+						geocode: {
+							coordinate: { latitude, longitude },
+							tier: "address_point",
+							uncertaintyMeters: 1,
+							hierarchy: null,
+							poBox: null,
+							multiUnit: null,
+						},
 					},
 	}
 }
 
 function entity(id: string, records: SourceRecord[]): ResolvedEntity {
-	return { id, records, representative: records[0]!, cohesion: null }
+	return { id, records, representative: records[0]!, coordinate: null, cohesion: null }
 }
 
 function primary(entries: Array<[npi: string, org: string, addrKey: string]>): Map<string, NPIPrimary> {

@@ -4,8 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { layerschemadatabase } from "@mailwoman/core/layers"
-import { addBoundingBoxColumns, addCellIndexColumns, addRingsColumn } from "@mailwoman/sqlite/schema-columns"
+import type { layerschemadatabase, MappedExtentTable } from "@mailwoman/core/layers"
+import {
+	addBoundingBoxColumns,
+	addCellIndexColumns,
+	addRingsColumn,
+	type AreaCellIndexTable,
+} from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -219,28 +224,10 @@ export interface ZoningCrosswalkEdgeTable {
  *
  * Keyed on the polygon rather than a code, because a zoning answer is the polygon
  * and two authorities' plans can name the same code for different things.
+ *
+ * `containment` is one of {@link ZoningCellContainment}.
  */
-export interface ZoningCellTable {
-	/**
-	 * 48-bit short H3 cell.
-	 *
-	 * Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay
-	 * at the resolution the feature was indexed at.
-	 */
-	h3_cell: number
-	/**
-	 * The resolution this row's cell was captured at.
-	 *
-	 * Short H3 cell values omit their resolution.
-	 * Queries against a table with mixed resolutions require this field.
-	 */
-	resolution: number
-	area_id: string
-	/**
-	 * One of {@link ZoningCellContainment}.
-	 */
-	containment: string
-}
+export type ZoningCellTable = AreaCellIndexTable
 
 /**
  * The authority's own statement of what it mapped.
@@ -250,17 +237,7 @@ export interface ZoningCellTable {
  *
  * Use the authority statement for mapped extent instead of deriving the extent from the polygon union.
  */
-export interface ZoningMappedExtentTable {
-	extent_id: string
-	source: string
-	statement: string
-	statement_url: string
-	effective_date: string | null
-	min_lat: number
-	min_lon: number
-	max_lat: number
-	max_lon: number
-}
+export type ZoningMappedExtentTable = MappedExtentTable
 
 /**
  * Pass to `new DatabaseClient<ZoningDatabase>(...)`.

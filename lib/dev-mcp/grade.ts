@@ -81,7 +81,7 @@ export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
  * for a different wrong one has not improved.
  */
 export function gradeRow(
-	seed: SeedCase | undefined,
+	seed: SeedCase | null,
 	a: GauntletResult,
 	b: GauntletResult,
 	check: (c: GauntletCaseTable, r: GauntletResult) => string[]

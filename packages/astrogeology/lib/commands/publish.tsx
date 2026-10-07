@@ -84,7 +84,7 @@ export function publishedURLs(body: BuildableBodyID, version: string) {
 	}
 }
 
-async function publishBody(body: BuildableBodyID, out: string | undefined, dryRun: boolean): Promise<string> {
+async function publishBody(body: BuildableBodyID, out: string | null, dryRun: boolean): Promise<string> {
 	await verifyBody(body, out)
 
 	const directory = buildDirectory(body, out)
@@ -146,7 +146,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 }
 
 const Publish: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(() => publishBody(parseBody(options.body), options.out, options.dryRun))
+	const state = useCommandTask(() => publishBody(parseBody(options.body), options.out ?? null, options.dryRun))
 
 	return <CommandTaskResult state={state} running={<Spinner label={`publishing ${options.body}…`} />} />
 }

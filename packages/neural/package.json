@@ -97,6 +97,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/locale-hint": "workspace:*",

@@ -82,7 +82,7 @@ export function geometryToWKT(geometry: GeometryLiteral | GeometryCollection): s
  *
  * @category Geo
  */
-export function geometryToSQL<T extends GeometryLiteral | GeometryCollection>(geometry: T | null | undefined) {
+export function geometryToSQL<T extends GeometryLiteral | GeometryCollection>(geometry: T | null) {
 	return () => {
 		if (!geometry) return `NULL`
 

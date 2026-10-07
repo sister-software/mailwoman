@@ -60,20 +60,20 @@ export interface NominatimResult {
  * Parsed `/search` parameters (free-text or structured. Never both).
  */
 export interface NominatimSearchParams {
-	q?: string
-	street?: string
-	city?: string
-	county?: string
-	state?: string
-	country?: string
-	postalcode?: string
-	countrycodes?: string[]
+	q?: string | null
+	street?: string | null
+	city?: string | null
+	county?: string | null
+	state?: string | null
+	country?: string | null
+	postalcode?: string | null
+	countrycodes?: string[] | null
 	limit: number
-	viewbox?: [number, number, number, number]
-	bounded?: boolean
-	addressdetails?: boolean
+	viewbox?: [number, number, number, number] | null
+	bounded?: boolean | null
+	addressdetails?: boolean | null
 	format: NominatimFormat
-	acceptLanguage?: string
+	acceptLanguage?: string | null
 }
 
 /**
@@ -82,10 +82,10 @@ export interface NominatimSearchParams {
 export interface NominatimReverseParams {
 	lat: number
 	lon: number
-	zoom?: number
-	addressdetails?: boolean
+	zoom?: number | null
+	addressdetails?: boolean | null
 	format: NominatimFormat
-	acceptLanguage?: string
+	acceptLanguage?: string | null
 }
 
 /**
@@ -121,32 +121,32 @@ export interface NominatimStatusArtifact {
 	/**
 	 * Why the manifest is absent or unreadable.
 	 */
-	reason?: string
+	reason: string | null
 	/**
 	 * When the artifact was built, as its own manifest records it.
 	 */
-	built?: string
+	built: string | null
 	/**
 	 * `<layer name>@<layer version>`, the artifact's identity.
 	 */
-	version?: string
+	version: string | null
 	/**
 	 * What it was built from: the manifest's source, then its source vintage.
 	 */
-	sources?: string[]
+	sources: string[] | null
 	/**
 	 * The SPDX expression this artifact's own manifest records, verbatim.
 	 *
-	 * Left out when the row holds none.
-	 * An absent expression states that the build did not record the obligations.
+	 * Null when the row holds none.
+	 * A null expression states that the build did not record the obligations.
 	 *
-	 * The artifact may still contain a manifest, so a client must not read its absence as permissive.
+	 * The artifact may still contain a manifest, so a client must not read a null as permissive.
 	 */
-	license?: string
+	license: string | null
 	/**
 	 * The credit line the publisher's terms ask for, as this artifact's own manifest records it.
 	 */
-	attribution?: string
+	attribution: string | null
 }
 
 /**
@@ -186,7 +186,7 @@ export interface NominatimStatus {
  * and declared here so the wire interface keeps no import from the engine implementation.
  */
 export interface NominatimFreshnessReport {
-	dataUpdated?: string
+	dataUpdated: string | null
 	artifacts: NominatimStatusArtifact[]
 }
 

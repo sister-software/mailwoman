@@ -39,18 +39,21 @@ test("a nomenclature tile feature becomes a selection with the geometry's center
 	})
 })
 
-test("the optional fields are absent, not empty strings, when the tile carries none", () => {
+test("the optional fields are null, not empty strings, when the tile carries none", () => {
 	const selection = featureFromTileProperties({ id: "1", name: "Marvin", featureType: "Crater, craters" }, CENTER)
 
 	expect(selection).toEqual({
 		id: "1",
 		name: "Marvin",
 		featureType: "Crater, craters",
+		featureTypeCode: null,
+		diameterKm: null,
+		origin: null,
+		approvalStatus: null,
+		approvalDate: null,
 		centerLon: CENTER.longitude,
 		centerLat: CENTER.latitude,
 	})
-
-	expect(selection && "origin" in selection).toBe(false)
 })
 
 test("a feature without a name or an id is not a selection", () => {

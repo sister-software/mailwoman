@@ -88,43 +88,64 @@ export interface ResolvedInput {
 	 */
 	id: string
 	input: string
-	country?: string
+	country: string | null
 	/**
 	 * The country overlay used for runtime routing.
 	 */
-	routeCountry?: string
+	routeCountry: string | null
 	/**
 	 * The locale region that scopes the fuzzy resolver tier on board rows.
 	 */
-	fuzzyCountryScope?: string
+	fuzzyCountryScope: string | null
 	/**
 	 * The board row's own resolver country.
 	 */
-	defaultCountry?: string
-	addressKind?: string
-	status?: string
+	defaultCountry: string | null
+	addressKind: string | null
+	status: string | null
 	/**
 	 * The board case with its expectations.
 	 * Literal inputs have none.
 	 */
-	seed?: SeedCase
+	seed: SeedCase | null
 	/**
 	 * The truth coordinate for distance grading.
 	 */
-	truthLat?: number
-	truthLon?: number
+	truthLat: number | null
+	truthLon: number | null
 	/**
 	 * The provenance type of the truth point, used for stratification.
 	 */
-	truthType?: string
+	truthType: string | null
 	/**
 	 * The row's distance tolerance in meters.
 	 */
-	toleranceM?: number
+	toleranceM: number | null
 	/**
 	 * The expected components of a golden or parity row.
 	 */
-	expectComponents?: Record<string, string>
+	expectComponents: Record<string, string> | null
+}
+
+/**
+ * Builds a {@linkcode ResolvedInput}, with every field the caller leaves out set to `null`.
+ */
+export function resolvedInput(row: Pick<ResolvedInput, "id" | "input"> & Partial<ResolvedInput>): ResolvedInput {
+	return {
+		country: null,
+		routeCountry: null,
+		fuzzyCountryScope: null,
+		defaultCountry: null,
+		addressKind: null,
+		status: null,
+		seed: null,
+		truthLat: null,
+		truthLon: null,
+		truthType: null,
+		toleranceM: null,
+		expectComponents: null,
+		...row,
+	}
 }
 
 /**
@@ -139,11 +160,11 @@ export interface ResolvedInputSet {
 	/**
 	 * The size of the population a subset was drawn from.
 	 */
-	populationN?: number
+	populationN: number | null
 	/**
 	 * The rationale for a hand-picked set, repeated in results.
 	 */
-	why?: string
+	why: string | null
 	/**
 	 * The population strata this set excludes.
 	 */
@@ -158,11 +179,11 @@ export interface ResolvedInputSet {
 	/**
 	 * The regression corpus hash of a board-derived set.
 	 */
-	corpusHash?: string
+	corpusHash: string | null
 	notes: string[]
 }
 
-function countStrata(cases: SeedCase[], pick: (c: SeedCase) => string | undefined): Map<string, number> {
+function countStrata(cases: SeedCase[], pick: (c: SeedCase) => string | null): Map<string, number> {
 	const counts = new Map<string, number>()
 
 	for (const row of cases) {
@@ -240,9 +261,9 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Promise<ResolvedInputSet> {
 	const board = await resolveBoard({
 		kind: "board",
-		...(ref.country ? { country: ref.country } : {}),
-		...(ref.address_kind ? { address_kind: ref.address_kind } : {}),
-		...(ref.status ? { status: ref.status } : {}),
+		country: ref.country,
+		address_kind: ref.address_kind,
+		status: ref.status,
 	})
 
 	const withTruth = board.inputs.filter((row) => typeof row.truthLat === "number" && typeof row.truthLon === "number")
@@ -276,6 +297,7 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
 				? [`${board.inputs.length - withTruth.length} board rows carry no coordinate truth and have no ladder`]
 				: []),
 		],
+		why: null,
 		hasTruth: truthCounts(rungs.map((r) => r.seed).filter(isPresent)),
 		corpusHash: board.corpusHash,
 		notes: [
@@ -318,15 +340,17 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		throw new Error(`input set: the ${definition.label} draw produced no rows from ${definition.file}.`)
 	}
 
-	const inputs: ResolvedInput[] = sample.map((row, index) => ({
-		id: `${source}-${index}`,
-		input: row.query,
-		country: source.toUpperCase(),
-		truthLat: row.lat,
-		truthLon: row.lon,
-		// Both sources are national house-number address points.
-		truthType: "rooftop",
-	}))
+	const inputs: ResolvedInput[] = sample.map((row, index) =>
+		resolvedInput({
+			id: `${source}-${index}`,
+			input: row.query,
+			country: source.toUpperCase(),
+			truthLat: row.lat,
+			truthLon: row.lon,
+			// Both sources are national house-number address points.
+			truthType: "rooftop",
+		})
+	)
 
 	return {
 		setID: `holdout:${source}/${n}${ref.seed === undefined ? "" : `/seed-${ref.seed}`}`,
@@ -335,11 +359,13 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: "random-draw",
 		populationN: drawnFrom,
+		why: null,
 		notCovered: [
 			"Everything the source itself excludes: both parsers keep only rows with a house number, a street and a " +
 				"locality, and drop the postcode to leave the bare form.",
 		],
 		hasTruth: coordinateTruthCounts(inputs),
+		corpusHash: null,
 		notes: [
 			`${definition.label}, ${inputs.length} rows drawn from ${drawnFrom.toLocaleString("en-US")} parseable rows.`,
 			ref.seed === undefined
@@ -368,18 +394,18 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 	// A bare string can only be observed.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
 		typeof entry === "string"
-			? { id: String(index), input: entry }
-			: {
+			? resolvedInput({ id: String(index), input: entry })
+			: resolvedInput({
 					id: String(index),
 					input: entry.input,
 					truthLat: entry.lat,
 					truthLon: entry.lon,
-					...(entry.tolerance_m === undefined ? {} : { toleranceM: entry.tolerance_m }),
-					...(entry.truth_type === undefined ? {} : { truthType: entry.truth_type }),
-				}
+					toleranceM: entry.tolerance_m ?? null,
+					truthType: entry.truth_type ?? null,
+				})
 	)
 
-	const graded = rows.filter((row) => row.truthLat !== undefined).length
+	const graded = rows.filter((row) => row.truthLat !== null).length
 	// The digest includes the truth coordinates, so sets graded differently get different IDs.
 	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
 
@@ -389,6 +415,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		n: rows.length,
 		sha256: sha256Hex(digest),
 		selection: "hand-picked",
+		populationN: null,
 		why: ref.why,
 		notCovered: [],
 		hasTruth: {
@@ -398,6 +425,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 			any: graded,
 			none: rows.length - graded,
 		},
+		corpusHash: null,
 		notes: [
 			graded === 0
 				? "Hand-picked inputs carry no expectations, so this set can be observed but not graded."
@@ -451,25 +479,29 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 
 	return {
 		setID: slugParts.length ? `board:${slugParts.join("/")}` : "board",
-		inputs: filtered.map((seed) => ({
-			id: seed.id,
-			input: seed.input,
-			country: seed.country,
-			routeCountry: routeCountry(seed),
-			...(seed.locale?.split("-")[1] ? { fuzzyCountryScope: seed.locale.split("-")[1] } : {}),
-			...(seed.defaultCountry ? { defaultCountry: seed.defaultCountry } : {}),
-			addressKind: seed.addressKind,
-			status: seed.status,
-			seed,
-			...(typeof seed.expectLat === "number" && typeof seed.expectLon === "number"
-				? { truthLat: seed.expectLat, truthLon: seed.expectLon }
-				: {}),
-			...(seed.expectToleranceM === undefined ? {} : { toleranceM: seed.expectToleranceM }),
-		})),
+		inputs: filtered.map((seed) => {
+			const hasTruth = typeof seed.expectLat === "number" && typeof seed.expectLon === "number"
+
+			return resolvedInput({
+				id: seed.id,
+				input: seed.input,
+				country: seed.country,
+				routeCountry: routeCountry(seed),
+				fuzzyCountryScope: seed.locale?.split("-")[1] || null,
+				defaultCountry: seed.defaultCountry || null,
+				addressKind: seed.addressKind,
+				status: seed.status,
+				seed,
+				truthLat: hasTruth ? seed.expectLat! : null,
+				truthLon: hasTruth ? seed.expectLon! : null,
+				toleranceM: seed.expectToleranceM ?? null,
+			})
+		}),
 		n: filtered.length,
 		sha256: sha256Hex(filtered.map((r) => `${r.id}\t${r.input}`)),
 		selection: isSubset ? "subset" : "full",
-		...(isSubset ? { populationN: all.length } : {}),
+		populationN: isSubset ? all.length : null,
+		why: null,
 		notCovered,
 		hasTruth: truthCounts(filtered),
 		corpusHash,
@@ -566,16 +598,19 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		return true
 	})
 
-	const inputs: ResolvedInput[] = filtered.map((row, index) => ({
-		id: row.id ?? String(index),
-		input: row.input ?? row.raw ?? "",
-		...(row.country ? { country: row.country } : {}),
-		...(typeof row.truth_lat === "number" && typeof row.truth_lon === "number"
-			? { truthLat: row.truth_lat, truthLon: row.truth_lon }
-			: {}),
-		...(row.truth_type ? { truthType: row.truth_type } : {}),
-		...(typeof row.tolerance_m === "number" ? { toleranceM: row.tolerance_m } : {}),
-	}))
+	const inputs: ResolvedInput[] = filtered.map((row, index) => {
+		const hasTruth = typeof row.truth_lat === "number" && typeof row.truth_lon === "number"
+
+		return resolvedInput({
+			id: row.id ?? String(index),
+			input: row.input ?? row.raw ?? "",
+			country: row.country || null,
+			truthLat: hasTruth ? row.truth_lat! : null,
+			truthLon: hasTruth ? row.truth_lon! : null,
+			truthType: row.truth_type || null,
+			toleranceM: typeof row.tolerance_m === "number" ? row.tolerance_m : null,
+		})
+	})
 
 	const isSubset = filtered.length !== all.length
 	const notCovered: string[] = []
@@ -597,9 +632,11 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: isSubset ? "subset" : "full",
-		...(isSubset ? { populationN: all.length } : {}),
+		populationN: isSubset ? all.length : null,
+		why: null,
 		notCovered,
 		hasTruth: coordinateTruthCounts(inputs),
+		corpusHash: null,
 		notes: [
 			`Benchmark panel ${version}, ${all.length} rows${isSubset ? ` filtered to ${inputs.length}` : ""}.`,
 			"Carries truth_type — report stratified by it rather than blended.",
@@ -624,12 +661,14 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 		if (!(await pathExists(path))) continue
 
 		for (const [index, row] of (await readCorpus(path, `golden ${version}/${split}/${locale}`)).entries()) {
-			inputs.push({
-				id: row.id ?? `${locale}-${index}`,
-				input: row.raw ?? row.input ?? "",
-				...(locale === "adversarial" ? {} : { country: locale.toUpperCase() }),
-				...(row.components ? { expectComponents: row.components } : {}),
-			})
+			inputs.push(
+				resolvedInput({
+					id: row.id ?? `${locale}-${index}`,
+					input: row.raw ?? row.input ?? "",
+					country: locale === "adversarial" ? null : locale.toUpperCase(),
+					expectComponents: row.components ?? null,
+				})
+			)
 		}
 	}
 
@@ -645,8 +684,11 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: "full",
+		populationN: null,
+		why: null,
 		notCovered: split === "dev" ? ['the held-back split — `split: "full"` reaches it, deliberately separately'] : [],
 		hasTruth: coordinateTruthCounts(inputs),
+		corpusHash: null,
 		notes: [
 			`Golden ${version}, ${split} split, ${inputs.length} rows.`,
 			split === "dev"
@@ -673,12 +715,14 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		? all.filter((row) => (row.country ?? "").toUpperCase() === ref.country!.toUpperCase())
 		: all
 
-	const inputs: ResolvedInput[] = filtered.map((row, index) => ({
-		id: row.id ?? String(index),
-		input: row.input ?? row.raw ?? "",
-		...(row.country ? { country: row.country } : {}),
-		...(row.expect ? { expectComponents: row.expect as Record<string, string> } : {}),
-	}))
+	const inputs: ResolvedInput[] = filtered.map((row, index) =>
+		resolvedInput({
+			id: row.id ?? String(index),
+			input: row.input ?? row.raw ?? "",
+			country: row.country || null,
+			expectComponents: (row.expect as Record<string, string> | undefined) ?? null,
+		})
+	)
 
 	const isSubset = filtered.length !== all.length
 
@@ -688,11 +732,13 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: isSubset ? "subset" : "full",
-		...(isSubset ? { populationN: all.length } : {}),
+		populationN: isSubset ? all.length : null,
+		why: null,
 		notCovered: isSubset
 			? [`countries excluded: ${[...new Set(all.map((r) => r.country))].filter((c) => c !== ref.country).join(", ")}`]
 			: [],
 		hasTruth: { components: inputs.length, coordinates: 0, tier: 0, any: inputs.length, none: 0 },
+		corpusHash: null,
 		notes: [
 			`Parity corpus, ${all.length} live fixtures (${tombstones} tombstones skipped)${isSubset ? `, filtered to ${inputs.length}` : ""}.`,
 			"Component expectations only — NO coordinates, so a cross-engine distance comparison cannot be graded on it.",

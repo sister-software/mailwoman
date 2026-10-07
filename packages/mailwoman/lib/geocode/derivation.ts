@@ -61,19 +61,19 @@ export interface TraceCollector {
 	traceSink: ResolveOpts["traceSink"]
 
 	/**
-	 * Adds the derivation built from the collected records to `result`, or returns
-	 * `result` unchanged when the caller supplied no sink.
+	 * Adds the derivation built from the collected records to `result`.
+	 * The derivation is null when the caller supplied no sink.
 	 */
 	attach<T extends { epistemic_status: DerivationProjection["status"]; uncertainty_m: number | null }>(
 		result: T
-	): T & { derivation?: DerivationProjection }
+	): T & { derivation: DerivationProjection | null }
 }
 
 /**
  * Wraps a caller's trace sink so its records also build the result's `derivation`.
  *
- * Without a caller sink it keeps no records and `attach` returns the result unchanged,
- * so tracing stays opt-in.
+ * Without a caller sink it keeps no records, and `attach` sets a null derivation.
+ * A caller opts in to tracing by passing a sink.
  */
 export function traceCollector(callerSink: ResolveOpts["traceSink"]): TraceCollector {
 	const records: ResolveNodeTrace[] = []
@@ -88,7 +88,7 @@ export function traceCollector(callerSink: ResolveOpts["traceSink"]): TraceColle
 	return {
 		traceSink,
 		attach(result) {
-			if (!traceSink) return result
+			if (!traceSink) return { ...result, derivation: null }
 
 			return {
 				...result,

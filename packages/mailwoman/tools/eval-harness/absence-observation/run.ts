@@ -110,7 +110,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 
 	try {
 		for (const row of definition.rows) {
-			const { outcome, observation } = await gradeRow(pipeline, absenceRoute, semanticRoute, row)
+			const { outcome, observation } = await gradeRow(pipeline, absenceRoute, semanticRoute ?? null, row)
 
 			rows.push(outcome)
 
@@ -141,9 +141,9 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 async function gradeRow(
 	pipeline: (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>,
 	absenceRoute: AbsenceObservationRoute,
-	semanticRoute: SemanticObservationRoute | undefined,
+	semanticRoute: SemanticObservationRoute | null,
 	row: AbsenceProbeRow
-): Promise<{ outcome: AbsenceRowOutcome; observation?: AbsenceRowObservation }> {
+): Promise<{ outcome: AbsenceRowOutcome; observation: AbsenceRowObservation | null }> {
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
@@ -151,7 +151,7 @@ async function gradeRow(
 	// to the next row nor accumulated unbounded.
 	semanticRoute?.takeObservations()
 
-	const decision = await absenceRoute.observe(result.poiIntent)
+	const decision = await absenceRoute.observe(result.poiIntent ?? null)
 	const observedOutcome: AbsenceExpectedOutcome = decision.fired ? "absence_observation" : decision.refusal
 
 	const poiOutcome = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
@@ -176,17 +176,16 @@ async function gradeRow(
 		expectedOutcome: row.expectedOutcome,
 		observedOutcome,
 		holds: observedOutcome === row.expectedOutcome && !searchedSetBreach,
-		...(searchedCategories ? { searchedCategories } : {}),
-		...(searchedSetBreach ? { searchedSetBreach } : {}),
-		...(decision.fired ? { observationLine: describeAbsenceObservation(decision.observation) } : {}),
+		searchedCategories: searchedCategories ?? null,
+		searchedSetBreach: searchedSetBreach ?? null,
+		observationLine: decision.fired ? describeAbsenceObservation(decision.observation) : null,
 		poiOutcome,
-		...(result.poiIntent?.type === "abstain" ? { abstainReason: result.poiIntent.reason } : {}),
-		...(result.poiIntent?.type === "intent" && result.poiIntent.results
-			? { resultsReturned: result.poiIntent.results.length }
-			: {}),
+		abstainReason: result.poiIntent?.type === "abstain" ? result.poiIntent.reason : null,
+		resultsReturned:
+			result.poiIntent?.type === "intent" && result.poiIntent.results ? result.poiIntent.results.length : null,
 	}
 
-	if (!decision.fired) return { outcome }
+	if (!decision.fired) return { outcome, observation: null }
 
 	return {
 		outcome,

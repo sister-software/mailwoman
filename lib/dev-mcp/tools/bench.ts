@@ -31,9 +31,9 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 		limit: z.number().int().positive().optional(),
 	}),
 	handler: async (args) => {
-		const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
-		const config = (args["config"] as EngineConfig | undefined) ?? {}
-		const repetitions = (args["repetitions"] as number | undefined) ?? 1
+		const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
+		const config = (args["config"] as EngineConfig | null) ?? {}
+		const repetitions = (args["repetitions"] as number | null) ?? 1
 		const limit = args["limit"] as number | undefined
 		const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 

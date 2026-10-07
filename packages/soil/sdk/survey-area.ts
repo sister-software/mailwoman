@@ -218,7 +218,12 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
  * A blank is a real NULL state rather than a violation, recording that the
  * survey did not rate the component.
  */
-function assertDeclared(declared: ReadonlySet<string>, value: string | undefined, domain: string, where: string): void {
+function assertDeclared(
+	declared: ReadonlySet<string>,
+	value: string | null | undefined,
+	domain: string,
+	where: string
+): void {
 	if (!value) return
 
 	if (declared.has(value)) return
@@ -228,7 +233,7 @@ function assertDeclared(declared: ReadonlySet<string>, value: string | undefined
 	)
 }
 
-function nullable(value: string | undefined): string | null {
+function nullable(value: string | null | undefined): string | null {
 	return value || null
 }
 
@@ -344,17 +349,17 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
  * Two `indexOf` calls avoid the polynomial backtracking a regex takes on a document
  * whose opening tag has no closing partner.
  */
-function elementText(xml: string, name: string): string | undefined {
+function elementText(xml: string, name: string): string | null {
 	const open = `<${name}>`
 	const start = xml.indexOf(open)
 
-	if (start === -1) return undefined
+	if (start === -1) return null
 
 	const from = start + open.length
 	const end = xml.indexOf(`</${name}>`, from)
 
 	// An element with no closing tag is unreadable rather than empty, the same answer an absent element gets.
-	return end === -1 ? undefined : xml.slice(from, end)
+	return end === -1 ? null : xml.slice(from, end)
 }
 
 /**

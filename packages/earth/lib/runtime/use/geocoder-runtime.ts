@@ -29,6 +29,7 @@ import type {
 	ResolvedMapPlace,
 	Suggestion,
 } from "@mailwoman/react/map"
+import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
@@ -61,7 +62,7 @@ import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
-import { loadPolygonDB, type PlaceGeometry, type PolygonDB } from "#runtime/basemap"
+import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
@@ -86,9 +87,9 @@ interface StreetLookups {
 }
 
 interface CandidateExtras {
-	bbox?: ResolvedPlaceView["bbox"]
-	tier?: "address_point" | "interpolated"
-	uncertaintyM?: number
+	bbox: ResolvedPlaceView["bbox"] | null
+	tier: "address_point" | "interpolated" | null
+	uncertaintyM: number | null
 }
 
 export interface GeocoderRuntimeHandle {
@@ -256,7 +257,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
-			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+			const stateSlug = regionToStateSlug((stateNode?.value as string | undefined) ?? null)
 
 			const streetSlug =
 				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
@@ -273,10 +274,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 						streetResolution = await resolveStreet(
 							streetValue,
 							String(houseNumberNode.value),
-							postcodeNode?.value ? String(postcodeNode.value) : undefined,
-							localityNode?.value ? String(localityNode.value) : undefined,
+							postcodeNode?.value ? String(postcodeNode.value) : null,
+							localityNode?.value ? String(localityNode.value) : null,
 							street.situs,
-							street.interp,
+							street.interp ?? null,
 							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
 						)
 					}
@@ -306,7 +307,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					kindResult,
 					fstActive: assets?.fstMatcher != null,
 					fstProvenance: assets?.fstProvenance ?? null,
-					timing,
+					timing: { ...timing, resolve: null },
+					dualRoles: null,
 				}
 			}
 
@@ -362,7 +364,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
 			cascadeHits.forEach((c, i) => {
-				extrasRef.current.set(candidates[i]!, { bbox: c.bbox })
+				extrasRef.current.set(candidates[i]!, { bbox: c.bbox ?? null, tier: null, uncertaintyM: null })
 			})
 
 			// A street-level coordinate wins the pin; `id: 0` marks a non-WOF synthesized place,
@@ -376,11 +378,13 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					lat: streetResolution.lat,
 					lon: streetResolution.lon,
 					score: 1,
+					bbox: null,
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				}
 
 				extrasRef.current.set(streetCandidate, {
+					bbox: null,
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				})
@@ -438,13 +442,13 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
-			const extras = extrasRef.current.get(candidate) ?? {}
+			const extras = extrasRef.current.get(candidate) ?? null
 
 			const place: ResolvedMapPlace = {
 				...candidate,
-				bbox: extras.bbox,
-				tier: extras.tier,
-				uncertaintyM: extras.uncertaintyM,
+				bbox: extras?.bbox ?? null,
+				tier: extras?.tier ?? null,
+				uncertaintyM: extras?.uncertaintyM ?? null,
 			}
 
 			// Crisp admin polygon only for a real WOF place with no street tier, because

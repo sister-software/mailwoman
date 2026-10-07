@@ -20,8 +20,8 @@ export async function runInterfaceCensus(
 	registry: EngineRegistryLike,
 	args: Record<string, unknown>
 ): Promise<unknown> {
-	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
-	const config = (args["config"] as EngineConfig | undefined) ?? {}
+	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
+	const config = (args["config"] as EngineConfig | null) ?? {}
 	const engine = await registry.acquire(config)
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs

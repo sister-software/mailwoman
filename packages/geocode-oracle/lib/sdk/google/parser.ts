@@ -131,7 +131,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 	const abbreviateRegion = countryCode !== null && REGION_ABBREVIATION_COUNTRIES.has(countryCode)
 
 	for (const rule of COMPONENT_RULES) {
-		if (components[rule.tag] !== undefined) continue
+		if (components[rule.tag]) continue
 
 		for (const type of rule.types) {
 			const component = index.get(type)
@@ -216,6 +216,9 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 		// `raw.geometry.location_type` is the ground truth when this matters.
 		tier: toResolutionTier(result) ?? "admin",
 		uncertaintyMeters: null,
+		hierarchy: null,
+		poBox: null,
+		multiUnit: null,
 	}
 
 	const address = withGeocode(
@@ -232,7 +235,7 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 		addressID: createPostalAddressID({
 			coordinate,
 			address: result.formatted_address,
-			state: regionPrefix(components.region),
+			state: regionPrefix(components.region) ?? undefined,
 		}),
 		// Absent means exact — Google only sets this field when it had to loosen the query.
 		partialMatch: result.partial_match === true,

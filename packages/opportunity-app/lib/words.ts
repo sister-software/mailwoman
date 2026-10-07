@@ -97,7 +97,7 @@ export function positionText(position: FeaturePosition): string {
  * buildings that no single extent of the kind places.
  */
 export function districtHeading(properties: DistrictProperties): string {
-	if (properties.extent !== null) return properties.extent
+	if (properties.extent) return properties.extent
 
 	return properties.placement === DistrictPlacement.Unplaced
 		? `Buildings with no ${properties.extentKind} membership`

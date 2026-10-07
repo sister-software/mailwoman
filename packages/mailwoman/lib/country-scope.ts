@@ -14,13 +14,13 @@ export type CountryScope = "auto" | "locale" | "none"
 /**
  * ISO-3166 country inferred from a BCP-47 locale's final two-letter region subtag.
  */
-export function localeToCountry(locale: string | undefined): string | undefined {
-	if (!locale) return undefined
+export function localeToCountry(locale: string | null): string | null {
+	if (!locale) return null
 
 	const parts = locale.split("-")
-	const region = parts.length > 1 ? parts.at(-1) : undefined
+	const region = parts.length > 1 ? parts.at(-1) : null
 
-	return region && /^[A-Za-z]{2}$/u.test(region) ? region.toUpperCase() : undefined
+	return region && /^[A-Za-z]{2}$/u.test(region) ? region.toUpperCase() : null
 }
 
 /**
@@ -35,10 +35,10 @@ export function resolverDefaultCountry(
 		countryScope?: CountryScope
 	},
 	_candidateActive = false
-): string | undefined {
-	if (options.defaultCountry === "none") return undefined
+): string | null {
+	if (options.defaultCountry === "none") return null
 
 	if (options.defaultCountry) return options.defaultCountry
 
-	return options.countryScope === "none" ? undefined : localeToCountry(options.locale)
+	return options.countryScope === "none" ? null : localeToCountry(options.locale ?? null)
 }

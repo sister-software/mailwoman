@@ -90,8 +90,8 @@ const EVIDENCE_CHANNELS = ["locality_surface", "street_type"] as const
  * Drop the `$`-prefixed annotation keys before comparing, since they contain per-card history
  * and the declaration they annotate is what has to match.
  */
-function semanticFields(channel: EvidenceChannel | undefined): Record<string, unknown> | undefined {
-	if (!channel) return undefined
+function semanticFields(channel: EvidenceChannel | null): Record<string, unknown> | null {
+	if (!channel) return null
 
 	return Object.fromEntries(Object.entries(channel).filter(([k]) => !k.startsWith("$")))
 }
@@ -103,9 +103,9 @@ describe("overlay ↔ base evidence-channel parity (#1511 class — a declared b
 				const card = await readCard(overlay)
 				// A card with no block is exempt by design, so the expected value is the base's
 				// declaration only when this overlay declares anything at all.
-				const expected = card.requires ? semanticFields(enUs.requires![channel]) : undefined
+				const expected = card.requires ? semanticFields(enUs.requires![channel] ?? null) : null
 
-				expect(semanticFields(card.requires?.[channel])).toEqual(expected)
+				expect(semanticFields(card.requires?.[channel] ?? null)).toEqual(expected)
 			})
 		}
 	}

@@ -190,7 +190,7 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
  *
  * @returns Null for anything it cannot place.
  */
-export function lookupJapanesePrefecture(input: string | null | undefined): JapanesePrefectureCode | null {
+export function lookupJapanesePrefecture(input: string | null): JapanesePrefectureCode | null {
 	if (!input || typeof input !== "string") return null
 	const trimmed = input.trim()
 

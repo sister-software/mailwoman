@@ -7,12 +7,7 @@
  * code here touches React. The resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
  */
 
-/**
- * A GeoJSON Polygon / MultiPolygon: what the polygon DB stores and the map draws as the place outline.
- */
-export type PlaceGeometry =
-	| { type: "Polygon"; coordinates: number[][][] }
-	| { type: "MultiPolygon"; coordinates: number[][][][] }
+import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 
 /**
  * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`;

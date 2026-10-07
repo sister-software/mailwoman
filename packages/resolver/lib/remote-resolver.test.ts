@@ -26,7 +26,7 @@ describe("serializableResolveOpts", () => {
 			maxLookups: 3,
 			interpolationRadiusCalibration: 1.7,
 			addressPoints: {} as AddressPointLookup,
-			interpolation: {} as InterpolationLookup,
+			interpolation: { radiusCalibration: null } as InterpolationLookup,
 		}
 
 		const out = serializableResolveOpts(opts)!
@@ -35,8 +35,8 @@ describe("serializableResolveOpts", () => {
 		expect("interpolation" in out).toBe(false)
 	})
 
-	test("undefined passes through", () => {
-		expect(serializableResolveOpts(undefined)).toBeUndefined()
+	test("undefined becomes null", () => {
+		expect(serializableResolveOpts(undefined)).toBeNull()
 	})
 })
 

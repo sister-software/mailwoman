@@ -27,6 +27,6 @@ describe("mapUnitJurisdiction", () => {
 	})
 
 	it("gives no jurisdiction to a disputed area that carries -99 in both fields", () => {
-		expect(mapUnitJurisdiction(unit("-99", "-99", "BRT", "Bir Tawil"))).toBeUndefined()
+		expect(mapUnitJurisdiction(unit("-99", "-99", "BRT", "Bir Tawil"))).toBeNull()
 	})
 })

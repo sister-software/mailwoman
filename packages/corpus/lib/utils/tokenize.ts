@@ -8,32 +8,13 @@
  * chose its splits. The interface is deliberately minimal — only what alignment needs.
  */
 
-/**
- * A token with its character span in the source string.
- */
-export interface TokenSpan {
-	/**
-	 * The token text, possibly normalized.
-	 * This tokenizer leaves case unchanged.
-	 */
-	text: string
-
-	/**
-	 * Inclusive start offset, a UTF-16 code-unit index into the source string.
-	 */
-	start: number
-
-	/**
-	 * Exclusive end offset, with `text === source.slice(start, end)`.
-	 */
-	end: number
-}
+import type { TextSpan } from "@mailwoman/query-shape"
 
 /**
- * A tokenizer that maps a string to a sequence of `TokenSpan`s.
+ * A tokenizer that maps a string to a sequence of `TextSpan`s.
  */
 export interface Tokenizer {
-	tokenize(text: string): readonly TokenSpan[]
+	tokenize(text: string): readonly TextSpan[]
 }
 
 /**
@@ -47,8 +28,8 @@ export function whitespaceTokenizer(): Tokenizer {
 	const tokenRe = /[\p{L}\p{N}\p{M}'_-]+/gu
 
 	return {
-		tokenize(text: string): readonly TokenSpan[] {
-			const out: TokenSpan[] = []
+		tokenize(text: string): readonly TextSpan[] {
+			const out: TextSpan[] = []
 			tokenRe.lastIndex = 0
 			let m: RegExpExecArray | null
 
@@ -81,8 +62,8 @@ export function cjkAwareTokenizer(): Tokenizer {
 	const base = whitespaceTokenizer()
 
 	return {
-		tokenize(text: string): readonly TokenSpan[] {
-			const out: TokenSpan[] = []
+		tokenize(text: string): readonly TextSpan[] {
+			const out: TextSpan[] = []
 
 			for (const token of base.tokenize(text)) {
 				if (!HAN.test(token.text)) {

@@ -48,9 +48,9 @@ export interface FloodLayerReadingQuery {
 export interface FloodDossierRecords {
 	reading: LayerReading
 	/**
-	 * The zone the authority's map assigns at the coordinate, absent when the reading is unknown.
+	 * The zone the authority's map assigns at the coordinate, null when the reading is unknown.
 	 */
-	claim?: Claim<string>
+	claim: Claim<string> | null
 }
 
 /**
@@ -66,7 +66,7 @@ export interface FloodDossierRecords {
 export function floodLayerReading(lookup: FloodZoneLookup, query: FloodLayerReadingQuery): FloodDossierRecords {
 	const answer = lookup.lookup(query.latitude, query.longitude)
 	const { name: layer, sourceVintage: surveyedAt } = lookup.identity.manifest
-	const evidence = { source: query.source }
+	const evidence = { source: query.source, observedAt: null, validFrom: null, validTo: null }
 
 	const reading = (basis: LayerReading["basis"], records: number | null): LayerReading => ({
 		layer,
@@ -78,11 +78,11 @@ export function floodLayerReading(lookup: FloodZoneLookup, query: FloodLayerRead
 		evidence,
 	})
 
-	if (answer.kind === FloodReadingKind.Unknown) return { reading: reading(null, null) }
+	if (answer.kind === FloodReadingKind.Unknown) return { reading: reading(null, null), claim: null }
 
 	const zoneCode = answer.zoneCode ?? answer.definition?.code
 
-	if (zoneCode === undefined) {
+	if (!zoneCode) {
 		throw new Error(
 			`floodLayerReading: the ${answer.kind} answer at ${query.latitude}, ${query.longitude} has no zone code`
 		)
@@ -115,7 +115,7 @@ export function floodLayerReading(lookup: FloodZoneLookup, query: FloodLayerRead
  * The basis a coverage row stores.
  */
 function storedBasis(coverage: NonNullable<FloodZoneReading["coverage"]>): LayerReading["basis"] {
-	if (coverage.basis === undefined) {
+	if (!coverage.basis) {
 		throw new Error(`floodLayerReading: the coverage row for ${coverage.h3CellIndex} has no basis`)
 	}
 

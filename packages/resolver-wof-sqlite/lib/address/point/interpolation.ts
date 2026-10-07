@@ -107,6 +107,8 @@ export class AddressPointInterpolator<
 		this.#resources = resources.move()
 	}
 
+	readonly radiusCalibration = null
+
 	find(query: InterpolationQuery): InterpolatedHit | null {
 		const numberRaw = query.number.trim()
 
@@ -168,8 +170,8 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 
 	// Nearest known number below and above the query.
 	// The rows never contain n itself.
-	let below: NumberAnchor | undefined
-	let above: NumberAnchor | undefined
+	let below: NumberAnchor | null = null
+	let above: NumberAnchor | null = null
 
 	for (const anchor of anchors) {
 		if (anchor.n < n) {
@@ -190,6 +192,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 			lon: below.lon + (above.lon - below.lon) * t,
 			interpolated: true,
 			method: "address_point",
+			parityMatched: null,
 			bracket: "both",
 			uncertaintyM: Math.round(spanM / 2),
 			source: below.source,
@@ -217,6 +220,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 		lon,
 		interpolated: true,
 		method: "address_point",
+		parityMatched: null,
 		bracket: "single",
 		// Explicitly larger than the both-sided radius: the whole pair span plus the overshoot.
 		uncertaintyM: Math.round(pairM + overshootM),

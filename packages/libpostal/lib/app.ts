@@ -7,8 +7,13 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo, readServedDocumentInfo } from "@mailwoman/api-kit"
-import type { EngineStamp } from "@mailwoman/core/license"
+import {
+	attachOpenAPIDocs,
+	type CompatibilityAppOptions,
+	engineHeaders,
+	type OpenAPIDocInfo,
+	readServedDocumentInfo,
+} from "@mailwoman/api-kit"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
@@ -20,25 +25,6 @@ import { registerLibpostalRoutes } from "#routes"
  * This matches the usual JSON parser default.
  */
 const MAX_BODY_BYTES = 102_400
-
-/**
- * Options for {@link createLibpostalApp}.
- */
-export interface LibpostalAppOptions {
-	/**
-	 * Enables permissive CORS.
-	 *
-	 * It defaults to `true`.
-	 * Set it to `false` when a reverse proxy adds the CORS headers.
-	 */
-	cors?: boolean
-
-	/**
-	 * Engine stamp for response headers.
-	 * The CLI always provides it.
-	 */
-	engine?: EngineStamp
-}
 
 /**
  * OpenAPI metadata shared by the served document and CLI-generated documents.
@@ -67,7 +53,7 @@ export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 /**
  * Creates the app around an injected {@link LibpostalEngine}.
  */
-export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAppOptions = {}): OpenAPIHono {
+export function createLibpostalApp(engine: LibpostalEngine, options: CompatibilityAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
 	if (options.cors !== false) {

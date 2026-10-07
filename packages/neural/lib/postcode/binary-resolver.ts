@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { PostcodePlace } from "@mailwoman/core/resolver"
+
 import type { AnchorLookup } from "#anchor-inference"
-import type { PostcodePlace } from "#postcode/anchor"
 
 const MAGIC = 0x31_42_43_50
 

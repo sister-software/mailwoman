@@ -63,7 +63,7 @@ interface ParsedFeature {
 	isSuperseding: number
 	lastmodified: number
 	concordances: Record<string, string | number>
-	pointChoice?: PointChoice
+	pointChoice: PointChoice | null
 	names: Array<{ name: string; language: string; privateuse: string; official: number }>
 }
 
@@ -94,15 +94,14 @@ async function parseFeature(
 
 	let lat = hasLbl ? props["lbl:latitude"]! : hasGeom ? props["geom:latitude"]! : 0
 	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
-	let pointChoice: PointChoice | undefined
+	let pointChoice: PointChoice | null = null
 
 	// Only localities use GeoNames adjudication.
 	// GeoNames anchors for regions and counties are centroids.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
-		const anchor =
-			gnID !== undefined && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : undefined
+		const anchor = gnID !== undefined && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : null
 
 		const chosen = choosePoint(
 			{ latitude: props["geom:latitude"]!, longitude: props["geom:longitude"]! },
@@ -142,7 +141,7 @@ async function parseFeature(
 		const vals = Array.isArray(value) ? value : [value]
 
 		for (const v of vals) {
-			if (typeof v === "string" && v.length) {
+			if (typeof v === "string" && v) {
 				names.push({ name: v, language: lang, privateuse, official })
 			}
 		}
@@ -168,7 +167,7 @@ async function parseFeature(
 		isSuperseding: (props["wof:supersedes"]?.length ?? 0) > 0 ? 1 : 0,
 		lastmodified: typeof props["wof:lastmodified"] === "number" ? props["wof:lastmodified"] : 0,
 		concordances: props["wof:concordances"] ?? {},
-		...(pointChoice ? { pointChoice } : {}),
+		pointChoice,
 		names,
 	}
 }

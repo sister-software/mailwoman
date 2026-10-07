@@ -92,10 +92,14 @@ function oracleAt(point: { lat: number; lon: number }): OracleGeocoderLike & { c
 						components: {},
 						canonicalKey: "stub",
 						formatted: "Stub, AD",
+						raw: null,
 						geocode: {
 							coordinate: { latitude: point.lat, longitude: point.lon },
 							tier: "admin",
 							uncertaintyMeters: null,
+							hierarchy: null,
+							poBox: null,
+							multiUnit: null,
 						},
 					},
 					addressID: createPostalAddressID({

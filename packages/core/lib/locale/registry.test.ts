@@ -28,7 +28,7 @@ describe("InMemoryLocaleRegistry — registration", () => {
 
 	test("get returns undefined for unknown locale", () => {
 		const registry = new InMemoryLocaleRegistry()
-		expect(registry.get("zh-CN")).toBeUndefined()
+		expect(registry.get("zh-CN")).toBeNull()
 	})
 
 	test("re-registering the same locale replaces the prior entry", () => {
@@ -43,7 +43,7 @@ describe("InMemoryLocaleRegistry — registration", () => {
 		const registry = new InMemoryLocaleRegistry()
 		registry.register(enUS)
 		registry.unregister("en-US")
-		expect(registry.get("en-US")).toBeUndefined()
+		expect(registry.get("en-US")).toBeNull()
 	})
 })
 

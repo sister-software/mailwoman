@@ -126,10 +126,10 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 	// The expected place can be an ancestor of the most specific result, so every resolved node is checked.
 	let placeOK: boolean | null = null
 
-	if (c.expectPlaceID !== undefined) {
+	if (c.expectPlaceID) {
 		const want = Number(c.expectPlaceID.replace(/^wof:/u, ""))
 		placeOK = resolved.some((r) => r.id === want)
-	} else if (c.expectPlaceName !== undefined) {
+	} else if (c.expectPlaceName) {
 		const want = norm(c.expectPlaceName)
 		placeOK = resolved.some((r) => norm(r.name) === want)
 	}

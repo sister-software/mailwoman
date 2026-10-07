@@ -38,20 +38,20 @@ async function main(): Promise<void> {
 	// A conditional spread here reproduces both behaviors exactly: an absent flag must
 	// not arrive as `undefined` where that would override a default.
 	await perLocaleF1({
-		...(values["golden-dir"] !== undefined ? { goldenDir: values["golden-dir"] } : {}),
-		...(values.files !== undefined ? { files: extractDelimited(values.files) } : {}),
-		...(values["weights-cache"] !== undefined ? { weightsCache: values["weights-cache"] } : {}),
-		...(values.model !== undefined ? { modelPath: values.model } : {}),
-		...(values.tokenizer !== undefined ? { tokenizerPath: values.tokenizer } : {}),
-		...(values["model-card"] !== undefined ? { modelCardPath: values["model-card"] } : {}),
-		...(values["model-anchor-lookup"] !== undefined ? { modelAnchorLookupPath: values["model-anchor-lookup"] } : {}),
-		...(values["gazetteer-lexicon"] !== undefined ? { gazetteerLexiconPath: values["gazetteer-lexicon"] } : {}),
+		...(values["golden-dir"] ? { goldenDir: values["golden-dir"] } : {}),
+		...(values.files ? { files: extractDelimited(values.files) } : {}),
+		...(values["weights-cache"] ? { weightsCache: values["weights-cache"] } : {}),
+		...(values.model ? { modelPath: values.model } : {}),
+		...(values.tokenizer ? { tokenizerPath: values.tokenizer } : {}),
+		...(values["model-card"] ? { modelCardPath: values["model-card"] } : {}),
+		...(values["model-anchor-lookup"] ? { modelAnchorLookupPath: values["model-anchor-lookup"] } : {}),
+		...(values["gazetteer-lexicon"] ? { gazetteerLexiconPath: values["gazetteer-lexicon"] } : {}),
 		...(values["no-anchor"] !== undefined ? { noAnchor: true } : {}),
 		...(values["suppress-gaz-near-postcode"] !== undefined ? { suppressGazNearPostcode: true } : {}),
-		...(values.conventions !== undefined ? { conventions: values.conventions } : {}),
+		...(values.conventions ? { conventions: values.conventions } : {}),
 		...(values["bridge-gaps"] !== undefined ? { bridgeGaps: true } : {}),
 		...(values["raw-case"] !== undefined ? { rawCase: true } : {}),
-		...(values["out-json"] !== undefined ? { outJSON: values["out-json"] } : {}),
+		...(values["out-json"] ? { outJSON: values["out-json"] } : {}),
 	})
 }
 

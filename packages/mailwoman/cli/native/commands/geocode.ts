@@ -186,16 +186,16 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 
 	return {
 		locale: stringValue(values, "locale")!,
-		...(stringValue(values, "bias") ? { bias: stringValue(values, "bias") } : {}),
-		...(stringValue(values, "default-country") ? { defaultCountry: stringValue(values, "default-country") } : {}),
+		...(stringValue(values, "bias") ? { bias: stringValue(values, "bias")! } : {}),
+		...(stringValue(values, "default-country") ? { defaultCountry: stringValue(values, "default-country")! } : {}),
 		countryScope: stringValue(values, "country-scope") as GeocodeOptions["countryScope"],
-		...(stringValue(values, "resolve-db") ? { resolveDB: stringValue(values, "resolve-db") } : {}),
-		...(stringValue(values, "candidate-db") ? { candidateDB: stringValue(values, "candidate-db") } : {}),
+		...(stringValue(values, "resolve-db") ? { resolveDB: stringValue(values, "resolve-db")! } : {}),
+		...(stringValue(values, "candidate-db") ? { candidateDB: stringValue(values, "candidate-db")! } : {}),
 		dataRoot,
-		...(stringValue(values, "address-points-db") ? { addressPointsDB: stringValue(values, "address-points-db") } : {}),
-		...(stringValue(values, "interpolation-db") ? { interpolationDB: stringValue(values, "interpolation-db") } : {}),
-		...(numberValue(values, "interp-calibration") !== undefined
-			? { interpCalibration: numberValue(values, "interp-calibration") }
+		...(stringValue(values, "address-points-db") ? { addressPointsDB: stringValue(values, "address-points-db")! } : {}),
+		...(stringValue(values, "interpolation-db") ? { interpolationDB: stringValue(values, "interpolation-db")! } : {}),
+		...(numberValue(values, "interp-calibration") !== null
+			? { interpCalibration: numberValue(values, "interp-calibration")! }
 			: {}),
 		localeCountryPrior: booleanValue(values, "locale-country-prior"),
 		gazetteerPrior: booleanValue(values, "gazetteer-prior"),
@@ -205,8 +205,8 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
-		...(capitalTier === undefined ? {} : { capitalTier }),
-		...(variantAliasExemption === undefined ? {} : { variantAliasExemption }),
+		...(capitalTier === null ? {} : { capitalTier }),
+		...(variantAliasExemption === null ? {} : { variantAliasExemption }),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),
@@ -216,7 +216,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		debugSize: stringValue(values, "debug-size")!,
 		stdin: booleanValue(values, "stdin"),
 		timing: booleanValue(values, "timing"),
-		...(stringValue(values, "tiles") ? { tiles: stringValue(values, "tiles") } : {}),
+		...(stringValue(values, "tiles") ? { tiles: stringValue(values, "tiles")! } : {}),
 	}
 }
 

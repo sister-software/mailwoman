@@ -43,11 +43,11 @@ export interface FormatAddressOptions {
 	 *
 	 * A caller with the parse tree should pass the order explicitly.
 	 */
-	script?: AddressScript
+	script?: AddressScript | null
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
-	if (opts.separator !== undefined) return opts.separator
+	if (opts.separator) return opts.separator
 
 	return opts.singleLine ? lineJoinForCountry(country, script) : "\n"
 }
@@ -66,7 +66,7 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
  * Two separators would ignore the requested value.
  */
 function softSeparatorFor(opts: FormatAddressOptions): string {
-	if (opts.separator !== undefined) return opts.separator
+	if (opts.separator) return opts.separator
 
 	return opts.singleLine ? " " : "\n"
 }
@@ -109,7 +109,7 @@ export function isLatinScriptText(value: string): boolean {
 // This takes a dict and answers which of a country's two orders it is written for.
 // This package cannot import it because it has no runtime dependencies.
 // The core package adds 11 MB of shipped data.
-export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
+export function scriptOfComponents(components: ComponentDict): AddressScript | null {
 	for (const tag of SCRIPT_WITNESSES) {
 		const value = components[tag]?.trim()
 
@@ -118,7 +118,7 @@ export function scriptOfComponents(components: ComponentDict): AddressScript | u
 		return carriesNonLatinLetter(value) ? "local" : "latin"
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -218,7 +218,7 @@ export function formatAddressRow(
 	// An explicit `script` overrides both derived checks.
 	// A dictionary with no letters identifies no register.
 	// The function also avoids an order that would drop a component in this country.
-	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : undefined
+	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : null
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
 	const layout = layoutForCountry(country, script)
 

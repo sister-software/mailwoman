@@ -78,7 +78,7 @@ const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 /**
  * Read a string delimiter from a literal or expression-free template.
  */
-function literalDelimiter(argument: AstNode | undefined): string | null {
+function literalDelimiter(argument: AstNode | null | undefined): string | null {
 	if (!argument) return null
 
 	if ((argument.type === "Literal" || argument.type === "StringLiteral") && typeof argument.value === "string") {
@@ -110,7 +110,7 @@ const preferSpliteratorRule: Rule = {
 				if (callee.property?.type !== "Identifier" || callee.property.name !== "split") return
 
 				const delimiter = literalDelimiter(node.arguments?.[0])
-				const entry = delimiter === null ? undefined : DELIMITER_HINTS.get(delimiter)
+				const entry = delimiter ? DELIMITER_HINTS.get(delimiter) : undefined
 
 				if (!entry) return
 
@@ -143,7 +143,7 @@ const DATABASE_BOUNDARY_METHODS = new Set([
 /**
  * Check whether an expression contains a `never` cast.
  */
-function containsNeverCast(node: AstNode | undefined): boolean {
+function containsNeverCast(node: AstNode | null | undefined): boolean {
 	if (!node) return false
 
 	if (node.type === "TSAsExpression" || node.type === "TSTypeAssertion") {
@@ -412,7 +412,7 @@ const noRelativeDynamicImportRule: Rule = {
 			ImportExpression(node: AstNode) {
 				const specifier = literalDelimiter(node.source)
 
-				if (specifier === null || !/^\.\.?\//.test(specifier)) return
+				if (!specifier || !/^\.\.?\//.test(specifier)) return
 
 				context.report({
 					node,
@@ -489,7 +489,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 
 				const text = literalDelimiter(segment)
 
-				if (text === null || !text.startsWith("..")) return
+				if (!text || !text.startsWith("..")) return
 
 				context.report({
 					node,
@@ -508,12 +508,12 @@ const noImportMetaDirnameWalkRule: Rule = {
  */
 function methodChain(node: AstNode): string[] {
 	const names: string[] = []
-	let current: AstNode | undefined = node
+	let current: AstNode | null | undefined = node
 
 	while (current?.type === "CallExpression") {
 		const method = calledMethod(current)
 
-		if (method === null) break
+		if (!method) break
 		names.unshift(method)
 		current = current.callee?.object
 	}
@@ -530,7 +530,7 @@ function numericLiteralValue(node: AstNode): number | null {
 /**
  * Get the base identifier of computed index access, such as `rows` in `rows[i]`.
  */
-function indexedBaseName(node: AstNode | undefined): string | null {
+function indexedBaseName(node: AstNode | null | undefined): string | null {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return null
 
 	return typeof node.object?.name === "string" ? node.object.name : null
@@ -539,7 +539,7 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 /**
  * Check whether a computed index uses a variable rather than a constant.
  */
-function isVariableIndex(node: AstNode | undefined): boolean {
+function isVariableIndex(node: AstNode | null | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
 
 	return node.property?.type === "Identifier"
@@ -586,7 +586,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 		const elements = (left as ESTreeNode).elements ?? []
 		const bases = elements.map((element) => indexedBaseName(element))
 
-		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1] && elements.every(isVariableIndex)) {
+		if (bases.length === 2 && bases[0] && bases[0] === bases[1] && elements.every(isVariableIndex)) {
 			return true
 		}
 	}
@@ -761,7 +761,7 @@ const noCrossPackageReexportRule: Rule = {
 		const check = (node: AstNode): void => {
 			const specifier = literalDelimiter(node.source)
 
-			if (specifier === null || !/^(?:@mailwoman\/|mailwoman(?:\/|$))/.test(specifier)) return
+			if (!specifier || !/^(?:@mailwoman\/|mailwoman(?:\/|$))/.test(specifier)) return
 
 			context.report({
 				node,
@@ -824,7 +824,7 @@ function typeReferenceName(node: AstNode): string | null {
 /**
  * Whether `node` resolves to a {@link SYNC_DISPOSABLE_TYPES} member, past `Promise` and a union.
  */
-function namesSyncDisposable(node: AstNode | undefined): boolean {
+function namesSyncDisposable(node: AstNode | null | undefined): boolean {
 	if (!node) return false
 
 	if (node.type === "TSUnionType") return ((node as ESTreeNode).types ?? []).some(namesSyncDisposable)

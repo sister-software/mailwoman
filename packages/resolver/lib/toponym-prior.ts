@@ -167,7 +167,7 @@ export function rankByImportance<T extends Rankable>(candidates: readonly T[]): 
  */
 export function rankByCountryPrior<T extends Rankable>(
 	candidates: readonly T[],
-	country: string | undefined,
+	country: string | null,
 	weight: number = DEFAULT_COUNTRY_PRIOR_WEIGHT
 ): T[] {
 	if (!country || candidates.length < 2) return [...candidates]

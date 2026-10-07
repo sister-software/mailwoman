@@ -444,7 +444,7 @@ function parseCandidates(text: string): Candidate[] {
 	if (Array.isArray(parsed)) return parsed as Candidate[]
 
 	// Some providers wrap in {"variants": [...]} or {"candidates": [...]}
-	if (typeof parsed === "object" && parsed !== null) {
+	if (typeof parsed === "object" && parsed) {
 		for (const key of ["variants", "candidates", "results"]) {
 			const v = (parsed as Record<string, unknown>)[key]
 

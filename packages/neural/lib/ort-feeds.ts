@@ -26,8 +26,8 @@ export interface InferChannel {
  * The evidence-bundle channels as `infer` receives them.
  */
 export interface InferEvidenceChannels {
-	streetType?: InferChannel
-	localitySurface?: InferChannel
+	streetType?: InferChannel | null
+	localitySurface?: InferChannel | null
 	/**
 	 * The address-system id for a graph with a `locale_hint` input.
 	 *
@@ -42,9 +42,9 @@ export interface InferEvidenceChannels {
  */
 export type InferFunction = (
 	tokenIDs: number[],
-	anchor?: InferChannel,
-	gazetteer?: InferChannel,
-	country?: InferChannel,
+	anchor?: InferChannel | null,
+	gazetteer?: InferChannel | null,
+	country?: InferChannel | null,
 	evidence?: InferEvidenceChannels
 ) => Promise<InferResult>
 
@@ -63,24 +63,25 @@ export interface InferResult {
 	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order)
 	 * when the model exports it.
 	 *
-	 * Consumers must treat undefined as no address-system detection available.
+	 * Consumers must treat null as no address-system detection available.
 	 */
-	localeLogits?: number[]
+	localeLogits: number[] | null
 	/**
 	 * The address-system head's logits (`address_system_logits` output), indexed by the
 	 * model card's `address_systems` ids, when the model exports it.
 	 */
-	addressSystemLogits?: number[]
+	addressSystemLogits: number[] | null
 	/**
 	 * Per-span type scores from the semi-Markov span head, indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1`
-	 * tokens. absent on bundles without the head, so consumers fall back to the BIO path.
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1` tokens.
+	 *
+	 * Null on bundles without the head, so consumers fall back to the BIO path.
 	 */
-	spanScores?: number[][][]
+	spanScores: number[][][] | null
 	/**
-	 * Max span length (the `L` axis of {@link spanScores}); absent iff `spanScores` is.
+	 * Max span length (the `L` axis of {@link spanScores}); null iff `spanScores` is.
 	 */
-	maxSpan?: number
+	maxSpan: number | null
 }
 
 /**
@@ -162,12 +163,11 @@ export function packCharFeed(
 }
 
 /**
- * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors,
- * zero-padded to `fixedSeqLen`; an `undefined` channel packs the confidence=0
- * identity the model treats as channel-off.
+ * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors, zero-padded
+ * to `fixedSeqLen`; a `null` channel packs the confidence=0 identity the model treats as channel-off.
  */
 function packChannelFeed(
-	channel: InferChannel | undefined,
+	channel: InferChannel | null,
 	fixedSeqLen: number,
 	seqLen: number,
 	dim: number
@@ -203,9 +203,9 @@ export function packSoftChannelFeeds(
 	inputNames: readonly string[],
 	fixedSeqLen: number,
 	seqLen: number,
-	anchor?: InferChannel,
-	gazetteer?: InferChannel,
-	country?: InferChannel,
+	anchor?: InferChannel | null,
+	gazetteer?: InferChannel | null,
+	country?: InferChannel | null,
 	evidence?: InferEvidenceChannels
 ): Array<[name: string, feed: PackedFeed]> {
 	const channels = [
@@ -232,7 +232,7 @@ export function packSoftChannelFeeds(
 		if (!inputNames.includes(`${prefix}_features`)) continue
 
 		const dim = channel ? (channel.features[0]?.length ?? suppliedEmptyDim) : absentDim
-		const packed = packChannelFeed(channel, fixedSeqLen, seqLen, dim)
+		const packed = packChannelFeed(channel ?? null, fixedSeqLen, seqLen, dim)
 
 		entries.push([`${prefix}_features`, packed.features], [`${prefix}_confidence`, packed.confidence])
 	}
@@ -297,12 +297,12 @@ export function decodeInferOutput(
 		logits.push(row)
 	}
 
-	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
-	const addressSystemLogits = output.addressSystemLogits ? Array.from(output.addressSystemLogits.data) : undefined
+	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : null
+	const addressSystemLogits = output.addressSystemLogits ? Array.from(output.addressSystemLogits.data) : null
 
 	const spanTensor = output.spanScores
-	let spanScores: number[][][] | undefined
-	let maxSpan: number | undefined
+	let spanScores: number[][][] | null = null
+	let maxSpan: number | null = null
 
 	if (spanTensor) {
 		const spanData = spanTensor.data
@@ -333,9 +333,10 @@ export function decodeInferOutput(
 	return {
 		logits,
 		numLabels,
-		...(localeLogits ? { localeLogits } : {}),
-		...(addressSystemLogits ? { addressSystemLogits } : {}),
-		...(spanScores ? { spanScores, maxSpan } : {}),
+		localeLogits,
+		addressSystemLogits,
+		spanScores: maxSpan === null ? null : spanScores,
+		maxSpan: spanScores ? maxSpan : null,
 	}
 }
 

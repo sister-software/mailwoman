@@ -19,20 +19,28 @@ import { runFile } from "@mailwoman/core/process"
 import { assertDatumTransformationAvailable } from "#projection/transform"
 
 /**
- * What one layer declares about itself.
+ * A layer's EPSG code, feature count, name and attribute field names, read before any feature.
  */
-export interface OGRLayerIdentity {
+export interface OGRLayerSchema {
 	epsg: number
 	featureCount: number
 	layer: string
 	/**
 	 * The layer's own attribute field names — empty when the source reports none.
+	 *
+	 * ogr2ogr rejects a `select` that asks for a missing column, so query builders read this set.
 	 */
 	fields: ReadonlySet<string>
+}
+
+/**
+ * What one layer declares about itself.
+ */
+export interface OGRLayerIdentity extends OGRLayerSchema {
 	/**
 	 * The layer's own declared extent, `[minLon, minLat, maxLon, maxLat]`, where the source declares one.
 	 */
-	extent?: readonly [number, number, number, number]
+	extent: readonly [number, number, number, number] | null
 }
 
 export interface ReadOGRLayerIdentityOptions {
@@ -59,7 +67,7 @@ export interface ReadOGRLayerIdentityOptions {
 	/**
 	 * Forwarded to the datum-transformation guard.
 	 */
-	areaOfUse?: string
+	areaOfUse?: string | null
 	/**
 	 * Refuse a layer that declares no extent.
 	 */
@@ -111,7 +119,7 @@ const EXTENT_ORDINATES = 4
 export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions): Promise<OGRLayerIdentity> {
 	const { stdout } = await runFile(
 		"ogrinfo",
-		["-json", "-so", options.path, ...(options.layer === undefined ? [] : [options.layer])],
+		["-json", "-so", options.path, ...(options.layer ? [options.layer] : [])],
 		{ maxBuffer: OGRINFO_MAX_BUFFER }
 	)
 
@@ -131,13 +139,13 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 
 	if (!described?.name) {
 		throw new Error(
-			options.layer === undefined
-				? `${options.context}: ${options.path} carries no readable layer`
-				: `${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`
+			options.layer
+				? `${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`
+				: `${options.context}: ${options.path} carries no readable layer`
 		)
 	}
 
-	if (options.layer !== undefined && described.name !== options.layer) {
+	if (options.layer && described.name !== options.layer) {
 		throw new Error(`${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`)
 	}
 
@@ -170,7 +178,7 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		throw new TypeError(`${options.context}: ${subject} reports no feature count`)
 	}
 
-	let extent: readonly [number, number, number, number] | undefined
+	let extent: readonly [number, number, number, number] | null = null
 
 	if (geometry?.extent && geometry.extent.length >= EXTENT_ORDINATES) {
 		extent = [geometry.extent[0]!, geometry.extent[1]!, geometry.extent[2]!, geometry.extent[3]!]
@@ -184,7 +192,7 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 
 	await assertDatumTransformationAvailable(code, {
 		context: options.context,
-		...(options.areaOfUse === undefined ? {} : { areaOfUse: options.areaOfUse }),
+		areaOfUse: options.areaOfUse ?? null,
 	})
 
 	const fields = new Set((described.fields ?? []).map((field) => field.name).filter((name) => name !== undefined))
@@ -202,6 +210,6 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		featureCount: described.featureCount,
 		layer: described.name,
 		fields,
-		...(extent === undefined ? {} : { extent }),
+		extent,
 	}
 }

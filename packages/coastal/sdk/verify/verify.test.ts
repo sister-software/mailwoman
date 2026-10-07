@@ -120,7 +120,7 @@ describe("the positive half", () => {
 		})
 
 		expect(result.disagreed).toBe(1)
-		expect(result.agreement[0]!.nearestEdgeMetres).toBeUndefined()
+		expect(result.agreement[0]!.nearestEdgeMetres).toBeNull()
 	})
 
 	it("tolerates a point a few centimeters outside the service's own edge", async () => {

@@ -54,10 +54,10 @@ export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype
  *
  * The two reasonable answers (block conservatively, or ignore) differ per call site.
  */
-export function placetypeSpecificity(placetype: string | null | undefined): number | undefined {
-	if (!placetype) return undefined
+export function placetypeSpecificity(placetype: string | null | undefined): number | null {
+	if (!placetype) return null
 
-	return PLACETYPE_SPECIFICITY[placetype]
+	return PLACETYPE_SPECIFICITY[placetype] ?? null
 }
 
 /**
@@ -72,11 +72,11 @@ export function placetypeSpecificity(placetype: string | null | undefined): numb
 export function isAtLeastAsSpecific(
 	candidate: string | null | undefined,
 	reference: string | null | undefined
-): boolean | undefined {
+): boolean | null {
 	const a = placetypeSpecificity(candidate)
 	const b = placetypeSpecificity(reference)
 
-	if (a === undefined || b === undefined) return undefined
+	if (a === null || b === null) return null
 
 	return a >= b
 }
@@ -97,11 +97,11 @@ export function isAtLeastAsSpecific(
 export function isStrictlyFiner(
 	candidate: string | null | undefined,
 	reference: string | null | undefined
-): boolean | undefined {
+): boolean | null {
 	const a = placetypeSpecificity(candidate)
 	const b = placetypeSpecificity(reference)
 
-	if (a === undefined || b === undefined) return undefined
+	if (a === null || b === null) return null
 
 	return a > b
 }

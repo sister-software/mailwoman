@@ -145,6 +145,33 @@ export interface ResolutionMeasurementOptions {
 }
 
 /**
+ * What a resolution instrument reports for a single-layer source: the features it streamed,
+ * the count the source declares for itself, and one measurement per candidate resolution.
+ *
+ * A streamed total that differs from the declared count means a truncated read.
+ */
+export interface ResolutionMeasurementReport<Measurement> {
+	features: number
+	declaredFeatureCount: number
+	measurements: Measurement[]
+}
+
+/**
+ * A verification sample point outside the authority's published coverage.
+ *
+ * `passed` is true when the artifact answered `unknown` with no designation,
+ * the only acceptable reading there.
+ */
+export interface OutsideCoverageRow {
+	label: string
+	latitude: number
+	longitude: number
+	kind: string
+	designations: number
+	passed: boolean
+}
+
+/**
  * The area a build streamed, beside the area the source reports for itself.
  */
 export interface AreaAgreement {
@@ -196,7 +223,7 @@ export type AreaAgreementReading =
  * Both readings of a build's streamed ring areas against the source's own figure,
  * or the stated absence of one.
  */
-export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number | undefined): AreaAgreementReading {
+export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number | null): AreaAgreementReading {
 	const nestedKM2 = streamed.nestedM2 / M2_PER_KM2
 	const allExteriorKM2 = streamed.allExteriorM2 / M2_PER_KM2
 

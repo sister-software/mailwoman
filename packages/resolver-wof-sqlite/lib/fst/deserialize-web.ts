@@ -143,8 +143,8 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 				lat: view.getFloat32(pp + 16, true),
 				lon: view.getFloat32(pp + 20, true),
 				parentChain,
-				...(hasAmbiguity ? { crossCountryBranches: view.getUint8(pp + 6) } : {}),
-				...(hasEncyclopedic ? { encyclopedic: view.getFloat32(pp + ENCYCLOPEDIC_OFFSET, true) } : {}),
+				crossCountryBranches: hasAmbiguity ? view.getUint8(pp + 6) : null,
+				encyclopedic: hasEncyclopedic ? view.getFloat32(pp + ENCYCLOPEDIC_OFFSET, true) : null,
 			}
 		}
 
@@ -154,25 +154,25 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	return FSTMatcher.fromNodes(nodes)
 }
 
-export function readFSTProvenanceWeb(input: ArrayBuffer | Uint8Array): FSTProvenance | undefined {
+export function readFSTProvenanceWeb(input: ArrayBuffer | Uint8Array): FSTProvenance | null {
 	const bytes = input instanceof ArrayBuffer ? new Uint8Array(input) : input
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const decoder = new TextDecoder("utf-8")
 
-	if (bytes.byteLength < HEADER_SIZE) return undefined
+	if (bytes.byteLength < HEADER_SIZE) return null
 	const version = view.getUint16(4, true)
 
-	if (version < VERSION_WITH_METADATA) return undefined
+	if (version < VERSION_WITH_METADATA) return null
 	const provenanceOffset = view.getUint32(28, true)
 
-	if (provenanceOffset === 0 || provenanceOffset >= bytes.byteLength) return undefined
+	if (provenanceOffset === 0 || provenanceOffset >= bytes.byteLength) return null
 
 	try {
 		const jsonLen = view.getUint32(provenanceOffset, true)
 		const jsonStr = decoder.decode(bytes.subarray(provenanceOffset + 4, provenanceOffset + 4 + jsonLen))
 
-		return tryParsingJSON<FSTProvenance>(jsonStr) ?? undefined
+		return tryParsingJSON<FSTProvenance>(jsonStr) ?? null
 	} catch {
-		return undefined
+		return null
 	}
 }

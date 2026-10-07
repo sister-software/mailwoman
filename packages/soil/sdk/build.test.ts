@@ -150,7 +150,7 @@ describe("what each reading says", () => {
 		const distribution = reading.distribution!
 
 		expect(distribution.notRateableShare).toBeGreaterThan(0.9)
-		expect(distribution.topClass).toBeUndefined()
+		expect(distribution.topClass).toBeNull()
 		expect(reading.kind).toBe(SoilReadingKind.DesignatedNoRating)
 	})
 
@@ -168,7 +168,7 @@ describe("what each reading says", () => {
 		const distribution = reading.distribution!
 
 		expect(distribution.noDataShare).toBeGreaterThan(0.9)
-		expect(distribution.topClass).toBeUndefined()
+		expect(distribution.topClass).toBeNull()
 		expect(distribution.unratedShare).toBe(0)
 		expect(distribution.notRateableShare).toBe(0)
 	})
@@ -177,8 +177,8 @@ describe("what each reading says", () => {
 		const reading = lookup.lookup(FIXTURE_ORIGIN.lat + 5, FIXTURE_ORIGIN.lon + 5)
 
 		expect(reading.kind).toBe(SoilReadingKind.Unknown)
-		expect(reading.coverage).toBeUndefined()
-		expect(reading.distribution).toBeUndefined()
+		expect(reading.coverage).toBeNull()
+		expect(reading.distribution).toBeNull()
 	})
 })
 

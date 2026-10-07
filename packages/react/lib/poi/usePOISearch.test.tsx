@@ -23,7 +23,7 @@ import { renderComponent } from "../../test/render.tsx"
 const loadRuntime = async () => makePOIRuntime()
 const loadBrandRuntime = async () => makeBrandPOIRuntime()
 
-function subjectLabel(subject: POISubject | undefined): string {
+function subjectLabel(subject: POISubject | null): string {
 	if (!subject) return "no-subject"
 
 	return subject.kind === "brand" ? subject.name : subject.category.label
@@ -50,7 +50,7 @@ function Harness({
 
 	return (
 		<div>
-			<span className="subject">{subjectLabel(result?.subject)}</span>
+			<span className="subject">{subjectLabel(result?.subject ?? null)}</span>
 			<span className="live">{liveSearch.status}</span>
 			<span className="hit">{liveSearch.status === "success" ? (liveSearch.hits[0]?.name ?? "") : ""}</span>
 			<button type="button" onClick={searchLive} disabled={!canSearchLive}>

@@ -20,33 +20,33 @@ export interface CORESRegistration {
 	 * The legal name under which the entity registered.
 	 * People may use a different name.
 	 */
-	entityName?: string
+	entityName: string | null
 	/**
 	 * Cores's own entity-type string verbatim, deliberately not parsed into a union
 	 * because the vocabulary is unenumerated.
 	 */
-	entityType?: string
+	entityType: string | null
 	/**
 	 * The organization the registered contact belongs to, a genuinely independent name surface
 	 * from `entityName` because it is where the brand appears when it differs from the legal name.
 	 */
-	contactOrganization?: string
-	contactName?: string
-	contactPosition?: string
+	contactOrganization: string | null
+	contactName: string | null
+	contactPosition: string | null
 	/**
 	 * The contact's postal address as one string, with cores's line breaks
 	 * and appended `"United States"` collapsed.
 	 */
-	contactAddress?: string
-	contactEmail?: string
-	contactPhone?: string
-	contactFax?: string
+	contactAddress: string | null
+	contactEmail: string | null
+	contactPhone: string | null
+	contactFax: string | null
 	/**
 	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served, so a caller that
 	 * needs a temporal value performs its own conversion to a `Date`.
 	 */
-	registrationDate?: string
-	lastUpdated?: string
+	registrationDate: string | null
+	lastUpdated: string | null
 }
 
 /**
@@ -143,7 +143,20 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 
 	if (fields.frn && fields.frn !== frn) return null
 
-	const registration: CORESRegistration = { frn }
+	const registration: CORESRegistration = {
+		frn,
+		entityName: null,
+		entityType: null,
+		contactOrganization: null,
+		contactName: null,
+		contactPosition: null,
+		contactAddress: null,
+		contactEmail: null,
+		contactPhone: null,
+		contactFax: null,
+		registrationDate: null,
+		lastUpdated: null,
+	}
 
 	for (const [field, value] of Object.entries(fields)) {
 		if (field === "frn") continue

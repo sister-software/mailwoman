@@ -14,14 +14,14 @@
 export type ISODate = string
 
 export interface SourceTime {
-	observedAt?: ISODate
-	availableAt?: ISODate
-	retrievedAt?: ISODate
+	observedAt: ISODate | null
+	availableAt: ISODate | null
+	retrievedAt: ISODate | null
 }
 
 export interface ClaimInterval {
-	validFrom?: ISODate
-	validTo?: ISODate
+	validFrom: ISODate | null
+	validTo: ISODate | null
 }
 
 export type Admission = "admitted" | "excluded" | "undated"
@@ -51,17 +51,17 @@ export function compareISODate(a: ISODate, b: ISODate): -1 | 0 | 1 {
  * so it is undated rather than admitted.
  */
 export function admitsAsOf(time: SourceTime, asOf: ISODate): Admission {
-	if (time.availableAt === undefined) return "undated"
+	if (!time.availableAt) return "undated"
 
 	return compareISODate(time.availableAt, asOf) <= 0 ? "admitted" : "excluded"
 }
 
 export function appliesAt(interval: ClaimInterval, date: ISODate): boolean | "unknown" {
-	if (interval.validFrom === undefined && interval.validTo === undefined) return "unknown"
+	if (!interval.validFrom && !interval.validTo) return "unknown"
 
-	if (interval.validFrom !== undefined && compareISODate(date, interval.validFrom) < 0) return false
+	if (interval.validFrom && compareISODate(date, interval.validFrom) < 0) return false
 
-	if (interval.validTo !== undefined && compareISODate(date, interval.validTo) > 0) return false
+	if (interval.validTo && compareISODate(date, interval.validTo) > 0) return false
 
 	return true
 }

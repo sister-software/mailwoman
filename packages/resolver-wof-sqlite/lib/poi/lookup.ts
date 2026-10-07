@@ -109,7 +109,7 @@ export interface POISearchHit {
 	 * See `POITable.gers_id`.
 	 */
 	gersID: string | null
-	distanceM?: number
+	distanceM: number | null
 }
 
 /**
@@ -369,9 +369,7 @@ function toHit(
 		country: row.country,
 		confidence: row.confidence,
 		gersID: row.gers_id,
-		...(center
-			? { distanceM: haversineKm(center.latitude, center.longitude, row.latitude, row.longitude) * 1000 }
-			: {}),
+		distanceM: center ? haversineKm(center.latitude, center.longitude, row.latitude, row.longitude) * 1000 : null,
 	}
 }
 

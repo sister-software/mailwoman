@@ -124,7 +124,7 @@ export class UnresolvedAddressComponentError extends Error {
 	constructor(inspireID: string, column: string, reference: string | null) {
 		super(
 			`${DK_INSPIRE_ADAPTER_ID} adapter: address ${inspireID} carries ${column}=` +
-				`${reference === null ? "NULL" : `"${reference}"`}, which resolves to no row.`
+				`${reference ? `"${reference}"` : "NULL"}, which resolves to no row.`
 		)
 
 		this.name = "UnresolvedAddressComponentError"
@@ -256,7 +256,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 					// The street is the one component every address needs and every row
 					// of the measured file resolves.
 					// An unresolved reference is reported, never read as a missing street.
-					if (record.street === null) {
+					if (!record.street) {
 						throw new UnresolvedAddressComponentError(
 							record.inspireid,
 							"component_thoroughfarename",
@@ -264,7 +264,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 						)
 					}
 
-					if (record.postcode === null && record.postname === null) {
+					if (!record.postcode && !record.postname) {
 						throw new UnresolvedAddressComponentError(
 							record.inspireid,
 							"component_postaldescriptor",

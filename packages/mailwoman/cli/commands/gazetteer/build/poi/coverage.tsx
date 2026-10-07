@@ -22,6 +22,7 @@ import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { stripCombiningMarks } from "@mailwoman/normalize"
+import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
 
 import {
@@ -31,7 +32,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import type { POISourceRow } from "#gazetteer/poi/build/poi"
 import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**

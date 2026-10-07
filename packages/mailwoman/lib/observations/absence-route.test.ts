@@ -114,6 +114,7 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuil
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: "2026-08-27T00:00:00.000Z",
+		sourceRecords: null,
 	})
 
 	const categories = options.categories ?? ["pharmacy"]
@@ -278,7 +279,7 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses an answer the executor never produced", async () => {
 		const route = await routeOver()
 
-		expect(await route.observe(undefined)).toEqual({ fired: false, refusal: "no_poi_answer" })
+		expect(await route.observe(null)).toEqual({ fired: false, refusal: "no_poi_answer" })
 
 		expect(await route.observe({ type: "abstain", reason: "anchor_required" })).toEqual({
 			fired: false,

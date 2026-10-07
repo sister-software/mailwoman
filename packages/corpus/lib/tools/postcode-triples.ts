@@ -32,7 +32,7 @@ export interface PostcodeTriple {
 	 *
 	 * A recipe output whose every row begins with the locality teaches that the first segment is the locality.
 	 */
-	dependentLocality?: string
+	dependentLocality: string | null
 	locality: string
 	region: string
 	country: string
@@ -288,6 +288,7 @@ export async function readTriplesFromParentJoin(
 			for (const region of surfaces.region(cc, row.region_id, row.region)) {
 				out.push({
 					postcode: row.postcode,
+					dependentLocality: null,
 					locality,
 					region,
 					country: row.country ?? "",
@@ -429,7 +430,7 @@ export async function readPairsFromAdmin(
 				// The recipe drops that pair, so filtering it here keeps the country budget for rows that remain.
 				if (region === locality) continue
 
-				out.push({ locality, region, country: row.country ?? "", cc, locale })
+				out.push({ dependentLocality: null, locality, region, country: row.country ?? "", cc, locale })
 			}
 		}
 	}
@@ -534,7 +535,7 @@ export async function readTriplesFromGeonames(
 
 		out.push({
 			postcode,
-			...(dep ? { dependentLocality: dep } : {}),
+			dependentLocality: dep || null,
 			locality,
 			region,
 			country: countryName,

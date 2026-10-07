@@ -48,7 +48,7 @@ export function damerauLevenshtein(a: string, b: string): number {
 	return d[rows - 1]![cols - 1]!
 }
 
-function trigramExpression(token: string): string | undefined {
+function trigramExpression(token: string): string | null {
 	const windows = new Set<string>()
 	const characters = [...token.toLowerCase()]
 
@@ -56,43 +56,43 @@ function trigramExpression(token: string): string | undefined {
 		windows.add(characters.slice(start, start + TRIGRAM).join(""))
 	}
 
-	return !windows.size ? undefined : [...windows].map(quoteTerm).join(" OR ")
+	return windows.size ? [...windows].map(quoteTerm).join(" OR ") : null
 }
 
-async function correctToken(db: SearchDatabase, token: string): Promise<string | undefined> {
+async function correctToken(db: SearchDatabase, token: string): Promise<string | null> {
 	// Lengths count code points, as the trigram windows do.
 	const length = [...token].length
 
-	if (length < MIN_TOKEN) return undefined
+	if (length < MIN_TOKEN) return null
 
 	const expression = trigramExpression(token)
 
-	if (!expression) return undefined
+	if (!expression) return null
 
 	const candidates = await db.query<{ term: string }>(CANDIDATE_SQL, [expression])
 	const lower = token.toLowerCase()
 	const allowed = length < SHORT_TOKEN ? MAX_EDITS_SHORT : MAX_EDITS
-	let best: { term: string; distance: number } | undefined
+	let best: { term: string; distance: number } | null = null
 
 	for (const { term } of candidates) {
 		const distance = damerauLevenshtein(lower, term)
 
-		if (distance === 0) return undefined
+		if (distance === 0) return null
 
 		if (distance <= allowed && (!best || distance < best.distance)) {
 			best = { term, distance }
 		}
 	}
 
-	return best?.term
+	return best?.term ?? null
 }
 
 /**
  * The tokens with each correctable token replaced by its nearest vocabulary term.
- * `undefined` when no token changed.
+ * `null` when no token changed.
  */
-export async function correctTokens(db: SearchDatabase, tokens: readonly string[]): Promise<string[] | undefined> {
+export async function correctTokens(db: SearchDatabase, tokens: readonly string[]): Promise<string[] | null> {
 	const corrected = await Promise.all(tokens.map(async (token) => (await correctToken(db, token)) ?? token))
 
-	return corrected.some((token, index) => token !== tokens[index]) ? corrected : undefined
+	return corrected.some((token, index) => token !== tokens[index]) ? corrected : null
 }

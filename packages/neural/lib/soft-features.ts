@@ -30,31 +30,31 @@ export interface SoftFeatures {
 	/**
 	 * The postcode-anchor channel.
 	 */
-	anchor?: SoftFeatureChannel
+	anchor: SoftFeatureChannel | null
 
 	/**
 	 * The gazetteer channel, already zeroed next to postcode-anchor hits when suppression is enabled.
 	 */
-	gazetteer?: SoftFeatureChannel
+	gazetteer: SoftFeatureChannel | null
 
 	/**
 	 * The country channel.
 	 *
 	 * Near-postcode suppression never applies to it, so it still marks the country in `12345 USA`.
 	 */
-	country?: SoftFeatureChannel
+	country: SoftFeatureChannel | null
 
 	/**
 	 * The street-type evidence channel.
 	 */
-	streetType?: SoftFeatureChannel
+	streetType: SoftFeatureChannel | null
 
 	/**
 	 * The locality-surface evidence channel.
 	 *
 	 * It is built only when the street-type lexicon is absent or matched at least one piece.
 	 */
-	localitySurface?: SoftFeatureChannel
+	localitySurface: SoftFeatureChannel | null
 }
 
 /**
@@ -103,7 +103,7 @@ export function buildSoftFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	sources: SoftFeatureSources
 ): SoftFeatures {
-	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup, sources.postcodeAnchorSpanMode, undefined)
+	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup ?? null, sources.postcodeAnchorSpanMode ?? null, null)
 
 	const anchor = sources.postcodeAnchorLookup
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {
@@ -129,15 +129,15 @@ export function buildSoftFeatures(
 	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
 
 	const localitySurface =
-		sources.localitySurfaceLexicon && (streetContext || sources.streetTypeLexicon === undefined)
+		sources.localitySurfaceLexicon && (streetContext || !sources.streetTypeLexicon)
 			? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
 			: undefined
 
 	return {
-		...(anchor ? { anchor } : {}),
-		...(gazFed ? { gazetteer: gazFed } : {}),
-		...(country ? { country } : {}),
-		...(streetType ? { streetType } : {}),
-		...(localitySurface ? { localitySurface } : {}),
+		anchor: anchor ?? null,
+		gazetteer: gazFed ?? null,
+		country: country ?? null,
+		streetType: streetType ?? null,
+		localitySurface: localitySurface ?? null,
 	}
 }

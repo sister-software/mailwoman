@@ -4,14 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type {
-	LocaleHint,
-	NormalizedInputLite,
-	PipelineOpts,
-	PipelineResult,
-	POIIntent,
-	POIIntentOutcome,
-} from "@mailwoman/core/pipeline"
+import type { LocaleHint, PipelineOpts, PipelineResult, POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import { matchPOISubject, type POIPhraseLookup, type POIPhraseMatch } from "@mailwoman/kind-classifier"
 import {
 	lookupPOIBrand,
@@ -20,6 +13,7 @@ import {
 	lookupPOICategoryTypo,
 	resolveBrandName,
 } from "@mailwoman/poi-taxonomy"
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import type { AliasLookupResult, BrandAlias } from "@mailwoman/variant-aliases"
 import { lookupVariantAliases } from "@mailwoman/variant-aliases"
 
@@ -65,7 +59,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 		const tail = words.at(-1)
 
 		if (tail) {
-			let singular: string | undefined
+			let singular: string | null = null
 
 			if (/[^aeiou]ies$/i.test(tail)) {
 				singular = tail.slice(0, -3) + "y"

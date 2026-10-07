@@ -8,7 +8,7 @@
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**
@@ -130,6 +130,7 @@ const PIN_RANK_POSTCODE_FIRST = 6
 export class CandidateResolverBackend implements ResolverBackend {
 	readonly #lookup: MailwomanLookupLike
 	readonly #meta = new Map<number, CandidateMeta>()
+	readonly artifactCoverage = null
 
 	constructor(lookup: MailwomanLookupLike) {
 		this.#lookup = lookup
@@ -138,12 +139,12 @@ export class CandidateResolverBackend implements ResolverBackend {
 	/**
 	 * The memoized bbox/country/placetype of a previously returned candidate.
 	 */
-	metaFor(id: number): CandidateMeta | undefined {
-		return this.#meta.get(id)
+	metaFor(id: number): CandidateMeta | null {
+		return this.#meta.get(id) ?? null
 	}
 
 	async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
-		let bbox: BBox | undefined
+		let bbox: BBox | null = null
 		let country = query.country
 
 		if (query.parentID !== undefined) {
@@ -168,7 +169,7 @@ export class CandidateResolverBackend implements ResolverBackend {
 			text: query.text,
 			placetype: query.placetype,
 			country,
-			bbox,
+			bbox: bbox ?? undefined,
 			postcode: query.postcode,
 			limit: query.limit,
 			bias: query.bias,
@@ -178,15 +179,15 @@ export class CandidateResolverBackend implements ResolverBackend {
 			this.#meta.set(h.id, { bbox: h.bbox, country: h.country, placetype: h.placetype })
 
 			return {
+				...EMPTY_PLACE_FIELDS,
 				id: h.id,
 				name: h.name,
 				placetype: h.placetype,
 				lat: h.lat,
 				lon: h.lon,
 				score: h.score,
-				// ResolvedPlace requires a country; "" matches no ISO code, so coherence passes treat it as un-scopable.
-				country: h.country ?? "",
-				exactMatch: h.exactMatch,
+				country: h.country ?? null,
+				exactMatch: h.exactMatch ?? null,
 			}
 		})
 	}
@@ -238,11 +239,11 @@ export async function runCascade(
 				const postcodeLeads =
 					placetype === "postalcode" &&
 					(isUnitGradePostcodeHit(String(node.value ?? ""), String(node.metadata?.["resolver_name"] ?? "")) ||
-						areaPostcodeLeadsLocality(hit.country))
+						areaPostcodeLeadsLocality(hit.country ?? null))
 
 				collected.push({ rank: postcodeLeads ? PIN_RANK_POSTCODE_FIRST : (PIN_RANK[placetype] ?? 0), hit })
 
-				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
+				const alts = (node.alternatives as Array<Record<string, unknown>> | null) ?? []
 
 				alternativesOf.set(
 					id,

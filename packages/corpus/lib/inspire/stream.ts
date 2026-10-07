@@ -35,13 +35,13 @@ import type { CanonicalRow } from "#types"
  * What a {@linkcode ComposeInspireRow} callback answers for one address.
  *
  * A row is emitted.
- * `undefined` refuses the address.
+ * `null` refuses the address.
  * The caller counts each refusal.
  *
  * `deferred` states that the address holds a reference the pass has not indexed yet,
  * so the driver holds it and asks again once the document has ended.
  */
-export type InspireRowResult = CanonicalRow | undefined | "deferred"
+export type InspireRowResult = CanonicalRow | null | "deferred"
 
 /**
  * Builds one row from an address and the references indexed so far.
@@ -87,7 +87,7 @@ export interface StreamInspireRowsOptions<Indexed> {
 	 * and a stored-query `Id` parameter both name.
 	 * A feature carrying no key is skipped, because an address cannot reference it.
 	 */
-	key?: (feature: MarkupElement) => string | undefined
+	key?: (feature: MarkupElement) => string | null
 
 	/**
 	 * What to keep per referenced feature.
@@ -117,8 +117,8 @@ export interface StreamInspireRowsOptions<Indexed> {
 /**
  * The default key a referenced feature is indexed under.
  */
-function gmlID(feature: MarkupElement): string | undefined {
-	return feature.attributes["gml:id"]
+function gmlID(feature: MarkupElement): string | null {
+	return feature.attributes["gml:id"] ?? null
 }
 
 /**
@@ -218,7 +218,7 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
 	 * so a reference resolving to no feature is a value the reader asked for and could not read.
 	 * The caller raises on one rather than writing the address without it.
 	 */
-	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | undefined
+	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | null
 }
 
 /**

@@ -40,7 +40,7 @@ const GazetteerBuildFST: CommandComponent<typeof spec> = ({ options }) => {
 		const { buildLocaleFSTs } = await import("#gazetteer/fst")
 
 		const built = await buildLocaleFSTs({
-			locales: options.locales === undefined ? undefined : extractDelimited(options.locales),
+			locales: options.locales ? extractDelimited(options.locales) : undefined,
 			dbPath: options.db,
 			outputDir: options.out,
 			uncurated: options.uncurated,

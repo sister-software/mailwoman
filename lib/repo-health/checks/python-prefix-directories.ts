@@ -189,6 +189,8 @@ export const pythonPrefixDirectoriesCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				file: group.members[0]!.path,
 				message: `${group.members.length} siblings in ${group.directory}/ share the "${group.prefix}_" prefix (${describe(group)}). Move them under ${group.directory}/${group.prefix}/, with the member named for the prefix becoming its \`__init__.py\`.`,
+				line: null,
+				details: null,
 			}))
 		)
 	},

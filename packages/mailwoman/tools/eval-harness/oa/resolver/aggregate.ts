@@ -83,7 +83,7 @@ export function bump(a: Agg, locMatch: boolean, regMatch: boolean, resolved: boo
  * The error dump read `?? "??"` and therefore filed an empty-state row under `""`
  * while every aggregate filed the same row under `"??"`.
  */
-export function stateBucket(state: string | undefined): string {
+export function stateBucket(state: string | null): string {
 	return state || "??"
 }
 
@@ -93,7 +93,7 @@ export function stateBucket(state: string | undefined): string {
  * A row with no state lands in `??` rather than being dropped, so the per-state
  * buckets always sum to the headline.
  */
-export function recordInto(pair: AggPair, state: string | undefined, outcome: ArmOutcome): void {
+export function recordInto(pair: AggPair, state: string | null, outcome: ArmOutcome): void {
 	const st = stateBucket(state)
 
 	if (!pair.byState.has(st)) {

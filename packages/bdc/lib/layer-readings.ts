@@ -30,7 +30,7 @@ const LAYER_BY_TECHNOLOGY: ReadonlyMap<number, string> = new Map([
 export function bdcTechnologyLayer(technologyCode: number): string {
 	const layer = LAYER_BY_TECHNOLOGY.get(technologyCode)
 
-	if (layer === undefined) {
+	if (!layer) {
 		throw new Error(`bdcTechnologyLayer: technology code ${technologyCode} has no dossier layer name`)
 	}
 
@@ -64,7 +64,7 @@ export interface BDCLayerReadingQuery {
 	 * Places a block that has no rows of its own, as `geoidCellResolver` builds one.
 	 * Without it, such a block is unknown.
 	 */
-	resolveGeoidCell?: (geoid: string) => number | undefined
+	resolveGeoidCell?: (geoid: string) => number | null
 }
 
 /**
@@ -104,6 +104,6 @@ export async function bdcLayerReadings(
 		basis: surveyed ? landscape.coverage_basis : null,
 		surveyedAt: landscape.vintage,
 		records: surveyed ? landscape.filings.filter((filing) => filing.technology_code === technologyCode).length : null,
-		evidence: { source: query.source },
+		evidence: { source: query.source, observedAt: null, validFrom: null, validTo: null },
 	}))
 }

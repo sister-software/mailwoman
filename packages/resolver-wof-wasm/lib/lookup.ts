@@ -17,7 +17,7 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import type { CoincidentLocality } from "@mailwoman/core/resolver"
+import { type CoincidentLocality, EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath imports (fts.ts's only node:sqlite import is type-only).
 // The shared alias-bag parser and query fold keep this backend byte-identical to Node's exact tier.
@@ -230,7 +230,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				country: row.country,
 				lat: row.latitude,
 				lon: row.longitude,
-				parent_id: row.parent_id ?? undefined,
+				parent_id: row.parent_id ?? null,
 				// Surface the exact-match tier so a downstream country re-rank can keep the
 				// country pin from crossing it, in parity with `WOFSQLitePlaceLookup`.
 				// See ResolvedPlace.exactMatch.
@@ -243,11 +243,21 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 								minLon: row.min_longitude,
 								maxLon: row.max_longitude,
 							}
-						: undefined,
+						: null,
 				// Flip sign so higher = better (PlaceLookup interface).
 				// The adjusted, population-aware score is what we sorted by, so callers
 				// see the same ordering they're shown.
 				score: -adjScore,
+				distanceKm: null,
+				prominence: null,
+				population: null,
+				referential: null,
+				encyclopedic: null,
+				importance: null,
+				mismatch: null,
+				containedByQualifier: null,
+				regionScopeMiss: null,
+				variantAliasExempted: null,
 			}))
 	}
 
@@ -289,6 +299,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 				for (const r of rows) {
 					const candidate: CoincidentLocality = {
+						...EMPTY_PLACE_FIELDS,
 						id: r.id,
 						name: r.name,
 						placetype: "locality",

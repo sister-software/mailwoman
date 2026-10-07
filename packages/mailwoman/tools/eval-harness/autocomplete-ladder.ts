@@ -162,7 +162,7 @@ export interface RowArmReading {
 export function readRow(rungs: readonly RungReading[], inputLength: number): RowArmReading {
 	const firstIndex = rungs.findIndex((rung) => rung.hit)
 	const first = firstIndex === -1 ? null : rungs[firstIndex]!
-	const churn = first === null ? null : rungs.slice(firstIndex + 1).filter((rung) => !rung.hit).length
+	const churn = first ? rungs.slice(firstIndex + 1).filter((rung) => !rung.hit).length : null
 	const shortOnes = rungs.filter((rung) => rung.chars <= ABSTAIN_EXPECTED_MAX_CHARS)
 
 	return {

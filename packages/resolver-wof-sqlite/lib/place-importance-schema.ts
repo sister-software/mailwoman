@@ -89,8 +89,8 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
  * (`referential` 0), and otherwise the encyclopedic score clamped between the
  * referential score and {@link ENCYCLOPEDIC_BOOST_CAP} above it.
  */
-export function blendImportance(referential: number, encyclopedic: number | null | undefined): number {
-	if (encyclopedic === null || encyclopedic === undefined) return referential
+export function blendImportance(referential: number, encyclopedic: number | null): number {
+	if (encyclopedic === null) return referential
 
 	if (referential <= 0) return encyclopedic
 
@@ -159,12 +159,12 @@ export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
  * Bit equality would invent encyclopedic scores.
  */
 export function splitLegacyImportance(
-	legacy: number | undefined,
+	legacy: number | null,
 	population: number | null | undefined
 ): { referential: number; encyclopedic?: number } {
-	const referential = referentialFromPopulation(population)
+	const referential = referentialFromPopulation(population ?? null)
 
-	if (legacy === undefined) return { referential }
+	if (legacy === null) return { referential }
 
 	if (Math.abs(legacy - referential) <= LEGACY_FALLBACK_EPSILON * Math.max(referential, 1)) return { referential }
 

@@ -30,11 +30,13 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-healt
 async function readDeclaredLicense(repoRoot: string, file: string): Promise<string | Diagnostic> {
 	const manifest = await readLocalJSONFile<{ license?: unknown }>(resolvePath(repoRoot, file))
 
-	if (typeof manifest.license !== "string" || !manifest.license.length) {
+	if (typeof manifest.license !== "string" || !manifest.license) {
 		return {
 			severity: DiagnosticSeverity.Error,
 			message: `${file} declares no "license" string, so the workspace's source states no terms and a published one reaches npm that way`,
 			file,
+			line: null,
+			details: null,
 		}
 	}
 
@@ -45,16 +47,18 @@ async function readDeclaredLicense(repoRoot: string, file: string): Promise<stri
  * The admissibility failure for one expression, or `undefined` when every identifier is
  * one the obligations table knows or a `LicenseRef-` this repository defines.
  */
-function admissibilityDiagnostic(expression: string, file: string): Diagnostic | undefined {
+function admissibilityDiagnostic(expression: string, file: string): Diagnostic | null {
 	try {
 		assertAdmissibleLicenseExpression(expression, file)
 
-		return undefined
+		return null
 	} catch (error) {
 		return {
 			severity: DiagnosticSeverity.Error,
 			message: error instanceof Error ? error.message : String(error),
 			file,
+			line: null,
+			details: null,
 		}
 	}
 }
@@ -103,6 +107,8 @@ export const packageLicenseCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${workspace} declares "${declared}" where the root declares "${rootDeclared}" — npm shows the workspace's field, so a consumer reads the narrower terms`,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 		}

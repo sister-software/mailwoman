@@ -241,7 +241,7 @@ function toComponentDict(components: Record<string, string | string[]>): Compone
 	for (const [key, value] of Object.entries(components)) {
 		const first = Array.isArray(value) ? value[0] : value
 
-		if (first !== undefined) {
+		if (first) {
 			out[key as ComponentTag] = first
 		}
 	}
@@ -261,11 +261,11 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 	const stamp = options.engine
 
 	app.openapi(parseGetRoute, async (c) => {
-		if (!engine.parse) return c.json({ error: "parse not implemented" }, 501)
+		if (!engine.parse) return c.json({ error: "parse not implemented", detail: null }, 501)
 
 		const address = c.req.query("address")?.trim()
 
-		if (!address) return c.json({ error: "address is required" }, 400)
+		if (!address) return c.json({ error: "address is required", detail: null }, 400)
 		const debug = c.req.query("debug") === "true"
 		const inputModeRaw = c.req.query("input_mode")
 		const inputMode = inputModeRaw === "fragmented" || inputModeRaw === "formatted" ? inputModeRaw : undefined
@@ -278,14 +278,14 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		parsePostRoute,
 		async (c) => {
 			if (!engine.parse) {
-				return c.json({ error: "parse not implemented" }, 501)
+				return c.json({ error: "parse not implemented", detail: null }, 501)
 			}
 
 			const { address, debug, input_mode } = c.req.valid("json")
 			const trimmed = address.trim()
 
 			if (!trimmed) {
-				return c.json({ error: "address is required" }, 400)
+				return c.json({ error: "address is required", detail: null }, 400)
 			}
 
 			const outcome = await engine.parse(trimmed, { debug: debug ?? false, inputMode: input_mode })
@@ -293,7 +293,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			return c.json(withEngineStamp(outcome, stamp), 200)
 		},
 		(result, c) => {
-			if (!result.success) return c.json({ error: "address is required" }, 400)
+			if (!result.success) return c.json({ error: "address is required", detail: null }, 400)
 
 			return undefined
 		}
@@ -309,7 +309,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			const { address, input_mode } = c.req.valid("json")
 			const trimmed = address.trim()
 
-			if (!trimmed) return c.json({ error: "address is required" }, 400)
+			if (!trimmed) return c.json({ error: "address is required", detail: null }, 400)
 			const t0 = performance.now()
 
 			return engine
@@ -327,7 +327,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		},
 		(result, c) => {
 			if (!result.success) {
-				return c.json({ error: "address is required" }, 400)
+				return c.json({ error: "address is required", detail: null }, 400)
 			}
 
 			return undefined
@@ -342,7 +342,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			if (!addresses.length) return c.json(withEngineStamp({ results: [] }, stamp), 200)
 
 			if (addresses.length > batchMax) {
-				return c.json({ error: `batch too large: ${addresses.length} > ${batchMax}` }, 413)
+				return c.json({ error: `batch too large: ${addresses.length} > ${batchMax}`, detail: null }, 413)
 			}
 
 			if (!engine.batch) {
@@ -364,7 +364,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			}
 		},
 		(result, c) => {
-			if (!result.success) return c.json({ error: "body must be { addresses: string[] }" }, 400)
+			if (!result.success) return c.json({ error: "body must be { addresses: string[] }", detail: null }, 400)
 
 			return undefined
 		}
@@ -384,7 +384,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			return c.json(withEngineStamp(outcome, stamp), 200)
 		},
 		(result, c) => {
-			if (!result.success) return c.json({ error: "body must be { tree: AddressTree, opts? }" }, 400)
+			if (!result.success) return c.json({ error: "body must be { tree: AddressTree, opts? }", detail: null }, 400)
 
 			return undefined
 		}

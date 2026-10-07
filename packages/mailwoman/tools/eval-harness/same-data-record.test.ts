@@ -17,6 +17,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -28,9 +29,36 @@ import { recordFixture } from "#tools/eval-harness/same-data/record"
  * km away, plus a real namesake far enough away to be a different place.
  */
 const TROYES: ResolvedPlace[] = [
-	{ id: 101_750_981, name: "Troyes", placetype: "locality", country: "FR", lat: 48.2973, lon: 4.0744, score: 5 },
-	{ id: 404_405_659, name: "Troyes", placetype: "localadmin", country: "FR", lat: 48.2921, lon: 4.0801, score: 4 },
-	{ id: 999, name: "Troyes", placetype: "locality", country: "CA", lat: 45.5, lon: -73.6, score: 1 },
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 101_750_981,
+		name: "Troyes",
+		placetype: "locality",
+		country: "FR",
+		lat: 48.2973,
+		lon: 4.0744,
+		score: 5,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 404_405_659,
+		name: "Troyes",
+		placetype: "localadmin",
+		country: "FR",
+		lat: 48.2921,
+		lon: 4.0801,
+		score: 4,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 999,
+		name: "Troyes",
+		placetype: "locality",
+		country: "CA",
+		lat: 45.5,
+		lon: -73.6,
+		score: 1,
+	},
 ]
 
 const PANEL: SameDataPanelRow[] = [

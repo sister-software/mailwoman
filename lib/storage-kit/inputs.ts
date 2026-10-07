@@ -20,7 +20,7 @@ export function commaList(fallback: readonly string[]) {
 		.union([z.string(), z.array(z.string())])
 		.optional()
 		.transform((value) => {
-			if (value === undefined) return [...fallback]
+			if (!value) return [...fallback]
 
 			if (Array.isArray(value)) return [...value]
 

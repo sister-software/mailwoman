@@ -38,12 +38,12 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 	}),
 
 	handler: async (args) => {
-		const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
+		const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 		const pattern = args["matching"] as string | undefined
 
-		let matched: Array<{ id: string; input: string }> | undefined
+		let matched: Array<{ id: string; input: string }> | null = null
 
-		if (pattern !== undefined) {
+		if (pattern) {
 			let expression: RegExp
 
 			try {
@@ -82,22 +82,22 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 			n: set.n,
 			sha256: set.sha256,
 			selection: set.selection,
-			...(set.populationN === undefined ? {} : { population_n: set.populationN }),
-			...(set.why === undefined ? {} : { why: set.why }),
-			...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
+			population_n: set.populationN,
+			why: set.why,
+			corpus_hash: set.corpusHash,
 			strata: { by_country: byCountry, by_address_kind: byAddressKind, by_status: byStatus },
 			has_truth: set.hasTruth,
 			not_covered: set.notCovered,
-			...(matched === undefined
-				? {}
-				: {
+			...(matched
+				? {
 						matching: {
 							pattern,
 							n: matched.length,
 							of: set.n,
 							rows: matched,
 						},
-					}),
+					}
+				: {}),
 			summary:
 				`${set.setID}: ${set.n} rows, selection ${set.selection}` +
 				(set.populationN ? ` drawn from ${set.populationN}` : "") +
@@ -105,10 +105,10 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 				`, ${set.hasTruth.none} carry none` +
 				` (by kind, overlapping: ${set.hasTruth.components} components, ${set.hasTruth.coordinates} coordinates, ${set.hasTruth.tier} tier).` +
 				(set.notCovered.length ? ` Excluded — ${set.notCovered.join("; ")}.` : "") +
-				(matched === undefined
-					? ""
-					: ` ${matched.length} of ${set.n} rows match /${pattern}/i — a count over THIS set, which is not a` +
-						" production rate."),
+				(matched
+					? ` ${matched.length} of ${set.n} rows match /${pattern}/i — a count over THIS set, which is not a` +
+						" production rate."
+					: ""),
 			notes: set.notes,
 		}
 	},

@@ -60,7 +60,7 @@ function regionSurface(country: string, name: string): string {
  * and the ancestor placetypes the variants use.
  * The admin adapter keeps its own mapping.
  */
-function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
+function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | null {
 	switch (placetype) {
 		case "country":
 		case "nation":
@@ -73,7 +73,7 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 		case "postalcode":
 			return "postcode"
 		default:
-			return undefined
+			return null
 	}
 }
 

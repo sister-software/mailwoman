@@ -70,7 +70,7 @@ test("SubjectPanel renders a brand subject with its name, brand badge, and a lin
 })
 
 test("SubjectPanel omits the QID chip for a brand matched by name alone", () => {
-	const { container } = renderComponent(<SubjectPanel subject={brandSubject({ wikidata: undefined })} />)
+	const { container } = renderComponent(<SubjectPanel subject={brandSubject({ wikidata: null })} />)
 
 	expect(container.querySelector(".mw-subject__chip")?.textContent).toBe("Chevron")
 	expect(container.querySelector(".mw-subject__qid")).toBeNull()

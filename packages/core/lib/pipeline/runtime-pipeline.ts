@@ -7,6 +7,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
 
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -17,7 +18,6 @@ import type {
 	FSTMatcherLike,
 	InputMode,
 	LocaleHint,
-	NormalizedInputLite,
 	PhraseProposal,
 	PipelineFault,
 	PipelineOpts,
@@ -96,16 +96,16 @@ export function hardCountryFor(
 	placedCountry: string,
 	placedConfidence: number,
 	existing: { hardCountry?: string; defaultCountry?: string },
-	hardPlaceCountry: boolean | undefined,
+	hardPlaceCountry: boolean | null,
 	safelist: ReadonlySet<string> | undefined
-): string | undefined {
-	if (!hardPlaceCountry) return undefined
+): string | null {
+	if (!hardPlaceCountry) return null
 
-	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return undefined
+	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return null
 
-	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return undefined
+	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return null
 
-	if (existing.hardCountry || existing.defaultCountry) return undefined
+	if (existing.hardCountry || existing.defaultCountry) return null
 
 	return placedCountry
 }
@@ -119,7 +119,7 @@ function isPostcodeFormatHit(hit: { format: string }): boolean {
  * The pipeline uses it when no normalizer is configured.
  */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
-	return { raw, normalized: raw, appliedLocale: opts?.locale }
+	return { raw, normalized: raw, appliedLocale: opts?.locale ?? null }
 }
 
 /**
@@ -161,6 +161,7 @@ async function defaultClassifyKind(
 		kind: "structured_address",
 		confidence: 0,
 		alternatives: [],
+		intentMarkers: null,
 	}
 }
 
@@ -268,7 +269,7 @@ export async function runPipeline(
 				placed.country,
 				placed.confidence,
 				opts?.resolveOpts ?? {},
-				opts?.hardPlaceCountry,
+				opts?.hardPlaceCountry ?? null,
 				opts?.hardCountrySafelist ?? stages.resolver?.artifactCoverage?.hardCountrySafelist
 			)
 
@@ -303,7 +304,7 @@ export async function runPipeline(
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
 
-	const intentMarkers: QueryIntentMarker[] = kind.intentMarkers ? [...kind.intentMarkers] : []
+	const intentMarkers: QueryIntentMarker[] = [...(kind.intentMarkers ?? [])]
 
 	// A POI-shaped query goes to the intent stage first.
 	// A null outcome falls through to parsing.
@@ -353,6 +354,7 @@ export async function runPipeline(
 			phraseProposals: [],
 			tree,
 			timing,
+			poiIntent: null,
 			faults,
 			intentMarkers,
 			path: "fast-path",
@@ -413,6 +415,7 @@ export async function runPipeline(
 		phraseProposals,
 		tree,
 		timing,
+		poiIntent: null,
 		faults,
 		intentMarkers,
 		path: "full",

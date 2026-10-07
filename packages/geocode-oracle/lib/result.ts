@@ -88,7 +88,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
 
 /**
  * A region value narrowed to something usable as {@linkcode createPostalAddressID}'s
- * `state` prefix, or `undefined` so that function falls back to its own derivation.
+ * `state` prefix, or `null` so that function falls back to its own derivation.
  *
  * `createPostalAddressID` interpolates `state` into the key unvalidated while `parsePostalAddressID`
  * and `isPostalAddressID` require `^[a-z]{2}\.`, so only a bare two-letter code passes
@@ -96,6 +96,6 @@ export interface OracleGeocodeResult<Raw = unknown> {
  *
  * Lives here rather than in either parser because both need it and neither owns it.
  */
-export function regionPrefix(region: string | undefined): string | undefined {
-	return region !== undefined && /^[A-Za-z]{2}$/.test(region) ? region : undefined
+export function regionPrefix(region: string | null | undefined): string | null {
+	return region && /^[A-Za-z]{2}$/.test(region) ? region : null
 }

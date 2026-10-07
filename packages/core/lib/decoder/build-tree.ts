@@ -128,11 +128,11 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 	const confidence = attribution.calibrate ? attribution.calibrate(rawConfidence) : rawConfidence
 	const node: AddressNode = { tag: open.tag, start, end, value, confidence, children: [] }
 
-	if (attribution.source !== undefined) {
+	if (attribution.source) {
 		node.source = attribution.source
 	}
 
-	if (attribution.sourceID !== undefined) {
+	if (attribution.sourceID) {
 		node.sourceID = attribution.sourceID
 	}
 
@@ -156,13 +156,13 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// The span stays open so the following same-tag `B-` token can merge in
 			// (see the spurious-boundary repair below).
 			// A non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
-			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
+			if (open && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
 			open = flush(open, raw, out, attribution)
 
 			continue
 		}
 
-		if (prefix === "B" || open === null || open.tag !== tag) {
+		if (prefix === "B" || !open || open.tag !== tag) {
 			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an
 			// already-open `X` span is the model fragmenting a multi-word value, e.g. "Saint
 			// Paul" emitted as B-locality B-locality, where the second tag continues the first.
@@ -172,7 +172,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// A comma or any other separator keeps them distinct.
 			// An intervening O or different-tag token already nulls or replaces `open` above.
 			// Two separate same-tag spans (e.g. "Springfield, Chicago") are never merged.
-			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
+			if (prefix === "B" && open && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end
 				open.confidences.push(tok.confidence)
 

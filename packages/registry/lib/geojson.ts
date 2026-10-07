@@ -19,7 +19,7 @@ import type { EntityGeoData, ResolvedEntity, SourceRecord } from "#types"
  * Assemble a display name from a record's parsed person name, if any.
  */
 function displayName(record: SourceRecord): string | null {
-	return formatPersonName(record.name) || null
+	return formatPersonName(record.name ?? null) || null
 }
 
 /**
@@ -54,6 +54,7 @@ export function toFeature(
 			organization: rep.organization?.canonical ?? null,
 			address: rep.address?.formatted ?? null,
 			geocodeTier: rep.address?.geocode?.tier ?? null,
+			bucket: null,
 			...extra,
 		},
 	}

@@ -18,6 +18,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
+import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import {
 	POI_H3_RESOLUTION,
 	createPOIBrandIndex,
@@ -59,20 +60,6 @@ export { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 const COVERAGE_H3_RESOLUTION = 6
 
 const STAGE_BATCH_SIZE = 10_000
-
-/**
- * One POI row in the flat shape that {@link buildPOIDatabase} loads.
- */
-export interface POISourceRow {
-	name: string | null
-	category: string | null
-	brandWikidata: string | null
-	latitude: number
-	longitude: number
-	country: string
-	confidence: number
-	gersID: string | null
-}
 
 async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<POISourceRow> {
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -445,6 +432,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			freshnessPolicy: "sealed",
 			spineKeys: { h3: { column: "h3_cell", resolution: POI_H3_RESOLUTION } },
 			createdAt: opts.createdAt ?? new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		coverageCells = opts.coverageCellsOverride

@@ -38,9 +38,10 @@ function splitMatcher(encyclopedic?: number): FSTMatcher {
 					name: "Saint-Denis",
 					parentChain: [],
 					referential: 0.4863,
-					...(encyclopedic === undefined ? {} : { encyclopedic }),
+					encyclopedic: encyclopedic ?? null,
 					lat: 48.9296,
 					lon: 2.3593,
+					crossCountryBranches: null,
 				},
 			],
 		},
@@ -93,13 +94,12 @@ describe("two-score split — format v5", () => {
 		expect(entry.encyclopedic).toBeCloseTo(0.1173, 5)
 	})
 
-	it("an absent encyclopedic score round-trips as ABSENT, never as 0", () => {
+	it("an absent encyclopedic score round-trips as null, never as 0", () => {
 		// Roughly 89% of gazetteer places have no Wikipedia article.
 		// A consumer reading 0.0 for those places would mistake absence for a recorded value.
 		const entry = deserializeFST(serializeFST(splitMatcher())).query("Saint-Denis").accepting[0]!
 
-		expect(entry.encyclopedic).toBeUndefined()
-		expect("encyclopedic" in entry).toBe(false)
+		expect(entry.encyclopedic).toBeNull()
 	})
 
 	it("an encyclopedic score of exactly 0 survives as a RECORDED zero", () => {
@@ -116,16 +116,13 @@ describe("two-score split — format v5", () => {
 		const entry = deserializeFST(downgradeToV4(serializeFST(splitMatcher(0.1173)))).query("Saint-Denis").accepting[0]!
 
 		expect(entry.referential).toBeCloseTo(0.4863, 5)
-		expect(entry.encyclopedic).toBeUndefined()
+		expect(entry.encyclopedic).toBeNull()
 	})
 
 	it("the freshness guard reports a v4 artifact as format-stale", () => {
 		// A pre-split binary's single float is unattributable, so it must not read as
 		// current merely because its source md5 still matches.
-		const stale = fstStaleReason(
-			{ formatVersion: 4, provenance: undefined },
-			{ source: { md5: "0".repeat(32), bytes: 1 } }
-		)
+		const stale = fstStaleReason({ formatVersion: 4, provenance: null }, { source: { md5: "0".repeat(32), bytes: 1 } })
 
 		expect(stale).toBe(`format v4 → v${FST_FORMAT_VERSION}`)
 	})

@@ -53,7 +53,7 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		}
 
 		const all = await listRuns(RUN_STORE_DIR, fingerprint)
-		const limit = (args["limit"] as number | undefined) ?? 25
+		const limit = (args["limit"] as number | null) ?? 25
 		const sameTree = all.filter((run) => run.fingerprint_matches_now).length
 
 		// One measurement often writes several runs in the same second against the same tool,

@@ -71,7 +71,7 @@ export interface POIBoardOptions {
  */
 async function loadResolver(
 	options: POIBoardOptions
-): Promise<({ resolver: Resolver; backend: POIBoardResolverBackend } & Disposable) | undefined> {
+): Promise<({ resolver: Resolver; backend: POIBoardResolverBackend } & Disposable) | null> {
 	const wofCandidates = options.candidateDB
 		? []
 		: options.resolveDB
@@ -88,7 +88,7 @@ async function loadResolver(
 				"category/brand cases will abstain anchor_required. Set --resolve-db/--candidate-db to fix."
 		)
 
-		return undefined
+		return null
 	}
 
 	try {
@@ -103,7 +103,7 @@ async function loadResolver(
 	} catch {
 		console.error("note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve.")
 
-		return undefined
+		return null
 	}
 }
 
@@ -169,8 +169,8 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
  *
  * The route module is imported dynamically so a run with the option off never loads its compiled artifact.
  */
-async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<POIPhraseLookup | undefined> {
-	if (!semanticObservation) return undefined
+async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<POIPhraseLookup | null> {
+	if (!semanticObservation) return null
 
 	const { createSemanticObservationRoute } = await import("#observations/semantic-route")
 

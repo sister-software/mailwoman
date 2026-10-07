@@ -32,7 +32,7 @@ export interface TwoModelArgs {
 
 const DEFAULT_GOLDEN = "data/eval/golden/v0.1.2/dev/us.jsonl"
 
-function requiredFlag(name: string, value: string | undefined): string {
+function requiredFlag(name: string, value: string | null): string {
 	if (!value) throw new Error(`--${name} required`)
 
 	return value
@@ -57,9 +57,9 @@ export function parseTwoModelArgs(nDefault: string): TwoModelArgs {
 	const modelCard = args["model-card"]
 
 	return {
-		baseline: requiredFlag("baseline", args.baseline),
-		candidate: requiredFlag("candidate", args.candidate),
-		tokenizer: requiredFlag("tokenizer", args.tokenizer),
+		baseline: requiredFlag("baseline", args.baseline ?? null),
+		candidate: requiredFlag("candidate", args.candidate ?? null),
+		tokenizer: requiredFlag("tokenizer", args.tokenizer ?? null),
 		...(modelCard ? { "model-card": modelCard } : {}),
 		golden: args.golden ?? DEFAULT_GOLDEN,
 		n: Number(args.n ?? nDefault),

@@ -42,7 +42,7 @@ export const publishWorkspaceOperation = defineOperation({
 		workspace: z.string(),
 		outcome: z.enum(["published", "skipped-weights", "already-published", "dry-run"]),
 		tarballAudit: z.string().optional(),
-		planDigest: z.string().optional(),
+		planDigest: z.string().nullable(),
 	}),
 	async run(input, context) {
 		const environment = releaseItWorkspaceEnvironment()
@@ -52,7 +52,7 @@ export const publishWorkspaceOperation = defineOperation({
 			throw new Error("publish-workspace: --workspace ./<path> or RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE is required")
 		}
 
-		let planDigest: string | undefined
+		let planDigest: string | null = null
 
 		if (input.plan) {
 			planDigest = (await assertPlanHolds(context.repoRoot, input.plan)).planDigest
@@ -78,6 +78,6 @@ export const publishWorkspaceOperation = defineOperation({
 			log: context.log,
 		})
 
-		return { ...report, ...(planDigest ? { planDigest } : {}) }
+		return { ...report, planDigest }
 	},
 })

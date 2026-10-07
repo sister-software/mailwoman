@@ -30,7 +30,6 @@ export type {
 	LocaleDetector,
 	LocaleHint,
 	MachinePreferences,
-	NormalizedInputLite,
 	PhraseGrouper,
 	PhraseKind,
 	PhraseProposal,

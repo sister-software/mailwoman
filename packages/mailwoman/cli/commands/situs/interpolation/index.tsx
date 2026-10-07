@@ -476,7 +476,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 
 			const result = await buildStateDatabase(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
 
-			if (result === null) {
+			if (!result) {
 				stateResults.push({ state: abbr, counties: 0, segments: 0, wallMs: 0, skipped: true })
 
 				continue

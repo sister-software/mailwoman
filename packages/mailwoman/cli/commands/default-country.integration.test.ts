@@ -26,9 +26,9 @@ describe("localeToCountry", () => {
 	})
 
 	test("ignores script subtags and language-only tags (no guessing)", () => {
-		expect(localeToCountry("en")).toBeUndefined()
-		expect(localeToCountry("zh-Hant")).toBeUndefined()
-		expect(localeToCountry(undefined)).toBeUndefined()
+		expect(localeToCountry("en")).toBeNull()
+		expect(localeToCountry("zh-Hant")).toBeNull()
+		expect(localeToCountry(null)).toBeNull()
 	})
 
 	test("reads the trailing region of a multi-subtag tag", () => {
@@ -46,7 +46,7 @@ describe("resolverDefaultCountry", () => {
 	})
 
 	test("'none' disables the filter", () => {
-		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US" })).toBeUndefined()
+		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US" })).toBeNull()
 	})
 })
 
@@ -62,8 +62,8 @@ describe("--country-scope separates country policy from the resolver backend", (
 	})
 
 	test("'none' scopes on neither backend", () => {
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, false)).toBeUndefined()
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, true)).toBeUndefined()
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, false)).toBeNull()
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, true)).toBeNull()
 	})
 
 	test("an explicit --default-country outranks every scope", () => {
@@ -71,7 +71,7 @@ describe("--country-scope separates country policy from the resolver backend", (
 
 		expect(
 			resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" }, false)
-		).toBeUndefined()
+		).toBeNull()
 	})
 
 	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {

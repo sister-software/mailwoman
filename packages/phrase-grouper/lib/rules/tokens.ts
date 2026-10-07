@@ -6,17 +6,14 @@
 
 import { US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { Span } from "@mailwoman/core/tokenization"
+import type { SpanRange } from "@mailwoman/query-shape"
 
 /**
  * One token within a segment — absolute offsets into the normalized input.
  *
  * Built by `tokenizeSegment` from a (segment-text, segment-start) pair.
  */
-export interface SegmentToken {
-	body: string
-	start: number
-	end: number
-}
+export type SegmentToken = SpanRange
 
 const WHITESPACE = /\s+/
 

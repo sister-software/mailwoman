@@ -68,7 +68,7 @@ export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system])
  * run only on the few postcode-shaped spans an address contains.
  */
 export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
-	if (typeof postcode !== "string" || !postcode.length) return []
+	if (typeof postcode !== "string" || !postcode) return []
 	const out: SystemCode[] = []
 
 	for (const [system, accepts] of SYSTEM_ACCEPTS) {
@@ -129,7 +129,7 @@ const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpper
  * The caller must also confirm that a coordinate is present.
  * The Node ladder and demo pin ranking share this check.
  */
-export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
+export function isUnitGradePostcodeHit(parsed: string, resolverName: string | null): boolean {
 	const value = parsed.trim()
 
 	if (!value || !UNIT_GRADE_POSTCODE.some((re) => re.test(value))) return false
@@ -166,6 +166,6 @@ export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["
  *
  * An absent or unknown country gives false, so the locality-first convention is what an unscoped query gets.
  */
-export function areaPostcodeLeadsLocality(country: string | undefined): boolean {
-	return country !== undefined && AREA_POSTCODE_FINER_THAN_LOCALITY.has(country.trim().toUpperCase())
+export function areaPostcodeLeadsLocality(country: string | null): boolean {
+	return country != null && AREA_POSTCODE_FINER_THAN_LOCALITY.has(country.trim().toUpperCase())
 }

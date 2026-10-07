@@ -174,22 +174,22 @@ export function createESGipuzkoaAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or undefined when it holds too little to render.
+ * One address's row, or null when it holds too little to render.
  *
  * The reference index is complete before this is called, so a reference resolving to no
  * feature is a value the reader asked for and could not read, and it raises.
  */
-function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | undefined {
-	const addressID = address.attributes["gml:id"]?.trim()
+function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | null {
+	const addressID = address.attributes["gml:id"]?.trim() ?? null
 
 	if (voidDesignatorTypes(address).has(HOUSE_NUMBER_TYPE)) {
 		throw new VoidDesignatorError(ES_GIPUZKOA_ADAPTER_ID, addressID, HOUSE_NUMBER_TYPE)
 	}
 
-	let street: string | undefined
-	let postcode: string | undefined
-	let locality: string | undefined
-	let settlement: string | undefined
+	let street: string | null = null
+	let postcode: string | null = null
+	let locality: string | null = null
+	let settlement: string | null = null
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)

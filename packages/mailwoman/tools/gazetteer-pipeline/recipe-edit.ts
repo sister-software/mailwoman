@@ -28,15 +28,15 @@ export type RecipeEditResult =
  * touching anything else in the file, including the docstring above the list.
  * Every list includes that docstring.
  */
-function listBody(source: string, listName: string): { start: number; end: number } | undefined {
+function listBody(source: string, listName: string): { start: number; end: number } | null {
 	const header = new RegExp(`export const ${listName}\\s*=\\s*\\[`, "u").exec(source)
 
-	if (!header) return undefined
+	if (!header) return null
 
 	const start = header.index + header[0].length
 	const end = source.indexOf("]", start)
 
-	return end === -1 ? undefined : { start, end }
+	return end === -1 ? null : { start, end }
 }
 
 /**

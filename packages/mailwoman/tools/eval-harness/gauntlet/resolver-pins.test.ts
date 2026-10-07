@@ -28,7 +28,7 @@ describe("resolverPinDeps — the pin set → geocodeAddress deps", () => {
 	})
 
 	it("emits NOTHING for an absent pin set — production defaults stay in force", () => {
-		expect(resolverPinDeps(undefined)).toEqual({})
+		expect(resolverPinDeps(null)).toEqual({})
 		expect(resolverPinDeps({})).toEqual({})
 	})
 })
@@ -43,7 +43,7 @@ describe("describeResolverPins — the run banner", () => {
 	})
 
 	it("says so when nothing is pinned — an unlabeled log is not evidence about a pin", () => {
-		expect(describeResolverPins(undefined)).toBe("resolver pins: (none pinned — production defaults)")
+		expect(describeResolverPins(null)).toBe("resolver pins: (none pinned — production defaults)")
 	})
 })
 
@@ -58,9 +58,9 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
 
-	it("returns undefined when the flag was never set", () => {
-		expect(runResolverPins({})).toBeUndefined()
-		expect(runResolverPins({ candidate: "./out/model.onnx" })).toBeUndefined()
+	it("returns null when the flag was never set", () => {
+		expect(runResolverPins({})).toBeNull()
+		expect(runResolverPins({ candidate: "./out/model.onnx" })).toBeNull()
 	})
 })
 
@@ -149,7 +149,7 @@ describe("gazetteerPrior pin (#1497)", () => {
 	})
 
 	it("still reports production defaults when nothing is pinned", () => {
-		expect(describeResolverPins(undefined)).toContain("none pinned")
+		expect(describeResolverPins(null)).toContain("none pinned")
 	})
 
 	it("announces alongside a boolean pin rather than replacing it", () => {
@@ -182,7 +182,7 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 	})
 
 	it("leaves an unset pin absent, not pinned", () => {
-		expect(runResolverPins({})).toBeUndefined()
+		expect(runResolverPins({})).toBeNull()
 	})
 })
 
@@ -280,7 +280,7 @@ describe("spanRescoreWeakResolution — #2264's pin", () => {
 
 	it("has no OFF spelling — an unset pin is the shipped brake", () => {
 		expect(resolverPinDeps(layerDepsOptions(runLayerOptions({})).pins)).toEqual({})
-		expect(describeResolverPins(undefined)).toContain("production defaults")
+		expect(describeResolverPins(null)).toContain("production defaults")
 	})
 
 	it("composes with a sibling pin rather than replacing it", () => {

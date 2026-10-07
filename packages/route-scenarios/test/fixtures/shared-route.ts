@@ -69,7 +69,7 @@ export const UNIT_COUNTS: UnitCount[] = [
 		count: 24,
 		at: "2026-08-01",
 		membership: "example-a:all",
-		evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01" },
+		evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01", validFrom: null, validTo: null },
 	},
 	{
 		id: "b-completed",
@@ -78,7 +78,7 @@ export const UNIT_COUNTS: UnitCount[] = [
 		count: 16,
 		at: "2026-08-01",
 		membership: "example-b:all",
-		evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01" },
+		evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01", validFrom: null, validTo: null },
 	},
 ]
 
@@ -91,25 +91,26 @@ export const DOSSIER_RECORDS: DossierRecords = {
 			observedAt: "2026-08-01",
 			availableAt: "2026-08-03",
 			retrievedAt: AS_OF,
+			url: null,
 		},
 	],
 	entities: [
 		{
 			id: PARCEL,
 			kind: "parcel",
-			externalIDs: [{ namespace: "example:lot", value: "56-78" }],
+			externalIDs: [{ namespace: "example:lot", value: "56-78", evidence: null }],
 			label: "Example Route Parcel",
 		},
 		{
 			id: BUILDING_A,
 			kind: "building",
-			externalIDs: [{ namespace: "example:bin", value: "2001" }],
+			externalIDs: [{ namespace: "example:bin", value: "2001", evidence: null }],
 			label: "Example Building A",
 		},
 		{
 			id: BUILDING_B,
 			kind: "building",
-			externalIDs: [{ namespace: "example:bin", value: "2002" }],
+			externalIDs: [{ namespace: "example:bin", value: "2002", evidence: null }],
 			label: "Example Building B",
 		},
 	],
@@ -119,13 +120,13 @@ export const DOSSIER_RECORDS: DossierRecords = {
 			child: BUILDING_A,
 			parent: PARCEL,
 			relation: ContainmentRelation.BuildingOn,
-			evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01" },
+			evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01", validFrom: null, validTo: null },
 		},
 		{
 			child: BUILDING_B,
 			parent: PARCEL,
 			relation: ContainmentRelation.BuildingOn,
-			evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01" },
+			evidence: { source: INSPECTION_SOURCE, observedAt: "2026-08-01", validFrom: null, validTo: null },
 		},
 	],
 	claims: [],

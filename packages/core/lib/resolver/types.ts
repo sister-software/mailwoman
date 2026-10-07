@@ -23,11 +23,14 @@ export type {
 	AddressPointLookup,
 	InterpolatedPointHit,
 	InterpolationLookup,
+	POIDistanceHit,
+	PostcodePlace,
 	PostcodePrefixAncestor,
 	PostcodePrefixIndexLike,
 	PostcodePrefixNode,
 	StreetCentroidHit,
 	StreetCentroidLookup,
+	WOFAncestor,
 } from "#resolver/lookup-types"
 
 export interface ResolvedPlace {
@@ -46,7 +49,7 @@ export interface ResolvedPlace {
 	/**
 	 * ISO 3166-1 alpha-2 country code, if known.
 	 */
-	country?: string
+	country: string | null
 	/**
 	 * Centroid latitude.
 	 */
@@ -58,7 +61,7 @@ export interface ResolvedPlace {
 	/**
 	 * Parent place id, if any.
 	 */
-	parent_id?: number | string
+	parent_id: number | string | null
 	/**
 	 * Resolver-defined ranking score.
 	 */
@@ -66,48 +69,62 @@ export interface ResolvedPlace {
 	/**
 	 * Optional backend prominence score.
 	 */
-	prominence?: number
+	prominence: number | null
 	/**
 	 * Optional raw population.
 	 */
-	population?: number
+	population: number | null
 	/**
 	 * Optional referential likelihood in [0, 1].
 	 */
-	referential?: number
+	referential: number | null
 	/**
 	 * Optional strict encyclopedia importance in [0, 1].
 	 */
-	encyclopedic?: number
+	encyclopedic: number | null
 	/**
 	 * Optional blended global toponym prior in [0, 1].
 	 */
-	importance?: number
+	importance: number | null
 	/**
 	 * Optional exact name/alias match marker.
 	 */
-	exactMatch?: boolean
+	exactMatch: boolean | null
 	/**
 	 * Optional postcode/locality mismatch marker.
 	 */
-	mismatch?: boolean
+	mismatch?: boolean | null
 	/**
 	 * Optional fallback-quality marker.
 	 */
-	resolutionQuality?: "fallback"
+	resolutionQuality?: "fallback" | null
 	/**
 	 * Optional admin-containment verdict.
 	 */
-	containedByQualifier?: boolean
+	containedByQualifier?: boolean | null
 	/**
 	 * Optional marker for a miss under parent scope.
 	 */
-	regionScopeMiss?: boolean
+	regionScopeMiss?: boolean | null
 	/**
 	 * Optional marker for variant-alias exemption.
 	 */
-	variantAliasExempted?: true
+	variantAliasExempted?: true | null
 }
+
+/**
+ * The nullable {@link ResolvedPlace} signals, each `null`, spread first into a place literal.
+ */
+export const EMPTY_PLACE_FIELDS = Object.freeze({
+	country: null,
+	parent_id: null,
+	prominence: null,
+	population: null,
+	referential: null,
+	encyclopedic: null,
+	importance: null,
+	exactMatch: null,
+}) satisfies Partial<ResolvedPlace>
 
 export interface ResolverBackend {
 	findPlace(query: {
@@ -156,7 +173,7 @@ export interface ResolverBackend {
 	/**
 	 * Optional artifact coverage facts.
 	 */
-	artifactCoverage?: GazetteerArtifactCoverage
+	artifactCoverage?: GazetteerArtifactCoverage | null
 }
 
 export interface BackendCapabilityGap {
@@ -268,7 +285,7 @@ export interface ResolveOpts {
 	/**
 	 * Optional capital-level callback.
 	 */
-	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
+	capitalLevel?: (place: { name: string; country: string | null; lat: number; lon: number }) => number
 	/**
 	 * Optional hard country filter from coarse placer.
 	 */
@@ -292,7 +309,7 @@ export interface ResolveOpts {
 	/**
 	 * Optional street-centroid provider by country.
 	 */
-	streetCentroids?: (country: string) => StreetCentroidLookup | undefined
+	streetCentroids?: ((country: string) => StreetCentroidLookup | null) | null
 	/**
 	 * Optional pre-resolution country hints for street-centroid tier.
 	 */
@@ -392,14 +409,14 @@ export interface ResolveCandidateTrace {
 	/**
 	 * Optional country code.
 	 */
-	country?: string
+	country: string | null
 	placetype: string
 	score: number
-	prominence?: number
-	importance?: number
-	population?: number
-	exactMatch?: boolean
-	containedByQualifier?: boolean
+	prominence: number | null
+	importance: number | null
+	population: number | null
+	exactMatch: boolean | null
+	containedByQualifier: boolean | null
 	ranks: Record<string, number>
 }
 
@@ -411,17 +428,17 @@ export interface ResolveNodeTrace {
 	value: string
 	placetype: string
 	query: {
-		country?: string
-		parentID?: string | number
-		postcode?: string
-		regionQualifier?: string
+		country: string | null
+		parentID: string | number | null
+		postcode: string | null
+		regionQualifier: string | null
 		limit: number
 	}
 	checks: string[]
 	/**
 	 * Other placetypes where the value was reachable, if probed.
 	 */
-	reachableIn?: Array<{ placetype: string; n: number }>
+	reachableIn: Array<{ placetype: string; n: number }> | null
 	candidates: ResolveCandidateTrace[]
 	candidatesTruncated: number
 	picked: {
@@ -451,9 +468,9 @@ export interface Resolver {
 	/**
 	 * Optional artifact coverage facts passthrough.
 	 */
-	artifactCoverage?: GazetteerArtifactCoverage
+	artifactCoverage: GazetteerArtifactCoverage | null
 	/**
 	 * Optional list of missing backend capabilities.
 	 */
-	capabilityGaps?: readonly BackendCapabilityGap[]
+	capabilityGaps: readonly BackendCapabilityGap[] | null
 }

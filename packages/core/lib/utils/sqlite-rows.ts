@@ -25,8 +25,8 @@ export function allRows<Row>(statement: StatementSync, ...parameters: SQLInputVa
 }
 
 /**
- * Single-row counterpart to {@link allRows}, answering `undefined` when the statement matched no row.
+ * Single-row counterpart to {@link allRows}, answering `null` when the statement matched no row.
  */
-export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row | undefined {
-	return statement.get(...parameters) as Row | undefined
+export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row | null {
+	return (statement.get(...parameters) as Row | undefined) ?? null
 }

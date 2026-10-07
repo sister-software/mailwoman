@@ -117,7 +117,7 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
  * Every country carrying a distinct Latin order writes it smallest-first,
  * read off the layout rather than encoded as a rule.
  */
-export function isLargestFirstSystem(countryCode: string | null | undefined, script?: AddressScript): boolean {
+export function isLargestFirstSystem(countryCode: string | null, script?: AddressScript): boolean {
 	if (!countryCode) return false
 
 	const code = countryCode.trim().toUpperCase()
@@ -317,7 +317,7 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * Hand-authored entries take precedence because tests check them against real addresses.
  * `null` is the result for 55 of the 252 shipped records with no usable `fmt`.
  */
-export function layoutForCountry(countryCode: string | null | undefined, script?: AddressScript): AddressLayout | null {
+export function layoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
 
 	const code = countryCode.trim().toUpperCase()
@@ -494,7 +494,7 @@ export function conventionClaimForCountry(
  * CJK joins apply only to the local script.
  * A single script keeps line order and separator tied to one system.
  */
-export function lineJoinForCountry(countryCode: string | null | undefined, script?: AddressScript): string {
+export function lineJoinForCountry(countryCode: string | null, script?: AddressScript): string {
 	if (!countryCode) return ", "
 
 	const code = countryCode.trim().toUpperCase()

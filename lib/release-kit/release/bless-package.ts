@@ -106,7 +106,7 @@ async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): P
 
 		const [url] = AUTH_URL_PATTERN.exec(tail) ?? []
 
-		if (!url) return
+		if (!url) return null
 
 		copied = true
 
@@ -146,14 +146,14 @@ async function readPkg(dir: PathBuilderLike): Promise<PackageJSONLike<{ name: st
 	return readPackageJSON<{ name: string }>(PathBuilder.from(dir)("package.json"))
 }
 
-function parseRepo(repository: PackageJSONLike["repository"]): string | undefined {
-	if (!repository) return
+function parseRepo(repository: PackageJSONLike["repository"]): string | null {
+	if (!repository) return null
 	const url = typeof repository === "string" ? repository : repository.url
 
-	if (!url) return
+	if (!url) return null
 	const m = url.match(/github\.com[/:]([^/]+\/[^/.]+)/i) ?? url.match(/^github:([^/]+\/[^/.]+)/i)
 
-	return m?.[1]
+	return m?.[1] ?? null
 }
 
 async function existsOnRegistry(name: string): Promise<boolean> {
@@ -257,7 +257,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	} catch (error) {
 		// The create endpoint answers 409 whenever a trust config exists, even a stale one.
 		// A retry keeps returning 409, so the log gives the revoke commands.
-		const stderr = String((error as { stderr?: string } | undefined)?.stderr ?? error)
+		const stderr = String((error as { stderr?: string } | null)?.stderr ?? error)
 
 		if (/\b409\b/.test(stderr)) {
 			log(`⚠ ${pkg.name}: a trust config already exists (409). Read it, and replace it if it is stale:`)

@@ -94,10 +94,10 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * The metadata JSON stored at seal time, or `undefined` when the artifact has no metadata.
 	 */
-	metadata(): JSONValue | undefined {
+	metadata(): JSONValue | null {
 		const offset = this.header.metadataOffset
 
-		if (offset === 0 || offset >= this.view.byteLength) return undefined
+		if (offset === 0 || offset >= this.view.byteLength) return null
 		const length = this.view.getUint32(offset, true)
 
 		// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf: reaching @mailwoman/core for parseJSONStrict would pull its ~11 MB of shipped data behind this browser-safe reader (the nuts-lookup precedent), and a throw on corrupt bytes is this reader's interface.
@@ -182,10 +182,10 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * Decode one entry by id, or `undefined` when the id names no entry.
 	 */
-	getEntry(id: number): AncestrieRecord | undefined {
+	getEntry(id: number): AncestrieRecord | null {
 		const ordinal = this.ordinalOf(id)
 
-		if (ordinal < 0) return undefined
+		if (ordinal < 0) return null
 
 		return this.recordAt(ordinal)
 	}

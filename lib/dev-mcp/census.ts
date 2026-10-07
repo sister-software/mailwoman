@@ -181,7 +181,7 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 	for (const [kind, tally] of Object.entries(aggregate.priors)) {
 		const allowReason = CENSUS_ALLOWLIST[kind]
 
-		if (allowReason !== undefined) {
+		if (allowReason) {
 			aggregate.allowlisted.push({ mechanism: kind, reason: allowReason, expectation_held: tally.l1_applied === 0 })
 
 			continue
@@ -221,8 +221,8 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
  * Run the census: one traced parse per input, aggregated.
  */
 export async function runCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
-	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
-	const config = (args["config"] as Record<string, unknown> | undefined) ?? {}
+	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
+	const config = (args["config"] as Record<string, unknown> | null) ?? {}
 	// The census uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
 	const engine = await registry.acquire({ ...config, trace: true })
@@ -249,7 +249,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		n: aggregate.n,
 		selection: set.selection,
 		eventLabel: "were parsed with every present evidence channel silent",
-		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+		populationN: set.populationN,
 	})
 
 	const inertSentence = aggregate.inert.length

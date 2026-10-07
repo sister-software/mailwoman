@@ -234,7 +234,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 		if (excludeSurfaces?.has(tokens.join(" "))) return true
 
-		if (excludeAllTokensOf !== undefined && tokens.every((t) => excludeAllTokensOf.has(t))) return true
+		if (excludeAllTokensOf && tokens.every((t) => excludeAllTokensOf.has(t))) return true
 
 		return false
 	}
@@ -272,7 +272,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
-			if (surfaceCountryCounts !== undefined) {
+			if (surfaceCountryCounts) {
 				const count = surfaceCountryCounts.get(tokens.join(" "))
 				existing.push({ ...entry, crossCountryBranches: Math.min(count ?? 1, 255) })
 			} else {
@@ -296,11 +296,12 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned, so a place with no Wikipedia article has no field instead of a zero.
-			// The serializer's per-place presence bit reads `!== undefined`.
-			...(encyclopedic === undefined ? {} : { encyclopedic }),
+			// A place with no Wikipedia article is `null` rather than a zero.
+			// The serializer's per-place presence bit reads `!== null`.
+			encyclopedic: encyclopedic ?? null,
 			lat: row.latitude,
 			lon: row.longitude,
+			crossCountryBranches: null,
 		}
 
 		const primaryTokens = normalizeTokens(row.name)
@@ -352,9 +353,10 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		sourceDB: dbPath,
 		sourceDBMD5: source.md5,
 		sourceDBBytes: source.bytes,
-		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined
+		modelCardVersion: null,
+		...(excludeSurfaces || excludeAllTokensOf
 			? { exclusionPolicy: opts.exclusionPolicy ?? "unspecified", excludedInsertions: excludedCount }
-			: {}),
+			: { exclusionPolicy: null, excludedInsertions: null }),
 	}
 
 	return {

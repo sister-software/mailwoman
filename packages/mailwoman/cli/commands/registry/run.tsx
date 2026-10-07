@@ -92,8 +92,8 @@ export const DEFAULT_MAPPING: ColumnMapping = {
  * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
  */
 export async function loadMapping(
-	option: string | undefined,
-	source: string | undefined,
+	option: string | null,
+	source: string | null,
 	base: ColumnMapping = DEFAULT_MAPPING
 ): Promise<ColumnMapping> {
 	let provided: Partial<ColumnMapping> = {}
@@ -438,7 +438,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 		const written = await writeOutputs(geojson, options)
 
-		return written === null ? report : `${report}\n\n${written}`
+		return written ? `${report}\n\n${written}` : report
 	}
 
 	const geojson = toGeoJSON(result.entities)
@@ -453,7 +453,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
+	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
@@ -468,7 +468,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
-	const mapping = await loadMapping(options.mapping, options.source, base)
+	const mapping = await loadMapping(options.mapping ?? null, options.source ?? null, base)
 	using geocoder = await buildGeocoder(options)
 	const { geocodeAddress: geocodeForIngest } = geocoder
 
@@ -491,7 +491,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
+	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
@@ -504,7 +504,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 
 		const csv = args?.[0]
 
-		if (!csv || !csv.trim().length) {
+		if (!csv || !csv.trim()) {
 			throw new CommandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
 					"e.g. mailwoman registry contacts.csv --out entities.geojson"

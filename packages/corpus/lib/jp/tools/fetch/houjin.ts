@@ -41,14 +41,14 @@ export type FetchHoujinJPOptions = BaseFetchOptions
 /**
  * The nationwide row of the "CSV形式・Unicode" table stores the file number in its `doDownload(N)` handler.
  */
-function nationwideUnicodeFileNumber(html: string): string | undefined {
+function nationwideUnicodeFileNumber(html: string): string | null {
 	const start = html.indexOf('id="csv-unicode"')
 
-	if (start === -1) return undefined
+	if (start === -1) return null
 	const section = html.slice(start, html.indexOf('id="xml-unicode"', start))
 	const row = /全国[\s\S]{0,600}?doDownload\((\d+)\)/.exec(section)
 
-	return row?.[1]
+	return row?.[1] ?? null
 }
 
 export async function fetchHoujinJP(

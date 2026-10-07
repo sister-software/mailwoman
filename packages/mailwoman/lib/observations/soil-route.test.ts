@@ -65,13 +65,15 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 				}),
 			],
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return {
 		classifier,
 		resolver,
 		placeCountry: false,
-		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [] }),
+		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -216,7 +218,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			const distribution = evidence.distribution as Record<string, number>
 
 			expect(evidence.reading).toBe("designated_no_rating")
-			expect(evidence.topClass).toBeUndefined()
+			expect(evidence.topClass).toBeNull()
 			expect(distribution.unratedShare).toBeGreaterThan(0.9)
 		} finally {
 			route[Symbol.dispose]()
@@ -248,7 +250,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 		const route = createSoilCapabilityRoute({ databasePath })
 
 		try {
-			expect(route.observe(undefined, undefined)).toEqual({ fired: false, refusal: "no_coordinate" })
+			expect(route.observe(null, null)).toEqual({ fired: false, refusal: "no_coordinate" })
 		} finally {
 			route[Symbol.dispose]()
 		}

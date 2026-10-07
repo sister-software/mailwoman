@@ -52,11 +52,11 @@ export const spec = {
  * A probe failure yields `undefined` so the caller falls back to the recorded
  * {@link BundleArtifact.approxBytes} rather than treating it as a verdict.
  */
-async function liveContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
+async function liveContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | null> {
 	try {
 		return await headContentLength(client, artifactURL(artifact))
 	} catch {
-		return undefined
+		return null
 	}
 }
 

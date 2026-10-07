@@ -103,7 +103,7 @@ describe("ZoningCellIndex", () => {
 
 		// Absent rather than zero: a column reporting "0 dropped" with no measurement
 		// reads as the good news the measurement exists to establish.
-		expect(unmeasured.finish().polyfillZeroCellFeatures).toBeUndefined()
+		expect(unmeasured.finish().polyfillZeroCellFeatures).toBeNull()
 	})
 
 	it("counts stored rows as the compacted whole set plus the fringe", () => {

@@ -24,7 +24,7 @@ import { PlanetaryBuildManifestSchema } from "#schema/manifest"
  * Answers one line per output.
  * Throws naming the first difference.
  */
-export async function verifyBody(body: BuildableBodyID, out: string | undefined): Promise<string[]> {
+export async function verifyBody(body: BuildableBodyID, out: string | null): Promise<string[]> {
 	const directory = buildDirectory(body, out)
 	const manifestPath = resolvePath(directory, buildOutputs(body).manifest)
 	const manifest = PlanetaryBuildManifestSchema.parse(await readLocalJSONFile(manifestPath))

@@ -237,8 +237,8 @@ function isDeepRelativeSpecifier(value: string): boolean {
 	return /^(?:[.][.]\/){3}/.test(value)
 }
 
-function isSelfPackageSpecifier(value: string, packageName: string | undefined): boolean {
-	return packageName !== undefined && (value === packageName || value.startsWith(`${packageName}/`))
+function isSelfPackageSpecifier(value: string, packageName: string | null): boolean {
+	return packageName !== null && (value === packageName || value.startsWith(`${packageName}/`))
 }
 
 /**
@@ -309,7 +309,7 @@ function isChildrenSpreadPush(node: ts.Node): boolean {
 function visit(
 	source: ts.SourceFile,
 	ledger: DebtLedger,
-	packageName: string | undefined,
+	packageName: string | null,
 	countSelfPackageImports: boolean
 ): void {
 	function walk(node: ts.Node): void {
@@ -561,7 +561,7 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 		// Tests may self-import by package name.
 		const countSelfPackageImports = !path.includes("/test/") && !/[.]test[.]tsx?$/.test(path)
 
-		visit(source, ledger, workspacePackage?.name, countSelfPackageImports)
+		visit(source, ledger, workspacePackage?.name ?? null, countSelfPackageImports)
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- File text already loaded.
 		const nulBytes = text.split("\0").length - 1
@@ -667,6 +667,7 @@ export const debtCheck: RepoCheck = {
 					message: `${name} is ${count} and has no baseline entry — record one with \`mwops health baseline debt\``,
 					file,
 					details: listSites(sites[name]),
+					line: null,
 				})
 			} else if (count > recorded) {
 				diagnostics.push({
@@ -674,12 +675,15 @@ export const debtCheck: RepoCheck = {
 					message: `Repository debt grew: ${name} ${recorded} → ${count}`,
 					file,
 					details: listSites(sites[name]),
+					line: null,
 				})
 			} else if (count < recorded) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Warning,
 					message: `${name} fell ${recorded} → ${count}; ratchet the baseline with \`mwops health baseline debt\``,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 		}

@@ -145,8 +145,8 @@ export const PROMINENCE_FREEZE_PATH = preregistrationPath("prominence-floor", "b
  * Finds the band containing a population.
  * It returns `null` for a missing or unmatched population.
  */
-export function bandFor(bands: readonly ProminenceBand[], population: number | undefined): ProminenceBand | null {
-	if (population === undefined || !Number.isFinite(population)) return null
+export function bandFor(bands: readonly ProminenceBand[], population: number | null): ProminenceBand | null {
+	if (population == null || !Number.isFinite(population)) return null
 
 	return bands.find((band) => population >= band.min && (band.max === 0 || population <= band.max)) ?? null
 }

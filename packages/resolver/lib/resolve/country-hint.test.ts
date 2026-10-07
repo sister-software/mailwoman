@@ -11,12 +11,14 @@
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { createWOFResolver } from "#resolve"
 
 const MESSINA = {
+	...EMPTY_PLACE_FIELDS,
 	id: 10,
 	name: "Messina",
 	placetype: "region",
@@ -28,6 +30,7 @@ const MESSINA = {
 }
 
 const MAINE = {
+	...EMPTY_PLACE_FIELDS,
 	id: 20,
 	name: "Maine",
 	placetype: "region",
@@ -39,6 +42,7 @@ const MAINE = {
 }
 
 const AUGUSTA_ME: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 21,
 	name: "Augusta",
 	placetype: "locality",
@@ -51,6 +55,7 @@ const AUGUSTA_ME: ResolvedPlace = {
 }
 
 const AUGUSTA_IT: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 11,
 	name: "Augusta",
 	placetype: "locality",
@@ -63,6 +68,7 @@ const AUGUSTA_IT: ResolvedPlace = {
 }
 
 const WESTERN_AUSTRALIA: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 30,
 	name: "Western Australia",
 	placetype: "region",
@@ -74,6 +80,7 @@ const WESTERN_AUSTRALIA: ResolvedPlace = {
 }
 
 const CURRAMBINE_AU: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 31,
 	name: "Currambine",
 	placetype: "locality",
@@ -126,12 +133,12 @@ const augustaMeTree = (hint: boolean): AddressTree => ({
 	],
 })
 
-function localityOf(tree: AddressTree): AddressNode | undefined {
+function localityOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "locality") return n
 	}
 
-	return undefined
+	return null
 }
 
 describe("resolveTree + country_hint (#833 forward linkage)", () => {

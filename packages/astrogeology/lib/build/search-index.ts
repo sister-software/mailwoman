@@ -37,10 +37,10 @@ export async function buildSearchIndex(
 			featureType: feature.featureType,
 			centerLon: feature.centerLon,
 			centerLat: feature.centerLat,
-			// Include a diameter only when the gazetteer has one.
+			// A missing diameter stays null.
 			// A zero diameter would tell a camera that a feature with no diameter is a point.
-			...(feature.featureTypeCode ? { featureTypeCode: feature.featureTypeCode } : {}),
-			...(feature.diameterKm === undefined ? {} : { diameterKm: feature.diameterKm }),
+			featureTypeCode: feature.featureTypeCode || null,
+			diameterKm: feature.diameterKm,
 		}
 
 		const surfaces = new Set([feature.name, feature.cleanName ?? feature.name])

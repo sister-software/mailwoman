@@ -108,8 +108,8 @@ const SUITE_BY_LAW = new Map(CONFORMANCE_SUITES.map((suite) => [suite.law, suite
 /**
  * Returns the registered suite for a law, or `undefined` when no suite is registered for it.
  */
-export function suiteForLaw(law: string): ConformanceSuite | undefined {
-	return SUITE_BY_LAW.get(law)
+export function suiteForLaw(law: string): ConformanceSuite | null {
+	return SUITE_BY_LAW.get(law) ?? null
 }
 
 /**

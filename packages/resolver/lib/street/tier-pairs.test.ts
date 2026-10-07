@@ -54,7 +54,9 @@ describe("applyAddressPoint", () => {
 			find(query) {
 				probed.push(query.number)
 
-				return query.number === "22" ? { lat: 48.84, lon: 2.35, source: "test", release: "r" } : undefined
+				return query.number === "22"
+					? { lat: 48.84, lon: 2.35, source: "test", release: "r", localityNorm: null, postcode: null }
+					: undefined
 			},
 		} as AddressPointLookup
 
@@ -75,7 +77,9 @@ describe("applyAddressPoint", () => {
 			find(query) {
 				probed.push(query.number)
 
-				return query.number === "1802" ? { lat: 48.84, lon: 2.35, source: "test", release: "r" } : undefined
+				return query.number === "1802"
+					? { lat: 48.84, lon: 2.35, source: "test", release: "r", localityNorm: null, postcode: null }
+					: undefined
 			},
 		} as AddressPointLookup
 
@@ -100,7 +104,7 @@ describe("applyAddressPoint", () => {
 			find(query) {
 				queries.push(query)
 
-				return { lat: 25.0399658, lon: 121.5124584, source: "test", release: "r" }
+				return { lat: 25.0399658, lon: 121.5124584, source: "test", release: "r", localityNorm: null, postcode: null }
 			},
 		} as AddressPointLookup
 

@@ -141,12 +141,18 @@ for (const row of rows) {
 	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 
 	for (const tag of ["street_prefix", "street_suffix"]) {
-		const e = normLoose(row.components[tag])
+		const e = normLoose(row.components[tag] ?? null)
 
 		if (!e) continue
 
-		if (normLoose(got[tag]) !== e) {
-			misses.push({ row, tag, expected: e, got: normLoose(got[tag]) || "(nothing)", street: normLoose(got.street) })
+		if (normLoose(got[tag] ?? null) !== e) {
+			misses.push({
+				row,
+				tag,
+				expected: e,
+				got: normLoose(got[tag] ?? null) || "(nothing)",
+				street: normLoose(got.street ?? null),
+			})
 		}
 	}
 }

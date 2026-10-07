@@ -8,17 +8,10 @@
  *   exception — it's wired in-package from `@mailwoman/formatter` (the surface exists to expose it).
  */
 
-import type { AddressTree } from "@mailwoman/core"
+import type { AddressTree, ParseComponent } from "@mailwoman/core"
+import type { InputMode } from "@mailwoman/core/pipeline"
 
 import type { GeocodeOutcomeLike } from "#schema"
-
-/**
- * One parsed component in reading order (a `ComponentTag` + the covered text).
- */
-export interface ParseComponent {
-	tag: string
-	value: string
-}
 
 /**
  * One parse outcome: ordered components + the full decoded tree (the same language `/v1/resolve` speaks).
@@ -27,7 +20,7 @@ export interface ParsedAddressResult {
 	input: string
 	components: ParseComponent[]
 	tree: AddressTree
-	debug?: string
+	debug: string | null
 }
 
 export interface BatchResultFailure {
@@ -49,16 +42,11 @@ export interface ResolveTreeOutcome {
  */
 export type HealthData = Record<string, unknown>
 
-/**
- * The input register (Decision A / GTM B10. Canonical docs on `@mailwoman/core/pipeline`'s
- * `InputMode` — duplicated structurally so `@mailwoman/api` stays engine-agnostic).
- *
- * `formatted` runs the evidence-bundle channels off.
- */
-export type WireInputMode = "fragmented" | "formatted"
-
 export interface ParseInit {
-	inputMode?: WireInputMode
+	/**
+	 * The input register; `formatted` runs the evidence-bundle channels off.
+	 */
+	inputMode?: InputMode
 	debug?: boolean
 }
 

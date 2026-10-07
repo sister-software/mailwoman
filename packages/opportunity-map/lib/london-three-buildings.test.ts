@@ -72,7 +72,7 @@ describe("the three London buildings as one dossier", () => {
 					{
 						namespace: "croydon:planning-application",
 						value: "17/02680/FUL",
-						evidence: { source: "ldd-17-02680-ful" },
+						evidence: { source: "ldd-17-02680-ful", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 				["28-30 Addiscombe Grove, CR0 5LP"],
@@ -83,7 +83,7 @@ describe("the three London buildings as one dossier", () => {
 					{
 						namespace: "barnet:planning-application",
 						value: "16/0601/FUL",
-						evidence: { source: "ldd-16-0601-ful" },
+						evidence: { source: "ldd-16-0601-ful", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 				["112-132 Cricklewood Lane, NW2 2DP"],
@@ -94,7 +94,7 @@ describe("the three London buildings as one dossier", () => {
 					{
 						namespace: "islington:planning-application",
 						value: "P2014/1017/FUL",
-						evidence: { source: "ldd-p2014-1017-ful" },
+						evidence: { source: "ldd-p2014-1017-ful", observedAt: null, validFrom: null, validTo: null },
 					},
 				],
 				["130-154, 154a Pentonville Road, N1 9JE"],
@@ -116,7 +116,13 @@ describe("the three London buildings as one dossier", () => {
 				longitude,
 				synthetic: false,
 				positions: [
-					{ subject: entry.building, latitude, longitude, synthetic: false, evidence: { source: entry.ldd } },
+					{
+						subject: entry.building,
+						latitude,
+						longitude,
+						synthetic: false,
+						evidence: { source: entry.ldd, observedAt: null, validFrom: null, validTo: null },
+					},
 				],
 			})
 		}
@@ -164,8 +170,8 @@ describe("the three London buildings as one dossier", () => {
 			at: "2018-02-20",
 			total: 153,
 			parts: [
-				{ count: 153, evidence: { source: "ldd-17-02680-ful" } },
-				{ count: 153, evidence: { source: "gla-referral-3831a" } },
+				{ count: 153, evidence: { source: "ldd-17-02680-ful", observedAt: null, validFrom: null, validTo: null } },
+				{ count: 153, evidence: { source: "gla-referral-3831a", observedAt: null, validFrom: null, validTo: null } },
 			],
 		})
 
@@ -173,7 +179,9 @@ describe("the three London buildings as one dossier", () => {
 			status: "resolved",
 			at: "2016-08-30",
 			total: 122,
-			parts: [{ count: 122, evidence: { source: "ldd-16-0601-ful" } }],
+			parts: [
+				{ count: 122, evidence: { source: "ldd-16-0601-ful", observedAt: null, validFrom: null, validTo: null } },
+			],
 		})
 
 		expect(sectionOf(PENTONVILLE_ROAD).counts.planned).toMatchObject({
@@ -182,8 +190,8 @@ describe("the three London buildings as one dossier", () => {
 			reason:
 				"2 counts share the same subject, stage, date and membership (islington-p2014-1017-ful:residential-units) and disagree: 119 versus 118",
 			conflicting: [
-				{ count: 119, evidence: { source: "ldd-p2014-1017-ful" } },
-				{ count: 118, evidence: { source: "gla-referral-2924b" } },
+				{ count: 119, evidence: { source: "ldd-p2014-1017-ful", observedAt: null, validFrom: null, validTo: null } },
+				{ count: 118, evidence: { source: "gla-referral-2924b", observedAt: null, validFrom: null, validTo: null } },
 			],
 		})
 
@@ -201,7 +209,7 @@ describe("the three London buildings as one dossier", () => {
 					start: entry.started,
 					end: entry.completed,
 					stage: "construction",
-					evidence: { source: entry.ldd },
+					evidence: { source: entry.ldd, observedAt: null, validFrom: null, validTo: null },
 				},
 			])
 		)
@@ -272,7 +280,7 @@ describe("the three London buildings: claims", () => {
 			derivedFrom: ["islington-p2014-1017-ful:site-grid-reference", "islington-p2014-1017-ful:permission-date"],
 			explanation:
 				"ONSPD dates the introduction of N1 9FW to 2018-06, after the permission date, and NSUL places 4 of the 6 UPRNs with that postcode within 50 m of the planning grid reference. The link rests on proximity and introduction date, and no published record links the planning record to the postcode.",
-			evidence: { source: NSUL },
+			evidence: { source: NSUL, observedAt: null, validFrom: null, validTo: null },
 		})
 	})
 

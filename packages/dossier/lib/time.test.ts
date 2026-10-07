@@ -28,16 +28,23 @@ describe("compareISODate", () => {
 
 describe("admitsAsOf", () => {
 	test("admits a record available on or before the cutoff", () => {
-		expect(admitsAsOf({ availableAt: "2022-01-15" }, "2022-06-30")).toBe("admitted")
-		expect(admitsAsOf({ availableAt: "2022-06-30" }, "2022-06-30")).toBe("admitted")
+		expect(admitsAsOf({ availableAt: "2022-01-15", observedAt: null, retrievedAt: null }, "2022-06-30")).toBe(
+			"admitted"
+		)
+
+		expect(admitsAsOf({ availableAt: "2022-06-30", observedAt: null, retrievedAt: null }, "2022-06-30")).toBe(
+			"admitted"
+		)
 	})
 
 	test("excludes a record available after the cutoff even when observed before it", () => {
-		expect(admitsAsOf({ observedAt: "2021-12-01", availableAt: "2023-01-01" }, "2022-06-30")).toBe("excluded")
+		expect(admitsAsOf({ observedAt: "2021-12-01", availableAt: "2023-01-01", retrievedAt: null }, "2022-06-30")).toBe(
+			"excluded"
+		)
 	})
 
 	test("reports a record with no availability date as undated", () => {
-		expect(admitsAsOf({ observedAt: "2021-12-01" }, "2022-06-30")).toBe("undated")
+		expect(admitsAsOf({ observedAt: "2021-12-01", availableAt: null, retrievedAt: null }, "2022-06-30")).toBe("undated")
 	})
 })
 
@@ -48,10 +55,10 @@ describe("appliesAt", () => {
 	})
 
 	test("is unknown when the interval has neither bound", () => {
-		expect(appliesAt({}, "2022-06-30")).toBe("unknown")
+		expect(appliesAt({ validFrom: null, validTo: null }, "2022-06-30")).toBe("unknown")
 	})
 
 	test("treats an open end as applying from the start onward", () => {
-		expect(appliesAt({ validFrom: "2022-01-01" }, "2030-01-01")).toBe(true)
+		expect(appliesAt({ validFrom: "2022-01-01", validTo: null }, "2030-01-01")).toBe(true)
 	})
 })

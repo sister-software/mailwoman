@@ -23,8 +23,8 @@ export class InMemoryLocaleRegistry implements LocaleRegistry {
 		this.#profiles.set(profile.locale, profile)
 	}
 
-	get(locale: string): LocaleProfile | undefined {
-		return this.#profiles.get(locale)
+	get(locale: string): LocaleProfile | null {
+		return this.#profiles.get(locale) ?? null
 	}
 
 	list(): LocaleProfile[] {

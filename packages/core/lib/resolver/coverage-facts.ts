@@ -36,11 +36,11 @@ export interface CountryCoverageFact {
 	/**
 	 * Measured hard-resolve rate (0..1) on the panel identified by `source`, when the receipt recorded one.
 	 */
-	hardResolveRate?: number
+	hardResolveRate: number | null
 	/**
 	 * Panel size behind `hardResolveRate`, when recorded.
 	 */
-	sampleSize?: number
+	sampleSize: number | null
 	/**
 	 * ISO-8601 date of the measurement / promote eval.
 	 */
@@ -76,7 +76,7 @@ export interface CountryBBoxFact {
  * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from
  * the artifact they are actually resolving against.
  *
- * `undefined` on the handle means the artifact predates the manifest.
+ * `null` on the handle means the artifact predates the manifest.
  * Consumers then use the code constants.
  *
  * Those constants produce the same results as the pre-manifest implementation.

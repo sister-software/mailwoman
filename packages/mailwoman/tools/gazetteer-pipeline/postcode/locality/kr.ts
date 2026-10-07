@@ -71,11 +71,11 @@ function pyStrFloat(x: number): string {
 	return Number.isInteger(x) ? `${x}.0` : String(x)
 }
 
-function norm(s: string | null | undefined): string {
+function norm(s: string | null): string {
 	return (s || "").normalize("NFKC").replaceAll(/[\s-]/g, "").toLowerCase()
 }
 
-function bare(s: string | null | undefined): string {
+function bare(s: string | null): string {
 	return norm(s).replace(SUFFIX, "")
 }
 

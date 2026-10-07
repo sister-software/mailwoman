@@ -98,7 +98,7 @@ export {
 
 export { SqliteConventionSource } from "#sqlite/convention-source"
 
-export { WOFPostcodeLookup, type PostcodePlace } from "#postcode-point-lookup"
+export { WOFPostcodeLookup } from "#postcode-point-lookup"
 
 export {
 	PLACE_BBOX_TABLE,

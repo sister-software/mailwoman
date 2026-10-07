@@ -125,7 +125,7 @@ describe("resolveStreet", () => {
 
 	test("returns null when both tiers miss, or when there's no street/number", async () => {
 		expect(await resolveStreet("Main St", "150", "10001", "NYC", situsMiss, interpMiss)).toBeNull()
-		expect(await resolveStreet(undefined, "150", "10001", "NYC", situsHit, interpHit)).toBeNull()
+		expect(await resolveStreet(null, "150", "10001", "NYC", situsHit, interpHit)).toBeNull()
 		expect(await resolveStreet("Main St", "", "10001", "NYC", situsHit, interpHit)).toBeNull()
 	})
 })

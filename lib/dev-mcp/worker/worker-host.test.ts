@@ -109,7 +109,7 @@ describe("WorkerHost restart", () => {
 			},
 		])
 
-		expect(report.killed_jobs_note).toBeUndefined()
+		expect(report.killed_jobs_note).toBeNull()
 	}, 30_000)
 
 	it("says the job list could not be read rather than reporting no jobs", async () => {

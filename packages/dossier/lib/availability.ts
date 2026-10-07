@@ -18,13 +18,13 @@ export interface ProviderAvailability {
 	subject: EntityID
 	product: string
 	from: ISODate
-	to?: ISODate
+	to: ISODate | null
 	/**
 	 * The extent at which the record's source states availability.
 	 *
 	 * It is written as a layer reading writes its extent, such as `census-block:<GEOID>`.
 	 */
-	extent?: string
+	extent: string | null
 	evidence: Evidence
 }
 
@@ -44,13 +44,12 @@ export function availabilityAt(
 	if (!mine.length) return { status: "unknown", records: [] }
 
 	const current = mine.filter(
-		(record) =>
-			compareISODate(record.from, date) <= 0 && (record.to === undefined || compareISODate(date, record.to) <= 0)
+		(record) => compareISODate(record.from, date) <= 0 && (record.to === null || compareISODate(date, record.to) <= 0)
 	)
 
 	if (current.length) return { status: "available", records: mine }
 
-	const past = mine.filter((record) => record.to !== undefined && compareISODate(date, record.to) > 0)
+	const past = mine.filter((record) => record.to !== null && compareISODate(date, record.to) > 0)
 
 	return { status: past.length ? "withdrawn" : "unknown", records: mine }
 }

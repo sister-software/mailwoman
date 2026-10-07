@@ -130,7 +130,7 @@ function collectLabels(
 ): void {
 	const text = String(feature.properties[property] ?? "")
 
-	if (!text.length) return
+	if (!text) return
 
 	const packedColor = rgbToPacked(color)
 

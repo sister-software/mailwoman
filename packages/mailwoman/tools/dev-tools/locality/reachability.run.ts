@@ -236,7 +236,7 @@ const MIN_ROWS_PER_WORD = 10
 const byWord = new Map<string, typeof outcomes>()
 
 for (const row of outcomes) {
-	if (row.suffixTail === null) continue
+	if (!row.suffixTail) continue
 
 	const bucket = byWord.get(row.suffixTail) ?? []
 

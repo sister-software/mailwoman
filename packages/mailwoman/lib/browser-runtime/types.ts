@@ -8,6 +8,9 @@
  *   imports on the load path.
  */
 
+import type { SoftFeatureChannel } from "@mailwoman/neural/soft-features"
+import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
+
 export interface FSTMatcherLike {
 	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null
 	walkFrom(
@@ -43,18 +46,6 @@ export interface MailwomanClassifierLike {
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
 
-export interface TraceChannelLike {
-	features: number[][]
-	confidence: number[]
-}
-
-export interface TracePieceLike {
-	piece: string
-	id: number
-	start: number
-	end: number
-}
-
 export interface TraceTokenLike {
 	piece: string
 	start: number
@@ -75,16 +66,16 @@ export interface TraceRepairLike {
 export interface ParseTraceLike {
 	text: string
 	caseNormalized: boolean
-	pieces: TracePieceLike[]
-	anchor?: TraceChannelLike
-	gazetteer?: TraceChannelLike
+	pieces: TokenizedPiece[]
+	anchor: SoftFeatureChannel | null
+	gazetteer: SoftFeatureChannel | null
 	logits: number[][]
-	localeLogits?: number[]
+	localeLogits: number[] | null
 	/**
 	 * The locale-head axis, a country code per `localeLogits` index.
 	 * Never hardcode the order.
 	 */
-	localeCountries?: string[]
+	localeCountries: string[] | null
 	detectedSystem: string | null
 	systemSource: "off" | "auto" | "pinned"
 	priors: Array<{ kind: string; applied: boolean }>

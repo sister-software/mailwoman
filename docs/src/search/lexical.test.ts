@@ -27,8 +27,8 @@ describe("matchExpression", () => {
 		expect(matchExpression(['say"hi'])).toBe('"say""hi"*')
 	})
 
-	test("returns undefined for zero tokens", () => {
-		expect(matchExpression([])).toBeUndefined()
+	test("returns null for zero tokens", () => {
+		expect(matchExpression([])).toBeNull()
 	})
 })
 

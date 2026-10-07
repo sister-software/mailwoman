@@ -21,10 +21,7 @@ import { toGauntletResult } from "#tools/eval-harness/gauntlet/harness"
  * Produces one side of a law, letting a caller attach trace and mechanism-account detail
  * rather than this module reaching for a private workspace.
  */
-export type ConformanceObserver = (
-	query: string,
-	context: ConformanceContext | undefined
-) => Promise<ConformanceOutcome>
+export type ConformanceObserver = (query: string, context: ConformanceContext | null) => Promise<ConformanceOutcome>
 
 /**
  * One fixture's result.
@@ -43,7 +40,7 @@ export interface ConformanceFinding {
  * with no mechanism account attached.
  */
 export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceObserver {
-	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context)) })
+	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context ?? undefined)) })
 }
 
 /**
@@ -52,7 +49,7 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
  */
 export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTraced"]): ConformanceObserver {
 	return async (query, context) => {
-		const { result, resolver } = await geocodeTraced(query, context)
+		const { result, resolver } = await geocodeTraced(query, context ?? undefined)
 
 		return { result: toGauntletResult(result), candidates: resolver }
 	}

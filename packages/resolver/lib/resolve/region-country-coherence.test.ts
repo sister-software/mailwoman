@@ -5,6 +5,7 @@
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -15,6 +16,7 @@ interface RegionPlace extends ResolvedPlace {
 }
 
 const QUEBEC: RegionPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 100,
 	name: "Quebec",
 	abbrev: "QC",
@@ -27,6 +29,7 @@ const QUEBEC: RegionPlace = {
 }
 
 const ONTARIO: RegionPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 101,
 	name: "Ontario",
 	abbrev: "ON",
@@ -39,6 +42,7 @@ const ONTARIO: RegionPlace = {
 }
 
 const ILLINOIS: RegionPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 102,
 	name: "Illinois",
 	abbrev: "IL",
@@ -51,6 +55,7 @@ const ILLINOIS: RegionPlace = {
 }
 
 const MAINE: RegionPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 103,
 	name: "Maine",
 	abbrev: "ME",
@@ -63,6 +68,7 @@ const MAINE: RegionPlace = {
 }
 
 const MONTREAL_CA: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 200,
 	name: "Montreal",
 	placetype: "locality",
@@ -75,6 +81,7 @@ const MONTREAL_CA: ResolvedPlace = {
 }
 
 const MONTREAL_WI: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 201,
 	name: "Montreal",
 	placetype: "locality",
@@ -87,6 +94,7 @@ const MONTREAL_WI: ResolvedPlace = {
 }
 
 const LONDON_CA: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 202,
 	name: "London",
 	placetype: "locality",
@@ -99,6 +107,7 @@ const LONDON_CA: ResolvedPlace = {
 }
 
 const LONDON_KY: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 203,
 	name: "London",
 	placetype: "locality",
@@ -111,6 +120,7 @@ const LONDON_KY: ResolvedPlace = {
 }
 
 const SPRINGFIELD_IL: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 204,
 	name: "Springfield",
 	placetype: "locality",
@@ -123,6 +133,7 @@ const SPRINGFIELD_IL: ResolvedPlace = {
 }
 
 const PORTLAND_ME: ResolvedPlace = {
+	...EMPTY_PLACE_FIELDS,
 	id: 205,
 	name: "Portland",
 	placetype: "locality",
@@ -174,20 +185,20 @@ const regionLocalityTree = (city: string, region: string): AddressTree => ({
 	],
 })
 
-function localityOf(tree: AddressTree): AddressNode | undefined {
+function localityOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "locality") return n
 	}
 
-	return undefined
+	return null
 }
 
-function regionOf(tree: AddressTree): AddressNode | undefined {
+function regionOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "region") return n
 	}
 
-	return undefined
+	return null
 }
 
 const CA_POOL = [QUEBEC, ONTARIO, ILLINOIS, MAINE, MONTREAL_CA, MONTREAL_WI, LONDON_CA, LONDON_KY]

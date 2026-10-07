@@ -100,10 +100,10 @@ export function isUSStateAbbreviation(input: unknown): input is USStateAbbreviat
 /**
  * Normalize a USPS state-or-territory abbreviation, or return `undefined` when `value` is not one.
  */
-export function formatAsUSStateAbbreviation(value: string): USStateAbbreviation | undefined {
+export function formatAsUSStateAbbreviation(value: string): USStateAbbreviation | null {
 	const code = value.trim().toUpperCase()
 
-	return isUSStateAbbreviation(code) ? code : undefined
+	return isUSStateAbbreviation(code) ? code : null
 }
 
 /**
@@ -204,7 +204,7 @@ const US_STATE_NAME_TO_ABBREVIATION: ReadonlyMap<string, USStateAbbreviation> = 
  * publishes the name (GeoNames' postal export writes `California`, never `CA`) has
  * to be turned into the posted form before it can attest one.
  */
-export function lookupUSState(input: string | null | undefined): USStateAbbreviation | null {
+export function lookupUSState(input: string | null): USStateAbbreviation | null {
 	if (!input || typeof input !== "string") return null
 
 	const upper = input.trim().toUpperCase()

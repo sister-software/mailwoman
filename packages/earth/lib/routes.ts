@@ -53,7 +53,7 @@ export function runtimeModeFromSearch(search: string): RuntimeMode {
 export function queryFromSearch(search: string): string | null {
 	const value = new URLSearchParams(search).get("q")
 
-	if (value === null) return null
+	if (!value) return null
 
 	return value.trim() === "" ? null : value
 }

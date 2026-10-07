@@ -45,6 +45,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
 		"spliterator": "^8.1.0"
 	}
 }

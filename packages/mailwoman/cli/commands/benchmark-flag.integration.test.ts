@@ -68,7 +68,7 @@ describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 	}, 30_000)
 
 	test("rejects --benchmark with --neural", async () => {
-		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | undefined
+		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | null = null
 
 		try {
 			await runFile(process.execPath, [cliBin, "parse", "--benchmark", "5", "--neural", "hello world"])

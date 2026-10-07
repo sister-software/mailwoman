@@ -261,7 +261,7 @@ export interface HarvestESNavarraOptions {
  * That test would keep an archive of unknown age for as long as the feed stayed silent.
  */
 async function isCurrent(
-	recorded: ESNavarraArchiveEntry | undefined,
+	recorded: ESNavarraArchiveEntry | null,
 	partition: ESNavarraPartition,
 	path: PathBuilderLike,
 	verifyDigests: boolean
@@ -398,7 +398,7 @@ export async function harvestESNavarra(
 
 		const dest = destDir(partition.filename)
 
-		if (await isCurrent(files.get(partition.filename), partition, dest, options.verifyDigests ?? false)) {
+		if (await isCurrent(files.get(partition.filename) ?? null, partition, dest, options.verifyDigests ?? false)) {
 			skipped++
 
 			continue

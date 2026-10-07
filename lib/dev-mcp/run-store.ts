@@ -66,9 +66,9 @@ export interface StoredRun {
 	engine_id: string | null
 	input_set_id: string | null
 	/**
-	 * Per-arm replay indices keyed by the arm's label, absent for a run no arm can replay.
+	 * Per-arm replay indices keyed by the arm's label, `null` for a run no arm can replay.
 	 */
-	answers?: Record<string, RecordedAnswer[]>
+	answers: Record<string, RecordedAnswer[]> | null
 	payload: unknown
 }
 
@@ -199,7 +199,7 @@ export async function listRuns(
 			input_set_id: run.input_set_id,
 			bytes,
 			replayable_arms: Object.keys(run.answers ?? {}),
-			fingerprint_matches_now: currentFingerprint === undefined ? null : run.tree_fingerprint === currentFingerprint,
+			fingerprint_matches_now: currentFingerprint ? run.tree_fingerprint === currentFingerprint : null,
 		}))
 		.toSorted((a, b) => b.created_at.localeCompare(a.created_at))
 }

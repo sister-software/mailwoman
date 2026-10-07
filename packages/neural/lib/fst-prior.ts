@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { AncestrieMatch } from "@mailwoman/ancestrie"
+
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
@@ -24,17 +26,6 @@ function hasWordContent(piece: string): boolean {
 	if (BYTE_FALLBACK_RE.test(literal)) return false
 
 	return /[\p{L}\p{N}]/u.test(piece)
-}
-
-/**
- * A state reached by walking tokens through a gazetteer FST.
- *
- * `accepted` is true when the walked tokens form a complete indexed name.
- */
-export interface FSTMatchLike {
-	stateID: number
-	accepted: boolean
-	depth: number
 }
 
 /**
@@ -59,8 +50,8 @@ export interface FSTPlaceEntryLike {
  * It keeps this package independent of any FST implementation.
  */
 export interface FSTMatcherLike {
-	walk(tokens: string[]): FSTMatchLike | null
-	walkFrom(prev: FSTMatchLike, token: string): FSTMatchLike | null
+	walk(tokens: string[]): AncestrieMatch | null
+	walkFrom(prev: AncestrieMatch, token: string): AncestrieMatch | null
 	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
@@ -320,7 +311,7 @@ export function buildFSTEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	const streetContext = opts.streetContext
+	const streetContext = opts.streetContext ?? null
 
 	const streetTypeFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => g.fstToken !== "" && isStreetAffix(streetContext.fst, g.fstToken))
@@ -450,7 +441,7 @@ export function normalizeFSTToken(s: string): string {
 		.toLowerCase()
 		.replaceAll(/[\p{P}\p{S}]/gu, "")
 
-	return cleaned.length ? cleaned : ""
+	return cleaned ?? ""
 }
 
 function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
@@ -473,7 +464,7 @@ function streetContextScale(
 	groups: WordGroup[],
 	startIdx: number,
 	endIdx: number,
-	streetContext: StreetContextRequirementOpts | undefined,
+	streetContext: StreetContextRequirementOpts | null,
 	streetTypeFlags: boolean[] | null,
 	houseNumberFlags: boolean[] | null
 ): number {

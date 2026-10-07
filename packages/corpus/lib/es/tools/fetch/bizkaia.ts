@@ -366,7 +366,7 @@ export interface HarvestESBizkaiaOptions {
  * so a service that stops stating a version is re-fetched rather than frozen.
  */
 async function archiveIsCurrent(
-	recorded: ESBizkaiaArchiveEntry | undefined,
+	recorded: ESBizkaiaArchiveEntry | null,
 	dataset: ESBizkaiaMunicipalityDataset,
 	path: PathBuilderLike,
 	verifyDigests: boolean
@@ -436,7 +436,7 @@ export async function fetchBizkaiaComponentDocument(
 	// count is read from `numberReturned` and compared against the hits request's figure.
 	const returned = rootAttribute(document, "numberReturned", { xml: true })
 
-	if (returned === undefined || !/^\d+$/u.test(returned)) {
+	if (!returned || !/^\d+$/u.test(returned)) {
 		throw new Error(
 			`${context}: the GetFeature response states numberReturned=${stringifyJSON(returned ?? null)} rather than ` +
 				`a count, so what the document holds against the ${featureCount} features the service matched is unknown`
@@ -561,7 +561,7 @@ export async function harvestESBizkaia(
 
 		if (
 			!options.force &&
-			(await archiveIsCurrent(files.get(dataset.filename), dataset, dest, options.verifyDigests ?? false))
+			(await archiveIsCurrent(files.get(dataset.filename) ?? null, dataset, dest, options.verifyDigests ?? false))
 		) {
 			skipped++
 

@@ -94,10 +94,10 @@ const ROOT_OPENING_TAG = /<([A-Za-z_][\w.:-]*)([^>]*)>/u
 /**
  * One attribute of an opening tag, by local name.
  */
-function tagAttribute(root: MarkupRoot, attribute: string): string | undefined {
+function tagAttribute(root: MarkupRoot, attribute: string): string | null {
 	const pattern = new RegExp(`(?:^|\\s)(?:[\\w.-]+:)?${attribute}\\s*=\\s*"([^"]*)"`, "iu")
 
-	return pattern.exec(root.attributes)?.[1]
+	return pattern.exec(root.attributes)?.[1] ?? null
 }
 
 /**
@@ -108,7 +108,7 @@ function tagAttribute(root: MarkupRoot, attribute: string): string | undefined {
 export function rootCount(root: MarkupRoot, attribute: string): number | null {
 	const value = tagAttribute(root, attribute)
 
-	return value !== undefined && /^\d+$/u.test(value) ? Number(value) : null
+	return value && /^\d+$/u.test(value) ? Number(value) : null
 }
 
 /**
@@ -217,7 +217,7 @@ export async function readWFSMarkupPage(
 		root,
 		numberReturned: rootCount(root, "numberReturned"),
 		numberMatched: rootCount(root, "numberMatched"),
-		timeStamp: tagAttribute(root, "timeStamp") ?? null,
+		timeStamp: tagAttribute(root, "timeStamp"),
 	}
 }
 
@@ -685,7 +685,7 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 	const recorded = await readManifest<WFSHarvestManifest>(manifestPath)
 	const resumable = recorded !== null && Array.isArray(recorded.pages) && describesSameRequest(recorded, options)
 
-	if (recorded !== null && !resumable) {
+	if (recorded && !resumable) {
 		options.report?.("  The manifest describes a different request — starting the harvest over")
 
 		await removePathIfPresent(dataPath)

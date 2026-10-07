@@ -92,17 +92,17 @@ export interface ParsedWOFPlacetype {
 	src: string
 	placetype: WhosOnFirstPlacetype
 	localizedPropMap: Map<Alpha3bLanguageCode, LocalizedPlacetypePropMap>
-	country?: string
-	latitude?: number
-	longitude?: number
-	population?: number
-	concordances?: Record<string, string | number>
-	isCurrent?: boolean
-	isDeprecated?: boolean
-	isCeased?: boolean
-	isSuperseded?: boolean
-	isSuperseding?: boolean
-	lastmodified?: number
+	country: string | null
+	latitude: number | null
+	longitude: number | null
+	population: number | null
+	concordances: Record<string, string | number> | null
+	isCurrent: boolean | null
+	isDeprecated: boolean
+	isCeased: boolean
+	isSuperseded: boolean
+	isSuperseding: boolean
+	lastmodified: number | null
 }
 
 const langPattern = new RegExp(`:([a-z0-9\\-_]{2,3})_x_(${WOFNameKinds.join("|")})`)
@@ -167,9 +167,9 @@ export function pluckPlacetypeSpec({
 	if (!src) throw new Error(`No source found for placetype ${placetype} with ID ${id}`)
 
 	const population =
-		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : undefined
+		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : null
 
-	const isCurrent = mzIsCurrent === undefined ? undefined : mzIsCurrent !== 0 && mzIsCurrent !== "0"
+	const isCurrent = mzIsCurrent === undefined ? null : mzIsCurrent !== 0 && mzIsCurrent !== "0"
 
 	return {
 		id,
@@ -178,17 +178,17 @@ export function pluckPlacetypeSpec({
 		parent_id,
 		placetype,
 		localizedPropMap,
-		country: country || undefined,
-		latitude: typeof latitude === "number" ? latitude : undefined,
-		longitude: typeof longitude === "number" ? longitude : undefined,
+		country: country || null,
+		latitude: typeof latitude === "number" ? latitude : null,
+		longitude: typeof longitude === "number" ? longitude : null,
 		population,
-		concordances: concordances && Object.keys(concordances).length ? concordances : undefined,
+		concordances: concordances && Object.keys(concordances).length ? concordances : null,
 		isCurrent,
 		isDeprecated: !!edtfDeprecated,
 		isCeased: !!edtfCessation,
 		isSuperseded: !!(superseded_by && superseded_by.length),
 		isSuperseding: !!(supersedes && supersedes.length),
-		lastmodified: typeof lastmodified === "number" ? lastmodified : undefined,
+		lastmodified: typeof lastmodified === "number" ? lastmodified : null,
 	}
 }
 

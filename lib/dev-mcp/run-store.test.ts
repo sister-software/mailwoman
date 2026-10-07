@@ -37,6 +37,7 @@ function run(runID: string, overrides: Partial<StoredRun> = {}): StoredRun {
 		tree_fingerprint: "abc123",
 		engine_id: "en-us@4.4.0",
 		input_set_id: null,
+		answers: null,
 		payload: { rows: 3 },
 		...overrides,
 	}

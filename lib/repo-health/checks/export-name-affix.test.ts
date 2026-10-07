@@ -93,7 +93,12 @@ describe("findAffixPairs", () => {
 
 		expect(diagnostics).toEqual(
 			pairs.map((pair) =>
-				expect.objectContaining({ file: pair.file, line: pair.line, severity: DiagnosticSeverity.Warning })
+				expect.objectContaining({
+					file: pair.file,
+					line: pair.line,
+					severity: DiagnosticSeverity.Warning,
+					details: null,
+				})
 			)
 		)
 	})
@@ -174,7 +179,12 @@ describe("findDanglingLinks", () => {
 
 		expect(diagnostics).toEqual(
 			dangling.map((link) =>
-				expect.objectContaining({ file: link.file, line: link.line, severity: DiagnosticSeverity.Warning })
+				expect.objectContaining({
+					file: link.file,
+					line: link.line,
+					severity: DiagnosticSeverity.Warning,
+					details: null,
+				})
 			)
 		)
 	})

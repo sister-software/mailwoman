@@ -30,14 +30,14 @@ export function lookupPOIBrand(text: string) {
 /**
  * The single best exact-phrase brand match, if any.
  */
-export function resolveBrandName(name: string): BrandRecord | undefined {
+export function resolveBrandName(name: string): BrandRecord | null {
 	return CORE.resolveBrandName(name)
 }
 
 /**
  * Fetch a brand by its Wikidata QID.
  */
-export function getBrand(wikidata: string): BrandRecord | undefined {
+export function getBrand(wikidata: string): BrandRecord | null {
 	return CORE.getBrand(wikidata)
 }
 

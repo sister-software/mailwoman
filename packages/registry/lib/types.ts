@@ -21,21 +21,21 @@ export interface SourceRecord {
 	/**
 	 * Provenance: which file / dataset this came from.
 	 */
-	source?: string | null
+	source: string | null
 	/**
 	 * Parsed person name, when the record is a contact.
 	 */
-	name?: PersonName | null
+	name: PersonName | null
 	/**
 	 * Canonicalized organization name, when the record is an org.
 	 */
-	organization?: OrganizationName | null
+	organization: OrganizationName | null
 	/**
 	 * The address, normalized + (ideally) geocoded.
 	 */
-	address?: PostalAddress | null
-	phone?: string | null
-	email?: string | null
+	address: PostalAddress | null
+	phone: string | null
+	email: string | null
 	/**
 	 * Additional secondary-identifier fields, normalized.
 	 *
@@ -45,11 +45,11 @@ export interface SourceRecord {
 	 * Used as extra comparisons + corroborators when the model is built with matching `discriminators`.
 	 * Keyed by a stable field name the model references.
 	 */
-	attributes?: Record<string, string>
+	attributes: Record<string, string> | null
 	/**
 	 * The original row, verbatim, for audit.
 	 */
-	raw?: Record<string, string>
+	raw: Record<string, string> | null
 }
 
 /**
@@ -71,7 +71,7 @@ export interface ResolvedEntity {
 	/**
 	 * The entity's location, from the representative's geocode.
 	 */
-	coordinate?: { latitude: number; longitude: number }
+	coordinate: { latitude: number; longitude: number } | null
 	/**
 	 * Weakest within-cluster link weight in bits (how tightly it holds together); `null` for a singleton.
 	 */
@@ -85,15 +85,15 @@ export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funde
 
 export interface EntityGeoData {
 	entityID: string
-	sourceIDs?: string[]
-	recordCount?: number
-	cohesion?: number | null
+	sourceIDs: string[]
+	recordCount: number
+	cohesion: number | null
 	sources: string[]
 	name: string | null
-	organization?: string | null
-	address?: string | null
-	geocodeTier?: ResolutionTier | null
-	bucket?: ReconciliationBucket
+	organization: string | null
+	address: string | null
+	geocodeTier: ResolutionTier | null
+	bucket: ReconciliationBucket | null
 }
 
 /**
@@ -105,6 +105,6 @@ export interface EntityGeoData {
  * {@link ReconciliationBucket}; and a collection assembled from something other than resolved
  * entities (raw address points, links read back from a file) have no entity id or display name.
  */
-export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string }
+export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string | null }
 
 // #endregion

@@ -25,6 +25,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { NamedLatLon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilder, resolvePathBuilder } from "path-ts"
 
@@ -35,7 +36,7 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import type { GBGranularity, PostcodeDatabaseRow } from "#gazetteer/postcode/binary"
+import type { GBGranularity } from "#gazetteer/postcode/binary"
 
 interface LocaleSource {
 	country: string
@@ -109,7 +110,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 
 			using conn = new DatabaseClient<WOFDatabase>(db, { readOnly: true })
 
-			const rows = allRows<PostcodeDatabaseRow>(
+			const rows = allRows<NamedLatLon>(
 				conn.prepare(
 					`SELECT name, latitude AS lat, longitude AS lon FROM spr
 					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`

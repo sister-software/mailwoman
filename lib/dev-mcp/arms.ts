@@ -207,7 +207,7 @@ export const ARM_SPEC_SCHEMA = z
  * @throws On a deferred kind, an unknown kind, or an external arm missing its endpoint.
  */
 export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
-	if (raw === undefined || raw === null) return { kind: "mailwoman", config: {} }
+	if (!raw) return { kind: "mailwoman", config: {} }
 
 	if (typeof raw !== "object" || Array.isArray(raw)) {
 		throw new TypeError(`Arm ${label} must be an object: a mailwoman config, or {kind:"external", engine, endpoint}.`)
@@ -293,7 +293,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 			)
 		}
 
-		return { kind: "worktree", ref: ref.trim(), config: (record["config"] as EngineConfig | undefined) ?? {} }
+		return { kind: "worktree", ref: ref.trim(), config: (record["config"] as EngineConfig | null) ?? {} }
 	}
 
 	throw new Error(

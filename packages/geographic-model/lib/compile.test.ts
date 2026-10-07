@@ -182,7 +182,7 @@ function fixture(): GeographicModelDocument {
 function withReversedKeys(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(withReversedKeys)
 
-	if (typeof value !== "object" || value === null) return value
+	if (typeof value !== "object" || !value) return value
 
 	return Object.fromEntries(
 		Object.entries(value)
@@ -205,8 +205,8 @@ function permuted(document: GeographicModelDocument): unknown {
 	})
 }
 
-function ancestorsIn(model: CompiledGeographicModel, concept: string): readonly ConceptID[] | undefined {
-	return model.inheritanceClosure.find((entry) => entry.concept === concept)?.ancestors
+function ancestorsIn(model: CompiledGeographicModel, concept: string): readonly ConceptID[] | null {
+	return model.inheritanceClosure.find((entry) => entry.concept === concept)?.ancestors ?? null
 }
 
 function factsAbout(model: CompiledGeographicModel, concept: string): DerivedFactRecord[] {

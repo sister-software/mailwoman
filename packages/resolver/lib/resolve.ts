@@ -108,7 +108,7 @@ class WOFResolver implements Resolver {
 
 	constructor(backend: ResolverBackend) {
 		this.#backend = backend
-		this.artifactCoverage = backend.artifactCoverage
+		this.artifactCoverage = backend.artifactCoverage ?? null
 		this.capabilityGaps = describeCapabilityGaps(backend)
 		reportCapabilityGaps(this.capabilityGaps)
 	}
@@ -186,8 +186,8 @@ class WOFResolver implements Resolver {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
 				defaultCountry: state.defaultCountry,
-				...(shapeVerdict?.narrowing !== undefined ? { candidateSystems: shapeVerdict.narrowing } : {}),
-				...(opts.postcodeCountryCoherenceThresholdKm !== undefined
+				...(shapeVerdict?.narrowing ? { candidateSystems: shapeVerdict.narrowing } : {}),
+				...(opts.postcodeCountryCoherenceThresholdKm != null
 					? { thresholdKm: opts.postcodeCountryCoherenceThresholdKm }
 					: {}),
 			})
@@ -309,7 +309,7 @@ class WOFResolver implements Resolver {
 		let resolved: CoordinateOptionalPlace | null = null
 
 		// Skip lookup for shape-excluded postcode spans.
-		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length && !isShapeExcludedPostcode(node)) {
+		if (placetype && state.lookupsRemaining > 0 && node.value.trim() && !isShapeExcludedPostcode(node)) {
 			let picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 
 			// Compound JP municipality handling with scoped fallback control.
@@ -450,11 +450,11 @@ class WOFResolver implements Resolver {
 		const containmentEligible =
 			state.adminContainmentRerank &&
 			placetype === "locality" &&
-			state.regionQualifier !== undefined &&
+			state.regionQualifier != null &&
 			(!state.defaultCountry || state.defaultCountryIsInferred)
 
 		if (containmentEligible) {
-			query.regionQualifier = state.regionQualifier
+			query.regionQualifier = state.regionQualifier!
 		}
 
 		// Optional locality postcode hint and containment coherence flag.
@@ -477,7 +477,7 @@ class WOFResolver implements Resolver {
 		// For unconstrained postalcodes, probe format-implied countries only.
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
 			rec.check("postcode_format_probe")
-			let best: ResolvedPlace | undefined
+			let best: ResolvedPlace | null = null
 
 			for (const impliedCountry of state.postcodeFormatCountries) {
 				try {
@@ -511,7 +511,7 @@ class WOFResolver implements Resolver {
 				}
 
 				// If parent scope misses, retry once without parent scope.
-				if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
+				if (!candidates.length && state.parentFallback && query.parentID != null) {
 					delete query.parentID
 					rec.check("parent_fallback_retry")
 					candidates = await this.#backend.findPlace(query)
@@ -539,10 +539,8 @@ class WOFResolver implements Resolver {
 				const metadata: Record<string, unknown> = {
 					postcode_prefix: probe.prefix,
 					postcode_prefix_ancestors: probe.node.ancestors,
-					...(probe.node.radiusP95Km !== undefined ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
-					...(probe.node.lat !== undefined && probe.node.lon !== undefined
-						? { coordinate_source: "postcode_prefix" }
-						: {}),
+					...(probe.node.radiusP95Km != null ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
+					...(probe.node.lat != null && probe.node.lon != null ? { coordinate_source: "postcode_prefix" } : {}),
 				}
 
 				rec.check("postcode_prefix_prior")
@@ -604,8 +602,8 @@ class WOFResolver implements Resolver {
 
 				if (tier !== 0) return tier
 				// Unknown-country candidates get zero posterior mass.
-				const aKey = (a.prominence ?? a.score) + w * (a.country === undefined ? 0 : (post[a.country] ?? 0))
-				const bKey = (b.prominence ?? b.score) + w * (b.country === undefined ? 0 : (post[b.country] ?? 0))
+				const aKey = (a.prominence ?? a.score) + w * (a.country ? (post[a.country] ?? 0) : 0)
+				const bKey = (b.prominence ?? b.score) + w * (b.country ? (post[b.country] ?? 0) : 0)
 
 				return bKey - aKey || b.score - a.score
 			})
@@ -694,7 +692,7 @@ class WOFResolver implements Resolver {
 			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
 			// Mark picks admitted outside resolved parent scope.
-			...((parentResolved && typeof parentResolved.id === "number" && query.parentID === undefined) ||
+			...((parentResolved && typeof parentResolved.id === "number" && query.parentID == null) ||
 			top.regionScopeMiss === true
 				? { parent_fallback: true }
 				: {}),

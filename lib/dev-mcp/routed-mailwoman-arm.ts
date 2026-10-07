@@ -182,7 +182,7 @@ async function preflightLocale(
 
 async function resolveLocale(
 	locale: string,
-	cacheRoot: string | undefined,
+	cacheRoot: string | null,
 	deps: RoutedMailwomanArmDeps,
 	digests: Map<string, Promise<string>>
 ) {
@@ -214,7 +214,7 @@ export async function buildRoutedMailwomanArm(
 	using resources = new DisposableStack()
 	assertSupportedConfig(config)
 
-	const cacheRoot = config.weights_cache
+	const cacheRoot = config.weights_cache ?? null
 
 	const routes = Object.fromEntries(
 		inputs.flatMap((input) => {

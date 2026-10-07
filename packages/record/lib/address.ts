@@ -15,7 +15,7 @@ import type { GeoCoordinate } from "@mailwoman/spatial"
 export interface HierarchyNode {
 	tag: string
 	value: string
-	placeID?: string
+	placeID: string | null
 }
 
 /**
@@ -35,19 +35,19 @@ export interface AddressGeocode {
 	/**
 	 * Lists the resolved admin hierarchy from the locality up to the country.
 	 */
-	hierarchy?: HierarchyNode[]
+	hierarchy: HierarchyNode[] | null
 
 	/**
 	 * Marks a delivery point, such as a PO box, rather than a building,
 	 * so the coordinate does not locate the addressee.
 	 */
-	poBox?: boolean
+	poBox: boolean | null
 
 	/**
 	 * Marks a multi-unit building whose records share one coordinate,
 	 * so the coordinate cannot distinguish units.
 	 */
-	multiUnit?: boolean
+	multiUnit: boolean | null
 }
 
 /**
@@ -70,14 +70,14 @@ export interface PostalAddress {
 	/**
 	 * Gives a human-readable single-line form for display.
 	 */
-	formatted?: string
+	formatted: string | null
 
-	geocode?: AddressGeocode
+	geocode: AddressGeocode | null
 
 	/**
 	 * Keeps the original free-text input for provenance.
 	 */
-	raw?: string
+	raw: string | null
 }
 
 /**
@@ -88,12 +88,12 @@ export interface ToPostalAddressOptions {
 	 * Supplies the country for formatting as an ISO-2 code or a name.
 	 * It defaults to the `country` component.
 	 */
-	country?: string
+	country?: string | null
 
 	/**
 	 * Supplies the original free-text input to keep as provenance.
 	 */
-	raw?: string
+	raw?: string | null
 
 	/**
 	 * Indicates whether to compute the `formatted` string.
@@ -116,24 +116,16 @@ export interface ToPostalAddressOptions {
 export function toPostalAddress(components: ComponentDict, opts: ToPostalAddressOptions = {}): PostalAddress {
 	const country = opts.country ?? components.country ?? ""
 
-	const record: PostalAddress = {
+	const formatted =
+		opts.format === false ? null : formatAddress(components, country, opts.formatOptions ?? { separator: ", " })
+
+	return {
 		components,
 		canonicalKey: canonicalKey(components),
+		formatted: formatted || null,
+		geocode: null,
+		raw: opts.raw ?? null,
 	}
-
-	if (opts.raw !== undefined) {
-		record.raw = opts.raw
-	}
-
-	if (opts.format !== false) {
-		const formatted = formatAddress(components, country, opts.formatOptions ?? { separator: ", " })
-
-		if (formatted) {
-			record.formatted = formatted
-		}
-	}
-
-	return record
 }
 
 /**

@@ -32,7 +32,7 @@ export type ParseReading = (typeof ParseReading)[keyof typeof ParseReading]
 /**
  * Which reading a jurisdiction's parse capability falls under.
  */
-export function parseReading(coverage: CountryCoverage | undefined): ParseReading {
+export function parseReading(coverage: CountryCoverage | null): ParseReading {
 	if (!coverage) return ParseReading.Absent
 
 	if (!coverage.admitted) {
@@ -62,7 +62,7 @@ export type GeocodeReading = (typeof GeocodeReading)[keyof typeof GeocodeReading
 /**
  * Which reading a jurisdiction's geocode capability falls under.
  */
-export function geocodeReading(coverage: CountryCoverage | undefined): GeocodeReading {
+export function geocodeReading(coverage: CountryCoverage | null): GeocodeReading {
 	if (!coverage) return GeocodeReading.Absent
 
 	if (coverage.geocodeTier === "rooftop-published") return GeocodeReading.Rooftop

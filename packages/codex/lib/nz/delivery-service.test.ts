@@ -61,7 +61,7 @@ describe("matchNZDeliveryService", () => {
 
 	it("allows an identifier-less Private Bag (ADV358: identifier not always allocated)", () => {
 		expect(matchNZDeliveryService("Private Bag")).toMatchObject({ type: "Private Bag" })
-		expect(matchNZDeliveryService("Private Bag")?.id).toBeUndefined()
+		expect(matchNZDeliveryService("Private Bag")?.id).toBeNull()
 	})
 
 	it("recognizes wild punctuated forms while the standard prefers bare PO", () => {
@@ -70,9 +70,9 @@ describe("matchNZDeliveryService", () => {
 	})
 
 	it("ADV358 types do not carry the colloquial flag", () => {
-		expect(matchNZDeliveryService("PO Box 24999")?.colloquial).toBeUndefined()
-		expect(matchNZDeliveryService("Private Bag 106999")?.colloquial).toBeUndefined()
-		expect(matchNZDeliveryService("Counter Delivery")?.colloquial).toBeUndefined()
+		expect(matchNZDeliveryService("PO Box 24999")?.colloquial).toBe(false)
+		expect(matchNZDeliveryService("Private Bag 106999")?.colloquial).toBe(false)
+		expect(matchNZDeliveryService("Counter Delivery")?.colloquial).toBe(false)
 	})
 
 	it("recognizes 'Private Box' as the colloquial NZ alias — operator ruling 2026-06-11", () => {

@@ -25,7 +25,7 @@ export interface SpanRescoreOptions {
 	/**
 	 * The sibling postcode serves as the backend disambiguation hint and the consistency-check anchor.
 	 */
-	postcode?: string
+	postcode?: string | null
 	/**
 	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor.
 	 *
@@ -122,7 +122,7 @@ function tokenizeRaw(raw: string): RawTok[] {
 	const re = /[^\s,;/]+/g
 	let m: RegExpExecArray | null
 
-	while ((m = re.exec(raw)) !== null) {
+	while ((m = re.exec(raw))) {
 		toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
 	}
 
@@ -163,7 +163,7 @@ function hasAdminQualifier(roots: readonly AddressNode[]): boolean {
 					n.tag === "postcode" ||
 					n.tag === "house_number") &&
 				n.value.trim().length > 0
-		) !== undefined
+		) != null
 	)
 }
 
@@ -190,9 +190,7 @@ export function hasResolvedPlace(
 	roots: readonly AddressNode[],
 	weakReading: WeakResolutionReading | false = false
 ): boolean {
-	return (
-		firstNodeWhere(roots, (n) => Boolean(n.placeID) && !(weakReading && resolvedWeakly(n, weakReading))) !== undefined
-	)
+	return firstNodeWhere(roots, (n) => Boolean(n.placeID) && !(weakReading && resolvedWeakly(n, weakReading))) != null
 }
 
 /**
@@ -384,14 +382,14 @@ export async function findRescoreCandidate(
 	 * The token a sub-span probe leaves behind when it reads as an administrative qualifier: one token
 	 * of 2 or 3 uppercase ASCII letters, shaped as a subdivision code rather than looked up in a table.
 	 */
-	const qualifierRemainder = (span: { start: number; end: number }): string | undefined => {
+	const qualifierRemainder = (span: { start: number; end: number }): string | null => {
 		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
 
-		if (outside.length !== 1) return undefined
+		if (outside.length !== 1) return null
 
 		const token = outside[0]!.text
 
-		return isRegionAbbreviationToken(token, { maxLetters: 3 }) ? token : undefined
+		return isRegionAbbreviationToken(token, { maxLetters: 3 }) ? token : null
 	}
 
 	/**
@@ -432,7 +430,7 @@ export async function findRescoreCandidate(
 		if (opts.spanRescoreRequireContextRemainder && !wholeSpan && !remainderIsContext(sp)) continue
 
 		const bare = softCountryEligible && wholeSpan
-		const qualifier = wholeSpan ? undefined : qualifierRemainder(sp)
+		const qualifier = wholeSpan ? null : qualifierRemainder(sp)
 
 		const hits = bare
 			? rankByCountryPrior(
@@ -453,7 +451,7 @@ export async function findRescoreCandidate(
 					// The qualifier the sub-span left behind.
 					// A backend without the ancestors sidecar ignores this qualifier.
 					// That matches a query without one.
-					...(qualifier === undefined ? {} : { regionQualifier: qualifier }),
+					...(qualifier ? { regionQualifier: qualifier } : {}),
 				})
 
 		// No primary-name re-check: `exactMatch` is name-or-alias, so re-comparing only
@@ -465,14 +463,13 @@ export async function findRescoreCandidate(
 
 		// The same partition the walk applies: tier-safe, stable and positive-evidence-only,
 		// so a backend that ignored `regionQualifier` is byte-stable.
-		const exact =
-			qualifier === undefined
-				? ranked
-				: partitionByContainment(
-						ranked,
-						(c) => c.containedByQualifier === true,
-						(c) => c.exactMatch === true
-					)
+		const exact = qualifier
+			? partitionByContainment(
+					ranked,
+					(c) => c.containedByQualifier === true,
+					(c) => c.exactMatch === true
+				)
+			: ranked
 
 		const withinThreshold = (p: ResolvedPlace): boolean =>
 			!anchor || thresholdKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm

@@ -13,12 +13,13 @@ import type { Context } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 
 /**
- * The native error envelope: a short machine-stable `error` string plus an optional human `detail`.
+ * The native error envelope: a short machine-stable `error` string plus a human
+ * `detail`, `null` when there is none.
  */
 export const APIErrorSchema = z
 	.object({
 		error: z.string(),
-		detail: z.string().optional(),
+		detail: z.string().nullable(),
 	})
 	.openapi("APIError")
 
@@ -29,8 +30,13 @@ export const APIErrorSchema = z
  * A `ContentfulStatusCode` type would fail the response type required by
  * `app.openapi(route, handler)` because it must match the route's declared response branch.
  */
-export function errorResponse<S extends ContentfulStatusCode>(c: Context, status: S, error: string, detail?: string) {
-	return c.json(detail === undefined ? { error } : { error, detail }, status)
+export function errorResponse<S extends ContentfulStatusCode>(
+	c: Context,
+	status: S,
+	error: string,
+	detail: string | null = null
+) {
+	return c.json({ error, detail }, status)
 }
 
 const GEOCODER_UNAVAILABLE_DETAIL =

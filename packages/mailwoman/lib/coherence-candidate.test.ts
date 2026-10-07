@@ -115,7 +115,7 @@ async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const nodes = [...walkNodes(resolved.roots)] as AdminCoherenceSourceNode[]
 	const winner = nodes.find((n) => n.tag === "locality")!
 
-	return { winner, fragment: adminCoherenceField(nodes, winner, undefined) }
+	return { winner, fragment: adminCoherenceField(nodes, winner, null) }
 }
 
 describe("admin coherence over the candidate backend's ancestors sidecar", () => {
@@ -133,18 +133,18 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 			{ id: USA, placetype: "country", name: "United States" },
 		])
 
-		expect(fragment.admin_coherence!.region).toBe("contradicted")
+		expect(fragment!.region).toBe("contradicted")
 	})
 
 	test("without the stamp the same winner reads unverifiable — the pre-sidecar standing state", async () => {
 		const { fragment } = await verdictFor("Thüringen", false)
 
-		expect(fragment.admin_coherence!.region).toBe("unverifiable")
+		expect(fragment!.region).toBe("unverifiable")
 	})
 
 	test("a qualifier the ancestry vouches for reads confirmed", async () => {
 		const { fragment } = await verdictFor("Texas", true)
 
-		expect(fragment.admin_coherence!.region).toBe("confirmed")
+		expect(fragment!.region).toBe("confirmed")
 	})
 })

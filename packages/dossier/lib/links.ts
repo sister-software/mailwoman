@@ -16,7 +16,7 @@ import type { ClaimInterval, ISODate } from "#time"
 
 export interface Evidence extends ClaimInterval {
 	source: SourceRecordID
-	observedAt?: ISODate
+	observedAt: ISODate | null
 }
 
 export interface AliasCandidate {
@@ -26,7 +26,7 @@ export interface AliasCandidate {
 
 export interface Alias {
 	text: string
-	address?: PostalAddress
+	address: PostalAddress | null
 	candidates: readonly AliasCandidate[]
 }
 

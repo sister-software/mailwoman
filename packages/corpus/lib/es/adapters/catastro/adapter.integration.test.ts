@@ -51,13 +51,13 @@ const fixture = workspacePath("corpus", "fixtures", "es-catastro", "A.ES.SDGC.AD
 interface PublisherAnswer {
 	error?: string
 	streets: ReadonlySet<string>
-	numbers: ReadonlySet<string | undefined>
+	numbers: ReadonlySet<string | null>
 	postcodes: ReadonlySet<string>
 	municipalities: ReadonlySet<string>
 }
 
-function text(xml: string, tag: string): string | undefined {
-	return new RegExp(`<${tag}>([^<]*)</${tag}>`, "u").exec(xml)?.[1]
+function text(xml: string, tag: string): string | null {
+	return new RegExp(`<${tag}>([^<]*)</${tag}>`, "u").exec(xml)?.[1] ?? null
 }
 
 async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
@@ -69,7 +69,7 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 
 	const empty = {
 		streets: new Set<string>(),
-		numbers: new Set<string | undefined>(),
+		numbers: new Set<string | null>(),
 		postcodes: new Set<string>(),
 		municipalities: new Set<string>(),
 	}
@@ -86,9 +86,7 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 		// `tv` is the street type and `nv` its name, and the service omits either one, so the pair is
 		// joined through a predicate that narrows away an absent field rather than through `Boolean`.
 		streets: new Set(
-			blocks.map((dir) =>
-				[text(dir, "tv"), text(dir, "nv")].filter((part): part is string => part !== undefined).join(" ")
-			)
+			blocks.map((dir) => [text(dir, "tv"), text(dir, "nv")].filter((part): part is string => part !== null).join(" "))
 		),
 		// `pnp` and `plp` concatenate: `13` and `D` make `13D`.
 		// A `pnp` of `0` with no `plp`, or no `pnp` at all, is the Cadastre holding no number.
@@ -98,7 +96,7 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 				const pnp = text(dir, "pnp")
 				const plp = text(dir, "plp")
 
-				if (!plp && (pnp === undefined || pnp === "" || pnp === "0")) return undefined
+				if (!plp && (!pnp || pnp === "" || pnp === "0")) return null
 
 				return `${pnp ?? ""}${plp ?? ""}`
 			})
@@ -138,7 +136,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-catastro rows against the OVC Consulta_
 				readable++
 
 				const streetOK = answer.streets.has(row.components.street ?? "")
-				const numberOK = answer.numbers.has(row.components.house_number)
+				const numberOK = answer.numbers.has(row.components.house_number ?? null)
 
 				const postcodeOK = answer.postcodes.size
 					? answer.postcodes.has(row.components.postcode ?? "")

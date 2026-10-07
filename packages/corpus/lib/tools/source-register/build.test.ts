@@ -19,15 +19,15 @@ import { AddressRole } from "#types"
 
 describe("readUnresolvedColumn", () => {
 	it("reads a declared placeholder as unresolved, whatever its case", () => {
-		expect(readUnresolvedColumn("varies", "address_role", 1)).toBeUndefined()
-		expect(readUnresolvedColumn("Varies", "address_role", 1)).toBeUndefined()
-		expect(readUnresolvedColumn("country-specific", "coverage", 1)).toBeUndefined()
+		expect(readUnresolvedColumn("varies", "address_role", 1)).toBeNull()
+		expect(readUnresolvedColumn("Varies", "address_role", 1)).toBeNull()
+		expect(readUnresolvedColumn("country-specific", "coverage", 1)).toBeNull()
 	})
 
 	it("reads an empty or absent column as unresolved", () => {
-		expect(readUnresolvedColumn("", "upstream", 1)).toBeUndefined()
-		expect(readUnresolvedColumn("   ", "upstream", 1)).toBeUndefined()
-		expect(readUnresolvedColumn(undefined, "upstream", 1)).toBeUndefined()
+		expect(readUnresolvedColumn("", "upstream", 1)).toBeNull()
+		expect(readUnresolvedColumn("   ", "upstream", 1)).toBeNull()
+		expect(readUnresolvedColumn(null, "upstream", 1)).toBeNull()
 	})
 
 	it("returns a value somebody resolved", () => {

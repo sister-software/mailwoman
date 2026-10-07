@@ -77,7 +77,7 @@ export const DataBundlesTable: React.FC = () => {
 function servedCell(bundle: PublishedBundleSummary): string {
 	if (!bundle.served) return "not in the snapshot"
 
-	if (bundle.served.servedSize === null) {
+	if (!bundle.served.servedSize) {
 		return `unmeasured for ${bundle.served.sizesUnmeasured} of ${bundle.artifactCount} files`
 	}
 

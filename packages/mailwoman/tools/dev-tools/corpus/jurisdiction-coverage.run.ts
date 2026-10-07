@@ -85,7 +85,7 @@ const measured = new Map<string, CountryCoverage>(report.countries.map((country)
 /**
  * The state of one jurisdiction's parse capability, keeping `absent` and `declined` separate readings.
  */
-function parseState(coverage: CountryCoverage | undefined): string {
+function parseState(coverage: CountryCoverage | null): string {
 	const rows = coverage ? coverage.corpusRows.toLocaleString() : "0"
 
 	// The street count sits in its own column, so the phrase omits what `mwdev_coverage`'s one-line form names.
@@ -99,7 +99,7 @@ function parseState(coverage: CountryCoverage | undefined): string {
 	}[parseReading(coverage)]
 }
 
-function geocodeState(coverage: CountryCoverage | undefined): string {
+function geocodeState(coverage: CountryCoverage | null): string {
 	return {
 		[GeocodeReading.Absent]: "absent",
 		[GeocodeReading.Rooftop]: "rooftop",
@@ -108,7 +108,7 @@ function geocodeState(coverage: CountryCoverage | undefined): string {
 	}[geocodeReading(coverage)]
 }
 
-function boardState(coverage: CountryCoverage | undefined): string {
+function boardState(coverage: CountryCoverage | null): string {
 	if (!coverage?.boardRows) return "—"
 
 	return `${coverage.boardPassedRows}/${coverage.boardRows}`
@@ -151,7 +151,7 @@ const newlyAdmitted = nextAdmitted ? sorted.filter((code) => nextAdmitted.has(co
 const nextDrops = nextAdmitted ? admitted.filter((code) => !nextAdmitted.has(code)) : []
 
 const rows = sorted.map((code) => {
-	const coverage = measured.get(code)
+	const coverage = measured.get(code) ?? null
 	const name = ISO2_TO_NAME.get(code) ?? "—"
 	const street = coverage?.corpusStreetRows ? coverage.corpusStreetRows.toLocaleString() : "0"
 

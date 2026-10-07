@@ -58,7 +58,7 @@ export function exactMatchIDs<DB>(
 		const needle = foldQueryText(trimmed)
 
 		for (const r of rows) {
-			if (r.name !== null && foldQueryText(r.name) === needle) {
+			if (r.name && foldQueryText(r.name) === needle) {
 				out.add(r.id)
 			}
 		}

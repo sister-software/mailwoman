@@ -103,7 +103,7 @@ export interface BuildBDCOptions {
 	 * It returns `undefined` for an unknown GEOID.
 	 * The build then skips the row and counts it in `unknownGeoids`.
 	 */
-	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
+	blockCentroids: (geoid: string) => { lat: number; lon: number } | null
 	onProgress?: (message: string) => void
 
 	/**
@@ -181,7 +181,7 @@ interface BDCStageRow {
 	geoid: string
 	provider_id: number
 	technology_code: number
-	location_id?: string
+	location_id: string
 	max_advertised_download_speed: number
 	max_advertised_upload_speed: number
 	low_latency: 0 | 1
@@ -263,13 +263,13 @@ async function groupProviderListRows(
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>,
-	filerDB: DatabaseClient<FilerDatabase> | undefined,
+	filerDB: DatabaseClient<FilerDatabase> | null,
 	asOf: string
 ): Promise<number> {
 	const byProviderID = await groupProviderListRows(providers)
 	const insertRows: Insertable<BDCProviderTable>[] = []
 
-	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | undefined
+	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | null = null
 
 	for (const [providerID, rows] of byProviderID) {
 		const distinctFRNs = [...new Set(rows.map((row) => row.frn))]
@@ -515,6 +515,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION }, wofID: "wof_id" },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		let providersPopulated = 0
@@ -525,7 +526,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			providersPopulated = await populateBDCProviderTable(
 				db,
 				options.providers,
-				options.filerDB,
+				options.filerDB ?? null,
 				options.primaryFRNAsOf ?? options.asOfDate
 			)
 

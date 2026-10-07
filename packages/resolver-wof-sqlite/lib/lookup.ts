@@ -320,7 +320,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 			const result = await strategy(query, convention)
 
-			if (result !== null) {
+			if (result) {
 				outcome = result
 
 				break
@@ -478,7 +478,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		const extract =
 			forceExtract ??
-			pickExtractForPlacetype(this.#extracts, firstPlacetype, {
+			pickExtractForPlacetype(this.#extracts, firstPlacetype ?? null, {
 				country: query.country,
 				countriesBySchema: this.#extractCountries,
 			})
@@ -645,7 +645,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 				: wofAliases
 
 			const sName = softNameScore(query.text, cand.name, aliases)
-			const sPop = populationScaleTerm(cand.population, this.#weights)
+			const sPop = populationScaleTerm(cand.population ?? null, this.#weights)
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
 		}
 
@@ -703,22 +703,28 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		)
 
 		return rows.map((row) => {
-			const c: PlaceCandidate = {
+			return {
 				id: row.id,
 				name: row.name,
 				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
 				lat: row.lat ?? 0,
 				lon: row.lon ?? 0,
-				parent_id: row.parent_id ?? undefined,
+				parent_id: row.parent_id ?? null,
 				score: 0,
-			}
-
-			if (row.population !== null && row.population > 0) {
-				c.population = row.population
-			}
-
-			return c
+				population: row.population !== null && row.population > 0 ? row.population : null,
+				distanceKm: null,
+				exactMatch: null,
+				prominence: null,
+				referential: null,
+				encyclopedic: null,
+				importance: null,
+				bbox: null,
+				mismatch: null,
+				containedByQualifier: null,
+				regionScopeMiss: null,
+				variantAliasExempted: null,
+			} satisfies PlaceCandidate
 		})
 	}
 

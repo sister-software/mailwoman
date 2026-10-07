@@ -133,7 +133,10 @@ describe("parseExhibit21 — clean HTML table", () => {
 	it("a data row with no jurisdiction column is a name-only subsidiary, not unparseable", () => {
 		const html = "<table><tr><td>Standalone Sub LLC</td></tr></table>"
 
-		expect(parseExhibit21(html)).toEqual({ subsidiaries: [{ name: "Standalone Sub LLC" }], unparseable: 0 })
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Standalone Sub LLC", jurisdiction: null }],
+			unparseable: 0,
+		})
 	})
 
 	it("an empty <tr></tr> is skipped as formatting cruft — not a subsidiary, not unparseable", () => {
@@ -212,7 +215,10 @@ describe("parseExhibit21 — nested-list variant", () => {
 	it("a list item with no parenthetical jurisdiction is name-only, not unparseable", () => {
 		const html = "<ul><li>Standalone Sub LLC</li></ul>"
 
-		expect(parseExhibit21(html)).toEqual({ subsidiaries: [{ name: "Standalone Sub LLC" }], unparseable: 0 })
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Standalone Sub LLC", jurisdiction: null }],
+			unparseable: 0,
+		})
 	})
 })
 
@@ -245,7 +251,7 @@ describe("parseExhibit21 — plain-text variant", () => {
 		const result = parseExhibit21(text)
 
 		expect(result.unparseable).toBe(0)
-		expect(result.subsidiaries).toEqual([{ name: "Acme Fiber, LLC, Delaware" }])
+		expect(result.subsidiaries).toEqual([{ name: "Acme Fiber, LLC, Delaware", jurisdiction: null }])
 	})
 
 	it("blank lines are skipped, never counted as unparseable", () => {

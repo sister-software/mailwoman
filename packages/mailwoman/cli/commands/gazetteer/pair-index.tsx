@@ -102,7 +102,7 @@ const SOURCE_PARENT_TAGS = {
 /**
  * The secondary sources stay separate files so the header records an MD5 for each one.
  */
-function splitPathList(value: string | undefined): string[] {
+function splitPathList(value: string | null | undefined): string[] {
 	return extractDelimited(value)
 }
 
@@ -176,7 +176,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				header: false,
 				enableQuoteHandling: true,
 			})) {
-				if (header === null) {
+				if (!header) {
 					header = cells.map((h) => h.trim().toUpperCase())
 					cityIx = header.indexOf("CITY")
 					districtIx = header.indexOf("DISTRICT")

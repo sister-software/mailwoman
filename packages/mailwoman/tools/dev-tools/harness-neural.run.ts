@@ -109,35 +109,35 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["tests"] != null) {
+	if (values["tests"]) {
 		out.testsDir = values["tests"] as string
 	}
 
-	if (values["out-json"] != null) {
+	if (values["out-json"]) {
 		out.outJSON = values["out-json"] as string
 	}
 
-	if (values["model"] != null) {
+	if (values["model"]) {
 		out.modelPath = values["model"] as string
 	}
 
-	if (values["tokenizer"] != null) {
+	if (values["tokenizer"]) {
 		out.tokenizerPath = values["tokenizer"] as string
 	}
 
-	if (values["model-card"] != null) {
+	if (values["model-card"]) {
 		out.modelCardPath = values["model-card"] as string
 	}
 
-	if (values["gazetteer-lexicon"] != null) {
+	if (values["gazetteer-lexicon"]) {
 		out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
 	}
 
-	if (values["anchor-lookup"] != null) {
+	if (values["anchor-lookup"]) {
 		out.anchorLookupPath = values["anchor-lookup"] as string
 	}
 
-	if (values["conventions"] != null) {
+	if (values["conventions"]) {
 		out.conventions = values["conventions"] as string
 	}
 
@@ -145,11 +145,11 @@ function parseArgs(): Args {
 		out.bridgeGaps = true
 	}
 
-	if (values["admin-fst"] != null) {
+	if (values["admin-fst"]) {
 		out.adminFSTPath = values["admin-fst"] as string
 	}
 
-	if (values["morphology-fst"] != null) {
+	if (values["morphology-fst"]) {
 		out.morphologyBinPath = values["morphology-fst"] as string
 	}
 
@@ -157,7 +157,7 @@ function parseArgs(): Args {
 		out.morphologyEnabled = false
 	}
 
-	if (values["falsehoods"] != null) {
+	if (values["falsehoods"]) {
 		out.falsehoodsDir = values["falsehoods"] as string
 	}
 
@@ -474,8 +474,8 @@ interface AssertionResult {
 	/**
 	 * The assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded like neural.
 	 */
-	assembled_pass?: boolean
-	assembled_actual?: ClassificationRecord
+	assembled_pass: boolean | null
+	assembled_actual: ClassificationRecord | null
 }
 
 async function runAssertion(
@@ -497,8 +497,8 @@ async function runAssertion(
 	// with the same loose top-1 semantics and tree→visible-record conversion as neural.
 	// Off unless `--assembled` wired the pipeline.
 	// An assembled-pipeline regression is invisible against raw-neural F1.
-	let assembledPass: boolean | undefined
-	let assembledRecord: ClassificationRecord | undefined
+	let assembledPass: boolean | null = null
+	let assembledRecord: ClassificationRecord | null = null
 
 	if (pipeline) {
 		const { tree: assembledTree } = await pipeline(a.input)
@@ -621,7 +621,7 @@ function printReport(results: AssertionResult[]): void {
 
 	// Assembled-pipeline arm (only when --assembled): what the assembled pipeline
 	// (grouper + reconcile + fast-path) gains or loses against raw neural on the same assertions.
-	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
+	const hasAssembled = results.some((r) => r.assembled_pass !== null)
 
 	if (hasAssembled) {
 		const asmPass = results.filter((r) => r.assembled_pass).length
@@ -718,13 +718,13 @@ async function main(): Promise<void> {
 		// lookup with near-postcode suppression.
 		// Zero-filled clues depress country recall and fake an affix crash
 		// (the ship config. See CONTRIBUTING_MODEL_WORK eval invariants).
-		let gazetteerLexicon: GazetteerLexicon | undefined
+		let gazetteerLexicon: GazetteerLexicon | null = null
 
 		if (args.gazetteerLexiconPath) {
 			gazetteerLexicon = parseGazetteerLexicon(await readLocalJSONFile(args.gazetteerLexiconPath))
 		}
 
-		let postcodeAnchorLookup: AnchorLookup | undefined
+		let postcodeAnchorLookup: AnchorLookup | null = null
 
 		if (args.anchorLookupPath) {
 			postcodeAnchorLookup = parseAnchorLookup(await readLocalJSONFile(args.anchorLookupPath))
@@ -744,7 +744,7 @@ async function main(): Promise<void> {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
 
-	let adminFST: ReturnType<typeof deserializeFST> | undefined
+	let adminFST: ReturnType<typeof deserializeFST> | null = null
 
 	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
@@ -752,7 +752,7 @@ async function main(): Promise<void> {
 		adminFST = deserializeFST(await readLocalBuffer(args.adminFSTPath))
 	}
 
-	let morphologyFST: ReturnType<typeof deserializeFST> | undefined
+	let morphologyFST: ReturnType<typeof deserializeFST> | null = null
 
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {

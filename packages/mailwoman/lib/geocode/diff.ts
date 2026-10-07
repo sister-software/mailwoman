@@ -26,16 +26,16 @@ import { haversineKm } from "@mailwoman/spatial"
 export interface SpanResolution {
 	tag: string
 	value: string
-	placeID?: string
-	lat?: number
-	lon?: number
+	placeID: string | null
+	lat: number | null
+	lon: number | null
 	/**
 	 * How many candidates the retrieval considered.
 	 *
 	 * Breadth rather than correctness.
 	 * A span that won from 40 is less settled than one that won from 2, even when both picked the same place.
 	 */
-	candidates?: number
+	candidates: number | null
 }
 
 /**
@@ -44,14 +44,14 @@ export interface SpanResolution {
 export interface SpanGeoDelta {
 	tag: string
 	value: string
-	placeIDBefore?: string
-	placeIDAfter?: string
+	placeIDBefore: string | null
+	placeIDAfter: string | null
 	/**
 	 * Kilometers between the two arms' centroids for this span, when both resolved.
 	 */
-	movedKm?: number
-	candidatesBefore?: number
-	candidatesAfter?: number
+	movedKm: number | null
+	candidatesBefore: number | null
+	candidatesAfter: number | null
 	/**
 	 * `resolved` / `unresolved` / `repointed` — the last meaning the span kept its text
 	 * and tag and landed on a different place.
@@ -68,21 +68,21 @@ export interface GeocodeDiff {
 	 */
 	parse: ParseDiff
 	spanGeo: SpanGeoDelta[]
-	tierBefore?: string
-	tierAfter?: string
-	latBefore?: number | null
-	lonBefore?: number | null
-	latAfter?: number | null
-	lonAfter?: number | null
+	tierBefore: string | null
+	tierAfter: string | null
+	latBefore: number | null
+	lonBefore: number | null
+	latAfter: number | null
+	lonAfter: number | null
 	/**
 	 * Kilometers the final answer moved.
 	 *
-	 * Undefined when either arm returned no coordinate.
+	 * Null when either arm returned no coordinate.
 	 * This differs from a zero-kilometer move and must not be read as one.
 	 */
-	movedKm?: number
-	uncertaintyBefore?: number | null
-	uncertaintyAfter?: number | null
+	movedKm: number | null
+	uncertaintyBefore: number | null
+	uncertaintyAfter: number | null
 	identical: boolean
 	/**
 	 * Which of the three explanations the evidence supports.
@@ -97,17 +97,17 @@ export interface GeocodeDiff {
 		| "coordinate-appeared-or-vanished"
 }
 
-function resolutions(tree: AddressTree | null | undefined): Map<string, SpanResolution> {
+function resolutions(tree: AddressTree | null): Map<string, SpanResolution> {
 	const out = new Map<string, SpanResolution>()
 
 	for (const node of flattenTreeNodes(tree)) {
 		out.set(`${node.start}:${node.end}:${node.tag}`, {
 			tag: node.tag,
 			value: node.value,
-			...(node.placeID === undefined ? {} : { placeID: node.placeID }),
-			...(node.lat === undefined ? {} : { lat: node.lat }),
-			...(node.lon === undefined ? {} : { lon: node.lon }),
-			...(node.alternatives === undefined ? {} : { candidates: node.alternatives }),
+			placeID: node.placeID ?? null,
+			lat: node.lat ?? null,
+			lon: node.lon ?? null,
+			candidates: node.alternatives ?? null,
 		})
 	}
 
@@ -129,13 +129,13 @@ export interface GeocodeArm {
  * Report which of the three explanations the evidence supports.
  */
 export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm): GeocodeDiff {
-	const parse = diffParse(input, before.tree, after.tree, {
+	const parse = diffParse(input, before.tree ?? null, after.tree ?? null, {
 		...(before.localeCountry ? { before: before.localeCountry } : {}),
 		...(after.localeCountry ? { after: after.localeCountry } : {}),
 	})
 
-	const ra = resolutions(before.tree)
-	const rb = resolutions(after.tree)
+	const ra = resolutions(before.tree ?? null)
+	const rb = resolutions(after.tree ?? null)
 	const spanGeo: SpanGeoDelta[] = []
 
 	for (const [key, left] of ra) {
@@ -143,34 +143,33 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 
 		if (!right) continue
 
-		const bothPlaced =
-			left.lat !== undefined && left.lon !== undefined && right.lat !== undefined && right.lon !== undefined
+		const bothPlaced = left.lat !== null && left.lon !== null && right.lat !== null && right.lon !== null
 
-		const movedKm = bothPlaced ? haversineKm(left.lat!, left.lon!, right.lat!, right.lon!) : undefined
+		const movedKm = bothPlaced ? haversineKm(left.lat!, left.lon!, right.lat!, right.lon!) : null
 		const repointed = left.placeID !== right.placeID
 
 		const kind: SpanGeoDelta["kind"] = repointed
 			? "repointed"
-			: left.placeID === undefined && right.placeID !== undefined
+			: !left.placeID && right.placeID
 				? "resolved"
-				: left.placeID !== undefined && right.placeID === undefined
+				: left.placeID && !right.placeID
 					? "unresolved"
 					: "unchanged"
 
 		spanGeo.push({
 			tag: left.tag,
 			value: left.value,
-			...(left.placeID === undefined ? {} : { placeIDBefore: left.placeID }),
-			...(right.placeID === undefined ? {} : { placeIDAfter: right.placeID }),
-			...(movedKm === undefined ? {} : { movedKm }),
-			...(left.candidates === undefined ? {} : { candidatesBefore: left.candidates }),
-			...(right.candidates === undefined ? {} : { candidatesAfter: right.candidates }),
+			placeIDBefore: left.placeID,
+			placeIDAfter: right.placeID,
+			movedKm,
+			candidatesBefore: left.candidates,
+			candidatesAfter: right.candidates,
 			kind,
 		})
 	}
 
 	const bothPlaced = before.lat !== null && before.lat !== undefined && after.lat !== null && after.lat !== undefined
-	const movedKm = bothPlaced ? haversineKm(before.lat!, before.lon!, after.lat!, after.lon!) : undefined
+	const movedKm = bothPlaced ? haversineKm(before.lat!, before.lon!, after.lat!, after.lon!) : null
 	const tierChanged = before.tier !== after.tier
 	const anyRepoint = spanGeo.some((s) => s.kind !== "unchanged")
 
@@ -191,13 +190,13 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 		input,
 		parse,
 		spanGeo,
-		...(before.tier === undefined ? {} : { tierBefore: before.tier }),
-		...(after.tier === undefined ? {} : { tierAfter: after.tier }),
+		tierBefore: before.tier ?? null,
+		tierAfter: after.tier ?? null,
 		latBefore: before.lat ?? null,
 		lonBefore: before.lon ?? null,
 		latAfter: after.lat ?? null,
 		lonAfter: after.lon ?? null,
-		...(movedKm === undefined ? {} : { movedKm }),
+		movedKm,
 		uncertaintyBefore: before.uncertaintyM ?? null,
 		uncertaintyAfter: after.uncertaintyM ?? null,
 		identical: attribution === "unchanged" && (movedKm ?? 0) === 0,
@@ -223,7 +222,7 @@ export function renderGeocodeDiff(diff: GeocodeDiff): string {
 		lines.push(`  ! tier ${diff.tierBefore ?? "—"} → ${diff.tierAfter ?? "—"}`)
 	}
 
-	if (diff.movedKm !== undefined && diff.movedKm * 1000 >= SAME_POINT_M) {
+	if (diff.movedKm !== null && diff.movedKm * 1000 >= SAME_POINT_M) {
 		lines.push(
 			`  ! answer moved ${diff.movedKm < 1 ? `${(diff.movedKm * 1000).toFixed(0)} m` : `${diff.movedKm.toFixed(2)} km`}`
 		)
@@ -237,7 +236,7 @@ export function renderGeocodeDiff(diff: GeocodeDiff): string {
 		if (span.kind === "unchanged" && (span.candidatesBefore ?? 0) === (span.candidatesAfter ?? 0)) continue
 
 		const moved =
-			span.movedKm === undefined
+			span.movedKm === null
 				? ""
 				: `  ${span.movedKm < 1 ? `${(span.movedKm * 1000).toFixed(0)} m` : `${span.movedKm.toFixed(1)} km`}`
 

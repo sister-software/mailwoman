@@ -10,6 +10,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -24,6 +25,7 @@ const norm = backendNameKey
  */
 const PLACES: ResolvedPlace[] = [
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 1,
 		name: "Zürich",
 		placetype: "locality",
@@ -35,6 +37,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 2,
 		name: "Zurich",
 		placetype: "locality",
@@ -46,6 +49,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 3,
 		name: "Berlin",
 		placetype: "locality",
@@ -57,6 +61,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 4,
 		name: "Berlin",
 		placetype: "locality",
@@ -68,6 +73,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 5,
 		name: "Berlin",
 		placetype: "locality",
@@ -80,6 +86,7 @@ const PLACES: ResolvedPlace[] = [
 	},
 	// Manchester: the in-country answer the soft prior must keep.
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 6,
 		name: "Manchester",
 		placetype: "locality",
@@ -91,6 +98,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 7,
 		name: "Manchester",
 		placetype: "locality",
@@ -103,6 +111,7 @@ const PLACES: ResolvedPlace[] = [
 	},
 	// Weimar / Thüringen: a 2-token span containing a real exact match must not outrank the 1-token gold.
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 8,
 		name: "Weimar",
 		placetype: "locality",
@@ -114,6 +123,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: 9,
 		name: "Thüringen",
 		placetype: "locality",
@@ -125,7 +135,16 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	// A postcode → point for the not-bare guard, sitting on Berlin, Wisconsin (id 5) so the check admits it.
-	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
+	{
+		...EMPTY_PLACE_FIELDS,
+		id: 900,
+		name: "54923",
+		placetype: "postalcode",
+		country: "US",
+		lat: 43.97,
+		lon: -88.95,
+		score: 1,
+	},
 ]
 
 async function makeBackend(
@@ -270,6 +289,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 describe("importance key in the admin walk (#17)", () => {
 	const WHITBY: ResolvedPlace[] = [
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 1,
 			name: "Whitby",
 			placetype: "locality",
@@ -281,6 +301,7 @@ describe("importance key in the admin walk (#17)", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 2,
 			name: "Whitby",
 			placetype: "locality",
@@ -365,6 +386,7 @@ describe("bare-country class", () => {
 	const WORLD: ResolvedPlace[] = [
 		// prominence = log10(population + 1).
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 10,
 			name: "Japan",
 			placetype: "country",
@@ -376,6 +398,7 @@ describe("bare-country class", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 11,
 			name: "Japan",
 			placetype: "locality",
@@ -387,6 +410,7 @@ describe("bare-country class", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 12,
 			name: "Germany",
 			placetype: "country",
@@ -398,6 +422,7 @@ describe("bare-country class", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 13,
 			name: "Nigeria",
 			placetype: "country",
@@ -409,6 +434,7 @@ describe("bare-country class", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 14,
 			name: "Paris",
 			placetype: "locality",
@@ -548,6 +574,7 @@ describe("bare-country class", () => {
 describe("bare-region dominance (#1650)", () => {
 	const US_STATES: ResolvedPlace[] = [
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 20,
 			name: "Georgia",
 			placetype: "region",
@@ -560,6 +587,7 @@ describe("bare-region dominance (#1650)", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 21,
 			name: "Georgia",
 			placetype: "locality",
@@ -572,6 +600,7 @@ describe("bare-region dominance (#1650)", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 22,
 			name: "New York",
 			placetype: "region",
@@ -584,6 +613,7 @@ describe("bare-region dominance (#1650)", () => {
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 23,
 			name: "New York",
 			placetype: "locality",

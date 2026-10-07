@@ -36,8 +36,8 @@ export interface AddressPointHit {
 	 * A query that never contained those values cannot supply them.
 	 * Optional, because some sources omit one or both.
 	 */
-	localityNorm?: string
-	postcode?: string
+	localityNorm: string | null
+	postcode: string | null
 }
 
 /**
@@ -74,7 +74,7 @@ export interface AddressPointLookup {
 		 * bounding box scopes the `(street, number)` probe instead.
 		 * US situs never passes it, so the Latin path stays byte-stable.
 		 */
-		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+		bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 	}): AddressPointHit | null
 }
 
@@ -99,13 +99,13 @@ export interface InterpolatedPointHit {
 	/**
 	 * False when only the opposite side's range contained the number (right block, wrong side).
 	 */
-	parityMatched?: boolean
+	parityMatched: boolean | null
 	/**
 	 * `both` means neighbors bracketed it.
 	 *
 	 * `single` means one-sided extrapolation with larger uncertainty.
 	 */
-	bracket?: "both" | "single"
+	bracket: "both" | "single" | null
 	/**
 	 * Honest uncertainty radius in meters (half the matched segment length).
 	 */
@@ -144,8 +144,7 @@ export interface InterpolationLookup {
 	 * so it ships in the artifact.
 	 * The resolver applies it as the default whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
 	 *
-	 * `undefined` means the artifact defines no multiplier.
-	 * An implementation without the property also reports no multiplier.
+	 * `null` means the artifact defines no multiplier.
 	 *
 	 * Extracts built before the metadata table existed use that behavior.
 	 * The ladder then uses the caller-supplied factor or raw value, as before.
@@ -153,7 +152,7 @@ export interface InterpolationLookup {
 	 * Implementations must read this at open time (constructor/factory), never per-lookup.
 	 * `find()` is synchronous by design.
 	 */
-	readonly radiusCalibration?: number
+	readonly radiusCalibration: number | null
 }
 
 /**
@@ -195,13 +194,54 @@ export interface StreetCentroidLookup {
 }
 
 /**
- * One admin-ancestry entry a PFX1 node asserts (coarsest-first: country → constituent country → district).
+ * One Who's On First place in an administrative ancestry.
+ *
+ * A PFX1 node lists them coarsest first.
+ * A POI result lists them deepest first.
  */
-export interface PostcodePrefixAncestor {
+export interface WOFAncestor {
+	/**
+	 * The WOF placetype, such as `"country"`, `"macroregion"` or `"region"`.
+	 */
 	placetype: string
+	/**
+	 * The Who's On First ID that consumers join against the gazetteer.
+	 */
 	wofID: number
+	/**
+	 * The display name.
+	 * It keeps a trace readable without a gazetteer lookup.
+	 */
 	name: string
 }
+
+/**
+ * One POI found near a search center, with its distance from that center in meters.
+ */
+export interface POIDistanceHit {
+	name: string
+	lat: number
+	lon: number
+	distanceM: number
+	country: string
+	confidence: number
+}
+
+/**
+ * One gazetteer hit for a postcode.
+ *
+ * A `lat` and `lon` of 0 mean the postcode is known but has no centroid.
+ */
+export interface PostcodePlace {
+	country: string
+	lat: number
+	lon: number
+}
+
+/**
+ * One admin-ancestry entry a PFX1 node asserts (coarsest-first: country → constituent country → district).
+ */
+export type PostcodePrefixAncestor = WOFAncestor
 
 /**
  * A PFX1 postcode-prefix node, the partial-code prior's payload ({@link ResolveOpts.postcodePrefixPrior}).
@@ -209,16 +249,16 @@ export interface PostcodePrefixAncestor {
  * The coordinate is optional and its absence is meaningful.
  * An ancestry-only tier such as Northern Ireland's BT districts includes `ancestors` and no `lat`/`lon`.
  *
- * The type represents that omission as absence.
+ * The type represents that omission as `null`.
  * `radiusP95Km` is mandatory whenever a coordinate is present, because a 1-digit US band
  * and a GB outward code are both a prefix with a centroid and differ by 200×.
  */
 export interface PostcodePrefixNode {
 	prefix: string
 	ancestors: readonly PostcodePrefixAncestor[]
-	lat?: number
-	lon?: number
-	radiusP95Km?: number
+	lat: number | null
+	lon: number | null
+	radiusP95Km: number | null
 	unitCount: number
 }
 

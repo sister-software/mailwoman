@@ -64,13 +64,15 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 				}),
 			],
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return {
 		classifier,
 		resolver,
 		placeCountry: false,
-		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [] }),
+		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -221,7 +223,7 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 	it("names a coordinate-less answer as its own refusal rather than as a missing designation", async () => {
 		using route = createCoastalErosionRoute({ databasePath })
 
-		const decision = route.observe(null, undefined)
+		const decision = route.observe(null, null)
 
 		expect(decision.fired).toBe(false)
 

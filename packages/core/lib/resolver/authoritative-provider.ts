@@ -7,7 +7,7 @@
  *   Results include the provider's identity, licensing and provenance.
  *   This keeps provider assertions separate from Mailwoman's inferences.
  *
- *   An absent provider field remains `undefined`; the interface uses no substitute value such as `false`, `0`, or `""`.
+ *   An absent provider field is `null`; the interface uses no substitute value such as `false`, `0`, or `""`.
  *   Refusal and ambiguity are explicit outcomes.
  *   Provider assertions do not overwrite Mailwoman's answer. The response contains both for the consumer to compare.
  *   Provider product names stay out of this interface. Product-specific mapping belongs in an adapter package.
@@ -25,8 +25,8 @@ export interface AuthoritativeQueryComponent {
 	 * Character offsets into {@link AuthoritativeQuery.normalizedQuery},
 	 * absent for components assembled from multiple spans.
 	 */
-	start?: number
-	end?: number
+	start: number | null
+	end: number | null
 }
 
 /**
@@ -40,15 +40,15 @@ export interface AuthoritativeQuery {
 	/**
 	 * ISO 3166-1 alpha-2, absent when the pipeline could not commit to one.
 	 */
-	countryCode?: string
+	countryCode: string | null
 	/**
 	 * The caller's locale hint (BCP 47), when declared.
 	 */
-	locale?: string
+	locale: string | null
 	/**
 	 * Mailwoman's own confidence in the parse, [0, 1], where absent means unmeasured rather than zero.
 	 */
-	parseConfidence?: number
+	parseConfidence: number | null
 }
 
 /**
@@ -74,25 +74,25 @@ export interface AuthoritativeMatch {
 	 * Authoritative object identifiers by scheme, lowercase keys owned by the adapter,
 	 * omitted when the provider supplies none.
 	 */
-	objectIDs?: Readonly<Record<string, string>>
+	objectIDs: Readonly<Record<string, string>> | null
 	/**
 	 * Canonical address fields as the provider returned them, keyed by the provider's own names
 	 * and deliberately not remapped to {@link ComponentTag}, because a lossy remap would
 	 * overwrite the assertion this interface exists to preserve.
 	 */
-	canonicalFields?: Readonly<Record<string, string>>
-	latitude?: number
-	longitude?: number
+	canonicalFields: Readonly<Record<string, string>> | null
+	latitude: number | null
+	longitude: number | null
 	/**
 	 * The provider's stated precision or tier for the coordinate, in the provider's own vocabulary,
 	 * because the resolver's tier taxonomy does not apply to an assertion Mailwoman did not make.
 	 */
-	coordinatePrecision?: string
+	coordinatePrecision: string | null
 	matchStatus: AuthoritativeMatchStatus
 	/**
 	 * The provider's own match score, provider-defined in scale and ordinal only.
 	 */
-	providerScore?: number
+	providerScore: number | null
 }
 
 /**
@@ -128,20 +128,20 @@ export interface AuthoritativeResponse {
 	/**
 	 * Source attribution for downstream display, when the provider's terms require one.
 	 */
-	attribution?: string
+	attribution: string | null
 	/**
 	 * License or terms identifier for downstream display, retained so a consumer can keep
 	 * provider-derived records under the provider's terms using this result.
 	 */
-	license?: string
+	license: string | null
 	/**
 	 * When the provider answered, ISO-8601, absent when the transport does not surface it.
 	 */
-	retrievedAt?: string
+	retrievedAt: string | null
 	/**
 	 * The provider's dataset version or epoch, when it states one.
 	 */
-	datasetVersion?: string
+	datasetVersion: string | null
 }
 
 /**

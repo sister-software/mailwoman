@@ -62,7 +62,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 						input: address,
 						components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
 						tree,
-						debug: opts.debug ? decodeAsXML(tree) : undefined,
+						debug: opts.debug ? decodeAsXML(tree) : null,
 					}
 				})
 

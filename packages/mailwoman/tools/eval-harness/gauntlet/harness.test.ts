@@ -101,7 +101,7 @@ function refusalFrom(run: () => unknown): PremiseLinkageRedactionError {
 }
 
 function isCount(value: unknown): value is PremiseLinkageCount {
-	if (typeof value !== "object" || value === null) return false
+	if (typeof value !== "object" || !value) return false
 
 	return typeof (value as PremiseLinkageCount).n === "number" && typeof (value as PremiseLinkageCount).of === "number"
 }
@@ -128,7 +128,7 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 	it("grades both arms through ONE mapper, so neither arm can hold a private definition of `exact`", () => {
 		const expected = { scheme: "uprn", id: "000000000001" }
 
-		expect(outcomeFor(undefined, expected)).toEqual({
+		expect(outcomeFor(null, expected)).toEqual({
 			outcome: PremiseLinkageOutcome.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ArmAssertsNoIdentifier,
 		})
@@ -138,31 +138,93 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 				{
 					provider: "p",
 					status: "matched",
-					matches: [{ provider_place_id: "a", object_ids: { uprn: "000000000001" }, match_status: "exact" }],
+					matches: [
+						{
+							provider_place_id: "a",
+							object_ids: { uprn: "000000000001" },
+							canonical_fields: null,
+							lat: null,
+							lon: null,
+							precision: null,
+							provider_score: null,
+							match_status: "exact",
+						},
+					],
+					attribution: null,
+					license: null,
+					retrieved_at: null,
+					dataset_version: null,
+					error: null,
 				},
 				expected
 			)
-		).toEqual({ outcome: PremiseLinkageOutcome.Exact })
+		).toEqual({ outcome: PremiseLinkageOutcome.Exact, failureCategory: null })
 
 		expect(
 			outcomeFor(
 				{
 					provider: "p",
 					status: "matched",
-					matches: [{ provider_place_id: "a", object_ids: { uprn: "000000000009" }, match_status: "exact" }],
+					matches: [
+						{
+							provider_place_id: "a",
+							object_ids: { uprn: "000000000009" },
+							canonical_fields: null,
+							lat: null,
+							lon: null,
+							precision: null,
+							provider_score: null,
+							match_status: "exact",
+						},
+					],
+					attribution: null,
+					license: null,
+					retrieved_at: null,
+					dataset_version: null,
+					error: null,
 				},
 				expected
 			).outcome
 		).toBe(PremiseLinkageOutcome.Wrong)
 
-		expect(outcomeFor({ provider: "p", status: "refused" }, expected).outcome).toBe(PremiseLinkageOutcome.Refused)
+		expect(
+			outcomeFor(
+				{
+					provider: "p",
+					status: "refused",
+					matches: null,
+					attribution: null,
+					license: null,
+					retrieved_at: null,
+					dataset_version: null,
+					error: null,
+				},
+				expected
+			).outcome
+		).toBe(PremiseLinkageOutcome.Refused)
 
 		expect(
 			outcomeFor(
 				{
 					provider: "p",
 					status: "ambiguous",
-					matches: [{ provider_place_id: "a", object_ids: { uprn: "000000000001" }, match_status: "exact" }],
+					matches: [
+						{
+							provider_place_id: "a",
+							object_ids: { uprn: "000000000001" },
+							canonical_fields: null,
+							lat: null,
+							lon: null,
+							precision: null,
+							provider_score: null,
+							match_status: "exact",
+						},
+					],
+					attribution: null,
+					license: null,
+					retrieved_at: null,
+					dataset_version: null,
+					error: null,
 				},
 				expected
 			).outcome
@@ -343,7 +405,7 @@ describe(": the public-report writer refuses an injected disclosure", () => {
 		const unpublishable = run.rows.filter((row) => !row.coordinatePublishable)
 
 		expect(unpublishable.length).toBeGreaterThan(0)
-		expect(unpublishable.every((row) => row.coordinateErrorM === undefined)).toBe(true)
+		expect(unpublishable.every((row) => row.coordinateErrorM === null)).toBe(true)
 	})
 
 	it("refuses a whole run smaller than the agreed minimum cell size", async () => {
@@ -434,6 +496,8 @@ describe(": the Mailwoman-only arm uses the production pipeline, unchanged", () 
 
 							return deps.resolver.resolveTree(tree)
 						},
+						artifactCoverage: null,
+						capabilityGaps: null,
 					},
 				},
 			})
@@ -477,6 +541,9 @@ describe(": the authoritative arm consumes the provider interface", () => {
 			rawQuery: "nothing the fixture knows",
 			normalizedQuery: "nothing the fixture knows",
 			components: [],
+			countryCode: null,
+			locale: null,
+			parseConfidence: null,
 		})
 
 		expect(answer.status).toBe(AuthoritativeResponseStatus.Refused)

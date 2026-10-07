@@ -76,16 +76,14 @@ export function poiObservationKind(verdict: QueryKindResult): QueryKind | null {
 }
 
 function designationMarkers<Observation>(
-	route:
-		| {
-				observe: (
-					latitude: number | null | undefined,
-					longitude: number | null | undefined
-				) => { fired: true; observation: Observation } | { fired: false; refusal: string }
-		  }
-		| undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: {
+		observe: (
+			latitude: number | null,
+			longitude: number | null
+		) => { fired: true; observation: Observation } | { fired: false; refusal: string }
+	} | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult,
 	toMarker: (observation: Observation, verdict: QueryKindResult) => QueryIntentMarker
 ): QueryIntentMarker[] {
@@ -177,9 +175,9 @@ export function absenceObservationMarker(
  * map assigns rather than whether a location will flood.
  */
 export function authorityDesignationMarkers(
-	route: AuthorityDesignationRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: AuthorityDesignationRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, authorityDesignationMarker)
@@ -202,11 +200,11 @@ export function authorityDesignationMarker(
 			`at the resolved coordinate. This states what the authority's map assigns at a location, not whether a property will flood.`,
 		evidence: {
 			reading: observation.reading,
-			...(observation.code ? { code: observation.code } : {}),
-			...(observation.definition ? { definition: observation.definition } : {}),
-			...(observation.areaID ? { areaID: observation.areaID } : {}),
+			code: observation.code,
+			definition: observation.definition,
+			areaID: observation.areaID,
 			containment: observation.containment,
-			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			coverage: observation.coverage,
 			indexCellIndex: observation.indexCellIndex,
 			extent: observation.extent,
 			limits: observation.limits,
@@ -221,9 +219,9 @@ export function authorityDesignationMarker(
  * the cell it covers and stating what the survey assigns rather than whether the land can be farmed.
  */
 export function soilCapabilityMarkers(
-	route: SoilCapabilityRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: SoilCapabilityRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, soilCapabilityMarker)
@@ -246,12 +244,12 @@ export function soilCapabilityMarker(
 			`This states what the survey assigns to the map unit covering a location, not whether the land can be farmed.`,
 		evidence: {
 			reading: observation.reading,
-			...(observation.topClass ? { topClass: observation.topClass } : {}),
-			...(observation.topClassShare === undefined ? {} : { topClassShare: observation.topClassShare }),
-			...(observation.topClassDefinition ? { topClassDefinition: observation.topClassDefinition } : {}),
+			topClass: observation.topClass,
+			topClassShare: observation.topClassShare,
+			topClassDefinition: observation.topClassDefinition,
 			distribution: observation.distribution,
-			...(observation.surveyArea ? { surveyArea: observation.surveyArea } : {}),
-			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			surveyArea: observation.surveyArea,
+			coverage: observation.coverage,
 			indexCellIndex: observation.indexCellIndex,
 			limits: observation.limits,
 			layer: observation.layer,
@@ -265,9 +263,9 @@ export function soilCapabilityMarker(
  * and label so a projection cannot be read as a present-day designation.
  */
 export function coastalErosionMarkers(
-	route: CoastalErosionRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: CoastalErosionRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, coastalErosionMarker)
@@ -294,7 +292,7 @@ export function coastalErosionMarker(
 			scenario: observation.scenario,
 			designations: observation.designations,
 			containment: observation.containment,
-			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			coverage: observation.coverage,
 			indexCellIndex: observation.indexCellIndex,
 			limits: observation.limits,
 			coverageLimit: observation.coverageLimit,
@@ -309,9 +307,9 @@ export function coastalErosionMarker(
  * and stating what a plan assigns rather than what may be built there.
  */
 export function zoningDesignationMarkers(
-	route: ZoningDesignationRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: ZoningDesignationRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, zoningDesignationMarker)
@@ -337,7 +335,7 @@ export function zoningDesignationMarker(
 			reading: observation.reading,
 			designations: observation.designations,
 			containment: observation.containment,
-			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			coverage: observation.coverage,
 			indexCellIndex: observation.indexCellIndex,
 			limits: observation.limits,
 			coverageLimit: observation.coverageLimit,
@@ -375,14 +373,14 @@ export interface LayerDesignationRoutes {
  */
 export function layerDesignationMarkers(
 	routes: LayerDesignationRoutes,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return [
-		...authorityDesignationMarkers(routes.authorityDesignationRoute, latitude, longitude, verdict),
-		...soilCapabilityMarkers(routes.soilCapabilityRoute, latitude, longitude, verdict),
-		...coastalErosionMarkers(routes.coastalErosionRoute, latitude, longitude, verdict),
-		...zoningDesignationMarkers(routes.zoningDesignationRoute, latitude, longitude, verdict),
+		...authorityDesignationMarkers(routes.authorityDesignationRoute ?? null, latitude, longitude, verdict),
+		...soilCapabilityMarkers(routes.soilCapabilityRoute ?? null, latitude, longitude, verdict),
+		...coastalErosionMarkers(routes.coastalErosionRoute ?? null, latitude, longitude, verdict),
+		...zoningDesignationMarkers(routes.zoningDesignationRoute ?? null, latitude, longitude, verdict),
 	]
 }

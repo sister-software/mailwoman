@@ -264,6 +264,7 @@ async function main(): Promise<void> {
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "layer_coverage.h3_cell", resolution: STREET_CENTROID_COVERAGE_RESOLUTION } },
 			createdAt: isoSeconds(),
+			sourceRecords: null,
 		})
 
 		const designated = cells.filter((cell) => cell.basis === "designated").length

@@ -59,7 +59,7 @@ test("featureIDFromLink reads the trailing id", () => {
 
 test("approvalDateFromSource keeps the date and drops the zero time", () => {
 	expect(approvalDateFromSource("2006/01/01 00:00:00")).toBe("2006-01-01")
-	expect(approvalDateFromSource("")).toBeUndefined()
+	expect(approvalDateFromSource("")).toBeNull()
 })
 
 test("featureFromSourceRow projects Tycho", () => {
@@ -96,7 +96,7 @@ test("featureFromSourceRow projects Tycho", () => {
 
 	expect(feature.centerLon).toBeCloseTo(-11.2153, 4)
 	expect(feature.centerLat).toBeCloseTo(-43.2958, 4)
-	expect(feature.origin).toBeUndefined()
+	expect(feature.origin).toBeNull()
 })
 
 test("featureFromSourceRow takes null for an absent attribute, as the Mars archive writes it", () => {
@@ -119,8 +119,8 @@ test("featureFromSourceRow takes null for an absent attribute, as the Mars archi
 		link: "http://planetarynames.wr.usgs.gov/Feature/1522",
 	})
 
-	expect(feature.origin).toBeUndefined()
-	expect(feature.quadName).toBeUndefined()
+	expect(feature.origin).toBeNull()
+	expect(feature.quadName).toBeNull()
 	expect(feature.diameterKm).toBe(0)
 	expect(feature.centerLon).toBe(180)
 })

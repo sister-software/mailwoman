@@ -65,7 +65,7 @@ function parseStdoutJSON(stdout: string): unknown {
 
 const ADDRESS = "350 5th Ave, New York, NY 10118"
 
-let absentPlainParse: Promise<{ stdout: string; stderr: string; code: number }> | undefined
+let absentPlainParse: Promise<{ stdout: string; stderr: string; code: number }> | null = null
 
 /**
  * The plain `parse --locale pt-BR` run under the stub home.

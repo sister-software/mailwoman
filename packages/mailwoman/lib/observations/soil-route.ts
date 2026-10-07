@@ -42,15 +42,15 @@ export interface SoilCapabilityObservation {
 	/**
 	 * The capability class with the largest share of the cell and the size of that share.
 	 *
-	 * Both are absent on a `designated_no_rating` reading, where the survey
-	 * mapped the ground but rated no class.
+	 * Both are null on a `designated_no_rating` reading.
+	 * There the survey mapped the ground but rated no class.
 	 */
-	topClass?: string
-	topClassShare?: number
+	topClass: string | null
+	topClassShare: number | null
 	/**
 	 * The authority's definition of the top class, taken from the domain table in the archive.
 	 */
-	topClassDefinition?: string
+	topClassDefinition: string | null
 	/**
 	 * The full class distribution, including the four absence shares and the truncated tail.
 	 */
@@ -58,11 +58,11 @@ export interface SoilCapabilityObservation {
 	/**
 	 * The survey area that covers the location, with its refresh date and field-survey date.
 	 */
-	surveyArea?: SoilSurveyAreaRecord
+	surveyArea: SoilSurveyAreaRecord | null
 	/**
 	 * The coverage record for the location.
 	 */
-	coverage?: ObservationCoverageRecord
+	coverage: ObservationCoverageRecord | null
 	indexCellIndex: string
 	/**
 	 * The product's exclusions, in the authority's own words.
@@ -111,7 +111,7 @@ export interface SoilCapabilityRoute extends Disposable {
 	 * Reads the layer at one coordinate.
 	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => SoilDesignationDecision
+	observe: (latitude: number | null, longitude: number | null) => SoilDesignationDecision
 }
 
 /**
@@ -136,7 +136,7 @@ export function createSoilCapabilityRoute(options: SoilCapabilityRouteOptions): 
 	return createDesignationRoute(lookup, {
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
 		refusalFor: (reading) =>
-			reading.kind === SoilReadingKind.Unknown || !reading.distribution ? "outside_surveyed_area" : undefined,
+			reading.kind === SoilReadingKind.Unknown || !reading.distribution ? "outside_surveyed_area" : null,
 		toObservation: (reading, latitude, longitude) =>
 			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
@@ -160,12 +160,12 @@ function toObservation(
 
 	return {
 		reading: reading.kind,
-		...(distribution.topClass ? { topClass: distribution.topClass } : {}),
-		...(distribution.topClassShare === undefined ? {} : { topClassShare: distribution.topClassShare }),
-		...(reading.topClassDefinition ? { topClassDefinition: reading.topClassDefinition } : {}),
+		topClass: distribution.topClass || null,
+		topClassShare: distribution.topClassShare,
+		topClassDefinition: reading.topClassDefinition || null,
 		distribution,
-		...(reading.surveyArea ? { surveyArea: reading.surveyArea } : {}),
-		...observationCoverageRecord(reading.coverage),
+		surveyArea: reading.surveyArea ?? null,
+		coverage: observationCoverageRecord(reading.coverage),
 		indexCellIndex: reading.indexCellIndex,
 		limits: reading.limits,
 		layer: observationLayerRecord(identity.manifest),

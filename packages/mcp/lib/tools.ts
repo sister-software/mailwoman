@@ -42,7 +42,7 @@ export interface MCPToolDeps {
  * Each `handler` re-parses `args` through its own `inputSchema` instead of trusting a cast,
  * because the table's uniform signature erases the per-tool types.
  */
-export interface MCPToolDef {
+interface MCPToolDef {
 	name: string
 	description: string
 	inputSchema: z.ZodObject<z.ZodRawShape>

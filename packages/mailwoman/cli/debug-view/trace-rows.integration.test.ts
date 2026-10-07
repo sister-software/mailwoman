@@ -69,7 +69,7 @@ function traceOf(overrides: Partial<GeocodeTrace["parse"]> = {}): GeocodeTrace {
 describe("evidence rows without a trace", () => {
 	it("every row reports its own absence rather than a plausible default", () => {
 		for (const row of [systemRow, localeHeadRow, tokensRow, channelsRow, decodeRow]) {
-			expect(row(undefined)).toBe(ABSENT)
+			expect(row(null)).toBe(ABSENT)
 		}
 	})
 })

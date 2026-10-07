@@ -39,7 +39,7 @@ export interface Relation {
 	vintage: string
 	relationship: string
 	assertion: Assertion
-	score?: number
+	score: number | null
 }
 
 export interface Prior {
@@ -56,7 +56,7 @@ export interface RelationInput {
 	vintage: string
 	relationship: string
 	assertion: Assertion
-	score?: number
+	score?: number | null
 }
 
 export function observation(source: string, vintage: string | null, value: unknown): Observation {
@@ -71,21 +71,20 @@ export function observation(source: string, vintage: string | null, value: unkno
  * was concluded rather than stated.
  */
 export function relation(input: RelationInput): Relation {
-	if (input.assertion === Assertion.Authoritative && input.score !== undefined) {
+	if (input.assertion === Assertion.Authoritative && input.score != null) {
 		throw new Error(
 			`authoritative relation cannot carry a score (${input.relationship} from ${input.source}): a score means the link was concluded, not stated`
 		)
 	}
 
-	const base = {
-		kind: "relation" as const,
+	return {
+		kind: "relation",
 		source: input.source,
 		vintage: input.vintage,
 		relationship: input.relationship,
 		assertion: input.assertion,
+		score: input.score ?? null,
 	}
-
-	return input.score === undefined ? base : { ...base, score: input.score }
 }
 
 export function prior(source: string, label: string, weight: number): Prior {

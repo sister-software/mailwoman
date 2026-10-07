@@ -147,7 +147,7 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 			)
 		}
 
-		if (row.searchedCategories !== undefined) {
+		if (row.searchedCategories) {
 			const sorted = [...new Set(row.searchedCategories)].toSorted(compareByCodePoint)
 
 			if (!row.searchedCategories.length || sorted.join("\u0000") !== row.searchedCategories.join("\u0000")) {
@@ -217,23 +217,23 @@ export interface AbsenceRowOutcome {
 	 * Category set that the search used.
 	 * It is present only when a POI intent formed.
 	 */
-	searchedCategories?: string[]
+	searchedCategories: string[] | null
 	/**
 	 * Description of how the searched set differs from the registered set.
 	 */
-	searchedSetBreach?: string
+	searchedSetBreach: string | null
 	/**
 	 * Observation text.
-	 * A silent row omits it.
+	 * It is null on a silent row.
 	 */
-	observationLine?: string
+	observationLine: string | null
 	/**
 	 * POI route result.
 	 * The value `none` means the POI route did not run.
 	 */
 	poiOutcome: "none" | "abstain" | "intent"
-	abstainReason?: string
-	resultsReturned?: number
+	abstainReason: string | null
+	resultsReturned: number | null
 }
 
 /**

@@ -94,8 +94,8 @@ export const RECIPES_BY_NAME: ReadonlyMap<string, CorpusRecipe> = new Map(RECIPE
 /**
  * Look up a recipe by its `<recipe>` name.
  */
-export function getRecipe(name: string): CorpusRecipe | undefined {
-	return RECIPES_BY_NAME.get(name)
+export function getRecipe(name: string): CorpusRecipe | null {
+	return RECIPES_BY_NAME.get(name) ?? null
 }
 
 /**

@@ -213,7 +213,7 @@ export function pickExtractsForPlacetype(
  */
 export function pickExtractForPlacetype(
 	extracts: ResolvedExtract[],
-	placetype: string | undefined,
+	placetype: string | null,
 	opts?: {
 		/**
 		 * The query's country constraint, when the caller has one.

@@ -70,13 +70,13 @@ const ProvisionActionSchema = z.enum(["exists", "updated", "replaced", "created"
 export type ProvisionAction = z.infer<typeof ProvisionActionSchema>
 
 const ProvisionedObjectSchema = z.object({
-	id: z.string().optional(),
+	id: z.string().nullable(),
 	action: ProvisionActionSchema,
 	/**
 	 * Differences between Stripe and the catalog that remain after the run,
 	 * every difference on a read-only run.
 	 */
-	drift: z.array(z.string()).optional(),
+	drift: z.array(z.string()).nullable(),
 })
 
 /**
@@ -101,15 +101,15 @@ export const ProvisionReportSchema = z.object({
 	prices: z.record(z.enum(SHOP_PLAN_CODES), ProvisionedObjectSchema),
 	paymentLinks: z.record(
 		z.enum(SHOP_PLAN_CODES),
-		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean(), promotionCodes: z.boolean() })
+		ProvisionedObjectSchema.extend({ url: z.string().nullable(), consent: z.boolean(), promotionCodes: z.boolean() })
 	),
 	/**
 	 * The Customer Portal configuration.
 	 *
 	 * Its `url` opens the login page where customers can change a card or plan or cancel.
 	 */
-	portal: ProvisionedObjectSchema.extend({ url: z.string().optional() }),
-	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),
+	portal: ProvisionedObjectSchema.extend({ url: z.string().nullable() }),
+	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().nullable() }).nullable(),
 })
 
 /**
@@ -121,12 +121,12 @@ function planRecord<T>(build: (plan: ShopPlan) => T): Record<ShopPlan["code"], T
 	return Object.fromEntries(SHOP_PLANS.map((plan) => [plan.code, build(plan)])) as Record<ShopPlan["code"], T>
 }
 
-async function findListed<T>(list: AsyncIterable<T>, matches: (item: T) => boolean): Promise<T | undefined> {
+async function findListed<T>(list: AsyncIterable<T>, matches: (item: T) => boolean): Promise<T | null> {
 	for await (const item of list) {
 		if (matches(item)) return item
 	}
 
-	return undefined
+	return null
 }
 
 function withDrift<T extends ProvisionedObject>(object: T, drift: string[]): T {
@@ -156,14 +156,16 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		(candidate) => candidate.metadata[SHOP_METADATA_KEY] === SHOP_MARK
 	)
 
-	let productReport: ProvisionedObject = product ? { id: product.id, action: "exists" } : { action: "missing" }
+	let productReport: ProvisionedObject = product
+		? { id: product.id, action: "exists", drift: null }
+		: { id: null, action: "missing", drift: null }
 
 	if (product) {
 		const drift = differs(AGREEMENT_METADATA_KEY, product.metadata[AGREEMENT_METADATA_KEY], AGREEMENT_VERSION)
 
 		if (drift.length && input.apply) {
 			product = await stripe.products.update(product.id, { metadata: { [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION } })
-			productReport = { id: product.id, action: "updated" }
+			productReport = { id: product.id, action: "updated", drift: null }
 		} else {
 			productReport = withDrift(productReport, drift)
 		}
@@ -175,19 +177,19 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 			metadata: { [SHOP_METADATA_KEY]: SHOP_MARK, [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION },
 		})
 
-		productReport = { id: product.id, action: "created" }
+		productReport = { id: product.id, action: "created", drift: null }
 	}
 
 	// Prices are found by lookup key.
 	// Stripe Prices are immutable, so a difference is reported as drift.
-	const prices: ProvisionReport["prices"] = planRecord(() => ({ action: "missing" }))
+	const prices: ProvisionReport["prices"] = planRecord(() => ({ id: null, action: "missing", drift: null }))
 
 	for (const plan of SHOP_PLANS) {
 		const listed = await stripe.prices.list({ lookup_keys: [plan.code], active: true, limit: 1 })
 		const price = listed.data[0]
 
 		if (price) {
-			prices[plan.code] = withDrift({ id: price.id, action: "exists" }, [
+			prices[plan.code] = withDrift({ id: price.id, action: "exists", drift: null }, [
 				...differs("unit_amount", price.unit_amount, plan.unitAmount),
 				...differs("currency", price.currency, plan.currency),
 				...differs("recurring.interval", price.recurring?.interval, plan.interval),
@@ -208,7 +210,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 			metadata: { [SHOP_METADATA_KEY]: SHOP_MARK },
 		})
 
-		prices[plan.code] = { id: created.id, action: "created" }
+		prices[plan.code] = { id: created.id, action: "created", drift: null }
 	}
 
 	const links: Stripe.PaymentLink[] = []
@@ -218,7 +220,10 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	}
 
 	const paymentLinks: ProvisionReport["paymentLinks"] = planRecord(() => ({
+		id: null,
+		url: null,
 		action: "missing",
+		drift: null,
 		consent: false,
 		promotionCodes: false,
 	}))
@@ -238,6 +243,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 			const held = {
 				id: existing.id,
 				url: existing.url,
+				drift: null,
 				consent: existing.consent_collection?.terms_of_service === "required",
 				promotionCodes: existing.allow_promotion_codes,
 			}
@@ -295,6 +301,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 					id: created.id,
 					url: created.url,
 					action: "replaced",
+					drift: null,
 					consent: true,
 					promotionCodes: true,
 				}
@@ -317,12 +324,22 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 				id: created.id,
 				url: created.url,
 				action: "created",
+				drift: null,
 				consent: true,
 				promotionCodes: true,
 			}
 		} catch (error) {
 			consent = false
-			paymentLinks[plan.code] = { action: "blocked", consent: false, promotionCodes: false }
+
+			paymentLinks[plan.code] = {
+				id: null,
+				url: null,
+				action: "blocked",
+				drift: null,
+				consent: false,
+				promotionCodes: false,
+			}
+
 			log(`Payment Link ${plan.code} not created: ${error instanceof Error ? error.message : String(error)}`)
 		}
 	}
@@ -336,14 +353,15 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	const portalReport = (configuration: Stripe.BillingPortal.Configuration, action: ProvisionAction) => ({
 		id: configuration.id,
 		action,
-		...(configuration.login_page.url ? { url: configuration.login_page.url } : {}),
+		drift: null,
+		url: configuration.login_page.url || null,
 	})
 
 	let portal: ProvisionReport["portal"] = existingPortal
 		? portalReport(existingPortal, "exists")
-		: { action: "missing" }
+		: { id: null, action: "missing", drift: null, url: null }
 
-	const priceIDs = SHOP_PLANS.map((plan) => prices[plan.code].id).filter((id): id is string => id !== undefined)
+	const priceIDs = SHOP_PLANS.map((plan) => prices[plan.code].id).filter((id): id is string => id !== null)
 
 	if (existingPortal) {
 		const drift = [
@@ -395,7 +413,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	// The webhook destination is found by URL and its event list is reconciled.
 	// An API version difference is only reported, because a new destination has a
 	// new signing secret the worker needs first.
-	let webhook: ProvisionReport["webhook"]
+	let webhook: ProvisionReport["webhook"] = null
 
 	if (input.workerOrigin) {
 		const url = `${input.workerOrigin.replace(/\/$/u, "")}${WEBHOOK_PATH}`
@@ -410,9 +428,12 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 
 			if (events.length && input.apply) {
 				await stripe.webhookEndpoints.update(existing.id, { enabled_events: [...WEBHOOK_EVENTS] })
-				webhook = withDrift({ id: existing.id, url, action: "updated" }, version)
+				webhook = withDrift({ id: existing.id, url, action: "updated", drift: null, secret: null }, version)
 			} else {
-				webhook = withDrift({ id: existing.id, url, action: "exists" }, [...events, ...version])
+				webhook = withDrift({ id: existing.id, url, action: "exists", drift: null, secret: null }, [
+					...events,
+					...version,
+				])
 			}
 		} else if (input.apply) {
 			const created = await stripe.webhookEndpoints.create({
@@ -423,9 +444,9 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 				metadata: { [SHOP_METADATA_KEY]: SHOP_MARK },
 			})
 
-			webhook = { id: created.id, url, action: "created", ...(created.secret ? { secret: created.secret } : {}) }
+			webhook = { id: created.id, url, action: "created", drift: null, secret: created.secret || null }
 		} else {
-			webhook = { url, action: "missing" }
+			webhook = { id: null, url, action: "missing", drift: null, secret: null }
 		}
 	}
 
@@ -435,6 +456,6 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		prices,
 		paymentLinks,
 		portal,
-		...(webhook ? { webhook } : {}),
+		webhook,
 	}
 }

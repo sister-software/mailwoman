@@ -58,7 +58,7 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * Overlays load lazily on the first row of their country, so ask after grading that row.
 	 */
-	gradedBaseOnly(caseCountry?: string): boolean
+	gradedBaseOnly(caseCountry: string | null): boolean
 }
 
 /**
@@ -178,7 +178,7 @@ export interface GauntletResolverPins {
  *
  * Pure and exported so the pin-reaches-the-pipeline interface is testable without the full database set.
  */
-export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
+export function resolverPinDeps(pins?: GauntletResolverPins | null): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 	poiVenueTier?: boolean
@@ -196,9 +196,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 		...(pins.spanRescoreRequireContextRemainder === undefined
 			? {}
 			: { spanRescoreRequireContextRemainder: pins.spanRescoreRequireContextRemainder }),
-		...(pins.spanRescoreWeakResolution === undefined
-			? {}
-			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),
+		...(pins.spanRescoreWeakResolution ? { spanRescoreWeakResolution: pins.spanRescoreWeakResolution } : {}),
 	}
 }
 
@@ -208,7 +206,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
  * It prints on the unpinned run too, so two gauntlet logs can be told apart,
  * because an off/on pair whose logs are indistinguishable is not evidence about the pin.
  */
-export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
+export function describeResolverPins(pins?: GauntletResolverPins | null): string {
 	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
 	// so this list includes every pin rather than only the boolean ones.
 	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
@@ -311,10 +309,10 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 	const missing: string[] = []
 
 	for (const locale of locales) {
-		let packageDir: PathBuilder | undefined
+		let packageDir: PathBuilder | null
 
 		try {
-			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir
+			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir ?? null
 		} catch {
 			continue
 		}
@@ -511,12 +509,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		opts.pins?.capitalTier === false
 			? undefined
 			: await loadCapitalIndex({
-					candidateDB: await resolveCandidateDBPath(opts.candidateDB),
+					candidateDB: (await resolveCandidateDBPath(opts.candidateDB)) ?? undefined,
 					missing: opts.pins?.capitalTier === true ? "throw" : "degrade",
 				})
 
 	const capitalLevel = capitalIndex
-		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
@@ -622,7 +620,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	 */
 	const runGeocode = async (
 		input: string,
-		geoOpts: GauntletGeocodeOpts | undefined,
+		geoOpts: GauntletGeocodeOpts | null,
 		extra: Pick<GeocodeDeps, "resolveTraceSink">
 	): Promise<GeocodeResult> => {
 		const { caseCountry, ...forwarded } = geoOpts ?? {}
@@ -659,12 +657,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},
-		gradedBaseOnly: (caseCountry?: string) => gradedBaseOnly(caseCountry, baseOnlyLocales),
-		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts, {}),
+		gradedBaseOnly: (caseCountry: string | null) => gradedBaseOnly(caseCountry, baseOnlyLocales),
+		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts ?? null, {}),
 		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const resolverTrace: ResolveNodeTrace[] = []
 
-			const result = await runGeocode(input, geoOpts, {
+			const result = await runGeocode(input, geoOpts ?? null, {
 				resolveTraceSink: (record) => resolverTrace.push(record),
 			})
 
@@ -714,15 +712,15 @@ export interface GauntletResult {
 	postcode_country_scope: string | null
 	/**
 	 * The capital promotion's firing receipt, projected verbatim: the promoted candidate's
-	 * country, present only when the promotion changed some node's leading candidate,
+	 * country, or null unless the promotion changed some node's leading candidate,
 	 * carrying the same firing-count posture as {@linkcode postcode_country_scope}.
 	 */
-	capital_promotion?: string
+	capital_promotion: string | null
 	/**
-	 * The variant-exemption firing receipt, projected verbatim and present (`true`) only when the
-	 * winning candidate reached the top because the exemption spared it the cross-country alias penalty.
+	 * The variant-exemption firing receipt, projected verbatim: `true` when the exemption
+	 * spared the winning candidate the cross-country alias penalty, and null otherwise.
 	 */
-	variant_alias_exemption?: true
+	variant_alias_exemption: true | null
 	/**
 	 * The resolved admin chain, locality → country, verbatim from
 	 * {@linkcode GeocodeResult.hierarchy}; Cases do not assert this value.
@@ -730,15 +728,15 @@ export interface GauntletResult {
 	 * The ablation layer's degradation ladder is synthesized from the gazetteer `placeID`s.
 	 * An empty array means the run resolved no admin-grade entry.
 	 */
-	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
+	hierarchy: Array<{ tag: string; name: string; placeID: string | null; lat: number | null; lon: number | null }>
 	/**
 	 * The stage-1 admin-coherence verdicts, verbatim from {@linkcode GeocodeResult.admin_coherence};
 	 * Cases do not assert these flag-only measurements.
 	 *
 	 * A dev-mcp row can count verdicts per component across a board run.
-	 * The field is absent when the geocode resolved no winner to check.
+	 * The field is null when the geocode resolved no winner to check.
 	 */
-	admin_coherence?: AdminCoherenceReport
+	admin_coherence: AdminCoherenceReport | null
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -767,14 +765,15 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
-		...(g.capital_promotion === undefined ? {} : { capital_promotion: g.capital_promotion }),
-		...(g.variant_alias_exemption === true ? { variant_alias_exemption: true as const } : {}),
-		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
+		capital_promotion: g.capital_promotion ?? null,
+		variant_alias_exemption: g.variant_alias_exemption === true ? true : null,
+		admin_coherence: g.admin_coherence ?? null,
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,
 			name: h.name,
-			...(h.placeID ? { placeID: h.placeID } : {}),
-			...(h.lat != null ? { lat: h.lat, lon: h.lon! } : {}),
+			placeID: h.placeID || null,
+			lat: h.lat ?? null,
+			lon: h.lon ?? null,
 		})),
 	}
 }

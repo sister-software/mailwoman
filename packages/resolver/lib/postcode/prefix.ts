@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
@@ -90,12 +91,13 @@ export function postcodePrefixResolvedPlace(
 	index: PostcodePrefixIndexLike
 ): CoordinateOptionalPlace {
 	return {
+		...EMPTY_PLACE_FIELDS,
 		id: 0,
 		name: prefix,
 		placetype: "postalcode",
 
 		country: index.country?.toUpperCase() ?? "",
-		...(node.lat !== undefined && node.lon !== undefined ? { lat: node.lat, lon: node.lon } : {}),
+		...(node.lat != null && node.lon != null ? { lat: node.lat, lon: node.lon } : {}),
 		score: 0,
 		exactMatch: false,
 	}

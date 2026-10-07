@@ -65,23 +65,23 @@ export type FloodContainmentPath = (typeof FloodContainmentPath)[keyof typeof Fl
 export interface FloodZoneReading {
 	kind: FloodReadingKind
 	/**
-	 * The authority's zone code, verbatim, present only on a `designated` reading.
+	 * The authority's zone code, verbatim, null unless the reading is `designated`.
 	 */
-	zoneCode?: string
+	zoneCode: string | null
 	/**
 	 * The definition the authority publishes for the answered zone, {@link FLOOD_ZONE_1} on a
 	 * designated absence, since this product represents Zone 1 by absence and ships no polygon for it.
 	 */
-	definition?: FloodZoneDefinition
+	definition: FloodZoneDefinition | null
 	/**
 	 * The polygon the ray cast matched on a `ray_cast` reading, identified so a reader can fetch and draw it.
 	 */
-	areaID?: string
+	areaID: string | null
 	containment: FloodContainmentPath
 	/**
-	 * The coverage row that licenses the reading, absent on `unknown`, which is the absence.
+	 * The coverage row that licenses the reading, null on `unknown`, which is the absence.
 	 */
-	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
+	coverage: (CoverageCell & { h3CellIndex: string; resolution: number }) | null
 	/**
 	 * The index cell probed, for a receipt.
 	 */
@@ -194,10 +194,10 @@ export class FloodZoneLookup implements Disposable {
 			return {
 				kind: FloodReadingKind.Designated,
 				zoneCode: zone.zoneCode,
-				...(definition ? { definition } : {}),
-				...(zone.areaID ? { areaID: zone.areaID } : {}),
+				definition: definition ?? null,
+				areaID: zone.areaID,
 				containment: zone.containment,
-				...(coverage ? { coverage } : {}),
+				coverage,
 				indexCellIndex: indexCell,
 				limits: EA_PRODUCT_LIMITS,
 			}
@@ -206,7 +206,11 @@ export class FloodZoneLookup implements Disposable {
 		if (!coverage) {
 			return {
 				kind: FloodReadingKind.Unknown,
+				zoneCode: null,
+				definition: null,
+				areaID: null,
 				containment: zone.containment,
+				coverage: null,
 				indexCellIndex: indexCell,
 				limits: EA_PRODUCT_LIMITS,
 			}
@@ -214,6 +218,8 @@ export class FloodZoneLookup implements Disposable {
 
 		return {
 			kind: FloodReadingKind.DesignatedAbsence,
+			zoneCode: null,
+			areaID: null,
 			definition: FLOOD_ZONE_1,
 			containment: zone.containment,
 			coverage,
@@ -229,7 +235,7 @@ export class FloodZoneLookup implements Disposable {
 	/**
 	 * The coverage row for the index cell's parent at the coverage resolution.
 	 */
-	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
+	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | null {
 		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
@@ -240,7 +246,7 @@ export class FloodZoneLookup implements Disposable {
 		indexCell: H3Cell,
 		latitude: number,
 		longitude: number
-	): { zoneCode?: string; areaID?: string; containment: FloodContainmentPath } {
+	): { zoneCode: string | null; areaID: string | null; containment: FloodContainmentPath } {
 		// Coarsest first: a whole hit high in the ancestor chain cannot be contradicted lower down,
 		// because compaction only ever replaces a full set of children with their parent.
 		const partialCells: number[] = []
@@ -251,7 +257,7 @@ export class FloodZoneLookup implements Disposable {
 
 			const whole = rows.find((row) => row.containment === FloodCellContainment.Whole)
 
-			if (whole) return { zoneCode: whole.zone_code, containment: FloodContainmentPath.WholeCell }
+			if (whole) return { zoneCode: whole.zone_code, areaID: null, containment: FloodContainmentPath.WholeCell }
 
 			if (rows.some((row) => row.containment === FloodCellContainment.Partial)) {
 				partialCells.push(short)
@@ -259,7 +265,7 @@ export class FloodZoneLookup implements Disposable {
 		}
 
 		if (!partialCells.length) {
-			return { containment: FloodContainmentPath.NoZoneCell }
+			return { zoneCode: null, areaID: null, containment: FloodContainmentPath.NoZoneCell }
 		}
 
 		const candidates = partialCells.flatMap((short) => this.#selectCandidates.all(short) as Array<{ area_id: string }>)
@@ -286,7 +292,7 @@ export class FloodZoneLookup implements Disposable {
 			}
 		}
 
-		return { containment: FloodContainmentPath.RayCast }
+		return { zoneCode: null, areaID: null, containment: FloodContainmentPath.RayCast }
 	}
 }
 

@@ -152,7 +152,7 @@ describe("the committed whitespace suite", () => {
 	it("gives every tracked row a reference and a note, and every enforcing row no reference", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeNull()
 
 				continue
 			}

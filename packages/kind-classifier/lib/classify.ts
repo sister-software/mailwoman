@@ -63,6 +63,7 @@ function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKind
 		kind: top.kind,
 		confidence: top.confidence,
 		alternatives: scored.slice(1).map((s) => ({ kind: s.kind, confidence: s.confidence })),
+		intentMarkers: null,
 	}
 }
 

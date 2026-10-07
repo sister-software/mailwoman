@@ -61,7 +61,7 @@ function readLocaleTables(source: ts.SourceFile, file: string): LocaleTable[] {
 	const tables: LocaleTable[] = []
 	const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
 
-	const unwrap = (node: ts.Node | undefined): ts.Node | undefined => {
+	const unwrap = (node: ts.Node | null): ts.Node | null => {
 		let current = node
 
 		while (
@@ -94,7 +94,7 @@ function readLocaleTables(source: ts.SourceFile, file: string): LocaleTable[] {
 			}
 
 			if (initializer && ts.isNewExpression(initializer)) {
-				const list = unwrap(initializer.arguments?.[0])
+				const list = unwrap(initializer.arguments?.[0] ?? null)
 
 				if (list && ts.isArrayLiteralExpression(list)) {
 					for (const element of list.elements) {
@@ -172,6 +172,7 @@ export const localeTablesCheck: RepoCheck = {
 						message: `${table.name} maps ${entry.country} to ${entry.locale}, whose region is ${region} — a table read by country key routes that country's rows through another country's artifact`,
 						file: table.file,
 						line: entry.line,
+						details: null,
 					})
 				}
 			}

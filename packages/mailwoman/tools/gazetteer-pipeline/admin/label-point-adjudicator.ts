@@ -37,10 +37,10 @@ export interface AdjudicatedPoint extends GeoCoordinate {
 /**
  * Looks up the GeoNames coordinate for a `gn:id` concordance within a country.
  *
- * It returns `undefined` when there is no anchor.
+ * It returns `null` when there is no anchor.
  * The caller then keeps the label point.
  */
-export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<GeoCoordinate | undefined>
+export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<GeoCoordinate | null>
 
 /**
  * Chooses the point to store.
@@ -49,11 +49,7 @@ export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => P
  * apart and the geometry point is {@link ANCHOR_DECISIVE_RATIO} times closer to the anchor.
  * Every other case keeps the label point.
  */
-export function choosePoint(
-	geom: GeoCoordinate,
-	lbl: GeoCoordinate,
-	anchor: GeoCoordinate | undefined
-): AdjudicatedPoint {
+export function choosePoint(geom: GeoCoordinate, lbl: GeoCoordinate, anchor: GeoCoordinate | null): AdjudicatedPoint {
 	const disagreement = haversineKm(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
 
 	if (disagreement <= LABEL_GEOM_DISAGREEMENT_KM || !anchor) {
@@ -119,8 +115,8 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 	}
 
 	return async (country, gnID) => {
-		if (!country) return undefined
+		if (!country) return null
 
-		return (await load(country)).get(String(gnID))
+		return (await load(country)).get(String(gnID)) ?? null
 	}
 }

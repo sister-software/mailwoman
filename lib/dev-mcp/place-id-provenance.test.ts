@@ -55,7 +55,7 @@ describe("placeIDProvenance", () => {
 
 describe("syntheticIDNote", () => {
 	it("is absent when every id is a real WOF id", () => {
-		expect(syntheticIDNote([890_463_199, 101_750_505])).toBeUndefined()
+		expect(syntheticIDNote([890_463_199, 101_750_505])).toBeNull()
 	})
 
 	it("names the counts per fold on a mixed set", () => {
@@ -67,6 +67,6 @@ describe("syntheticIDNote", () => {
 	})
 
 	it("is absent for an empty set rather than claiming a clean one", () => {
-		expect(syntheticIDNote([])).toBeUndefined()
+		expect(syntheticIDNote([])).toBeNull()
 	})
 })

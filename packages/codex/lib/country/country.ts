@@ -122,14 +122,14 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 /**
  * Check lookup by lowercase token first, then by folded token.
  */
-function probeCountry(token: string): string | undefined {
+function probeCountry(token: string): string | null {
 	const direct = COUNTRY_LOOKUP.get(token.trim().toLowerCase())
 
 	if (direct) return direct
 
 	const folded = foldName(token)
 
-	return folded ? COUNTRY_LOOKUP.get(folded) : undefined
+	return folded ? (COUNTRY_LOOKUP.get(folded) ?? null) : null
 }
 
 /**
@@ -152,7 +152,7 @@ export interface CountryMatch {
  *
  * Multi-word names must be passed as full phrases.
  */
-export function matchCountry(token: string | null | undefined): CountryMatch | null {
+export function matchCountry(token: string | null): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
 	const iso2 = probeCountry(token)
 
@@ -171,14 +171,14 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
  *
  * Returns undefined if unresolved.
  */
-export function countryCodeForTable(country: string | null | undefined): string | undefined {
+export function countryCodeForTable(country: string | null): string | null {
 	const trimmed = country?.trim()
 
-	if (!trimmed) return undefined
+	if (!trimmed) return null
 
 	if (trimmed.length === 2) return trimmed.toUpperCase()
 
-	return matchCountry(trimmed)?.iso2
+	return matchCountry(trimmed)?.iso2 ?? null
 }
 
 /**
@@ -214,7 +214,7 @@ export function isAlpha2CodeShape(value: unknown): value is string {
  * Case-insensitive check for any recognized country form.
  */
 export function isCountryToken(token: unknown): boolean {
-	return typeof token === "string" && probeCountry(token) !== undefined
+	return typeof token === "string" && probeCountry(token) !== null
 }
 
 /**

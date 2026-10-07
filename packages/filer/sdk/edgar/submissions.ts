@@ -62,7 +62,7 @@ interface RawSubmissionsPayload {
  * interface changed rather than a row worth silently dropping.
  */
 export function parseTenKFilings(cik: CIK, raw: unknown): TenKFiling[] {
-	const recent = (raw as RawSubmissionsPayload | null | undefined)?.filings?.recent
+	const recent = (raw as RawSubmissionsPayload | null)?.filings?.recent
 
 	if (!recent || !Array.isArray(recent.form)) {
 		throw new Error(`parseTenKFilings: malformed submissions payload for CIK ${cik} — missing filings.recent.form`)

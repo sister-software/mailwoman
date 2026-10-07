@@ -21,7 +21,7 @@ import { add, listVocabulary, type ValidationIssue, ValidationIssueCode } from "
  * Index a table by identifier, reporting every record after the first that
  * claims an identifier already taken.
  */
-function indexByID<T extends { path: string; id?: string }>(
+function indexByID<T extends { path: string; id: string | null }>(
 	issues: ValidationIssue[],
 	records: readonly T[],
 	label: string
@@ -29,7 +29,7 @@ function indexByID<T extends { path: string; id?: string }>(
 	const index = new Map<string, T>()
 
 	for (const record of records) {
-		if (record.id === undefined) continue
+		if (!record.id) continue
 
 		if (index.has(record.id)) {
 			add(
@@ -49,11 +49,11 @@ function indexByID<T extends { path: string; id?: string }>(
 }
 
 interface EdgeCheck {
-	subjectKind?: ConceptKind
+	subjectKind: ConceptKind | null
 	subjectPath: string
-	relationID?: string
+	relationID: string | null
 	relationPath: string
-	objectID?: string
+	objectID: string | null
 	objectPath: string
 }
 
@@ -62,9 +62,9 @@ interface EdgeCheck {
  * and range kinds shared by authored assertions, source observations and derived facts.
  */
 function checkEdge(issues: ValidationIssue[], edge: EdgeCheck, tables: ReferenceTables): void {
-	const relation = edge.relationID === undefined ? undefined : tables.relations.get(edge.relationID)
+	const relation = edge.relationID ? tables.relations.get(edge.relationID) : null
 
-	if (edge.relationID !== undefined && !relation) {
+	if (edge.relationID && !relation) {
 		add(
 			issues,
 			edge.relationPath,
@@ -73,9 +73,9 @@ function checkEdge(issues: ValidationIssue[], edge: EdgeCheck, tables: Reference
 		)
 	}
 
-	const object = edge.objectID === undefined ? undefined : tables.concepts.get(edge.objectID)
+	const object = edge.objectID ? tables.concepts.get(edge.objectID) : null
 
-	if (edge.objectID !== undefined && !object) {
+	if (edge.objectID && !object) {
 		add(
 			issues,
 			edge.objectPath,
@@ -132,7 +132,7 @@ function checkRelation(
 		}
 	}
 
-	if (relation.inverse === undefined) return
+	if (!relation.inverse) return
 
 	const inverse = index.get(relation.inverse)
 
@@ -188,8 +188,8 @@ function checkRelation(
  * Follow `isA` upward from one concept and report the trail if it returns to where it started,
  * leaving the direct self-edge to `checkIsA`'s self-reference report.
  */
-function findIsACycle(start: ConceptView, concepts: ReadonlyMap<string, ConceptView>): string[] | undefined {
-	if (start.id === undefined) return undefined
+function findIsACycle(start: ConceptView, concepts: ReadonlyMap<string, ConceptView>): string[] | null {
+	if (!start.id) return null
 
 	const startID = start.id
 	const visited = new Set<string>()
@@ -214,7 +214,7 @@ function findIsACycle(start: ConceptView, concepts: ReadonlyMap<string, ConceptV
 		}
 	}
 
-	return undefined
+	return null
 }
 
 function checkIsA(issues: ValidationIssue[], concept: ConceptView, concepts: ReadonlyMap<string, ConceptView>): void {
@@ -257,7 +257,7 @@ function checkDerivationInputs(issues: ValidationIssue[], fact: DerivedFactView,
 	}
 
 	for (const input of fact.inputs) {
-		if (input.kind === undefined || input.id === undefined) continue
+		if (!input.kind || !input.id) continue
 
 		if (input.kind === DerivationInputKind.DerivedFact && input.id === fact.id) {
 			add(issues, `${input.path}.id`, ValidationIssueCode.SelfReference, "a derived fact is not one of its own inputs")
@@ -319,7 +319,7 @@ export function checkReferences(issues: ValidationIssue[], view: DocumentView): 
 	}
 
 	for (const mapping of view.mappings) {
-		if (mapping.concept !== undefined && !concepts.has(mapping.concept)) {
+		if (mapping.concept && !concepts.has(mapping.concept)) {
 			add(
 				issues,
 				`${mapping.path}.concept`,
@@ -330,9 +330,9 @@ export function checkReferences(issues: ValidationIssue[], view: DocumentView): 
 	}
 
 	for (const triple of [...view.observations, ...view.derivedFacts]) {
-		const subject = triple.subject === undefined ? undefined : concepts.get(triple.subject)
+		const subject = triple.subject ? concepts.get(triple.subject) : null
 
-		if (triple.subject !== undefined && !subject) {
+		if (triple.subject && !subject) {
 			add(
 				issues,
 				`${triple.path}.subject`,
@@ -344,7 +344,7 @@ export function checkReferences(issues: ValidationIssue[], view: DocumentView): 
 		checkEdge(
 			issues,
 			{
-				subjectKind: subject?.kind,
+				subjectKind: subject?.kind ?? null,
 				subjectPath: `${triple.path}.subject`,
 				relationID: triple.relation,
 				relationPath: `${triple.path}.relation`,

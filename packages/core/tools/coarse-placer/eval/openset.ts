@@ -292,7 +292,7 @@ export async function evalOpenSet(
 	/**
 	 * Computes every score for one address and checks its in-map route against the label.
 	 */
-	function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
+	function scoreRow(raw: string, trueCountry: string | null): ScoredRow {
 		const z = logits(raw)
 		const probs = new Float64Array(C)
 
@@ -313,7 +313,7 @@ export async function evalOpenSet(
 		const inmapProbMax = Math.max(...IN.map((c) => probs[c]!))
 
 		return {
-			correctRoute: trueCountry !== undefined && routedCountry === trueCountry,
+			correctRoute: trueCountry !== null && routedCountry === trueCountry,
 			s: {
 				maxprob: inmapProbMax,
 				p_inmap: 1 - probs[OTHER]!,
@@ -331,7 +331,7 @@ export async function evalOpenSet(
 
 	const heldout = (await readLatinOffmapRows<DataRow>(dataDir)).filter((r) => r.group === "heldout")
 
-	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
+	const heldoutScored = heldout.map((r) => scoreRow(r.raw, null))
 
 	// Even-indexed rows form the development half.
 	// Odd-indexed rows form the test half.

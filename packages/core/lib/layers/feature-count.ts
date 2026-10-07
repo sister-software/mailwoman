@@ -11,8 +11,8 @@
  * the layer's count rather than the limit's: a builder that compares streamed count to
  * the limit as strict equality would otherwise refuse a complete download as short.
  */
-export function limitedFeatureCount(layerCount: number, limit: number | undefined): number {
-	return limit === undefined ? layerCount : Math.min(limit, layerCount)
+export function limitedFeatureCount(layerCount: number, limit: number | null): number {
+	return limit === null ? layerCount : Math.min(limit, layerCount)
 }
 
 export interface DeclaredFeatureCountInput {
@@ -33,5 +33,5 @@ export interface DeclaredFeatureCountInput {
  * else the layer's count bounded by the limit.
  */
 export function declaredFeatureCount(input: DeclaredFeatureCountInput): number {
-	return input.declared ?? limitedFeatureCount(input.layerCount, input.limit)
+	return input.declared ?? limitedFeatureCount(input.layerCount, input.limit ?? null)
 }

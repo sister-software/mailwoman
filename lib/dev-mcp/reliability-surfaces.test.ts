@@ -14,7 +14,7 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import type { ResolvedInput } from "#dev-mcp/input-sets"
+import { resolvedInput } from "#dev-mcp/input-sets"
 import {
 	ComponentAggregate,
 	decodeReliabilitySample,
@@ -35,12 +35,12 @@ function stubEngine(run: GeocodeRunLike): EngineLike {
 	return { session: { geocode: async () => run } }
 }
 
-const ROW: ResolvedInput = {
+const ROW = resolvedInput({
 	id: "row-1",
 	input: "1 Main St, Springfield, IL",
 	country: "US",
 	expectComponents: { street: "Main St", locality: "Springfield" },
-}
+})
 
 describe("decodeReliabilitySample", () => {
 	it("folds a span with min by default and mean on request", async () => {
@@ -132,7 +132,7 @@ describe("decodeReliabilitySample", () => {
 
 		const sample = await decodeReliabilitySample(
 			stubEngine(run),
-			[{ id: "bare", input: "somewhere" }],
+			[resolvedInput({ id: "bare", input: "somewhere" })],
 			ComponentAggregate.Min
 		)
 

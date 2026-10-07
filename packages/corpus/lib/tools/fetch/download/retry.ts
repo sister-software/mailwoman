@@ -80,10 +80,10 @@ export async function resumableDownload(options: {
 	const { url, dest, headers = {}, maxConnections = 400, retryDelayMs = DEFAULT_RETRY_DELAY_MS, report } = options
 	const tmp = dest + ".tmp"
 	let have = await bytesOnDisk(tmp)
-	let total: number | undefined
+	let total: number | null = null
 
 	for (let connection = 0; connection < maxConnections; connection++) {
-		if (total !== undefined && have >= total) break
+		if (total !== null && have >= total) break
 
 		let res: Response
 
@@ -137,7 +137,7 @@ export async function resumableDownload(options: {
 		}
 	}
 
-	if (total === undefined || have < total) {
+	if (total === null || have < total) {
 		throw new Error(`resumable download stalled at ${have} of ${total ?? "?"} bytes — ${url}`)
 	}
 

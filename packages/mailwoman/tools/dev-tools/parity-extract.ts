@@ -28,7 +28,7 @@ export interface ParityCase {
 	 * Set when an expected arg wasn't a pure literal.
 	 * That slot in `expected` holds source text.
 	 */
-	nonLiteral?: boolean
+	nonLiteral: boolean
 }
 
 function literalToJSON(node: ts.Expression): { ok: true; value: unknown } | { ok: false } {
@@ -64,7 +64,7 @@ function literalToJSON(node: ts.Expression): { ok: true; value: unknown } | { ok
 			const name =
 				ts.isIdentifier(property.name) || ts.isStringLiteralLike(property.name) ? property.name.text : undefined
 
-			if (name === undefined) return { ok: false }
+			if (!name) return { ok: false }
 
 			const value = literalToJSON(property.initializer)
 
@@ -105,7 +105,7 @@ export function extractAssertCalls(sourceText: string, fileName: string): Parity
 					}
 				}
 
-				cases.push(nonLiteral ? { file: fileName, input, expected, nonLiteral } : { file: fileName, input, expected })
+				cases.push({ file: fileName, input, expected, nonLiteral })
 			}
 		}
 

@@ -87,8 +87,8 @@ const UNSIZED_FEATURE_ZOOM = 2
 /**
  * The zoom at which a feature first appears, from its diameter in kilometers, by {@link DECLUTTER_STEPS}.
  */
-export function minZoomForDiameter(diameterKm: number | undefined): number {
-	if (diameterKm === undefined || diameterKm === 0) return UNSIZED_FEATURE_ZOOM
+export function minZoomForDiameter(diameterKm: number | null): number {
+	if (diameterKm === null || diameterKm === 0) return UNSIZED_FEATURE_ZOOM
 
 	for (const [minDiameterKm, zoom] of DECLUTTER_STEPS) {
 		if (diameterKm >= minDiameterKm) return zoom
@@ -112,7 +112,7 @@ export function nomenclatureNDJSONLine(feature: PlanetaryNomenclatureFeature): s
 		type: "Feature",
 		tippecanoe: { layer: NOMENCLATURE_LAYER, minzoom: minZoomForDiameter(feature.diameterKm) },
 		geometry: { type: "Point", coordinates: [centerLon, centerLat] },
-		properties: { ...properties, bbox: properties.bbox ? stringifyJSON(properties.bbox) : undefined },
+		properties: { ...properties, bbox: properties.bbox ? stringifyJSON(properties.bbox) : null },
 	})
 }
 

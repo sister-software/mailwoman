@@ -5,7 +5,7 @@
  * @file Reads nearby coastal-zone features from the Environment Agency service.
  */
 
-import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
+import { createOGCFeaturesBBoxReader, type OGCFeature } from "@mailwoman/core/api"
 import { stringifyJSON } from "@mailwoman/core/json"
 
 import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "#sdk/client"
@@ -30,10 +30,7 @@ const SERVICE_FEATURE_LIMIT = 200
  * One feature as the service publishes it.
  * The only shape the comparison reads.
  */
-export interface ServiceFeature {
-	properties?: Record<string, unknown>
-	geometry?: { type: string; coordinates: unknown }
-}
+export type ServiceFeature = OGCFeature
 
 /**
  * The one call the verification makes against the service: the features it publishes

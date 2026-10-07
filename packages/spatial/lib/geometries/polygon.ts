@@ -47,7 +47,7 @@ export interface PolygonLiteral<P extends PolygonPath = PolygonPath> extends Geo
  * Predicate for checking if a GeoJSON object is a `Polygon` geometry.
  */
 export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unknown): input is PolygonLiteral<P> {
-	if (typeof input !== "object" || input === null) return false
+	if (typeof input !== "object" || !input) return false
 
 	return "type" in input && input.type === "Polygon" && "coordinates" in input && Array.isArray(input.coordinates)
 }
@@ -145,7 +145,7 @@ export type ParsedGeometry = GeometryLiteral | { type: string; coordinates?: unk
  * A geometry's polygons in the `MultiPolygon` coordinate shape, with a bare `Polygon`
  * lifted to `[rings]` and `null` for any non-areal geometry.
  */
-export function arealPolygons(geometry: ParsedGeometry | null | undefined): MultiPolygonRings | null {
+export function arealPolygons(geometry: ParsedGeometry | null): MultiPolygonRings | null {
 	if (!geometry) return null
 
 	if (geometry.type === "Polygon") return [geometry.coordinates as PolygonRings]
@@ -171,11 +171,7 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
  * Does an areal GeoJSON geometry contain the point, returning `null` for a
  * non-areal geometry rather than `false`.
  */
-export function geometryContains(
-	geometry: ParsedGeometry | null | undefined,
-	lon: number,
-	lat: number
-): boolean | null {
+export function geometryContains(geometry: ParsedGeometry | null, lon: number, lat: number): boolean | null {
 	const polygons = arealPolygons(geometry)
 
 	if (!polygons) return null

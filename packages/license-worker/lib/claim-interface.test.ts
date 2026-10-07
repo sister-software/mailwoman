@@ -29,9 +29,9 @@ describe("the claim interface", () => {
 	})
 
 	it("refuses an issued answer with a field missing, an unknown status, and a body that is no object", () => {
-		expect(parseClaimResponse({ status: "issued", lid: "lic_x" })).toBeUndefined()
-		expect(parseClaimResponse({ status: "granted" })).toBeUndefined()
-		expect(parseClaimResponse("issued")).toBeUndefined()
-		expect(parseClaimResponse(null)).toBeUndefined()
+		expect(parseClaimResponse({ status: "issued", lid: "lic_x" })).toBeNull()
+		expect(parseClaimResponse({ status: "granted" })).toBeNull()
+		expect(parseClaimResponse("issued")).toBeNull()
+		expect(parseClaimResponse(null)).toBeNull()
 	})
 })

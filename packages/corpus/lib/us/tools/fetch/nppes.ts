@@ -35,7 +35,7 @@ export type FetchNPPESOptions = BaseFetchOptions
  * files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`, while weekly files
  * include a `MMDDYY_MMDDYY` date range and are excluded.
  */
-async function discoverLatestZip(): Promise<string | undefined> {
+async function discoverLatestZip(): Promise<string | null> {
 	const html = await new APIClient({
 		displayName: "nppes-index",
 		retry: true,
@@ -50,17 +50,17 @@ async function discoverLatestZip(): Promise<string | undefined> {
 		if (name && !/\d{6}_\d{6}/.test(name)) return name
 	}
 
-	return undefined
+	return null
 }
 
 /**
  * The main registry CSV (`npidata_pfile_*.csv`); the archive also includes a
  * header file and a per-month change file.
  */
-async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | undefined> {
+async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | null> {
 	const entries = await listZipEntries(zipPath)
 
-	return entries.find((entry) => /npidata_pfile\S+\.csv/i.test(entry.name))?.name
+	return entries.find((entry) => /npidata_pfile\S+\.csv/i.test(entry.name))?.name ?? null
 }
 
 export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: string) => void): Promise<FetchSummary> {

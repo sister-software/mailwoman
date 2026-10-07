@@ -112,7 +112,7 @@ export function priceLine(scenario: Scenario, line: CostLine, adjustment: CostAd
 	}
 
 	const amount =
-		adjustment !== null && adjustment.categories.includes(line.category)
+		adjustment && adjustment.categories.includes(line.category)
 			? applyBasisPoints(listed, BASIS_POINTS_PER_WHOLE + adjustment.basisPoints)
 			: listed
 
@@ -153,7 +153,7 @@ export function constructionCost(
 
 	checkSelection(scenario, selection, "selection")
 
-	if (adjustment !== null) {
+	if (adjustment) {
 		checkCostAdjustment(adjustment, "adjustment")
 	}
 

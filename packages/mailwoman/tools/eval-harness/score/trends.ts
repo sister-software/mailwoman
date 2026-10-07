@@ -123,17 +123,17 @@ function normalize(run: Record<string, unknown>): LocaleScores {
 		}
 	}
 
-	if (container === null && LOCALES.some((locale) => locale in metrics)) {
+	if (!container && LOCALES.some((locale) => locale in metrics)) {
 		container = metrics
 	}
 
-	if (container === null) return {}
+	if (!container) return {}
 
 	const out: LocaleScores = {}
 
 	if (LOCALES.some((locale) => locale in container!)) {
 		for (const [locale, tags] of Object.entries(container)) {
-			if (typeof tags !== "object" || tags === null || Array.isArray(tags)) continue
+			if (typeof tags !== "object" || !tags || Array.isArray(tags)) continue
 
 			const inner: Record<string, number> = {}
 
@@ -153,7 +153,7 @@ function normalize(run: Record<string, unknown>): LocaleScores {
 	const inner: Record<string, number> = {}
 
 	for (const [tag, value] of Object.entries(container)) {
-		if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+		if (typeof value === "object" && value && !Array.isArray(value)) {
 			const f1 = (value as Record<string, unknown>).f1
 
 			inner[tag] = pyRound(Number(typeof f1 === "number" ? f1 : 0) * 100, 1)

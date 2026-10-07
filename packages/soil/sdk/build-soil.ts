@@ -260,7 +260,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			// The build writes them first so a delineation with a missing map unit fails early.
 			writeAttributes(kdb, options.areas)
 
-			if (!options.inProcess) return undefined
+			if (!options.inProcess) return null
 
 			return aggregateChunks(await ingestInProcess(kdb, options))
 		},
@@ -423,7 +423,7 @@ function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: St
 
 	const area = areaAgreementFrom(
 		{ nestedM2: streamed.nestedM2, allExteriorM2: streamed.allExteriorM2 },
-		known ? publishedAcres * M2_PER_ACRE : undefined
+		known ? publishedAcres * M2_PER_ACRE : null
 	)
 
 	if (area.witness === "source" && area.relativeGap > AREA_TOLERANCE) {

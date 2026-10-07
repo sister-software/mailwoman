@@ -227,7 +227,7 @@ export async function downloadBDAdresses(
 		!options.force &&
 		present &&
 		existing &&
-		resource.md5 !== null &&
+		resource.md5 &&
 		existing.publisher_md5 === resource.md5 &&
 		existing.source_url === resource.url
 	) {
@@ -272,7 +272,7 @@ export async function downloadBDAdresses(
 
 	const md5 = await md5File(csvPath)
 
-	if (resource.md5 !== null && resource.md5 !== md5) {
+	if (resource.md5 && resource.md5 !== md5) {
 		report?.(`  ✗ the dataset record states md5 ${resource.md5} and the bytes hash to ${md5}`)
 		await removePathIfPresent(csvPath)
 

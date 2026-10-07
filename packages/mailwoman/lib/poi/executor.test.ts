@@ -306,7 +306,7 @@ describe("createPOIExecutor", () => {
 
 	it("requires_build_local_layer: fires with NO lookup at all, even with no anchor", () => {
 		const executor = createPOIExecutor({
-			lookup: undefined,
+			lookup: null,
 			requiresBuildLocal: (categoryID) => categoryID === "fire_hydrant",
 		})
 
@@ -316,7 +316,7 @@ describe("createPOIExecutor", () => {
 	})
 
 	it("intent-only passthrough: no lookup configured, non-build-local category", () => {
-		const executor = createPOIExecutor({ lookup: undefined, requiresBuildLocal: NEVER_BUILD_LOCAL })
+		const executor = createPOIExecutor({ lookup: null, requiresBuildLocal: NEVER_BUILD_LOCAL })
 
 		const intent: POIIntent = { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } }
 		const outcome = executor(intent)
@@ -336,6 +336,7 @@ describe("createPOIExecutor", () => {
 			country: "US",
 			confidence: 0.6,
 			gersID: null,
+			distanceM: null,
 		}
 
 		const executor = createPOIExecutor({
@@ -418,11 +419,11 @@ describe("createPOIExecutor", () => {
 		expect(seenCoords).toEqual([[HOSPITAL_HIT.latitude, HOSPITAL_HIT.longitude]])
 	})
 
-	it("ancestry stays ABSENT for a result when reverseGeocode returns undefined (e.g. open ocean)", () => {
+	it("ancestry stays ABSENT for a result when reverseGeocode returns null (e.g. open ocean)", () => {
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => [HOSPITAL_HIT]),
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
-			reverseGeocode: () => undefined,
+			reverseGeocode: () => null,
 		})
 
 		const outcome = executor({
@@ -456,7 +457,7 @@ describe("createPOIExecutor", () => {
 })
 
 describe("resolvePOIAnchorCountry", () => {
-	const stamped = (country: string | undefined, child = false): AddressTree => {
+	const stamped = (country: string | null, child = false): AddressTree => {
 		const node = {
 			tag: "locality" as const,
 			value: "Springfield",
@@ -484,7 +485,7 @@ describe("resolvePOIAnchorCountry", () => {
 	})
 
 	it("falls back to a stamped root when the centered child carries none", () => {
-		const tree = stamped(undefined, true)
+		const tree = stamped(null, true)
 		tree.roots[0]!.metadata = { resolver_country: "US" }
 
 		expect(resolvePOIAnchorCountry({ subject: { kind: "name", text: "x" }, anchor: { tree } })).toBe("US")
@@ -493,7 +494,7 @@ describe("resolvePOIAnchorCountry", () => {
 	it("answers null for a country-less node, a biasPoint anchor, and no anchor", () => {
 		const subject = { kind: "name" as const, text: "x" }
 
-		expect(resolvePOIAnchorCountry({ subject, anchor: { tree: stamped(undefined) } })).toBeNull()
+		expect(resolvePOIAnchorCountry({ subject, anchor: { tree: stamped(null) } })).toBeNull()
 		expect(resolvePOIAnchorCountry({ subject, anchor: { biasPoint: { latitude: 1, longitude: 2 } } })).toBeNull()
 		expect(resolvePOIAnchorCountry({ subject })).toBeNull()
 	})

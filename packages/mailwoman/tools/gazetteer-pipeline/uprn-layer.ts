@@ -726,6 +726,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: options.createdAt ?? now.toISOString(),
+		sourceRecords: null,
 	})
 
 	phase("meta")

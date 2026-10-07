@@ -142,7 +142,7 @@ describe("artifactSetWarnings", () => {
 		artifacts: artifacts.map(([artifact, path]) => ({
 			name: artifact,
 			path,
-			origin: path === null ? null : "cache",
+			origin: path ? "cache" : null,
 		})),
 	})
 
@@ -239,7 +239,7 @@ describe("artifactSetWarnings", () => {
 		artifacts: artifacts.map(([artifact, path, digest]) => ({
 			name: artifact,
 			path,
-			origin: path === null ? null : "cache",
+			origin: path ? "cache" : null,
 			digest,
 		})),
 	})

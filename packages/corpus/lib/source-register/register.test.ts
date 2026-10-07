@@ -402,7 +402,7 @@ describe("electedLicenseLabel", () => {
 				publisherStatement: "Free",
 				note: "an access label",
 			})
-		).toBeUndefined()
+		).toBeNull()
 	})
 
 	it("prefers the SPDX identifier over the publisher's wording", () => {

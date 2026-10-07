@@ -34,12 +34,12 @@ const LISTED_MODULE = /^(?!.*\.(?:test|d)\.ts$).+\.ts$/u
  * Any other pattern is left out because its matches cannot be listed from the key.
  */
 async function exportedSubpaths(packageDirectory: PathBuilderLike, exports: unknown): Promise<string[]> {
-	if (typeof exports !== "object" || exports === null) return []
+	if (typeof exports !== "object" || !exports) return []
 
 	const map = exports as Record<string, unknown>
 	const explicit = Object.keys(map).filter((subpath) => subpath !== "./package.json" && !subpath.includes("*"))
 	const pattern = map["./*"]
-	const target = typeof pattern === "object" && pattern !== null ? (pattern as { node?: unknown }).node : pattern
+	const target = typeof pattern === "object" && pattern ? (pattern as { node?: unknown }).node : pattern
 
 	if (target !== LIB_PATTERN_TARGET) return explicit
 

@@ -34,6 +34,7 @@ const MANIFEST: LayerManifest = {
 	freshnessPolicy: "sealed",
 	spineKeys: { h3: { column: "h3_cell", resolution: 13 }, wofID: "wof_id" },
 	createdAt: "2026-07-18T00:00:00Z",
+	sourceRecords: null,
 }
 
 async function openschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
@@ -65,15 +66,15 @@ describe("layer manifest IO", () => {
 		expect(await readLayerManifest(db)).toEqual(counted)
 	})
 
-	it("reads a missing count as absent and a zero-publisher count as empty", async () => {
+	it("reads a missing count as null and a zero-publisher count as empty", async () => {
 		// These outcomes differ.
-		// Old manifests and builds without a count omit `sourceRecords`.
+		// Old manifests and builds without a count read `sourceRecords` as `null`.
 		// `{}` means the build counted records and found no publisher.
 		// Overture prunes its release, so the original count cannot be recovered from the input.
 		using absent = await openschemadb()
 		await writeLayerManifest(absent, MANIFEST)
 
-		expect(await readLayerManifest(absent)).not.toHaveProperty("sourceRecords")
+		expect(await readLayerManifest(absent)).toHaveProperty("sourceRecords", null)
 
 		using empty = await openschemadb()
 		await writeLayerManifest(empty, { ...MANIFEST, sourceRecords: {} })
@@ -98,13 +99,13 @@ describe("layer manifest IO", () => {
 		await expect(readLayerManifest(db)).rejects.toThrow(/manifest/)
 	})
 
-	it("round-trips a manifest with attribution absent", async () => {
+	it("round-trips a manifest with a null attribution", async () => {
 		using db = await openschemadb()
-		const { attribution: _attribution, ...manifestWithoutAttribution } = MANIFEST
+		const manifestWithoutAttribution: LayerManifest = { ...MANIFEST, attribution: null }
 		await writeLayerManifest(db, manifestWithoutAttribution)
 		const back = await readLayerManifest(db)
 		expect(back).toEqual(manifestWithoutAttribution)
-		expect("attribution" in back).toBe(false)
+		expect(back.attribution).toBeNull()
 	})
 })
 
@@ -125,7 +126,7 @@ describe("layer coverage IO", () => {
 		})
 
 		// An unsurveyed cell reads as `undefined`, which means unknown coverage.
-		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
+		expect(await readLayerCoverage(db, 9999)).toBeNull()
 	})
 
 	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
@@ -178,7 +179,7 @@ describe("layer coverage IO", () => {
 			observedRows: lastCell,
 		})
 
-		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
+		expect(await readLayerCoverage(db, cellCount + 1000)).toBeNull()
 	})
 })
 
@@ -248,7 +249,7 @@ describe("coverage cell invariants", () => {
 			])
 		).rejects.toThrow(/completeness/)
 
-		expect(await readLayerCoverage(db, 1)).toBeUndefined()
+		expect(await readLayerCoverage(db, 1)).toBeNull()
 	})
 
 	it("refuses a corrupted row at READ time too", async () => {

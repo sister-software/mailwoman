@@ -16,8 +16,7 @@
  *   `curl -r 0-1023` against this URL returns http 200 with `size_download=70296882`, the whole file.
  */
 
-import { downloadZippedGeodatabase } from "@mailwoman/core/utils"
-import type { PathBuilderLike } from "path-ts"
+import { downloadZippedGeodatabase, type GeodatabaseVintageOptions } from "@mailwoman/core/utils"
 
 /**
  * The resource name the catalogue entry uses for the file geodatabase.
@@ -29,30 +28,10 @@ export const NCERM_GEODATABASE_RESOURCE = "National_Coastal_Erosion_Risk_Mapping
  */
 export const NCERM_GEODATABASE_DIRECTORY = "National_Coastal_Erosion_Risk_Mapping_NCERM_National_2024.gdb"
 
-export interface DownloadGeodatabaseOptions {
-	/**
-	 * The direct file URL, read from the catalogue entry rather than assembled —
-	 * the EA's file service keys on an opaque id with no relationship to the dataset id.
-	 */
-	url: string
-	/**
-	 * The product's ISO revision date.
-	 *
-	 * The cache is keyed on it, so a re-run against the same vintage never re-transfers
-	 * and a new vintage never overwrites the old one in place.
-	 */
-	revisionDate: string
-	/**
-	 * Where vintages are kept.
-	 */
-	cacheRoot: PathBuilderLike
-	onProgress?: (message: string) => void
-}
-
 /**
  * Download and unzip the geodatabase for one product vintage, returning the path of the `.gdb` directory.
  */
-export async function downloadCoastalGeodatabase(options: DownloadGeodatabaseOptions): Promise<string> {
+export async function downloadCoastalGeodatabase(options: GeodatabaseVintageOptions): Promise<string> {
 	return downloadZippedGeodatabase({
 		url: options.url,
 		revisionDate: options.revisionDate,

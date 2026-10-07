@@ -29,6 +29,12 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 			[1, 0],
 			[0, 1],
 		],
+		anchor: null,
+		gazetteer: null,
+		country: null,
+		localeLogits: null,
+		spanScores: null,
+		localeCountries: null,
 		detectedSystem: null,
 		systemSource: "off",
 		priors: [],
@@ -90,8 +96,8 @@ describe("priorSignals", () => {
 		const signals = priorSignals(
 			trace({
 				priors: [
-					{ kind: "fst", applied: true },
-					{ kind: "queryShape", applied: false },
+					{ kind: "fst", applied: true, probePath: null, census: null, censusProbedParents: null },
+					{ kind: "queryShape", applied: false, probePath: null, census: null, censusProbedParents: null },
 				],
 				emissions: [
 					[1.5, 0],
@@ -113,8 +119,20 @@ describe("priorSignals", () => {
 describe("aggregateCensus — the inert verdict", () => {
 	it("reports a mechanism that ran everywhere and moved nothing as inert, with that exact distinction", () => {
 		const rows = [
-			{ id: "a", input: "a", parse: trace({ priors: [{ kind: "fst", applied: false }] }) },
-			{ id: "b", input: "b", parse: trace({ priors: [{ kind: "fst", applied: false }] }) },
+			{
+				id: "a",
+				input: "a",
+				parse: trace({
+					priors: [{ kind: "fst", applied: false, probePath: null, census: null, censusProbedParents: null }],
+				}),
+			},
+			{
+				id: "b",
+				input: "b",
+				parse: trace({
+					priors: [{ kind: "fst", applied: false, probePath: null, census: null, censusProbedParents: null }],
+				}),
+			},
 		]
 
 		const { aggregate } = aggregateCensus(rows)
@@ -134,8 +152,20 @@ describe("aggregateCensus — the inert verdict", () => {
 
 	it("does not report a mechanism that fired once as inert", () => {
 		const rows = [
-			{ id: "a", input: "a", parse: trace({ priors: [{ kind: "fst", applied: false }] }) },
-			{ id: "b", input: "b", parse: trace({ priors: [{ kind: "fst", applied: true }] }) },
+			{
+				id: "a",
+				input: "a",
+				parse: trace({
+					priors: [{ kind: "fst", applied: false, probePath: null, census: null, censusProbedParents: null }],
+				}),
+			},
+			{
+				id: "b",
+				input: "b",
+				parse: trace({
+					priors: [{ kind: "fst", applied: true, probePath: null, census: null, censusProbedParents: null }],
+				}),
+			},
 		]
 
 		const { aggregate } = aggregateCensus(rows)
@@ -159,7 +189,18 @@ describe("aggregateCensus — the inert verdict", () => {
 	})
 
 	it("routes an allowlisted mechanism to the allowlist, never to inert", () => {
-		const rows = [{ id: "a", input: "a", parse: trace({ priors: [{ kind: "placetypeCensus", applied: false }] }) }]
+		const rows = [
+			{
+				id: "a",
+				input: "a",
+				parse: trace({
+					priors: [
+						{ kind: "placetypeCensus", applied: false, probePath: null, census: null, censusProbedParents: null },
+					],
+				}),
+			},
+		]
+
 		const { aggregate } = aggregateCensus(rows)
 
 		expect(aggregate.inert.some((entry) => entry.mechanism === "placetypeCensus")).toBe(false)
@@ -172,7 +213,18 @@ describe("aggregateCensus — the inert verdict", () => {
 	})
 
 	it("flags an allowlisted mechanism that FIRES — the reason on file is then stale", () => {
-		const rows = [{ id: "a", input: "a", parse: trace({ priors: [{ kind: "placetypeCensus", applied: true }] }) }]
+		const rows = [
+			{
+				id: "a",
+				input: "a",
+				parse: trace({
+					priors: [
+						{ kind: "placetypeCensus", applied: true, probePath: null, census: null, censusProbedParents: null },
+					],
+				}),
+			},
+		]
+
 		const { aggregate } = aggregateCensus(rows)
 
 		const entry = aggregate.allowlisted.find((item) => item.mechanism === "placetypeCensus")

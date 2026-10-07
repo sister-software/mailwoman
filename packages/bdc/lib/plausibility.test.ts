@@ -16,7 +16,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
 import type { PathBuilder } from "path-ts"
@@ -27,7 +27,6 @@ import {
 	PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES,
 	physicalCategoriesForTechnology,
 	plausibilityCheck,
-	type GeocodeLike,
 	type PlausibilityAbstainReason,
 	type PlausibilityBundle,
 	type PlausibilityCoverageAxisState,
@@ -66,8 +65,8 @@ const PROVIDER_DSL = 130_002
 
 const SPRINGFIELD_CENTROID = { lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude }
 
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : undefined
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : null
 }
 
 function fixtureRows(): BDCAvailabilityRow[] {
@@ -200,6 +199,8 @@ async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<l
 		freshnessPolicy: "sealed",
 		spineKeys: { h3: { column: "h3_cell", resolution: resolutionOverride } },
 		createdAt: `${ASOF_DATE}T00:00:00Z`,
+		attribution: null,
+		sourceRecords: null,
 	})
 
 	resources.move()
@@ -276,7 +277,7 @@ describe("plausibilityCheck — claim resolution", () => {
 	})
 
 	it("throws when geocode resolves no coordinate for the address", async () => {
-		const geocode = async (): Promise<GeocodeLike> => ({ lat: null, lon: null })
+		const geocode = async (): Promise<NullableLatLon> => ({ lat: null, lon: null })
 
 		await expect(
 			plausibilityCheck(
@@ -311,7 +312,7 @@ describe("plausibilityCheck — claim resolution", () => {
 	})
 
 	it("geocodes an address claim and resolves it through the point path", async () => {
-		const geocode = async (address: string): Promise<GeocodeLike> => {
+		const geocode = async (address: string): Promise<NullableLatLon> => {
 			expect(address).toBe("123 Main St, Springfield, IL")
 
 			return { lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude }
@@ -939,7 +940,7 @@ describe("§7-2b criteria", () => {
 
 			expect(byPoint.block_resolution).toBe("h3_cell_approximation")
 
-			const geocode = async (): Promise<GeocodeLike> => ({ lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude })
+			const geocode = async (): Promise<NullableLatLon> => ({ lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude })
 
 			const byAddress = await plausibilityCheck(
 				{

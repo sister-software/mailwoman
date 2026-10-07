@@ -142,11 +142,11 @@ export interface NZDeliveryServiceMatch {
 	/**
 	 * The identifier, when present, such as "24999" or "B99".
 	 */
-	id?: string
+	id: string | null
 	/**
 	 * Set when the input uses the "Private Box" alias.
 	 */
-	colloquial?: true
+	colloquial: boolean
 }
 
 /**
@@ -162,9 +162,8 @@ export function matchNZDeliveryService(input: unknown): NZDeliveryServiceMatch |
 		const m = re.exec(input)
 
 		if (!m) continue
-		const colloquial = type === "Private Box" ? ({ colloquial: true } as const) : {}
 
-		return { matched: m[1]!.trim(), type, ...(m[2] ? { id: m[2] } : {}), ...colloquial }
+		return { matched: m[1]!.trim(), type, id: m[2] || null, colloquial: type === "Private Box" }
 	}
 
 	return null

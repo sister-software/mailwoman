@@ -9,7 +9,14 @@
  *   ~540 consumer references through that door — 68% of everything `@mailwoman/core/utils` was asked for.
  *   `repo` and `data-root` reference each other. That was the shelf's only internal edge.
  */
-import { createPathBuilderResolver, createPathResolver, dirname, resolvePath, type Join } from "path-ts"
+import {
+	createPathBuilderResolver,
+	createPathResolver,
+	dirname,
+	resolvePath,
+	type Join,
+	type PathBuilderLike,
+} from "path-ts"
 
 import { fileURLToPath } from "#module/file-url"
 
@@ -175,3 +182,11 @@ export function resourceDictionaryPath<A extends AddressResource, S extends stri
  * Absolute path to the test directory.
  */
 export const functionTestsDirectory = repoRootPathBuilder("test")
+
+/**
+ * A file under a stable display or identity name, beside wherever this checkout keeps it.
+ */
+export interface NamedPath {
+	name: string
+	path: PathBuilderLike
+}

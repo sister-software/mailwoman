@@ -12,7 +12,7 @@ import { Fragment, type ReactNode } from "react"
 
 export interface ResolvedPlaceProps {
 	place: ResolvedPlaceView
-	dualRoles?: DualRoleView[]
+	dualRoles?: DualRoleView[] | null
 }
 
 export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNode {

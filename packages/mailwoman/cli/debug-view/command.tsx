@@ -25,7 +25,7 @@ import { DebugSessionApp } from "./DebugSessionApp.tsx"
  * `--debug` answer, exported for `static.test.ts` rather than as a consumer-facing surface.
  */
 export async function runStaticDebug(input: string, options: GeocodeCommandOptions): Promise<string> {
-	if (!input.trim().length) {
+	if (!input.trim()) {
 		throw new CommandError(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)
@@ -47,7 +47,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 
 		if (result.lat == null || result.lon == null) {
 			mapNote = "unresolved: no coordinate"
-		} else if (tilesPath == null) {
+		} else if (!tilesPath) {
 			mapNote = "no tiles: set $MAILWOMAN_TILES or --tiles"
 		} else {
 			const source = await TileSource.open(tilesPath)

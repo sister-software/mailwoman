@@ -26,7 +26,8 @@ const planSchema = z.object({
 			workspace: z.string(),
 			filename: z.string(),
 			origin: z.enum(["hf", "repo"]),
-			expectedMD5: z.string().optional(),
+			base: z.string().nullable(),
+			expectedMD5: z.string().nullable(),
 		})
 	),
 	destinations: planDestinations,

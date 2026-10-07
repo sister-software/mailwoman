@@ -122,7 +122,7 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 		streetTypeLexiconURL: null,
 		localitySurfaceLexiconURL: null,
 		pairIndexURLs,
-		...(country !== undefined ? { country } : {}),
+		...(country ? { country } : {}),
 		runner: { useWebGPU: false },
 		fetchImpl: makeFetch(),
 	}
@@ -155,7 +155,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 
 		// "Shoreditch London" has no postcode, so the call site pins the posture with `{ country }`.
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
-		expect(placetypePair).toBeDefined()
+		expect(placetypePair).not.toBeNull()
 
 		const json = await result.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
 		expect(json.dependent_locality).toBe("Shoreditch")
@@ -175,7 +175,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(priorFree.pairIndexes).toEqual([])
 
 		const placetypePair = loaded.selectPairIndexForText("Shoreditch London")
-		expect(placetypePair).toBeUndefined()
+		expect(placetypePair).toBeNull()
 
 		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
 		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })

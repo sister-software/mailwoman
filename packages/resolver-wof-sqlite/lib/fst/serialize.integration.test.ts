@@ -27,6 +27,8 @@ function buildSyntheticFST(): FSTMatcher {
 					referential: 0.95,
 					lat: 40.7128,
 					lon: -74.006,
+					encyclopedic: null,
+					crossCountryBranches: null,
 				},
 				{
 					wofID: 85_688_543,
@@ -36,6 +38,8 @@ function buildSyntheticFST(): FSTMatcher {
 					referential: 0.85,
 					lat: 42.1657,
 					lon: -74.9481,
+					encyclopedic: null,
+					crossCountryBranches: null,
 				},
 			],
 		}, // "york" (2)
@@ -50,6 +54,8 @@ function buildSyntheticFST(): FSTMatcher {
 					referential: 0.72,
 					lat: 45.5152,
 					lon: -122.6784,
+					encyclopedic: null,
+					crossCountryBranches: null,
 				},
 			],
 		}, // "portland" (3)
@@ -222,6 +228,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 						referential: 0.4,
 						lat: 44.36,
 						lon: -100.35,
+						encyclopedic: null,
 						crossCountryBranches: 7,
 					},
 				],
@@ -243,7 +250,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 		expect(q.accepting[0]!.crossCountryBranches).toBe(7)
 	})
 
-	it("pre-ambiguity artifacts expose undefined, never a fake zero", () => {
+	it("pre-ambiguity artifacts expose null, never a fake zero", () => {
 		const plain = buildSyntheticFST()
 		const bytes = serializeFST(plain)
 
@@ -251,7 +258,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 		const restored = deserializeFST(bytes)
 		const q = restored.query("New York")
 
-		expect(q.accepting[0]!.crossCountryBranches).toBeUndefined()
+		expect(q.accepting[0]!.crossCountryBranches).toBeNull()
 	})
 
 	it("mixed presence still flags the header and defaults absent entries to 0 in-band", () => {
@@ -265,6 +272,8 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 			referential: 0.1,
 			lat: 29.96,
 			lon: -91.2,
+			encyclopedic: null,
+			crossCountryBranches: null,
 		})
 
 		const restored = deserializeFST(serializeFST(m))

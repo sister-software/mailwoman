@@ -107,7 +107,7 @@ function withoutSuffix(value: string, suffixes: readonly string[]): string {
  * Every expansion lands the canonical name and code folds in the set, so `IL`
  * and `Illinois`, or `WA` and `Western Australia`, meet from either side.
  */
-export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
+export function regionKeys(value: string, countryAlpha2?: string | null): Set<string> {
 	const keys = new Set([normalizeLocalityForKey(value)])
 
 	for (const stripped of [
@@ -157,7 +157,7 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  * The board has no case for this stored form.
  * Add one before building a change for this suffix.
  */
-export function regionQualifierProbeKeys(value: string, countryAlpha2?: string): Set<string> {
+export function regionQualifierProbeKeys(value: string, countryAlpha2?: string | null): Set<string> {
 	const keys = regionKeys(value, countryAlpha2)
 	// Snapshot before widening: the loop adds `county <key>` members that must not themselves be revisited.
 	const bare = [...keys]

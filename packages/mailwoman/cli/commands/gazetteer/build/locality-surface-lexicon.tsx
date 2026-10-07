@@ -39,8 +39,8 @@ const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof spec> = ({ o
 		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
 
 		const built = await buildLocalitySurfaceLexicon({
-			countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
-			placetypes: options.placetypes === undefined ? undefined : extractDelimited(options.placetypes),
+			countries: options.countries ? extractDelimited(options.countries) : undefined,
+			placetypes: options.placetypes ? extractDelimited(options.placetypes) : undefined,
 			dbPath: options.db,
 			output: options.out,
 			onProgress: (line) => console.error(line),

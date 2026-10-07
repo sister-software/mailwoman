@@ -66,27 +66,27 @@ export type MapLinkCoordinateSource = "place-pin" | "viewport-centre"
 export interface MapLinkResolution {
 	url: string
 	resolved: boolean
-	latitude?: number
-	longitude?: number
+	latitude: number | null
+	longitude: number | null
 	/**
 	 * `place-pin` is the coordinate to pin.
 	 *
 	 * `viewport-centre` means the URL has no `!3d`/`!4d` pair and this is the camera position —
 	 * usable for a coarse case, never for a rooftop tolerance.
 	 */
-	source?: MapLinkCoordinateSource
+	source: MapLinkCoordinateSource | null
 	/**
 	 * The place name Google put in the URL path, when one is present.
 	 *
 	 * Useful for catching a link that resolves to a different place than the caller
 	 * believed — the failure a coordinate cannot reveal.
 	 */
-	name?: string
+	name: string | null
 	/**
 	 * The expanded URL, so a reader can audit the parse without re-fetching.
 	 */
-	expandedURL?: string
-	reason?: string
+	expandedURL: string | null
+	reason: string | null
 }
 
 /**
@@ -108,9 +108,22 @@ const NAME_PATTERN = /\/place\/([^/@]+)/
  * Exported separately from the fetch so tests can exercise parsing without a network.
  * The parser accounts for the defects in this module.
  */
+function unresolved(url: string): MapLinkResolution {
+	return {
+		url,
+		resolved: false,
+		latitude: null,
+		longitude: null,
+		source: null,
+		name: null,
+		expandedURL: null,
+		reason: null,
+	}
+}
+
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
 	const name = NAME_PATTERN.exec(expandedURL)?.[1]
-	const decodedName = name === undefined ? undefined : decodeURIComponent(name.replaceAll("+", " "))
+	const decodedName = name ? decodeURIComponent(name.replaceAll("+", " ")) : null
 
 	const pin = PIN_PATTERN.exec(expandedURL)
 
@@ -121,8 +134,9 @@ export function parseMapURL(url: string, expandedURL: string): MapLinkResolution
 			latitude: Number(pin[1]),
 			longitude: Number(pin[2]),
 			source: "place-pin",
-			...(decodedName === undefined ? {} : { name: decodedName }),
+			name: decodedName,
 			expandedURL,
+			reason: null,
 		}
 	}
 
@@ -135,7 +149,7 @@ export function parseMapURL(url: string, expandedURL: string): MapLinkResolution
 			latitude: Number(viewport[1]),
 			longitude: Number(viewport[2]),
 			source: "viewport-centre",
-			...(decodedName === undefined ? {} : { name: decodedName }),
+			name: decodedName,
 			expandedURL,
 			reason: "no !3d/!4d place pin in the expanded URL — this is the map CAMERA, offset from the place",
 		}
@@ -144,6 +158,10 @@ export function parseMapURL(url: string, expandedURL: string): MapLinkResolution
 	return {
 		url,
 		resolved: false,
+		latitude: null,
+		longitude: null,
+		source: null,
+		name: decodedName,
 		expandedURL,
 		reason: "the expanded URL carries neither a !3d/!4d place pin nor an @lat,lng viewport",
 	}
@@ -208,12 +226,12 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 				const location = (headers["location"] ?? headers["Location"]) as string | undefined
 
 				if (!location) {
-					return { url, resolved: false, reason: `no redirect Location header (status ${response.status})` }
+					return { ...unresolved(url), reason: `no redirect Location header (status ${response.status})` }
 				}
 
 				return parseMapURL(url, location)
 			} catch (error) {
-				return { url, resolved: false, reason: (error as Error).message.slice(0, 160) }
+				return { ...unresolved(url), reason: (error as Error).message.slice(0, 160) }
 			}
 		},
 	}

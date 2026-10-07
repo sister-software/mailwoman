@@ -23,12 +23,26 @@ const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency 
 function rec(id: string, given: string, family: string, key: string, raw: string): SourceRecord {
 	return {
 		id,
-		name: { given, family },
+		name: { prefix: null, given, middle: null, familyParticle: null, family, suffix: null, nickname: null },
+		source: null,
+		organization: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
 		address: {
 			components: {},
 			canonicalKey: key,
 			raw,
-			geocode: { coordinate: { latitude: 40, longitude: -75 }, tier: "address_point", uncertaintyMeters: 1 },
+			formatted: null,
+			geocode: {
+				coordinate: { latitude: 40, longitude: -75 },
+				tier: "address_point",
+				uncertaintyMeters: 1,
+				hierarchy: null,
+				poBox: null,
+				multiUnit: null,
+			},
 		},
 	}
 }
@@ -64,13 +78,18 @@ describe("createMatchFeaturizer", () => {
 	it("fires the roll-up signature (#625): same official + org disagree + co-located", () => {
 		const a = {
 			...rec("1", "", "", "10 oak st", "10 OAK ST"),
-			organization: { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [] },
+			organization: { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [], dba: null },
 			attributes: { authorizedOfficial: "shane lewis" },
 		}
 
 		const b = {
 			...rec("2", "", "", "10 oak st", "10 OAK ST"),
-			organization: { canonical: "bluebonnet health services", raw: "Bluebonnet Health Services", designations: [] },
+			organization: {
+				canonical: "bluebonnet health services",
+				raw: "Bluebonnet Health Services",
+				designations: [],
+				dba: null,
+			},
 			attributes: { authorizedOfficial: "shane lewis" },
 		}
 
@@ -78,8 +97,11 @@ describe("createMatchFeaturizer", () => {
 		expect(t[3]).toBe(1) // officialAgree
 		expect(t[4]).toBe(1) // officialAgree × orgDisagree — the roll-up core
 		expect(t[5]).toBe(1) // …at the same place
+
 		// Same officials but org names agree → the roll-up features must not fire.
-		const c = { ...b, organization: { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [] } }
+		const agreeingOrg = { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [], dba: null }
+		const c = { ...b, organization: agreeingOrg }
+
 		const t2 = tail(a, c)
 		expect(t2[4]).toBe(0)
 		expect(t2[5]).toBe(0)

@@ -14,6 +14,8 @@
  *   - Per-table sources under https://github.com/whosonfirst/go-whosonfirst-sqlite-features
  */
 
+import type { KeyValueMetaTable } from "@mailwoman/sqlite/database-schema"
+
 /**
  * The FTS5 virtual table this package builds on first open.
  * It is local to this repository.
@@ -193,19 +195,8 @@ export interface CoincidentRolesTable {
  *
  * The build and augment writers adopt it so a column rename is a compile error on both sides.
  */
-/**
- * The provenance row every built extract includes: source fingerprints stored with
- * the database rather than in a document that can drift from it.
- *
- * Written by the postcode builders in `mailwoman/gazetteer-pipeline`.
- */
-export interface ExtractMetaTable {
-	key: string
-	value: string | null
-}
-
 export interface WOFDatabase {
-	meta: ExtractMetaTable
+	meta: KeyValueMetaTable
 	place_search: PlaceSearchTable
 	spr: SprTable
 	names: NamesTable

@@ -139,7 +139,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.config = config
 		this.logger = config.logger ?? ConsoleLogger.prefix(config.displayName)
 		this.#clock = config.clock ?? systemClock
-		this.#retryPolicy = resolveRetryPolicy(config.retry)
+		this.#retryPolicy = resolveRetryPolicy(config.retry ?? null)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null
 
 		// The pacing limit lives IN the adapter rather than in `fetch()`: `axios-cache-interceptor`

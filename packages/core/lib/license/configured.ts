@@ -17,10 +17,10 @@ import { trustedLicenseSigningKeys } from "#license/register"
 /**
  * Verify the configured key offline, or `undefined` when neither the variable nor the key file is set.
  */
-export async function verifyConfiguredLicenseKey(now?: Date): Promise<LicenseKeyVerification | undefined> {
+export async function verifyConfiguredLicenseKey(now?: Date): Promise<LicenseKeyVerification | null> {
 	const configured = await readConfiguredLicenseToken()
 
-	if (!configured) return undefined
+	if (!configured) return null
 
 	return verifyLicenseKey(configured.token, {
 		trustedKeys: trustedLicenseSigningKeys(),

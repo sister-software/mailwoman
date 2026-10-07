@@ -30,7 +30,17 @@ const echoOf = (record: SourceRecord): WiringEcho => (record as { address?: unkn
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
 	for (let i = 0; i < n; i++) {
-		yield { id: String(i), raw: { addr: `addr ${i}` } } as SourceRecord
+		yield {
+			id: String(i),
+			source: null,
+			name: null,
+			organization: null,
+			address: null,
+			phone: null,
+			email: null,
+			attributes: null,
+			raw: { addr: `addr ${i}` },
+		}
 	}
 }
 

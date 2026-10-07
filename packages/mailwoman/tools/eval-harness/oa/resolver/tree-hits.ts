@@ -27,7 +27,7 @@ export interface Resolved {
 	 *
 	 * Read only for a `postalcode`, whose rank against the locality is per-address-system.
 	 */
-	country?: string
+	country: string | null
 	lat: number
 	lon: number
 }
@@ -76,6 +76,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 				name,
 				value: String(n.value ?? ""),
 				placetype,
+				country: null,
 				lat: n.lat,
 				lon: n.lon,
 			})
@@ -102,9 +103,10 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 					name,
 					value: String(n.value ?? ""),
 					placetype,
-					...(typeof interp.metadata?.["resolver_country"] === "string"
-						? { country: interp.metadata["resolver_country"] as string }
-						: {}),
+					country:
+						typeof interp.metadata?.["resolver_country"] === "string"
+							? (interp.metadata["resolver_country"] as string)
+							: null,
 					lat: interp.lat,
 					lon: interp.lon,
 				})
@@ -135,7 +137,7 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 		placetype: r.placetype,
 		value: r.value,
 		resolverName: r.name,
-		...(r.country ? { country: r.country } : {}),
+		country: r.country ?? undefined,
 	}))
 }
 
@@ -177,13 +179,13 @@ export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
  * The function also returns the interpolation tier's precondition triple and diagnostic text for a miss.
  */
 export function findInterpolationSpans(tree: AddressTree): {
-	street?: string
-	houseNumber?: string
-	postcode?: string
+	street: string | null
+	houseNumber: string | null
+	postcode: string | null
 } {
-	let s: string | undefined
-	let hn: string | undefined
-	let pc: string | undefined
+	let s: string | null = null
+	let hn: string | null = null
+	let pc: string | null = null
 
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "street" && !s && n.value.trim()) {

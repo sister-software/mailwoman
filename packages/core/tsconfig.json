@@ -7,7 +7,12 @@
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
-	"references": [{ "path": "../sqlite" }, { "path": "../codex" }, { "path": "../evidence" }],
+	"references": [
+		{ "path": "../sqlite" },
+		{ "path": "../codex" },
+		{ "path": "../evidence" },
+		{ "path": "../query-shape" }
+	],
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
 }

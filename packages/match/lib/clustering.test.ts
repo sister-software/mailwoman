@@ -105,6 +105,6 @@ describe("representative", () => {
 	})
 
 	it("returns undefined for an empty cluster", () => {
-		expect(representative([])).toBeUndefined()
+		expect(representative([])).toBeNull()
 	})
 })

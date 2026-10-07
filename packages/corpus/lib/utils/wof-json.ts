@@ -96,7 +96,7 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 	return out
 }
 
-function firstNonBlankString(value: unknown): string | undefined {
+function firstNonBlankString(value: unknown): string | null {
 	for (const candidate of Array.isArray(value) ? value : [value]) {
 		if (typeof candidate !== "string") continue
 
@@ -105,7 +105,7 @@ function firstNonBlankString(value: unknown): string | undefined {
 		if (normalized) return normalized
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -197,7 +197,7 @@ export async function* walkFeatures(
 
 		const parsed = tryParsingJSON<WOFFeature>(text)
 
-		if (parsed === null) continue
+		if (!parsed) continue
 
 		const rec = recordFromFeature(parsed)
 
@@ -278,7 +278,7 @@ export function buildAncestorNameIndex(
 			const tag = tagOf(parent.placetype)
 
 			for (const wanted of ANCESTOR_NAME_TAGS) {
-				if (tag === wanted && names[wanted] === undefined) {
+				if (tag === wanted && !names[wanted]) {
 					names[wanted] = parent.name
 				}
 			}

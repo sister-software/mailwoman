@@ -422,7 +422,7 @@ function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 
 	const resolved = resolveTarget(raw, cwd)
 
-	if (resolved === null) return true
+	if (!resolved) return true
 
 	return resolved === repoRoot || resolved.startsWith(`${repoRoot}/`)
 }

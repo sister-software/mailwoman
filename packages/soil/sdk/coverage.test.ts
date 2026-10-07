@@ -142,7 +142,7 @@ describe("the coverage footprint over adjacent survey areas", () => {
 			const reading = lookup.lookup(lat + 5, lon + 5)
 
 			expect(reading.kind).toBe(SoilReadingKind.Unknown)
-			expect(reading.coverage).toBeUndefined()
+			expect(reading.coverage).toBeNull()
 		} finally {
 			lookup[Symbol.dispose]()
 		}

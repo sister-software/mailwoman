@@ -93,8 +93,8 @@ const CENTROIDS: Record<string, { lat: number; lon: number }> = {
 	[GEOID_TWO_TIER]: { lat: 40.7178, lon: -74.006 },
 }
 
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return CENTROIDS[geoid]
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return CENTROIDS[geoid] ?? null
 }
 
 /**
@@ -102,7 +102,7 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
  * inside SF's covered res-6 cell.
  * Every other GEOID stays unplaced.
  */
-const resolveGeoidCell = geoidCellResolver((geoid) => (geoid === GEOID_ZERO_ROW ? CENTROID_SF : undefined))
+const resolveGeoidCell = geoidCellResolver((geoid) => (geoid === GEOID_ZERO_ROW ? CENTROID_SF : null))
 
 const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
@@ -248,7 +248,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
 		)
 
-		expect(await readLayerCoverage(schemadb, neverSurveyedRes6)).toBeUndefined()
+		expect(await readLayerCoverage(schemadb, neverSurveyedRes6)).toBeNull()
 
 		const knownOnly = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY] })
 		const withUnknown = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY, GEOID_UNKNOWN] })
@@ -301,7 +301,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		expect(await readLayerCoverage(schemadb, sfCoverageCell)).toBeDefined()
 
 		await schemadb.deleteFrom("layer_coverage").where("h3_cell", "=", sfCoverageCell).execute()
-		expect(await readLayerCoverage(schemadb, sfCoverageCell)).toBeUndefined()
+		expect(await readLayerCoverage(schemadb, sfCoverageCell)).toBeNull()
 
 		const result = await filingLandscape(writable, { geoids: [GEOID_SF, GEOID_NY] })
 
@@ -415,7 +415,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		// The builder must write coverage under the unified derivation.
 		// The directly indexed res-6 cell is absent.
 		expect(await readLayerCoverage(schemadb, unifiedDerivation)).toBeDefined()
-		expect(await readLayerCoverage(schemadb, oldBuggyDerivation)).toBeUndefined()
+		expect(await readLayerCoverage(schemadb, oldBuggyDerivation)).toBeNull()
 
 		// End-to-end: this block must read back as surveyed with its own filing intact,
 		// so the surveyed count and the filings list agree.
@@ -477,7 +477,7 @@ describe("geoidCellResolver", () => {
 		const resolve = geoidCellResolver(blockCentroids)
 
 		expect(resolve(GEOID_NY)).toBe(blockCentroidCells(CENTROID_NY).h3Cell)
-		expect(resolve(GEOID_UNKNOWN)).toBeUndefined()
+		expect(resolve(GEOID_UNKNOWN)).toBeNull()
 	})
 })
 

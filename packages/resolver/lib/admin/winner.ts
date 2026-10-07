@@ -52,7 +52,7 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
  */
 export interface ResolvedPostcodeHit {
 	value: string
-	resolverName: string | undefined
+	resolverName: string | null
 	/**
 	 * ISO-3166 alpha-2 code where the resolver placed the postcode.
 	 *
@@ -67,11 +67,11 @@ export interface ResolvedPostcodeHit {
  * Pick the admin fallback order for one resolved tree: postcode-first when the code is
  * unit-grade or the address system's area-grade codes are finer than its localities.
  */
-export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): ReadonlyArray<string> {
-	if (postcode === undefined) return ADMIN_LADDER_LOCALITY_FIRST
+export function adminLadderFor(postcode: ResolvedPostcodeHit | null): ReadonlyArray<string> {
+	if (!postcode) return ADMIN_LADDER_LOCALITY_FIRST
 
 	const leads =
-		isUnitGradePostcodeHit(postcode.value, postcode.resolverName) || areaPostcodeLeadsLocality(postcode.country)
+		isUnitGradePostcodeHit(postcode.value, postcode.resolverName) || areaPostcodeLeadsLocality(postcode.country ?? null)
 
 	return leads ? ADMIN_LADDER_POSTCODE_FIRST : ADMIN_LADDER_LOCALITY_FIRST
 }
@@ -89,7 +89,7 @@ export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArra
 
 	return adminLadderFor({
 		value: node.value,
-		resolverName: node.metadata?.["resolver_name"] as string | undefined,
+		resolverName: (node.metadata?.["resolver_name"] as string | undefined) ?? null,
 		...(typeof country === "string" ? { country } : {}),
 	})
 }
@@ -130,8 +130,8 @@ export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number
 	}
 
 	const leads =
-		isUnitGradePostcodeHit(candidate.value ?? "", candidate.resolverName) ||
-		areaPostcodeLeadsLocality(candidate.country)
+		isUnitGradePostcodeHit(candidate.value ?? "", candidate.resolverName ?? null) ||
+		areaPostcodeLeadsLocality(candidate.country ?? null)
 
 	return leads ? (PLACETYPE_SPECIFICITY["postalcode"] ?? Number.NEGATIVE_INFINITY) : AREA_GRADE_POSTALCODE_SPECIFICITY
 }

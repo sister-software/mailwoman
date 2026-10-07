@@ -104,7 +104,7 @@ describe("buildAnchorFeatures — span modes", () => {
 		const tokenRe = /[A-Za-z0-9]+/g
 		let m: RegExpExecArray | null
 
-		while ((m = tokenRe.exec(text)) !== null) {
+		while ((m = tokenRe.exec(text))) {
 			const entry = lookup.get(m[0].toUpperCase())
 
 			if (!entry) continue
@@ -363,7 +363,7 @@ describe("shapedKeyerObligationViolation", () => {
 	})
 
 	it("flags an undeclared card against a unit-key lookup, naming the remedy", () => {
-		const violation = shapedKeyerObligationViolation(withUnits, undefined, "postcode-gb.bin")
+		const violation = shapedKeyerObligationViolation(withUnits, null, "postcode-gb.bin")
 
 		expect(violation).toContain("span_mode")
 		expect(violation).toContain("shaped")
@@ -376,7 +376,7 @@ describe("shapedKeyerObligationViolation", () => {
 
 	it("passes a coherent pairing, and any pairing without unit keys", () => {
 		expect(shapedKeyerObligationViolation(withUnits, "shaped", "postcode-gb.bin")).toBeNull()
-		expect(shapedKeyerObligationViolation(withoutUnits, undefined, "postcode-gb.bin")).toBeNull()
-		expect(shapedKeyerObligationViolation(undefined, undefined, undefined)).toBeNull()
+		expect(shapedKeyerObligationViolation(withoutUnits, null, "postcode-gb.bin")).toBeNull()
+		expect(shapedKeyerObligationViolation(null, null, null)).toBeNull()
 	})
 })

@@ -5,7 +5,7 @@
  * @file Reads nearby flood features from the Environment Agency service.
  */
 
-import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
+import { createOGCFeaturesBBoxReader, type OGCFeature } from "@mailwoman/core/api"
 
 import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "#sdk/client"
 import { EA_FLOOD_LAYER } from "#vocabulary"
@@ -25,10 +25,7 @@ const SERVICE_FEATURE_LIMIT = 200
 /**
  * One feature as the service publishes it — the only shape the comparison reads.
  */
-export interface ServiceFeature {
-	properties?: { flood_zone?: string }
-	geometry?: { type: string; coordinates: unknown }
-}
+export type ServiceFeature = OGCFeature<{ flood_zone?: string }>
 
 /**
  * The one call the verification makes against the service: the features it publishes near a point.

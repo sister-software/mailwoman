@@ -134,7 +134,7 @@ function inferSourceFromFilename(filename: string): string {
 	// Return "<unknown>" so the caller flags this case.
 	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
 
-	if (m && m[1] !== undefined) return m[1]
+	if (m && m[1]) return m[1]
 
 	return "<unknown>"
 }
@@ -303,7 +303,7 @@ function formatPct(v: number | "—"): string {
 
 function printReport(
 	corpusDir: PathBuilderLike,
-	configPath: PathBuilderLike | undefined,
+	configPath: PathBuilderLike | null,
 	stats: FileCountStats,
 	rows: AuditRow[]
 ): void {
@@ -395,5 +395,5 @@ export async function audit(opts: AuditOpts): Promise<void> {
 
 	const trainStats = stats.bySplit["train"] ?? {}
 	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})
-	printReport(opts.corpusDir, opts.configPath, stats, rows)
+	printReport(opts.corpusDir, opts.configPath ?? null, stats, rows)
 }

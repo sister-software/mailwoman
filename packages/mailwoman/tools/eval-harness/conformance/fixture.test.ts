@@ -103,7 +103,7 @@ describe("parseConformanceFixture", () => {
 		expect(fixture.id).toBe("cnf-sample-01")
 		expect(fixture.outcomeComparator).toBe("resolution_identity")
 		expect(fixture.expect).toBe("equivalent")
-		expect(fixture.context).toBeUndefined()
+		expect(fixture.context).toBeNull()
 	})
 
 	it("rejects a fixture with no comparator, naming the fixture and the closed set", () => {
@@ -181,8 +181,8 @@ describe("parseConformanceFixture", () => {
 	it("defaults an unstated status to enforcing rather than to tracked", () => {
 		const fixture = parseConformanceFixture(record(), "inline")
 
-		expect(fixture.status).toBeUndefined()
-		expect(fixture.bugRef).toBeUndefined()
+		expect(fixture.status).toBeNull()
+		expect(fixture.bugRef).toBeNull()
 	})
 
 	it("rejects an unknown status rather than reading it as tracked", () => {

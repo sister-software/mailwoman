@@ -176,7 +176,7 @@ function fail(path: string, where: string, problem: string): never {
 }
 
 function assertUnmeasured(value: Record<string, unknown>, path: string, where: string): UnmeasuredValue {
-	if (typeof value.reason !== "string" || !value.reason.length) {
+	if (typeof value.reason !== "string" || !value.reason) {
 		fail(path, where, "is unmeasured and records no reason")
 	}
 
@@ -212,7 +212,7 @@ function assertServedManifest(value: unknown, path: string, where: string): Serv
 		fail(path, where, `has status ${stringifyJSON(value.status ?? null)} rather than measured or unmeasured`)
 	}
 
-	if (typeof value.tier !== "string" || !value.tier.length) {
+	if (typeof value.tier !== "string" || !value.tier) {
 		fail(path, where, "records no tier")
 	}
 
@@ -242,7 +242,7 @@ function assertDatabaseLicense(value: unknown, path: string, where: string): Dat
 		fail(path, where, `has status ${stringifyJSON(value.status ?? null)} rather than measured or unmeasured`)
 	}
 
-	if (typeof value.license !== "string" || !value.license.length) {
+	if (typeof value.license !== "string" || !value.license) {
 		fail(path, where, "is measured and records no license")
 	}
 
@@ -262,7 +262,7 @@ function assertRightsComponent(value: unknown, path: string, where: string): Rig
 		fail(path, where, "is not an object")
 	}
 
-	if (typeof value.source !== "string" || !value.source.length) {
+	if (typeof value.source !== "string" || !value.source) {
 		fail(path, where, "has no source")
 	}
 
@@ -311,7 +311,7 @@ function assertArtifact(value: unknown, path: string, where: string): PublishedA
 		fail(path, where, "is not an object")
 	}
 
-	if (typeof value.remotePath !== "string" || !value.remotePath.length) {
+	if (typeof value.remotePath !== "string" || !value.remotePath) {
 		fail(path, where, "has no remotePath")
 	}
 
@@ -337,7 +337,7 @@ export function assertPublishedBundlesSnapshot(value: unknown, path: string): Pu
 		fail(path, "measuredAt", `is ${stringifyJSON(value.measuredAt ?? null)} rather than an ISO 8601 instant`)
 	}
 
-	if (typeof value.bucket !== "string" || !value.bucket.length) {
+	if (typeof value.bucket !== "string" || !value.bucket) {
 		fail(path, "bucket", "is missing")
 	}
 
@@ -352,7 +352,7 @@ export function assertPublishedBundlesSnapshot(value: unknown, path: string): Pu
 			fail(path, where, "is not an object")
 		}
 
-		if (typeof entry.bundle !== "string" || !entry.bundle.length) {
+		if (typeof entry.bundle !== "string" || !entry.bundle) {
 			fail(path, where, "has no bundle name")
 		}
 

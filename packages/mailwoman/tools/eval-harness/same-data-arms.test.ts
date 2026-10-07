@@ -11,6 +11,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { runBaselineArm, runResolverArm } from "#tools/eval-harness/same-data/arms"
@@ -26,6 +27,7 @@ import {
 import { armMetrics } from "#tools/eval-harness/same-data/score"
 
 const SPRINGFIELD_IL: SameDataCandidate = {
+	...EMPTY_PLACE_FIELDS,
 	id: 101,
 	name: "Springfield",
 	placetype: "locality",
@@ -38,6 +40,7 @@ const SPRINGFIELD_IL: SameDataCandidate = {
 }
 
 const SPRINGFIELD_MA: SameDataCandidate = {
+	...EMPTY_PLACE_FIELDS,
 	id: 202,
 	name: "Springfield",
 	placetype: "locality",
@@ -115,7 +118,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 
 		expect(result.selection).toBe("101")
 		expect(result.correct).toBe(true)
-		expect(result.error).toBeUndefined()
+		expect(result.error).toBeNull()
 	})
 
 	it("reports a wrong-area selection with its distance rather than only a verdict", async () => {
@@ -152,7 +155,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 		const panel = panelFor("smoke-absent", [101], false)
 		const result = await runResolverArm("mailwoman", panel, fixtureFor("smoke-absent", []), {})
 
-		expect(result.error).toBeUndefined()
+		expect(result.error).toBeNull()
 		expect(result.selection).toBeNull()
 
 		const metrics = armMetrics("mailwoman", "gold_absent", new Map([[panel.id, panel]]), [result])

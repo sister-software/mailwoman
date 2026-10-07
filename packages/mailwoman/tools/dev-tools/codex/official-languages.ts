@@ -58,7 +58,7 @@ interface LanguagePopulation {
 	_officialStatus?: string
 }
 
-async function loadCLDR(file: string, cldrDir: PathBuilderLike | undefined, cldrVersion: string): Promise<unknown> {
+async function loadCLDR(file: string, cldrDir: PathBuilderLike | null, cldrVersion: string): Promise<unknown> {
 	if (cldrDir) {
 		return readLocalJSONFile(PathBuilder.from(cldrDir)(`cldr-${file}.json`))
 	}
@@ -83,13 +83,13 @@ export async function generateOfficialLanguages(
 	const outPath = options.out ?? DEFAULT_OUT
 
 	const territoryInfo = (
-		(await loadCLDR("territoryInfo", options.cldrDir, cldrVersion)) as Record<
+		(await loadCLDR("territoryInfo", options.cldrDir ?? null, cldrVersion)) as Record<
 			string,
 			Record<string, Record<string, unknown>>
 		>
 	).supplemental!.territoryInfo as Record<string, { languagePopulation?: Record<string, LanguagePopulation> }>
 
-	const aliasesDoc = (await loadCLDR("aliases", options.cldrDir, cldrVersion)) as {
+	const aliasesDoc = (await loadCLDR("aliases", options.cldrDir ?? null, cldrVersion)) as {
 		supplemental: { metadata: { alias: { languageAlias: Record<string, { _replacement?: string }> } } }
 	}
 

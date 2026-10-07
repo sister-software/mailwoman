@@ -204,9 +204,9 @@ export interface ResolvedRetryPolicy {
 /**
  * Fill in {@linkcode RetryOptions}' defaults.
  *
- * `undefined` (the absent option) resolves to a single attempt — no retry.
+ * `null` (the absent option) resolves to a single attempt — no retry.
  */
-export function resolveRetryPolicy(options: RetryOptions | boolean | undefined): ResolvedRetryPolicy {
+export function resolveRetryPolicy(options: RetryOptions | boolean | null): ResolvedRetryPolicy {
 	if (!options) return { maxAttempts: 1, baseDelayMs: DEFAULT_BASE_RETRY_DELAY_MS }
 
 	const provided = options === true ? {} : options

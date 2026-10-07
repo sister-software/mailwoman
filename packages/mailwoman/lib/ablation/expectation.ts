@@ -613,7 +613,7 @@ export function gradeAgainstLadder(input: {
 		// For unconstrained cases, abstention and any on-ladder rung are acceptable.
 		if (!resolved) return { grade: "correctlyAbstained", achievedRungDepth: null, degradedRungs: null }
 
-		if (achieved == null) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
+		if (!achieved) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
 
 		return { grade: fell === 0 ? "held" : "degraded", achievedRungDepth, degradedRungs: fell }
 	}
@@ -621,7 +621,7 @@ export function gradeAgainstLadder(input: {
 	if (!resolved) return { grade: "lost", achievedRungDepth: null, degradedRungs: null }
 
 	// Distinguish off-ladder wrong place from on-ladder over-coarsening.
-	if (achieved == null) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
+	if (!achieved) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
 
 	// Do not penalize below undeleted precision floor.
 	if (achieved.depth > Math.max(expected.depth, anchorRungDepth)) {

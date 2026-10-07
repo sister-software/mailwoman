@@ -56,7 +56,7 @@ describe("sameRemote", () => {
 		]
 
 		for (const form of forms) {
-			expect(sameRemote(form, forms[0]), form).toBe(true)
+			expect(sameRemote(form, forms[0] ?? null), form).toBe(true)
 		}
 	})
 
@@ -64,9 +64,9 @@ describe("sameRemote", () => {
 		expect(sameRemote(repoURL(FORK_ORG, REPO), repoURL(UPSTREAM_ORG, REPO))).toBe(false)
 	})
 
-	it("treats an absent remote as not-matching rather than as a match against undefined", () => {
-		expect(sameRemote(undefined, repoURL(FORK_ORG, REPO))).toBe(false)
-		expect(sameRemote(undefined, undefined)).toBe(false)
+	it("treats an absent remote as not-matching rather than as a match against null", () => {
+		expect(sameRemote(null, repoURL(FORK_ORG, REPO))).toBe(false)
+		expect(sameRemote(null, null)).toBe(false)
 	})
 })
 
@@ -99,13 +99,42 @@ describe("planRepoSync", () => {
 	})
 
 	it("clones what is absent", () => {
-		expect(planRepoSync(upstreamOrigin, DIR, { exists: false, isRepository: false }).action).toBe(SyncAction.Clone)
+		expect(
+			planRepoSync(
+				upstreamOrigin,
+				DIR,
+				clone({
+					exists: false,
+					isRepository: false,
+					originURL: null,
+					dirty: null,
+					ahead: null,
+					behind: null,
+					shallow: null,
+					head: null,
+					headDate: null,
+				})
+			).action
+		).toBe(SyncAction.Clone)
 	})
 
 	it("refuses a directory that is not a checkout rather than cloning over it", () => {
-		expect(planRepoSync(upstreamOrigin, DIR, { exists: true, isRepository: false }).action).toBe(
-			SyncAction.RefuseNotAClone
-		)
+		expect(
+			planRepoSync(
+				upstreamOrigin,
+				DIR,
+				clone({
+					isRepository: false,
+					originURL: null,
+					dirty: null,
+					ahead: null,
+					behind: null,
+					shallow: null,
+					head: null,
+					headDate: null,
+				})
+			).action
+		).toBe(SyncAction.RefuseNotAClone)
 	})
 
 	it("fast-forwards a clean, correctly-pointed, behind clone — and only then", () => {

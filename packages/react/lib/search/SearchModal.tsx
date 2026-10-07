@@ -273,7 +273,7 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 				/>
 			</form>
 
-			{response?.corrected !== undefined && (
+			{response?.corrected != null && (
 				<p className="mw-search__corrected">Showing results for “{response.corrected}”</p>
 			)}
 

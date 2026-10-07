@@ -78,7 +78,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		let filerDBPath: PathBuilderLike | undefined
+		let filerDBPath: PathBuilderLike | null = null
 
 		if (options.providerListPath) {
 			if (!(await pathExists(options.providerListPath))) {
@@ -135,7 +135,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ build: ${out}`)
 
-		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
+		let filerDB: DatabaseClientHandle<FilerDatabase> | null = null
 
 		if (filerDBPath) {
 			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDBPath})`)
@@ -152,7 +152,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 				includeLocationIDs: options.includeLocationIDs,
 				blockCentroids: await createTIGERBlockCentroidLookup(tigerDBPath),
 				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
-				filerDB,
+				filerDB: filerDB ?? undefined,
 				onProgress: (message) => console.error(`  [bdc] ${message}`),
 			})
 

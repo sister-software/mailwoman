@@ -32,7 +32,7 @@ export function makePOIRuntime(): POIRuntime {
 			phrase.trim().toLowerCase() === "drinking fountain"
 				? [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 0.9 }]
 				: [],
-		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [] }),
+		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -44,7 +44,7 @@ export function makePOIRuntime(): POIRuntime {
  */
 export function makeBrandPOIRuntime(): POIRuntime {
 	const lookup = {
-		getPOICategory: () => undefined,
+		getPOICategory: () => null,
 		requiresBuildLocalLayer: () => false,
 		resolveOvertureCategories: (id: string) => [id],
 		lookupPOICategory: () => [],
@@ -59,7 +59,7 @@ export function makeBrandPOIRuntime(): POIRuntime {
 			phrase.trim().toLowerCase() === "chevron"
 				? [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1 }]
 				: [],
-		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [] }),
+		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [], intentMarkers: null }),
 	}
 }
 

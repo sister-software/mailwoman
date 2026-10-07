@@ -63,7 +63,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			),
 	}),
 	handler: async (args) => {
-		const countries = (args["countries"] as string[] | undefined)?.map((code) => code.toUpperCase())
+		const countries = (args["countries"] as string[] | null)?.map((code) => code.toUpperCase())
 		const filter = args["artifact"] as string | undefined
 
 		const paths = (await gazetteerArtifacts()).filter((path) => (filter ? path.includes(filter) : true))

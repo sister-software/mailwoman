@@ -44,9 +44,11 @@ export const countryReferenceAnnotator: Annotator = ({ countryCode }): Partial<A
 	const flag = countryFlag(alpha2)
 
 	return {
-		iso3166: { alpha2 },
-		...(flag ? { flag } : {}),
-		...(ref?.callingCode != null ? { callingCode: ref.callingCode } : {}),
-		...(ref?.currency ? { currency: ref.currency } : {}),
+		iso3166: { alpha2, alpha3: null, numeric: null },
+		flag: flag || null,
+		callingCode: ref?.callingCode ?? null,
+		currency: ref?.currency
+			? { isoCode: ref.currency.isoCode, name: ref.currency.name ?? null, symbol: ref.currency.symbol ?? null }
+			: null,
 	}
 }

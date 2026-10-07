@@ -52,8 +52,8 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
 
-		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
-		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
+		const labels = await readLabelsFromModelCard(weights!.modelCardPath ?? null)
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner, ...(labels ? { labels } : {}) })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")
 		expect(tree.raw).toBe("123 Main St, Springfield, IL 62704")

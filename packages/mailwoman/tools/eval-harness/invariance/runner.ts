@@ -51,16 +51,16 @@ export interface PairOutcome {
 	 * Baseline parser's verdict on the same pair.
 	 * It is set only in baseline mode.
 	 */
-	baselineVerdict?: Verdict
+	baselineVerdict: Verdict | null
 	/**
 	 * Whether the candidate's violation is no more severe than the baseline's verdict on the same pair.
 	 */
-	preExisting?: boolean
+	preExisting: boolean | null
 	/**
 	 * Whether the row's original parse has a critical component from the candidate
 	 * and none from the baseline.
 	 */
-	gainedCapability?: boolean
+	gainedCapability: boolean | null
 }
 
 /**
@@ -189,7 +189,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			const transform = getTransform(transformID)
 			const transformedText: string | null = transformID === "idempotence" ? row.raw : transform.apply(row.raw)
 
-			if (transformedText == null) {
+			if (!transformedText) {
 				skipped.push({ rowID: row.id, transformID, reason: "transform not applicable to this raw" })
 
 				continue
@@ -219,6 +219,9 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 				transformed: candidateOutcome.transformed,
 				verdict: candidateOutcome.verdict,
 				diff: candidateOutcome.diff,
+				baselineVerdict: null,
+				preExisting: null,
+				gainedCapability: null,
 			}
 
 			if (options.baselineParse) {

@@ -36,7 +36,7 @@ export function declaredTiers(markdown: string): Map<string, string[]> {
 		const cells = line.split("|")
 		const locales = cells[2]
 
-		if (locales === undefined) continue
+		if (!locales) continue
 
 		tiers.set(
 			match[1],
@@ -71,6 +71,8 @@ export const localeScopeCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `parsed ${declared.size} tier rows out of the declaration; ${SCOPE_TIER_KEYS.length} are expected, so the parser matched nothing and every comparison below is vacuous`,
 				file: DECLARATION,
+				line: null,
+				details: null,
 			})
 
 			return diagnostics
@@ -85,6 +87,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `tier ${tier} holds ${country} in the declaration and not in the register`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -93,6 +97,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `tier ${tier} holds ${country} in the register and not in the declaration`,
 					file: DECLARATION,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -114,6 +120,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${country} ships a weights package, sits in no tier, and has no entry in untieredShippingLocales saying why`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -126,6 +134,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `untieredShippingLocales names ${country} with an empty reason; an entry is a debt with a reason someone can read, not an exemption`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -136,12 +146,16 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `untieredShippingLocales still names ${country}, which the declaration now places in a tier — remove the entry`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			} else if (!shipping.has(country)) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message: `untieredShippingLocales names ${country}, which no longer ships a weights package — remove the entry`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -154,6 +168,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `dRuleProtected names ${country} with an empty reason; the arc reports the reason at the moment it blocks, and "${country}" alone does not answer why`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -162,6 +178,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `dRuleProtected names ${country}, which tier 1 already protects unconditionally — two sources for one fact is what this register replaced`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -170,6 +188,8 @@ export const localeScopeCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `dRuleProtected names ${country}, which is in no tier and ships nothing — a protection for a country the project does not cover blocks on rows that cannot exist`,
 					file: REGISTER,
+					line: null,
+					details: null,
 				})
 			}
 		}

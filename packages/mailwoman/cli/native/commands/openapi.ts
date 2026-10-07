@@ -35,7 +35,7 @@ export async function run(args: readonly string[]): Promise<number> {
 
 		const app = createMailwomanAPI({})
 		const flavor = stringValue(parsed.values, "flavor") === "3.0" ? "3.0" : "3.1"
-		const out = stringValue(parsed.values, "out")
+		const out = stringValue(parsed.values, "out") ?? undefined
 
 		printOpenAPIDocument(app, MAILWOMAN_API_DOC_INFO, { flavor, out })
 

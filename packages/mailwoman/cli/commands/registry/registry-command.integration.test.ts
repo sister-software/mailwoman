@@ -24,11 +24,11 @@ async function tmp(): Promise<PathBuilder> {
 
 describe("registry command — loadMapping", () => {
 	test("no --mapping returns the built-in default", async () => {
-		expect(await loadMapping(undefined, undefined)).toEqual(DEFAULT_MAPPING)
+		expect(await loadMapping(null, null)).toEqual(DEFAULT_MAPPING)
 	})
 
 	test("inline JSON merges over the default (override just one field)", async () => {
-		const m = await loadMapping('{ "address": ["addr"], "name": "contact_name" }', undefined)
+		const m = await loadMapping('{ "address": ["addr"], "name": "contact_name" }', null)
 		expect(m.address).toEqual(["addr"])
 		expect(m.name).toBe("contact_name")
 		expect(m.email).toBe(DEFAULT_MAPPING.email)
@@ -39,19 +39,19 @@ describe("registry command — loadMapping", () => {
 		const file = (await tmp())("mapping.json")
 		await writeLocalJSONFile({ id: "npi", organization: "legal_name" }, file)
 		// The option is a string, because it holds either inline JSON or a file path.
-		const m = await loadMapping(file.toString(), undefined)
+		const m = await loadMapping(file.toString(), null)
 		expect(m.id).toBe("npi")
 		expect(m.organization).toBe("legal_name")
 		expect(m.address).toEqual(DEFAULT_MAPPING.address)
 	})
 
 	test("--source stamps a provenance label (not a column)", async () => {
-		const m = await loadMapping(undefined, "clinics-2026")
+		const m = await loadMapping(null, "clinics-2026")
 		expect(m.source).toBe("clinics-2026")
 	})
 
 	test("invalid JSON (and not a file) throws a clear error", async () => {
-		await expect(loadMapping("{ not json", undefined)).rejects.toThrow(/mapping/)
+		await expect(loadMapping("{ not json", null)).rejects.toThrow(/mapping/)
 	})
 })
 

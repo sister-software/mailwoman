@@ -37,7 +37,7 @@ describe("detectAddressSystem", () => {
 	})
 
 	it("returns null when the model has no locale head", () => {
-		expect(detectAddressSystem(undefined)).toBeNull()
+		expect(detectAddressSystem(null)).toBeNull()
 	})
 
 	it("returns null on a vocabulary-size mismatch (drifted head)", () => {
@@ -81,12 +81,12 @@ describe("locale hint", () => {
 	})
 
 	it("gives no hint for an absent or unknown country", () => {
-		expect(localeHintID(table, undefined, "anything")).toBe(3)
+		expect(localeHintID(table, null, "anything")).toBe(3)
 		expect(localeHintID(table, "GH", "Plot 12, Spintex Road")).toBe(3)
 	})
 
 	it("reads a card without the field as no table, and refuses a malformed one", () => {
-		expect(parseAddressSystemTable(undefined, "card")).toBeUndefined()
+		expect(parseAddressSystemTable(undefined, "card")).toBeNull()
 		expect(() => parseAddressSystemTable({ no_hint: "3", members: {} }, "card")).toThrow(/address_systems/u)
 	})
 

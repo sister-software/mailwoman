@@ -71,7 +71,7 @@ function bboxOf(
  * Parses the resolver's `placeID` URI back to a WOF id, returning `null` for anything else
  * so a future non-WOF backend is not silently read as one.
  */
-export function wofIDFromPlaceID(placeID: string | undefined): number | null {
+export function wofIDFromPlaceID(placeID: string | null): number | null {
 	if (!placeID) return null
 
 	const match = /^wof:(\d+)$/.exec(placeID)

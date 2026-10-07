@@ -39,7 +39,7 @@ export const rigTool = (_deps: DevToolDeps): DevTool => ({
 	}),
 	handler: async (args) => {
 		const engine = args["engine"] as EngineRigName
-		const action = (args["action"] as string | undefined) ?? "status"
+		const action = (args["action"] as string | null) ?? "status"
 
 		if (action === "start") return rigStart(engine)
 

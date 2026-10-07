@@ -49,7 +49,7 @@ describe("buildSoftFeatures — US postcode anchor hit", () => {
 
 	it("confidence 1.0 + the feature vector on exactly the postcode pieces; no gazetteer when unconfigured", () => {
 		const soft = buildSoftFeatures(TEXT, PIECES, { postcodeAnchorLookup: LOOKUP })
-		expect(soft.gazetteer).toBeUndefined()
+		expect(soft.gazetteer).toBeNull()
 		expect(soft.anchor).toBeDefined()
 		expect(soft.anchor!.confidence).toEqual([0, 0, 0, 1, 1])
 		const us = anchorFeatureVector({ US: 1 }, 33.749, -84.388)
@@ -70,7 +70,7 @@ describe("buildSoftFeatures — homograph gazetteer hit", () => {
 
 	it("paints the homograph clue on the Georgia pieces; no anchor when unconfigured", () => {
 		const soft = buildSoftFeatures(TEXT, PIECES, { gazetteerLexicon: LEXICON })
-		expect(soft.anchor).toBeUndefined()
+		expect(soft.anchor).toBeNull()
 		expect(soft.gazetteer).toBeDefined()
 		const homo = [1, 1, 0, 0, 1] // country | region | homograph
 		expect(soft.gazetteer!.features[0]).toEqual(ZERO_GAZ)
@@ -111,7 +111,7 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 			suppressGazetteerNearPostcode: true,
 		})
 
-		expect(soft.anchor).toBeUndefined()
+		expect(soft.anchor).toBeNull()
 		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0])
 	})
 })

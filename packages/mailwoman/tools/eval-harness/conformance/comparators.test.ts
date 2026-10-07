@@ -30,6 +30,9 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 		dependent_locality: null,
 		unit: null,
 		postcode_country_scope: null,
+		capital_promotion: null,
+		variant_alias_exemption: null,
+		admin_coherence: null,
 		hierarchy: [],
 		...over,
 	}
@@ -47,6 +50,12 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		variant: "10 DOWNING STREET, LONDON",
 		outcomeComparator: "resolution_identity",
 		expect: "equivalent",
+		context: null,
+		status: null,
+		bugRef: null,
+		rowRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -66,8 +75,8 @@ const COMPONENTS = fixture({ outcomeComparator: "component_map" })
 const MECHANISM = fixture({ outcomeComparator: "mechanism_shape" })
 
 const LONDON = [
-	{ tag: "locality", name: "London", placeID: "wof:101750367" },
-	{ tag: "country", name: "United Kingdom", placeID: "wof:85633159" },
+	{ tag: "locality", name: "London", placeID: "wof:101750367", lat: null, lon: null },
+	{ tag: "country", name: "United Kingdom", placeID: "wof:85633159", lat: null, lon: null },
 ]
 
 describe("resolution_identity", () => {
@@ -81,7 +90,7 @@ describe("resolution_identity", () => {
 	it("diverges on two different places 90 meters apart — a coordinate is never read", () => {
 		const near = [
 			{ tag: "locality", name: "London", placeID: "wof:404227469", lat: 51.5015, lon: -0.1246 },
-			{ tag: "country", name: "United Kingdom", placeID: "wof:85633159" },
+			{ tag: "country", name: "United Kingdom", placeID: "wof:85633159", lat: null, lon: null },
 		]
 
 		const reading = compareOutcomes(
@@ -95,7 +104,11 @@ describe("resolution_identity", () => {
 	})
 
 	it("reads a chain extended at the fine end as a refinement", () => {
-		const deeper = [{ tag: "dependent_locality", name: "Westminster", placeID: "wof:85681877" }, ...LONDON]
+		const deeper = [
+			{ tag: "dependent_locality", name: "Westminster", placeID: "wof:85681877", lat: null, lon: null },
+			...LONDON,
+		]
+
 		const reading = compareOutcomes(IDENTITY, outcome({ hierarchy: LONDON }), outcome({ hierarchy: deeper }))
 
 		expect(reading.observed).toBe("refines")
@@ -103,7 +116,7 @@ describe("resolution_identity", () => {
 	})
 
 	it("reports undecidable when neither side carries a place identity", () => {
-		const nameOnly = [{ tag: "locality", name: "London" }]
+		const nameOnly = [{ tag: "locality", name: "London", placeID: null, lat: null, lon: null }]
 		const reading = compareOutcomes(IDENTITY, outcome({ hierarchy: nameOnly }), outcome({ hierarchy: nameOnly }))
 
 		expect(reading.observed).toBe("undecidable")
@@ -295,7 +308,7 @@ describe("candidate_admissibility", () => {
 			tag: "locality",
 			value: "Springfield",
 			placetype: "locality",
-			query: { limit: 5, ...over },
+			query: { country: null, parentID: null, postcode: null, regionQualifier: null, limit: 5, ...over },
 			checks: [],
 			candidates: ids.map((id) => ({
 				id,
@@ -303,10 +316,16 @@ describe("candidate_admissibility", () => {
 				country: "US",
 				placetype: "locality",
 				score: 1,
+				prominence: null,
+				importance: null,
+				population: null,
+				exactMatch: null,
+				containedByQualifier: null,
 				ranks: {},
 			})),
 			candidatesTruncated: 0,
 			picked: null,
+			reachableIn: null,
 		}
 	}
 

@@ -56,17 +56,23 @@ describe("the conformance suite register", () => {
 		}
 	})
 
-	it("answers undefined for a law nobody registered, rather than another law's audit", () => {
+	it("answers null for a law nobody registered, rather than another law's audit", () => {
 		const unregistered: ConformanceFixture = {
 			id: "unregistered",
 			law: "no-such-law",
 			base: "Portland, OR",
 			variant: "Portland, OR",
+			context: null,
 			outcomeComparator: "resolution_identity",
 			expect: "equivalent",
+			status: null,
+			bugRef: null,
+			rowRef: null,
+			toleranceM: null,
+			note: null,
 		}
 
-		expect(suiteForLaw(unregistered.law)).toBeUndefined()
+		expect(suiteForLaw(unregistered.law)).toBeNull()
 		expect(describeLaw(unregistered)).toBe("")
 	})
 

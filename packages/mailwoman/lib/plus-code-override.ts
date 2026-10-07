@@ -128,7 +128,7 @@ function evictCodeFromComponents(result: GeocodeOutcomeLike, tree: AddressTree, 
 				.find((n) => n.tag === tag && !isCode(n.value))
 				?.value.trim() || null
 
-		if (current !== undefined && isCode(current)) {
+		if (current && isCode(current)) {
 			if (replacement) {
 				components[tag] = replacement
 			} else {
@@ -139,7 +139,7 @@ function evictCodeFromComponents(result: GeocodeOutcomeLike, tree: AddressTree, 
 		if ((COMPONENT_SLOTS as readonly string[]).includes(tag)) {
 			const slot = tag as (typeof COMPONENT_SLOTS)[number]
 
-			if (result[slot] !== null && isCode(result[slot]!)) {
+			if (result[slot] && isCode(result[slot]!)) {
 				result[slot] = replacement
 			}
 		}

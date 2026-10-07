@@ -74,3 +74,28 @@ export function addCellIndexColumns<TB extends string, C extends string, K exten
 
 	return keyed.addColumn("containment", "text", (column) => column.notNull())
 }
+
+/**
+ * One row of a cell index keyed by `area_id`, the columns {@link addCellIndexColumns} creates for that key.
+ */
+export interface AreaCellIndexTable {
+	/**
+	 * 48-bit short H3 cell.
+	 *
+	 * Uses mixed resolutions.
+	 * `whole` rows are compacted parent-ward; `partial` rows stay at the index resolution.
+	 */
+	h3_cell: number
+	/**
+	 * The resolution this row's cell was captured at.
+	 *
+	 * A short cell has no resolution of its own.
+	 * A table that mixes resolutions requires this column for probes.
+	 */
+	resolution: number
+	area_id: string
+	/**
+	 * Whether the area covers the whole cell or only part of it.
+	 */
+	containment: string
+}

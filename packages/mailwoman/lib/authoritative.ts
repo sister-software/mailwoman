@@ -20,32 +20,32 @@ import type {
  */
 interface AuthoritativeAssertionMatch {
 	provider_place_id: string
-	object_ids?: Record<string, string>
-	canonical_fields?: Record<string, string>
-	lat?: number
-	lon?: number
-	precision?: string
+	object_ids: Record<string, string> | null
+	canonical_fields: Record<string, string> | null
+	lat: number | null
+	lon: number | null
+	precision: string | null
 	match_status: "exact" | "approximate"
-	provider_score?: number
+	provider_score: number | null
 }
 
 /**
  * The result-level block: `status` is the provider's response status plus `transport_error`,
- * and `matches` is present exactly when the provider returned candidates —
+ * and `matches` is non-null exactly when the provider returned candidates —
  * one for `matched`, all of them in the provider's order for `ambiguous`.
  */
 export interface AuthoritativeAssertion {
 	provider: string
 	status: "matched" | "ambiguous" | "refused" | "transport_error"
-	matches?: AuthoritativeAssertionMatch[]
-	attribution?: string
-	license?: string
-	retrieved_at?: string
-	dataset_version?: string
+	matches: AuthoritativeAssertionMatch[] | null
+	attribution: string | null
+	license: string | null
+	retrieved_at: string | null
+	dataset_version: string | null
 	/**
 	 * `transport_error` only: the thrown message, verbatim.
 	 */
-	error?: string
+	error: string | null
 }
 
 /**
@@ -92,8 +92,8 @@ export function authoritativeQueryFrom(
 	for (const [field, tag] of EVIDENCE_TAGS) {
 		const value = evidence[field]
 
-		if (typeof value === "string" && value.length) {
-			components.push({ tag, value })
+		if (typeof value === "string" && value) {
+			components.push({ tag, value, start: null, end: null })
 		}
 	}
 
@@ -101,21 +101,22 @@ export function authoritativeQueryFrom(
 		rawQuery,
 		normalizedQuery,
 		components,
-		...(evidence.countryCode ? { countryCode: evidence.countryCode } : {}),
-		...(locale ? { locale } : {}),
+		countryCode: evidence.countryCode || null,
+		locale: locale || null,
+		parseConfidence: null,
 	}
 }
 
 function projectMatch(match: AuthoritativeMatch): AuthoritativeAssertionMatch {
 	return {
 		provider_place_id: match.providerPlaceID,
-		...(match.objectIDs ? { object_ids: { ...match.objectIDs } } : {}),
-		...(match.canonicalFields ? { canonical_fields: { ...match.canonicalFields } } : {}),
-		...(match.latitude !== undefined ? { lat: match.latitude } : {}),
-		...(match.longitude !== undefined ? { lon: match.longitude } : {}),
-		...(match.coordinatePrecision ? { precision: match.coordinatePrecision } : {}),
+		object_ids: match.objectIDs ? { ...match.objectIDs } : null,
+		canonical_fields: match.canonicalFields ? { ...match.canonicalFields } : null,
+		lat: match.latitude,
+		lon: match.longitude,
+		precision: match.coordinatePrecision || null,
 		match_status: match.matchStatus,
-		...(match.providerScore !== undefined ? { provider_score: match.providerScore } : {}),
+		provider_score: match.providerScore,
 	}
 }
 
@@ -134,16 +135,22 @@ export async function consultAuthoritativeProvider(
 		return {
 			provider: provider.name,
 			status: response.status,
-			...(response.matches.length ? { matches: response.matches.map(projectMatch) } : {}),
-			...(response.attribution ? { attribution: response.attribution } : {}),
-			...(response.license ? { license: response.license } : {}),
-			...(response.retrievedAt ? { retrieved_at: response.retrievedAt } : {}),
-			...(response.datasetVersion ? { dataset_version: response.datasetVersion } : {}),
+			matches: response.matches.length ? response.matches.map(projectMatch) : null,
+			attribution: response.attribution || null,
+			license: response.license || null,
+			retrieved_at: response.retrievedAt || null,
+			dataset_version: response.datasetVersion || null,
+			error: null,
 		}
 	} catch (error) {
 		return {
 			provider: provider.name,
 			status: "transport_error",
+			matches: null,
+			attribution: null,
+			license: null,
+			retrieved_at: null,
+			dataset_version: null,
 			error: (error as Error).message,
 		}
 	}

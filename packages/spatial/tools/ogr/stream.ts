@@ -68,7 +68,7 @@ export function spawnOGR2OGR(args: readonly PathBuilderLike[], context: string):
 		stdout: child.stdout,
 		settled,
 		kill: () => {
-			if (child.exitCode === null && child.signalCode === null) {
+			if (child.exitCode === null && !child.signalCode) {
 				child.kill()
 			}
 		},

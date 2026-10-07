@@ -33,11 +33,10 @@ export type ClaimResponse = z.infer<typeof ClaimResponseSchema>
 export type IssuedClaim = Extract<ClaimResponse, { status: "issued" }>
 
 /**
- * Returns `undefined` for a body that does not match the schema, so a 200
- * whose fields are missing is no claim.
+ * Returns `null` for a body that does not match the schema, so a 200 whose fields are missing is no claim.
  */
-export function parseClaimResponse(body: unknown): ClaimResponse | undefined {
+export function parseClaimResponse(body: unknown): ClaimResponse | null {
 	const parsed = ClaimResponseSchema.safeParse(body)
 
-	return parsed.success ? parsed.data : undefined
+	return parsed.success ? parsed.data : null
 }

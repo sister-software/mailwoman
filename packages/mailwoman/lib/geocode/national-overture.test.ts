@@ -78,7 +78,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(taiwan?.register).toBe("OpenAddresses/<bureau> Civil Affairs")
 
 		expect(overtureCountryLicense("es")?.expression).toBe("CC-BY-4.0")
-		expect(overtureCountryLicense("kr")).toBeUndefined()
+		expect(overtureCountryLicense("kr")).toBeNull()
 	})
 
 	it("answers {} for a registered country whose database is not on disk, and for an unregistered one", async () => {
@@ -128,7 +128,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(lookup).toBeDefined()
 
 		expect(
-			lookup?.find({ street: "重慶南路一段", number: "122號", region: "台北市", subregion: "中正區" })
+			lookup?.find({ street: "重慶南路一段", number: "122號", region: "台北市", subregion: "中正區", bbox: null })
 		).toMatchObject({ lat: 25.0399658, lon: 121.5124584 })
 
 		expect(provider.for("TW")).toBe(provider.for("tw"))

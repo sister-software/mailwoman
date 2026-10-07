@@ -125,7 +125,7 @@ export function renderSGRegister(row: SGRow, random: () => number, register?: SG
 	const street = random() < P_ABBREVIATE ? abbreviateSGStreet(street0) : street0
 	const drawn = random()
 	const building = isBuildingName(row.unit) ? titleCaseIfUpper(row.unit) : null
-	const draw = register === undefined ? drawn : REGISTER_DRAW[register]
+	const draw = register ? REGISTER_DRAW[register] : drawn
 
 	let raw: string
 	let rendered: SGRegister

@@ -6,7 +6,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
+import type { BackendCapabilityGap, GazetteerArtifactCoverage, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
  * Describes the `ResolveOpts` sent over the wire.
@@ -19,8 +19,8 @@ export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "inter
 /**
  * Strip the live lookup handles from `ResolveOpts` so the rest can be JSON-serialized over http.
  */
-export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | undefined {
-	if (!opts) return undefined
+export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | null {
+	if (!opts) return null
 	const { addressPoints: _ap, interpolation: _ip, ...rest } = opts
 
 	return rest
@@ -69,7 +69,7 @@ export interface RemoteResolverOpts {
  */
 export interface ResolveTreeRequest {
 	tree: AddressTree
-	opts?: SerializableResolveOpts
+	opts?: SerializableResolveOpts | null
 }
 
 /**
@@ -90,6 +90,8 @@ export class RemoteResolver implements Resolver {
 	readonly #fetch: RemoteResolverFetch
 	readonly #timeoutMs: number
 	readonly #headers: Record<string, string>
+	readonly artifactCoverage: GazetteerArtifactCoverage | null = null
+	readonly capabilityGaps: readonly BackendCapabilityGap[] | null = null
 
 	constructor(opts: RemoteResolverOpts) {
 		if (!opts.endpoint) throw new Error("RemoteResolver: `endpoint` is required")

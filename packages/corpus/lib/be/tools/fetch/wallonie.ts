@@ -197,7 +197,7 @@ export async function downloadWallonie(
 	const recorded = await readManifest<WallonieManifest>(manifestPath)
 	const stat = await tryStat(archivePath)
 
-	if (!options.force && recorded && stat && feedUpdated !== null && recorded.feed_updated === feedUpdated) {
+	if (!options.force && recorded && stat && feedUpdated && recorded.feed_updated === feedUpdated) {
 		report?.(`  present, and the dataset feed reports the recorded updated ${feedUpdated}`)
 
 		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }

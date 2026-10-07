@@ -46,6 +46,10 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		outcomeComparator: "parse_whole_strict",
 		expect: "equivalent",
 		rowRef: "cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore",
+		status: null,
+		bugRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -210,11 +214,11 @@ describe("auditCaseFoldingSuite", () => {
 	})
 
 	it("rejects a row with no country — an unrouted row grades against a locale that is not its own", () => {
-		expect(auditCaseFoldingSuite([fixture({ context: undefined })])[0]).toContain("no context.caseCountry")
+		expect(auditCaseFoldingSuite([fixture({ context: null })])[0]).toContain("no context.caseCountry")
 	})
 
 	it("rejects a row with no committed source", () => {
-		expect(auditCaseFoldingSuite([fixture({ rowRef: undefined })])[0]).toContain("no rowRef")
+		expect(auditCaseFoldingSuite([fixture({ rowRef: null })])[0]).toContain("no rowRef")
 	})
 
 	it("rejects a relation other than equivalent", () => {
@@ -256,6 +260,9 @@ describe("a seeded case regression", () => {
 				dependent_locality: null,
 				unit: null,
 				postcode_country_scope: null,
+				capital_promotion: null,
+				variant_alias_exemption: null,
+				admin_coherence: null,
 				hierarchy: [],
 			},
 		} satisfies ConformanceOutcome

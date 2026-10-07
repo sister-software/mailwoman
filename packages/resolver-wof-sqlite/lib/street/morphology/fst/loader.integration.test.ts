@@ -86,7 +86,7 @@ describe("loadStreetMorphologyFST", () => {
 		})
 
 		expect(loaded.source).toBe("built")
-		expect(loaded.path).toBeUndefined()
+		expect(loaded.path).toBeNull()
 		expect(loaded.matcher.query("avenue").accepting.length).toBeGreaterThan(0)
 	})
 

@@ -14,8 +14,8 @@ import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
  * walk threads onto locality lookups, deliberately the same node the admin-coherence
  * verdicts read so the two populations coincide.
  */
-export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
-	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim())?.value.trim()
+export function firstRegionQualifier(roots: readonly AddressNode[]): string | null {
+	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim())?.value.trim() ?? null
 }
 
 /**
@@ -58,14 +58,14 @@ export function partitionByContainment<T>(
  * no stamps at all → `"unavailable"`.
  */
 export function adminContainmentVerdict(
-	candidates: ReadonlyArray<{ containedByQualifier?: boolean | undefined }>
+	candidates: ReadonlyArray<{ containedByQualifier?: boolean | null }>
 ): "contained" | "no_contained_candidate" | "unavailable" {
 	let evaluated = false
 
 	for (const candidate of candidates) {
 		if (candidate.containedByQualifier === true) return "contained"
 
-		if (candidate.containedByQualifier !== undefined) {
+		if (candidate.containedByQualifier != null) {
 			evaluated = true
 		}
 	}

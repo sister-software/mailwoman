@@ -14,7 +14,7 @@ import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/intros
  *
  * `StatementSync` accepts any `SQLInputValue[]`, which would erase tagged key types at the call site.
  */
-export type PreparedGet<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row | undefined
+export type PreparedGet<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row | null
 
 /**
  * Prepares a single-row query with a typed parameter tuple.

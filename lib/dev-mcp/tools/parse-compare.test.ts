@@ -14,8 +14,8 @@ import { describe, expect, it } from "vitest"
 
 import { diffSpans, SpanVerdict, type LabelledSpan } from "#dev-mcp/parse/compare"
 
-function span(label: string, value: string, tag?: string): LabelledSpan {
-	return tag === undefined ? { label, value } : { label, value, tag }
+function span(label: string, value: string, tag: string | null = null): LabelledSpan {
+	return { label, value, tag }
 }
 
 describe("diffSpans", () => {
@@ -50,7 +50,7 @@ describe("diffSpans", () => {
 	it("leaves a one-to-one label unmarked", () => {
 		const [diff] = diffSpans([span("postcode", "EC3A 8BN", "postcode")], [span("postcode", "ec3a 8bn")])
 
-		expect(diff).not.toHaveProperty("collapsed_from")
+		expect(diff).toHaveProperty("collapsed_from", null)
 	})
 
 	it("names which side produced a label the other did not", () => {

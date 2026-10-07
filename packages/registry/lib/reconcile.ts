@@ -109,7 +109,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
-	const person = formatPersonName(rep.name, "short")
+	const person = formatPersonName(rep.name ?? null, "short")
 
 	return rep.organization?.canonical ?? (person || rep.id)
 }

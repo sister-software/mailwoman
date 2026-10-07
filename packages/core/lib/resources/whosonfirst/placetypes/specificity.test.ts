@@ -31,10 +31,10 @@ describe("placetypeSpecificity", () => {
 	})
 
 	it("returns undefined for an unranked placetype rather than defaulting it to coarse", () => {
-		expect(placetypeSpecificity("bookstore")).toBeUndefined()
-		expect(placetypeSpecificity(null)).toBeUndefined()
-		expect(placetypeSpecificity(undefined)).toBeUndefined()
-		expect(placetypeSpecificity("")).toBeUndefined()
+		expect(placetypeSpecificity("bookstore")).toBeNull()
+		expect(placetypeSpecificity(null)).toBeNull()
+		expect(placetypeSpecificity(undefined)).toBeNull()
+		expect(placetypeSpecificity("")).toBeNull()
 	})
 })
 
@@ -64,8 +64,8 @@ describe("isAtLeastAsSpecific", () => {
 	})
 
 	it("returns undefined when either side is unranked, so a caller cannot silently get a boolean", () => {
-		expect(isAtLeastAsSpecific("bookstore", "locality")).toBeUndefined()
-		expect(isAtLeastAsSpecific("locality", "bookstore")).toBeUndefined()
+		expect(isAtLeastAsSpecific("bookstore", "locality")).toBeNull()
+		expect(isAtLeastAsSpecific("locality", "bookstore")).toBeNull()
 	})
 })
 
@@ -100,7 +100,7 @@ describe("isStrictlyFiner", () => {
 	})
 
 	it("returns undefined for an unranked placetype so a check can choose to block on it", () => {
-		expect(isStrictlyFiner("bookstore", "locality")).toBeUndefined()
+		expect(isStrictlyFiner("bookstore", "locality")).toBeNull()
 	})
 })
 

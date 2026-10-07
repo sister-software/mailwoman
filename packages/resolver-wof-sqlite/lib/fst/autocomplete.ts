@@ -54,7 +54,7 @@ export interface AutocompleteSuggestion {
 	 * `undefined` means no article, or a pre-v5 binary.
 	 * It is never 0.
 	 */
-	encyclopedic?: number
+	encyclopedic: number | null
 	wofID: number
 	parentChain: number[]
 	matchDepth: number
@@ -182,7 +182,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 				name: entry.name,
 				placetype: entry.placetype,
 				referential: entry.referential,
-				...(entry.encyclopedic === undefined ? {} : { encyclopedic: entry.encyclopedic }),
+				encyclopedic: entry.encyclopedic,
 				wofID: s.id,
 				parentChain: s.parentIDs,
 				matchDepth: s.matchDepth,

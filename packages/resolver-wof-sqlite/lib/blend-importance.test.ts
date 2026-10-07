@@ -5,7 +5,6 @@ import { blendImportance, ENCYCLOPEDIC_BOOST_CAP } from "#place-importance-schem
 describe("blendImportance", () => {
 	it("answers the referential score when there is no article", () => {
 		expect(blendImportance(0.2921, null)).toBe(0.2921)
-		expect(blendImportance(0.2921, undefined)).toBe(0.2921)
 	})
 
 	it("keeps the encyclopedic value untouched when there is no population evidence", () => {

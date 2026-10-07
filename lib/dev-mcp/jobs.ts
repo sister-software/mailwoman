@@ -108,8 +108,8 @@ export class JobRegistry {
 		return job
 	}
 
-	get(jobID: string): Job | undefined {
-		return this.#jobs.get(jobID)
+	get(jobID: string): Job | null {
+		return this.#jobs.get(jobID) ?? null
 	}
 
 	list(): JobSummary[] {

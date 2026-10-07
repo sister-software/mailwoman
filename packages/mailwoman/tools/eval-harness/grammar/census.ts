@@ -234,8 +234,8 @@ export interface C6RowReport {
 	input: string
 	fstAvailable: boolean
 	violations: Array<C6Violation & { boundaryCharacter: number; grade: BoundaryTruthGrade }>
-	completeSpanRegistry?: CompleteSpanRegistryReceipt
-	sourceGazetteer?: {
+	completeSpanRegistry: CompleteSpanRegistryReceipt | null
+	sourceGazetteer: {
 		databasePath: string
 		key: string
 		exactLocalities: Array<{ wofID: number; name: string; population: number | null; primary: boolean }>
@@ -243,7 +243,7 @@ export interface C6RowReport {
 			key: string
 			rows: Array<{ wofID: number; name: string; population: number | null; primary: boolean }>
 		}>
-	}
+	} | null
 }
 
 export interface C6CensusSummary {

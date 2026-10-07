@@ -87,6 +87,8 @@ export const dataProvenanceCheck: RepoCheck = {
 						"Record what writes it and how a reader checks it, so the next person to open the file knows " +
 						"whether editing it by hand is a repair or a corruption.",
 					file: provenanceFile,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -100,6 +102,8 @@ export const dataProvenanceCheck: RepoCheck = {
 						"Say what the directory holds and what wrote it. Naming it is enough — this check does not ask " +
 						"for the files inside, and a subdirectory with its own `PROVENANCE.md` is checked separately.",
 					file: provenanceFile,
+					line: null,
+					details: null,
 				})
 			}
 		}

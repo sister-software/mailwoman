@@ -64,7 +64,7 @@ describe("buildEngineStamp", () => {
 		const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: valid })
 
 		expect(stamp.license).toBe("LicenseRef-Commercial")
-		expect(stamp.notice).toBeUndefined()
+		expect(stamp.notice).toBeNull()
 	})
 
 	it.each([
@@ -75,16 +75,14 @@ describe("buildEngineStamp", () => {
 		const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key })
 
 		expect(stamp.license).toBe("AGPL-3.0-only")
-		expect(stamp.notice).toBeDefined()
+		expect(stamp.notice).not.toBeNull()
 	})
 
 	it("never carries the licensee or the key id, whatever the key reads", () => {
 		for (const key of [undefined, valid, expired, unknownKey, invalid]) {
 			const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key })
 
-			expect(Object.keys(stamp).toSorted()).toEqual(
-				["license", "license_url", "name", "version", ...(stamp.notice ? ["notice"] : [])].toSorted()
-			)
+			expect(Object.keys(stamp).toSorted()).toEqual(["license", "license_url", "name", "notice", "version"])
 
 			expect(stringifyJSON(stamp)).not.toContain("Example Ltd")
 			expect(stringifyJSON(stamp)).not.toContain(kid)
@@ -113,6 +111,6 @@ describe("licenseNoticeLines", () => {
 	it("is absent for a valid key", () => {
 		const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: valid })
 
-		expect(licenseNoticeLines(stamp, valid)).toBeUndefined()
+		expect(licenseNoticeLines(stamp, valid)).toBeNull()
 	})
 })

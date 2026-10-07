@@ -418,14 +418,14 @@ export function fail(input: ScenarioInput, path: string, message: string): never
  * A schedule validated here starts at month 0, so every month in the horizon has a step.
  */
 export function stepAt<T extends { fromMonth: number }>(steps: readonly T[], month: number): T {
-	let found: T | undefined
+	let found: T | null = null
 
 	for (const step of steps)
 		if (step.fromMonth <= month) {
 			found = step
 		}
 
-	if (found === undefined) throw new RangeError(`stepAt: no step covers month ${month}`)
+	if (found === null) throw new RangeError(`stepAt: no step covers month ${month}`)
 
 	return found
 }
@@ -549,7 +549,7 @@ function requireMonth(value: unknown, path: string, horizon: number): number {
  * Checks one basis: its kind, and the source record or the party that stated the assumption.
  */
 export function checkBasis(basis: unknown, path: string): void {
-	if (typeof basis !== "object" || basis === null) {
+	if (typeof basis !== "object" || !basis) {
 		fail(ScenarioInput.Basis, path, "the basis is missing")
 	}
 
@@ -686,7 +686,7 @@ function checkLine(
 		fail(ScenarioInput.Category, `${path}.category`, `${String(entry.category)} is not a cost category`)
 	}
 
-	if (typeof entry.quantity !== "object" || entry.quantity === null) {
+	if (typeof entry.quantity !== "object" || !entry.quantity) {
 		fail(ScenarioInput.Quantity, `${path}.quantity`, "the quantity is missing")
 	}
 
@@ -902,7 +902,7 @@ function checkOperating(operating: OperatingAssumptions, rates: ReadonlyMap<stri
  */
 export function validateScenario(scenario: Scenario): void {
 	for (const field of REQUIRED_OBJECTS) {
-		if (scenario[field] === undefined || scenario[field] === null) {
+		if (!scenario[field]) {
 			fail(ScenarioInput.Field, field, `the ${field} field is missing`)
 		}
 	}
@@ -1028,7 +1028,7 @@ export function validateScenario(scenario: Scenario): void {
 		fail(ScenarioInput.Field, "taxTreatment.kind", `${String((tax as { kind: unknown }).kind)} is not a tax treatment`)
 	}
 
-	if (scenario.costAdjustment !== null) {
+	if (scenario.costAdjustment) {
 		checkCostAdjustment(scenario.costAdjustment, "costAdjustment")
 	}
 

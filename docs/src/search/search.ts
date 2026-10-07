@@ -44,10 +44,10 @@ export async function search(db: SearchDatabase, text: string, limit = DEFAULT_L
 	const bounded = Math.min(Math.max(1, Math.trunc(limit)), MAX_LIMIT)
 	let tokens = queryTokens(text)
 
-	if (!tokens.length) return { query: text, hits: [] }
+	if (!tokens.length) return { query: text, corrected: null, hits: [] }
 
 	let rows = await lexicalRows(db, tokens)
-	let corrected: string | undefined
+	let corrected: string | null = null
 
 	if (!rows.length) {
 		const replacement = await correctTokens(db, tokens)
@@ -59,19 +59,12 @@ export async function search(db: SearchDatabase, text: string, limit = DEFAULT_L
 		}
 	}
 
-	const response: SearchResponse = {
-		query: text,
-		hits: collapseByURL(rows, bounded).map((record) => ({
-			url: record.url,
-			anchor: record.anchor,
-			hierarchy: record.hierarchy,
-			...snippet(record.content, tokens),
-		})),
-	}
+	const hits = collapseByURL(rows, bounded).map((record) => ({
+		url: record.url,
+		anchor: record.anchor,
+		hierarchy: record.hierarchy,
+		...snippet(record.content, tokens),
+	}))
 
-	if (corrected !== undefined && response.hits.length) {
-		response.corrected = corrected
-	}
-
-	return response
+	return { query: text, corrected: hits.length ? corrected : null, hits }
 }

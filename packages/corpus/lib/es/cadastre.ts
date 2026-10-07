@@ -45,7 +45,7 @@ export function isSinNumero(value: string): boolean {
 }
 
 /**
- * The house number a Spanish cadastre states, or undefined where it states that there is none.
+ * The house number a Spanish cadastre states, or null where it states that there is none.
  *
  * @param types The publisher's own designator types, in the caller's order of precedence.
  * The Dirección General del Catastro writes the type as the element text `1`, while Navarra
@@ -54,10 +54,10 @@ export function isSinNumero(value: string): boolean {
 export function spanishHouseNumber(
 	byType: ReadonlyMap<string, readonly string[]>,
 	...types: readonly string[]
-): string | undefined {
+): string | null {
 	const value = designator(byType, ...types)
 
-	if (!value || isSinNumero(value)) return undefined
+	if (!value || isSinNumero(value)) return null
 
 	return value
 }
@@ -89,29 +89,29 @@ export interface CadastralAddress {
 	/**
 	 * The thoroughfare name the address references, absent where the publisher writes none.
 	 */
-	street: string | undefined
+	street: string | null
 	/**
 	 * The house number this cadastre's own designator type states.
 	 */
-	house: string | undefined
+	house: string | null
 	/**
 	 * The postal descriptor's code.
 	 */
-	postcode: string | undefined
+	postcode: string | null
 	/**
 	 * The municipality-level administrative unit's name.
 	 */
-	locality: string | undefined
+	locality: string | null
 	/**
 	 * The address-area name.
 	 * It is a settlement within the municipality.
 	 */
-	settlement: string | undefined
+	settlement: string | null
 	/**
 	 * The publisher's own identifier for the address.
 	 * It keys `source_id` where it exists.
 	 */
-	addressID: string | undefined
+	addressID: string | null
 }
 
 /**
@@ -137,15 +137,15 @@ export interface CadastralSource {
  *
  * Each adapter would otherwise repeat those 42 lines four times.
  *
- * Returns `undefined` in two cases.
+ * Returns `null` in two cases.
  * The address holds neither a municipality nor an address area, so the row would have no locality.
  *
- * Otherwise `formatAddressRow` returns `undefined` for the components it was given.
+ * Otherwise `formatAddressRow` returns `null` for the components it was given.
  */
-export function cadastralRow(address: CadastralAddress, source: CadastralSource): CanonicalRow | undefined {
+export function cadastralRow(address: CadastralAddress, source: CadastralSource): CanonicalRow | null {
 	const place = address.locality ?? address.settlement
 
-	if (!place) return undefined
+	if (!place) return null
 
 	const components: CanonicalRow["components"] = {}
 
@@ -172,7 +172,7 @@ export function cadastralRow(address: CadastralAddress, source: CadastralSource)
 
 	const rendered = formatAddressRow(components, "ES", { singleLine: true })
 
-	if (!rendered) return undefined
+	if (!rendered) return null
 
 	const { raw, components: aligned } = rendered
 

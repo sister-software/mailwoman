@@ -74,11 +74,11 @@ export interface Form499Lifecycle {
 	 * ISO `yyyy-MM-dd` date this filer stopped being active, because `valid_to` is
 	 * enforced by `assertISODate` and the source's `M/D/yyyy` sorts wrong.
 	 */
-	ceasedAt?: string
+	ceasedAt: string | null
 	/**
 	 * The Form 499 filer ID that superseded this one, a supersession edge rather than an ownership one.
 	 */
-	replacedByForm499ID?: string
+	replacedByForm499ID: string | null
 	/**
 	 * Every recognized reason, deduplicated, in the order first seen.
 	 *
@@ -135,8 +135,8 @@ function pad2(value: string): string {
 export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefined>): Form499Lifecycle {
 	const notes: string[] = []
 	const reasons: Form499CessationReasonValue[] = []
-	let ceasedAt: string | undefined
-	let replacedByForm499ID: string | undefined
+	let ceasedAt: string | null = null
+	let replacedByForm499ID: string | null = null
 	let unrecognized = 0
 
 	const addReason = (reason: Form499CessationReasonValue): void => {
@@ -169,7 +169,7 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 		const replaced = REPLACED_BY_FILER_PATTERN.exec(note)
 
 		if (replaced) {
-			replacedByForm499ID = replaced[1]
+			replacedByForm499ID = replaced[1] ?? null
 
 			addReason(Form499CessationReason.ReplacedByFiler)
 
@@ -187,17 +187,7 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 		unrecognized++
 	}
 
-	const lifecycle: Form499Lifecycle = { notes, reasons, unrecognized }
-
-	if (ceasedAt) {
-		lifecycle.ceasedAt = ceasedAt
-	}
-
-	if (replacedByForm499ID) {
-		lifecycle.replacedByForm499ID = replacedByForm499ID
-	}
-
-	return lifecycle
+	return { notes, reasons, unrecognized, ceasedAt: ceasedAt || null, replacedByForm499ID: replacedByForm499ID || null }
 }
 
 /**

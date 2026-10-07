@@ -42,7 +42,7 @@ describe("placetypeMapForCountry", () => {
 	it("answers the default map ITSELF for a country with no override, so a caller can compare by identity", () => {
 		expect(placetypeMapForCountry("KR")).toBe(DEFAULT_PLACETYPE_MAP)
 		expect(placetypeMapForCountry("us")).toBe(DEFAULT_PLACETYPE_MAP)
-		expect(placetypeMapForCountry(undefined)).toBe(DEFAULT_PLACETYPE_MAP)
+		expect(placetypeMapForCountry(null)).toBe(DEFAULT_PLACETYPE_MAP)
 		expect(placetypeMapForCountry(null)).toBe(DEFAULT_PLACETYPE_MAP)
 		// The Korean 시군구 stay counties: a KR line under the default band reads exactly as before.
 		expect(placetypeMapForCountry("KR").subregion).toBe("county")

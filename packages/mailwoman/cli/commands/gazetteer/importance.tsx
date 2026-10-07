@@ -258,16 +258,16 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		for (const wofID of allIDs) {
 			const referential = wofReferential.get(wofID) ?? 0
-			const encyclopedic = wofEncyclopedic.get(wofID)
+			const encyclopedic = wofEncyclopedic.get(wofID) ?? null
 
-			if (encyclopedic === undefined) {
+			if (encyclopedic === null) {
 				referentialOnlyCount++
 			} else {
 				encyclopedicCount++
 			}
 
 			// NULL, never 0, for a place with no article — the meaning-of-zero rule at the column level.
-			insertStmt.run(wofID, referential, encyclopedic ?? null, blendImportance(referential, encyclopedic))
+			insertStmt.run(wofID, referential, encyclopedic, blendImportance(referential, encyclopedic))
 		}
 
 		kdb.exec("COMMIT")

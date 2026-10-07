@@ -31,7 +31,7 @@ function fixtureParseOutcome(address: string, debug?: boolean): ParsedAddressRes
 			{ tag: "street", value: "Pennsylvania Ave NW" },
 		],
 		tree: { raw: address, roots: [] },
-		debug: debug ? "diagnostic report" : undefined,
+		debug: debug ? "diagnostic report" : null,
 	}
 }
 
@@ -73,7 +73,7 @@ test("POST /v1/parse: happy path returns the components + decoded tree", async (
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.components).toHaveLength(2)
 	expect(body.tree.roots).toEqual([])
-	expect(body.debug).toBeUndefined()
+	expect(body.debug).toBeNull()
 })
 
 test("POST /v1/parse: debug:true reaches the engine and rides back in the response", async () => {
@@ -109,7 +109,7 @@ test('POST /v1/parse: missing address body key -> 400 { error: "address is requi
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test('POST /v1/parse: empty-string address -> 400 { error: "address is required" }', async () => {
@@ -122,7 +122,7 @@ test('POST /v1/parse: empty-string address -> 400 { error: "address is required"
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test('GET /v1/parse: absent address -> 400 { error: "address is required" }', async () => {
@@ -130,7 +130,7 @@ test('GET /v1/parse: absent address -> 400 { error: "address is required" }', as
 
 	const res = await app.request("/v1/parse")
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test("POST /v1/parse: engine.parse absent -> 501", async () => {
@@ -143,7 +143,7 @@ test("POST /v1/parse: engine.parse absent -> 501", async () => {
 	})
 
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "parse not implemented" })
+	expect(await res.json()).toEqual({ error: "parse not implemented", detail: null })
 })
 
 test("GET /v1/parse: engine.parse absent -> 501", async () => {
@@ -151,7 +151,7 @@ test("GET /v1/parse: engine.parse absent -> 501", async () => {
 
 	const res = await app.request("/v1/parse?address=x")
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "parse not implemented" })
+	expect(await res.json()).toEqual({ error: "parse not implemented", detail: null })
 })
 
 // MARK: /v1/geocode
@@ -179,7 +179,7 @@ test('POST /v1/geocode: missing address -> 400 { error: "address is required" }'
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test("POST /v1/geocode: engine.geocode absent -> 503 (deps missing in production)", async () => {
@@ -255,7 +255,7 @@ test('POST /v1/batch: wrong body shape -> 400 { error: "body must be { addresses
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "body must be { addresses: string[] }" })
+	expect(await res.json()).toEqual({ error: "body must be { addresses: string[] }", detail: null })
 })
 
 test("POST /v1/batch: over batchMax -> 413", async () => {
@@ -268,7 +268,7 @@ test("POST /v1/batch: over batchMax -> 413", async () => {
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "batch too large: 3 > 2" })
+	expect(await res.json()).toEqual({ error: "batch too large: 3 > 2", detail: null })
 })
 
 test("POST /v1/batch: engine.batch absent -> 503", async () => {
@@ -324,7 +324,7 @@ test('POST /v1/resolve: wrong body shape -> 400 { error: "body must be { tree: A
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "body must be { tree: AddressTree, opts? }" })
+	expect(await res.json()).toEqual({ error: "body must be { tree: AddressTree, opts? }", detail: null })
 })
 
 test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
@@ -546,7 +546,7 @@ test("bodyLimitBytes: an oversized /v1/* POST answers 413, not a buffered crash"
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "request body too large" })
+	expect(await res.json()).toEqual({ error: "request body too large", detail: null })
 })
 
 test("an engine fault answers the native 500 envelope with a helpful detail, never a crash", async () => {

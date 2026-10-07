@@ -37,7 +37,7 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 	}),
 	handler: async (args) => {
 		const inputs = args["inputs"] as string[]
-		const config = (args["config"] as EngineConfig | undefined) ?? {}
+		const config = (args["config"] as EngineConfig | null) ?? {}
 		const fullParseTrace = args["full_parse_trace"] === true
 		// This surface enables tracing to explain each row.
 		// The band probe also runs with tracing.

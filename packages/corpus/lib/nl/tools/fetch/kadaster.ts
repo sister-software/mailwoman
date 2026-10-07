@@ -192,7 +192,7 @@ export function nlKadasterPublicationIsRecorded(
 	bytesOnDisk: number,
 	publication: NLKadasterPublication
 ): boolean {
-	if (publication.feedUpdated === null) return false
+	if (!publication.feedUpdated) return false
 
 	return recorded.feed_updated === publication.feedUpdated && recorded.bytes === bytesOnDisk
 }

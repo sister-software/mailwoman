@@ -77,9 +77,9 @@ export type RouteSource = (typeof RouteSource)[keyof typeof RouteSource]
  */
 export interface RoutingDecision {
 	/**
-	 * The family this input routes to, or `undefined` to stay on the caller's locale.
+	 * The family this input routes to, or `null` to stay on the caller's locale.
 	 */
-	family: string | undefined
+	family: string | null
 	source: RouteSource
 	/**
 	 * How strongly the rule claims the input, in `[0, 1]`.
@@ -89,9 +89,9 @@ export interface RoutingDecision {
 	confidence: number
 	/**
 	 * Why the router selected no family.
-	 * It is absent when `family` is set.
+	 * It is `null` when `family` is set.
 	 */
-	abstainedBecause?: string
+	abstainedBecause: string | null
 }
 
 /**
@@ -175,20 +175,20 @@ const FAMILY_BY_ID = new Map(FAMILIES.map((entry) => [entry.family, entry]))
 const FAMILY_BY_LOCALE = new Map(FAMILIES.flatMap((entry) => entry.locales.map((locale) => [locale, entry] as const)))
 
 /**
- * Returns the family with this id, or `undefined`.
+ * Returns the family with this id, or `null`.
  */
-export function familyByID(family: string): WeightsFamily | undefined {
-	return FAMILY_BY_ID.get(family)
+export function familyByID(family: string): WeightsFamily | null {
+	return FAMILY_BY_ID.get(family) ?? null
 }
 
 /**
- * Returns the family serving this locale, or `undefined` when no family claims it.
+ * Returns the family serving this locale, or `null` when no family claims it.
  *
  * A packaged locale matches first.
  * Otherwise the language subtag decides, so `ko-KR` and `zh-TW` reach the character family.
- * Callers must not treat `undefined` as the Latin family.
+ * Callers must not treat `null` as the Latin family.
  */
-export function familyForLocale(locale: string): WeightsFamily | undefined {
+export function familyForLocale(locale: string): WeightsFamily | null {
 	const code = locale.toLowerCase()
 	const packaged = FAMILY_BY_LOCALE.get(code)
 
@@ -196,24 +196,24 @@ export function familyForLocale(locale: string): WeightsFamily | undefined {
 
 	const language = code.split("-")[0]
 
-	return FAMILIES.find((entry) => entry.languages?.includes(language as string))
+	return FAMILIES.find((entry) => entry.languages?.includes(language as string)) ?? null
 }
 
 /**
- * Returns the family id that a locale without its own graph falls back to, or `undefined`.
+ * Returns the family id that a locale without its own graph falls back to, or `null`.
  *
- * It returns `undefined` for a family id itself, for a locale in a family without
+ * It returns `null` for a family id itself, for a locale in a family without
  * routing scripts or a locale that no family claims.
  * A Latin overlay names its base through `mailwoman.baseWeights` in its manifest instead.
  */
-export function familyFallbackFor(locale: string): string | undefined {
+export function familyFallbackFor(locale: string): string | null {
 	const code = locale.toLowerCase()
 	const family = familyForLocale(code)
 
-	if (!family || family.family === code) return undefined
+	if (!family || family.family === code) return null
 
 	// The package manifest's `mailwoman.baseWeights` is the only source for families without routing scripts.
-	return family.routingScripts ? family.family : undefined
+	return family.routingScripts ? family.family : null
 }
 
 /**
@@ -224,14 +224,14 @@ export const FAMILY_SCRIPTS: ReadonlySet<string> = new Set(
 )
 
 /**
- * Returns the family a script routes to, or `undefined`.
+ * Returns the family a script routes to, or `null`.
  */
-export function familyForScript(script: string): WeightsFamily | undefined {
+export function familyForScript(script: string): WeightsFamily | null {
 	for (const entry of FAMILIES) {
 		if (entry.routingScripts?.has(script)) return entry
 	}
 
-	return undefined
+	return null
 }
 
 /**

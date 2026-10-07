@@ -12,19 +12,20 @@ import {
 	composeAnnotators,
 	composeStreetAddress,
 	toNative,
+	emptyAnnotationSet,
 	toOpenCage,
 	toSchemaOrg,
 } from "#index"
 
 test("composeAnnotators: merges partial results from multiple annotators", async () => {
 	const coords: Annotator = () => ({ geohash: "dqcjqcp84", mgrs: "18SUJ23480647" })
-	const country: Annotator = () => ({ callingCode: 1, currency: { isoCode: "USD" } })
+	const country: Annotator = () => ({ callingCode: 1, currency: { isoCode: "USD", name: null, symbol: null } })
 	const set = await composeAnnotators([coords, country])({ lat: 38.8977, lon: -77.0365 })
 
 	expect(set.geohash).toBe("dqcjqcp84")
 	expect(set.mgrs).toBe("18SUJ23480647")
 	expect(set.callingCode).toBe(1)
-	expect(set.currency).toEqual({ isoCode: "USD" })
+	expect(set.currency).toEqual({ isoCode: "USD", name: null, symbol: null })
 })
 
 test("composeAnnotators: a throwing annotator is skipped, the rest still apply", async () => {
@@ -40,23 +41,24 @@ test("composeAnnotators: a throwing annotator is skipped, the rest still apply",
 })
 
 test("composeAnnotators: later annotators win on key collision", async () => {
-	const a: Annotator = () => ({ timezone: { name: "UTC" } })
-	const b: Annotator = () => ({ timezone: { name: "America/New_York", offsetSec: -18_000 } })
+	const a: Annotator = () => ({ timezone: { name: "UTC", offsetSec: null, offsetString: null } })
+	const b: Annotator = () => ({ timezone: { name: "America/New_York", offsetSec: -18_000, offsetString: null } })
 	const set = await composeAnnotators([a, b])({ lat: 0, lon: 0 })
 
-	expect(set.timezone).toEqual({ name: "America/New_York", offsetSec: -18_000 })
+	expect(set.timezone).toEqual({ name: "America/New_York", offsetSec: -18_000, offsetString: null })
 })
 
 test("toOpenCage: maps native fields to OpenCage key names + casing", () => {
 	const set: AnnotationSet = {
+		...emptyAnnotationSet(),
 		dms: { lat: "38° 53′ 51″ N", lon: "77° 02′ 11″ W" },
 		geohash: "dqcjqcp84",
 		mercator: { x: -8_575_528, y: 4_707_174 },
 		qiblaBearing: 58.4,
 		callingCode: 1,
-		currency: { isoCode: "USD", symbol: "$" },
+		currency: { isoCode: "USD", name: null, symbol: "$" },
 		flag: "🇺🇸",
-		timezone: { name: "America/New_York", offsetSec: -18_000 },
+		timezone: { name: "America/New_York", offsetSec: -18_000, offsetString: null },
 		fips: "11001",
 	}
 
@@ -74,12 +76,12 @@ test("toOpenCage: maps native fields to OpenCage key names + casing", () => {
 })
 
 test("toOpenCage: omits unpopulated fields", () => {
-	expect(toOpenCage({})).toEqual({})
-	expect(toOpenCage({ geohash: "x" })).toEqual({ geohash: "x" })
+	expect(toOpenCage(emptyAnnotationSet())).toEqual({})
+	expect(toOpenCage({ ...emptyAnnotationSet(), geohash: "x" })).toEqual({ geohash: "x" })
 })
 
 test("toNative: returns the native set unchanged", () => {
-	const set: AnnotationSet = { geohash: "x", callingCode: 44 }
+	const set: AnnotationSet = { ...emptyAnnotationSet(), geohash: "x", callingCode: 44 }
 	expect(toNative(set)).toEqual(set)
 })
 

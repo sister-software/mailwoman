@@ -46,10 +46,10 @@ export interface PromotionVerdictOptions {
 /**
  * Pull `| <tag> | … | <F1> |`-style F1 from an affix/country scorer table (P, R, F1 columns).
  */
-function scorerF1(md: string, tag: string): number | undefined {
+function scorerF1(md: string, tag: string): number | null {
 	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*[\\d.]+\\s*\\|\\s*[\\d.]+\\s*\\|\\s*([\\d.]+)`))
 
-	return m ? Number(m[1]) : undefined
+	return m ? Number(m[1]) : null
 }
 
 /**
@@ -73,10 +73,10 @@ function tableCells(line: string): string[] {
  *
  * A header-row lookup works for both shapes and any future column addition.
  */
-export function arenaColumn(md: string, arena: string, column: string): number | undefined {
+export function arenaColumn(md: string, arena: string, column: string): number | null {
 	const m = tableCell(md, /^\|\s*arena\s*\|/, column, arena)?.match(/([\d.]+)%/)
 
-	return m ? Number(m[1]) : undefined
+	return m ? Number(m[1]) : null
 }
 
 /**
@@ -87,10 +87,10 @@ export function arenaColumn(md: string, arena: string, column: string): number |
  * so a locale is found by its column name.
  * A reordered or added locale column then cannot swap one locale's number for another's.
  *
- * A missing table, tag or column reads `undefined`, and so does an empty cell.
+ * A missing table, tag or column reads `null`, and so does an empty cell.
  */
-function perLocale(md: string, tag: string, locale: string): number | undefined {
-	return Number(tableCell(md, /^\|\s*Tag\s*\|/, locale, tag)?.replace("%", "")) || undefined
+function perLocale(md: string, tag: string, locale: string): number | null {
+	return Number(tableCell(md, /^\|\s*Tag\s*\|/, locale, tag)?.replace("%", "")) || null
 }
 
 /**
@@ -99,9 +99,9 @@ function perLocale(md: string, tag: string, locale: string): number | undefined 
  * The header must come first.
  * The parser searches for the row afterward, so it belongs to that table.
  *
- * A missing table, column or row reads `undefined`, and the caller parses the cell text.
+ * A missing table, column or row reads `null`, and the caller parses the cell text.
  */
-function tableCell(md: string, headerPattern: RegExp, column: string, row: string): string | undefined {
+function tableCell(md: string, headerPattern: RegExp, column: string, row: string): string | null {
 	const rowPattern = new RegExp(`^\\|\\s*${row}\\s*\\|`)
 	let columnIndex = -1
 
@@ -111,15 +111,15 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
 
 			columnIndex = tableCells(line).indexOf(column)
 
-			if (columnIndex === -1) return undefined
+			if (columnIndex === -1) return null
 
 			continue
 		}
 
-		if (rowPattern.test(line)) return tableCells(line)[columnIndex]
+		if (rowPattern.test(line)) return tableCells(line)[columnIndex] ?? null
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -146,7 +146,7 @@ export interface PromotionVerdict {
 	 */
 	graded_artifact: "int8" | "fp32" | "weights-cache"
 	verdict: "PASS" | "FAIL"
-	results: Record<string, { floor: number; actual: number | undefined; pass: boolean }>
+	results: Record<string, { floor: number; actual: number | null; pass: boolean }>
 	int8_vs_fp32_deltas: Record<string, number>
 	generated_at_dir: PathBuilderLike
 }
@@ -171,29 +171,29 @@ export async function assemblePromotionVerdict(
 	const dir = options.outDir
 	const read = (f: string): Promise<string> => readLocalTextFile(dir, f)
 
-	async function maybeRead(f: string): Promise<string | undefined> {
+	async function maybeRead(f: string): Promise<string | null> {
 		try {
 			return await read(f)
 		} catch {
-			return undefined
+			return null
 		}
 	}
 
-	async function sidecar(f: string): Promise<ScorerSidecar | undefined> {
+	async function sidecar(f: string): Promise<ScorerSidecar | null> {
 		const raw = await maybeRead(f)
 
-		return raw === undefined ? undefined : parseJSONStrict<ScorerSidecar>(raw)
+		return raw ? parseJSONStrict<ScorerSidecar>(raw) : null
 	}
 
-	function tagF1(side: ScorerSidecar | undefined, md: string, tag: string): number | undefined {
+	function tagF1(side: ScorerSidecar | null, md: string, tag: string): number | null {
 		const f1 = side?.tags?.[tag]?.f1
 
-		if (f1 !== undefined) return f1
+		if (f1 !== undefined && f1 !== null) return f1
 
 		return scorerF1(md, tag)
 	}
 
-	async function collect(tag: "fp32" | "int8"): Promise<Record<string, number | undefined>> {
+	async function collect(tag: "fp32" | "int8"): Promise<Record<string, number | null>> {
 		// Every battery output is an independent file, so the reads are issued together.
 		const [
 			pl,
@@ -239,34 +239,34 @@ export async function assemblePromotionVerdict(
 			"us.locality": perLocale(pl, "locality", "us"),
 			"us.region": perLocale(pl, "region", "us"),
 			"us.street": perLocale(pl, "street", "us"),
-			"us.micro": micro ? Number(micro[1]) : undefined,
+			"us.micro": micro ? Number(micro[1]) : null,
 			"us.street_prefix": tagF1(affixJ, affix, "street_prefix"),
 			"us.street_suffix": tagF1(affixJ, affix, "street_suffix"),
 			"us.unit_real": tagF1(unitJ, unit, "unit"),
 			"us.country_homograph_f1": tagF1(countryJ, country, "country"),
 			"fr.postcode": perLocale(pl, "postcode", "fr"),
 			"fr.house_number": perLocale(pl, "house_number", "fr"),
-			"de.native_locality": deNative ? Number(deNative[1]) : undefined,
+			"de.native_locality": deNative ? Number(deNative[1]) : null,
 			"fr.region": perLocale(pl, "region", "fr"),
-			"us.po_box_real": poboxJ?.tags?.po_box?.f1 ?? (pobox ? scorerF1(pobox, "po_box") : undefined),
-			"fr.cedex_real": poboxJ?.tags?.cedex?.f1 ?? (pobox ? scorerF1(pobox, "cedex") : undefined),
+			"us.po_box_real": poboxJ?.tags?.po_box?.f1 ?? (pobox ? scorerF1(pobox, "po_box") : null),
+			"fr.cedex_real": poboxJ?.tags?.cedex?.f1 ?? (pobox ? scorerF1(pobox, "cedex") : null),
 			// Graded as the weaker of the two spans.
 			// An intersection parse needs both.
 			"us.intersection_real": intersectionJ
 				? Math.min(intersectionJ.tags?.intersection_a?.f1 ?? 0, intersectionJ.tags?.intersection_b?.f1 ?? 0)
 				: intersection
 					? Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
-					: undefined,
+					: null,
 			// Arena leg runs once on the ship artifact (int8).
-			// The fp32 pass reads undefined and the delta loop skips it.
+			// The fp32 pass reads null and the delta loop skips it.
 			// The `neural` column of the `perturb` row, located by header (see arenaColumn).
-			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : undefined,
+			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : null,
 			// Demo-cascade smoke pass rate: whole-stack parse→reconcile→resolve against the slim hot DB.
 			// Like the arena leg it runs once on the ship artifact (no fp32/int8 split),
 			// and sidecar only (the leg is new, so there are no pre-sidecar out-dirs to replay).
-			// Absent sidecar (DB not staged / runner errored) reads undefined → a floored
+			// Absent sidecar (DB not staged / runner errored) reads null → a floored
 			// spec fails loudly, an unfloored spec ignores it.
-			"cascade.demo_smoke": cascadeJ?.summary?.pass_rate_pct,
+			"cascade.demo_smoke": cascadeJ?.summary?.pass_rate_pct ?? null,
 		}
 	}
 
@@ -279,7 +279,7 @@ export async function assemblePromotionVerdict(
 	// must skip them or it spuriously reports "not found" for a floor that already passed.
 	const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])
 
-	const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
+	const results: Record<string, { floor: number; actual: number | null; pass: boolean }> = {}
 	let failed = false
 
 	// A leg-handled floor is enforced by its leg but would otherwise be absent from `results` entirely.
@@ -294,10 +294,10 @@ export async function assemblePromotionVerdict(
 	for (const [key, floor] of Object.entries(check.floors)) {
 		if (LEG_HANDLED_FLOORS.has(key)) {
 			const legSidecar = legSidecars[key]
-			const raw = legSidecar ? await maybeRead(legSidecar.file) : undefined
+			const raw = legSidecar ? await maybeRead(legSidecar.file) : null
 
 			if (raw) {
-				const actual = parseJSONStrict<Record<string, number>>(raw)[legSidecar!.rate]
+				const actual = parseJSONStrict<Record<string, number>>(raw)[legSidecar!.rate] ?? null
 
 				results[key] = { floor, actual, pass: true }
 			}
@@ -305,8 +305,8 @@ export async function assemblePromotionVerdict(
 			continue
 		}
 
-		const actual = graded[key]
-		const pass = actual !== undefined && actual >= floor
+		const actual = graded[key] ?? null
+		const pass = actual !== null && actual >= floor
 
 		if (!pass) {
 			failed = true
@@ -319,10 +319,10 @@ export async function assemblePromotionVerdict(
 
 	if (int8 && check.int8_vs_fp32_max_delta_pp !== undefined) {
 		for (const key of Object.keys(check.floors)) {
-			const a = fp32[key]
-			const b = int8[key]
+			const a = fp32[key] ?? null
+			const b = int8[key] ?? null
 
-			if (a === undefined || b === undefined) continue
+			if (a === null || b === null) continue
 			const d = Math.abs(a - b)
 			deltas[key] = Number(d.toFixed(2))
 

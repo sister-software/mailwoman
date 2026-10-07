@@ -48,7 +48,7 @@ describe("readServiceException", () => {
 	})
 
 	it("returns nothing for a real answer, so the JSON path is untouched", () => {
-		expect(readServiceException('{"Table":[["IA153"]]}')).toBeUndefined()
+		expect(readServiceException('{"Table":[["IA153"]]}')).toBeNull()
 	})
 
 	it("answers in linear time on a report whose exception element is never closed", () => {

@@ -78,10 +78,10 @@ interface SurfaceRun {
  * Grade one confidence surface and return its curve, threshold table and error classes.
  */
 export async function runReliability(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
-	const surface = (args["surface"] as ReliabilitySurface | undefined) ?? ReliabilitySurface.Decode
-	const binCount = (args["bins"] as number | undefined) ?? DEFAULT_BIN_COUNT
-	const thresholds = (args["thresholds"] as number[] | undefined) ?? [...DEFAULT_THRESHOLDS]
-	const requestedStrata = (args["stratify"] as string[] | undefined) ?? STRATA_FOR[surface]
+	const surface = (args["surface"] as ReliabilitySurface | null) ?? ReliabilitySurface.Decode
+	const binCount = (args["bins"] as number | null) ?? DEFAULT_BIN_COUNT
+	const thresholds = (args["thresholds"] as number[] | null) ?? [...DEFAULT_THRESHOLDS]
+	const requestedStrata = (args["stratify"] as string[] | null) ?? STRATA_FOR[surface]
 
 	const { sample, provenance, nRequested, selection, eventLabel } =
 		surface === ReliabilitySurface.CoarsePlacer ? await placerRun(registry, args) : await decodeRun(registry, args)
@@ -124,8 +124,8 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 }
 
 async function decodeRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
-	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
-	const config = (args["config"] as EngineConfig | undefined) ?? {}
+	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
+	const config = (args["config"] as EngineConfig | null) ?? {}
 	// The per-token softmax is the measurement, so tracing is forced on regardless of what the caller passed.
 	const engine = await registry.acquire({ ...config, trace: true })
 	const limit = args["limit"] as number | undefined
@@ -134,8 +134,8 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 	const sample = await decodeReliabilitySample(
 		engine,
 		selected,
-		(args["aggregate"] as ComponentAggregate | undefined) ?? ComponentAggregate.Min,
-		(args["unasserted"] as UnassertedPolicy | undefined) ?? UnassertedPolicy.Exclude
+		(args["aggregate"] as ComponentAggregate | null) ?? ComponentAggregate.Min,
+		(args["unasserted"] as UnassertedPolicy | null) ?? UnassertedPolicy.Exclude
 	)
 
 	return {
@@ -150,7 +150,7 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 }
 
 async function placerRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
-	const corpus = (args["corpus"] as string | undefined) ?? resolvePath(registry.repoRoot, ...PLACER_TEST_SPLIT)
+	const corpus = (args["corpus"] as string | null) ?? resolvePath(registry.repoRoot, ...PLACER_TEST_SPLIT)
 	const sample = await coarsePlacerReliabilitySample(corpus)
 
 	return {

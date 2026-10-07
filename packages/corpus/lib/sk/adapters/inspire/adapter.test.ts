@@ -121,7 +121,7 @@ describe("sk-inspire adapter against the fixture WFS pages", () => {
 		).toBe("1760/29")
 
 		expect(slovakHouseNumber(new Map([["addressNumber", ["142"]]]))).toBe("142")
-		expect(slovakHouseNumber(new Map([["buildingIdentifier", ["29"]]]))).toBeUndefined()
+		expect(slovakHouseNumber(new Map([["buildingIdentifier", ["29"]]]))).toBeNull()
 	})
 
 	it("keeps a street-less address, which two thirds of the service's addresses are", async () => {

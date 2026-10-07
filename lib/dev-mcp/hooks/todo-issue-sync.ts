@@ -75,7 +75,7 @@ async function hookMain(): Promise<void> {
 
 	if (issue === null) return
 
-	const todos = (payload.tool_input as { todos?: TodoItem[] } | undefined)?.todos
+	const todos = (payload.tool_input as { todos?: TodoItem[] } | null)?.todos
 
 	if (!Array.isArray(todos)) return
 

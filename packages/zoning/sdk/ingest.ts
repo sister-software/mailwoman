@@ -12,7 +12,7 @@
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
-import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
+import { readOGRLayerIdentity, type OGRLayerSchema } from "@mailwoman/spatial/tools/ogr"
 import { spawnOGR2OGR } from "@mailwoman/spatial/tools/ogr/stream"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/well-known-text"
 import { CSVSpliterator } from "spliterator"
@@ -106,19 +106,6 @@ export interface ZoningIngestOptions {
 }
 
 /**
- * The metadata that the source declares, read before any feature.
- */
-export interface ZoningSourceIdentity {
-	epsg: number
-	featureCount: number
-	layer: string
-	/**
-	 * The source's attribute field names.
-	 */
-	fields: ReadonlySet<string>
-}
-
-/**
  * The number of coordinate decimals that ogr2ogr writes.
  * Nine decimals is far finer than the source's precision.
  */
@@ -160,7 +147,7 @@ export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
  * @throws {Error} When the export is unreadable, when its declared EPSG code differs
  * from `expectEPSG`, or when it lacks a field that the ingest reads.
  */
-export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<ZoningSourceIdentity> {
+export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<OGRLayerSchema> {
 	const identity = await readOGRLayerIdentity({
 		path: options.exportPath,
 		expectEPSG: options.expectEPSG ?? GZT_SOURCE_EPSG,
@@ -195,7 +182,7 @@ function whereClause(options: ZoningIngestOptions): string[] {
 		bounds.push(`OBJECTID <= ${options.objectIDTo}`)
 	}
 
-	if (options.authorityCode !== undefined) {
+	if (options.authorityCode) {
 		bounds.push(`LA_CODE = '${options.authorityCode.replaceAll("'", "''")}'`)
 	}
 
@@ -205,10 +192,10 @@ function whereClause(options: ZoningIngestOptions): string[] {
 /**
  * Returns the value, or null when it is undefined or empty.
  */
-function blankToNull(value: string | undefined): string | null {
-	if (value === undefined) return null
+function blankToNull(value: string | null | undefined): string | null {
+	if (!value) return null
 
-	return value.length ? value : null
+	return value ?? null
 }
 
 /**

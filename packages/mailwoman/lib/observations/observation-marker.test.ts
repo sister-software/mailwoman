@@ -32,7 +32,7 @@ const route = await createSemanticObservationRoute()
  * A verdict whose top kind is the POI branch.
  * The route produces this result for a query it claimed.
  */
-const POI_VERDICT: QueryKindResult = { kind: "poi_query", confidence: 0.9, alternatives: [] }
+const POI_VERDICT: QueryKindResult = { kind: "poi_query", confidence: 0.9, alternatives: [], intentMarkers: null }
 
 /**
  * A verdict that placed the POI reading below its structural incumbent.
@@ -43,9 +43,15 @@ const ALTERNATIVE_VERDICT: QueryKindResult = {
 	kind: "structured_address",
 	confidence: 0.8,
 	alternatives: [{ kind: "poi_category", confidence: 0.4 }],
+	intentMarkers: null,
 }
 
-const ADDRESS_VERDICT: QueryKindResult = { kind: "structured_address", confidence: 0.9, alternatives: [] }
+const ADDRESS_VERDICT: QueryKindResult = {
+	kind: "structured_address",
+	confidence: 0.9,
+	alternatives: [],
+	intentMarkers: null,
+}
 
 /**
  * One coverage-qualified absence, shaped as the absence route records it.

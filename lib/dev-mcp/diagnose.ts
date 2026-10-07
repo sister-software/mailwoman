@@ -163,19 +163,20 @@ export interface AccountInput {
 		hierarchy: ReadonlyArray<{
 			tag: string
 			name: string
-			placeID?: string | undefined
-			in_winner_lineage?: boolean | undefined
+			placeID?: string | null | undefined
+			in_winner_lineage?: boolean | null | undefined
 		}>
-		admin_coherence?: { region: string; country: string } | undefined
+		admin_coherence?: { region: string; country: string } | null | undefined
 	}
 	trace?:
 		| {
 				parse: NeuralParseTrace
 				queryShape: { knownFormats: ReadonlyArray<{ format: string; confidence: number; span: { body: string } }> }
-				kind?: { kind: string; confidence: number } | undefined
+				kind?: { kind: string; confidence: number } | null | undefined
 				inputMode: string
-				resolver?: ReadonlyArray<ResolveNodeTrace> | undefined
+				resolver?: ReadonlyArray<ResolveNodeTrace> | null | undefined
 		  }
+		| null
 		| undefined
 }
 
@@ -214,7 +215,7 @@ export interface ParseFacts {
 	 * The classifier skips it when a caller pins the register.
 	 * This records the call configuration rather than a zero-confidence verdict.
 	 */
-	kind_absent_reason?: string
+	kind_absent_reason: string | null
 	input_mode: string
 	known_formats: KnownFormatReading[]
 	priors_present: TracePriorKind[]
@@ -233,7 +234,7 @@ interface LookupFact {
 	tag: string
 	value: string
 	placetype: string
-	scope: { country?: string; parent?: string | number; qualifier?: string }
+	scope: { country: string | null; parent: string | number | null; qualifier: string | null }
 	n_candidates: number
 	candidates_truncated: number
 	checks: string[]
@@ -288,7 +289,7 @@ export interface OutcomeFacts {
 export interface RowAccount {
 	id: string
 	input: string
-	country?: string | undefined
+	country: string | null
 	shapes: DiagnoseShape[]
 	/**
 	 * `null` when the run produced no parse trace (the bundle could not produce one),
@@ -308,8 +309,8 @@ export interface RowAccount {
 	/**
 	 * The trace's own stated absence, when there was none.
 	 */
-	trace_absent_reason?: string
-	counterfactuals?: RowCounterfactuals | undefined
+	trace_absent_reason: string | null
+	counterfactuals: RowCounterfactuals | null
 	rendered: string
 }
 
@@ -345,7 +346,7 @@ export function collectParseFacts(
 
 	const knownFormats = trace.queryShape.knownFormats.map((hit): KnownFormatReading => {
 		const expects = (COMPONENT_FOR_KNOWN_FORMAT as Record<string, string | undefined>)[hit.format] ?? null
-		const carried = expects === null ? undefined : components[expects]
+		const carried = expects ? components[expects] : undefined
 		const wanted = foldForSpanMatch(hit.span.body)
 
 		return {
@@ -359,13 +360,10 @@ export function collectParseFacts(
 
 	return {
 		kind: trace.kind ? { verdict: trace.kind.kind, confidence: trace.kind.confidence } : null,
-		...(trace.kind
-			? {}
-			: {
-					kind_absent_reason:
-						"the kind classifier did not run — a caller pinned the input register, so there is no verdict rather " +
-						"than a zero-confidence one",
-				}),
+		kind_absent_reason: trace.kind
+			? null
+			: "the kind classifier did not run — a caller pinned the input register, so there is no verdict rather " +
+				"than a zero-confidence one",
 		input_mode: trace.inputMode,
 		known_formats: knownFormats,
 		priors_present: priors.present,
@@ -375,7 +373,7 @@ export function collectParseFacts(
 	}
 }
 
-export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> | undefined): RetrievalFacts {
+export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> | null): RetrievalFacts {
 	if (!records) return { lookups: null, checks_fired: [] }
 
 	const lookups = records.map((record): LookupFact => {
@@ -393,9 +391,9 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 			value: record.value,
 			placetype: record.placetype,
 			scope: {
-				...(record.query.country === undefined ? {} : { country: record.query.country }),
-				...(record.query.parentID === undefined ? {} : { parent: record.query.parentID }),
-				...(record.query.regionQualifier === undefined ? {} : { qualifier: record.query.regionQualifier }),
+				country: record.query.country ?? null,
+				parent: record.query.parentID ?? null,
+				qualifier: record.query.regionQualifier ?? null,
 			},
 			n_candidates: record.candidates.length,
 			candidates_truncated: record.candidatesTruncated,
@@ -652,7 +650,7 @@ export interface SettingTally {
  * was never applicable are the same zero in a moved-only table but not the same fact.
  */
 export function aggregateCounterfactuals(
-	accounts: ReadonlyArray<{ counterfactuals?: RowCounterfactuals | undefined }>
+	accounts: ReadonlyArray<{ counterfactuals: RowCounterfactuals | null }>
 ): Record<string, SettingTally> {
 	const out: Record<string, SettingTally> = {}
 
@@ -719,7 +717,7 @@ export function assembleAccount(
 	const trace = run.trace
 	const parse = trace ? collectParseFacts(trace, run.result.components) : null
 	const evidence = trace ? evidenceCensus(trace.parse) : null
-	const retrieval = collectRetrievalFacts(trace?.resolver)
+	const retrieval = collectRetrievalFacts(trace?.resolver ?? null)
 	const outcome = collectOutcomeFacts(run.result)
 	const shapes = matchShapes({ parse, evidence, retrieval, outcome })
 
@@ -742,13 +740,11 @@ export function assembleAccount(
 		outcome,
 		expectation,
 		resolved_without_recorded_lookup: !outcome.abstained && retrieval.lookups?.length === 0,
-		...(trace
-			? {}
-			: {
-					trace_absent_reason:
-						"No trace was recorded for this run, so the parse, evidence and retrieval facts are ABSENT — not " +
-						"silent. Either the session refused to trace, or the loaded bundle's classifier cannot produce one.",
-				}),
+		trace_absent_reason: trace
+			? null
+			: "No trace was recorded for this run, so the parse, evidence and retrieval facts are ABSENT — not " +
+				"silent. Either the session refused to trace, or the loaded bundle's classifier cannot produce one.",
+		counterfactuals: null,
 	}
 }
 
@@ -757,8 +753,8 @@ export function assembleAccount(
  * Then run the counterfactual sweep and aggregate by shape.
  */
 export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
-	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
-	const config = (args["config"] as EngineConfig | undefined) ?? {}
+	const ref = (args["inputs"] as InputSetRef | null) ?? { kind: "board" }
+	const config = (args["config"] as EngineConfig | null) ?? {}
 	const limit = args["limit"] as number | undefined
 	const rowsCap = args["rows_cap"] as number | undefined
 	const wantCounterfactuals = args["counterfactuals"] !== false
@@ -808,7 +804,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactualErrors = flipErrors
 
 		for (const account of accounts) {
-			account.counterfactuals = byRow.get(account.id)
+			account.counterfactuals = byRow.get(account.id) ?? null
 		}
 	}
 
@@ -829,7 +825,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		n: rows.length,
 		selection: set.selection,
 		eventLabel: "matched at least one mechanism-state shape",
-		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+		populationN: set.populationN,
 	})
 
 	const unclassified = byShape["unclassified"]?.n ?? 0

@@ -129,7 +129,7 @@ export async function familyRollup(
 	db: DatabaseClient<FilerDatabase>,
 	query: FamilyRollupQuery
 ): Promise<FamilyRollup[]> {
-	const suppliedCount = (query.familyID !== undefined ? 1 : 0) + (query.nodeID !== undefined ? 1 : 0)
+	const suppliedCount = (query.familyID ? 1 : 0) + (query.nodeID ? 1 : 0)
 
 	if (suppliedCount !== 1) {
 		throw new Error("familyRollup: exactly one of `familyID`, `nodeID` is required")
@@ -142,7 +142,7 @@ export async function familyRollup(
 
 	const asOf = query.asOf ?? todayISODate()
 
-	if (query.familyID !== undefined) {
+	if (query.familyID) {
 		const rollup = await readFamilyRollup(db, query.familyID, asOf, manifest.source_vintage)
 
 		return rollup ? [rollup] : []

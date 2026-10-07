@@ -58,7 +58,7 @@ export interface CountryCoverage {
 	/**
 	 * Holds the locale package name when one ships.
 	 */
-	weightsPackage?: string
+	weightsPackage: string | null
 	/**
 	 * Counts admin places in the serving gazetteer.
 	 */
@@ -161,11 +161,11 @@ export interface CoverageReport {
 	/**
 	 * Holds the corpus version that the training config references.
 	 */
-	configuredCorpusVersion?: string
+	configuredCorpusVersion: string | null
 	/**
 	 * Explains the mismatch when the counted corpus differs from the configured corpus.
 	 */
-	corpusMismatch?: string
+	corpusMismatch: string | null
 	corpusRowsTotal: number
 	/**
 	 * Holds the cached census timestamp, or `null` when the corpus was recounted in this run.
@@ -317,10 +317,10 @@ export function sameCorpusVersion(a: string, b: string): boolean {
 /**
  * Reads the corpus version from a training config's `corpus_dir`.
  *
- * Returns `undefined` when the config is missing or has no `corpus_dir`.
+ * Returns `null` when the config is missing or has no `corpus_dir`.
  */
-export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | undefined> {
-	if (!(await pathExists(configPath))) return undefined
+export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | null> {
+	if (!(await pathExists(configPath))) return null
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a training config is a few hundred lines, read sync
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
@@ -334,10 +334,10 @@ export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): 
 
 		if (versioned !== -1 && segments[versioned + 1]) return segments[versioned + 1]!.replace(/^v/, "")
 
-		return segments.at(-1)?.replace(/^corpus-v?/, "")
+		return segments.at(-1)?.replace(/^corpus-v?/, "") ?? null
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -404,7 +404,7 @@ export async function readBoardCoverage(
 			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)
 
-				if (row === null) continue
+				if (!row) continue
 
 				const country = String(row.country ?? dir).toUpperCase()
 				const entry = out.get(country) ?? { rows: 0, passed: 0 }
@@ -674,7 +674,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			corpusRows: census.rows[cc] ?? 0,
 			corpusStreetRows: census.streetRows[cc] ?? 0,
 			admitted: admitted.has(cc),
-			...(weightsPackages.has(cc) ? { weightsPackage: weightsPackages.get(cc) } : {}),
+			weightsPackage: weightsPackages.get(cc) ?? null,
 			gazetteerPlaces,
 			geocodeTier: ROOFTOP_PUBLISHED.has(cc)
 				? "rooftop-published"
@@ -700,7 +700,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 				"Every row count here is about the corpus that was COUNTED, not the one that trains — a country the " +
 				"newer corpus added reads as zero rows. Re-run with refresh, or point at the config whose corpus was " +
 				"censused."
-			: undefined
+			: null
 
 	return {
 		countries,
@@ -714,7 +714,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		},
 		corpusVersion: census.corpusVersion,
 		configuredCorpusVersion,
-		...(corpusMismatch ? { corpusMismatch } : {}),
+		corpusMismatch,
 		corpusRowsTotal: census.total,
 		corpusCensusTakenAt: takenAt,
 		configPath: options.configPath,

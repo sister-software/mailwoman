@@ -122,8 +122,8 @@ export interface ForkEntityAnswerTarget {
 	epistemic_status?: string
 	countryCode: string | null
 	venue: string | null
-	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
-	admin_coherence?: AdminCoherenceReport
+	entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
+	admin_coherence: AdminCoherenceReport | null
 }
 
 /**
@@ -150,8 +150,8 @@ function applyForkEntityAnswer(
 
 	const coherence = forkedEntityCoherenceField(roots, entity)
 
-	if (coherence.admin_coherence) {
-		result.admin_coherence = coherence.admin_coherence
+	if (coherence) {
+		result.admin_coherence = coherence
 	}
 }
 
@@ -188,7 +188,7 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 
 	const resolverName = postcode.metadata?.["resolver_name"]
 
-	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : undefined)
+	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : null)
 		? VENUE_UNIT_ANCHOR_THRESHOLD_M
 		: VENUE_ANCHOR_THRESHOLD_M
 }
@@ -254,7 +254,7 @@ export function probeVenueNearAnchor(
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
 		resolution_tier: string | null
-		entity?: { name: string; categoryID: string | null; confidence: number; country: string }
+		entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
 	},
 	markers: readonly { code: string }[],
 	parseInput: string,
@@ -366,7 +366,7 @@ export function probeVenueNearAnchorFolded(
 	const hits = opts.lookup.search({ name: queryHead, limit: 24 })
 
 	const folded = hits.filter((h) => {
-		if (h.name === null) return false
+		if (!h.name) return false
 		const hitHead = venueHeadSegment(h.name) ?? h.name
 
 		return normalizeLocalityForKey(hitHead) === queryKey

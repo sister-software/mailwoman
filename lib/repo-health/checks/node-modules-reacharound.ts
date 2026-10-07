@@ -143,7 +143,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 	const hits: Array<{ line: number; text: string }> = []
 	const reported: Array<{ start: number; end: number }> = []
 
-	const argumentText = (node: ts.Node): string | undefined => {
+	const argumentText = (node: ts.Node): string | null => {
 		// `isStringLiteralLike` already covers a no-substitution template.
 		if (ts.isStringLiteralLike(node)) return node.text
 
@@ -155,11 +155,11 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 			return node.head.text + node.templateSpans.map((span) => `\0${span.literal.text}`).join("")
 		}
 
-		return undefined
+		return null
 	}
 
-	const isInstallPath = (text: string | undefined): boolean =>
-		text !== undefined && /(^|[/\\])node_modules([/\\]|$)/u.test(text) && !/^!?\*\*/u.test(text)
+	const isInstallPath = (text: string | null): boolean =>
+		text !== null && /(^|[/\\])node_modules([/\\]|$)/u.test(text) && !/^!?\*\*/u.test(text)
 
 	const report = (node: ts.Node): void => {
 		const start = node.getStart(sourceFile)
@@ -250,6 +250,9 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
 				message: "no tracked source mentions node_modules at all — the prefilter is broken, not the tree clean",
+				file: null,
+				line: null,
+				details: null,
 			})
 		}
 
@@ -265,6 +268,7 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 						message: `hand-assembled node_modules path: ${hit.text}`,
 						file: key,
 						line: hit.line,
+						details: null,
 					})
 				}
 			})
@@ -276,6 +280,8 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: "allowlist entries carry a reason a reviewer can read",
 					file: key,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -288,6 +294,8 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: "allowlisted file no longer exists — drop its entry, or move it with the file",
 					file: key,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -299,6 +307,8 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: "no longer reaches around — drop its allowlist entry",
 					file: key,
+					line: null,
+					details: null,
 				})
 			}
 		}

@@ -45,6 +45,9 @@
 			"end": 17
 		}
 	],
+	"anchor": null,
+	"gazetteer": null,
+	"country": null,
 	"logits": [
 		[
 			0,
@@ -230,36 +233,58 @@
 		"IT",
 		"NL"
 	],
+	"spanScores": null,
 	"detectedSystem": "us",
 	"systemSource": "auto",
 	"priors": [
 		{
 			"kind": "queryShape",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		},
 		{
 			"kind": "fst",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		},
 		{
 			"kind": "streetMorphology",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		},
 		{
 			"kind": "spanProposer",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		},
 		{
 			"kind": "placetypePair",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		},
 		{
 			"kind": "placetypeCensus",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		},
 		{
 			"kind": "conventionsMask",
-			"applied": false
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
 		}
 	],
 	"emissions": [

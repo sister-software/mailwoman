@@ -1,5 +1,6 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import {
+	EMPTY_PLACE_FIELDS,
 	type ResolvedPlace,
 	type Resolver,
 	type ResolveOpts,
@@ -55,7 +56,7 @@ describe("CountryFromPostcodeFormat", () => {
 	})
 
 	it("is null on empty / missing input", () => {
-		expect(countryFromPostcodeFormat(undefined)).toBeNull()
+		expect(countryFromPostcodeFormat(null)).toBeNull()
 		expect(countryFromPostcodeFormat("")).toBeNull()
 		expect(countryFromPostcodeFormat("   ")).toBeNull()
 	})
@@ -133,10 +134,10 @@ describe("ExtractGeocodeResult — a component the answer did not follow", () =>
 		])
 
 		expect(r.components.postcode).toBe("744301")
-		expect(r.dropped_components).toBeUndefined()
+		expect(r.dropped_components).toBeNull()
 	})
 
-	it("omits the field entirely when the answer followed everything it parsed", () => {
+	it("nulls the field when the answer followed everything it parsed", () => {
 		const agreeing: AddressTree = {
 			raw: "Paris, 75008",
 			roots: [
@@ -145,7 +146,7 @@ describe("ExtractGeocodeResult — a component the answer did not follow", () =>
 			],
 		}
 
-		expect(extractGeocodeResult("Paris, 75008", agreeing).unfollowed_components).toBeUndefined()
+		expect(extractGeocodeResult("Paris, 75008", agreeing).unfollowed_components).toBeNull()
 	})
 })
 
@@ -593,6 +594,8 @@ describe("The lineage-attachment wiring", () => {
 					roots: [node({ tag: "locality", value: "Weimar", lat: 1, lon: 2, placeID: "wof:1" })],
 				}
 			},
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		return { classifier, resolver, placeCountry: false }
@@ -616,6 +619,7 @@ describe("The lineage-attachment wiring", () => {
 describe(": a famous namesake the model reads as a `street` keeps its candidate list", () => {
 	const SPRINGFIELDS: ResolvedPlace[] = [
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 10,
 			name: "Springfield",
 			placetype: "locality",
@@ -627,6 +631,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 11,
 			name: "Springfield",
 			placetype: "locality",
@@ -638,6 +643,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 12,
 			name: "Springfield",
 			placetype: "locality",

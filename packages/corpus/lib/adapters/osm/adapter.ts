@@ -60,17 +60,17 @@ export const OSM_ATTRIBUTION =
  * The per-row shape `@mailwoman/osm`'s `emit-corpus-jsonl` writes.
  */
 interface OSMCorpusRow {
-	street?: string
-	number?: string
-	postcode?: string
-	suburb?: string
-	city?: string
-	unit?: string
-	place?: string
-	subdistrict?: string
-	district?: string
-	province?: string
-	country?: string
+	street?: string | null
+	number?: string | null
+	postcode?: string | null
+	suburb?: string | null
+	city?: string | null
+	unit?: string | null
+	place?: string | null
+	subdistrict?: string | null
+	district?: string | null
+	province?: string | null
+	country?: string | null
 }
 
 const MAX_STREET_WORDS = 8
@@ -120,7 +120,7 @@ export function splitCityValue(value: string): { locality: string; head: string 
 
 const PLACEHOLDERS = new Set(["n/a", "na", "none", "-", "nil"])
 
-function clean(value: string | undefined): string | null {
+function clean(value: string | null | undefined): string | null {
 	const trimmed = value?.trim() ?? ""
 
 	return trimmed && !PLACEHOLDERS.has(trimmed.toLowerCase()) ? trimmed : null
@@ -206,7 +206,7 @@ export function componentsForOSMRow(
 	// `district` never becomes `region`, because Vietnam's country template
 	// renders it only when no city is present.
 	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
-		.map((value) => clean(value ?? undefined))
+		.map((value) => clean(value))
 		.find(
 			(value) =>
 				value !== null &&
@@ -221,7 +221,7 @@ export function componentsForOSMRow(
 
 	const province = clean(row.province)
 
-	if (province && (split === null || !sameName(province, split.locality))) {
+	if (province && (!split || !sameName(province, split.locality))) {
 		components.region = province
 	}
 

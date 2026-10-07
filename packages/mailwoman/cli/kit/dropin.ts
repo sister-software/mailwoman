@@ -16,12 +16,13 @@
 import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import type { NamedPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from "#cli/kit/engine-stamp"
-import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
+import { type FreshnessReport, readFreshness } from "#freshness"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#resolver-backend"
 /**
  * The documentation page linked by missing-gazetteer messages.
@@ -88,7 +89,7 @@ export interface GazetteerPaths {
 	/**
 	 * The candidate gazetteer (worldwide resolution), when one was found.
 	 */
-	candidateDB: string | undefined
+	candidateDB: string | null
 	/**
 	 * The WOF admin FTS databases that exist on disk.
 	 */
@@ -104,7 +105,7 @@ export interface GazetteerPaths {
 /**
  * Find gazetteer databases, or exit with a clear error if they are unavailable.
  */
-export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
+export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
@@ -170,7 +171,7 @@ export async function gazetteerFreshness({
 	candidateDB,
 	wofPaths,
 }: GazetteerPaths): Promise<FreshnessReport> {
-	const artifacts: FreshnessArtifact[] = []
+	const artifacts: NamedPath[] = []
 
 	if (candidateDB) {
 		artifacts.push({ name: "gazetteer", path: candidateDB })

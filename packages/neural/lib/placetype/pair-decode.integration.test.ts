@@ -34,7 +34,14 @@ class FakeRunner implements NeuralRunner {
 		this.#canned = canned
 	}
 	async infer(_ids: number[]): Promise<InferResult> {
-		return { logits: this.#canned, numLabels: this.#canned[0]?.length ?? 0 }
+		return {
+			logits: this.#canned,
+			numLabels: this.#canned[0]?.length ?? 0,
+			localeLogits: null,
+			addressSystemLogits: null,
+			spanScores: null,
+			maxSpan: null,
+		}
 	}
 }
 
@@ -61,7 +68,7 @@ function fixedPairIndex(
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
 		// No `parentDelta`: a parent write would move the spans these child-side decode-order
 		// tests assert on for reasons unrelated to what they measure.
-		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : undefined),
+		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : null),
 	}
 }
 
@@ -108,6 +115,8 @@ describe("placetype-pair prior — decode-order integration", () => {
 			kind: "placetypePair",
 			applied: true,
 			probePath: "window",
+			census: null,
+			censusProbedParents: null,
 		})
 
 		expect(biased.repairs.find((r) => r.pass === "wordConsistency")).toBeUndefined()
@@ -145,6 +154,8 @@ describe("placetype-pair prior — decode-order integration", () => {
 			kind: "placetypePair",
 			applied: true,
 			probePath: "window",
+			census: null,
+			censusProbedParents: null,
 		})
 
 		const streetB = col("B-street")
@@ -190,6 +201,8 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			kind: "placetypePair",
 			applied: true,
 			probePath: "anchored",
+			census: null,
+			censusProbedParents: null,
 		})
 
 		expect(trace.path).toEqual([col("B-street"), col("I-street"), col("I-street"), col("B-locality")])

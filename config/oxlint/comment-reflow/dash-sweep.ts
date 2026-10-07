@@ -206,7 +206,7 @@ function sweepBody(lines: readonly string[]): string[] {
 	const output: string[] = []
 	let paragraph: string[] = []
 	let paragraphIndent = ""
-	let item: { marker: string; text: string[] } | undefined
+	let item: { marker: string; text: string[] } | null = null
 
 	const flushParagraph = () => {
 		if (!paragraph.length) return
@@ -219,7 +219,7 @@ function sweepBody(lines: readonly string[]): string[] {
 		if (!item) return
 
 		output.push(item.marker + sweepParagraph(item.text.join(" ").replaceAll(/\s+/g, " ")))
-		item = undefined
+		item = null
 	}
 
 	for (const line of lines) {

@@ -268,10 +268,7 @@ export interface PairIndexCalibration {
  *
  * The caller checks the source MD5s because only the caller knows its sources.
  */
-export function pairIndexStaleReason(
-	header: PairIndexHeaderFields,
-	expected: PairIndexCalibration
-): string | undefined {
+export function pairIndexStaleReason(header: PairIndexHeaderFields, expected: PairIndexCalibration): string | null {
 	if (header.schemaVersion !== REQUIRED_PAIR_INDEX_SCHEMA) {
 		return `schemaVersion ${header.schemaVersion} → ${REQUIRED_PAIR_INDEX_SCHEMA}`
 	}
@@ -286,7 +283,7 @@ export function pairIndexStaleReason(
 		return `parentDelta ${header.parentDelta ?? "(absent)"} → ${expected.parentDelta ?? "(absent)"}`
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -518,15 +515,15 @@ export interface SoftFeedLink {
 export async function committedSoftFeedLinks(): Promise<{
 	anchor: SoftFeedLink
 	country: SoftFeedLink
-	streetType?: SoftFeedLink
+	streetType: SoftFeedLink | null
 }> {
 	const config = await readReleaseConfig()
 	const sources = repoCommittedSoftFeedSources(repoRootPath(), config.softFeed ?? {})
 
-	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | undefined => {
+	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | null => {
 		const source = sources.get(name)
 
-		return source ? { source, name, consequenceIfMissing } : undefined
+		return source ? { source, name, consequenceIfMissing } : null
 	}
 
 	const anchor = link("anchor-lexicon-v1.json", "gazetteer channel will resolve OFF in this worktree.")
@@ -540,7 +537,7 @@ export async function committedSoftFeedLinks(): Promise<{
 
 	const streetType = link("street-type-lexicon-v3.json", "the street_type channel will resolve OFF in this worktree.")
 
-	return { anchor, country, ...(streetType ? { streetType } : {}) }
+	return { anchor, country, streetType }
 }
 
 /**
@@ -631,7 +628,7 @@ export interface DevOverlayManifest {
 export interface DevOverlay {
 	destDir: PathBuilder
 	cli: PathBuilder
-	card: WeightsCard | undefined
+	card: WeightsCard | null
 }
 
 const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
@@ -642,10 +639,10 @@ const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
 	{ channel: "locality_surface", source: (name) => dataRootPath("gazetteer", name) },
 ]
 
-async function readWeightsCard(workspace: string): Promise<WeightsCard | undefined> {
+async function readWeightsCard(workspace: string): Promise<WeightsCard | null> {
 	const path = workspacePathBuilder(workspace, "model-card.json")
 
-	if (!(await pathExists(path))) return undefined
+	if (!(await pathExists(path))) return null
 
 	return readLocalJSONFile<WeightsCard>(path)
 }
@@ -680,7 +677,7 @@ async function linkCharModel(destDir: PathBuilder, family: string): Promise<void
 	await removeIfPresent(destDir("tokenizer.model"))
 }
 
-async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | undefined): Promise<void> {
+async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null): Promise<void> {
 	const recipe = await readReleaseConfig()
 
 	const dataRoot = dataRootPath()
@@ -804,7 +801,7 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 		await removeIfPresent(destDir("model.onnx"))
 		await removeIfPresent(destDir("tokenizer.model"))
 	} else if (manifest.model?.kind === "link") {
-		await linkBaseModelPair(destDir, manifest.model.digestCard)
+		await linkBaseModelPair(destDir, manifest.model.digestCard ?? null)
 	} else if (manifest.model?.kind === "char") {
 		await linkCharModel(destDir, manifest.model.family)
 	}

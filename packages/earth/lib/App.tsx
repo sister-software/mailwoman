@@ -114,7 +114,7 @@ export function App() {
 	const query = queryFromSearch(location.search)
 	const mode = runtimeModeFromSearch(location.search)
 
-	if (route === null) return <NotFound pathname={location.pathname} />
+	if (!route) return <NotFound pathname={location.pathname} />
 
 	return (
 		<main className={`${panelStyles.demoRoot} ${geocoderStyles.geocoderRoot}`} data-route={route} data-runtime={mode}>

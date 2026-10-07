@@ -56,7 +56,7 @@ export function candidateFromSearchRow(
 
 	// Proximity boost applies only when the query includes `near` and the candidate has real coordinates.
 	// The decay is tunable via proximityBoost + proximityScaleKm.
-	let distanceKm: number | undefined
+	let distanceKm: number | null = null
 	// The best decayed-distance term over `near` and every `bias` point wins, each scaled by its weight.
 	let proximityTerm = 0
 
@@ -96,6 +96,14 @@ export function candidateFromSearchRow(
 	// additive units, so hints can win a cross-country postcode tie without a hard filter.
 	const prominence = popTerm + proximityTerm
 
+	const population = row.population !== null && row.population > 0 ? row.population : null
+
+	// The referential key derives from this row's population and no other field,
+	// so it cannot drift from the ordering.
+	// Consumers read the encyclopedic value.
+	// No ranking site reads it.
+	// The bbox gives parity with the wasm lookup.
+	// Without it the region→bbox constraint is dead and disambiguation falls to population ranking.
 	const candidate: PlaceCandidate = {
 		id: row.id,
 		prominence,
@@ -104,35 +112,27 @@ export function candidateFromSearchRow(
 		country: row.country ?? "",
 		lat: row.lat ?? 0,
 		lon: row.lon ?? 0,
-		parent_id: row.parent_id ?? undefined,
+		parent_id: row.parent_id ?? null,
 		score,
-	}
-
-	if (distanceKm !== undefined) {
-		candidate.distanceKm = distanceKm
-	}
-
-	if (row.population !== null && row.population > 0) {
-		candidate.population = row.population
-		// The referential ranking key is derived as a pure function of this row's population,
-		// so it cannot drift from the ordering.
-		candidate.referential = referentialFromPopulation(row.population)
-	}
-
-	// Returned for consumers (annotations / API surfaces); no ranking site reads it.
-	if (row.encyclopedic !== null) {
-		candidate.encyclopedic = row.encyclopedic
-	}
-
-	// Candidate bbox for parity with the wasm lookup. Without it the Node backend's
-	// region→bbox constraint is dead and disambiguation falls to population ranking.
-	if (row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null) {
-		candidate.bbox = {
-			minLat: row.min_latitude,
-			maxLat: row.max_latitude,
-			minLon: row.min_longitude,
-			maxLon: row.max_longitude,
-		}
+		distanceKm,
+		exactMatch: null,
+		population,
+		referential: population === null ? null : referentialFromPopulation(population),
+		encyclopedic: row.encyclopedic ?? null,
+		importance: null,
+		bbox:
+			row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
+				? {
+						minLat: row.min_latitude,
+						maxLat: row.max_latitude,
+						minLon: row.min_longitude,
+						maxLon: row.max_longitude,
+					}
+				: null,
+		mismatch: null,
+		containedByQualifier: null,
+		regionScopeMiss: null,
+		variantAliasExempted: null,
 	}
 
 	return candidate

@@ -43,9 +43,9 @@ describe("arenaColumn", () => {
 		expect(arenaColumn(WITH_V0, "perturb", "v0")).toBe(39)
 	})
 
-	test("locates other arena rows and returns undefined for an absent column or row", () => {
+	test("locates other arena rows and returns null for an absent column or row", () => {
 		expect(arenaColumn(NEURAL_ONLY, "libpostal", "neural")).toBe(33)
-		expect(arenaColumn(NEURAL_ONLY, "perturb", "nonexistent")).toBeUndefined()
-		expect(arenaColumn(NEURAL_ONLY, "nonexistent", "neural")).toBeUndefined()
+		expect(arenaColumn(NEURAL_ONLY, "perturb", "nonexistent")).toBeNull()
+		expect(arenaColumn(NEURAL_ONLY, "nonexistent", "neural")).toBeNull()
 	})
 })

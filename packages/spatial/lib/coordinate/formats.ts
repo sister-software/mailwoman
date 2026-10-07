@@ -158,8 +158,9 @@ const unixEpochJulian = 2_440_587.5
 export function sunTimes(
 	lat: number,
 	lon: number,
-	date: Date = new Date()
-): { rise?: number; set?: number; noon: number } {
+	date: Date | null = null
+): { rise: number | null; set: number | null; noon: number } {
+	date ??= new Date()
 	const julian = date.getTime() / 86_400_000 + unixEpochJulian
 	const n = Math.round(julian - J2000 - 0.0009 + lon / 360)
 	const meanSolarTime = n + 0.0009 - lon / 360
@@ -177,7 +178,7 @@ export function sunTimes(
 	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86_400)
 	const noon = toEpoch(transit)
 
-	if (cosH >= 1 || cosH <= -1) return { noon }
+	if (cosH >= 1 || cosH <= -1) return { rise: null, set: null, noon }
 	const hourAngle = toDeg(Math.acos(cosH))
 
 	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
@@ -259,7 +260,7 @@ export const coordinateFormatAnnotator: Annotator = ({ lat, lon, date }): Partia
 	dms: toDMS(lat, lon),
 	geohash: toGeohash(lat, lon),
 	maidenhead: toMaidenhead(lat, lon),
-	mgrs: toMGRS(lat, lon) || undefined,
+	mgrs: toMGRS(lat, lon) || null,
 	mercator: toMercator(lat, lon),
 	qiblaBearing: qiblaBearing(lat, lon),
 	sun: sunTimes(lat, lon, date),

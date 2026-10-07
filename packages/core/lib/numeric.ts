@@ -98,7 +98,7 @@ export function pyRound(x: number, nd = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -117,8 +117,8 @@ export function pyRound(x: number, nd = 0): number {
 /**
  * Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip).
  */
-export function pyFloat(s: string | undefined): number | null {
-	if (s === undefined) return null
+export function pyFloat(s: string | null | undefined): number | null {
+	if (!s) return null
 	const t = s.trim()
 
 	if (t === "") return null
@@ -150,7 +150,7 @@ export function pyFixed(x: number, d: number): string {
 		roundUp = true
 	} else if (rest[0]! < "5") {
 		roundUp = false
-	} else if (rest.slice(1).replace(/0+$/, "").length) {
+	} else if (rest.slice(1).replace(/0+$/, "")) {
 		roundUp = true
 	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")

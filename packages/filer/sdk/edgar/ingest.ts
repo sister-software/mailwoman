@@ -71,11 +71,11 @@ export type EdgarSkipReason = (typeof EdgarSkipReason)[keyof typeof EdgarSkipRea
  */
 export interface EdgarIngestOutcome {
 	query: string
-	cik?: CIK
-	registrantName?: string
-	sic?: string
-	accessionNumber?: string
-	filingDate?: string
+	cik: CIK | null
+	registrantName: string | null
+	sic: string | null
+	accessionNumber: string | null
+	filingDate: string | null
 	subsidiaries: number
 	/**
 	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
@@ -83,7 +83,7 @@ export interface EdgarIngestOutcome {
 	 * A high count against a low `subsidiaries` signals an unhandled layout.
 	 */
 	unparseable: number
-	skipReason?: EdgarSkipReason
+	skipReason: EdgarSkipReason | null
 }
 
 /**
@@ -134,18 +134,19 @@ async function resolveCorroboratedCIK(
 	tickers: readonly CompanyTickerEntry[],
 	options: EdgarIngestOptions
 ): Promise<
-	| { ok: true; cik: CIK; registrantName: string; sic?: string; payload: unknown }
+	| { ok: true; cik: CIK; registrantName: string; sic: string | null; payload: unknown }
 	| { ok: false; reason: EdgarSkipReason }
 > {
 	const candidates = resolveCIKCandidates(query, tickers, options.minScore ? { minScore: options.minScore } : {})
 
 	if (!candidates.length) return { ok: false, reason: EdgarSkipReason.Unresolved }
 
-	const corroborated: Array<{ cik: CIK; registrantName: string; sic?: string; payload: unknown; score: number }> = []
+	const corroborated: Array<{ cik: CIK; registrantName: string; sic: string | null; payload: unknown; score: number }> =
+		[]
 
 	for (const candidate of candidates) {
 		const payload = await client.get<SubmissionsPayload>(submissionsURL(candidate.cik))
-		const sic = typeof payload?.sic === "string" ? payload.sic : undefined
+		const sic = typeof payload?.sic === "string" ? payload.sic : null
 		const verdict = corroborateCIK(candidate.cik, sic, options)
 
 		if (!verdict.corroborated) continue
@@ -215,7 +216,7 @@ async function collectForFiling(
 			rows.push({
 				cik: filing.cik,
 				subsidiaryName: subsidiary.name,
-				...(subsidiary.jurisdiction ? { jurisdiction: subsidiary.jurisdiction } : {}),
+				jurisdiction: subsidiary.jurisdiction || null,
 				filingDate: filing.filingDate,
 			})
 		}
@@ -264,7 +265,17 @@ export async function collectEdgarSubsidiaryRows(
 		const resolved = await resolveCorroboratedCIK(client, query, tickers, options)
 
 		if (!resolved.ok) {
-			finish({ query, subsidiaries: 0, unparseable: 0, skipReason: resolved.reason })
+			finish({
+				query,
+				cik: null,
+				registrantName: null,
+				sic: null,
+				accessionNumber: null,
+				filingDate: null,
+				subsidiaries: 0,
+				unparseable: 0,
+				skipReason: resolved.reason,
+			})
 
 			continue
 		}
@@ -273,13 +284,20 @@ export async function collectEdgarSubsidiaryRows(
 			query,
 			cik: resolved.cik,
 			registrantName: resolved.registrantName,
-			...(resolved.sic ? { sic: resolved.sic } : {}),
+			sic: resolved.sic || null,
 		}
 
 		const [filing] = parseTenKFilings(resolved.cik, resolved.payload)
 
 		if (!filing) {
-			finish({ ...base, subsidiaries: 0, unparseable: 0, skipReason: EdgarSkipReason.NoTenK })
+			finish({
+				...base,
+				accessionNumber: null,
+				filingDate: null,
+				subsidiaries: 0,
+				unparseable: 0,
+				skipReason: EdgarSkipReason.NoTenK,
+			})
 
 			continue
 		}
@@ -294,13 +312,13 @@ export async function collectEdgarSubsidiaryRows(
 			filingDate: filing.filingDate,
 			subsidiaries: collected.rows.length,
 			unparseable: collected.unparseable,
-			...(collected.rows.length
-				? {}
-				: {
-						// Zero rows with no abstentions means the filing had no Exhibit 21.
-						// Zero rows with abstentions means one was read and yielded no row.
-						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
-					}),
+			// Zero rows with no abstentions means the filing had no Exhibit 21.
+			// Zero rows with abstentions means one was read and yielded no row.
+			skipReason: collected.rows.length
+				? null
+				: collected.unparseable
+					? EdgarSkipReason.NoSubsidiaries
+					: EdgarSkipReason.NoExhibit21,
 		})
 	}
 

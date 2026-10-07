@@ -95,7 +95,7 @@ export interface ConformanceFixture {
 	/**
 	 * Options shared by both sides; absent means production defaults.
 	 */
-	context?: ConformanceContext
+	context: ConformanceContext | null
 	/**
 	 * Required comparator for the expected relation.
 	 */
@@ -107,23 +107,23 @@ export interface ConformanceFixture {
 	/**
 	 * Whether failure blocks the run; defaults to `pass`.
 	 */
-	status?: ConformanceStatus
+	status: ConformanceStatus | null
 	/**
 	 * Issue or record associated with a tracked row.
 	 */
-	bugRef?: string
+	bugRef: string | null
 	/**
 	 * Source row or input set for this fixture.
 	 */
-	rowRef?: string
+	rowRef: string | null
 	/**
 	 * Coordinate tolerance in meters; supported only by `assembled_coordinate`.
 	 */
-	toleranceM?: number
+	toleranceM: number | null
 	/**
 	 * A note for the fixture author; the suite does not grade it.
 	 */
-	note?: string
+	note: string | null
 }
 
 /**
@@ -170,8 +170,8 @@ function requireNonEmptyString(record: Record<string, unknown>, key: string, lab
 	return value
 }
 
-function readContext(raw: unknown, label: string): ConformanceContext | undefined {
-	if (raw === undefined) return undefined
+function readContext(raw: unknown, label: string): ConformanceContext | null {
+	if (raw === undefined) return null
 
 	if (!isPlainObject(raw)) {
 		throw new Error(`${label}: "context" must be an object (got ${stringifyJSON(raw)})`)
@@ -268,7 +268,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	}
 
 	// `bugRef` is only valid on non-blocking tracked rows.
-	if (bugRef !== undefined && (status === undefined || status === "pass")) {
+	if (bugRef && (!status || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
 				`"${status ?? "pass"}" — a enforcing row that names a defect asserts the defect is fixed.`
@@ -311,12 +311,12 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		variant,
 		outcomeComparator,
 		expect,
-		...(status ? { status } : {}),
-		...(typeof bugRef === "string" ? { bugRef } : {}),
-		...(context ? { context } : {}),
-		...(typeof rowRef === "string" ? { rowRef } : {}),
-		...(typeof tolerance === "number" ? { toleranceM: tolerance } : {}),
-		...(typeof note === "string" ? { note } : {}),
+		status: status ?? null,
+		bugRef: typeof bugRef === "string" ? bugRef : null,
+		context: context ?? null,
+		rowRef: typeof rowRef === "string" ? rowRef : null,
+		toleranceM: typeof tolerance === "number" ? tolerance : null,
+		note: typeof note === "string" ? note : null,
 	}
 }
 

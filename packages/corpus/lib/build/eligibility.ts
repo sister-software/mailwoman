@@ -36,7 +36,7 @@ export async function readSourceEligibility(): Promise<ReadonlyMap<string, reado
 	const keyed = new Map<string, readonly string[]>()
 
 	for (const source of register.sources) {
-		if (source.adapterID === undefined) continue
+		if (!source.adapterID) continue
 
 		keyed.set(sourceEligibilityKey(source.adapterID, source.iso2), ingestEligibilityProblems(source, register))
 	}

@@ -23,6 +23,11 @@ function candidate(spec: CandidateSpec): ResolveCandidateTrace {
 		placetype: spec.placetype ?? "locality",
 		score: 1,
 		ranks: { initial: 1 },
+		prominence: null,
+		importance: null,
+		population: null,
+		exactMatch: null,
+		containedByQualifier: null,
 	}
 }
 
@@ -48,15 +53,16 @@ function lookup(spec: LookupSpec): ResolveNodeTrace {
 		placetype: spec.placetype ?? "locality",
 		query: {
 			limit: spec.limit ?? 5,
-			...(spec.country ? { country: spec.country } : {}),
-			...(spec.parentID === undefined ? {} : { parentID: spec.parentID }),
-			...(spec.regionQualifier ? { regionQualifier: spec.regionQualifier } : {}),
-			...(spec.postcode ? { postcode: spec.postcode } : {}),
+			country: spec.country || null,
+			parentID: spec.parentID ?? null,
+			regionQualifier: spec.regionQualifier || null,
+			postcode: spec.postcode || null,
 		},
 		checks: spec.checks ?? [],
 		candidates: spec.candidates.map(candidate),
 		candidatesTruncated: spec.truncated ?? 0,
 		picked: spec.picked ?? null,
+		reachableIn: null,
 	}
 }
 

@@ -58,7 +58,7 @@ const candidateLocalities = candidateDB
 	: undefined
 
 function sourceGazetteerReceipt(input: string): C6RowReport["sourceGazetteer"] {
-	if (!candidateDBPath || !candidateLocalities) return undefined
+	if (!candidateDBPath || !candidateLocalities) return null
 	const key = normalizeLocalityForKey(input)
 	// Hyphen is a possible decoded boundary (`Tel Aviv-Yafo`).
 	// Generate surface subspans, then pass every one through the candidate table's shared fold.
@@ -102,7 +102,14 @@ try {
 		const truth = locateUniqueComponentTruth(row.input, row.expectComponents ?? {})
 
 		if (!diagnostic.fst) {
-			reports.push({ id: row.id, input: row.input, fstAvailable: false, violations: [] })
+			reports.push({
+				id: row.id,
+				input: row.input,
+				fstAvailable: false,
+				violations: [],
+				completeSpanRegistry: null,
+				sourceGazetteer: null,
+			})
 
 			continue
 		}
@@ -121,10 +128,8 @@ try {
 			input: row.input,
 			fstAvailable: true,
 			violations,
-			...(required
-				? { completeSpanRegistry: completeSpanRegistryReceipt(matches, diagnostic.trace.pieces.length) }
-				: {}),
-			...(required ? { sourceGazetteer: sourceGazetteerReceipt(row.input) } : {}),
+			completeSpanRegistry: required ? completeSpanRegistryReceipt(matches, diagnostic.trace.pieces.length) : null,
+			sourceGazetteer: required ? sourceGazetteerReceipt(row.input) : null,
 		})
 	}
 } finally {

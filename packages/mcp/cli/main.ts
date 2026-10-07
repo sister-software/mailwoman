@@ -42,7 +42,7 @@ const { values } = parseArguments({
 	allowPositionals: true,
 })
 
-const poiDatabasePath = values["poi-db"]
+const poiDatabasePath = values["poi-db"] ?? null
 
 let corePromise:
 	| Promise<{
@@ -110,7 +110,7 @@ function loadCore(): Promise<{
 
 type Pipeline = (raw: string) => Promise<PipelineResult>
 
-let plainPipeline: Pipeline | undefined
+let plainPipeline: Pipeline | null = null
 
 const poiPipelines = new Map<string, Pipeline>()
 
@@ -124,7 +124,7 @@ async function getPlainPipeline(): Promise<Pipeline> {
 	return plainPipeline
 }
 
-async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
+async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
 	const key = dbPath ?? ""
 	const cached = poiPipelines.get(key)
 
@@ -243,9 +243,9 @@ const deps: MCPToolDeps = {
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
 
-		let frn: FRN | undefined
+		let frn: FRN | null = null
 
-		if (q.frn !== undefined) {
+		if (q.frn) {
 			const parsed = toFRN(q.frn)
 
 			if (!parsed) {

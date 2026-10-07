@@ -40,7 +40,7 @@ export function applyPunctuation(input: string): PunctuationResult {
 		const ch = input[i]!
 		const sub = REPLACEMENTS.get(ch)
 
-		if (sub === undefined) {
+		if (!sub) {
 			out.push(ch)
 			map.push(i)
 		} else {

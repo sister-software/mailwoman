@@ -14,13 +14,28 @@ import type { SourceRecord } from "#types"
 function record(id: string, raw: string, lat: number, lon: number, geocoded = true): SourceRecord {
 	return {
 		id,
+		source: null,
+		name: null,
+		organization: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
 		address: {
 			components: {},
 			canonicalKey: raw.toLowerCase(),
 			raw,
-			...(geocoded
-				? { geocode: { coordinate: { latitude: lat, longitude: lon }, tier: "address_point", uncertaintyMeters: 1 } }
-				: {}),
+			formatted: null,
+			geocode: geocoded
+				? {
+						coordinate: { latitude: lat, longitude: lon },
+						tier: "address_point",
+						uncertaintyMeters: 1,
+						hierarchy: null,
+						poBox: null,
+						multiUnit: null,
+					}
+				: null,
 		},
 	}
 }

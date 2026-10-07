@@ -107,5 +107,6 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		// and GeoNames folds — and the join key every consumer uses either way.
 		spineKeys: { wofID: "id" },
 		createdAt: input.createdAt,
+		sourceRecords: null,
 	}
 }

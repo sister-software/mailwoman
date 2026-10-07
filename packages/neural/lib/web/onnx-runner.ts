@@ -63,7 +63,7 @@ export async function fetchBytes(url: string, fetchImpl: typeof fetch = fetch): 
 	return new Uint8Array(await res.arrayBuffer())
 }
 
-function configureWASMPaths(root: string | undefined): void {
+function configureWASMPaths(root: string | null): void {
 	if (!root) return
 
 	ort.env.wasm.wasmPaths = root
@@ -110,7 +110,7 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Creates a runner from model bytes that have already been fetched.
 	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
-		configureWASMPaths(opts.wasmPathsRoot)
+		configureWASMPaths(opts.wasmPathsRoot ?? null)
 		const runner = new WebONNXRunner(modelBytes, opts)
 
 		return runner

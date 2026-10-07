@@ -63,10 +63,10 @@ export class LayerSpecificationList {
 	}
 
 	public *takeLayer(fromID?: string): Iterable<LayerSpecificationListItem> {
-		let item: LayerSpecificationListItem | undefined
+		let item: LayerSpecificationListItem | null
 
 		if (fromID) {
-			item = this.#layersByID.get(fromID)
+			item = this.#layersByID.get(fromID) ?? null
 
 			if (!item) {
 				throw ResourceError.from(404, `Layer with ID ${fromID} not found`)
@@ -80,7 +80,7 @@ export class LayerSpecificationList {
 		while (item) {
 			yield item
 
-			item = item[kNext]
+			item = item[kNext] ?? null
 		}
 	}
 

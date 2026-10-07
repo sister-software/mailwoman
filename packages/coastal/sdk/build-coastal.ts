@@ -231,7 +231,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			await createLayerCoverageTable(kdb)
 		},
 		ingest: async (kdb) => {
-			if (!source) return undefined
+			if (!source) return null
 
 			return aggregateChunks([
 				await ingestCoastalChunk(kdb, {

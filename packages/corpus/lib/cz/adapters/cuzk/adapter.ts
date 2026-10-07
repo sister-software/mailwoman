@@ -135,11 +135,11 @@ const DESCRIPTIVE_NUMBER_PREFIX = "č.p."
  */
 function czechHouseNumber(
 	byType: ReadonlyMap<string, readonly string[]>,
-	options: { street?: string }
-): string | undefined {
+	options: { street: string | null }
+): string | null {
 	const number = designator(byType, "buildingIdentifier")
 
-	if (!number) return undefined
+	if (!number) return null
 
 	const prefix = designator(byType, "buildingIdentifierPrefix")
 
@@ -193,7 +193,7 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, `undefined` when it holds too little to render, or `"deferred"`
+ * One address's row, `null` when it holds too little to render, or `"deferred"`
  * when a reference it cites is not indexed yet.
  *
  * The caller defers rather than drops because an unresolved reference and an absent one
@@ -205,13 +205,13 @@ function composeRow(
 	address: MarkupElement,
 	referenced: ReadonlyMap<string, MarkupElement>,
 	options: { final?: boolean } = {}
-): CanonicalRow | undefined | "deferred" {
+): CanonicalRow | null | "deferred" {
 	const byType = designatorsByType(address)
 
-	let street: string | undefined
-	let postcode: string | undefined
-	let locality: string | undefined
-	let settlement: string | undefined
+	let street: string | null = null
+	let postcode: string | null = null
+	let locality: string | null = null
+	let settlement: string | null = null
 	let unresolved = false
 
 	for (const href of componentHrefs(address)) {
@@ -248,9 +248,9 @@ function composeRow(
 	const house = czechHouseNumber(byType, { street })
 	const place = locality ?? settlement
 
-	if (!place) return undefined
+	if (!place) return null
 
-	if (!postcode && !street) return undefined
+	if (!postcode && !street) return null
 
 	const components: CanonicalRow["components"] = {}
 
@@ -275,7 +275,7 @@ function composeRow(
 
 	const rendered = formatAddressRow(components, "CZ", { singleLine: true })
 
-	if (!rendered) return undefined
+	if (!rendered) return null
 
 	const { raw, components: aligned } = rendered
 	const seed = address.attributes["gml:id"]?.trim()

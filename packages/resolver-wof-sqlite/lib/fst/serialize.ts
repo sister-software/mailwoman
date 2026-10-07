@@ -119,7 +119,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 
 	// Flag bit 0 marks that place rows include `crossCountryBranches`.
 	// Readers of a file without it report `undefined`.
-	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
+	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches != null))
 	MAGIC.copy(buf, pos)
 	pos += 4
 	buf.writeUInt16LE(FST_FORMAT_VERSION, pos)
@@ -191,7 +191,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
 			// An absent encyclopedic score writes flag 0 and a 0.0 float.
 			// Readers skip the float when the flag is 0.
-			const hasEncyclopedic = place.encyclopedic !== undefined
+			const hasEncyclopedic = place.encyclopedic != null
 			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)
 			buf.writeUInt32LE(intern(place.name), pp + 8)
 			buf.writeFloatLE(place.referential, pp + 12)
@@ -202,7 +202,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 				buf.writeUInt32LE(ci < chainLen ? validChain[ci]! : 0, pp + 24 + ci * 4)
 			}
 
-			buf.writeFloatLE(hasEncyclopedic ? place.encyclopedic! : 0, pp + ENCYCLOPEDIC_OFFSET)
+			buf.writeFloatLE(place.encyclopedic ?? 0, pp + ENCYCLOPEDIC_OFFSET)
 
 			placeIdx++
 		}
@@ -320,8 +320,8 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				lat: buf.readFloatLE(pp + 16),
 				lon: buf.readFloatLE(pp + 20),
 				parentChain,
-				...(hasAmbiguity ? { crossCountryBranches: buf.readUInt8(pp + 6) } : {}),
-				...(hasEncyclopedic ? { encyclopedic: buf.readFloatLE(pp + ENCYCLOPEDIC_OFFSET) } : {}),
+				crossCountryBranches: hasAmbiguity ? buf.readUInt8(pp + 6) : null,
+				encyclopedic: hasEncyclopedic ? buf.readFloatLE(pp + ENCYCLOPEDIC_OFFSET) : null,
 			}
 		}
 
@@ -335,23 +335,23 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
  * Reads the provenance trailer from an FST binary, or returns `undefined`
  * when the file has none or it cannot be parsed.
  */
-export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
-	if (buf.length < HEADER_SIZE) return undefined
+export function readFSTProvenance(buf: Buffer): FSTProvenance | null {
+	if (buf.length < HEADER_SIZE) return null
 
-	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
+	if (!buf.subarray(0, 4).equals(MAGIC)) return null
 	const version = buf.readUInt16LE(4)
 
-	if (version < VERSION_WITH_METADATA) return undefined
+	if (version < VERSION_WITH_METADATA) return null
 	const provenanceOffset = buf.readUInt32LE(28)
 
-	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return undefined
+	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return null
 
 	try {
 		const jsonLen = buf.readUInt32LE(provenanceOffset)
 		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
 
-		return tryParsingJSON<FSTProvenance>(jsonStr) ?? undefined
+		return tryParsingJSON<FSTProvenance>(jsonStr) ?? null
 	} catch {
-		return undefined
+		return null
 	}
 }

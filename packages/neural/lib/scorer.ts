@@ -53,29 +53,29 @@ export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
  */
 export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
-function createWeightsMemo(locale: string | undefined): () => Promise<ResolvedWeights | null> {
-	let memo: Promise<ResolvedWeights | null> | undefined
+function createWeightsMemo(locale: string | null | undefined): () => Promise<ResolvedWeights | null> {
+	let memo: Promise<ResolvedWeights | null> | null = null
 
-	return () => (memo ??= resolveWeights({ locale }).catch(() => null))
+	return () => (memo ??= resolveWeights(locale ? { locale } : {}).catch(() => null))
 }
 
 async function resolveDefaultLexicon(
 	weightsOnce: () => Promise<ResolvedWeights | null>,
-	repoCandidate: string | undefined,
+	repoCandidate: string | null,
 	pick: (weights: ResolvedWeights) => string | undefined
-): Promise<string | undefined> {
+): Promise<string | null> {
 	if (repoCandidate && (await pathExists(repoCandidate))) return repoCandidate
 
 	const resolved = await weightsOnce()
 
-	return resolved ? pick(resolved) : undefined
+	return resolved ? (pick(resolved) ?? null) : null
 }
 
 async function resolveAnchorSource(
-	pinned: PathBuilderLike | undefined,
+	pinned: PathBuilderLike | null | undefined,
 	weightsOnce: () => Promise<ResolvedWeights | null>,
-	spanMode: AnchorSpanMode | undefined
-): Promise<{ path: PathBuilderLike; binary: boolean } | undefined> {
+	spanMode: AnchorSpanMode | null
+): Promise<{ path: PathBuilderLike; binary: boolean } | null> {
 	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
 
 	if (spanMode !== "shaped" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
@@ -86,14 +86,14 @@ async function resolveAnchorSource(
 
 	if (resolved) return resolved.anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 
-	return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
+	return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : null
 }
 
 function streetTypeRepoCandidate(declared: RequiredChannels): string {
 	return `data/gazetteer/${declared.street_type?.lexicon ?? EVIDENCE_LEXICON_FAMILIES.street_type.legacy}`
 }
 
-function fstPathEntry(fstPath: PathBuilderLike | undefined): { fstPath?: PathBuilderLike } {
+function fstPathEntry(fstPath: PathBuilderLike | null | undefined): { fstPath?: PathBuilderLike } {
 	return fstPath ? { fstPath } : {}
 }
 
@@ -103,17 +103,17 @@ async function addressSystemsEntry(modelCardPath: PathBuilderLike): Promise<{ ad
 	return addressSystems ? { addressSystems } : {}
 }
 
-function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | undefined {
-	return declared.anchor?.span_mode
+function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | null {
+	return declared.anchor?.span_mode ?? null
 }
 
 function assertShapedKeyerObligation(
-	lookup: AnchorLookup | undefined,
-	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: PathBuilderLike | undefined,
+	lookup: AnchorLookup | null,
+	spanMode: AnchorSpanMode | null,
+	anchorSourcePath: PathBuilderLike | null | undefined,
 	strict: boolean
 ): void {
-	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)
+	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath ?? null)
 
 	if (violation) {
 		fail(strict, violation)
@@ -352,7 +352,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const anchorSource = await resolveAnchorSource(opts.anchorLookupPath, weightsOnce, declaredSpanMode)
 
 	const anchorRequired = declared.anchor?.required ?? false
-	let postcodeAnchorLookup: AnchorLookup | undefined
+	let postcodeAnchorLookup: AnchorLookup | null = null
 
 	if (overrides.anchor === false) {
 		if (anchorRequired) {
@@ -363,7 +363,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	} else {
 		postcodeAnchorLookup =
-			anchorSource && (await pathExists(anchorSource.path)) ? await loadAnchorLookup(anchorSource) : undefined
+			anchorSource && (await pathExists(anchorSource.path)) ? await loadAnchorLookup(anchorSource) : null
 
 		if (anchorRequired && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
 			const reason = postcodeAnchorLookup
@@ -383,7 +383,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		(await resolveDefaultLexicon(weightsOnce, DEFAULT_GAZETTEER_LEXICON, (weights) => weights.gazetteerLexiconPath))
 
 	const gazetteerRequired = declared.gazetteer?.required ?? false
-	let gazetteerLexicon: GazetteerLexicon | undefined
+	let gazetteerLexicon: GazetteerLexicon | null = null
 
 	if (overrides.gazetteer === false) {
 		if (gazetteerRequired) {
@@ -396,7 +396,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		gazetteerLexicon =
 			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
-				: undefined
+				: null
 
 		if (gazetteerRequired && !gazetteerLexicon) {
 			fail(
@@ -413,7 +413,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		(await resolveDefaultLexicon(weightsOnce, DEFAULT_COUNTRY_LEXICON, (weights) => weights.countryLexiconPath))
 
 	const countryRequired = declared.country?.required ?? false
-	let countryLexicon: CountryLexicon | undefined
+	let countryLexicon: CountryLexicon | null = null
 
 	if (overrides.country === false) {
 		if (countryRequired) {
@@ -426,7 +426,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		countryLexicon =
 			countryLexiconPath && (await pathExists(countryLexiconPath))
 				? parseCountryLexicon(await readLocalJSONFile(countryLexiconPath))
-				: undefined
+				: null
 
 		if (countryRequired && !countryLexicon) {
 			fail(
@@ -447,7 +447,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		))
 
 	const streetTypeRequired = declared.street_type?.required ?? false
-	let streetTypeLexicon: GazetteerLexicon | undefined
+	let streetTypeLexicon: GazetteerLexicon | null = null
 
 	if (overrides.streetType === false) {
 		if (streetTypeRequired) {
@@ -460,7 +460,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		streetTypeLexicon =
 			streetTypeLexiconPath && (await pathExists(streetTypeLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(streetTypeLexiconPath))
-				: undefined
+				: null
 
 		if (streetTypeRequired && !streetTypeLexicon) {
 			fail(
@@ -474,10 +474,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 	const localitySurfaceLexiconPath =
 		opts.localitySurfaceLexiconPath ??
-		(await resolveDefaultLexicon(weightsOnce, undefined, (weights) => weights.localitySurfaceLexiconPath))
+		(await resolveDefaultLexicon(weightsOnce, null, (weights) => weights.localitySurfaceLexiconPath))
 
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
-	let localitySurfaceLexicon: GazetteerLexicon | undefined
+	let localitySurfaceLexicon: GazetteerLexicon | null = null
 
 	if (overrides.localitySurface === false) {
 		if (localitySurfaceRequired) {
@@ -490,7 +490,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		localitySurfaceLexicon =
 			localitySurfaceLexiconPath && (await pathExists(localitySurfaceLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(localitySurfaceLexiconPath))
-				: undefined
+				: null
 
 		if (localitySurfaceRequired && !localitySurfaceLexicon) {
 			fail(
@@ -504,11 +504,11 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
-	let addressSystemConventions: "auto" | string | undefined
+	let addressSystemConventions: "auto" | string | null
 
 	if (overrides.conventions !== undefined) {
 		if (overrides.conventions === false) {
-			addressSystemConventions = undefined
+			addressSystemConventions = null
 
 			if (conventionsRequired) {
 				console.error(
@@ -527,7 +527,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			}
 		}
 	} else {
-		addressSystemConventions = conventionsRequired ? declaredConventionsMode : undefined
+		addressSystemConventions = conventionsRequired ? declaredConventionsMode : null
 
 		if (conventionsRequired && !addressSystemConventions) {
 			fail(strict, `conventions are declared REQUIRED by the model-card but no mode could be resolved.`)

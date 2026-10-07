@@ -95,7 +95,7 @@ export async function ensureLicenseFromCheckoutSession(
 	}
 
 	const priceID = idOf(session.line_items?.data[0]?.price)
-	const plan = priceID ? planForPrice(env, priceID) : undefined
+	const plan = priceID ? planForPrice(env, priceID) : null
 	const refreshSecret = newRefreshSecret()
 
 	await createLicenseIfAbsent(deps.ledger, {
@@ -157,7 +157,7 @@ export async function fulfilInvoice(
 	}
 
 	const priceID = linePriceID(line)
-	const plan = priceID ? planForPrice(env, priceID) : undefined
+	const plan = priceID ? planForPrice(env, priceID) : null
 
 	if (!plan || !priceID) {
 		return {
@@ -285,7 +285,7 @@ export async function sendTokenEmail(
 				issued: token.issued,
 				expires: token.expires,
 				agreement: license.agreement_version,
-				...(license.refresh_secret_pending ? { refreshSecret: license.refresh_secret_pending } : {}),
+				refreshSecret: license.refresh_secret_pending || null,
 			},
 			token.invoice_id
 		))

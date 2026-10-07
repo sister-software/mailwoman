@@ -61,7 +61,7 @@ test("lookupFipsState: an unrecognized code returns null", () => {
 
 test("lookupFipsState: null/undefined/empty input returns null", () => {
 	expect(lookupFipsState(null)).toBeNull()
-	expect(lookupFipsState(undefined)).toBeNull()
+	expect(lookupFipsState(null)).toBeNull()
 	expect(lookupFipsState("")).toBeNull()
 })
 
@@ -105,7 +105,7 @@ test("lookupStateAbbreviation: an unknown abbreviation returns null", () => {
 
 test("lookupStateAbbreviation: null/undefined/empty input returns null", () => {
 	expect(lookupStateAbbreviation(null)).toBeNull()
-	expect(lookupStateAbbreviation(undefined)).toBeNull()
+	expect(lookupStateAbbreviation(null)).toBeNull()
 	expect(lookupStateAbbreviation("")).toBeNull()
 })
 

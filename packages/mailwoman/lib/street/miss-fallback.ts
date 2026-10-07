@@ -40,7 +40,7 @@ export async function applyStreetMissFallback(
 	if (result.lat !== null || !deps.resolver || forkDeclared) return result
 	const bare = loneBareStreetSpan(tree)
 
-	if (bare === null || /\s/.test(bare.trim())) return result
+	if (!bare || /\s/.test(bare.trim())) return result
 
 	const localityTree: AddressTree = {
 		raw: tree.raw,

@@ -108,9 +108,9 @@ export class CapitalIndex {
 	 * an unknown country, or no matching entry.
 	 */
 	levelOfPlace(
-		name: string | null | undefined,
-		country: string | null | undefined,
-		latitude: number | null | undefined,
+		name: string | null,
+		country: string | null,
+		latitude: number | null,
 		longitude: number | null | undefined
 	): CapitalLevel {
 		if (!name || !country || typeof latitude !== "number" || typeof longitude !== "number") return CAPITAL_LEVEL.none

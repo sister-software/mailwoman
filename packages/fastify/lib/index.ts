@@ -21,7 +21,7 @@
  *   Fastify-native, so it reuses those shapes rather than `@mailwoman/api-kit`'s Hono plumbing.
  */
 
-import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
+import type { AddressTree, ParseComponent, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
@@ -82,16 +82,6 @@ export interface MailwomanFastifyOptions {
 	 * Defaults to `""` (no prefix).
 	 */
 	routePrefix?: string
-}
-
-/**
- * One parsed component in reading order — a `ComponentTag` + the covered text.
- *
- * Mirrors `@mailwoman/api`'s shape.
- */
-export interface ParseComponent {
-	tag: string
-	value: string
 }
 
 /**
@@ -193,7 +183,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 
 	const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale })
 
-	let resolver: ReturnType<(typeof import("@mailwoman/resolver"))["createWOFResolver"]> | undefined
+	let resolver: ReturnType<(typeof import("@mailwoman/resolver"))["createWOFResolver"]> | null = null
 
 	if (opts.resolveDatabasePath) {
 		const [resolverMod, { createWOFResolver }, { createResolverBackend }] = await Promise.all([
@@ -208,7 +198,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 
 	return createRuntimePipeline({
 		classifier,
-		resolver,
+		resolver: resolver ?? undefined,
 		poiQueryKind: opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : undefined,
 	})
 }
@@ -216,7 +206,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 /**
  * Merge the plugin's default locale into per-call pipeline opts (a caller-supplied `locale` wins).
  */
-function withLocale(opts: PipelineOpts | undefined, locale: string): PipelineOpts {
+function withLocale(opts: PipelineOpts | null | undefined, locale: string): PipelineOpts {
 	if (opts?.locale) return opts
 
 	return { ...opts, locale }
@@ -254,7 +244,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	// An injected pipeline is used as-is.
 	// Otherwise it's built on the first request (never at registration)
 	// so `fastify.register` stays cheap and side-effect-free.
-	let pipelinePromise: Promise<RuntimePipeline> | undefined
+	let pipelinePromise: Promise<RuntimePipeline> | null = null
 
 	const getPipeline = (): Promise<RuntimePipeline> => {
 		if (opts.pipeline) return Promise.resolve(opts.pipeline)
@@ -262,7 +252,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 		return (pipelinePromise ??= buildPipeline(opts, locale))
 	}
 
-	let helpersPromise: Promise<PipelineHelpers> | undefined
+	let helpersPromise: Promise<PipelineHelpers> | null = null
 	const getHelpers = (): Promise<PipelineHelpers> => (helpersPromise ??= loadHelpers())
 
 	const mailwoman: MailwomanDecorator = {
@@ -299,7 +289,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	fastify.post(`${prefix}/parse`, async (request, reply) => {
 		const text = readText(request, reply)
 
-		if (text === null) return reply
+		if (!text) return reply
 
 		return reply.send(await mailwoman.parse(text))
 	})
@@ -307,7 +297,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	fastify.post(`${prefix}/geocode`, async (request, reply) => {
 		const text = readText(request, reply)
 
-		if (text === null) return reply
+		if (!text) return reply
 
 		return reply.send(await mailwoman.geocode(text))
 	})
@@ -322,7 +312,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 
 		const text = readText(request, reply)
 
-		if (text === null) return reply
+		if (!text) return reply
 
 		return reply.send(await mailwoman.poi(text))
 	})

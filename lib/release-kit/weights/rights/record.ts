@@ -297,7 +297,7 @@ const DOCUMENTATION_FILES: ReadonlySet<string> = new Set([
 ])
 
 function stringOrNull(value: unknown): string | null {
-	return typeof value === "string" && value.length ? value : null
+	return typeof value === "string" && value ? value : null
 }
 
 /**

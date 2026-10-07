@@ -62,7 +62,7 @@ export interface Statement {
 	 * A check's extent that no admitted reading covers is one such subject.
 	 * Such a statement cites no source, and the report prints it as an absence.
 	 */
-	absence?: true
+	absence: boolean
 }
 
 /**
@@ -167,11 +167,11 @@ export interface OperatorOutcome {
 	/**
 	 * Minutes the investigation took.
 	 */
-	minutesSpent?: number
+	minutesSpent: number | null
 	/**
 	 * The operator's stated minutes for the same investigation without the report.
 	 */
-	baselineMinutes?: number
+	baselineMinutes: number | null
 	/**
 	 * The record of the outcome.
 	 *
@@ -203,7 +203,7 @@ export interface OperatorDisposition {
 	decision: string
 	decidedAt: ISODate
 	evidence: Evidence
-	outcome?: OperatorOutcome
+	outcome: OperatorOutcome | null
 }
 
 export interface Investigation {
@@ -262,7 +262,7 @@ export interface ServiceabilityException {
 	/**
 	 * The survey date of the failing readings, when they state one.
 	 */
-	vintage?: ISODate
+	vintage: ISODate | null
 	/**
 	 * The date the rules compare records against: the vintage, or the dossier's
 	 * as-of date when the readings state none.
@@ -307,7 +307,7 @@ export interface CheckResult {
 	/**
 	 * The survey date of the latest readings, when they state one.
 	 */
-	vintage?: ISODate
+	vintage: ISODate | null
 	/**
 	 * The latest readings at the check's extent as facts, then the deduction their class supports.
 	 */
@@ -315,9 +315,9 @@ export interface CheckResult {
 	/**
 	 * The latest failing vintage, open or resolved.
 	 *
-	 * It is absent when every reading at the extent holds records.
+	 * It is `null` when every reading at the extent holds records.
 	 */
-	exception?: ServiceabilityException
+	exception: ServiceabilityException | null
 	/**
 	 * The operator's dispositions as decisions and their admitted outcomes as facts, in decision order.
 	 */
@@ -364,7 +364,7 @@ export interface ExplanationInput {
 }
 
 function statement(kind: StatementKind, text: string, sources: readonly SourceRecordID[] = []): Statement {
-	return { kind, text, sources: distinctSources(sources) }
+	return { kind, text, sources: distinctSources(sources), absence: false }
 }
 
 /**
@@ -392,7 +392,7 @@ function withoutFinalPeriod(text: string): string {
 }
 
 interface VintageGroup {
-	vintage?: ISODate
+	vintage: ISODate | null
 	readings: readonly LayerReading[]
 	class: LayerReadingClass
 }
@@ -422,7 +422,11 @@ function byVintage(readings: readonly LayerReading[]): VintageGroup[] {
 
 			return compareISODate(a, b)
 		})
-		.map(([key, group]) => ({ vintage: key || undefined, readings: group, class: classifyReadings(group).class }))
+		.map(([key, group]) => ({
+			vintage: (key as ISODate) || null,
+			readings: group,
+			class: classifyReadings(group).class,
+		}))
 }
 
 function sourcesOf(readings: readonly LayerReading[]): SourceRecordID[] {
@@ -442,7 +446,7 @@ function readingFact(reading: LayerReading): Statement {
 	return statement(StatementKind.Fact, `${named} holds ${plural(reading.records, "record")}.`, sources)
 }
 
-function readingFacts(check: AvailabilityCheck, group: VintageGroup | undefined): Statement[] {
+function readingFacts(check: AvailabilityCheck, group: VintageGroup | null): Statement[] {
 	if (!group)
 		return [absentStatement(StatementKind.Fact, `No admitted reading of ${check.layer} covers ${check.extent}.`)]
 
@@ -454,7 +458,7 @@ function readingFacts(check: AvailabilityCheck, group: VintageGroup | undefined)
  *
  * Only a basis that supports exclusion turns a zero into an absence.
  */
-function classDeduction(check: AvailabilityCheck, group: VintageGroup | undefined, date: ISODate): Statement {
+function classDeduction(check: AvailabilityCheck, group: VintageGroup | null, date: ISODate): Statement {
 	const service = `${check.layer} service at ${check.extent} on ${date}`
 	const sources = group ? sourcesOf(group.readings) : []
 	const basis = group?.readings[0]?.basis ?? "unstated"
@@ -515,7 +519,7 @@ interface RuleContext {
 	 * The date the rules compare records against.
 	 */
 	date: ISODate
-	failing: VintageGroup | undefined
+	failing: VintageGroup | null
 	/**
 	 * The groups at the check's extent before the failing one, oldest first.
 	 */
@@ -599,14 +603,14 @@ function accessFinding(context: RuleContext): Finding {
 		(event) => event.kind === CommercialEventKind.LandlordPermission && touches(event)
 	)
 
-	const after = permissions.filter((event) => event.date !== undefined && compareISODate(event.date, date) > 0)
-	const inForce = permissions.filter((event) => event.date !== undefined && compareISODate(event.date, date) <= 0)
+	const after = permissions.filter((event) => event.date !== null && compareISODate(event.date, date) > 0)
+	const inForce = permissions.filter((event) => event.date !== null && compareISODate(event.date, date) <= 0)
 
 	const builds = input.events.filter(
 		(event) =>
 			event.kind === CommercialEventKind.AcceptedBuild &&
 			touches(event) &&
-			event.date !== undefined &&
+			event.date !== null &&
 			compareISODate(event.date, date) <= 0
 	)
 
@@ -659,7 +663,7 @@ function accessFinding(context: RuleContext): Finding {
 			`a dated landlord permission or refusal for ${label} from a party with signing authority`,
 			...(signatories.length ? [] : [`a record naming the signatory for ${label}`]),
 			...permissions
-				.filter((event) => event.date === undefined)
+				.filter((event) => event.date === null)
 				.map((event) => `the date of landlord permission ${event.id}`),
 		],
 		action: `Ask the owner or manager of ${label} whether a permission for the provider was in force on ${date}, and who signs for ${label}.`,
@@ -689,17 +693,17 @@ function capacityFinding(context: RuleContext): Finding {
 function openWindowText(window: ConstructionWindow, date: ISODate): string {
 	const named = `The construction window "${window.stage}"`
 
-	if (window.start === undefined) {
-		return window.end === undefined
-			? `${named} states no start and no end.`
-			: `${named} states no start and closed ${window.end}, after ${date}.`
+	if (!window.start) {
+		return window.end
+			? `${named} states no start and closed ${window.end}, after ${date}.`
+			: `${named} states no start and no end.`
 	}
 
 	if (compareISODate(window.start, date) > 0) return `${named} opened ${window.start}, after ${date}.`
 
-	return window.end === undefined
-		? `${named} opened ${window.start} and states no end.`
-		: `${named} opened ${window.start} and closed ${window.end}, after ${date}.`
+	return window.end
+		? `${named} opened ${window.start} and closed ${window.end}, after ${date}.`
+		: `${named} opened ${window.start} and states no end.`
 }
 
 /**
@@ -724,7 +728,7 @@ function installationFinding(context: RuleContext): Finding {
 	const { check, input, label, date } = context
 	const building = input.building.id
 	const windows = input.windows.filter((window) => window.subject === building)
-	const closed = (window: ConstructionWindow) => window.end !== undefined && compareISODate(window.end, date) <= 0
+	const closed = (window: ConstructionWindow) => window.end !== null && compareISODate(window.end, date) <= 0
 
 	const completed = input.counts.filter(
 		(count) => count.subject === building && count.stage === UnitStage.Completed && compareISODate(count.at, date) <= 0
@@ -734,7 +738,7 @@ function installationFinding(context: RuleContext): Finding {
 		(record) =>
 			record.subject === building &&
 			compareISODate(record.from, date) <= 0 &&
-			(record.to === undefined || compareISODate(date, record.to) <= 0)
+			(record.to === null || compareISODate(date, record.to) <= 0)
 	)
 
 	return {
@@ -797,7 +801,7 @@ function routeFinding(context: RuleContext): Finding {
 			reading.layer === check.layer &&
 			reading.extent !== check.extent &&
 			(reading.records ?? 0) > 0 &&
-			reading.surveyedAt === failing?.vintage
+			(reading.surveyedAt ?? null) === (failing?.vintage ?? null)
 	)
 
 	const positiveAtExtent = [...earlier, ...(failing ? [failing] : [])].flatMap((group) =>
@@ -873,7 +877,7 @@ export function rankExplanations(
 	return { kind: "ranked", order: documented.toSorted((a, b) => b.probability - a.probability) }
 }
 
-function exceptionClass(group: VintageGroup | undefined): ServiceabilityException["class"] {
+function exceptionClass(group: VintageGroup | null): ServiceabilityException["class"] {
 	const value = group?.class ?? LayerReadingClass.Unknown
 
 	if (value === LayerReadingClass.Records) {
@@ -886,9 +890,9 @@ function exceptionClass(group: VintageGroup | undefined): ServiceabilityExceptio
 function exceptionFor(
 	check: AvailabilityCheck,
 	input: ExplanationInput,
-	failing: VintageGroup | undefined,
+	failing: VintageGroup | null,
 	earlier: readonly VintageGroup[],
-	resolving: VintageGroup | undefined
+	resolving: VintageGroup | null
 ): ServiceabilityException {
 	const date = failing?.vintage ?? input.asOf
 	const deduction = classDeduction(check, failing, date)
@@ -938,7 +942,7 @@ function exceptionFor(
 		: []
 
 	return {
-		vintage: failing?.vintage,
+		vintage: failing?.vintage ?? null,
 		checkedAt: date,
 		class: exceptionClass(failing),
 		facts: readingFacts(check, failing),
@@ -990,19 +994,25 @@ export function explainCheck(check: AvailabilityCheck, input: ExplanationInput):
 		input.readings.filter((reading) => reading.layer === check.layer && reading.extent === check.extent)
 	)
 
-	const latest = groups.at(-1)
+	const latest = groups.at(-1) ?? null
 	const failingIndex = groups.findLastIndex((group) => group.class !== LayerReadingClass.Records)
 
 	const exception = !groups.length
-		? exceptionFor(check, input, undefined, [], undefined)
+		? exceptionFor(check, input, null, [], null)
 		: failingIndex !== -1
-			? exceptionFor(check, input, groups[failingIndex], groups.slice(0, failingIndex), groups[failingIndex + 1])
-			: undefined
+			? exceptionFor(
+					check,
+					input,
+					groups[failingIndex] ?? null,
+					groups.slice(0, failingIndex),
+					groups[failingIndex + 1] ?? null
+				)
+			: null
 
 	return {
 		check,
 		status: latest?.class ?? LayerReadingClass.Unknown,
-		vintage: latest?.vintage,
+		vintage: latest?.vintage ?? null,
 		answer: [...readingFacts(check, latest), classDeduction(check, latest, latest?.vintage ?? input.asOf)],
 		exception,
 		decisions: decisionStatements(check, input.dispositions),

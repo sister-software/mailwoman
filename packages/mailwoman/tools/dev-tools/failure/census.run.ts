@@ -52,7 +52,7 @@ function put(map: Map<Bucket, { count: number; samples: string[] }>, bucket: Buc
  * Does `got` equal `gold` with 1-2 chars deleted mid-string (the mangle signature)?
  */
 function looksMangled(gold: string, got: string): boolean {
-	if (!got.length || got.length >= gold.length) return false
+	if (!got || got.length >= gold.length) return false
 	// subsequence with small deletion count
 	let i = 0
 

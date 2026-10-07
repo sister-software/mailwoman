@@ -238,20 +238,20 @@ function ParseTask({
 	return writeRawStdout(state.result)
 }
 
-async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
+async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | null> {
 	const { $public } = await import("#env")
 	const dbPath = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
-	if (!dbPath) return undefined
+	if (!dbPath) return null
 
 	try {
-		if (!(await pathExists(dbPath))) return undefined
+		if (!(await pathExists(dbPath))) return null
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst")
 		const { matcher } = await buildFSTFromWOF({ dbPath })
 
 		return matcher
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -490,7 +490,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	if (
 		resolveOpts.candidatesPerLookup !== undefined ||
-		resolveOpts.defaultCountry !== undefined ||
+		resolveOpts.defaultCountry ||
 		resolveOpts.postcodeCountryCoherence !== undefined ||
 		resolveOpts.postcodeShapeCoherence !== undefined ||
 		resolveOpts.postcodeContainmentCoherence !== undefined
@@ -507,7 +507,15 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
-			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
+
+			const pipeline = createRuntimePipeline({
+				classifier: classifier ?? undefined,
+				resolver,
+				fst: fst ?? undefined,
+				streetEvidence,
+				poiQueryKind: options.poi,
+			})
+
 			const result = await pipeline(input, pipelineOpts)
 			emitFaultWarnings(result)
 
@@ -518,7 +526,14 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	}
 
 	const fst = await tryBuildFST(options)
-	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence, poiQueryKind: options.poi })
+
+	const pipeline = createRuntimePipeline({
+		classifier: classifier ?? undefined,
+		fst: fst ?? undefined,
+		streetEvidence,
+		poiQueryKind: options.poi,
+	})
+
 	const result = await pipeline(input, pipelineOpts)
 	emitFaultWarnings(result)
 
@@ -606,9 +621,9 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>
-				collect(createRuntimePipeline({ classifier, resolver, poiQueryKind: options.poi }))
+				collect(createRuntimePipeline({ classifier: classifier ?? undefined, resolver, poiQueryKind: options.poi }))
 			)
-		: await collect(createRuntimePipeline({ classifier, poiQueryKind: options.poi }))
+		: await collect(createRuntimePipeline({ classifier: classifier ?? undefined, poiQueryKind: options.poi }))
 
 	const lines: string[] = [
 		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,
@@ -667,9 +682,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
  *
  * Load warnings go to stderr, so stdout stays parseable.
  */
-async function tryLoadNeural(
-	options: ParseOptions
-): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
+async function tryLoadNeural(options: ParseOptions): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | null> {
 	return loadClassifierTolerant(options.locale, {
 		modelPath: options.model,
 		tokenizerPath: options.tokenizer,

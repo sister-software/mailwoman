@@ -101,7 +101,7 @@ function atomLinkOf(element: MarkupElement): AtomLink {
 		rel: (element.attributes.rel ?? "").toLowerCase(),
 		type: element.attributes.type ?? null,
 		title: element.attributes.title ?? null,
-		length: length !== undefined && /^\d+$/u.test(length) ? Number(length) : null,
+		length: length && /^\d+$/u.test(length) ? Number(length) : null,
 	}
 }
 
@@ -154,11 +154,11 @@ export async function* feedChunks(text: string): AsyncIterable<string> {
 }
 
 /**
- * The first link carrying `rel`, or `undefined` where the collection holds none.
+ * The first link carrying `rel`, or `null` where the collection holds none.
  *
  * A feed's entry commonly holds several: ČÚZK writes a `describedby` link to its ISO 19139
  * record beside the `alternate` link that is the data, and either would download as a dataset.
  */
-export function linkWithRel(links: readonly AtomLink[], rel: string): AtomLink | undefined {
-	return links.find((link) => link.rel === rel.toLowerCase())
+export function linkWithRel(links: readonly AtomLink[], rel: string): AtomLink | null {
+	return links.find((link) => link.rel === rel.toLowerCase()) ?? null
 }

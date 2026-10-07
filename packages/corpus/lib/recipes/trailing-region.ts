@@ -110,8 +110,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
 			const bareLocality = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
 
-			const localitySegment =
-				components["dependent_locality"] === undefined ? bareLocality : `${dependentLocality}, ${bareLocality}`
+			const localitySegment = components["dependent_locality"] ? `${dependentLocality}, ${bareLocality}` : bareLocality
 
 			// The code alternates with the region name rather than replacing it:
 			// both forms are posted and the resolver matches on the name.

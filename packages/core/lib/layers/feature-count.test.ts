@@ -10,7 +10,7 @@ import { declaredFeatureCount, limitedFeatureCount } from "#layers"
 
 describe("limitedFeatureCount", () => {
 	it("is the layer's count when no limit is given", () => {
-		expect(limitedFeatureCount(5, undefined)).toBe(5)
+		expect(limitedFeatureCount(5, null)).toBe(5)
 	})
 
 	it("is the limit when the limit is below the layer's count", () => {

@@ -224,7 +224,7 @@ async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | 
 	return paths
 }
 
-function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias"]> {
+function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
 	return TextSpliterator.from(raw ?? "", { delimiter: ";" })
 		.map((part) => {
 			const [coords, w] = part.split(":")
@@ -232,7 +232,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 
 			if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new CommandError(`--bias: bad point '${part}'`)
 
-			return { lat: lat!, lon: lon!, ...(w != null ? { weight: Number(w) } : {}) }
+			return { lat: lat!, lon: lon!, ...(w ? { weight: Number(w) } : {}) }
 		})
 		.toArray()
 }
@@ -256,17 +256,17 @@ export interface ForkEntityProbe {
  */
 export async function loadAuthorityDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
-): Promise<AuthorityDesignationRoute | undefined> {
+): Promise<AuthorityDesignationRoute | null> {
 	const floodDBPath = layerDatabasePath(options.dataRoot, "flood")
 
-	if (!(await pathExists(floodDBPath))) return undefined
+	if (!(await pathExists(floodDBPath))) return null
 
 	try {
 		const { createAuthorityDesignationRoute } = await import("#observations/flood-route")
 
 		return createAuthorityDesignationRoute({ databasePath: floodDBPath })
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -276,17 +276,17 @@ export async function loadAuthorityDesignationRoute(
  */
 export async function loadSoilCapabilityRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
-): Promise<SoilCapabilityRoute | undefined> {
+): Promise<SoilCapabilityRoute | null> {
 	const soilDBPath = layerDatabasePath(options.dataRoot, "soil")
 
-	if (!(await pathExists(soilDBPath))) return undefined
+	if (!(await pathExists(soilDBPath))) return null
 
 	try {
 		const { createSoilCapabilityRoute } = await import("#observations/soil-route")
 
 		return createSoilCapabilityRoute({ databasePath: soilDBPath })
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -296,17 +296,17 @@ export async function loadSoilCapabilityRoute(
  */
 export async function loadCoastalErosionRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
-): Promise<CoastalErosionRoute | undefined> {
+): Promise<CoastalErosionRoute | null> {
 	const coastalDBPath = layerDatabasePath(options.dataRoot, "coastal")
 
-	if (!(await pathExists(coastalDBPath))) return undefined
+	if (!(await pathExists(coastalDBPath))) return null
 
 	try {
 		const { createCoastalErosionRoute } = await import("#observations/coastal-route")
 
 		return createCoastalErosionRoute({ databasePath: coastalDBPath })
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -316,17 +316,17 @@ export async function loadCoastalErosionRoute(
  */
 export async function loadZoningDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
-): Promise<ZoningDesignationRoute | undefined> {
+): Promise<ZoningDesignationRoute | null> {
 	const zoningDBPath = layerDatabasePath(options.dataRoot, "zoning")
 
-	if (!(await pathExists(zoningDBPath))) return undefined
+	if (!(await pathExists(zoningDBPath))) return null
 
 	try {
 		const { createZoningDesignationRoute } = await import("#observations/zoning-route")
 
 		return createZoningDesignationRoute({ databasePath: zoningDBPath })
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -393,8 +393,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const classifier = routed.primary
 
-	let fst: FSTMatcherLike | undefined
-	let streetMorphology: FSTMatcherLike | undefined
+	let fst: FSTMatcherLike | null = null
+	let streetMorphology: FSTMatcherLike | null = null
 
 	if (options.gazetteerPrior !== false) {
 		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
@@ -464,7 +464,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			: await loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
 
 	const capitalLevel = capitals
-		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
@@ -474,11 +474,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const explicitAp = options.addressPointsDB
 		? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitApLocale })
-		: undefined
+		: null
 
-	const explicitIp = options.interpolationDB
-		? new mod.StreetInterpolator({ dbPath: options.interpolationDB })
-		: undefined
+	const explicitIp = options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null
 
 	const databases: RegionDatabaseResolver =
 		explicitAp || explicitIp
@@ -492,13 +490,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const backendsOpenedAt = performance.now()
 	progress("Loading optional data providers…")
 
-	let nationalDatabases: ((country: string) => RegionDatabases) | undefined
+	let nationalDatabases: ((country: string) => RegionDatabases) | null = null
 
 	try {
 		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
 	} catch {
-		nationalDatabases = undefined
+		nationalDatabases = null
 	}
 
 	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot))
@@ -510,24 +508,24 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		return ban?.addressPoints || ban?.streetCentroids ? ban : overtureProvider.for(country)
 	}
 
-	let osmProvider: RegionDatabaseProvider | undefined
+	let osmProvider: RegionDatabaseProvider | null = null
 
 	try {
 		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
 		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
 	} catch {
-		osmProvider = undefined
+		osmProvider = null
 	}
 
 	const optionalProvidersLoadedAt = performance.now()
 
-	let poiHandle: Disposable | undefined
-	let designationRoute: AuthorityDesignationRoute | undefined
-	let soilRoute: SoilCapabilityRoute | undefined
-	let coastalRoute: CoastalErosionRoute | undefined
-	let zoningRoute: ZoningDesignationRoute | undefined
+	let poiHandle: Disposable | null = null
+	let designationRoute: AuthorityDesignationRoute | null = null
+	let soilRoute: SoilCapabilityRoute | null = null
+	let coastalRoute: CoastalErosionRoute | null = null
+	let zoningRoute: ZoningDesignationRoute | null = null
 
-	const disposeQuietly = (handle: Disposable | undefined): void => {
+	const disposeQuietly = (handle: Disposable | null): void => {
 		try {
 			handle?.[Symbol.dispose]()
 		} catch {}
@@ -546,7 +544,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		disposeQuietly(zoningRoute)
 	}
 
-	let placer: CoarsePlacer | undefined
+	let placer: CoarsePlacer | null = null
 	let resolver: Resolver
 	let bias: NonNullable<GeocodeDeps["bias"]>
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
@@ -566,15 +564,15 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		placer = options.placeCountry
 			? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
-			: undefined
+			: null
 
 		resolver = createWOFResolver(lookup)
-		bias = parseBiasPoints(options.bias)
+		bias = parseBiasPoints(options.bias ?? null)
 
 		const probe = await loadForkEntityDeps(options)
 
 		forkEntityDeps = probe.deps
-		poiHandle = probe.handle
+		poiHandle = probe.handle ?? null
 		designationRoute = await loadAuthorityDesignationRoute(options)
 		soilRoute = await loadSoilCapabilityRoute(options)
 		coastalRoute = await loadCoastalErosionRoute(options)
@@ -607,8 +605,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		...(streetMorphology ? { streetMorphology } : {}),
 	}
 
-	const traceOf = async (input: string): Promise<Omit<GeocodeTrace, "resolver"> | undefined> => {
-		if (!options.trace) return undefined
+	const traceOf = async (input: string): Promise<Omit<GeocodeTrace, "resolver"> | null> => {
+		if (!options.trace) return null
 
 		const inputs = geocodeParseInputs(input, parseDeps)
 
@@ -621,7 +619,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				locale: options.locale,
 			}
 		} catch {
-			return undefined
+			return null
 		}
 	}
 
@@ -637,15 +635,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const routedAway = (await routed.forInput(input)) !== routed.primary
 
-		const localeCountry =
-			routedAway && !options.defaultCountry ? undefined : resolverDefaultCountry(options, !!candidateDB)
+		const localeCountry = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options, !!candidateDB)
 
 		const barePostcodeFormatConflict = (): boolean => {
 			if (!isBarePostcodeTree(parsedTree)) return false
 			const inferred = localeCountry
 
 			if (!inferred) return false
-			const postcodeValue = firstNodeWhere(parsedTree.roots, (node) => node.tag === "postcode")?.value
+			const postcodeValue = firstNodeWhere(parsedTree.roots, (node) => node.tag === "postcode")?.value ?? null
 
 			const implied = countriesFromPostcodeFormat(postcodeValue)
 
@@ -654,7 +651,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const inferredScopeOK = options.defaultCountry || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
 
-		const withheldCountry = inferredScopeOK ? undefined : localeCountry
+		const withheldCountry = inferredScopeOK ? null : localeCountry
 
 		const result = await geocodeAddress(input, {
 			classifier: routed,
@@ -666,7 +663,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
-			defaultCountry: (inferredScopeOK && localeCountry) || undefined,
+			defaultCountry: (inferredScopeOK && localeCountry) || null,
 
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),

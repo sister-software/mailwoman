@@ -9,6 +9,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
+import type { TokenizedPiece } from "#tokenizer"
 
 /**
  * Every prior kind the decode path records, in the order it records them; `"placetypeCensus"`
@@ -44,21 +45,21 @@ export interface TracePrior {
 
 	/**
 	 * The probe path that produced the `placetypePair` bias — comma-delimited segments, the adjacent
-	 * pair in comma-free text, or the opt-in sliding window — present only on an applied record.
+	 * pair in comma-free text, or the opt-in sliding window — null unless the record applied.
 	 */
-	probePath?: "segment" | "anchored" | "window"
+	probePath: "segment" | "anchored" | "window" | null
 
 	/**
-	 * The census entry for each parent name the pair probe looked up, present on the
+	 * The census entry for each parent name the pair probe looked up, non-null on the
 	 * `placetypeCensus` record only when a census is loaded.
 	 */
-	census?: PlacetypeCensusObservation[]
+	census: PlacetypeCensusObservation[] | null
 
 	/**
 	 * The number of distinct parent names probed against the census, the denominator for
 	 * {@link TracePrior.census}; an empty `census` with a positive count means the census held none of them.
 	 */
-	censusProbedParents?: number
+	censusProbedParents: number | null
 }
 
 /**
@@ -83,16 +84,6 @@ export interface TraceRepair {
 }
 
 /**
- * A tokenizer piece as fed to the model, in a JSON-serializable shape.
- */
-export interface TracePiece {
-	piece: string
-	id: number
-	start: number
-	end: number
-}
-
-/**
  * The full trace of one `traceParse` call, from tokenizer pieces through emissions, decoding and repairs.
  */
 export interface NeuralParseTrace {
@@ -102,22 +93,22 @@ export interface NeuralParseTrace {
 	text: string
 
 	caseNormalized: boolean
-	pieces: TracePiece[]
+	pieces: TokenizedPiece[]
 
 	/**
-	 * The postcode-anchor channel as fed to the model, absent when the channel was not fed.
+	 * The postcode-anchor channel as fed to the model, null when the channel was not fed.
 	 */
-	anchor?: SoftFeatureChannel
+	anchor: SoftFeatureChannel | null
 
 	/**
-	 * The gazetteer channel as fed to the model after suppression, absent when the channel was not fed.
+	 * The gazetteer channel as fed to the model after suppression, null when the channel was not fed.
 	 */
-	gazetteer?: SoftFeatureChannel
+	gazetteer: SoftFeatureChannel | null
 
 	/**
-	 * The country-lexicon channel as fed to the model, absent when the channel was not fed.
+	 * The country-lexicon channel as fed to the model, null when the channel was not fed.
 	 */
-	country?: SoftFeatureChannel
+	country: SoftFeatureChannel | null
 
 	/**
 	 * The raw model emissions before any prior, indexed as `logits[token][label]`.
@@ -127,24 +118,24 @@ export interface NeuralParseTrace {
 	/**
 	 * The locale head's output, index-aligned with {@link NeuralParseTrace.localeCountries}.
 	 *
-	 * It is absent for models without a locale head.
+	 * It is null for models without a locale head.
 	 */
-	localeLogits?: number[]
+	localeLogits: number[] | null
 
 	/**
 	 * The semi-Markov head's per-span type scores, indexed as `spanScores[token][length - 1][type]`.
 	 *
-	 * It is absent when the model exports none.
+	 * It is null when the model exports none.
 	 * The type order comes from the bundle's `semi-crf-transitions.json`.
 	 */
-	spanScores?: number[][][]
+	spanScores: number[][][] | null
 
 	/**
 	 * The country code for each {@link NeuralParseTrace.localeLogits} index.
 	 *
-	 * It is present if and only if `localeLogits` is present, so consumers never hardcode the order.
+	 * It is non-null if and only if `localeLogits` is non-null, so consumers never hardcode the order.
 	 */
-	localeCountries?: string[]
+	localeCountries: string[] | null
 
 	/**
 	 * The address system whose conventions applied, or null when conventions were off

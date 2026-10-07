@@ -11,7 +11,7 @@ import { confidenceTierOrMid } from "#common/confidence-tiers"
 import { cx } from "#common/cx"
 
 export interface ConfidenceCellProps {
-	confidence?: number
+	confidence?: number | null
 }
 
 export function ConfidenceCell({ confidence }: ConfidenceCellProps) {

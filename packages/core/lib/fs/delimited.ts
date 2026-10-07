@@ -64,7 +64,7 @@ export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<str
 
 	// Streamed rather than split, so the check stays cheap enough that a build step always runs it.
 	for await (const line of TextSpliterator.fromAsync(path)) {
-		if (line.length) {
+		if (line) {
 			expected++
 		}
 	}

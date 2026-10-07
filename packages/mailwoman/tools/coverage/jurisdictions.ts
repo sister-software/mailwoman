@@ -145,12 +145,12 @@ export function countRegisterSources(register: AddressSourceRegister): Map<strin
 
 /**
  * The share of `numerator` among `numerator + other`, rounded to three places,
- * or `undefined` when both are zero.
+ * or `null` when both are zero.
  */
-function share(numerator: number, other: number): number | undefined {
+function share(numerator: number, other: number): number | null {
 	const total = numerator + other
 
-	return total > 0 ? Math.round((numerator / total) * 1000) / 1000 : undefined
+	return total > 0 ? Math.round((numerator / total) * 1000) / 1000 : null
 }
 
 /**
@@ -204,12 +204,12 @@ export function jurisdictionProperties(inputs: JurisdictionInputs): Map<string, 
 		const postcode = exposure?.phenomena["postcode-precedes-locality"]?.realized_draws
 		const postcodeFirst = share(postcode?.["before"] ?? 0, postcode?.["after"] ?? 0)
 
-		if (postcodeFirst !== undefined) { properties["postcode_first_share"] = postcodeFirst }
+		if (postcodeFirst !== null) { properties["postcode_first_share"] = postcodeFirst }
 
 		const houseNumber = exposure?.phenomena["house-number-precedes-street"]?.realized_draws
 		const houseNumberFirst = share(houseNumber?.["before"] ?? 0, houseNumber?.["after"] ?? 0)
 
-		if (houseNumberFirst !== undefined) { properties["house_number_first_share"] = houseNumberFirst }
+		if (houseNumberFirst !== null) { properties["house_number_first_share"] = houseNumberFirst }
 
 		const system = localSystem.get(code)
 

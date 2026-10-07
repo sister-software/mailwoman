@@ -10,6 +10,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -27,7 +28,7 @@ import {
 } from "#tools/eval-harness/same-data/fixture"
 
 function candidate(id: number, name: string, country: string, lat: number, lon: number): SameDataCandidate {
-	return { id, name, placetype: "locality", country, lat, lon, score: 10 }
+	return { ...EMPTY_PLACE_FIELDS, id, name, placetype: "locality", country, lat, lon, score: 10 }
 }
 
 const TREE: AddressTree = {

@@ -11,7 +11,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	docsSiteURL,
 	isSelfServicePayload,
-	appliedLicenseBranch,
+	chooseLicenseBranch,
 	summarizeLicense,
 	type LicenseKeyVerification,
 	type LicenseObligation,
@@ -49,11 +49,11 @@ export interface DoctorCheck {
 	/**
 	 * Explains the user-facing effect when the check is not `ok`.
 	 */
-	consequence?: string
+	consequence: string | null
 	/**
 	 * Holds a command or URL that fixes the problem.
 	 */
-	fix?: string
+	fix: string | null
 	/**
 	 * Controls whether a non-`ok` result fails the process exit code.
 	 */
@@ -61,7 +61,7 @@ export interface DoctorCheck {
 	/**
 	 * Holds structured license details for a license check.
 	 */
-	license?: LicensePosture
+	license: LicensePosture | null
 }
 
 /**
@@ -88,18 +88,18 @@ export interface LicensePosture {
 	/**
 	 * Holds the recorded attribution requirement.
 	 */
-	attribution?: string
+	attribution: string | null
 	/**
 	 * `licensee`, `keyID` and `keyStatus` describe the key for Mailwoman's own license.
 	 */
-	licensee?: string
-	keyID?: string
-	keyStatus?: "valid" | "expired" | "unknown_key" | "invalid" | "retired"
+	licensee: string | null
+	keyID: string | null
+	keyStatus: "valid" | "expired" | "unknown_key" | "invalid" | "retired" | null
 	/**
 	 * `lid` and `lidStatus` hold the self-service license ID and its status from the license worker.
 	 */
-	lid?: string
-	lidStatus?: LicenseStatusAnswer
+	lid: string | null
+	lidStatus: LicenseStatusAnswer | null
 }
 
 /**
@@ -123,10 +123,10 @@ export interface SemverTriple {
  * Parses the minimum version from an `engines.node` range.
  * A missing minor or patch defaults to zero.
  */
-export function parseVersionFloor(engines: string): SemverTriple | undefined {
+export function parseVersionFloor(engines: string): SemverTriple | null {
 	const match = engines.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/u)
 
-	if (!match) return undefined
+	if (!match) return null
 
 	return { major: Number(match[1]), minor: Number(match[2] ?? 0), patch: Number(match[3] ?? 0) }
 }
@@ -134,10 +134,10 @@ export function parseVersionFloor(engines: string): SemverTriple | undefined {
 /**
  * Parses a runtime version in `major.minor.patch` form.
  */
-export function parseVersion(version: string): SemverTriple | undefined {
+export function parseVersion(version: string): SemverTriple | null {
 	const match = version.match(/^(\d+)\.(\d+)\.(\d+)/u)
 
-	if (!match) return undefined
+	if (!match) return null
 
 	return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]) }
 }
@@ -166,21 +166,21 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 export interface WeightsObservation {
 	/**
 	 * Holds the resolved paths and source.
-	 * It is absent when resolution failed.
+	 * It is null when resolution failed.
 	 */
-	resolved?: { source: string; modelPath: string; tokenizerPath: string }
+	resolved: { source: string; modelPath: string; tokenizerPath: string } | null
 	/**
 	 * Holds the model file size in bytes.
 	 */
-	modelSize?: number
+	modelSize: number | null
 	/**
 	 * Holds the tokenizer file size in bytes.
 	 */
-	tokenizerSize?: number
+	tokenizerSize: number | null
 	/**
 	 * Holds the resolution error.
 	 */
-	error?: string
+	error: string | null
 }
 
 const WEIGHTS_FIX = "npm install @mailwoman/neural-weights-en-us   (or: mailwoman parse --download-weights)"
@@ -194,7 +194,14 @@ const WEIGHTS_CONSEQUENCE =
  * Checks that the required en-us model weights resolve and are not empty.
  */
 export function weightsCheck(o: WeightsObservation): DoctorCheck {
-	const base = { id: "weights", label: "Model weights (en-us)", core: true }
+	const base = {
+		id: "weights",
+		label: "Model weights (en-us)",
+		core: true,
+		consequence: null,
+		fix: null,
+		license: null,
+	}
 
 	if (!o.resolved) {
 		return {
@@ -230,14 +237,21 @@ export interface LocaleOverlayObservation {
 	locale: string
 	packageName: string
 	resolved: boolean
-	source?: string
+	source: string | null
 }
 
 /**
  * Checks an optional locale overlay.
  */
 export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
-	const base = { id: `locale-overlay-${o.locale}`, label: `Locale overlay (${o.locale})`, core: false }
+	const base = {
+		id: `locale-overlay-${o.locale}`,
+		label: `Locale overlay (${o.locale})`,
+		core: false,
+		consequence: null,
+		fix: null,
+		license: null,
+	}
 
 	if (o.resolved) {
 		return { ...base, status: CheckStatus.OK, detail: `${o.packageName} resolvable${o.source ? ` (${o.source})` : ""}` }
@@ -279,7 +293,7 @@ const DATA_ROOT_CONSEQUENCE =
  * Checks that the data root exists and is writable.
  */
 export function dataRootCheck(o: DataRootObservation): DoctorCheck {
-	const base = { id: "data-root", label: "Data root", core: false }
+	const base = { id: "data-root", label: "Data root", core: false, consequence: null, fix: null, license: null }
 	const source = o.fromEnv ? "$MAILWOMAN_DATA_ROOT" : "default"
 
 	if (!o.exists) {
@@ -312,15 +326,15 @@ export interface GazetteerObservation {
 	/**
 	 * Holds the candidate database selected explicitly or through the environment.
 	 */
-	envCandidate?: { path: string; sizeBytes?: number }
+	envCandidate: { path: string; sizeBytes: number | null } | null
 	/**
 	 * Holds the candidate database found at the default path.
 	 */
-	conventionCandidate?: string
+	conventionCandidate: string | null
 	/**
 	 * Holds the WOF admin database used when no candidate database exists.
 	 */
-	wofDatabase?: { path: string; sizeBytes?: number }
+	wofDatabase: { path: string; sizeBytes: number | null } | null
 	/**
 	 * Lists the paths probed, for the report when no database is found.
 	 */
@@ -331,7 +345,7 @@ export interface GazetteerObservation {
  * Checks whether a gazetteer is available for geocoding, in the resolver's order of preference.
  */
 export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
-	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
+	const base = { id: "gazetteer", label: "Admin gazetteer", core: false, consequence: null, fix: null, license: null }
 
 	if (o.envCandidate) {
 		const size = o.envCandidate.sizeBytes ? ` (${ByteFormatter.formatSI(o.envCandidate.sizeBytes)})` : ""
@@ -380,18 +394,18 @@ export interface POIObservation {
 	/**
 	 * Holds the parsed manifest when it could be read.
 	 */
-	manifest?: LayerIdentity
+	manifest: LayerIdentity | null
 	/**
 	 * Holds the manifest read error.
 	 */
-	error?: string
+	error: string | null
 }
 
 /**
  * Checks whether the POI layer is present and its manifest is readable.
  */
 export function checkPOI(o: POIObservation): DoctorCheck {
-	const base = { id: "poi-layer", label: "POI layer", core: false }
+	const base = { id: "poi-layer", label: "POI layer", core: false, consequence: null, fix: null, license: null }
 	const fix = "mailwoman gazetteer build poi   (or: mailwoman data pull poi)"
 
 	const consequence =
@@ -431,7 +445,7 @@ export interface NodeRuntimeObservation {
  * Checks that the running Node version meets the `engines.node` floor.
  */
 export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
-	const base = { id: "node-version", label: "Node runtime", core: true }
+	const base = { id: "node-version", label: "Node runtime", core: true, consequence: null, fix: null, license: null }
 
 	if (versionMeetsFloor(o.nodeVersion, o.enginesFloor)) {
 		return { ...base, status: CheckStatus.OK, detail: `node v${o.nodeVersion} (engines: ${o.enginesFloor})` }
@@ -453,14 +467,14 @@ export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
  */
 export interface ONNXRuntimeObservation {
 	loadable: boolean
-	error?: string
+	error: string | null
 }
 
 /**
  * Checks whether `onnxruntime-node` can load.
  */
 export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
-	const base = { id: "onnxruntime", label: "ONNX runtime", core: true }
+	const base = { id: "onnxruntime", label: "ONNX runtime", core: true, consequence: null, fix: null, license: null }
 
 	if (o.loadable) {
 		return { ...base, status: CheckStatus.OK, detail: "onnxruntime-node loadable" }
@@ -492,17 +506,17 @@ export interface RuntimeLicenseObservation {
 	/**
 	 * Holds the offline key verification when a key is configured.
 	 */
-	key?: LicenseKeyVerification
+	key: LicenseKeyVerification | null
 	/**
 	 * Holds the key ID's publication status when it is known.
 	 */
-	publication?: LicenseKeyPublication
+	publication: LicenseKeyPublication | null
 	/**
 	 * Holds the license worker's status for a self-service license.
 	 *
 	 * This status does not change the offline license branch.
 	 */
-	lidStatus?: LicenseStatusAnswer
+	lidStatus: LicenseStatusAnswer | null
 }
 
 /**
@@ -511,14 +525,22 @@ export interface RuntimeLicenseObservation {
  * The check is informational and does not change runtime behavior.
  */
 export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
-	const base = { id: "license-mailwoman", label: "License (mailwoman)", core: false }
+	const base = {
+		id: "license-mailwoman",
+		label: "License (mailwoman)",
+		core: false,
+		consequence: null,
+		fix: null,
+		license: null,
+	}
+
 	const key = o.key
 	const retired = o.publication === "retired" || o.publication === "unlisted"
 	const commercial = key?.status === "valid" && !retired
-	const applied = appliedLicenseBranch(o.expression, key, o.publication)
+	const applied = chooseLicenseBranch(o.expression, { commercialAgreement: commercial })
 	const summary = summarizeLicense(applied)
 	const obligations = `obligations: ${describeObligations(summary.obligations, summary.recognized)}`
-	const lid = key && "payload" in key && isSelfServicePayload(key.payload) ? key.payload.lid : undefined
+	const lid = key && "payload" in key && isSelfServicePayload(key.payload) ? key.payload.lid : null
 
 	const license: LicensePosture = {
 		subject: "mailwoman",
@@ -526,11 +548,12 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		applied,
 		obligations: summary.obligations,
 		recognized: summary.recognized,
-		...(key && "payload" in key ? { licensee: key.payload.licensee } : {}),
-		...(key && "kid" in key ? { keyID: key.kid } : {}),
-		...(key ? { keyStatus: retired && key.status === "valid" ? "retired" : key.status } : {}),
-		...(lid ? { lid } : {}),
-		...(o.lidStatus ? { lidStatus: o.lidStatus } : {}),
+		attribution: null,
+		licensee: key && "payload" in key ? key.payload.licensee : null,
+		keyID: key && "kid" in key ? key.kid : null,
+		keyStatus: key ? (retired && key.status === "valid" ? "retired" : key.status) : null,
+		lid: lid || null,
+		lidStatus: o.lidStatus,
 	}
 
 	if (!key) {
@@ -569,12 +592,11 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 			}
 		}
 
-		const standing =
-			o.lidStatus === undefined
-				? ""
-				: o.lidStatus === "unreachable"
-					? "; license status unreachable"
-					: `; license ${o.lidStatus}`
+		const standing = o.lidStatus
+			? o.lidStatus === "unreachable"
+				? "; license status unreachable"
+				: `; license ${o.lidStatus}`
+			: ""
 
 		return {
 			...base,
@@ -610,16 +632,16 @@ export interface LayerLicenseObservation {
 	label: string
 	path: string
 	/**
-	 * Holds the manifest fields, or is absent when the manifest could not be read.
+	 * Holds the manifest fields, or is null when the manifest could not be read.
 	 */
-	manifest?: LayerIdentity
-	error?: string
+	manifest: LayerIdentity | null
+	error: string | null
 	/**
 	 * Lists other `.db` files in the layer's directory when the expected file is absent.
 	 *
 	 * These usually come from a build written under a name the session does not attach.
 	 */
-	alternates?: string[]
+	alternates: string[] | null
 }
 
 /**
@@ -630,7 +652,14 @@ export interface LayerLicenseObservation {
  * The check is informational and never core.
  */
 export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
-	const base = { id: `license-${o.id}`, label: `License (${o.label})`, core: false }
+	const base = {
+		id: `license-${o.id}`,
+		label: `License (${o.label})`,
+		core: false,
+		consequence: null,
+		fix: null,
+		license: null,
+	}
 
 	if (o.alternates?.length) {
 		return {
@@ -659,7 +688,12 @@ export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 		applied: o.manifest.license,
 		obligations: summary.obligations,
 		recognized: summary.recognized,
-		...(o.manifest.attribution ? { attribution: o.manifest.attribution } : {}),
+		attribution: o.manifest.attribution || null,
+		licensee: null,
+		keyID: null,
+		keyStatus: null,
+		lid: null,
+		lidStatus: null,
 	}
 
 	if (!summary.recognized) {
@@ -721,7 +755,15 @@ export interface ObligationPostureObservation {
  * The check is informational and never core.
  */
 export function obligationPostureCheck(o: ObligationPostureObservation): DoctorCheck {
-	const base = { id: "obligation-posture", label: "Obligation posture", core: false }
+	const base = {
+		id: "obligation-posture",
+		label: "Obligation posture",
+		core: false,
+		consequence: null,
+		fix: null,
+		license: null,
+	}
+
 	const refusing = `refusing ${o.refuse.join(", ")}`
 
 	const findings = o.layers.flatMap((layer) =>

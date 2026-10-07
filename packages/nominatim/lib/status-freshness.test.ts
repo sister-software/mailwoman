@@ -56,6 +56,8 @@ async function stamped(path: PathBuilder, createdAt: string): Promise<PathBuilde
 		freshnessPolicy: "sealed",
 		spineKeys: { wofID: "spr_id" },
 		createdAt,
+		attribution: null,
+		sourceRecords: null,
 	})
 
 	return path

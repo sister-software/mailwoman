@@ -122,7 +122,7 @@ export async function readANACEditionHead(client: Pick<APIClient, "fetch">, edit
 
 	return {
 		lastModified: headers?.["last-modified"] ?? null,
-		contentLength: length !== undefined && /^\d+$/u.test(length) ? Number(length) : null,
+		contentLength: length && /^\d+$/u.test(length) ? Number(length) : null,
 		contentType: headers?.["content-type"] ?? null,
 	}
 }
@@ -184,7 +184,7 @@ export function itANACInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuild
  * letting {@linkcode downloadITANAC} reach the host to find out which branch it took.
  */
 export async function isANACEditionCurrent(
-	recorded: ANACEditionManifest | undefined,
+	recorded: ANACEditionManifest | null,
 	head: ANACEditionHead,
 	path: PathBuilderLike,
 	verifyDigest: boolean
@@ -192,9 +192,9 @@ export async function isANACEditionCurrent(
 	if (!recorded) return false
 
 	// A host that states neither cannot be compared against, so the edition is downloaded.
-	if (head.lastModified === null && head.contentLength === null) return false
+	if (!head.lastModified && head.contentLength === null) return false
 
-	if (head.lastModified !== null && head.lastModified !== recorded.last_modified) return false
+	if (head.lastModified && head.lastModified !== recorded.last_modified) return false
 
 	if (head.contentLength !== null && head.contentLength !== recorded.compressed_bytes) return false
 
@@ -256,7 +256,7 @@ export async function downloadITANAC(
 
 		const current =
 			!options.force &&
-			(await isANACEditionCurrent(recorded.get(filename), head, editionPath, options.verifyDigest ?? false))
+			(await isANACEditionCurrent(recorded.get(filename) ?? null, head, editionPath, options.verifyDigest ?? false))
 
 		if (current) {
 			report?.(`  ✓ ${edition} already current — no download.`)

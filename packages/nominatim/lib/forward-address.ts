@@ -24,8 +24,8 @@ export const TAG_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 	country: "country",
 }
 
-function joinNonEmpty(...parts: Array<string | undefined>): string {
-	return parts.filter((part) => part !== undefined && part.length).join(", ")
+function joinNonEmpty(...parts: Array<string | null | undefined>): string {
+	return parts.filter((part) => part != null && part.length).join(", ")
 }
 
 /**

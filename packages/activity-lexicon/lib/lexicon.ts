@@ -13,14 +13,10 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagedDataPath } from "@mailwoman/core/module/packaged-data"
+import type { LocaleScopeMatch } from "@mailwoman/variant-aliases"
 import { resolveLocaleScope } from "@mailwoman/variant-aliases"
 
-import type {
-	ActivityPhraseEntry,
-	ActivityPhraseLexicon,
-	ActivityPhraseLocaleMatch,
-	ActivityPhraseDerivation,
-} from "#types"
+import type { ActivityPhraseEntry, ActivityPhraseLexicon, ActivityPhraseDerivation } from "#types"
 
 const moduleDir = import.meta.dirname
 
@@ -54,8 +50,8 @@ export function normalizeActivityPhrase(phrase: string): string {
 export function resolveActivityPhraseLocale(
 	entry: ActivityPhraseEntry,
 	locale: string | undefined
-): ActivityPhraseLocaleMatch | null {
-	return resolveLocaleScope(entry.locales, locale)
+): LocaleScopeMatch | null {
+	return resolveLocaleScope(entry.locales ?? null, locale)
 }
 
 /**
@@ -194,7 +190,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 	}
 }
 
-let committed: ActivityPhraseLexicon | undefined
+let committed: ActivityPhraseLexicon | null = null
 
 /**
  * Read the lexicon, refusing one the audit rejects.

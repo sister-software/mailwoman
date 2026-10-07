@@ -115,6 +115,8 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 		dcAgentTelephone: "",
 		dcAgentEmailAddress: "",
 		dcAgentAddress: "",
+		lifecycle: null,
+		operatingStates: null,
 		...overrides,
 	}
 }
@@ -1582,7 +1584,7 @@ describe("§7-3b criteria", () => {
 			const CIK_PARENT = "0001234567"
 
 			const edgarRows: EdgarSubsidiaryRow[] = [
-				{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", filingDate: "2026-04-01" },
+				{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", jurisdiction: null, filingDate: "2026-04-01" },
 			]
 
 			await buildFilerDatabase({

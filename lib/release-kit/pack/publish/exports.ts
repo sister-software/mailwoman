@@ -43,12 +43,12 @@ function emittedTargetFor(target: string): string {
  * name. {@link assertNoSourceTargets} rejects any TypeScript target that remains.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
-	if (typeof exports !== "object" || exports === null) return exports
+	if (typeof exports !== "object" || !exports) return exports
 
 	const out: Record<string, unknown> = {}
 
 	for (const [subpath, value] of Object.entries(exports as Record<string, unknown>)) {
-		if (typeof value !== "object" || value === null) {
+		if (typeof value !== "object" || !value) {
 			out[subpath] = value
 
 			continue
@@ -85,7 +85,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
  * as {@link transformExportsForPublish}.
  */
 export function transformImportsForPublish(imports: unknown): unknown {
-	if (typeof imports !== "object" || imports === null) return imports
+	if (typeof imports !== "object" || !imports) return imports
 
 	const out: Record<string, unknown> = {}
 
@@ -103,7 +103,7 @@ export function transformImportsForPublish(imports: unknown): unknown {
 		const transformed = transformExportsForPublish({ [specifier]: value }) as Record<string, unknown>
 		const rewritten = transformed[specifier]
 
-		if (typeof rewritten === "object" && rewritten !== null && !Object.keys(rewritten).length) continue
+		if (typeof rewritten === "object" && rewritten && !Object.keys(rewritten).length) continue
 		out[specifier] = rewritten
 	}
 
@@ -146,7 +146,7 @@ export function collectExportTargets(exports: unknown): string[] {
 			return
 		}
 
-		if (typeof value === "object" && value !== null) {
+		if (typeof value === "object" && value) {
 			for (const child of Object.values(value)) {
 				walk(child)
 			}

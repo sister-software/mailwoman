@@ -228,7 +228,7 @@ function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
  * Runs recorded before the record existed have no such record.
  */
 function resolvedArtifactsByLocale(provenance: unknown): Map<string, ResolvedByName> | null {
-	if (typeof provenance !== "object" || provenance === null) return null
+	if (typeof provenance !== "object" || !provenance) return null
 
 	const byLocale = (provenance as Record<string, unknown>)["artifacts_by_locale"]
 
@@ -243,12 +243,12 @@ function resolvedArtifactsByLocale(provenance: unknown): Map<string, ResolvedByN
 		const locale = record["locale"]
 		const artifacts = readArtifacts(record["artifacts"])
 
-		if (typeof locale !== "string" || artifacts === null) return null
+		if (typeof locale !== "string" || !artifacts) return null
 
 		const resolved: ResolvedByName = new Map()
 
 		for (const artifact of artifacts) {
-			if (artifact.path === null) continue
+			if (!artifact.path) continue
 
 			resolved.set(artifact.name, {
 				origin: artifact.origin ?? "unstated",

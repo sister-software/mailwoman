@@ -110,7 +110,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 
 				const input = tryParsingJSON<PoBoxInputRow>(trimmed)
 
-				if (input === null) {
+				if (!input) {
 					skipped++
 
 					continue

@@ -47,23 +47,23 @@ describe("readLabelsFromModelCard", () => {
 		expect(Object.isFrozen(out)).toBe(true)
 	})
 
-	test("returns undefined when the card has no labels field (legacy v3.0.0 cards)", async () => {
+	test("returns null when the card has no labels field (legacy v3.0.0 cards)", async () => {
 		const out = await readLabelsFromModelCard(await writeCard({ components_supported: ["country"] }))
-		expect(out).toBeUndefined()
+		expect(out).toBeNull()
 	})
 
 	test("returns undefined when the path is undefined", async () => {
-		expect(await readLabelsFromModelCard(undefined)).toBeUndefined()
+		expect(await readLabelsFromModelCard(null)).toBeNull()
 	})
 
 	test("returns undefined when the file does not exist", async () => {
-		expect(await readLabelsFromModelCard(dir.path("missing.json"))).toBeUndefined()
+		expect(await readLabelsFromModelCard(dir.path("missing.json"))).toBeNull()
 	})
 
 	test("returns undefined when the file is not valid JSON", async () => {
 		const p = dir.path("model-card.json")
 		await writeLocalTextFile("{ not: json,", p)
-		expect(await readLabelsFromModelCard(p)).toBeUndefined()
+		expect(await readLabelsFromModelCard(p)).toBeNull()
 	})
 
 	test("throws when labels is present but the wrong type (number instead of array)", async () => {

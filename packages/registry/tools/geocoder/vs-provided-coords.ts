@@ -85,7 +85,7 @@ export interface GeocoderVsProvidedCoordsOptions {
  *
  * Strictness is the measurement rather than an unfinished migration.
  */
-function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
+function parseLatLon(raw: string | null | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
 	const [a, b] = TextSpliterator.from(raw, { delimiter: "," }).map(Number).toArray()
 

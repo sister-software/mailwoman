@@ -88,9 +88,7 @@ function stubDeps(): MCPToolDeps {
 				asOf?: string
 			}) => {
 				const suppliedCount =
-					(query.frn !== undefined ? 1 : 0) +
-					(query.form499ID !== undefined ? 1 : 0) +
-					(query.bdcProviderID !== undefined ? 1 : 0)
+					(query.frn ? 1 : 0) + (query.form499ID ? 1 : 0) + (query.bdcProviderID !== undefined ? 1 : 0)
 
 				if (suppliedCount !== 1) {
 					throw new Error("filerLookup: exactly one of `frn`, `form499ID`, `bdcProviderID` is required")
@@ -111,7 +109,7 @@ function stubDeps(): MCPToolDeps {
 		// and its always-array return shape (never `null`, never a bare object) so the
 		// dispatch tests below can exercise both without reaching for a real filer.db.
 		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {
-			const suppliedCount = (query.familyID !== undefined ? 1 : 0) + (query.nodeID !== undefined ? 1 : 0)
+			const suppliedCount = (query.familyID ? 1 : 0) + (query.nodeID ? 1 : 0)
 
 			if (suppliedCount !== 1) {
 				throw new Error("familyRollup: exactly one of `familyID`, `nodeID` is required")

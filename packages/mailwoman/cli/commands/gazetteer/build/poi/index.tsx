@@ -24,6 +24,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import type { LatLonBounds } from "@mailwoman/spatial"
 
 import {
@@ -35,7 +36,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import type { POISourceRow } from "#gazetteer/poi/build/poi"
 import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 

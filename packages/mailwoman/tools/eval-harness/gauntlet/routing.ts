@@ -22,16 +22,16 @@ export interface BoardRouteInput {
 /**
  * Return the ISO region used to route a board row, preferring its explicit locale over its truth country.
  */
-export function routeCountry(row: BoardRouteInput): string | undefined {
+export function routeCountry(row: BoardRouteInput): string | null {
 	const localeRegion = row.locale?.split("-")[1]
 
-	return localeRegion || row.country || undefined
+	return localeRegion || row.country || null
 }
 
 /**
  * Return the weights locale for a routed country, or the base en-US locale when no overlay is declared.
  */
-export function overlayLocale(country: string | undefined): string {
+export function overlayLocale(country: string | null): string {
 	return (country && OVERLAY_LOCALE_BY_COUNTRY[country]) || "en-US"
 }
 
@@ -48,8 +48,8 @@ export function overlayLocale(country: string | undefined): string {
  * A second country routing to the same overlay takes the cached base classifier
  * and never re-enters the failure path, so a set keyed by country would miss it.
  */
-export function gradedBaseOnly(country: string | undefined, baseOnlyLocales: ReadonlySet<string>): boolean {
-	const locale = country ? OVERLAY_LOCALE_BY_COUNTRY[country] : undefined
+export function gradedBaseOnly(country: string | null, baseOnlyLocales: ReadonlySet<string>): boolean {
+	const locale = country ? OVERLAY_LOCALE_BY_COUNTRY[country] : null
 
 	return locale ? baseOnlyLocales.has(locale) : false
 }

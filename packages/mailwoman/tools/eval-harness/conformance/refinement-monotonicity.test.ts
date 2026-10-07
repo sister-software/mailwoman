@@ -23,6 +23,10 @@ function row(
 		expect: "refines",
 		context: { caseCountry: "US" },
 		rowRef: "cases/us/regression.jsonl#us-springfield-il-region-guard",
+		status: null,
+		bugRef: null,
+		toleranceM: null,
+		note: null,
 		...overrides,
 	}
 }
@@ -172,11 +176,11 @@ describe("the suite audit", () => {
 
 	it("refuses a row that names no committed population, and one graded off its own overlay", () => {
 		const noRef = auditRefinementSuite([
-			{ ...row({ id: "a", base: "Springfield", variant: "Springfield, IL" }), rowRef: undefined },
+			{ ...row({ id: "a", base: "Springfield", variant: "Springfield, IL" }), rowRef: null },
 		])
 
 		const noCountry = auditRefinementSuite([
-			{ ...row({ id: "a", base: "Springfield", variant: "Springfield, IL" }), context: undefined },
+			{ ...row({ id: "a", base: "Springfield", variant: "Springfield, IL" }), context: null },
 		])
 
 		expect(noRef.join("\n")).toContain("no rowRef")

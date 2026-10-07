@@ -32,7 +32,7 @@ function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 }
 
 const labelsFor = (template: BoundaryStressTemplate, seed: number): readonly string[] => {
-	const row = synthesizeBoundaryStressRow(undefined, { random: mulberry32(seed), forceTemplate: template })
+	const row = synthesizeBoundaryStressRow(null, { random: mulberry32(seed), forceTemplate: template })
 	const result = alignRow(asCanonical(row))
 	expect(result.kind, `${template} should align, raw=${row.raw}`).toBe("labeled")
 
@@ -50,7 +50,7 @@ describe("synthesizeBoundaryStressRow", () => {
 	})
 
 	it("comma-less-city-state: locality + region + postcode still label without comma cues", () => {
-		const row = synthesizeBoundaryStressRow(undefined, {
+		const row = synthesizeBoundaryStressRow(null, {
 			random: mulberry32(2),
 			forceTemplate: "comma-less-city-state",
 		})
@@ -102,8 +102,8 @@ describe("synthesizeBoundaryStressRow", () => {
 	})
 
 	it("is deterministic under a fixed seed", () => {
-		const a = synthesizeBoundaryStressRow(undefined, { random: mulberry32(42) })
-		const b = synthesizeBoundaryStressRow(undefined, { random: mulberry32(42) })
+		const a = synthesizeBoundaryStressRow(null, { random: mulberry32(42) })
+		const b = synthesizeBoundaryStressRow(null, { random: mulberry32(42) })
 		expect(a.raw).toBe(b.raw)
 	})
 
@@ -112,7 +112,7 @@ describe("synthesizeBoundaryStressRow", () => {
 		let labeled = 0
 
 		for (let i = 0; i < 400; i++) {
-			const row = synthesizeBoundaryStressRow(undefined, { random: rng })
+			const row = synthesizeBoundaryStressRow(null, { random: rng })
 			const result = alignRow(asCanonical(row))
 
 			if (result.kind !== "labeled") continue

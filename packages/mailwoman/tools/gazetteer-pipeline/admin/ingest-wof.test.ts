@@ -131,7 +131,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 		const result = await ingestWOF(db, {
 			dataDir: root,
 			anchorLookup: async (country, gnID) =>
-				country === "US" && String(gnID) === "4140963" ? { latitude: 38.89511, longitude: -77.03637 } : undefined,
+				country === "US" && String(gnID) === "4140963" ? { latitude: 38.89511, longitude: -77.03637 } : null,
 		})
 
 		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE id = 9").get() as {

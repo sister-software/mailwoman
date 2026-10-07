@@ -87,6 +87,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		parentChain: [],
 		lat: 0,
 		lon: 0,
+		encyclopedic: null,
+		crossCountryBranches: null,
 	})
 
 	const matcher = new FSTMatcher([

@@ -102,15 +102,15 @@ export interface Phase2LaneReport {
 	landed: string
 	registeredChecks: number
 	checksMet: number
-	blockedBy?: string
-	blockedReason?: string
+	blockedBy: string | null
+	blockedReason: string | null
 	/**
 	 * Lists the rows a blocked lane will read after it unblocks and the current value of each reading.
 	 *
-	 * Present only on a blocked lane.
+	 * Null except on a blocked lane.
 	 * These rows never enter any count.
 	 */
-	plannedChecks?: { id: string; measures: string; todayReads: string }[]
+	plannedChecks: { id: string; measures: string; todayReads: string }[] | null
 }
 
 export interface Phase2Receipt {
@@ -653,9 +653,9 @@ export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise
 			landed: lane.landed,
 			registeredChecks: laneChecks.length,
 			checksMet: laneChecks.filter((check) => check.met).length,
-			...(lane.blockedBy ? { blockedBy: lane.blockedBy } : {}),
-			...(lane.blockedReason ? { blockedReason: lane.blockedReason } : {}),
-			...(lane.plannedChecks ? { plannedChecks: lane.plannedChecks.map((planned) => ({ ...planned })) } : {}),
+			blockedBy: lane.blockedBy || null,
+			blockedReason: lane.blockedReason || null,
+			plannedChecks: lane.plannedChecks ? lane.plannedChecks.map((planned) => ({ ...planned })) : null,
 		}
 	})
 

@@ -151,7 +151,7 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 
 	const insert = printableRun(input)
 
-	if (!insert.length) return state
+	if (!insert) return state
 
 	return {
 		value: value.slice(0, cursor) + insert + value.slice(cursor),

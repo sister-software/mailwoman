@@ -124,7 +124,7 @@ export async function readAddressesFeed(xml: string, feedURL: string): Promise<A
 	}
 
 	// The feed holds one entry covering the whole country, so the first is the dataset.
-	let entry: MarkupElement | undefined
+	let entry: MarkupElement | null = null
 
 	for await (const found of streamMarkupElements(oneChunk(), "entry", { xml: true })) {
 		entry ??= found

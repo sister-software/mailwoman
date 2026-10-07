@@ -35,6 +35,8 @@ export const licenseRegisterCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `${WELL_KNOWN_FILE} differs from packages/core/lib/license/register.ts — run \`mailwoman license register --write\``,
 				file: WELL_KNOWN_FILE,
+				line: null,
+				details: null,
 			})
 		}
 

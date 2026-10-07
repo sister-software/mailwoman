@@ -86,7 +86,7 @@ describe("createPOITaxonomyLookup", () => {
 		const lookup = createPOITaxonomyLookup(TWO_CATEGORY_TABLE)
 
 		expect(lookup.getPOICategory("hospital")).toBe(hospital)
-		expect(lookup.getPOICategory("nonexistent")).toBeUndefined()
+		expect(lookup.getPOICategory("nonexistent")).toBeNull()
 		expect(lookup.getAllCategories()).toEqual([hospital, telecomCabinet])
 	})
 
@@ -181,14 +181,14 @@ describe("createPOIBrandLookup", () => {
 		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
 
 		expect(lookup.resolveBrandName("Acme")).toBe(acme)
-		expect(lookup.resolveBrandName("nonexistent brand")).toBeUndefined()
+		expect(lookup.resolveBrandName("nonexistent brand")).toBeNull()
 	})
 
 	it("exposes getBrand / getAllBrands over the injected table", () => {
 		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
 
 		expect(lookup.getBrand("Q1")).toBe(chevron)
-		expect(lookup.getBrand("nonexistent")).toBeUndefined()
+		expect(lookup.getBrand("nonexistent")).toBeNull()
 		expect(lookup.getAllBrands()).toEqual([chevron, acme])
 	})
 

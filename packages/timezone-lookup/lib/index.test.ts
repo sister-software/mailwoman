@@ -48,7 +48,7 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	// New York: EST (-5h) in January, EDT (-4h) in July.
 	expect(offsetSecForTimezone("America/New_York", new Date("2026-01-15T12:00:00Z"))).toBe(-18_000)
 	expect(offsetSecForTimezone("America/New_York", new Date("2026-07-15T12:00:00Z"))).toBe(-14_400)
-	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
+	expect(offsetSecForTimezone("Not/AZone")).toBeNull()
 })
 
 async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
@@ -71,6 +71,6 @@ test("makeTimezoneAnnotator: fills AnnotationSet.timezone", async () => {
 	using db = await fixtureDB()
 	using lookup = new TimezoneLookup({ database: db })
 	const annotate = makeTimezoneAnnotator(lookup)
-	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
+	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone", offsetSec: null, offsetString: null } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

@@ -66,7 +66,7 @@ describe("buildingFeatures: the five states", () => {
 			sources: [INSPECTION, LISTING],
 		})
 
-		expect(feature(BUILDING_A).properties.service.available[0]).not.toHaveProperty("extent")
+		expect(feature(BUILDING_A).properties.service.available[0]).toHaveProperty("extent", null)
 	})
 
 	test("partial availability over an extent: the reason and the service evidence keep the record's extent", () => {
@@ -99,13 +99,17 @@ describe("buildingFeatures: the five states", () => {
 			...DISTRICT_RECORDS,
 			availability: [
 				listing!,
-				{ ...listing!, extent: "example-cell:a", evidence: { source: SURVEY } },
+				{
+					...listing!,
+					extent: "example-cell:a",
+					evidence: { source: SURVEY, observedAt: null, validFrom: null, validTo: null },
+				},
 				{
 					...listing!,
 					from: "2026-01-01",
 					to: "2026-05-31",
 					extent: "example-district:north",
-					evidence: { source: PERMIT },
+					evidence: { source: PERMIT, observedAt: null, validFrom: null, validTo: null },
 				},
 			],
 		}
@@ -119,7 +123,7 @@ describe("buildingFeatures: the five states", () => {
 		)
 
 		expect(properties.service.available).toEqual([
-			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", sources: [LISTING] },
+			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", extent: null, sources: [LISTING] },
 			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", extent: "example-cell:a", sources: [SURVEY] },
 		])
 
@@ -195,7 +199,12 @@ describe("buildingFeatures: the five states", () => {
 			...DISTRICT_RECORDS,
 			counts: [
 				...DISTRICT_RECORDS.counts,
-				{ ...DISTRICT_RECORDS.counts[0]!, id: "a-completed-survey", count: 26, evidence: { source: SURVEY } },
+				{
+					...DISTRICT_RECORDS.counts[0]!,
+					id: "a-completed-survey",
+					count: 26,
+					evidence: { source: SURVEY, observedAt: null, validFrom: null, validTo: null },
+				},
 			],
 		}
 

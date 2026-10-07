@@ -39,7 +39,7 @@ const BOUNDS_TARGET: MapCameraTarget = {
 /**
  * Poll `get` until truthy or `timeout` ms elapse, flushing react-map-gl's async effects inside `act()`.
  */
-async function settle<T>(get: () => T | null | undefined, timeout = 8000): Promise<T | null> {
+async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 	let found: T | null | undefined = null
 

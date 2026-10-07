@@ -8,25 +8,29 @@
  *   outside it never leaves the build.
  */
 
-import { blankAsAbsent } from "@mailwoman/core/env/utils"
 import { z } from "zod"
+
+/**
+ * Read the shapefile's `""`, or a missing key, as null.
+ */
+const blankAsNull = <T extends z.ZodType>(inner: T) =>
+	z.preprocess((value) => (value === "" || value === undefined ? null : value), inner)
 
 /**
  * The feature record in every artifact.
  *
- * The optional strings take the shapefile's `""` as absence.
+ * The nullable strings take the shapefile's `""` as null.
  * The coordinates are the normalized ones (east-positive, −180..180), never the source's 0..360.
  */
 export const PlanetaryNomenclatureFeatureSchema = z.object({
 	id: z.string().min(1),
 	body: z.enum(["moon", "mars"]),
 	name: z.string().min(1),
-	// The shapefile writes "" for an absent string; `blankAsAbsent` (the env schema helper,
-	// the one home for that mapping) turns it into absence before the optional applies.
-	cleanName: blankAsAbsent(z.string().optional()),
+	// The shapefile writes "" for an absent string; `blankAsNull` turns it into null.
+	cleanName: blankAsNull(z.string().nullable()),
 	featureType: z.string().min(1),
-	featureTypeCode: blankAsAbsent(z.string().optional()),
-	diameterKm: z.number().nonnegative().optional(),
+	featureTypeCode: blankAsNull(z.string().nullable()),
+	diameterKm: z.number().nonnegative().nullable().default(null),
 	centerLon: z.number().min(-180).max(180),
 	centerLat: z.number().min(-90).max(90),
 	bbox: z
@@ -37,14 +41,16 @@ export const PlanetaryNomenclatureFeatureSchema = z.object({
 			maxLat: z.number().min(-90).max(90),
 			crossesAntimeridian: z.boolean(),
 		})
-		.optional(),
-	approvalStatus: blankAsAbsent(z.string().optional()),
+		.nullable()
+		.default(null),
+	approvalStatus: blankAsNull(z.string().nullable()),
 	approvalDate: z
 		.string()
 		.regex(/^\d{4}-\d{2}-\d{2}$/u)
-		.optional(),
-	origin: blankAsAbsent(z.string().optional()),
-	quadName: blankAsAbsent(z.string().optional()),
+		.nullable()
+		.default(null),
+	origin: blankAsNull(z.string().nullable()),
+	quadName: blankAsNull(z.string().nullable()),
 	source: z.literal("usgs-iau"),
 })
 

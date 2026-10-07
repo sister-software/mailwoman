@@ -14,8 +14,8 @@ import type { NUTSDatabase } from "#schema"
 
 test("nutsFromID: derives nested levels by prefix", () => {
 	expect(nutsFromID("DE300")).toEqual({ level1: "DE3", level2: "DE30", level3: "DE300" })
-	expect(nutsFromID("DE3")).toEqual({ level1: "DE3" })
-	expect(nutsFromID("DE")).toEqual({})
+	expect(nutsFromID("DE3")).toEqual({ level1: "DE3", level2: null, level3: null })
+	expect(nutsFromID("DE")).toEqual({ level1: null, level2: null, level3: null })
 })
 
 test("NUTSLookup.explore: a point on an island inside a hole is inside the region", () => {

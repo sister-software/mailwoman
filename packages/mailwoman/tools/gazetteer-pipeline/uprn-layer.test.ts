@@ -185,7 +185,7 @@ describe("buildUPRNLayer (fixture)", () => {
 
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(surveyed?.completeness).toBe(1)
-		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 2)).toBeNull()
 	})
 
 	it("fails loudly on header drift", async () => {

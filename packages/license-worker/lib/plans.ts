@@ -43,6 +43,6 @@ export function planCatalog(env: LicenseWorkerEnv): readonly CommercialPlan[] {
 	]
 }
 
-export function planForPrice(env: LicenseWorkerEnv, priceID: string): CommercialPlan | undefined {
-	return planCatalog(env).find((plan) => plan.stripePriceID === priceID)
+export function planForPrice(env: LicenseWorkerEnv, priceID: string): CommercialPlan | null {
+	return planCatalog(env).find((plan) => plan.stripePriceID === priceID) ?? null
 }

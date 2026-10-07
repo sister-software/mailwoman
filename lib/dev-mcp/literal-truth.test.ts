@@ -40,7 +40,7 @@ describe("a literal input set carrying truth", () => {
 	it("still accepts bare strings, and says they cannot be graded", async () => {
 		const set = await resolveInputSet({ kind: "literal", why: WHY, inputs: ["Queen Street, Bristol"] })
 
-		expect(set.inputs[0]?.truthLat).toBeUndefined()
+		expect(set.inputs[0]?.truthLat).toBeNull()
 		expect(set.hasTruth).toMatchObject({ coordinates: 0, none: 1 })
 		expect(set.notes.join(" ")).toMatch(/observed but not graded/)
 	})

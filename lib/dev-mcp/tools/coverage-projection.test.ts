@@ -43,7 +43,7 @@ function report(overrides: Partial<CoverageReport> = {}): CoverageReport {
 		gazetteerPath: "/wof/candidate.db",
 		notes: [],
 		...overrides,
-	}
+	} as CoverageReport
 }
 
 describe("projectCoverage", () => {

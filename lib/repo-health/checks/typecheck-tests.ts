@@ -59,7 +59,7 @@ async function* typecheck(
 			.toArray()
 
 		for (const line of lines) {
-			yield { severity: DiagnosticSeverity.Error, message: line, file: workspace }
+			yield { severity: DiagnosticSeverity.Error, message: line, file: workspace, line: null, details: null }
 		}
 
 		if (!lines.length || !isProcessError(error) || typeof error.code !== "number" || error.signal) {
@@ -67,7 +67,8 @@ async function* typecheck(
 				severity: DiagnosticSeverity.Error,
 				message: `TypeScript did not complete for ${config}: ${errorMessage(error)}`,
 				file: config,
-				...(output.trim() ? { details: [output.trim()] } : {}),
+				line: null,
+				details: output.trim() ? [output.trim()] : null,
 			}
 		}
 	}
@@ -106,6 +107,8 @@ export const typecheckTestsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `Could not resolve the TypeScript compiler for ${context.repoRoot}: ${errorMessage(error)}`,
 					file: "package.json",
+					line: null,
+					details: null,
 				},
 			]
 		}

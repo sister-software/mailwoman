@@ -36,9 +36,9 @@ export const blessPackage = defineOperation({
 			"no-trust": flag,
 		})
 		.strict(),
-	outputSchema: z.object({ blessed: z.array(blessedPackage), planDigest: z.string().optional() }),
+	outputSchema: z.object({ blessed: z.array(blessedPackage), planDigest: z.string().nullable() }),
 	async run(input, context) {
-		let planDigest: string | undefined
+		let planDigest: string | null = null
 
 		if (input.plan) {
 			planDigest = (await assertPlanHolds(context.repoRoot, input.plan)).planDigest
@@ -65,6 +65,6 @@ export const blessPackage = defineOperation({
 			log: context.log,
 		})
 
-		return { ...report, ...(planDigest ? { planDigest } : {}) }
+		return { ...report, planDigest }
 	},
 })

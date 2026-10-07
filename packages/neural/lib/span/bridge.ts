@@ -24,7 +24,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 const MAX_BRIDGEABLE_GAP = 3
 
 function bridgeable(gap: string): boolean {
-	if (!gap.length || gap.length > MAX_BRIDGEABLE_GAP) return false
+	if (!gap || gap.length > MAX_BRIDGEABLE_GAP) return false
 
 	if (!/^[.\-/'\u2019\s]*$/.test(gap)) return false
 
@@ -95,7 +95,7 @@ export function bridgePunctuationGaps(
 
 			const prev = back >= 0 ? out[back]! : undefined
 			const tag = bareBIOTag(token.label)
-			const prevTag = prev === undefined ? undefined : bareBIOTag(prev.label)
+			const prevTag = prev ? bareBIOTag(prev.label) : undefined
 			const skipped = out.slice(back + 1)
 			const skippedInsideGap = prev !== undefined && skipped.every((t) => t.start >= prev.end && t.end <= token.start)
 

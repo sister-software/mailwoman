@@ -44,8 +44,8 @@ const CENTROIDS: Record<string, { lat: number; lon: number }> = {
 /**
  * The centroid source both builds and the resolver read, as a TIGER lookup would serve them.
  */
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return CENTROIDS[geoid]
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return CENTROIDS[geoid] ?? null
 }
 
 const resolveGeoidCell = geoidCellResolver(blockCentroids)
@@ -110,6 +110,8 @@ function recordsWith(readings: LayerReading[]): DossierRecords {
 				title: "BDC fixed broadband availability as of 2022-06-30",
 				observedAt: "2022-06-30",
 				availableAt: "2022-11-18",
+				url: null,
+				retrievedAt: null,
 			},
 			{
 				id: "fcc-bdc-d25",
@@ -117,6 +119,8 @@ function recordsWith(readings: LayerReading[]): DossierRecords {
 				title: "BDC fixed broadband availability as of 2025-12-31",
 				observedAt: "2025-12-31",
 				availableAt: "2026-09-29",
+				url: null,
+				retrievedAt: null,
 			},
 		],
 		entities: [{ id: BUILDING, kind: "building", externalIDs: [], label: "Example Tower" }],
@@ -161,7 +165,7 @@ describe("bdcLayerReadings", () => {
 				basis: "source_present",
 				surveyedAt: "2022-06-30",
 				records: 2,
-				evidence: { source: "fcc-bdc-j22" },
+				evidence: { source: "fcc-bdc-j22", observedAt: null, validFrom: null, validTo: null },
 			},
 			{
 				layer: "fcc-bdc-fttp",
@@ -170,7 +174,7 @@ describe("bdcLayerReadings", () => {
 				basis: "source_present",
 				surveyedAt: "2022-06-30",
 				records: 0,
-				evidence: { source: "fcc-bdc-j22" },
+				evidence: { source: "fcc-bdc-j22", observedAt: null, validFrom: null, validTo: null },
 			},
 		])
 
@@ -234,7 +238,7 @@ describe("bdcLayerReadings", () => {
 	it("reads a block whose res-6 cell has no coverage row as unknown", async () => {
 		using db = openBuild(j22)
 
-		expect(await readLayerCoverage(db, blockCentroidCells(CENTROIDS[GEOID_FAR]!).coverageCell)).toBeUndefined()
+		expect(await readLayerCoverage(db, blockCentroidCells(CENTROIDS[GEOID_FAR]!).coverageCell)).toBeNull()
 
 		const readings = await bdcLayerReadings(db, {
 			subject: BUILDING,
@@ -252,7 +256,7 @@ describe("bdcLayerReadings", () => {
 				basis: null,
 				surveyedAt: "2022-06-30",
 				records: null,
-				evidence: { source: "fcc-bdc-j22" },
+				evidence: { source: "fcc-bdc-j22", observedAt: null, validFrom: null, validTo: null },
 			},
 		])
 	})

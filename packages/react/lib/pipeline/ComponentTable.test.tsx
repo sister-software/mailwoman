@@ -13,9 +13,9 @@ test("ComponentTable renders a row per node with a tiered confidence bar", () =>
 	const { container } = renderComponent(
 		<ComponentTable
 			nodes={[
-				{ tag: "house_number", value: "350", confidence: 0.97 },
-				{ tag: "street", value: "5th Ave", confidence: 0.42 },
-				{ tag: "locality", value: "New York" },
+				{ tag: "house_number", value: "350", confidence: 0.97, start: null, end: null },
+				{ tag: "street", value: "5th Ave", confidence: 0.42, start: null, end: null },
+				{ tag: "locality", value: "New York", confidence: null, start: null, end: null },
 			]}
 		/>
 	)

@@ -207,7 +207,10 @@ describe("ANCHOR_SEPARATOR split behavior (byte-identical across the linearizati
 			matches: [hit],
 			subject: "cafe",
 			subjectSpan: { text: "cafe", start: 0, end: 4 },
+			relation: null,
+			relationSpan: null,
 			remainder: "",
+			anchorSpan: null,
 		})
 	})
 

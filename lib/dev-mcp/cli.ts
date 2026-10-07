@@ -76,7 +76,7 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
 
 server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
 	const name = request.params.name
-	const args = (request.params.arguments as Record<string, unknown> | undefined) ?? {}
+	const args = (request.params.arguments as Record<string, unknown> | null) ?? {}
 
 	if (name === RESTART_TOOL.name) {
 		try {

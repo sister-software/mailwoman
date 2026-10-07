@@ -42,7 +42,7 @@ describe("InMemoryAdapterRegistry", () => {
 		const a = fixtureAdapter("wof-admin")
 		r.register(a)
 		expect(r.get("wof-admin")).toBe(a)
-		expect(r.get("missing")).toBeUndefined()
+		expect(r.get("missing")).toBeNull()
 		expect(r.ids()).toEqual(["wof-admin"])
 		expect(r.list()).toEqual([a])
 	})

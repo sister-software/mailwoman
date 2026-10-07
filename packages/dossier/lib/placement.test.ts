@@ -7,24 +7,40 @@
 import { describe, expect, test } from "vitest"
 
 import type { LayerReading } from "#coverage"
+import type { Evidence } from "#links"
 import { type BuildingPosition, type ExtentMembership, positionOf, readingBuildings } from "#placement"
 import { ANNEX, HOUSE } from "#test/fixtures/example-house"
 
-const SURVEY = { source: "survey-2022" }
+const SURVEY: Evidence = { source: "survey-2022", observedAt: null, validFrom: null, validTo: null }
 
 function membership(subject: string, extent: string): ExtentMembership {
 	return { subject, extent, evidence: SURVEY }
 }
 
 function position(latitude: number, longitude: number, source = "survey-2022"): BuildingPosition {
-	return { subject: HOUSE, latitude, longitude, synthetic: true, evidence: { source } }
+	return {
+		subject: HOUSE,
+		latitude,
+		longitude,
+		synthetic: true,
+		evidence: { source, observedAt: null, validFrom: null, validTo: null },
+	}
 }
 
 /**
  * A cable reading over `extent` with no subject.
  */
 function reading(extent: string, overrides: Partial<LayerReading> = {}): LayerReading {
-	return { layer: "cable", extent, basis: "source_present", records: 2, evidence: SURVEY, ...overrides }
+	return {
+		layer: "cable",
+		extent,
+		basis: "source_present",
+		records: 2,
+		evidence: SURVEY,
+		subject: null,
+		surveyedAt: null,
+		...overrides,
+	}
 }
 
 describe("readingBuildings", () => {
@@ -48,7 +64,10 @@ describe("readingBuildings", () => {
 		expect(
 			readingBuildings(reading("cell-1"), [
 				membership(HOUSE, "cell-1"),
-				{ ...membership(HOUSE, "cell-1"), evidence: { source: "permit-2021" } },
+				{
+					...membership(HOUSE, "cell-1"),
+					evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+				},
 			])
 		).toEqual([HOUSE])
 	})

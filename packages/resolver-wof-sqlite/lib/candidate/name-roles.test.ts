@@ -61,7 +61,7 @@ interface NameSpec {
  * Stage each place's primary row plus one non-primary row per alias, then run the
  * detectors over the result and read the stamps back.
  */
-async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
+async function stamp(places: PlaceSpec[], names: NameSpec[] | null) {
 	using src = DatabaseClient.temp<WOFDatabase>()
 	using kdb = DatabaseClient.temp<CandidateDatabase>()
 
@@ -280,7 +280,7 @@ describe("stampNameRoles: the abbr provenance detector", () => {
 	test("says so when the source carries no `names` table, and still runs the gloss detector", async () => {
 		const { roleAbbr, roleGloss, messages } = await stamp(
 			[{ sid: 1, name: "Poisson", country: "FR", placetype: "locality", aliases: ["Fish", "Pesce", "Pescado"] }],
-			undefined
+			null
 		)
 
 		expect(roleAbbr).toBe(0)

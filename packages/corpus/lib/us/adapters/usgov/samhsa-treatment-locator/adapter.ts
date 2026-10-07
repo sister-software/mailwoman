@@ -78,7 +78,7 @@ interface SamhsaSiteRow {
  * The combined value is the `street` component surface form.
  * Phase 1 does not break this out into the `unit` component — see the file-level comment.
  */
-function joinTwoLineStreet(street1: string, street2: string | undefined): string {
+function joinTwoLineStreet(street1: string, street2: string | null): string {
 	const s1 = street1.trim()
 	const s2 = (street2 ?? "").trim()
 
@@ -101,7 +101,7 @@ function joinTwoLineStreet(street1: string, street2: string | undefined): string
  * Both render together as `"<name1> - <name2>"` when both are present — geocoder users
  * typically type either form, so the model benefits from the joined surface.
  */
-function composeVenue(name1: string, name2: string | undefined): string {
+function composeVenue(name1: string, name2: string | null): string {
 	const n1 = name1.trim()
 	const n2 = (name2 ?? "").trim()
 
@@ -140,8 +140,8 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const venue = composeVenue(record.name1 ?? "", record.name2)
-				const street = joinTwoLineStreet(record.street1 ?? "", record.street2)
+				const venue = composeVenue(record.name1 ?? "", record.name2 ?? null)
+				const street = joinTwoLineStreet(record.street1 ?? "", record.street2 ?? null)
 				const split = splitStreetLine(street)
 				const city = record.city ?? ""
 				const stateAbbr = record.state ?? ""

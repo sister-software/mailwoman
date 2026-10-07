@@ -179,12 +179,12 @@ const DESIGNATOR_FIELDS = 4
  *
  * The address's own designator repeats that code as its third field.
  *
- * @returns The street, or undefined where the feature states no name.
+ * @returns The street, or null where the feature states no name.
  */
-export function bizkaiaStreet(feature: MarkupElement): string | undefined {
+export function bizkaiaStreet(feature: MarkupElement): string | null {
 	const text = thoroughfareName(feature)
 
-	if (!text) return undefined
+	if (!text) return null
 
 	const street = text
 		.replace(/\((\d+)\)\s*$/u, "")
@@ -192,7 +192,7 @@ export function bizkaiaStreet(feature: MarkupElement): string | undefined {
 		.replaceAll(/\s+/gu, " ")
 		.trim()
 
-	return street || undefined
+	return street || null
 }
 
 /**
@@ -201,10 +201,10 @@ export function bizkaiaStreet(feature: MarkupElement): string | undefined {
  * The code the address's designator joins on.
  * The publisher's own `ad:LocatorName` therefore checks the join rather than copying it.
  *
- * @returns The digits inside the trailing parentheses, or undefined where there are none.
+ * @returns The digits inside the trailing parentheses, or null where there are none.
  */
-export function bizkaiaStreetCode(feature: MarkupElement): string | undefined {
-	return /\((\d+)\)\s*$/u.exec(thoroughfareName(feature) ?? "")?.[1]
+export function bizkaiaStreetCode(feature: MarkupElement): string | null {
+	return /\((\d+)\)\s*$/u.exec(thoroughfareName(feature) ?? "")?.[1] ?? null
 }
 
 /**
@@ -215,20 +215,20 @@ export function bizkaiaStreetCode(feature: MarkupElement): string | undefined {
  *
  * This module's header tabulates the four shapes it takes, with their counts.
  *
- * @returns The number, or undefined where the designator is absent or does not have four fields.
+ * @returns The number, or null where the designator is absent or does not have four fields.
  */
-export function bizkaiaHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | undefined {
+export function bizkaiaHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | null {
 	const code = designator(byType, HOUSE_NUMBER_TYPE)
 
-	if (!code) return undefined
+	if (!code) return null
 
 	const fields = code.split(".")
 
-	if (fields.length !== DESIGNATOR_FIELDS) return undefined
+	if (fields.length !== DESIGNATOR_FIELDS) return null
 
 	const number = fields[DESIGNATOR_FIELDS - 1]!.replace(/^0+(?=.)/u, "")
 
-	return number || undefined
+	return number || null
 }
 
 export function createESBizkaiaAdapter(): CorpusAdapter {
@@ -296,19 +296,19 @@ export function createESBizkaiaAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or undefined when it has too little to render.
+ * One address's row, or null when it has too little to render.
  */
-function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | undefined {
-	const addressID = address.attributes["gml:id"]?.trim()
+function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | null {
+	const addressID = address.attributes["gml:id"]?.trim() ?? null
 
 	if (voidDesignatorTypes(address).has(HOUSE_NUMBER_TYPE)) {
 		throw new VoidDesignatorError(ES_BIZKAIA_ADAPTER_ID, addressID, HOUSE_NUMBER_TYPE)
 	}
 
-	let street: string | undefined
-	let postcode: string | undefined
-	let locality: string | undefined
-	let settlement: string | undefined
+	let street: string | null = null
+	let postcode: string | null = null
+	let locality: string | null = null
+	let settlement: string | null = null
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)

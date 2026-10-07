@@ -50,7 +50,7 @@ interface GeocodeDepsBundle {
 	 * The concrete US provider, because the engine's `reload` calls its `reload`.
 	 */
 	databases: USStateDatabaseProvider
-	defaultCountry?: string
+	defaultCountry: string | null
 }
 
 async function wofPaths(): Promise<string[]> {
@@ -208,8 +208,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// Parse needs only the model weights, loaded here once per boot and reused by the
 	// geocode stack below, so `/v1/parse` answers even on a geocode-degraded boot.
 	let parse: MailwomanAPIEngine["parse"]
-	let neuralMod: typeof import("@mailwoman/neural") | undefined
-	let classifier: GeocodeClassifier | undefined
+	let neuralMod: typeof import("@mailwoman/neural") | null = null
+	let classifier: GeocodeClassifier | null = null
 
 	try {
 		neuralMod = await import("@mailwoman/neural")
@@ -229,7 +229,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				input: address,
 				components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
 				tree,
-				debug: opts.debug ? decodeAsXML(tree) : undefined,
+				debug: opts.debug ? decodeAsXML(tree) : null,
 			}
 		}
 	} catch {
@@ -268,7 +268,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
 	const databases = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
-	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
+	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? null : "US" }
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
@@ -310,7 +310,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 			const opts: ResolveOpts = {
 				...incomingOpts,
-				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
+				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry ?? undefined,
 				...(addressPoints ? { addressPoints } : {}),
 				// Calibration ladder: an explicit incoming factor wins, then the artifact's own
 				// header value (`interpolation.radiusCalibration`), then the in-code per-region

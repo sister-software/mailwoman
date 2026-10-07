@@ -123,7 +123,7 @@ test("the pending refresh secret is answered to exactly one taker, and the store
 	await createLicenseIfAbsent(ledger, row)
 
 	expect(await takePendingRefreshSecret(ledger, row.lid)).toBe("secret")
-	expect(await takePendingRefreshSecret(ledger, row.lid)).toBeUndefined()
+	expect(await takePendingRefreshSecret(ledger, row.lid)).toBeNull()
 
 	expect(await findLicenseBySubscription(ledger, row.subscription_id)).toMatchObject({
 		refresh_secret_pending: null,

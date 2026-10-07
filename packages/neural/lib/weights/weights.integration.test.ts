@@ -59,9 +59,9 @@ function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: str
 	return pieces.findIndex((p) => p.piece.replace(/^▁/, "").toLowerCase().startsWith(needle))
 }
 
-const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => undefined }
+const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => null }
 
-let enGBLoad: Promise<NeuralAddressClassifier> | undefined
+let enGBLoad: Promise<NeuralAddressClassifier> | null = null
 
 /**
  * The en-gb classifier, loaded once by the first test that asks for it after linking the dev weights.
@@ -263,6 +263,9 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			expect(disabledTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 				kind: "placetypePair",
 				applied: false,
+				probePath: null,
+				census: null,
+				censusProbedParents: null,
 			})
 
 			const bDepLocCol = disabledTrace.labels.indexOf("B-dependent_locality")

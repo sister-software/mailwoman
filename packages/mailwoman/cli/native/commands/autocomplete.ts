@@ -50,7 +50,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		if (!prefix) throw new CLIUsageError("autocomplete requires a prefix (for example mw autocomplete new yo).")
 
 		const { formatAutocomplete, resolveFSTPath, runAutocomplete } = await import("#autocomplete-core")
-		const fstPath = resolveFSTPath(stringValue(parsed.values, "fst"))
+		const fstPath = resolveFSTPath(stringValue(parsed.values, "fst") ?? undefined)
 		const entries = await runAutocomplete(prefix, { fstPath, limit: numberValue(parsed.values, "limit")! })
 
 		const { stamp } = await resolveEngineStamp()

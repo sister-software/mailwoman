@@ -42,8 +42,8 @@ const indexAbsent = !(await pathExists(INDEX_FILE))
 // oxlint-disable-next-line sister-software/no-process-globals -- the runner's `CI` flag is not a project setting
 const skipSuite = indexAbsent && !process.env.CI
 
-let scratch: TemporaryDirectory | undefined
-let client: DatabaseClient<SearchIndexDatabase> | undefined
+let scratch: TemporaryDirectory | null = null
+let client: DatabaseClient<SearchIndexDatabase> | null = null
 let db: SearchDatabase
 
 beforeAll(async () => {

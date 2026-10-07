@@ -19,16 +19,16 @@ export type DiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof Diagno
 export interface Diagnostic {
 	severity: DiagnosticSeverity
 	/**
-	 * One sentence a reader can act on, with the file and line, when present, reported separately.
+	 * One sentence a reader can act on, with the file and line, when known, reported separately.
 	 */
 	message: string
-	file?: string
-	line?: number
+	file: string | null
+	line: number | null
 	/**
 	 * The sites behind a count print indented under the message and ride along in `--json`,
 	 * because a count on its own leaves a reader to find the growth.
 	 */
-	details?: readonly string[]
+	details: readonly string[] | null
 }
 
 export interface RepoContext {

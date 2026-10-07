@@ -368,7 +368,7 @@ const PROVENANCE = {
 test("readFSTProvenanceWeb: returns undefined for versions below 3 (no trailer support)", () => {
 	// A v2 buffer never includes provenance the reader will read — version check is `< 3`.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 2, provenance: PROVENANCE })
-	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeNull()
 })
 
 test("readFSTProvenanceWeb: parses the JSON trailer for a v3 buffer", () => {
@@ -379,11 +379,11 @@ test("readFSTProvenanceWeb: parses the JSON trailer for a v3 buffer", () => {
 test("readFSTProvenanceWeb: a v3 buffer with no trailer (offset 0) returns undefined", () => {
 	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 3 })
 	// offset field at byte 28 is 0 when no provenance was written.
-	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeNull()
 })
 
 test("readFSTProvenanceWeb: a buffer shorter than the header returns undefined", () => {
-	expect(readFSTProvenanceWeb(new Uint8Array(HEADER_SIZE - 1))).toBeUndefined()
+	expect(readFSTProvenanceWeb(new Uint8Array(HEADER_SIZE - 1))).toBeNull()
 })
 
 test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefined", () => {
@@ -392,14 +392,14 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 	const offset = view.getUint32(28, true)
 	// Overwrite the first JSON byte with a non-"{" so JSON.parse throws.
 	bytes[offset + 4] = 0x21 // "!"
-	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeNull()
 })
 
 // #endregion
 
 // #region surface-ambiguity classes
 
-test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
+test("web reader roundtrips crossCountryBranches under header flags bit0, null without it", async () => {
 	const { serializeFST } = await import("#fst")
 	const { FSTMatcher } = await import("#fst")
 
@@ -416,7 +416,8 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 					referential: 0.4,
 					lat: 44.36,
 					lon: -100.35,
-					crossCountryBranches: 7,
+					encyclopedic: null,
+					crossCountryBranches: 7 as number | null,
 				},
 			],
 		},
@@ -429,12 +430,12 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 	expect(m.accepting(hit.stateID)[0]!.crossCountryBranches).toBe(7)
 
 	// The first buffer is already built — mutating the shared fixture only affects the second build.
-	delete (nodes[1]!.places[0] as { crossCountryBranches?: number }).crossCountryBranches
+	nodes[1]!.places[0]!.crossCountryBranches = null
 	const withoutAmbiguity = new Uint8Array(serializeFST(FSTMatcher.fromNodes(nodes)))
 	const m2 = deserializeFSTWeb(withoutAmbiguity)
 	const hit2 = m2.walk(["pierre"])!
 
-	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeUndefined()
+	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeNull()
 })
 
 // #endregion

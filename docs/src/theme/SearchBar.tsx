@@ -24,12 +24,12 @@ function isEditable(target: EventTarget | null): boolean {
 export default function SearchBar() {
 	const history = useHistory()
 	const [open, setOpen] = useState(false)
-	const database = useRef<Promise<RangeDatabase> | undefined>(undefined)
+	const database = useRef<Promise<RangeDatabase> | null>(null)
 
 	const openDatabase = useCallback((): Promise<RangeDatabase> => {
 		// A failed open clears the memo so the next open retries.
 		database.current ??= openWholeDatabase(SEARCH_INDEX_PATH, SQLITE_RUNTIME_PATH).catch((error: unknown) => {
-			database.current = undefined
+			database.current = null
 			throw error
 		})
 

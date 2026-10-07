@@ -30,12 +30,12 @@ export interface AddressSystemTable {
  * Validates a model card's `address_systems` value.
  * The Node and browser loaders both read it through here.
  *
- * It returns `undefined` when the card has no such field.
+ * It returns `null` when the card has no such field.
  *
  * @throws When the value is present but is not `{no_hint: number, members: {"CC/script": number}}`.
  */
-export function parseAddressSystemTable(value: unknown, source: string): AddressSystemTable | undefined {
-	if (value === undefined) return undefined
+export function parseAddressSystemTable(value: unknown, source: string): AddressSystemTable | null {
+	if (value == null) return null
 
 	const table = value as { no_hint?: unknown; members?: unknown }
 	const members = table.members as Record<string, unknown> | undefined
@@ -43,7 +43,7 @@ export function parseAddressSystemTable(value: unknown, source: string): Address
 	if (
 		typeof table.no_hint !== "number" ||
 		typeof members !== "object" ||
-		members === null ||
+		!members ||
 		!Object.values(members).every((id) => typeof id === "number")
 	) {
 		throw new Error(
@@ -62,7 +62,7 @@ export function parseAddressSystemTable(value: unknown, source: string): Address
  * matching how the trainer assigned its rows.
  * A country absent from the table, or no country, gives `noHint`.
  */
-export function localeHintID(table: AddressSystemTable, country: string | undefined, text: string): number {
+export function localeHintID(table: AddressSystemTable, country: string | null, text: string): number {
 	if (!country) return table.noHint
 
 	const code = country.trim().toUpperCase()
@@ -85,7 +85,7 @@ export { LOCALE_COUNTRIES } from "#labels"
  * Returns the locale head's argmax country, or null when its probability is below the threshold.
  */
 function localeVerdict(
-	localeLogits: readonly number[] | undefined,
+	localeLogits: readonly number[] | null,
 	threshold: number
 ): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
 	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
@@ -133,10 +133,7 @@ export interface DetectedSystem {
  * @param localeLogits The raw `locale_logits` output, in {@link LOCALE_COUNTRIES} order.
  * @param threshold The minimum softmax probability to act on.
  */
-export function detectAddressSystem(
-	localeLogits: readonly number[] | undefined,
-	threshold = 0.8
-): DetectedSystem | null {
+export function detectAddressSystem(localeLogits: readonly number[] | null, threshold = 0.8): DetectedSystem | null {
 	const verdict = localeVerdict(localeLogits, threshold)
 
 	if (!verdict) return null
@@ -155,7 +152,7 @@ export function detectAddressSystem(
  * It does not resolve the address's actual country.
  */
 export function confidentLocaleCountry(
-	localeLogits: readonly number[] | undefined,
+	localeLogits: readonly number[] | null,
 	threshold = 0.8
 ): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
 	return localeVerdict(localeLogits, threshold)
@@ -167,21 +164,20 @@ export function confidentLocaleCountry(
  * A pinned `SystemCode` is used as given.
  * The value `"auto"` uses {@link detectAddressSystem}.
  *
- * An `undefined` value turns conventions off and yields a null system.
+ * A `null` value turns conventions off and yields a null system.
  */
 export function resolveSystemVerdict(
-	conventionsOpt: SystemCode | "auto" | undefined,
-	localeLogits: readonly number[] | undefined
+	conventionsOpt: SystemCode | "auto" | null,
+	localeLogits: readonly number[] | null
 ): { detectedSystem: SystemCode | null; systemSource: "off" | "auto" | "pinned" } {
-	const detectedSystem =
-		conventionsOpt === undefined
-			? null
-			: conventionsOpt === "auto"
-				? (detectAddressSystem(localeLogits)?.system ?? null)
-				: conventionsOpt
+	const detectedSystem = conventionsOpt
+		? conventionsOpt === "auto"
+			? (detectAddressSystem(localeLogits)?.system ?? null)
+			: conventionsOpt
+		: null
 
 	return {
 		detectedSystem,
-		systemSource: conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned",
+		systemSource: conventionsOpt ? (conventionsOpt === "auto" ? "auto" : "pinned") : "off",
 	}
 }

@@ -70,7 +70,7 @@ export interface GoldenReport {
 export function parseGoldenLine(line: string): GoldenEntry {
 	const obj = parseJSONStrict<Partial<GoldenEntry> & Record<string, unknown>>(line)
 
-	if (typeof obj.raw !== "string" || !obj.raw.length) {
+	if (typeof obj.raw !== "string" || !obj.raw) {
 		throw new Error("missing/empty raw")
 	}
 
@@ -87,7 +87,7 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	for (const [k, v] of Object.entries(components)) {
 		if (!TAG_SET.has(k)) throw new Error(`unknown ComponentTag: ${k}`)
 
-		if (typeof v !== "string" || !v.length) {
+		if (typeof v !== "string" || !v) {
 			throw new Error(`components.${k} must be a non-empty string`)
 		}
 	}

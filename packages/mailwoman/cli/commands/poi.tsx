@@ -77,7 +77,7 @@ type Options = OptionsOf<typeof spec>
  * A stderr note explains what's missing.
  * Caller owns closing the returned handle's backend lookup.
  */
-async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
+async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | null> {
 	const { resolvePOIResolverPaths } = await import("#resolver-backend")
 
 	const { candidateDB, wofPaths } = await resolvePOIResolverPaths({
@@ -93,7 +93,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 				"`mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
 		)
 
-		return undefined
+		return null
 	}
 
 	try {
@@ -109,7 +109,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 				"coordinates. Run `npm install @mailwoman/resolver-wof-sqlite` to enable anchor resolution."
 		)
 
-		return undefined
+		return null
 	}
 }
 
@@ -177,7 +177,7 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 			[
 				(r.name ?? "(unnamed)").slice(0, 30).padEnd(31),
 				(r.categoryID ?? "-").slice(0, 18).padEnd(20),
-				(r.distanceM !== undefined ? String(Math.round(r.distanceM)) : "-").padStart(10),
+				(r.distanceM != null ? String(Math.round(r.distanceM)) : "-").padStart(10),
 				r.latitude.toFixed(6).padStart(12),
 				r.longitude.toFixed(6).padStart(12),
 			].join("  ") + formatAncestrySuffix(r.ancestry)
@@ -205,7 +205,7 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 
 	lines.push("")
 
-	if (results === undefined) {
+	if (!results) {
 		lines.push("(intent only — no --db lookup configured)")
 	} else {
 		lines.push(...formatResultsTable(results))
@@ -233,7 +233,13 @@ async function runPOI(input: string, options: Options): Promise<string> {
 
 	try {
 		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : true
-		const pipeline = createRuntimePipeline({ classifier, resolver: resolverHandle?.resolver, poiQueryKind })
+
+		const pipeline = createRuntimePipeline({
+			classifier: classifier ?? undefined,
+			resolver: resolverHandle?.resolver,
+			poiQueryKind,
+		})
+
 		const result = await pipeline(input, { locale: options.locale })
 
 		if (options.json) {
@@ -257,7 +263,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
-		if (!input || !input.trim().length) {
+		if (!input || !input.trim()) {
 			throw new CommandError(
 				'mailwoman poi requires a positional query (e.g. mailwoman poi "fire hydrant near Springfield")'
 			)

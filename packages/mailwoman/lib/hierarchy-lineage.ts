@@ -53,8 +53,8 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 	tag: string
 	value: string
 	name: string
-	lat?: number
-	lon?: number
+	lat: number | null
+	lon: number | null
 }
 
 /**
@@ -82,14 +82,14 @@ const HIERARCHY_TAGS = [
  * An anchor at the deepest resolved entry grades ancestors in its chain.
  * It cannot falsely flag a descendant.
  */
-export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
+export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | null {
 	for (const tag of HIERARCHY_TAGS) {
 		const node = nodes.find((n) => n.tag === tag && n.placeID)
 
 		if (node) return node
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -104,7 +104,7 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
 	streetLocality: string | null,
-	anchor: LineageAnchor | undefined
+	anchor: LineageAnchor | null
 ): HierarchyEntry[] {
 	const hierarchy: HierarchyEntry[] = nodes
 		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
@@ -115,13 +115,23 @@ export function assembleHierarchy(
 			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`,
 			// and this falls back to the raw parsed span when a node resolved without one.
 			// Consumers should display this rather than `value`.
-			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
-			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeID ? { placeID: n.placeID } : {}),
+			name: (n.metadata?.["resolver_name"] as string | null)?.trim() || n.value.trim(),
+			lat: n.lat ?? null,
+			lon: n.lat != null ? n.lon! : null,
+			placeID: n.placeID || null,
+			in_winner_lineage: null,
 		}))
 
 	if (streetLocality && !hierarchy.some((h) => h.tag === "locality" || h.tag === "dependent_locality")) {
-		hierarchy.unshift({ tag: "locality", value: streetLocality, name: streetLocality })
+		hierarchy.unshift({
+			tag: "locality",
+			value: streetLocality,
+			name: streetLocality,
+			lat: null,
+			lon: null,
+			placeID: null,
+			in_winner_lineage: null,
+		})
 	}
 
 	annotateHierarchyLineage(hierarchy, anchor)
@@ -133,8 +143,8 @@ export function assembleHierarchy(
  * A hierarchy entry as `extractGeocodeResult` builds it, reduced to what the annotation reads and writes.
  */
 export interface HierarchyLineageEntry {
-	placeID?: string | undefined
-	in_winner_lineage?: boolean
+	placeID: string | null
+	in_winner_lineage: boolean | null
 }
 
 /**
@@ -159,7 +169,7 @@ export interface LineageAnchor {
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],
-	anchor: LineageAnchor | undefined
+	anchor: LineageAnchor | null
 ): void {
 	if (!anchor?.placeID) return
 
@@ -176,7 +186,7 @@ export function annotateHierarchyLineage(
 
 		if (lineage.has(entry.placeID)) {
 			entry.in_winner_lineage = true
-		} else if (ancestors !== undefined) {
+		} else if (ancestors) {
 			// Only a present sidecar can testify to absence.
 			// Without one, "not in the set" is ignorance.
 			entry.in_winner_lineage = false

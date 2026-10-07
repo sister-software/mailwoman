@@ -156,7 +156,7 @@ describe("triageWOFCurrency", () => {
 
 		// The nameless localadmin sits 0.1 km away and the county contains the name — neither is a cover.
 		expect(telford?.coverage).toBe(CoverageVerdict.Uncovered)
-		expect(telford?.coveredBy).toBeUndefined()
+		expect(telford?.coveredBy).toBeNull()
 	})
 
 	it("never judges a SUPERSEDED record — its successor is the answer", async () => {
@@ -192,7 +192,7 @@ describe("triageWOFCurrency", () => {
 
 		expect(rows.every((r) => r.attestation.state === "unmeasured")).toBe(true)
 		// And the summary refuses to publish an attested count it could not measure.
-		expect(summary.every((s) => s.uncoveredAttested === undefined)).toBe(true)
+		expect(summary.every((s) => s.uncoveredAttested === null)).toBe(true)
 	})
 
 	it("attests an uncovered record a second source independently carries, and separates it from one it does not", async () => {

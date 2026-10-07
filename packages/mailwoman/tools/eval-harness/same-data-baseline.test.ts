@@ -15,6 +15,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { ABLATION_RESOLVE_OPTS } from "#tools/eval-harness/same-data/arms"
@@ -24,7 +25,7 @@ import { candidatePool, type SameDataCandidate } from "#tools/eval-harness/same-
 import { mcnemarExactP } from "#tools/eval-harness/same-data/score"
 
 function locality(id: number, name: string, country: string, population: number): SameDataCandidate {
-	return { id, name, placetype: "locality", country, lat: 0.1, lon: 0.1, score: 10, population }
+	return { ...EMPTY_PLACE_FIELDS, id, name, placetype: "locality", country, lat: 0.1, lon: 0.1, score: 10, population }
 }
 
 function tree(raw: string, nodes: Array<[string, string]>): AddressTree {
@@ -45,6 +46,7 @@ const WHITBY_CA = locality(101, "Whitby", "CA", 128_377)
 const WHITBY_GB = locality(202, "Whitby", "GB", 13_130)
 
 const UNITED_KINGDOM: SameDataCandidate = {
+	...EMPTY_PLACE_FIELDS,
 	id: 303,
 	name: "United Kingdom",
 	placetype: "country",

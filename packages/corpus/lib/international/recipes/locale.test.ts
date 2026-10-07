@@ -308,7 +308,7 @@ describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", (
 	it("undefined (flag absent) returns the SAME part object — no override, byte-identical to before the flag existed", () => {
 		const part: LocalePart = { path: "/x.csv", districtAsLocality: true }
 
-		expect(applyDistrictAsLocalityOverride(part, undefined)).toBe(part)
+		expect(applyDistrictAsLocalityOverride(part, null)).toBe(part)
 	})
 
 	it("true forces districtAsLocality on, even overriding a part pinned false-ish (unset)", () => {
@@ -346,8 +346,8 @@ describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 	}
 
 	it("override undefined (flag absent): default parts, regardless of whether pedaniaParts exists", () => {
-		expect(resolveLocaleParts(esLikeSource, undefined)).toBe(defaultParts)
-		expect(resolveLocaleParts(noPedaniaSource, undefined)).toBe(defaultParts)
+		expect(resolveLocaleParts(esLikeSource, null)).toBe(defaultParts)
+		expect(resolveLocaleParts(noPedaniaSource, null)).toBe(defaultParts)
 	})
 
 	it("override true + pedaniaParts registered: selects pedaniaParts (the synth-es-pedania build)", () => {

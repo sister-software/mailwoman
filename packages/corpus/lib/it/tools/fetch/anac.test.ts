@@ -202,7 +202,7 @@ describe("isANACEditionCurrent", () => {
 
 		const { path } = await recordRun(scratch.path)
 
-		expect(await isANACEditionCurrent(undefined, HEAD, path, false)).toBe(false)
+		expect(await isANACEditionCurrent(null, HEAD, path, false)).toBe(false)
 	})
 })
 

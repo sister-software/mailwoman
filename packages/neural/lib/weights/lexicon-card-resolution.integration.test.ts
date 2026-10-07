@@ -37,7 +37,7 @@ async function stagePackage(card: Record<string, unknown>, lexicons: readonly st
 	}
 }
 
-function cardDeclaring(lexicon: string | undefined): Record<string, unknown> {
+function cardDeclaring(lexicon: string | null): Record<string, unknown> {
 	return {
 		requires: {
 			locality_surface: { required: true, ...(lexicon ? { lexicon } : {}) },
@@ -94,7 +94,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 	})
 
 	test("a card with NO lexicon field resolves the legacy filename WITH a warning", async () => {
-		await stagePackage(cardDeclaring(undefined), ["locality-surface-lexicon-v6.json"])
+		await stagePackage(cardDeclaring(null), ["locality-surface-lexicon-v6.json"])
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
 		try {

@@ -185,6 +185,8 @@ export const nestedIndexCheck: RepoCheck = {
 				message: entry.collision
 					? `${module.path} is an index module, and ${entry.collision} already exists. Rename one of them by hand.`
 					: `${module.path} is an index module. Rename it ${entry.directory}${module.suffix} — \`mwops health fix ${CHECK_ID}\` does it.`,
+				line: null,
+				details: null,
 			}
 		})
 
@@ -195,6 +197,8 @@ export const nestedIndexCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				file: module.path,
 				message: `${module.path} is a routed group's command, which the router reads only as ${entry.directory}/index${module.suffix}. \`mwops health fix ${CHECK_ID}\` moves it.`,
+				line: null,
+				details: null,
 			}
 		})
 

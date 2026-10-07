@@ -145,7 +145,7 @@ async function leg(defaultCountry: string): Promise<LegTally> {
 			tally.rescued++
 		} else {
 			tally.falsePositives.push(
-				`${pair.postcode} / ${pair.locality} → ${scope.country} via ${scope.evidence}${scope.distanceKm === undefined ? "" : ` at ${scope.distanceKm.toFixed(2)} km`} (default ${defaultCountry})`
+				`${pair.postcode} / ${pair.locality} → ${scope.country} via ${scope.evidence}${scope.distanceKm === null ? "" : ` at ${scope.distanceKm.toFixed(2)} km`} (default ${defaultCountry})`
 			)
 		}
 	}

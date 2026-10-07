@@ -44,20 +44,20 @@ export interface SourceCensusRow {
 	bytes: number
 	tables: number
 	/**
-	 * Present only when the artifact contains an `spr` table.
+	 * `null` unless the artifact contains an `spr` table.
 	 *
 	 * A file without one is reported unreadable with a reason rather than a zero.
 	 */
-	countries?: Record<string, number>
+	countries: Record<string, number> | null
 	join: JoinCapability[]
 	/**
 	 * Whether any row has a usable `parent_id`.
 	 *
 	 * A row count cannot show that every row has `-1` and lacks a parent link.
 	 */
-	parentLinked?: boolean
+	parentLinked: boolean | null
 	readable: boolean
-	reason?: string
+	reason: string | null
 }
 
 function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
@@ -73,7 +73,16 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 	const artifact = path.split("/").pop() ?? path
 
 	if (!(await pathExists(path))) {
-		return { artifact, bytes: 0, tables: 0, join: [], readable: false, reason: "not on disk" }
+		return {
+			artifact,
+			bytes: 0,
+			tables: 0,
+			countries: null,
+			join: [],
+			parentLinked: null,
+			readable: false,
+			reason: "not on disk",
+		}
 	}
 
 	const bytes = (await statPath(path)).size
@@ -83,7 +92,16 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 	try {
 		db = new DatabaseClient<WOFDatabase>(path, { readOnly: true })
 	} catch (error) {
-		return { artifact, bytes, tables: 0, join: [], readable: false, reason: (error as Error).message.slice(0, 120) }
+		return {
+			artifact,
+			bytes,
+			tables: 0,
+			countries: null,
+			join: [],
+			parentLinked: null,
+			readable: false,
+			reason: (error as Error).message.slice(0, 120),
+		}
 	}
 
 	try {
@@ -95,7 +113,9 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 				artifact,
 				bytes,
 				tables: tables.length,
+				countries: null,
 				join: joins,
+				parentLinked: null,
 				readable: false,
 				reason:
 					bytes === 0 ? "zero bytes — no tables at all" : `no \`spr\` table (has: ${tables.slice(0, 5).join(", ")})`,
@@ -139,9 +159,19 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 			join: joins,
 			parentLinked: linked.n > 0,
 			readable: true,
+			reason: null,
 		}
 	} catch (error) {
-		return { artifact, bytes, tables: 0, join: [], readable: false, reason: (error as Error).message.slice(0, 120) }
+		return {
+			artifact,
+			bytes,
+			tables: 0,
+			countries: null,
+			join: [],
+			parentLinked: null,
+			readable: false,
+			reason: (error as Error).message.slice(0, 120),
+		}
 	} finally {
 		db.destroy()
 	}

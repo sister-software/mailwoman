@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  */
 
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
+
 import type { AddressTree } from "#decoder/types"
 import type {
 	LocaleHint,
-	NormalizedInputLite,
 	PhraseProposal,
 	PipelineTiming,
 	PipelineFaultStage,
@@ -56,9 +57,9 @@ export interface PipelineResult {
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
 	/**
-	 * Present only when the poi-intent stage produced an outcome.
+	 * The poi-intent stage's outcome, or `null` when it produced none.
 	 */
-	poiIntent?: POIIntentOutcome
+	poiIntent: POIIntentOutcome | null
 	timing: PipelineTiming
 	/**
 	 * Every stage crash the coordinator caught and degraded past, in order.

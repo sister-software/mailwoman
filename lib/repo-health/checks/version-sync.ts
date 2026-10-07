@@ -43,6 +43,8 @@ export const versionSyncCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${workspace} is at ${String(manifest.version)}, root is at ${root.version} — the release PR has not fully landed, and publishing now ships mixed versions`,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 		}

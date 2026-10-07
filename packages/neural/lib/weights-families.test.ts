@@ -106,8 +106,8 @@ describe("the family registry", () => {
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
 		// A Latin-family interpretation of an undeclared locale would decode its rows
 		// on a graph no family declares for them.
-		expect(familyForLocale("pt-br")).toBeUndefined()
-		expect(familyForScript("Cyrl")).toBeUndefined()
+		expect(familyForLocale("pt-br")).toBeNull()
+		expect(familyForScript("Cyrl")).toBeNull()
 	})
 
 	it("serves a language's unpackaged locales, so ko-KR and zh-TW reach the character family", () => {
@@ -126,14 +126,14 @@ describe("familyFallbackFor", () => {
 
 	it("answers undefined for the three cases that are not a fallback", () => {
 		// A family id resolves to itself, so it has no fallback.
-		expect(familyFallbackFor("cjk")).toBeUndefined()
-		expect(familyFallbackFor("en-us")).toBeUndefined()
+		expect(familyFallbackFor("cjk")).toBeNull()
+		expect(familyFallbackFor("en-us")).toBeNull()
 		// A Latin overlay names its base in its manifest, so resolution follows `mailwoman.baseWeights`
 		// rather than a script rule and answering here would give one fact two sources.
-		expect(familyFallbackFor("en-GB")).toBeUndefined()
-		expect(familyFallbackFor("fr-FR")).toBeUndefined()
+		expect(familyFallbackFor("en-GB")).toBeNull()
+		expect(familyFallbackFor("fr-FR")).toBeNull()
 		// No family claims it.
-		expect(familyFallbackFor("pt-BR")).toBeUndefined()
+		expect(familyFallbackFor("pt-BR")).toBeNull()
 	})
 
 	it("agrees with scriptFamilyBase, which delegates to it", () => {
@@ -166,7 +166,7 @@ describe("routeFamilyForText", () => {
 	it("carries the reason when no family claims the input", () => {
 		const decision = routeFamilyForText("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY")
 
-		expect(decision.family).toBeUndefined()
+		expect(decision.family).toBeNull()
 		expect(decision.source).toBe(RouteSource.Caller)
 		expect(decision.abstainedBecause).toBeTruthy()
 	})
