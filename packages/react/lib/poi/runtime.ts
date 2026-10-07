@@ -37,6 +37,8 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 				mechanism: "exact",
 				inputPhrase: phrase,
 				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			}))
 		}
 
@@ -48,6 +50,8 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 			confidence: match.confidence,
 			mechanism: "exact",
 			inputPhrase: phrase,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 

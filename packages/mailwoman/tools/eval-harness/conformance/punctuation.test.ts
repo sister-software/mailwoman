@@ -22,7 +22,7 @@
 import { describe, expect, it } from "vitest"
 
 import { classifyCaseTransformation } from "#tools/eval-harness/conformance/case-folding"
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	auditPunctuationSuite,
@@ -64,7 +64,7 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		base: DE_NIPPES,
 		variant: PUNCTUATION_TRANSFORMATION_BY_NAME["comma-removed"](DE_NIPPES),
 		context: { caseCountry: "DE" },
-		outcomeComparator: "component_map",
+		resultComparator: "component_map",
 		expect: "equivalent",
 		rowRef: "cases/de/regression.jsonl#de-r9-nippes-koeln",
 		status: null,
@@ -321,7 +321,7 @@ describe("auditPunctuationSuite", () => {
 				base: FR_COMER,
 				variant: "COMER parísméxico",
 				context: { caseCountry: "FR" },
-				outcomeComparator: "resolution_identity",
+				resultComparator: "resolution_identity",
 			}),
 		])
 
@@ -387,7 +387,7 @@ describe("a seeded punctuation regression", () => {
 				admin_coherence: null,
 				hierarchy: [],
 			},
-		} satisfies ConformanceOutcome
+		} satisfies ConformanceResult
 	}
 
 	it("fails with the row, the transformation, the comparator and the mechanism", async () => {

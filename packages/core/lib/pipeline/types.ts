@@ -71,6 +71,25 @@ export const DEFAULT_PLACER_COUNTRY_USE = "filter" satisfies PlacerCountryUse
 export const DEFAULT_CASE_NORMALIZATION = "title-case" satisfies CaseNormalization
 
 /**
+ * Every {@link CaseNormalization} value, for flag choices and validation.
+ */
+export const CASE_NORMALIZATIONS = ["title-case", "preserve"] as const satisfies readonly CaseNormalization[]
+
+/**
+ * Reads a flag value as a {@link CaseNormalization}, falling back to
+ * {@link DEFAULT_CASE_NORMALIZATION} when unset and throwing on anything else.
+ */
+export function caseNormalizationOf(value: string | undefined): CaseNormalization {
+	if (!value) return DEFAULT_CASE_NORMALIZATION
+
+	if (!(CASE_NORMALIZATIONS as readonly string[]).includes(value)) {
+		throw new Error(`unknown case normalization "${value}"; expected one of ${CASE_NORMALIZATIONS.join(", ")}`)
+	}
+
+	return value as CaseNormalization
+}
+
+/**
  * Limits which words the word-consistency repair relabels.
  *
  * An empty object relabels every word whose pieces disagree on entity type.
@@ -163,7 +182,7 @@ export interface QueryShapeLite {
 		span: { start: number; end: number }
 		confidence: number
 	}>
-	segments: ReadonlyArray<{ body: string; index: number }> | null
+	segments: ReadonlyArray<{ body: string; index: number; span: { start: number; end: number } | null }> | null
 	characterClass: string | null
 	/**
 	 * ISO 15924 scripts ranked by share of script-bearing characters.

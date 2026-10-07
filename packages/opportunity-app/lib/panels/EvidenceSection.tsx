@@ -12,13 +12,13 @@ import type { EntityID } from "@mailwoman/dossier"
 import type { ReactNode } from "react"
 
 import { COST_AND_VALUE_ANCHOR, dossierAnchor } from "#evidence"
-import type { Outcome } from "#view"
+import type { Result } from "#view"
 
 export interface EvidenceSectionProps {
 	selection: readonly EntityID[]
 	labels: ReadonlyMap<EntityID, string>
 	dossierParts: ReadonlyMap<EntityID, string>
-	costAndValue: Outcome<string>
+	costAndValue: Result<string>
 }
 
 export function EvidenceSection({ selection, labels, dossierParts, costAndValue }: EvidenceSectionProps): ReactNode {

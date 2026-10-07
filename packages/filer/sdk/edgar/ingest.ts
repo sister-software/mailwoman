@@ -66,10 +66,10 @@ export const EdgarSkipReason = {
 export type EdgarSkipReason = (typeof EdgarSkipReason)[keyof typeof EdgarSkipReason]
 
 /**
- * One registrant's outcome, present for every input name including the ones that produced rows,
+ * One registrant's result, present for every input name including the ones that produced rows,
  * so a report can be read end-to-end without joining it back to the request list.
  */
-export interface EdgarIngestOutcome {
+export interface EdgarIngestResult {
 	query: string
 	cik: CIK | null
 	registrantName: string | null
@@ -87,10 +87,10 @@ export interface EdgarIngestOutcome {
 }
 
 /**
- * The full per-run report: every registrant's outcome plus the row and skip totals.
+ * The full per-run report: every registrant's result plus the row and skip totals.
  */
 export interface EdgarIngestReport {
-	outcomes: EdgarIngestOutcome[]
+	results: EdgarIngestResult[]
 	rows: number
 	registrantsWithRows: number
 	skipped: Record<EdgarSkipReason, number>
@@ -109,7 +109,7 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 	/**
 	 * Called once per registrant as it completes, for progress on a long run.
 	 */
-	onOutcome?: (outcome: EdgarIngestOutcome) => void
+	onResult?: (result: EdgarIngestResult) => void
 }
 
 /**
@@ -241,7 +241,7 @@ export async function collectEdgarSubsidiaryRows(
 	options: EdgarIngestOptions = {}
 ): Promise<{ rows: EdgarSubsidiaryRow[]; report: EdgarIngestReport }> {
 	const rows: EdgarSubsidiaryRow[] = []
-	const outcomes: EdgarIngestOutcome[] = []
+	const results: EdgarIngestResult[] = []
 
 	const skipped: Record<EdgarSkipReason, number> = {
 		[EdgarSkipReason.Unresolved]: 0,
@@ -252,13 +252,13 @@ export async function collectEdgarSubsidiaryRows(
 		[EdgarSkipReason.NoSubsidiaries]: 0,
 	}
 
-	const finish = (outcome: EdgarIngestOutcome): void => {
-		if (outcome.skipReason) {
-			skipped[outcome.skipReason]++
+	const finish = (result: EdgarIngestResult): void => {
+		if (result.skipReason) {
+			skipped[result.skipReason]++
 		}
 
-		outcomes.push(outcome)
-		options.onOutcome?.(outcome)
+		results.push(result)
+		options.onResult?.(result)
 	}
 
 	for (const query of queries) {
@@ -325,9 +325,9 @@ export async function collectEdgarSubsidiaryRows(
 	return {
 		rows,
 		report: {
-			outcomes,
+			results,
 			rows: rows.length,
-			registrantsWithRows: outcomes.filter((outcome) => outcome.subsidiaries > 0).length,
+			registrantsWithRows: results.filter((result) => result.subsidiaries > 0).length,
 			skipped,
 		},
 	}

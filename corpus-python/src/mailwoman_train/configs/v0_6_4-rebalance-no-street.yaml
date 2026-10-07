@@ -26,7 +26,7 @@
 # 91.5:32 (2.86:1) — restoring v0.6.2's dominance without sacrificing
 # house_number recovery. All other knobs held constant.
 #
-# Expected outcome at 100K (if dilution hypothesis is correct):
+# Expected result at 100K (if dilution hypothesis is correct):
 #   - locality hallucinations: 777 → ≤ 526 (back to baseline)
 #   - house_number recall: ≥ 77% (preserved from v0.6.3)
 #   - dep_loc hallucinations: 0 (preserved)

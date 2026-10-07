@@ -120,7 +120,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields record it.
+	// A null coordinate on either side is not distance zero: abstention is its own result and the tier fields record it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)

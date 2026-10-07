@@ -47,9 +47,9 @@ export interface FulfilDependencies {
 	now?: () => number
 }
 
-export type FulfilOutcome =
-	| { outcome: "minted" | "already_minted"; lid: string; invoiceID: string }
-	| { outcome: "refused"; reason: string }
+export type FulfilResult =
+	| { result: "minted" | "already_minted"; lid: string; invoiceID: string }
+	| { result: "refused"; reason: string }
 
 /**
  * The license row for a Checkout Session.
@@ -127,8 +127,8 @@ export async function fulfilInvoice(
 	env: LicenseWorkerEnv,
 	deps: FulfilDependencies,
 	invoiceID: string
-): Promise<FulfilOutcome> {
-	if (!env.issuanceEnabled) return { outcome: "refused", reason: "issuance is disabled" }
+): Promise<FulfilResult> {
+	if (!env.issuanceEnabled) return { result: "refused", reason: "issuance is disabled" }
 
 	const existingToken = await findToken(deps.ledger, invoiceID)
 
@@ -137,21 +137,21 @@ export async function fulfilInvoice(
 	const invoice = await deps.stripe.invoices.retrieve(invoiceID)
 
 	if (invoice.status !== "paid")
-		return { outcome: "refused", reason: `invoice ${invoiceID} is ${invoice.status}, not paid` }
+		return { result: "refused", reason: `invoice ${invoiceID} is ${invoice.status}, not paid` }
 
 	if (invoice.livemode !== env.liveMode)
-		return { outcome: "refused", reason: `invoice ${invoiceID} livemode does not match this environment` }
+		return { result: "refused", reason: `invoice ${invoiceID} livemode does not match this environment` }
 
 	const subscriptionID = invoiceSubscriptionID(invoice)
 
-	if (!subscriptionID) return { outcome: "refused", reason: `invoice ${invoiceID} carries no subscription` }
+	if (!subscriptionID) return { result: "refused", reason: `invoice ${invoiceID} carries no subscription` }
 
 	const lines = invoice.lines.data
 	const line = lines[0]
 
 	if (lines.length !== 1 || !line || (line.quantity ?? 1) !== 1) {
 		return {
-			outcome: "refused",
+			result: "refused",
 			reason: `invoice ${invoiceID} has ${lines.length} lines; one line at quantity 1 is expected`,
 		}
 	}
@@ -161,7 +161,7 @@ export async function fulfilInvoice(
 
 	if (!plan || !priceID) {
 		return {
-			outcome: "refused",
+			result: "refused",
 			reason: `invoice ${invoiceID} bills Price ${priceID ?? "none"}, which is not in the catalog`,
 		}
 	}
@@ -170,7 +170,7 @@ export async function fulfilInvoice(
 	// invoice after a later renewal must mint the period it paid for, never the newer one.
 	const periodEnd = line.period?.end
 
-	if (periodEnd === undefined) return { outcome: "refused", reason: `invoice ${invoiceID} line carries no period end` }
+	if (periodEnd === undefined) return { result: "refused", reason: `invoice ${invoiceID} line carries no period end` }
 
 	let license = await findLicenseBySubscription(deps.ledger, subscriptionID)
 
@@ -183,7 +183,7 @@ export async function fulfilInvoice(
 
 		const session = sessions.data[0]
 
-		if (!session) return { outcome: "refused", reason: `no Checkout Session found for subscription ${subscriptionID}` }
+		if (!session) return { result: "refused", reason: `no Checkout Session found for subscription ${subscriptionID}` }
 
 		license = await ensureLicenseFromCheckoutSession(env, deps, session)
 	}
@@ -230,7 +230,7 @@ export async function fulfilInvoice(
 
 	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires })
 
-	return { outcome: "minted", lid: license.lid, invoiceID }
+	return { result: "minted", lid: license.lid, invoiceID }
 }
 
 /**
@@ -239,7 +239,7 @@ export async function fulfilInvoice(
  * A crash between insert and send leaves the email pending.
  * A retry that finds the token sends it.
  */
-async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilOutcome> {
+async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilResult> {
 	if (token.email_state !== "sent") {
 		const holder = await findLicense(deps.ledger, token.lid)
 
@@ -248,7 +248,7 @@ async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): 
 		}
 	}
 
-	return { outcome: "already_minted", lid: token.lid, invoiceID: token.invoice_id }
+	return { result: "already_minted", lid: token.lid, invoiceID: token.invoice_id }
 }
 
 /**
@@ -260,10 +260,10 @@ async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): 
  * The row keeps its earlier state, so reconciliation sends again.
  * After an accepted send, that retry can deliver the message twice.
  */
-export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string }
+export type SendResult = { state: "sent" } | { state: "failed"; reason: string }
 
 /**
- * Send a token to its licensee under the invoice id and record the outcome.
+ * Send a token to its licensee under the invoice id and record the result.
  *
  * The refresh secret remains available while the plaintext is still pending, so a re-send
  * before the first claim includes what the first would have.
@@ -272,7 +272,7 @@ export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,
 	license: LicenseRow,
 	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires">
-): Promise<SendOutcome> {
+): Promise<SendResult> {
 	let messageID: string
 
 	try {

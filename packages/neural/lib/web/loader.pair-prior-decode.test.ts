@@ -122,6 +122,7 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 		streetTypeLexicon: "none" as const,
 		localitySurfaceLexicon: "none" as const,
 		pairIndexURLs,
+		postcodeBinaryURLs: [],
 		...(country ? { country } : {}),
 		runner: { useWebGPU: false },
 		fetchImpl: makeFetch(),

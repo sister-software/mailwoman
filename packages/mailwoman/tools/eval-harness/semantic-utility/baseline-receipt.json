@@ -1,7 +1,7 @@
 {
 	"probeID": "semantic-utility-probe-1928",
 	"definitionVersion": "1.0.0",
-	"definitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
+	"definitionSHA256": "2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8",
 	"arm": "baseline",
 	"generatedAt": "2026-08-26T06:23:36.396Z",
 	"gitCommit": "2b5fa6193",
@@ -38,7 +38,7 @@
 				"query": "where can i pick up a prescription near Denver CO",
 				"expectKind": "results",
 				"pass": false,
-				"detail": "expected a poi outcome (results), got path=full (no poi intent)"
+				"detail": "expected a poi result (results), got path=full (no poi intent)"
 			}
 		},
 		{
@@ -51,7 +51,7 @@
 				"query": "prescription near Denver CO",
 				"expectKind": "results",
 				"pass": false,
-				"detail": "expected a poi outcome (results), got path=full (no poi intent)"
+				"detail": "expected a poi result (results), got path=full (no poi intent)"
 			}
 		},
 		{
@@ -79,7 +79,7 @@
 				"query": "i need my prescription refilled near Tijuana",
 				"expectKind": "results",
 				"pass": false,
-				"detail": "expected a poi outcome (results), got path=full (no poi intent)"
+				"detail": "expected a poi result (results), got path=full (no poi intent)"
 			}
 		},
 		{

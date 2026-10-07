@@ -87,7 +87,7 @@ export interface RelabelGoldenOptions {
 }
 
 /**
- * Aggregate outcome for a whole golden version.
+ * Aggregate result for a whole golden version.
  */
 export interface RelabelGoldenReport {
 	files: Record<

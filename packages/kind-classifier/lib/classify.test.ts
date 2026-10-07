@@ -27,7 +27,7 @@ describe("classifyKind — postcode_only", () => {
 				knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
 				characterClass: "numeric",
 				totalLength: 5,
-				segments: [{ body: "10118", index: 0 }],
+				segments: [{ body: "10118", index: 0, span: null }],
 			})
 		)
 
@@ -42,7 +42,7 @@ describe("classifyKind — postcode_only", () => {
 				knownFormats: [{ format: "us_zip", span: { start: 12, end: 17 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 17,
-				segments: [{ body: "350 5th Ave 10118", index: 0 }],
+				segments: [{ body: "350 5th Ave 10118", index: 0, span: null }],
 			})
 		)
 
@@ -57,7 +57,7 @@ describe("classifyKind — postcode_only", () => {
 				knownFormats: [{ format: "us_zip4", span: { start: 0, end: 10 }, confidence: 0.95 }],
 				characterClass: "alphanumeric",
 				totalLength: 10,
-				segments: [{ body: "10118-1234", index: 0 }],
+				segments: [{ body: "10118-1234", index: 0, span: null }],
 			})
 		)
 
@@ -74,7 +74,7 @@ describe("classifyKind — locality_only", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 5,
-				segments: [{ body: "Paris", index: 0 }],
+				segments: [{ body: "Paris", index: 0, span: null }],
 			})
 		)
 
@@ -90,8 +90,8 @@ describe("classifyKind — locality_only", () => {
 				characterClass: "alpha",
 				totalLength: 8,
 				segments: [
-					{ body: "Paris", index: 0 },
-					{ body: "FR", index: 1 },
+					{ body: "Paris", index: 0, span: null },
+					{ body: "FR", index: 1, span: null },
 				],
 			})
 		)
@@ -107,7 +107,7 @@ describe("classifyKind — locality_only", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 50,
-				segments: [{ body: "The Magnificent Republic of Eastern Suburbia Hills", index: 0 }],
+				segments: [{ body: "The Magnificent Republic of Eastern Suburbia Hills", index: 0, span: null }],
 			})
 		)
 
@@ -122,7 +122,7 @@ describe("classifyKind — locality_only", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 5,
-				segments: [{ body: "Apt 4", index: 0 }],
+				segments: [{ body: "Apt 4", index: 0, span: null }],
 			})
 		)
 
@@ -140,9 +140,9 @@ describe("classifyKind — structured_address", () => {
 				characterClass: "alphanumeric",
 				totalLength: 31,
 				segments: [
-					{ body: "350 5th Ave", index: 0 },
-					{ body: "New York", index: 1 },
-					{ body: "NY 10118", index: 2 },
+					{ body: "350 5th Ave", index: 0, span: null },
+					{ body: "New York", index: 1, span: null },
+					{ body: "NY 10118", index: 2, span: null },
 				],
 			})
 		)
@@ -158,7 +158,7 @@ describe("classifyKind — structured_address", () => {
 				knownFormats: [{ format: "us_zip", span: { start: 19, end: 24 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 24,
-				segments: [{ body: "350 5th Ave NYC NY 10118", index: 0 }],
+				segments: [{ body: "350 5th Ave NYC NY 10118", index: 0, span: null }],
 			})
 		)
 
@@ -175,7 +175,7 @@ describe("classifyKind — po_box", () => {
 				knownFormats: [{ format: "po_box", span: { start: 0, end: 11 }, confidence: 0.85 }],
 				characterClass: "alphanumeric",
 				totalLength: 11,
-				segments: [{ body: "PO Box 1234", index: 0 }],
+				segments: [{ body: "PO Box 1234", index: 0, span: null }],
 			})
 		)
 
@@ -190,7 +190,7 @@ describe("classifyKind — po_box", () => {
 				knownFormats: [{ format: "po_box", span: { start: 0, end: 5 }, confidence: 0.85 }],
 				characterClass: "alphanumeric",
 				totalLength: 5,
-				segments: [{ body: "BP 42", index: 0 }],
+				segments: [{ body: "BP 42", index: 0, span: null }],
 			})
 		)
 
@@ -206,9 +206,9 @@ describe("classifyKind — po_box", () => {
 				characterClass: "alphanumeric",
 				totalLength: 30,
 				segments: [
-					{ body: "PO Box 1234", index: 0 },
-					{ body: "San Francisco", index: 1 },
-					{ body: "CA", index: 2 },
+					{ body: "PO Box 1234", index: 0, span: null },
+					{ body: "San Francisco", index: 1, span: null },
+					{ body: "CA", index: 2, span: null },
 				],
 			})
 		)
@@ -226,7 +226,7 @@ describe("classifyKind — intersection", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 22,
-				segments: [{ body: "Corner of 5th and Main", index: 0 }],
+				segments: [{ body: "Corner of 5th and Main", index: 0, span: null }],
 			})
 		)
 
@@ -241,7 +241,7 @@ describe("classifyKind — intersection", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 10,
-				segments: [{ body: "5th & 42nd", index: 0 }],
+				segments: [{ body: "5th & 42nd", index: 0, span: null }],
 			})
 		)
 
@@ -256,7 +256,7 @@ describe("classifyKind — intersection", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 24,
-				segments: [{ body: "Broadway and 42nd Street", index: 0 }],
+				segments: [{ body: "Broadway and 42nd Street", index: 0, span: null }],
 			})
 		)
 
@@ -273,7 +273,7 @@ describe("classifyKind — landmark", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 22,
-				segments: [{ body: "Behind the gas station", index: 0 }],
+				segments: [{ body: "Behind the gas station", index: 0, span: null }],
 			})
 		)
 
@@ -288,7 +288,7 @@ describe("classifyKind — landmark", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 22,
-				segments: [{ body: "Across from the church", index: 0 }],
+				segments: [{ body: "Across from the church", index: 0, span: null }],
 			})
 		)
 
@@ -303,7 +303,7 @@ describe("classifyKind — landmark", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 24,
-				segments: [{ body: "Near the old post office", index: 0 }],
+				segments: [{ body: "Near the old post office", index: 0, span: null }],
 			})
 		)
 
@@ -320,7 +320,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 7,
-				segments: [{ body: "Pier 39", index: 0 }],
+				segments: [{ body: "Pier 39", index: 0, span: null }],
 			})
 		)
 
@@ -335,7 +335,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 21,
-				segments: [{ body: "Empire State Building", index: 0 }],
+				segments: [{ body: "Empire State Building", index: 0, span: null }],
 			})
 		)
 
@@ -350,7 +350,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 13,
-				segments: [{ body: "Wrigley Field", index: 0 }],
+				segments: [{ body: "Wrigley Field", index: 0, span: null }],
 			})
 		)
 
@@ -365,7 +365,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 22,
-				segments: [{ body: "Grand Central Terminal", index: 0 }],
+				segments: [{ body: "Grand Central Terminal", index: 0, span: null }],
 			})
 		)
 
@@ -380,7 +380,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 11,
-				segments: [{ body: "350 5th Ave", index: 0 }],
+				segments: [{ body: "350 5th Ave", index: 0, span: null }],
 			})
 		)
 
@@ -395,7 +395,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 11,
-				segments: [{ body: "123 Main St", index: 0 }],
+				segments: [{ body: "123 Main St", index: 0, span: null }],
 			})
 		)
 
@@ -411,9 +411,9 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				characterClass: "alphanumeric",
 				totalLength: 32,
 				segments: [
-					{ body: "Pier 39", index: 0 },
-					{ body: "San Francisco", index: 1 },
-					{ body: "CA 94133", index: 2 },
+					{ body: "Pier 39", index: 0, span: null },
+					{ body: "San Francisco", index: 1, span: null },
+					{ body: "CA 94133", index: 2, span: null },
 				],
 			})
 		)
@@ -431,7 +431,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 5,
-				segments: [{ body: "Paris", index: 0 }],
+				segments: [{ body: "Paris", index: 0, span: null }],
 			})
 		)
 
@@ -449,7 +449,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 5,
-				segments: [{ body: "Paris", index: 0 }],
+				segments: [{ body: "Paris", index: 0, span: null }],
 			})
 		)
 
@@ -466,9 +466,9 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 				characterClass: "alphanumeric",
 				totalLength: 31,
 				segments: [
-					{ body: "350 5th Ave", index: 0 },
-					{ body: "New York", index: 1 },
-					{ body: "NY 10118", index: 2 },
+					{ body: "350 5th Ave", index: 0, span: null },
+					{ body: "New York", index: 1, span: null },
+					{ body: "NY 10118", index: 2, span: null },
 				],
 			})
 		)

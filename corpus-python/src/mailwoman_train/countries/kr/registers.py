@@ -322,7 +322,7 @@ def alignment_census(rows: Iterable[PermitRow], index: KeyIndex) -> dict[str, An
                 per_form[f"{form}_empty"] += 1
                 bucket[f"{form}_empty"] += 1
                 continue
-            outcome = "aligned" if aligner(text, index) else "unaligned"
-            per_form[f"{form}_{outcome}"] += 1
-            bucket[f"{form}_{outcome}"] += 1
+            alignment = "aligned" if aligner(text, index) else "unaligned"
+            per_form[f"{form}_{alignment}"] += 1
+            bucket[f"{form}_{alignment}"] += 1
     return {"per_form": dict(per_form), "per_category": {k: dict(v) for k, v in per_category.items()}}

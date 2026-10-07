@@ -2,15 +2,15 @@
 	"probeID": "semantic-utility-probe-1928",
 	"version": "1.0.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/1928",
-	"route": "a — commit the target rows first, graded on outcomes only",
+	"route": "a — commit the target rows first, graded on results only",
 	"routeReason": "Section 5.5 of docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md offers two routes, because no committed corpus contains an activity-shaped query. Route (b) pre-registers on the section 5.3 recall gap, and it cannot be executed against the frozen slice: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see requires a SECOND establishment class asserting the affordance, which section 4 forbids ('no sibling class is minted') and stop condition 5 makes an explicit amendment rather than a probe. It also needs a recall metric the committed grader does not have. Route (a) needs neither: the comparator already exists and is committed, the anchors and expectations are copied byte-for-byte from committed rows, and the semantic arm is reachable from the frozen slice alone — activity phrase to `obtain_medication`, `obtain_medication` to the concepts that afford it, that concept to POI category `pharmacy` through the committed mapping.",
 	"failureClass": "Activity-named POI query. The query names what the user wants to do; nothing routes an activity to the set of entity kinds that afford it, so the phrase matches no committed synonym, `createScorePOIQuery` returns 0, and the input leaves the POI branch entirely.",
 	"semanticObservation": "pharmacy affords obtain_medication — assertion `pharmacy-affords-obtain-medication`, modality `necessary`, in packages/geographic-model/data/geographic-model.json, reachable from the POI vocabulary through conceptsForExternalID(\"poi-taxonomy\", \"pharmacy\").",
 	"missingDistinction": "Which entity kinds afford `obtain_medication`, in which country, with what modality, and on whose authority.",
 	"baselineFailureShape": "no_poi_branch",
-	"baselineFailureShapeNote": "A POI outcome shape derived from `PipelineResult`'s own `path` and `POIIntentOutcome`'s own `type`, per section 2.6: `DIAGNOSE_SHAPES` is a vocabulary of address-path mechanism states and carries no state for the POI branch, so no value in it names what these rows do. The class shape is `no_poi_branch` and 3 of the 4 target rows measure it. The fourth, sem-act-fr-01, measures `poi_intent_results` — see its own `baselineShape` and `missingDistinction`, and read the mixture rather than the single value.",
-	"outcomeComparator": "poi_board_assembled_answer",
-	"outcomeComparatorNote": "`gradeCase` from packages/mailwoman/eval-harness/poi-board.ts, unchanged: the top result's `categoryID` and the nearest returned coordinate against the row's committed anchor. Outcomes only — the comparator cannot read how an answer was produced, so a semantic arm cannot pass by reporting that it consulted an affordance.",
+	"baselineFailureShapeNote": "A POI result shape derived from `PipelineResult`'s own `path` and `POIIntentResult`'s own `type`, per section 2.6: `DIAGNOSE_SHAPES` is a vocabulary of address-path mechanism states and carries no state for the POI branch, so no value in it names what these rows do. The class shape is `no_poi_branch` and 3 of the 4 target rows measure it. The fourth, sem-act-fr-01, measures `poi_intent_results` — see its own `baselineShape` and `missingDistinction`, and read the mixture rather than the single value.",
+	"resultComparator": "poi_board_assembled_answer",
+	"resultComparatorNote": "`gradeCase` from packages/mailwoman/eval-harness/poi-board.ts, unchanged: the top result's `categoryID` and the nearest returned coordinate against the row's committed anchor. Results only — the comparator cannot read how an answer was produced, so a semantic arm cannot pass by reporting that it consulted an affordance.",
 	"targetRows": [
 		{
 			"id": "sem-act-us-01",
@@ -158,19 +158,19 @@
 	],
 	"primaryMetric": {
 		"id": "target_answer_rate",
-		"numerator": "Target rows whose graded outcome passes `poi_board_assembled_answer`: the top returned result's `categoryID` equals the row's expected category AND the nearest returned result is within the row's `maxNearestKm` of its committed anchor.",
+		"numerator": "Target rows whose graded result passes `poi_board_assembled_answer`: the top returned result's `categoryID` equals the row's expected category AND the nearest returned result is within the row's `maxNearestKm` of its committed anchor.",
 		"denominator": 4,
 		"aggregation": "Count of passing rows over the 4 registered target rows. A row that errors, returns nothing, or never reaches the POI branch counts as not answered and stays in the denominator — the denominator is the registered row count, never the rows that happened to answer."
 	},
 	"diagnosticMetric": {
 		"id": "target_poi_routing_rate",
-		"numerator": "Target rows whose outcome shape is not `no_poi_branch` — the coordinator took the POI branch and produced an intent or an abstain, whether or not the assembled answer is right.",
+		"numerator": "Target rows whose result shape is not `no_poi_branch` — the coordinator took the POI branch and produced an intent or an abstain, whether or not the assembled answer is right.",
 		"denominator": 4,
-		"aggregation": "Count over the same 4 registered target rows, same denominator rule. This is the structured mechanism metric the DIAGNOSTIC-ONLY decision requires: it is read from the closed POI outcome-shape vocabulary, not from free-form prose about better diagnosis."
+		"aggregation": "Count over the same 4 registered target rows, same denominator rule. This is the structured mechanism metric the DIAGNOSTIC-ONLY decision requires: it is read from the closed POI result-shape vocabulary, not from free-form prose about better diagnosis."
 	},
 	"controlMetric": {
 		"id": "control_hold_rate",
-		"numerator": "Control rows whose graded outcome still passes `poi_board_assembled_answer` — for a `results` row, the same category within the same distance; for the abstain row, the same abstain reason.",
+		"numerator": "Control rows whose graded result still passes `poi_board_assembled_answer` — for a `results` row, the same category within the same distance; for the abstain row, the same abstain reason.",
 		"denominator": 6,
 		"aggregation": "Count over the 6 registered control rows, all of which hold at baseline. Both groups decide: three rows are the venue-noun form of the same intent, three are adjacent categories and a bare-category abstain, and an arm that over-fires toward `pharmacy` would keep the first group green."
 	},

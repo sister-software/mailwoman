@@ -10,6 +10,7 @@ import type { PathBuilderLike } from "path-ts"
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier, type AddressSystemConventions } from "#classifier"
+import { gazetteerSuppressionFor } from "#classifier/options"
 import { ScriptRoutedClassifier } from "#classifier/script-router"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
@@ -231,8 +232,7 @@ export async function loadClassifierFromWeights(
 		opts.placetypeCensusPath
 	)
 
-	const suppressGazetteerNearPostcode =
-		opts.suppressGazetteerNearPostcode ?? declared?.suppress_gazetteer_near_postcode ?? false
+	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode, declared)
 
 	const addressSystemConventions = (
 		declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : "off"

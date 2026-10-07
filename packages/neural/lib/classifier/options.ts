@@ -400,3 +400,20 @@ export interface ParseOpts {
 	 */
 	placetypeCensus?: PlacetypeCensusSelection
 }
+
+/**
+ * Whether a loader zeroes the gazetteer channel next to postcode-anchor hits.
+ *
+ * Inference must match training, so the model card's `requires.suppress_gazetteer_near_postcode` decides.
+ * A model whose card does not declare it was trained without the choreography, so it is off.
+ *
+ * A caller's explicit boolean replaces the card's declaration.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ */
+export function gazetteerSuppressionFor(
+	override: boolean | undefined,
+	declared: { suppress_gazetteer_near_postcode?: boolean } | null | undefined
+): boolean {
+	return override ?? declared?.suppress_gazetteer_near_postcode ?? false
+}

@@ -61,7 +61,7 @@ export interface AgreementRow {
 	 * Whether the service's own geometry places the point inside an erosion zone of that scenario.
 	 */
 	serviceInside: boolean
-	outcome: "agree" | "disagree" | "boundary_tolerance"
+	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
@@ -160,7 +160,7 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 				...point,
 				local,
 				serviceInside: service.inside,
-				outcome: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				result: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
 				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
@@ -182,9 +182,9 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
 			outside,
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}

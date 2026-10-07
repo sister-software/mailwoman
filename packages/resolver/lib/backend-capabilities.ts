@@ -9,7 +9,7 @@
  *   reports those gaps without changing resolution behavior.
  */
 
-import type { BackendCapabilityGap, ResolverBackend } from "@mailwoman/core/resolver"
+import { type BackendCapabilityGap, RESOLVE_SWITCH_DEFAULTS, type ResolverBackend } from "@mailwoman/core/resolver"
 
 /**
  * The optional backend methods whose absence degrades a passing default, paired with what stops working.
@@ -22,14 +22,14 @@ const CONSEQUENTIAL_CAPABILITIES: ReadonlyArray<Omit<BackendCapabilityGap, "back
 	{
 		capability: "ancestors",
 		option: "hierarchyCompletion",
-		defaultOn: true,
+		defaultOn: RESOLVE_SWITCH_DEFAULTS.hierarchyCompletion,
 		degrades:
 			"the containment lineage is never read: a parse that drops the locality of a city-state or dependent locality keeps the gap, and `metadata.ancestors` (the lineage the Nominatim and Photon drop-ins expose) is never populated",
 	},
 	{
 		capability: "coincidentLocalitiesFor",
 		option: "hierarchyCompletion",
-		defaultOn: true,
+		defaultOn: RESOLVE_SWITCH_DEFAULTS.hierarchyCompletion,
 		degrades:
 			"the dual-role pass never runs: a region that is also a locality under the same name resolves to one role only",
 	},

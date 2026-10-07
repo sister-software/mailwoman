@@ -22,7 +22,7 @@ import {
 } from "@mailwoman/opportunity-map"
 import { calendarMonth, formatMoney, type InputBasis, InputBasisKind } from "@mailwoman/route-scenarios"
 
-import type { Outcome } from "#view"
+import type { Result } from "#view"
 
 /**
  * The words of each building state.
@@ -135,7 +135,7 @@ export function segmentText(properties: RouteSegmentProperties, labels: Readonly
  * What the live region announces after a change: the selection's two headline figures,
  * the model's refusal, or the empty selection.
  */
-export function recalculationText(economics: Outcome<SelectionEconomics>): string {
+export function recalculationText(economics: Result<SelectionEconomics>): string {
 	if (economics.status === "empty") return "No building is selected."
 
 	if (economics.status === "refused") return `Recalculated: no figures. ${economics.message}`

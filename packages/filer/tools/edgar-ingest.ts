@@ -39,7 +39,7 @@ export interface FilerEdgarIngestOptions {
 	/**
 	 * Called when each registrant finishes.
 	 */
-	onOutcome?: (outcome: { query: string; ok: boolean; subsidiaries: number; detail: string }) => void
+	onResult?: (result: { query: string; ok: boolean; subsidiaries: number; detail: string }) => void
 }
 
 /**
@@ -65,15 +65,15 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 
 	const { rows, report } = await collectEdgarSubsidiaryRows(client, options.queries, tickers, {
 		pinnedCIKs: pinnedSet,
-		onOutcome: options.onOutcome
-			? (outcome) =>
-					options.onOutcome?.({
-						query: outcome.query,
-						ok: !outcome.skipReason,
-						subsidiaries: outcome.subsidiaries,
+		onResult: options.onResult
+			? (result) =>
+					options.onResult?.({
+						query: result.query,
+						ok: !result.skipReason,
+						subsidiaries: result.subsidiaries,
 						detail:
-							outcome.skipReason ??
-							`${outcome.subsidiaries} subsidiaries, ${outcome.unparseable} unparseable, SIC ${outcome.sic ?? "?"}`,
+							result.skipReason ??
+							`${result.subsidiaries} subsidiaries, ${result.unparseable} unparseable, SIC ${result.sic ?? "?"}`,
 					})
 			: undefined,
 	})

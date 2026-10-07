@@ -11,7 +11,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
-import type { DefaultCountry, Resolver } from "@mailwoman/core/resolver"
+import { RESOLVE_SWITCH_DEFAULTS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
 import type { Section } from "@mailwoman/core/types"
@@ -31,7 +31,7 @@ import {
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
-import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import { WeightsGuard, type WeightsResult } from "#cli-kit/weights-guard"
 import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
 
@@ -86,12 +86,24 @@ export const spec = {
 			default: "auto",
 			description: "Locale country-scoping policy",
 		},
-		"admin-coherence": { type: "boolean", default: true, description: "Joint admin consistency" },
-		"postcode-country-coherence": { type: "boolean", default: true, description: "Postcode country consistency" },
-		"postcode-shape-coherence": { type: "boolean", default: false, description: "Postcode shape consistency" },
+		"admin-coherence": {
+			type: "boolean",
+			default: RESOLVE_SWITCH_DEFAULTS.adminCoherence,
+			description: "Joint admin consistency",
+		},
+		"postcode-country-coherence": {
+			type: "boolean",
+			default: RESOLVE_SWITCH_DEFAULTS.postcodeCountryCoherence,
+			description: "Postcode country consistency",
+		},
+		"postcode-shape-coherence": {
+			type: "boolean",
+			default: RESOLVE_SWITCH_DEFAULTS.postcodeShapeCoherence,
+			description: "Postcode shape consistency",
+		},
 		"postcode-containment-coherence": {
 			type: "boolean",
-			default: false,
+			default: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 			description: "Postcode containment reranking",
 		},
 		neural: { type: "boolean", default: false, description: "Use neural-only path" },
@@ -140,6 +152,25 @@ interface ParseOptions {
 	benchmark?: number
 }
 
+/**
+ * The resolver switches set by the `parse` flags, passed through as stated.
+ *
+ * The flag defaults are {@link RESOLVE_SWITCH_DEFAULTS}, so an unstated flag means the resolver default.
+ */
+function cliResolveSwitches(
+	options: Pick<
+		ParseOptions,
+		"adminCoherence" | "postcodeCountryCoherence" | "postcodeShapeCoherence" | "postcodeContainmentCoherence"
+	>
+): ResolveOpts {
+	return {
+		adminCoherence: options.adminCoherence,
+		postcodeCountryCoherence: options.postcodeCountryCoherence,
+		postcodeShapeCoherence: options.postcodeShapeCoherence,
+		postcodeContainmentCoherence: options.postcodeContainmentCoherence,
+	}
+}
+
 interface PolicyOverride {
 	component: ComponentTag
 	mode: PolicyMode
@@ -177,12 +208,12 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 	if (guardEligible) {
 		return (
 			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
-				{(outcome) => <ParseTask options={options} args={args} weightsOutcome={outcome} />}
+				{(result) => <ParseTask options={options} args={args} weightsResult={result} />}
 			</WeightsGuard>
 		)
 	}
 
-	return <ParseTask options={options} args={args} weightsOutcome={options.degraded ? "declined" : "neural"} />
+	return <ParseTask options={options} args={args} weightsResult={options.degraded ? "declined" : "neural"} />
 }
 
 /**
@@ -191,11 +222,11 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 function ParseTask({
 	options,
 	args,
-	weightsOutcome,
+	weightsResult,
 }: {
 	options: ParseOptions
 	args: string[]
-	weightsOutcome: WeightsOutcome
+	weightsResult: WeightsResult
 }): React.ReactElement | null {
 	const state = useCommandTask(async () => {
 		const input = args[0]!
@@ -224,8 +255,8 @@ function ParseTask({
 			return runNeural(input, options, [])
 		}
 
-		// An `unavailable` outcome falls through to `runPipeline`, which attempts the load itself.
-		if (weightsOutcome === "declined") {
+		// An `unavailable` result falls through to `runPipeline`, which attempts the load itself.
+		if (weightsResult === "declined") {
 			return runDegraded(input, options)
 		}
 
@@ -266,47 +297,16 @@ async function resolveWithCandidates(
 	options: ParseOptions,
 	routedAway = false
 ): Promise<AddressTree> {
-	const opts: {
-		candidatesPerLookup?: number
-		defaultCountry?: DefaultCountry
-		adminCoherence?: boolean
-		postcodeCountryCoherence?: boolean
-		postcodeShapeCoherence?: boolean
-		postcodeContainmentCoherence?: boolean
-	} = {}
+	const opts: ResolveOpts = cliResolveSwitches(options)
 
 	if (options.candidates !== undefined) {
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
-	// The resolver enables postcode-country coherence by default, so only the opt-out is passed.
-	if (options.postcodeCountryCoherence === false) {
-		opts.postcodeCountryCoherence = false
-	}
+	const scope = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options)
 
-	// The resolver disables shape and containment coherence by default, so only the opt-in is passed.
-	if (options.postcodeShapeCoherence === true) {
-		opts.postcodeShapeCoherence = true
-	}
-
-	if (options.postcodeContainmentCoherence === true) {
-		opts.postcodeContainmentCoherence = true
-	}
-
-	const { resolveCandidateDBPath } = await import("#resolver-backend")
-
-	const dc =
-		routedAway && !options.defaultCountry
-			? undefined
-			: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
-
-	if (dc) {
-		opts.defaultCountry = { country: dc, source: "caller" }
-	}
-
-	// The resolver enables admin coherence by default, so only the opt-out is passed.
-	if (options.adminCoherence === false) {
-		opts.adminCoherence = false
+	if (scope) {
+		opts.defaultCountry = scope
 	}
 
 	return resolver.resolveTree(tree, opts)
@@ -432,71 +432,26 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	const wantAlternatives = options.candidates !== undefined
 
-	const resolveOpts: {
-		candidatesPerLookup?: number
-		defaultCountry?: DefaultCountry
-		postcodeCountryCoherence?: boolean
-		postcodeShapeCoherence?: boolean
-		postcodeContainmentCoherence?: boolean
-	} = {}
+	const resolveOpts: ResolveOpts = cliResolveSwitches(options)
 
 	if (wantAlternatives) {
 		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
 	}
 
-	// The resolver enables postcode-country coherence by default, so only the opt-out is passed.
-	if (options.resolve && options.postcodeCountryCoherence === false) {
-		resolveOpts.postcodeCountryCoherence = false
-	}
-
-	// The resolver disables shape and containment coherence by default, so only the opt-in is passed.
-	if (options.resolve && options.postcodeShapeCoherence === true) {
-		resolveOpts.postcodeShapeCoherence = true
-	}
-
-	if (options.resolve && options.postcodeContainmentCoherence === true) {
-		resolveOpts.postcodeContainmentCoherence = true
-	}
-
 	// The default country keeps a bare region abbreviation such as `NY` from resolving to a foreign homonym.
 	if (options.resolve) {
-		const { resolveCandidateDBPath } = await import("#resolver-backend")
 		// An input routed to another script family's classifier does not inherit the locale's country.
 		// An explicit `--default-country` still applies.
 		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
 
-		const dc =
-			routedAway && !options.defaultCountry
-				? undefined
-				: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
+		const scope = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options)
 
-		if (dc) {
-			resolveOpts.defaultCountry = { country: dc, source: "caller" }
+		if (scope) {
+			resolveOpts.defaultCountry = scope
 		}
 	}
 
-	const pipelineOpts: {
-		locale?: string
-		resolveOpts?: {
-			candidatesPerLookup?: number
-			defaultCountry?: DefaultCountry
-			postcodeCountryCoherence?: boolean
-			postcodeShapeCoherence?: boolean
-			postcodeContainmentCoherence?: boolean
-		}
-	} = {
-		locale: options.locale,
-	}
-
-	if (
-		resolveOpts.candidatesPerLookup !== undefined ||
-		resolveOpts.defaultCountry ||
-		resolveOpts.postcodeCountryCoherence !== undefined ||
-		resolveOpts.postcodeShapeCoherence !== undefined ||
-		resolveOpts.postcodeContainmentCoherence !== undefined
-	) {
-		pipelineOpts.resolveOpts = resolveOpts
-	}
+	const pipelineOpts: { locale: string; resolveOpts: ResolveOpts } = { locale: options.locale, resolveOpts }
 
 	// The `undefined` value keeps the pipeline's default street-evidence rerank.
 	// A `false` value disables it.

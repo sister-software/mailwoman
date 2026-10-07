@@ -467,14 +467,14 @@ describe("the frozen pre-registration", () => {
 
 	it("refuses a target row that does not expect the observation", () => {
 		const broken: AbsenceProbeDefinition = structuredClone(definition)
-		broken.rows.find((row) => row.group === "target")!.expectedOutcome = "cell_unsurveyed"
+		broken.rows.find((row) => row.group === "target")!.expectedResult = "cell_unsurveyed"
 
 		expect(auditAbsenceProbeDefinition(broken)).toContainEqual(expect.stringContaining("a target row expects"))
 	})
 
 	it("refuses a control row that expects the observation", () => {
 		const broken: AbsenceProbeDefinition = structuredClone(definition)
-		broken.rows.find((row) => row.group !== "target")!.expectedOutcome = "absence_observation"
+		broken.rows.find((row) => row.group !== "target")!.expectedResult = "absence_observation"
 
 		expect(auditAbsenceProbeDefinition(broken)).toContainEqual(
 			expect.stringContaining("control expects the observation")

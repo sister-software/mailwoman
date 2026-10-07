@@ -39,6 +39,8 @@ export function makePOIRuntime(): POIRuntime {
 							wikidata: null,
 							mechanism: "exact",
 							inputPhrase: "drinking fountain",
+							reading: "preference",
+							countryScope: null,
 						},
 					]
 				: [],
@@ -76,6 +78,8 @@ export function makeBrandPOIRuntime(): POIRuntime {
 							confidence: 1,
 							mechanism: "exact",
 							inputPhrase: "chevron",
+							reading: "preference",
+							countryScope: null,
 						},
 					]
 				: [],
@@ -97,14 +101,14 @@ export const mockLiveSearchSuccess: POILiveSearch = async () => ({
 
 /**
  * A live-search probe that echoes the brand QID it received back through the hits,
- * so tests can assert the brand path threaded `brandWikidata` (a category probe never sets it).
+ * so tests can assert the brand path sent a `kind: "brand"` request carrying the QID.
  */
-export const mockBrandLiveSearchSuccess: POILiveSearch = async ({ brandWikidata }) => ({
+export const mockBrandLiveSearchSuccess: POILiveSearch = async (request) => ({
 	status: "success",
 	centerName: "Houston, TX",
 	hits: [
 		{
-			name: `Chevron (${brandWikidata ?? "no-qid"})`,
+			name: `Chevron (${request.kind === "brand" ? request.wikidata : "no-qid"})`,
 			lat: 29.76,
 			lon: -95.37,
 			distanceM: 210,

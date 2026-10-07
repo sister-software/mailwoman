@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ledger's table types, one interface per table in `migrations/0001_ledger.sql`. The migration is the DDL by
+ *   The ledger's table types, one interface per table in `migrations/` (0001_ledger.sql plus later renames). The migrations are the DDL by
  *   Wrangler's interface. these are the read/write interfaces Kysely types every query against. A column the migration
  *   defaults is `Generated`, so an insert may omit it and a select always includes it.
  */
@@ -61,7 +61,7 @@ interface StripeEventsTable {
 	type: string
 	object_id: string
 	received_at: Generated<string>
-	outcome: Generated<string>
+	result: Generated<string>
 }
 
 export interface LedgerDatabase {

@@ -118,7 +118,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 }
 
 /**
- * The outcome of a blocking pass.
+ * The result of a blocking pass.
  */
 export interface BlockResult<R> {
 	/**

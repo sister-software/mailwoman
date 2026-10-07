@@ -43,12 +43,12 @@ async function resolveSkillSourceDir(): Promise<string> {
 	)
 }
 
-interface InstallOutcome {
+interface InstallResult {
 	ok: boolean
 	checks: Check[]
 }
 
-async function installSkill(dest: string | null): Promise<InstallOutcome> {
+async function installSkill(dest: string | null): Promise<InstallResult> {
 	const checks: Check[] = []
 
 	try {

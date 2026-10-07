@@ -97,7 +97,7 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO place_population VALUES (46, 90000);
 
 		-- Both FR neighborhoods hang off Paris, so parent prominence is available to both and the
-		-- law-3 guard is the only thing separating their outcomes.
+		-- law-3 guard is the only thing separating their results.
 		INSERT INTO ancestors VALUES (17, 10, 'locality');
 		INSERT INTO ancestors VALUES (18, 10, 'locality');
 

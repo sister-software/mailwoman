@@ -147,7 +147,7 @@ describe("the phrase rule", () => {
 				mechanism: null,
 				inputPhrase: "where can i pick up a prescription",
 				wikidata: null,
-				searchAsSet: true,
+				reading: "set",
 				countryScope: ["US"],
 			},
 			{
@@ -158,7 +158,8 @@ describe("the phrase rule", () => {
 				mechanism: null,
 				inputPhrase: "where can i pick up a prescription",
 				wikidata: null,
-				searchAsSet: true,
+				reading: "set",
+				countryScope: null,
 			},
 		])
 	})
@@ -337,7 +338,7 @@ describe("a plural affordance", () => {
 				mechanism: null,
 				inputPhrase: "prescription",
 				wikidata: null,
-				searchAsSet: true,
+				reading: "set",
 				countryScope: ["US"],
 			},
 			{
@@ -345,10 +346,11 @@ describe("a plural affordance", () => {
 				categoryID: "pharmacy",
 				matchedPhrase: "prescription",
 				confidence: 1,
-				searchAsSet: true,
+				reading: "set",
 				mechanism: null,
 				inputPhrase: "prescription",
 				wikidata: null,
+				countryScope: null,
 			},
 		])
 	})
@@ -376,20 +378,22 @@ describe("a plural affordance", () => {
 				categoryID: "drugstore",
 				matchedPhrase: "prescription",
 				confidence: 1,
-				searchAsSet: true,
+				reading: "set",
 				mechanism: null,
 				inputPhrase: "prescription",
 				wikidata: null,
+				countryScope: null,
 			},
 			{
 				kind: "category",
 				categoryID: "pharmacy",
 				matchedPhrase: "prescription",
 				confidence: 1,
-				searchAsSet: true,
+				reading: "set",
 				mechanism: null,
 				inputPhrase: "prescription",
 				wikidata: null,
+				countryScope: null,
 			},
 		]
 
@@ -407,7 +411,7 @@ describe("a plural affordance", () => {
 
 		expect(fr?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
 		expect(us?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
-		expect(fr?.matches.map((hit) => hit.countryScope)).toEqual([["US"], undefined])
+		expect(fr?.matches.map((hit) => hit.countryScope)).toEqual([["US"], null])
 	})
 
 	it("records one observation per member, each with its own authority", () => {
@@ -430,7 +434,7 @@ describe("a plural affordance", () => {
 		const hits = committedRoute.lookup("prescription", "fr-FR")
 
 		expect(hits.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
-		expect(hits.map((hit) => hit.countryScope)).toEqual([["US"], undefined])
+		expect(hits.map((hit) => hit.countryScope)).toEqual([["US"], null])
 
 		committedRoute.takeObservations()
 		committedRoute.lookup("prescription", "fr-FR")
@@ -439,7 +443,7 @@ describe("a plural affordance", () => {
 
 		const unscoped = await scratchRoute(withoutDrugstoreCountryScope)
 
-		expect(unscoped.lookup("prescription", "fr-FR").map((hit) => hit.countryScope)).toEqual([undefined, undefined])
+		expect(unscoped.lookup("prescription", "fr-FR").map((hit) => hit.countryScope)).toEqual([null, null])
 	})
 })
 
@@ -472,7 +476,7 @@ describe("the assertion's country scope", () => {
 					mechanism: null,
 					inputPhrase: "prescription",
 					wikidata: null,
-					searchAsSet: true,
+					reading: "set",
 					countryScope: ["US"],
 				},
 			])
@@ -495,7 +499,7 @@ describe("the assertion's country scope", () => {
 
 		expect(hits.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
 		expect(hits[0]).toHaveProperty("countryScope", ["US"])
-		expect(hits[1]).not.toHaveProperty("countryScope")
+		expect(hits[1]).toHaveProperty("countryScope", null)
 	})
 
 	it("records the scope and the caller's lens, so a receipt can be checked", async () => {
@@ -544,7 +548,7 @@ describe("the assertion's country scope", () => {
 					mechanism: null,
 					inputPhrase: "collect a prescription",
 					wikidata: null,
-					searchAsSet: true,
+					reading: "set",
 					countryScope: ["US"],
 				},
 			])

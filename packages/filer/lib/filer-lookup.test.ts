@@ -749,7 +749,7 @@ describe("§7-3a criteria", () => {
 			expect(result.primary_frn?.frn).toBe("0003333333")
 		})
 
-		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, checks the outcome", async () => {
+		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, checks the result", async () => {
 			using db = openMemory()
 			await seedClosedVsInForce(db)
 

@@ -24,7 +24,7 @@ export function clientAddress(c: Context): string {
  * This keeps one exhausted key from becoming a free retry on the rest.
  */
 export async function withinLimits(limiter: RateLimit, keys: readonly string[]): Promise<boolean> {
-	const outcomes = await Promise.all(keys.map((key) => limiter.limit({ key })))
+	const results = await Promise.all(keys.map((key) => limiter.limit({ key })))
 
-	return outcomes.every((outcome) => outcome.success)
+	return results.every((result) => result.success)
 }

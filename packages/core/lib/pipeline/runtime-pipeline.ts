@@ -326,7 +326,7 @@ export async function runPipeline(
 	const intentMarkers: QueryIntentMarker[] = [...(kind.intentMarkers ?? [])]
 
 	// A POI-shaped query goes to the intent stage first.
-	// A null outcome falls through to parsing.
+	// A null result falls through to parsing.
 	if ((kind.kind === "poi_query" || kind.kind === "poi_category") && stages.poiIntent) {
 		throwIfAborted(opts)
 		const tPoi = performance.now()

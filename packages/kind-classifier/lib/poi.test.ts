@@ -18,6 +18,8 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 				mechanism: null,
 				inputPhrase: null,
 				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		]
 	}
@@ -32,6 +34,8 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 				mechanism: null,
 				inputPhrase: null,
 				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		]
 	}
@@ -46,6 +50,8 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 				mechanism: null,
 				inputPhrase: null,
 				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		]
 	}
@@ -60,6 +66,8 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 				mechanism: null,
 				inputPhrase: null,
 				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		]
 	}
@@ -74,6 +82,8 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 				confidence: 1,
 				mechanism: null,
 				inputPhrase: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		]
 	}
@@ -95,7 +105,7 @@ const input = (normalized: string) => ({ raw: normalized, normalized })
 const shape = (segments?: string[]) => ({
 	...EMPTY_QUERY_SHAPE_VIEW,
 	knownFormats: [],
-	...(segments ? { segments: segments.map((body, index) => ({ body, index })) } : {}),
+	...(segments ? { segments: segments.map((body, index) => ({ body, index, span: null })) } : {}),
 })
 
 describe("matchPOISubject", () => {
@@ -156,6 +166,8 @@ describe("matchPOISubject", () => {
 			confidence: 1,
 			mechanism: null,
 			inputPhrase: null,
+			reading: "preference",
+			countryScope: null,
 		})
 
 		expect(m?.remainder).toBe("Houston TX")
@@ -174,6 +186,8 @@ describe("a lookup returning several hits", () => {
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
+						reading: "preference",
+						countryScope: null,
 					},
 					{
 						kind: "category",
@@ -183,6 +197,8 @@ describe("a lookup returning several hits", () => {
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
+						reading: "preference",
+						countryScope: null,
 					},
 				]
 			: []
@@ -198,7 +214,8 @@ describe("a lookup returning several hits", () => {
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
-						searchAsSet: true,
+						reading: "set",
+						countryScope: null,
 					},
 					{
 						kind: "category",
@@ -208,7 +225,8 @@ describe("a lookup returning several hits", () => {
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
-						searchAsSet: true,
+						reading: "set",
+						countryScope: null,
 					},
 				]
 			: []
@@ -257,6 +275,8 @@ describe("ANCHOR_SEPARATOR split behavior (byte-identical across the linearizati
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
+						reading: "preference",
+						countryScope: null,
 					},
 				]
 			: []
@@ -303,6 +323,8 @@ describe("ANCHOR_SEPARATOR split behavior (byte-identical across the linearizati
 			mechanism: null,
 			inputPhrase: null,
 			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}
 
 		expect(m).toEqual({
@@ -345,6 +367,8 @@ describe("span-first adversarial place names", () => {
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
+						reading: "preference",
+						countryScope: null,
 					},
 				]
 			: []
@@ -391,6 +415,8 @@ describe("span-first multilingual anchors", () => {
 						mechanism: null,
 						inputPhrase: null,
 						wikidata: null,
+						reading: "preference",
+						countryScope: null,
 					},
 				]
 			: []

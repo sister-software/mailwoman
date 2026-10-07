@@ -101,18 +101,18 @@ function peliasBody(point: { lat: number; lon: number } | null) {
 }
 
 /**
- * @param outcomes Scripted wire responses after the identity probe's two requests, in row order.
+ * @param results Scripted wire responses after the identity probe's two requests, in row order.
  */
 async function comparison(
 	registry: EngineRegistryLike,
-	outcomes: Parameters<typeof stubTransport>[0],
+	results: Parameters<typeof stubTransport>[0],
 	args: Record<string, unknown> = {}
 ) {
 	const transport = stubTransport([
 		// The identity probe: the status path, then one throwaway search.
 		{ status: 200, body: "status: ok" },
 		{ body: peliasBody(ANDORRA_LA_VELLA) },
-		...outcomes,
+		...results,
 	])
 
 	return (await runCompare(

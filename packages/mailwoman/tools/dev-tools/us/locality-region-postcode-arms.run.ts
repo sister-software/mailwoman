@@ -26,7 +26,7 @@
  * Read the per-word table for its row counts first, since a per-word rate here
  * is a pointer to a question rather than an answer.
  *
- * `--out-json` records every row's outcome for the same reason.
+ * `--out-json` records every row's result for the same reason.
  *
  * Run:
  *
@@ -161,9 +161,9 @@ const ARMS = [
 const EXAMPLES_PER_ARM = 5
 
 /**
- * One row's outcome, included in the JSON so a per-word reading needs no second run.
+ * One row's result, included in the JSON so a per-word reading needs no second run.
  */
-interface RowOutcome {
+interface RowResult {
 	arm: string
 	input: string
 	/**
@@ -191,7 +191,7 @@ const depsOptions: GauntletDepsOptions = {
 
 const deps = await buildGauntletDeps(depsOptions)
 const report: Record<string, { matched: number; noLocality: number; total: number; examples: string[] }> = {}
-const outcomes: RowOutcome[] = []
+const results: RowResult[] = []
 
 for (const arm of ARMS) {
 	let matched = 0
@@ -211,7 +211,7 @@ for (const arm of ARMS) {
 		const locality = result.locality ?? null
 		const tail = suffixTail(place.locality)
 
-		outcomes.push({
+		results.push({
 			arm: arm.name,
 			input,
 			expected: place.locality,
@@ -277,7 +277,7 @@ for (const arm of ARMS) {
 for (const arm of ARMS) {
 	if (arm.inverted) continue
 
-	const armRows = outcomes.filter((row) => row.arm === arm.name)
+	const armRows = results.filter((row) => row.arm === arm.name)
 
 	const buckets = [
 		["ends in a suffix word", armRows.filter((row) => row.suffixTail !== null)],
@@ -335,7 +335,7 @@ if (values["out-json"]) {
 		weights: await readWeightsIdentity(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
 	}
 
-	await writeLocalJSONFile({ provenance, panel: panel.length, arms: report, rows: outcomes }, values["out-json"])
+	await writeLocalJSONFile({ provenance, panel: panel.length, arms: report, rows: results }, values["out-json"])
 
 	console.log(
 		`\nwrote ${values["out-json"]}\n  commit ${provenance.gitCommit}` +

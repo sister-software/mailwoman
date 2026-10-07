@@ -112,9 +112,9 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 }
 
 /**
- * The outcome fields that an entity answer writes.
+ * The result fields that an entity answer writes.
  *
- * The type is structural to avoid an import cycle with the outcome module.
+ * The type is structural to avoid an import cycle with the result module.
  */
 export interface ForkEntityAnswerTarget {
 	lat: number | null
@@ -128,7 +128,7 @@ export interface ForkEntityAnswerTarget {
 }
 
 /**
- * Writes the entity's coordinates, venue tier and admin coherence report to the outcome.
+ * Writes the entity's coordinates, venue tier and admin coherence report to the result.
  */
 function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,

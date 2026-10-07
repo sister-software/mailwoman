@@ -13,7 +13,7 @@ import { ABLATION_ABSENT } from "#ablation/expectation"
 import {
 	ABLATABLE_COMPONENTS,
 	type AblationCell,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	aggregateAblationComponents,
 } from "#tools/eval-harness/gauntlet/ablation/types"
 
@@ -50,9 +50,9 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render only the matrix.
+	 * The per-row results behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render only the matrix.
 	 */
-	rows: readonly AblationRowOutcome[],
+	rows: readonly AblationRowResult[],
 	meta: {
 		boardID: string
 		measuredAt: string

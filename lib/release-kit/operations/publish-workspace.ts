@@ -40,7 +40,7 @@ export const publishWorkspaceOperation = defineOperation({
 		.strict(),
 	outputSchema: z.object({
 		workspace: z.string(),
-		outcome: z.enum(["published", "skipped-weights", "already-published", "dry-run"]),
+		result: z.enum(["published", "skipped-weights", "already-published", "dry-run"]),
 		tarballAudit: z.string().optional(),
 		planDigest: z.string().nullable(),
 	}),

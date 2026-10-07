@@ -18,6 +18,7 @@ import {
 	type ResolvedPlace,
 	type ResolveOpts,
 	type ResolverBackend,
+	type ResolveSwitches,
 } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 import { haversineKm } from "@mailwoman/spatial"
@@ -32,6 +33,11 @@ const TRACE_CANDIDATE_CAP = 10
 const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
 
 const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
+
+/**
+ * {@link ResolveOpts} with every {@link ResolveSwitches} key resolved against its default.
+ */
+export type ResolvedOpts = ResolveOpts & ResolveSwitches
 
 /**
  * The admin placetypes from country to microhood that `ResolveOpts.diagnoseUnreachable`
@@ -380,7 +386,7 @@ export async function applySpanRescore(
 	roots: AddressNode[],
 	raw: string,
 	backend: ResolverBackend,
-	opts: ResolveOpts
+	opts: ResolvedOpts
 ): Promise<void> {
 	if (hasResolvedPlace(roots, opts.spanRescoreWeakResolution ?? false)) return
 
@@ -392,14 +398,14 @@ export async function applySpanRescore(
 			postcode: firstPostcodeValue(roots),
 			thresholdKm: opts.spanRescoreThresholdKm,
 
-			postalCompoundRecovery: opts.postalCompoundRecovery !== false,
+			postalCompoundRecovery: opts.postalCompoundRecovery,
 			spanRescoreRequireContextRemainder: opts.spanRescoreRequireContextRemainder,
 		})
 	} catch {
 		return
 	}
 
-	if (!hit && opts.postalCompoundRecovery !== false) {
+	if (!hit && opts.postalCompoundRecovery) {
 		try {
 			await recoverPostcodeNode(roots, backend, opts.defaultCountry?.country ?? null, opts.traceSink)
 		} catch {}

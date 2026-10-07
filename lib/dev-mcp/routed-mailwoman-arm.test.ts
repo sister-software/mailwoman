@@ -178,7 +178,7 @@ describe("buildRoutedMailwomanArm", () => {
 				postcode_country_coherence: false,
 				gazetteer_prior: false,
 				admin_containment_rerank: true,
-				capital_tier: true,
+				capital_tier: "required",
 				variant_alias_exemption: "applied",
 			},
 			[resolvedInput({ id: "us", input: "1 Main St", country: "us" })],
@@ -192,7 +192,7 @@ describe("buildRoutedMailwomanArm", () => {
 				postcodeCountryCoherence: false,
 				gazetteerPrior: false,
 				adminContainmentRerank: true,
-				capitalTier: true,
+				capitalTier: "required",
 				variantAliasExemption: true,
 			},
 		})

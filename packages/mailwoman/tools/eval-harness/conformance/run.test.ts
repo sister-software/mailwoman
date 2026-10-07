@@ -10,7 +10,7 @@ import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	type ConformanceObserver,
@@ -28,7 +28,7 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		base: "10 Downing Street, London",
 		variant: "10 DOWNING STREET, LONDON",
 		context: null,
-		outcomeComparator: "component_map",
+		resultComparator: "component_map",
 		expect: "equivalent",
 		status: null,
 		bugRef: null,
@@ -72,7 +72,7 @@ function tableObserver(table: Record<string, Record<string, string>>): {
 				admin_coherence: null,
 				hierarchy: [],
 			},
-		} satisfies ConformanceOutcome
+		} satisfies ConformanceResult
 	}
 
 	return { observe, calls }
@@ -251,7 +251,7 @@ describe("formatConformanceFinding", () => {
 		})
 
 		const { findings } = await runConformanceFixtures(
-			[fixture({ outcomeComparator: "mechanism_shape", base: "10 Downing", variant: "somewhere else" })],
+			[fixture({ resultComparator: "mechanism_shape", base: "10 Downing", variant: "somewhere else" })],
 			shaped
 		)
 
@@ -406,7 +406,7 @@ describe("tracedGauntletObserver", () => {
 					law: "refinement-monotonicity",
 					base: "Springfield",
 					variant: "Springfield",
-					outcomeComparator: "candidate_admissibility",
+					resultComparator: "candidate_admissibility",
 					expect: "refines",
 				}),
 			],
@@ -495,7 +495,7 @@ describe("the unmeasured verdict bucket", () => {
 		law: "refinement-monotonicity",
 		base: "Springfield",
 		variant: "Springfield, IL",
-		outcomeComparator: "candidate_admissibility",
+		resultComparator: "candidate_admissibility",
 		expect: "refines",
 	})
 

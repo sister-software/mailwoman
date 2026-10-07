@@ -75,7 +75,7 @@ export interface SpanBoardOptions {
 	klass?: string
 }
 
-export interface SpanBoardOutcome {
+export interface SpanBoardResult {
 	exitCode: number
 }
 
@@ -100,7 +100,7 @@ export interface SpanBoardSpec<Fixture extends SpanBoardFixture> {
 export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	spec: SpanBoardSpec<Fixture>,
 	options: SpanBoardOptions = {}
-): Promise<SpanBoardOutcome> {
+): Promise<SpanBoardResult> {
 	const fixtures = JSONSpliterator.fromAsync<Fixture>(options.fixturesPath ?? spec.defaultFixturesPath).filter(
 		(fixture) => !options.klass || fixture.klass === options.klass
 	)

@@ -140,7 +140,7 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 }
 
 /**
- * One workspace's pack-and-audit outcome.
+ * One workspace's pack-and-audit result.
  *
  * A pack that could not produce a tarball reports the thrown message as its
  * single failure rather than aborting the sweep.

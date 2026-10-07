@@ -7,7 +7,7 @@
  */
 
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
-import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` arrives as a value via the post-reset dynamic import below,
 // so the type position needs this type-only static import.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
@@ -744,8 +744,8 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 })
 
 describe("createSECClient: the caller's failure taxonomy, decided without reading any message", () => {
-	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
-		const transport = stubTransport(outcomes)
+	async function failureFor(results: StubResult[], maxAttempts = 2): Promise<unknown> {
+		const transport = stubTransport(results)
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,

@@ -37,7 +37,7 @@ export type ServiceFeature = OGCFeature
  * near a point, in one scenario's collection.
  *
  * A function lets tests exercise the check's own logic.
- * The comparison decides which of three outcomes applies to a point.
+ * The comparison decides which of three results applies to a point.
  *
  * A test cannot observe these decisions through a live HTTP client.
  * A scripted reader lets the test pin them. {@link createEAServiceReader} builds the real reader.

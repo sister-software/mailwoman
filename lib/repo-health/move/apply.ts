@@ -35,7 +35,7 @@ export interface ModuleMoveApplyOptions {
 }
 
 /**
- * The outcome of {@linkcode applyModuleMoves}.
+ * The result of {@linkcode applyModuleMoves}.
  */
 export interface ModuleMoveResult {
 	moves: ModuleMove[]

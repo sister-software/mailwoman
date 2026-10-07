@@ -57,7 +57,7 @@ export interface BlessPackageOptions {
 }
 
 /**
- * The per-package outcome of {@link blessPackages}.
+ * The per-package result of {@link blessPackages}.
  */
 export interface BlessPackageReport {
 	blessed: Array<{ name: string; published: boolean; trusted: boolean }>

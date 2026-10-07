@@ -12,6 +12,7 @@ import type { PathBuilderLike } from "path-ts"
 import type { AddressSystemTable } from "#address-system"
 import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
 import { NeuralAddressClassifier, type AddressSystemConventions } from "#classifier"
+import { gazetteerSuppressionFor } from "#classifier/options"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
@@ -28,6 +29,12 @@ import {
 	type RequiredChannels,
 } from "#weights/channels"
 import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
+
+/**
+ * A scorer's conventions override: `"declared"` follows the model card, `"off"` disables
+ * conventions, and `"auto"` or a system code replaces the card's mode.
+ */
+export type ScorerConventions = "declared" | AddressSystemConventions
 
 /**
  * The largest F1 drop (`maskOffF1 − maskOnF1`) a conventions mask may cause on a
@@ -152,9 +159,10 @@ export interface ScorerOverrides {
 	country?: boolean
 
 	/**
-	 * Replaces the card's conventions mode with `"auto"` or a system code; `false` disables conventions.
+	 * The conventions mode: `"declared"` (the default) follows the card, `"off"` disables
+	 * conventions, and `"auto"` or a system code replaces the card's mode.
 	 */
-	conventions?: "auto" | string | false
+	conventions?: ScorerConventions
 
 	/**
 	 * Replaces the card's `bridge` declaration for punctuation-gap bridging.
@@ -505,26 +513,25 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
 	let addressSystemConventions: "auto" | string | null
+	const conventionsOverride = overrides.conventions ?? "declared"
 
-	if (overrides.conventions !== undefined) {
-		if (overrides.conventions === false) {
-			addressSystemConventions = null
+	if (conventionsOverride === "off") {
+		addressSystemConventions = null
 
-			if (conventionsRequired) {
-				console.error(
-					`[createScorer] OVERRIDE: conventions DISABLED (override conventions:false) but the ` +
-						`model-card declares them REQUIRED (mode "${declaredConventionsMode}").`
-				)
-			}
-		} else {
-			addressSystemConventions = overrides.conventions
+		if (conventionsRequired) {
+			console.error(
+				`[createScorer] OVERRIDE: conventions DISABLED (override conventions:"off") but the ` +
+					`model-card declares them REQUIRED (mode "${declaredConventionsMode}").`
+			)
+		}
+	} else if (conventionsOverride !== "declared") {
+		addressSystemConventions = conventionsOverride
 
-			if (overrides.conventions !== declaredConventionsMode) {
-				console.error(
-					`[createScorer] OVERRIDE: conventions mode set to "${overrides.conventions}" (model-card ` +
-						`declares "${declaredConventionsMode}").`
-				)
-			}
+		if (conventionsOverride !== declaredConventionsMode) {
+			console.error(
+				`[createScorer] OVERRIDE: conventions mode set to "${conventionsOverride}" (model-card ` +
+					`declares "${declaredConventionsMode}").`
+			)
 		}
 	} else {
 		addressSystemConventions = conventionsRequired ? declaredConventionsMode : null
@@ -536,8 +543,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 	const bridgePunctuationGaps = overrides.bridge ?? declared.bridge?.required ?? false
 
-	const suppressGazetteerNearPostcode =
-		overrides.suppressGazetteerNearPostcode ?? declared.suppress_gazetteer_near_postcode ?? false
+	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(overrides.suppressGazetteerNearPostcode, declared)
 
 	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 

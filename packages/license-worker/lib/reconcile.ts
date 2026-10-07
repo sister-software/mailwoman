@@ -178,12 +178,12 @@ async function mintIfUnminted(
 	try {
 		if (await findToken(deps.ledger, invoiceID)) return
 
-		const outcome = await fulfilInvoice(env, deps, invoiceID)
+		const result = await fulfilInvoice(env, deps, invoiceID)
 
-		if (outcome.outcome === "minted") {
+		if (result.result === "minted") {
 			report.minted.push(invoiceID)
-		} else if (outcome.outcome === "refused") {
-			report.refused.push({ invoiceID, reason: outcome.reason })
+		} else if (result.result === "refused") {
+			report.refused.push({ invoiceID, reason: result.reason })
 		}
 	} catch (error) {
 		report.failed.push({ stage: "mint", invoiceID, reason: failureReason(error) })
@@ -222,7 +222,7 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
  * read from the charge rather than the subscription.
  *
  * A refund leaves the subscription `active`, and a dispute Stripe ruled `won` returns the
- * license to its subscription's state while any other dispute outcome leaves it revoked.
+ * license to its subscription's state while any other dispute result leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

@@ -92,7 +92,7 @@ export interface GenerateClientsOptions {
 }
 
 /**
- * The outcome of {@link generateClients}: one check per pipeline step, stopping at
+ * The result of {@link generateClients}: one check per pipeline step, stopping at
  * the first failure, plus a receipt of what was written.
  */
 export interface GenerateClientsResult {

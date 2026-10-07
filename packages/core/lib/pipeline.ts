@@ -22,6 +22,8 @@ export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "#pipeline/span-propos
 export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipeline/span-proposer"
 
 export {
+	CASE_NORMALIZATIONS,
+	caseNormalizationOf,
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
 	deriveInputMode,

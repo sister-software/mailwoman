@@ -287,7 +287,7 @@ export interface JurisdictionTileOptions {
 }
 
 /**
- * The outcome of a jurisdiction tile build.
+ * The result of a jurisdiction tile build.
  */
 export interface JurisdictionTileResult {
 	out: string

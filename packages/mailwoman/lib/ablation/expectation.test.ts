@@ -273,15 +273,15 @@ describe("the expectation is INVARIANT to the variant's output", () => {
 	it("is byte-identical across four wildly different ablated answers", () => {
 		const expected = deriveExpectedRung(remaining, LADDER, gz)
 
-		const outcomes = [
+		const results = [
 			{ lat: 39.8017, lon: -89.6437 }, // The rooftop.
 			{ lat: 42.1015, lon: -72.5898 }, // Springfield, MA.
 			{ lat: 39.76, lon: -89.66 }, // The county centroid.
 			{ lat: null, lon: null }, // An abstention.
 		]
 
-		for (const outcome of outcomes) {
-			gradeAgainstLadder({ expected, ladder: LADDER, ...outcome, slot: "absent", anchorRungDepth: 0 })
+		for (const result of results) {
+			gradeAgainstLadder({ expected, ladder: LADDER, ...result, slot: "absent", anchorRungDepth: 0 })
 
 			expect(deriveExpectedRung(remaining, LADDER, gz)).toEqual(expected)
 		}

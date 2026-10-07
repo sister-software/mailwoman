@@ -245,6 +245,64 @@ export interface DefaultCountry {
 	source: DefaultCountrySource
 }
 
+/**
+ * The on/off resolver passes and tiers, every one resolved against {@link RESOLVE_SWITCH_DEFAULTS}.
+ *
+ * Each is an optional {@link ResolveOpts} key.
+ * The resolver reads them only through {@link resolveSwitches}, so a default lives in exactly one place.
+ */
+export interface ResolveSwitches {
+	parentFallback: boolean
+	addressPointBboxFallback: boolean
+	spanRescore: boolean
+	spanRescoreRequireContextRemainder: boolean
+	postalCompoundRecovery: boolean
+	postcodeConsistency: boolean
+	postcodeCountryCoherence: boolean
+	postcodeShapeCoherence: boolean
+	postcodeContainmentCoherence: boolean
+	postcodePrefixPrior: boolean
+	adminCoherence: boolean
+	hierarchyCompletion: boolean
+	includeAncestors: boolean
+	adminContainmentRerank: boolean
+	diagnoseUnreachable: boolean
+}
+
+/**
+ * The default of every {@link ResolveSwitches} key.
+ */
+export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
+	parentFallback: true,
+	addressPointBboxFallback: false,
+	spanRescore: true,
+	spanRescoreRequireContextRemainder: false,
+	postalCompoundRecovery: true,
+	postcodeConsistency: true,
+	postcodeCountryCoherence: true,
+	postcodeShapeCoherence: false,
+	postcodeContainmentCoherence: false,
+	postcodePrefixPrior: false,
+	adminCoherence: true,
+	hierarchyCompletion: true,
+	includeAncestors: false,
+	adminContainmentRerank: false,
+	diagnoseUnreachable: false,
+}
+
+/**
+ * Fills each unset switch from {@link RESOLVE_SWITCH_DEFAULTS}.
+ */
+export function resolveSwitches(opts: Partial<ResolveSwitches>): ResolveSwitches {
+	const switches = { ...RESOLVE_SWITCH_DEFAULTS }
+
+	for (const key of Object.keys(RESOLVE_SWITCH_DEFAULTS) as (keyof ResolveSwitches)[]) {
+		switches[key] = opts[key] ?? RESOLVE_SWITCH_DEFAULTS[key]
+	}
+
+	return switches
+}
+
 export interface ResolveOpts {
 	/**
 	 * Max backend lookups per tree.
@@ -272,6 +330,7 @@ export interface ResolveOpts {
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * Retry without parent constraint on scoped miss.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	parentFallback?: boolean
 	/**
@@ -312,6 +371,7 @@ export interface ResolveOpts {
 	addressPoints?: AddressPointLookup
 	/**
 	 * Enables locality-bbox fallback in address-point lookup.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	addressPointBboxFallback?: boolean
 	/**
@@ -332,6 +392,7 @@ export interface ResolveOpts {
 	streetCountryHints?: readonly string[]
 	/**
 	 * Enables span-rescore recovery tier.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	spanRescore?: boolean
 	/**
@@ -340,6 +401,7 @@ export interface ResolveOpts {
 	spanRescoreThresholdKm?: number
 	/**
 	 * Require contextual remainder for span-rescore sub-spans.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
@@ -348,10 +410,12 @@ export interface ResolveOpts {
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * Enables postal-compound recovery in span-rescore tier.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	postalCompoundRecovery?: boolean
 	/**
 	 * Enables postcode-based locality disambiguation.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	postcodeConsistency?: boolean
 	/**
@@ -364,6 +428,7 @@ export interface ResolveOpts {
 	postcodeConsistencyMaxMoveKm?: number
 	/**
 	 * Enables postcode-country coherence pass.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -372,14 +437,17 @@ export interface ResolveOpts {
 	postcodeCountryCoherenceThresholdKm?: number
 	/**
 	 * Enables postcode-shape coherence pass.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	postcodeShapeCoherence?: boolean
 	/**
 	 * Enables postcode-containment coherence pass.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**
 	 * Enables postcode-prefix prior tier.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	postcodePrefixPrior?: boolean
 	/**
@@ -392,18 +460,22 @@ export interface ResolveOpts {
 	postcodePrefixIndex?: PostcodePrefixIndexLike
 	/**
 	 * Enables admin descendant-consistency correction.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	adminCoherence?: boolean
 	/**
 	 * Enables dual-role hierarchy completion.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	hierarchyCompletion?: boolean
 	/**
 	 * Attach ancestor lineage to resolved nodes.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	includeAncestors?: boolean
 	/**
 	 * Enables admin-containment rerank for locality candidates.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	adminContainmentRerank?: boolean
 	/**
@@ -412,6 +484,7 @@ export interface ResolveOpts {
 	traceSink?: (record: ResolveNodeTrace) => void
 	/**
 	 * Diagnose unresolved value reachability across placetypes.
+	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	diagnoseUnreachable?: boolean
 }

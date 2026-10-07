@@ -226,12 +226,12 @@ export interface QueryShapeFormatsView {
 /**
  * A read-only view of one segment.
  *
- * The `span` field is optional so that hand-built shapes without offsets stay valid.
+ * `span` holds the segment's character offsets, or `null` for a hand-built shape that has none.
  */
 export interface SegmentView {
 	body: string
 	index: number
-	span?: { start: number; end: number }
+	span: { start: number; end: number } | null
 }
 
 /**

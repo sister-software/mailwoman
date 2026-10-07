@@ -79,7 +79,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.exitCode).toBe(0)
 		expect(result.counts.lost).toBe(0)
 		expect(result.counts.degraded).toBe(0)
-		expect(result.outcomes).toHaveLength(3)
+		expect(result.results).toHaveLength(3)
 	})
 
 	it("fails (nonzero exit) on any LOST pair", async () => {
@@ -144,7 +144,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.counts.lost).toBe(1)
 		expect(result.newCounts.lost).toBe(0)
 		expect(result.pass).toBe(true)
-		expect(result.outcomes[0]?.preExisting).toBe(true)
+		expect(result.results[0]?.preExisting).toBe(true)
 	})
 
 	it("--baseline regression mode: a NEW violation the baseline does NOT have fails the check", async () => {
@@ -162,7 +162,7 @@ describe("runInvarianceSuite", () => {
 
 		expect(result.newCounts.lost).toBe(1)
 		expect(result.pass).toBe(false)
-		expect(result.outcomes[0]?.preExisting).toBe(false)
+		expect(result.results[0]?.preExisting).toBe(false)
 	})
 
 	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
@@ -183,10 +183,10 @@ describe("runInvarianceSuite", () => {
 
 		const result = await runInvarianceSuite({ rows: [brokenRow], parse: candidateParse, baselineParse })
 
-		expect(result.outcomes[0]?.verdict).toBe("LOST")
-		expect(result.outcomes[0]?.baselineVerdict).toBe("DEGRADED")
-		expect(result.outcomes[0]?.preExisting).toBe(false)
-		expect(result.outcomes[0]?.gainedCapability).toBe(false)
+		expect(result.results[0]?.verdict).toBe("LOST")
+		expect(result.results[0]?.baselineVerdict).toBe("DEGRADED")
+		expect(result.results[0]?.preExisting).toBe(false)
+		expect(result.results[0]?.gainedCapability).toBe(false)
 		expect(result.newCounts.lost).toBe(1)
 		expect(result.pass).toBe(false)
 	})
@@ -232,9 +232,9 @@ describe("runInvarianceSuite", () => {
 
 		const result = await runInvarianceSuite({ rows: [degradedRow], parse: candidateParse, baselineParse })
 
-		expect(result.outcomes[0]?.verdict).toBe("DEGRADED")
-		expect(result.outcomes[0]?.baselineVerdict).toBe("DEGRADED")
-		expect(result.outcomes[0]?.preExisting).toBe(true)
+		expect(result.results[0]?.verdict).toBe("DEGRADED")
+		expect(result.results[0]?.baselineVerdict).toBe("DEGRADED")
+		expect(result.results[0]?.preExisting).toBe(true)
 		expect(result.pass).toBe(true)
 	})
 
@@ -256,7 +256,7 @@ describe("runInvarianceSuite", () => {
 
 		const result = await runInvarianceSuite({ rows: [abbrevRow], parse })
 
-		expect(result.outcomes[0]?.verdict).toBe("INVARIANT")
+		expect(result.results[0]?.verdict).toBe("INVARIANT")
 		expect(result.pass).toBe(true)
 	})
 
@@ -349,10 +349,10 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			report: (line) => lines.push(line),
 		})
 
-		const outcome = result.outcomes[0]!
-		expect(outcome.verdict).toBe("GAINED")
-		expect(outcome.baselineVerdict).toBe("DEGRADED")
-		expect(outcome.gainedCapability).toBe(true)
+		const first = result.results[0]!
+		expect(first.verdict).toBe("GAINED")
+		expect(first.baselineVerdict).toBe("DEGRADED")
+		expect(first.gainedCapability).toBe(true)
 		expect(result.counts.gained).toBe(1)
 		expect(result.newCounts.gained).toBe(1)
 		expect(result.counts.lost).toBe(0)
@@ -388,12 +388,12 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 
 		const result = await runInvarianceSuite({ rows: [row], parse, baselineParse })
 
-		const commaDrop = result.outcomes.find((o) => o.transformID === "comma-drop")!
+		const commaDrop = result.results.find((o) => o.transformID === "comma-drop")!
 		expect(commaDrop.verdict).toBe("LOST")
 		expect(commaDrop.gainedCapability).toBe(true)
 		expect(commaDrop.preExisting).toBe(false) // not "the baseline also violates" — it could not
 
-		const caseFold = result.outcomes.find((o) => o.transformID === "case-fold")!
+		const caseFold = result.results.find((o) => o.transformID === "case-fold")!
 		expect(caseFold.verdict).toBe("DEGRADED")
 		expect(caseFold.gainedCapability).toBe(true)
 

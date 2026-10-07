@@ -71,6 +71,8 @@ describe("poiTaxonomyLookup adapter", () => {
 			confidence: 1,
 			mechanism: "exact",
 			inputPhrase: "chevron",
+			reading: "preference",
+			countryScope: null,
 		})
 	})
 
@@ -135,6 +137,8 @@ describe("createPOINameLookup", () => {
 				mechanism: "exact",
 				inputPhrase: "statue OF liberty",
 				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		])
 	})
@@ -289,7 +293,7 @@ const PRESCRIPTION_SET: POIPhraseMatch[] = [
 		mechanism: null,
 		inputPhrase: null,
 		wikidata: null,
-		searchAsSet: true,
+		reading: "set",
 		countryScope: ["US"],
 	},
 	{
@@ -297,10 +301,11 @@ const PRESCRIPTION_SET: POIPhraseMatch[] = [
 		categoryID: "pharmacy",
 		matchedPhrase: "prescription",
 		confidence: 1,
-		searchAsSet: true,
+		reading: "set",
 		mechanism: null,
 		inputPhrase: null,
 		wikidata: null,
+		countryScope: null,
 	},
 ]
 

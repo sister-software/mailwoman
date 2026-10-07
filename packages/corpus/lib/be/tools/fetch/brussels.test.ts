@@ -16,7 +16,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -50,8 +50,8 @@ const RECORDED: BrusselsManifest = {
 /**
  * The real client over a stubbed transport, so the request takes the production path.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "brussels test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

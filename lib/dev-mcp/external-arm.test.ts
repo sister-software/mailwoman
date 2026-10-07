@@ -39,8 +39,8 @@ const NOMINATIM_STATUS = {
 	database_version: "4.5.0-0",
 }
 
-function client(engine: ExternalEngine, outcomes: Parameters<typeof stubTransport>[0], endpoint = ENDPOINT) {
-	const transport = stubTransport(outcomes)
+function client(engine: ExternalEngine, results: Parameters<typeof stubTransport>[0], endpoint = ENDPOINT) {
+	const transport = stubTransport(results)
 
 	return { transport, client: new ExternalGeocoderClient(engine, endpoint, { axios: transport.axios }) }
 }

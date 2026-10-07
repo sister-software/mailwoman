@@ -25,9 +25,9 @@ import {
 } from "#observations"
 import {
 	type AbsenceCounts,
-	type AbsenceExpectedOutcome,
+	type AbsenceExpectedResult,
 	type AbsenceProbeRow,
-	type AbsenceRowOutcome,
+	type AbsenceRowResult,
 	type AbsenceVerdict,
 	absenceProbeDefinitionHash,
 	computeAbsenceCounts,
@@ -59,7 +59,7 @@ export interface AbsenceProbeReceipt {
 	artifact: AbsenceArtifactIdentity
 	absenceRoute: AbsenceRouteIdentity
 	semanticRouteInjected: boolean
-	rows: AbsenceRowOutcome[]
+	rows: AbsenceRowResult[]
 	observations: AbsenceRowObservation[]
 	counts: AbsenceCounts
 	verdict: AbsenceVerdict
@@ -105,14 +105,14 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 
 	const { pipeline, db, backend } = pipelineHandle
 
-	const rows: AbsenceRowOutcome[] = []
+	const rows: AbsenceRowResult[] = []
 	const observations: AbsenceRowObservation[] = []
 
 	try {
 		for (const row of definition.rows) {
-			const { outcome, observation } = await gradeRow(pipeline, absenceRoute, semanticRoute ?? null, row)
+			const { graded, observation } = await gradeRow(pipeline, absenceRoute, semanticRoute ?? null, row)
 
-			rows.push(outcome)
+			rows.push(graded)
 
 			if (observation) {
 				observations.push(observation)
@@ -143,7 +143,7 @@ async function gradeRow(
 	absenceRoute: AbsenceObservationRoute,
 	semanticRoute: SemanticObservationRoute | null,
 	row: AbsenceProbeRow
-): Promise<{ outcome: AbsenceRowOutcome; observation: AbsenceRowObservation | null }> {
+): Promise<{ graded: AbsenceRowResult; observation: AbsenceRowObservation | null }> {
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
@@ -152,9 +152,9 @@ async function gradeRow(
 	semanticRoute?.takeObservations()
 
 	const decision = await absenceRoute.observe(result.poiIntent ?? null)
-	const observedOutcome: AbsenceExpectedOutcome = decision.fired ? "absence_observation" : decision.refusal
+	const observedResult: AbsenceExpectedResult = decision.fired ? "absence_observation" : decision.refusal
 
-	const poiOutcome = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
+	const poiResult = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
 
 	// Compared as code-point-ordered sets: the lookup's enumeration order states no preference.
 	const searchedCategories =
@@ -169,26 +169,26 @@ async function gradeRow(
 				}`
 			: undefined
 
-	const outcome: AbsenceRowOutcome = {
+	const graded: AbsenceRowResult = {
 		id: row.id,
 		group: row.group,
 		query: row.query,
-		expectedOutcome: row.expectedOutcome,
-		observedOutcome,
-		holds: observedOutcome === row.expectedOutcome && !searchedSetBreach,
+		expectedResult: row.expectedResult,
+		observedResult,
+		holds: observedResult === row.expectedResult && !searchedSetBreach,
 		searchedCategories: searchedCategories ?? null,
 		searchedSetBreach: searchedSetBreach ?? null,
 		observationLine: decision.fired ? describeAbsenceObservation(decision.observation) : null,
-		poiOutcome,
+		poiResult,
 		abstainReason: result.poiIntent?.type === "abstain" ? result.poiIntent.reason : null,
 		resultsReturned:
 			result.poiIntent?.type === "intent" && result.poiIntent.results ? result.poiIntent.results.length : null,
 	}
 
-	if (!decision.fired) return { outcome, observation: null }
+	if (!decision.fired) return { graded, observation: null }
 
 	return {
-		outcome,
+		graded,
 		observation: {
 			rowID: row.id,
 			line: describeAbsenceObservation(decision.observation),
@@ -198,7 +198,7 @@ async function gradeRow(
 }
 
 /**
- * Prints each row's registered outcome beside the observed one, so a reader never
+ * Prints each row's registered result beside the observed one, so a reader never
  * has to open the definition to know what the row asserted.
  */
 export function printAbsenceProbeReceipt(receipt: AbsenceProbeReceipt): void {
@@ -236,7 +236,7 @@ export function printAbsenceProbeReceipt(receipt: AbsenceProbeReceipt): void {
 
 	for (const row of receipt.rows) {
 		console.log(
-			`  ${row.group.padEnd(17)} ${row.id.padEnd(12)} ${row.holds ? " ✓  " : " ✗  "}  ${row.expectedOutcome.padEnd(31)} ${row.observedOutcome}` +
+			`  ${row.group.padEnd(17)} ${row.id.padEnd(12)} ${row.holds ? " ✓  " : " ✗  "}  ${row.expectedResult.padEnd(31)} ${row.observedResult}` +
 				(row.searchedCategories ? `  searched [${row.searchedCategories.join(", ")}]` : "")
 		)
 	}

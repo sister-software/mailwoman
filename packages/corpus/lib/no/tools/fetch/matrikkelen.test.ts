@@ -16,7 +16,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -42,8 +42,8 @@ const SVALBARD = MATRIKKELEN_AREAS[1]!
 
 const LAST_MODIFIED = "Tue, 08 Sep 2026 08:19:56 GMT"
 
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "matrikkelen test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

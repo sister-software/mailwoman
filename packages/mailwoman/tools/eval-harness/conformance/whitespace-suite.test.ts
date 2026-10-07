@@ -145,7 +145,7 @@ describe("the committed whitespace suite", () => {
 	})
 
 	it("measures more than one comparator and more than one country", () => {
-		expect(new Set(fixtures.map((fixture) => fixture.outcomeComparator)).size).toBeGreaterThan(1)
+		expect(new Set(fixtures.map((fixture) => fixture.resultComparator)).size).toBeGreaterThan(1)
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 

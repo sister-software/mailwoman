@@ -21,7 +21,7 @@ import {
 	groupByFoldedName,
 	padRowIndex,
 	type StratumFillCensus,
-	type StratumOutcome,
+	type StratumResult,
 	uniqueNameEligible,
 } from "#tools/eval-harness/panel-fill"
 import {
@@ -116,10 +116,10 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 				build: (city, index) => {
 					const gold = goldFor(city)
 
-					if (!gold) return { outcome: "ungradeable" } satisfies StratumOutcome<ProminencePanelRow>
+					if (!gold) return { result: "ungradeable" } satisfies StratumResult<ProminencePanelRow>
 
 					return {
-						outcome: "row",
+						result: "row",
 						row: {
 							id: `${label.replace("/", "-")}-${padRowIndex(index)}`,
 							stratum: label,

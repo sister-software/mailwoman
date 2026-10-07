@@ -19,7 +19,7 @@ import {
 import {
 	AUTHORITATIVE_ARM_NAME,
 	OPEN_ARM_NAME,
-	outcomeFor,
+	resultFor,
 	resolvePremiseLinkageConfig,
 	runPremiseLinkage,
 	type PremiseLinkageRunOptions,
@@ -28,7 +28,7 @@ import {
 import {
 	PremiseLinkageFailureCategory,
 	PremiseLinkageMode,
-	PremiseLinkageOutcome,
+	PremiseLinkageResult,
 	PremiseLinkagePolicy,
 	type PremiseLinkageArmReport,
 	type PremiseLinkageCount,
@@ -107,7 +107,7 @@ function isCount(value: unknown): value is PremiseLinkageCount {
 }
 
 describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in both required arms", () => {
-	it("grades every fixture row through both arms, and the authoritative arm produces all four outcomes", async () => {
+	it("grades every fixture row through both arms, and the authoritative arm produces all four results", async () => {
 		const run = await syntheticRun()
 		const fixtureRows = await collectRows(syntheticFixtureAdapter())
 
@@ -115,26 +115,24 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 		expect(armNamed(run.report, OPEN_ARM_NAME).rowsRead).toBe(fixtureRows.length)
 		expect(armNamed(run.report, AUTHORITATIVE_ARM_NAME).rowsRead).toBe(fixtureRows.length)
 
-		const authoritativeOutcomes = new Set(
-			run.rows.filter((row) => row.providerName !== "none").map((row) => row.outcome)
-		)
+		const authoritativeResults = new Set(run.rows.filter((row) => row.providerName !== "none").map((row) => row.result))
 
-		expect(authoritativeOutcomes).toContain(PremiseLinkageOutcome.Exact)
-		expect(authoritativeOutcomes).toContain(PremiseLinkageOutcome.Wrong)
-		expect(authoritativeOutcomes).toContain(PremiseLinkageOutcome.Refused)
-		expect(authoritativeOutcomes).toContain(PremiseLinkageOutcome.Ambiguous)
+		expect(authoritativeResults).toContain(PremiseLinkageResult.Exact)
+		expect(authoritativeResults).toContain(PremiseLinkageResult.Wrong)
+		expect(authoritativeResults).toContain(PremiseLinkageResult.Refused)
+		expect(authoritativeResults).toContain(PremiseLinkageResult.Ambiguous)
 	})
 
 	it("grades both arms through ONE mapper, so neither arm can hold a private definition of `exact`", () => {
 		const expected = { scheme: "uprn", id: "000000000001" }
 
-		expect(outcomeFor(null, expected)).toEqual({
-			outcome: PremiseLinkageOutcome.Refused,
+		expect(resultFor(null, expected)).toEqual({
+			result: PremiseLinkageResult.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ArmAssertsNoIdentifier,
 		})
 
 		expect(
-			outcomeFor(
+			resultFor(
 				{
 					provider: "p",
 					status: "matched",
@@ -158,10 +156,10 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 				},
 				expected
 			)
-		).toEqual({ outcome: PremiseLinkageOutcome.Exact, failureCategory: null })
+		).toEqual({ result: PremiseLinkageResult.Exact, failureCategory: null })
 
 		expect(
-			outcomeFor(
+			resultFor(
 				{
 					provider: "p",
 					status: "matched",
@@ -184,11 +182,11 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 					error: null,
 				},
 				expected
-			).outcome
-		).toBe(PremiseLinkageOutcome.Wrong)
+			).result
+		).toBe(PremiseLinkageResult.Wrong)
 
 		expect(
-			outcomeFor(
+			resultFor(
 				{
 					provider: "p",
 					status: "refused",
@@ -200,11 +198,11 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 					error: null,
 				},
 				expected
-			).outcome
-		).toBe(PremiseLinkageOutcome.Refused)
+			).result
+		).toBe(PremiseLinkageResult.Refused)
 
 		expect(
-			outcomeFor(
+			resultFor(
 				{
 					provider: "p",
 					status: "ambiguous",
@@ -227,8 +225,8 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 					error: null,
 				},
 				expected
-			).outcome
-		).toBe(PremiseLinkageOutcome.Ambiguous)
+			).result
+		).toBe(PremiseLinkageResult.Ambiguous)
 	})
 
 	it("keeps a transport failure and a scheme-less match OUT of every rate, each with its own count", async () => {
@@ -236,7 +234,7 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 		const authoritative = armNamed(run.report, AUTHORITATIVE_ARM_NAME)
 
 		const categories = run.rows
-			.filter((row) => row.outcome === PremiseLinkageOutcome.Errored)
+			.filter((row) => row.result === PremiseLinkageResult.Errored)
 			.map((row) => row.failureCategory)
 
 		expect(categories).toContain(PremiseLinkageFailureCategory.TransportError)
@@ -303,7 +301,7 @@ describe(": the report prints every numerator and denominator", () => {
 
 		const openRows = required.rows.filter((row) => row.providerName === "none")
 
-		expect(openRows.every((row) => row.outcome !== PremiseLinkageOutcome.Wrong)).toBe(true)
+		expect(openRows.every((row) => row.result !== PremiseLinkageResult.Wrong)).toBe(true)
 	})
 })
 

@@ -51,9 +51,9 @@ export interface StubRequestConfig {
 }
 
 /**
- * One scripted adapter outcome.
+ * One scripted adapter result.
  */
-export interface StubOutcome {
+export interface StubResult {
 	status?: number
 	statusText?: string
 	/**
@@ -110,7 +110,7 @@ export interface StubTransportOptions {
 	 */
 	clock?: { now(): number }
 	/**
-	 * The body served when an outcome names none.
+	 * The body served when a result names none.
 	 *
 	 * Defaults to `{ ok: true }`; pass the envelope the client under test expects
 	 * when it validates one (BDC's `{ data: [] }`, say).
@@ -165,7 +165,7 @@ export function axiosLikeError(message: string, code: string, config: StubReques
 }
 
 /**
- * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted)
+ * A stub Axios adapter that replays `results` (holding on the last entry once exhausted)
  * and records every dispatch.
  *
  * It reproduces what Axios's real adapters do on a failing status — reject with an
@@ -173,7 +173,7 @@ export function axiosLikeError(message: string, code: string, config: StubReques
  * by the adapter rather than by the interceptor chain.
  * A test that resolves with a 4xx instead would exercise a path the real transport never takes.
  */
-export function stubTransport(outcomes: StubOutcome[], options: StubTransportOptions = {}): StubTransport {
+export function stubTransport(results: StubResult[], options: StubTransportOptions = {}): StubTransport {
 	const { clock, defaultBody = { ok: true } } = options
 	const calls: string[] = []
 	const configs: StubRequestConfig[] = []
@@ -188,7 +188,7 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 			dispatchTimes.push(clock.now())
 		}
 
-		const stub = outcomes[Math.min(index, outcomes.length - 1)]!
+		const stub = results[Math.min(index, results.length - 1)]!
 
 		index++
 

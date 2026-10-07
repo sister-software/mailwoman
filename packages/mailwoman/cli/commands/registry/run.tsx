@@ -130,7 +130,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	])
 
 	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
+	const { createResolverBackend } = await import("#resolver-backend")
 
 	const wofPath = await requireCommandWOFPath(options)
 
@@ -157,7 +157,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
-	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
+	const defaultCountry = resolverDefaultCountry(options)
 	const resolver = createWOFResolver(lookup)
 
 	const geocodeForIngest = geocodeAddressVia({
@@ -167,11 +167,11 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 				classifier,
 				resolver,
 				databases,
-				...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
+				...(defaultCountry ? { defaultCountry } : {}),
 				interpCalibration: INTERP_RADIUS_CALIBRATION,
 				...(options.placeCountry ? {} : { placeCountry: "none" }),
 			}),
-		country: defaultCountry,
+		country: defaultCountry?.country,
 	})
 
 	return {

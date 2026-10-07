@@ -100,7 +100,7 @@ interface Row {
 	/**
 	 * Separates a wrong country (`contradicted`) from a missing one (`dropped`).
 	 */
-	outcome: "agreed" | "contradicted" | "dropped" | "unplaceable"
+	result: "agreed" | "contradicted" | "dropped" | "unplaceable"
 }
 
 const rows: Row[] = []
@@ -120,7 +120,7 @@ for (const seed of cases) {
 	const parsed = decodeAsJSON(await classifier.parse(seed.input)).country ?? null
 	const parsedCode = codeOf(parsed)
 
-	const outcome: Row["outcome"] = !parsed
+	const result: Row["result"] = !parsed
 		? "dropped"
 		: !parsedCode
 			? "unplaceable"
@@ -128,19 +128,19 @@ for (const seed of cases) {
 				? "agreed"
 				: "contradicted"
 
-	rows.push({ input: seed.input, truth, parsed, parsedCode, outcome })
+	rows.push({ input: seed.input, truth, parsed, parsedCode, result })
 }
 
-const byOutcome = (outcome: Row["outcome"]) => rows.filter((row) => row.outcome === outcome)
-const contradicted = byOutcome("contradicted")
-const dropped = byOutcome("dropped")
+const byResult = (result: Row["result"]) => rows.filter((row) => row.result === result)
+const contradicted = byResult("contradicted")
+const dropped = byResult("dropped")
 const share = (n: number) => `${((100 * n) / rows.length).toFixed(1)}%`
 
 console.log(`\ncountry precision — ${rows.length} board rows whose input NAMES its own country\n`)
-console.log(`  agreed        ${byOutcome("agreed").length}   ${share(byOutcome("agreed").length)}`)
+console.log(`  agreed        ${byResult("agreed").length}   ${share(byResult("agreed").length)}`)
 console.log(`  contradicted  ${contradicted.length}   ${share(contradicted.length)}   <- named a DIFFERENT country`)
 console.log(`  dropped       ${dropped.length}   ${share(dropped.length)}   <- named none`)
-console.log(`  unplaceable   ${byOutcome("unplaceable").length}   a surface form the codex cannot place`)
+console.log(`  unplaceable   ${byResult("unplaceable").length}   a surface form the codex cannot place`)
 
 if (contradicted.length) {
 	console.log("\ncontradicted rows, every one of them:\n")

@@ -32,15 +32,15 @@ export const EngineStampSchema = z
  * A route's response schema once the route attaches the stamp: the body schema
  * intersected with the optional `engine` field.
  *
- * Applied at the route, never on an outcome schema, so an outcome schema keeps describing
+ * Applied at the route, never on a result schema, so a result schema keeps describing
  * what the engine produces (the schema drift pin in `mailwoman` depends on that) and the
- * OpenAPI document references the outcome component through `allOf` instead of cloning it.
+ * OpenAPI document references the result component through `allOf` instead of cloning it.
  *
  * `name` registers the stamped shape as its own component.
  * It is required rather than optional because an unnamed intersection is inlined at every use:
  * a generator then has no name to give the type and invents one from the position it appears in.
  *
- * `PhotonResponse::Variant0`, or a flattened per-operation clone of an outcome that already has a name.
+ * `PhotonResponse::Variant0`, or a flattened per-operation clone of a result that already has a name.
  *
  * This produces one `$ref` per stamped shape.
  * Generated client type names then follow the document's names.

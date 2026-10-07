@@ -16,7 +16,7 @@
 # against the v0.6.0 baseline (model-v060-step-100000) a clean attribution: any
 # delta is the label-smoothing effect, nothing else.
 #
-# hypothesis / expected outcome:
+# hypothesis / expected result:
 #   - Overconfidence (share of >0.9-confidence predictions) drops markedly
 #     (plan target: ~81% → ~50%).
 #   - Harness pass rate (primary release metric) improves as overconfident

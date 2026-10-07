@@ -88,7 +88,7 @@ test("ScoreLocalityOnly: short, alpha, ≤2 segments without format hits", () =>
 })
 
 test("scoreStructuredAddress: multi-segment alphanumeric scores highest", () => {
-	const seg = (n: number) => Array.from({ length: n }, (_, i) => ({ body: `s${i}`, index: i }))
+	const seg = (n: number) => Array.from({ length: n }, (_, i) => ({ body: `s${i}`, index: i, span: null }))
 
 	expect(
 		scoreStructuredAddress(

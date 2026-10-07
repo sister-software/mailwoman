@@ -50,12 +50,44 @@ import type { SoilCapabilityRoute } from "#observations/soil-route"
 import type { ZoningDesignationRoute } from "#observations/zoning-route"
 import { poiTaxonomyLookup } from "#poi/intent"
 import {
+	capitalIndexFor,
+	type CapitalTier,
 	createResolverBackend,
 	existingWOFDatabasePaths,
-	loadCapitalIndex,
 	resolveCandidateDBPath,
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
+
+export type { CapitalTier } from "#resolver-backend"
+
+/**
+ * The session settings that have a default, resolved once by {@link geocodeSessionSettings}.
+ */
+export interface GeocodeSessionSettings {
+	gazetteerPrior: boolean
+	capitalTier: CapitalTier
+	variantAliasExemption: boolean
+}
+
+/**
+ * The defaults behind every unset {@link GeocodeSessionSettings} key.
+ */
+export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
+	gazetteerPrior: true,
+	capitalTier: "auto",
+	variantAliasExemption: true,
+}
+
+/**
+ * Fills each unset session setting from {@link GEOCODE_SESSION_DEFAULTS}.
+ */
+export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>): GeocodeSessionSettings {
+	return {
+		gazetteerPrior: options.gazetteerPrior ?? GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
+		capitalTier: options.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
+		variantAliasExemption: options.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
+	}
+}
 
 /**
  * The parsed geocode command options that a session reads, structural
@@ -63,7 +95,8 @@ import {
  */
 export interface GeocodeSessionOptions {
 	/**
-	 * Whether to feed the gazetteer FST prior to the parse, where only `false` disables it.
+	 * Whether to feed the gazetteer FST prior to the parse.
+	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}.
 	 */
 	gazetteerPrior?: boolean
 	locale: string
@@ -93,15 +126,16 @@ export interface GeocodeSessionOptions {
 	poiVenueTier?: boolean
 
 	/**
-	 * Whether to promote a national capital among same-name candidates for a bare place name,
-	 * where only `false` disables it, an unset option disables promotion on a missing capitals reference.
-	 * An explicit `true` throws instead.
+	 * The national-capital promotion among same-name candidates for a bare place name.
+	 *
+	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}; see {@link CapitalTier}.
 	 */
-	capitalTier?: boolean
+	capitalTier?: CapitalTier
 
 	/**
 	 * Whether own-name `variant` aliases skip the cross-country primary-name penalty,
 	 * affecting only the candidate backend and requiring the `name_role` column.
+	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}.
 	 */
 	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
@@ -113,11 +147,6 @@ export interface GeocodeSessionOptions {
 	 */
 	adminContainmentRerank?: boolean
 
-	/**
-	 * Deprecated.
-	 * The session ignores this option.
-	 */
-	retryAlternateRegister?: boolean
 	placeCountryThreshold: number
 
 	/**
@@ -373,6 +402,7 @@ export async function loadForkEntityDeps(
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()
 	const progress = options.onProgress ?? (() => {})
+	const settings = geocodeSessionSettings(options)
 
 	progress("Checking gazetteer…")
 
@@ -402,7 +432,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let fst: FSTMatcherLike | null = null
 	let streetMorphology: FSTMatcherLike | null = null
 
-	if (options.gazetteerPrior !== false) {
+	if (settings.gazetteerPrior) {
 		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite/fst"),
 			import("@mailwoman/resolver-wof-sqlite/street"),
@@ -461,13 +491,10 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		candidateDB,
 		dataRoot: options.dataRoot,
 		wofPaths: wofPath,
-		...(options.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
+		variantAliasExemption: settings.variantAliasExemption,
 	})
 
-	const capitals =
-		options.capitalTier === false
-			? undefined
-			: await loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
+	const capitals = await capitalIndexFor(settings.capitalTier, candidateDB)
 
 	const capitalLevel = capitals
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
@@ -643,7 +670,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const routedAway = (await routed.forInput(input)) !== routed.primary
 
-		const localeCountry = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options, !!candidateDB)
+		const countryScope = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options)
+		const localeCountry = countryScope?.country ?? null
 
 		const barePostcodeFormatConflict = (): boolean => {
 			if (!isBarePostcodeTree(parsedTree)) return false
@@ -657,7 +685,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			return implied.length > 0 && !implied.includes(inferred)
 		}
 
-		const inferredScopeOK = options.defaultCountry || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
+		const inferredScopeOK =
+			countryScope?.source === "caller" || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
 
 		const withheldCountry = inferredScopeOK ? null : localeCountry
 
@@ -671,9 +700,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
-			...(inferredScopeOK && localeCountry
-				? { defaultCountry: { country: localeCountry, source: options.defaultCountry ? "caller" : "inferred" } }
-				: {}),
+			...(inferredScopeOK && countryScope ? { defaultCountry: countryScope } : {}),
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
 
 			...(capitalLevel ? { capitalLevel } : {}),

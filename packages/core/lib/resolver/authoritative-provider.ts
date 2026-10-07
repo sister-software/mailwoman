@@ -8,7 +8,7 @@
  *   This keeps provider assertions separate from Mailwoman's inferences.
  *
  *   An absent provider field is `null`; the interface uses no substitute value such as `false`, `0`, or `""`.
- *   Refusal and ambiguity are explicit outcomes.
+ *   Refusal and ambiguity are explicit results.
  *   Provider assertions do not overwrite Mailwoman's answer. The response contains both for the consumer to compare.
  *   Provider product names stay out of this interface. Product-specific mapping belongs in an adapter package.
  */

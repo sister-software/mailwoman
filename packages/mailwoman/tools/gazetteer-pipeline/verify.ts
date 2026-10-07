@@ -11,7 +11,7 @@ import type { PathBuilderLike } from "path-ts"
 import { DEFAULT_VERIFY_BASELINE } from "#gazetteer/verify/baseline"
 
 /**
- * Records the outcome of one identified gazetteer verification check.
+ * Records the result of one identified gazetteer verification check.
  */
 export interface VerifyCheckResult {
 	check: string

@@ -55,7 +55,7 @@ export async function buildParseRig(
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
-		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
+		...(ablateToAnchor ? { gazetteer: false, conventions: "off" } : {}),
 		...(anchorOff ? { anchor: false } : {}),
 	}
 

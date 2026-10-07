@@ -312,15 +312,15 @@ export function neuralClassifierLoadURLs(
 		// Older releases may not include it.
 		gazetteerLexicon: { url: assetURL(locale, version, "anchor-lexicon-v1.json") },
 		runner: { useWebGPU: !opts.forceWASM },
-		...(opts.hasAnchor
-			? {
-					postcodeBinaryURLs: [
-						assetURL(locale, version, "postcode-us.bin"),
-						assetURL(locale, version, "postcode-de.bin"),
-						assetURL(locale, version, "postcode-fr.bin"),
-					],
-				}
-			: {}),
+		postcodeBinaryURLs: opts.hasAnchor
+			? [
+					assetURL(locale, version, "postcode-us.bin"),
+					assetURL(locale, version, "postcode-de.bin"),
+					assetURL(locale, version, "postcode-fr.bin"),
+				]
+			: [],
+		// Callers that want the placetype-pair prior replace this with {@link pairIndexURLs}.
+		pairIndexURLs: [] as readonly string[],
 	}
 }
 

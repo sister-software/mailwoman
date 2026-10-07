@@ -344,11 +344,9 @@ export async function createSemanticObservationRoute(
 				// The confidence selects a query kind and never orders candidates: 1 for an unscoped
 				// phrase or an exact locale match, half that when only the language matches.
 				confidence: localeMatch.confidence,
-				searchAsSet: true,
+				reading: "set",
 				// The intent stage applies the country scope after it parses the anchor.
-				...(assertion.countries?.length
-					? { countryScope: assertion.countries.map((scoped) => scoped.toUpperCase()) }
-					: {}),
+				countryScope: assertion.countries?.length ? assertion.countries.map((scoped) => scoped.toUpperCase()) : null,
 			})
 		}
 

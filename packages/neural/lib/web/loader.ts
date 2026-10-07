@@ -11,6 +11,7 @@ import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { type AddressSystemConventions, NeuralAddressClassifier } from "#classifier"
+import { gazetteerSuppressionFor } from "#classifier/options"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
@@ -83,7 +84,7 @@ export interface LoadResult {
 	/**
 	 * Every pair index that fetched and parsed.
 	 *
-	 * It is empty when `pairIndexURLs` was omitted or every fetch failed.
+	 * It is empty when `pairIndexURLs` was empty or every fetch failed.
 	 */
 	pairIndexes: readonly LoadedPairIndex[]
 
@@ -142,8 +143,9 @@ export interface LoadFromURLsOptions {
 	 * The loader merges them into the anchor lookup required by anchor-trained models.
 	 *
 	 * A binary that fails to load is skipped with a warning.
+	 * Pass `[]` to load none.
 	 */
-	postcodeBinaryURLs?: readonly string[]
+	postcodeBinaryURLs: readonly string[]
 
 	/**
 	 * URLs of PIX1 pair indexes.
@@ -151,8 +153,9 @@ export interface LoadFromURLsOptions {
 	 * The loader reads each index so {@link LoadResult.selectPairIndexForText} can pick one per parse.
 	 *
 	 * An index that fails to fetch or parse is skipped with a warning.
+	 * Pass `[]` to load none.
 	 */
-	pairIndexURLs?: readonly string[]
+	pairIndexURLs: readonly string[]
 
 	/**
 	 * A locale or country code.
@@ -208,7 +211,8 @@ export interface LoadFromURLsOptions {
 
 	/**
 	 * Whether to zero the gazetteer channel next to postcode-anchor hits.
-	 * The default is `true`.
+	 *
+	 * The default follows the model card's declaration (see {@link gazetteerSuppressionFor}).
 	 */
 	suppressGazetteerNearPostcode?: boolean
 
@@ -356,12 +360,10 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, opts.runner),
-		opts.postcodeBinaryURLs?.length
+		opts.postcodeBinaryURLs.length
 			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
 			: Promise.resolve<AnchorLookup | null>(null),
-		opts.pairIndexURLs?.length
-			? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
-			: Promise.resolve<LoadedPairIndex[]>([]),
+		opts.pairIndexURLs.length ? loadPairIndexes(opts.pairIndexURLs, fetchImpl) : Promise.resolve<LoadedPairIndex[]>([]),
 	])
 
 	let configPairIndex: PairIndexResolver | null = null
@@ -394,7 +396,10 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
-		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
+		suppressGazetteerNearPostcode: gazetteerSuppressionFor(
+			opts.suppressGazetteerNearPostcode,
+			modelCard?.requires as { suppress_gazetteer_near_postcode?: boolean } | undefined
+		),
 		addressSystemConventions: opts.addressSystemConventions ?? "auto",
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
 	})
@@ -515,7 +520,7 @@ function warnOnUnfedTrainedChannels(
 			fed: !!fed.postcodeAnchorLookup,
 			message:
 				"[@mailwoman/neural/web/loader] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
-				"but no `postcodeBinaryURLs` were provided (postcode-<cc>.bin). " +
+				"but `postcodeBinaryURLs` is empty (postcode-<cc>.bin). " +
 				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config.",
 		},
 	]

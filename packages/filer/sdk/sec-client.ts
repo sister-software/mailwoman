@@ -46,7 +46,7 @@
  *   class — so tasks 6-8 branch on `status` plus {@linkcode isTransientResourceError}, never on message
  *   prose:
  *
- *   | Outcome                              | Caller action | Test                                     |
+ *   | Result                              | Caller action | Test                                     |
  *   | ------------------------------------ | ------------- | ---------------------------------------- |
  *   | 404                                  | skip filing   | `error.status === 404`                   |
  *   | 403                                  | abort the run | `error.status === 403`                   |

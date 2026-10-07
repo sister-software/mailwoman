@@ -21,7 +21,7 @@ function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipe
 			return {
 				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
-				segments: [{ body: normalized, index: 0 }],
+				segments: [{ body: normalized, index: 0, span: null }],
 			}
 		},
 		...overrides,

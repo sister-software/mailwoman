@@ -28,8 +28,8 @@ RESOLVE_TAGS: dict[str, tuple[str, str]] = {
 
 
 @dataclass(frozen=True)
-class RowOutcome:
-    """One board row's read: its outcome and the two keys used to bucket it.
+class RowResult:
+    """One board row's read: its result and the two keys used to bucket it.
 
     `acceptable` and `unresolved` are mutually exclusive. A row outside both states is wrong when its
     resolved centroid exceeds the accept radius. `gold_exact` never implies
@@ -53,8 +53,8 @@ def score_row(
     id_to_label: Mapping[int, str],
     resolve_tags: tuple[str, str],
     accept_km: float,
-) -> RowOutcome:
-    """Read one board row: its resolve outcome, per-tag hits, plus assigned buckets."""
+) -> RowResult:
+    """Read one board row: its resolve result, per-tag hits, plus assigned buckets."""
     region_tag, locality_tag = resolve_tags
     raw = row["raw"]
     ids = list(predict(raw))[: len(raw)]
@@ -89,7 +89,7 @@ def score_row(
         gold_exact = (
             gold_hit is not None and haversine_km(gold_hit[0], gold_hit[1], row["lon"], row["lat"]) <= accept_km
         )
-    return RowOutcome(
+    return RowResult(
         register=row.get("register"),
         gold_municipality=gold_muni,
         acceptable=acceptable,
@@ -123,26 +123,26 @@ class BoardTallies:
         self.muni_acceptable: Counter[str] = Counter()
         self.muni_gold_exact: Counter[str] = Counter()
 
-    def add(self, outcome: RowOutcome) -> None:
+    def add(self, result: RowResult) -> None:
         self.rows += 1
-        self.tag_total.update(outcome.tag_totals)
-        self.tag_hit.update(outcome.tag_hits)
-        register, muni = outcome.register, outcome.gold_municipality
+        self.tag_total.update(result.tag_totals)
+        self.tag_hit.update(result.tag_hits)
+        register, muni = result.register, result.gold_municipality
         if register is not None:
             self.reg_rows[register] += 1
         if muni is not None:
             self.muni_rows[muni] += 1
-        if outcome.acceptable:
+        if result.acceptable:
             self.acceptable += 1
             if register is not None:
                 self.reg_acceptable[register] += 1
             if muni is not None:
                 self.muni_acceptable[muni] += 1
-        if outcome.unresolved:
+        if result.unresolved:
             self.unresolved += 1
             if register is not None:
                 self.reg_unresolved[register] += 1
-        if outcome.gold_exact:
+        if result.gold_exact:
             self.gold_exact += 1
             if register is not None:
                 self.reg_gold_exact[register] += 1
@@ -197,14 +197,14 @@ def score_board(
     resolve_tags: tuple[str, str],
     accept_km: float = ACCEPT_KM,
 ) -> dict[str, Any]:
-    """Run the pre-registered read over ``rows``, plus the per-register split of the same outcomes.
+    """Run the pre-registered read over ``rows``, plus the per-register split of the same results.
 
         ``predict(raw) -> per-character label ids`` is injected so the arithmetic is testable without a
         checkpoint (and without importing torch). ``main`` supplies the real argmax decoder.
 
         The blended ``fraction`` is computed exactly as the pre-registered definition states —
         ``acceptable / len(rows)``, an unresolved pair counting as unacceptable. ``per_register`` is the
-    same per-row outcomes bucketed by the board's ``register`` column and has no threshold.
+    same per-row results bucketed by the board's ``register`` column and has no threshold.
     """
     tallies = BoardTallies()
     for row in rows:

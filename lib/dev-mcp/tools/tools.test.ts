@@ -112,15 +112,15 @@ describe("mwdev_job", () => {
 		const result = await runToCompletion(FAIL_SCRIPT, 1)
 
 		expect(result["state"]).toBe("failed")
-		expect(result["job_outcome"]).toContain("COMPLETED and graded FAIL")
-		expect(result["job_outcome"]).toContain("not a crash")
+		expect(result["job_result"]).toContain("COMPLETED and graded FAIL")
+		expect(result["job_result"]).toContain("not a crash")
 	})
 
 	it("does not claim completion for a run that never reached a verdict", async () => {
 		const result = await runToCompletion('console.error("boom");process.exit(1)', 1)
 
 		expect(result["state"]).toBe("failed")
-		expect(result["job_outcome"]).toBeUndefined()
+		expect(result["job_result"]).toBeUndefined()
 		expect((result["report"] as { unparsed: string[] }).unparsed.join(" ")).toContain("did not reach a verdict")
 	})
 

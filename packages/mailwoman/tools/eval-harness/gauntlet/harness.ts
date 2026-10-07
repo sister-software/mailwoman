@@ -24,8 +24,9 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { USStateDatabaseProvider } from "#geocode/regions"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
-import { createResolverBackend, loadCapitalIndex, resolveCandidateDBPath } from "#resolver-backend"
+import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
 
 export interface GauntletDeps extends Disposable {
@@ -138,13 +139,12 @@ export interface GauntletResolverPins {
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym class,
-	 * carrying an artifact (the candidate `capital` table with a repo-file fallback) that
-	 * the harness loads rather than `resolverPinDeps`; default on, `false` pins the off arm.
-	 *
-	 * An unset value uses the default and degrades on a reference-less artifact.
+	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
+	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
+	 * that the harness loads rather than `resolverPinDeps`.
+	 * Unpinned uses the session default.
 	 */
-	capitalTier?: boolean
+	capitalTier?: CapitalTier
 	/**
 	 * Exempt own-name `variant` aliases from the cross-country primary-preference
 	 * penalty. the stamp lives in the candidate build's own-name detector,
@@ -220,7 +220,7 @@ export function describeResolverPins(pins?: GauntletResolverPins | null): string
 	}
 
 	if (pins?.capitalTier !== undefined) {
-		entries.push(`capitalTier=${pins.capitalTier ? "ON" : "OFF"}`)
+		entries.push(`capitalTier=${pins.capitalTier}`)
 	}
 
 	if (pins?.variantAliasExemption !== undefined) {
@@ -497,22 +497,16 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		await createResolverBackend(resolverMod, {
 			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			...(opts.pins?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
+			variantAliasExemption: opts.pins?.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		})
 	)
 
 	// The reference loads here and becomes the per-candidate `capitalLevel` closure,
 	// matching `createGeocodeSession`.
-	// `false` pins the off arm.
-	// Explicit `true` requires the reference.
-	// An unset value uses the default (on) and degrades on a reference-less artifact.
-	const capitalIndex =
-		opts.pins?.capitalTier === false
-			? undefined
-			: await loadCapitalIndex({
-					candidateDB: (await resolveCandidateDBPath(opts.candidateDB)) ?? undefined,
-					missing: opts.pins?.capitalTier === true ? "throw" : "degrade",
-				})
+	const capitalIndex = await capitalIndexFor(
+		opts.pins?.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
+		await resolveCandidateDBPath(opts.candidateDB)
+	)
 
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>

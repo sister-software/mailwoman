@@ -67,7 +67,7 @@ export const spec = {
 		"out-json": { type: "string", description: "Aggregate JSON" },
 		"errors-json": { type: "string", description: "Failure JSON" },
 		"out-resolved": { type: "string", description: "Resolved locality dump" },
-		"out-rows": { type: "string", description: "Outcome rows" },
+		"out-rows": { type: "string", description: "Result rows" },
 		"lookup-memo": booleanOption("Answer a repeated gazetteer query from a per-run memo"),
 		"profile-json": { type: "string", description: "Wall-time attribution JSON (profiling only)" },
 	},

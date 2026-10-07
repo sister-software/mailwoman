@@ -8,7 +8,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -21,8 +21,8 @@ const ARCHIVE_URL = "https://example.invalid/AD.zip"
 
 const BODY = Buffer.concat([Buffer.from("PK\u0003\u0004", "latin1"), Buffer.from("member", "utf8")])
 
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "zip archive test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

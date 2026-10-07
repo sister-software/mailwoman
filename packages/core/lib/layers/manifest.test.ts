@@ -67,7 +67,7 @@ describe("layer manifest IO", () => {
 	})
 
 	it("reads a missing count as null and a zero-publisher count as empty", async () => {
-		// These outcomes differ.
+		// These results differ.
 		// Old manifests and builds without a count read `sourceRecords` as `null`.
 		// `{}` means the build counted records and found no publisher.
 		// Overture prunes its release, so the original count cannot be recovered from the input.

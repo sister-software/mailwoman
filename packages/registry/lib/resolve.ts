@@ -433,7 +433,7 @@ export interface ResolveConfig {
 }
 
 /**
- * The outcome of a resolve pass.
+ * The result of a resolve pass.
  */
 export interface ResolveResult {
 	entities: ResolvedEntity[]

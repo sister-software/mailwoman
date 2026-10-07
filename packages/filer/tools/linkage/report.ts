@@ -10,7 +10,7 @@ import type { FRN } from "#frn"
 import type { Form499Row } from "#sdk/form499"
 import type { ProviderListRow } from "#sdk/provider-list"
 import { LINKAGE_EVAL_AS_OF, type LinkageEvalInputs, type LinkageEvalRegistrant } from "#tools/linkage/corpus"
-import type { LinkageEvalRun, TruthPositivePairOutcome } from "#tools/linkage/eval"
+import type { LinkageEvalRun, TruthPositivePairResult } from "#tools/linkage/eval"
 
 /**
  * Joins sentences into one Markdown paragraph, so that each sentence can sit on its own source line.
@@ -186,7 +186,7 @@ function renderCensusTable(withheld: LinkageEvalRun, control: LinkageEvalRun): s
 }
 
 function renderPairsTable(withheld: LinkageEvalRun, control: LinkageEvalRun): string[] {
-	const recoveredInControl = (pair: TruthPositivePairOutcome) =>
+	const recoveredInControl = (pair: TruthPositivePairResult) =>
 		control.truthPositivePairs.find((other) => other.a === pair.a && other.b === pair.b)?.recovered ?? false
 
 	const yesNo = (value: boolean) => (value ? "yes" : "no")

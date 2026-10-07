@@ -14,16 +14,16 @@ import {
 	decideProbe,
 	gradeWithComparator,
 	loadProbeDefinition,
-	POI_OUTCOME_SHAPES,
-	type POIOutcomeShape,
-	poiOutcomeShape,
+	POI_RESULT_SHAPES,
+	type POIResultShape,
+	poiResultShape,
 	PROBE_BASELINE_RECEIPT_PATH,
 	PROBE_DEFINITION_PATH,
 	PROBE_FREEZE_PATH,
 	type ProbeComparatorName,
 	type ProbeCounts,
 	type ProbeFreezeRecord,
-	type ProbeRowOutcome,
+	type ProbeRowResult,
 	probeDefinitionHash,
 	resolveControlRows,
 	type SemanticProbeDefinition,
@@ -43,7 +43,7 @@ interface BaselineReceipt {
 	definitionSHA256: string
 	arm: string
 	counts: ProbeCounts
-	rows: ProbeRowOutcome[]
+	rows: ProbeRowResult[]
 	verdict: { decision: string }
 }
 
@@ -137,7 +137,7 @@ describe("the committed pre-registration", () => {
 	it("states a missing distinction and a measured baseline shape on every target row", async () => {
 		for (const target of definition.targetRows) {
 			expect(target.missingDistinction.length).toBeGreaterThan(0)
-			expect(POI_OUTCOME_SHAPES).toContain(target.baselineShape)
+			expect(POI_RESULT_SHAPES).toContain(target.baselineShape)
 		}
 	})
 
@@ -183,11 +183,11 @@ describe("the freeze mechanism", () => {
 describe("execution refusals", () => {
 	it("refuses an unregistered comparator", async () => {
 		const fixture = definition.targetRows[0]!
-		const outcome: POIBoardResult = { path: "full", poiIntent: null }
+		const result: POIBoardResult = { path: "full", poiIntent: null }
 
 		const unregistered = "resolution_identity" as ProbeComparatorName
 
-		expect(() => gradeWithComparator(unregistered, fixture, outcome)).toThrow(/unregistered outcome comparator/u)
+		expect(() => gradeWithComparator(unregistered, fixture, result)).toThrow(/unregistered result comparator/u)
 	})
 
 	it("refuses a control row that is not in its committed file", async () => {
@@ -241,26 +241,26 @@ describe("execution refusals", () => {
 	})
 })
 
-describe("the outcome-shape vocabulary", () => {
-	it("names a shape for every reachable pipeline outcome", async () => {
-		expect(poiOutcomeShape({ path: "full", poiIntent: null })).toBe("no_poi_branch")
-		expect(poiOutcomeShape({ path: "fast-path", poiIntent: null })).toBe("no_poi_branch")
-		expect(poiOutcomeShape({ path: "poi", poiIntent: null })).toBe("no_poi_branch")
+describe("the result-shape vocabulary", () => {
+	it("names a shape for every reachable pipeline result", async () => {
+		expect(poiResultShape({ path: "full", poiIntent: null })).toBe("no_poi_branch")
+		expect(poiResultShape({ path: "fast-path", poiIntent: null })).toBe("no_poi_branch")
+		expect(poiResultShape({ path: "poi", poiIntent: null })).toBe("no_poi_branch")
 
-		expect(poiOutcomeShape({ path: "poi", poiIntent: { type: "abstain", reason: "anchor_required" } })).toBe(
+		expect(poiResultShape({ path: "poi", poiIntent: { type: "abstain", reason: "anchor_required" } })).toBe(
 			"poi_abstain"
 		)
 
-		expect(poiOutcomeShape({ path: "poi", poiIntent: { type: "intent", intent: pharmacyIntent, results: null } })).toBe(
+		expect(poiResultShape({ path: "poi", poiIntent: { type: "intent", intent: pharmacyIntent, results: null } })).toBe(
 			"poi_intent_no_results"
 		)
 
-		expect(poiOutcomeShape({ path: "poi", poiIntent: { type: "intent", intent: pharmacyIntent, results: [] } })).toBe(
+		expect(poiResultShape({ path: "poi", poiIntent: { type: "intent", intent: pharmacyIntent, results: [] } })).toBe(
 			"poi_intent_no_results"
 		)
 
 		expect(
-			poiOutcomeShape({
+			poiResultShape({
 				path: "poi",
 				poiIntent: { type: "intent", intent: pharmacyIntent, results: [pharmacyResult] },
 			})
@@ -269,12 +269,12 @@ describe("the outcome-shape vocabulary", () => {
 })
 
 describe("the metric arithmetic", () => {
-	function outcome(
+	function probeRow(
 		id: string,
 		role: "target" | "control",
 		pass: boolean,
-		shape: POIOutcomeShape = "no_poi_branch"
-	): ProbeRowOutcome {
+		shape: POIResultShape = "no_poi_branch"
+	): ProbeRowResult {
 		return {
 			id,
 			role,
@@ -288,8 +288,8 @@ describe("the metric arithmetic", () => {
 
 	it("counts over the registered denominators, never over the rows that answered", async () => {
 		const measured = computeProbeCounts(definition, [
-			outcome("sem-act-us-01", "target", true, "poi_intent_results"),
-			outcome("sem-act-us-02", "target", false),
+			probeRow("sem-act-us-01", "target", true, "poi_intent_results"),
+			probeRow("sem-act-us-02", "target", false),
 		])
 
 		expect(measured.primaryNumerator).toBe(1)
@@ -300,9 +300,9 @@ describe("the metric arithmetic", () => {
 
 	it("reads the diagnostic numerator off the shape, not off the grade", async () => {
 		const measured = computeProbeCounts(definition, [
-			outcome("sem-act-us-01", "target", false, "poi_intent_results"),
-			outcome("sem-act-fr-01", "target", false, "poi_abstain"),
-			outcome("sem-act-mx-01", "target", false, "no_poi_branch"),
+			probeRow("sem-act-us-01", "target", false, "poi_intent_results"),
+			probeRow("sem-act-fr-01", "target", false, "poi_abstain"),
+			probeRow("sem-act-mx-01", "target", false, "no_poi_branch"),
 		])
 
 		expect(measured.primaryNumerator).toBe(0)

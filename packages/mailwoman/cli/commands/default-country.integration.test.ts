@@ -38,11 +38,14 @@ describe("localeToCountry", () => {
 
 describe("resolverDefaultCountry", () => {
 	test("explicit --default-country wins over the locale", () => {
-		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US" })).toBe("FR")
+		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US" })).toEqual({
+			country: "FR",
+			source: "caller",
+		})
 	})
 
 	test("falls back to the locale's country when unset", () => {
-		expect(resolverDefaultCountry({ locale: "de-DE" })).toBe("DE")
+		expect(resolverDefaultCountry({ locale: "de-DE" })).toEqual({ country: "DE", source: "inferred" })
 	})
 
 	test("'none' disables the filter", () => {
@@ -51,27 +54,28 @@ describe("resolverDefaultCountry", () => {
 })
 
 describe("--country-scope separates country policy from the resolver backend", () => {
-	test("'auto' passes locale country on both backends", () => {
-		expect(resolverDefaultCountry({ locale: "en-US" }, false)).toBe("US")
-		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBe("US")
+	test("'auto' passes the locale country as an inferred scope", () => {
+		expect(resolverDefaultCountry({ locale: "en-US" })).toEqual({ country: "US", source: "inferred" })
 	})
 
-	test("'locale' scopes on either backend", () => {
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, false)).toBe("US")
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, true)).toBe("US")
+	test("'locale' scopes by the inferred locale country", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" })).toEqual({
+			country: "US",
+			source: "inferred",
+		})
 	})
 
-	test("'none' scopes on neither backend", () => {
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, false)).toBeNull()
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, true)).toBeNull()
+	test("'none' disables the locale scope", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" })).toBeNull()
 	})
 
 	test("an explicit --default-country outranks every scope", () => {
-		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" }, true)).toBe("FR")
+		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" })).toEqual({
+			country: "FR",
+			source: "caller",
+		})
 
-		expect(
-			resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" }, false)
-		).toBeNull()
+		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" })).toBeNull()
 	})
 
 	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {

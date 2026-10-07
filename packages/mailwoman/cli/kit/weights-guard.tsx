@@ -8,7 +8,7 @@
  *   one-keystroke download into the user weights cache (`~/.cache/mailwoman/weights`). The user's
  *   `npm install` populates that npm prefix with their integrity, proxy and registry settings.
  *
- *   Outcomes handed to the render prop:
+ *   Results handed to the render prop:
  *
  *   - `"neural"` — weights resolve (pre-existing, or just downloaded); render the real command.
  *   - `"declined"` — the user said no, the download failed, or `--degraded` was passed. the caller
@@ -32,7 +32,7 @@ import React, { useEffect, useState } from "react"
 /**
  * How the guard resolved, handed to the render prop.
  */
-export type WeightsOutcome = "neural" | "declined" | "unavailable"
+export type WeightsResult = "neural" | "declined" | "unavailable"
 
 /**
  * Probe whether weights resolve for a locale without loading the model.
@@ -151,7 +151,7 @@ export interface WeightsGuardProps {
 	 */
 	autoDownload?: boolean
 	/**
-	 * `--degraded`: skip the prompt, hand the caller the declined outcome directly.
+	 * `--degraded`: skip the prompt, hand the caller the declined result directly.
 	 */
 	forceDegraded?: boolean
 	/**
@@ -161,19 +161,19 @@ export interface WeightsGuardProps {
 	/**
 	 * Renders once the guard settles.
 	 */
-	children: (outcome: WeightsOutcome) => React.ReactElement
+	children: (result: WeightsResult) => React.ReactElement
 }
 
 type GuardPhase =
 	| { phase: "probing" }
 	| { phase: "prompt" }
 	| { phase: "downloading"; status: string }
-	| { phase: "settled"; outcome: WeightsOutcome }
+	| { phase: "settled"; result: WeightsResult }
 
 /**
  * Interactive guard around model-requiring commands.
  *
- * See the module docstring for the outcome interface.
+ * See the module docstring for the result interface.
  * The prompt renders only on a raw-mode-capable stdin.
  * Everything else settles immediately without painting UI.
  */
@@ -187,7 +187,7 @@ export function WeightsGuard({
 	const { isRawModeSupported } = useStdin()
 
 	const [state, setState] = useState<GuardPhase>(() => {
-		if (forceDegraded) return { phase: "settled", outcome: "declined" }
+		if (forceDegraded) return { phase: "settled", result: "declined" }
 
 		return { phase: "probing" }
 	})
@@ -203,7 +203,7 @@ export function WeightsGuard({
 			if (cancelled) return
 
 			if (probe.ok) {
-				setState({ phase: "settled", outcome: "neural" })
+				setState({ phase: "settled", result: "neural" })
 
 				return
 			}
@@ -214,7 +214,7 @@ export function WeightsGuard({
 				return
 			}
 
-			setState(isRawModeSupported ? { phase: "prompt" } : { phase: "settled", outcome: "unavailable" })
+			setState(isRawModeSupported ? { phase: "prompt" } : { phase: "settled", result: "unavailable" })
 		})
 
 		return () => {
@@ -241,7 +241,7 @@ export function WeightsGuard({
 				console.error(result.message)
 			}
 
-			setState({ phase: "settled", outcome: result.ok ? "neural" : "declined" })
+			setState({ phase: "settled", result: result.ok ? "neural" : "declined" })
 		})
 
 		return () => {
@@ -252,7 +252,7 @@ export function WeightsGuard({
 	useInput(
 		(input, key) => {
 			if (input === "n" || input === "N" || key.escape) {
-				setState({ phase: "settled", outcome: "declined" })
+				setState({ phase: "settled", result: "declined" })
 			} else if (input === "y" || input === "Y" || key.return) {
 				setState({ phase: "downloading", status: "Starting download…" })
 			}
@@ -264,7 +264,7 @@ export function WeightsGuard({
 		case "probing":
 			return <></>
 		case "settled":
-			return children(state.outcome)
+			return children(state.result)
 		case "prompt":
 			return (
 				<Box flexDirection="column">

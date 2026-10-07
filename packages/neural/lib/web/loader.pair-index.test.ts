@@ -113,6 +113,7 @@ function baseOpts(fetchImpl: typeof fetch, pairIndexURLs: readonly string[], cou
 		streetTypeLexicon: "none" as const,
 		localitySurfaceLexicon: "none" as const,
 		pairIndexURLs,
+		postcodeBinaryURLs: [],
 		...(country ? { country } : {}),
 		runner: { useWebGPU: false },
 		fetchImpl,

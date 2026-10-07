@@ -63,7 +63,7 @@ describe("the conformance suite register", () => {
 			base: "Portland, OR",
 			variant: "Portland, OR",
 			context: null,
-			outcomeComparator: "resolution_identity",
+			resultComparator: "resolution_identity",
 			expect: "equivalent",
 			status: null,
 			bugRef: null,

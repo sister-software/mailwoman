@@ -10,6 +10,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
+import { resolverDefaultCountry } from "#country-scope"
 import { shouldDropInferredScope } from "#inferred-scope"
 
 function tree(localeCountry?: { country: string; confidence: number }): AddressTree {
@@ -52,5 +53,21 @@ describe("shouldDropInferredScope (#1684)", () => {
 
 	it("the format signal never overrides an EXPLICIT scope either", () => {
 		expect(shouldDropInferredScope(tree(), CALLER_US, ["CA"])).toBe(false)
+	})
+})
+
+describe("CLI country scope feeds shouldDropInferredScope with its true source", () => {
+	it("a --locale country is inferred, so a contrary read withholds it", () => {
+		const scope = resolverDefaultCountry({ locale: "en-US" })
+
+		expect(scope).toEqual(INFERRED_US)
+		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 1 }), scope!)).toBe(true)
+	})
+
+	it("a --default-country is the caller's, so a contrary read keeps it", () => {
+		const scope = resolverDefaultCountry({ defaultCountry: "US", locale: "fr-FR" })
+
+		expect(scope).toEqual(CALLER_US)
+		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 1 }), scope!)).toBe(false)
 	})
 })

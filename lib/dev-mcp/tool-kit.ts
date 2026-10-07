@@ -210,7 +210,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 		postcode_containment_coherence: z.boolean().optional(),
 		admin_containment_rerank: z.boolean().optional(),
 		poi_venue_tier: z.boolean().optional(),
-		capital_tier: z.boolean().optional(),
+		capital_tier: z.enum(["auto", "required", "off"]).optional(),
 		variant_alias_exemption: VariantAliasExemptionSchema.optional(),
 	})
 	.strict()
@@ -448,7 +448,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 }
 
 /**
- * Counts, for each arm, the rows on which each opt-in mechanism fired, whether or not the outcome changed.
+ * Counts, for each arm, the rows on which each opt-in mechanism fired, whether or not the result changed.
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>

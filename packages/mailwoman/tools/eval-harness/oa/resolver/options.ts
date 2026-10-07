@@ -172,7 +172,7 @@ export interface OAResolverEvalOptions {
 	 */
 	outResolved?: string
 	/**
-	 * Per-row neural-vs-v0 outcome dump (every row).
+	 * Per-row neural-vs-v0 result dump (every row).
 	 */
 	outRows?: string
 	/**

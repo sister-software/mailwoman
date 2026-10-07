@@ -30,7 +30,7 @@ import {
 	groupByFoldedName,
 	padRowIndex,
 	type StratumFillCensus,
-	type StratumOutcome,
+	type StratumResult,
 	uniqueNameEligible,
 } from "#tools/eval-harness/panel-fill"
 import type { SameDataBenchmarkDefinition } from "#tools/eval-harness/same-data/definition"
@@ -205,7 +205,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	const take = (
 		stratum: string,
 		eligible: readonly GeoNamesCity[],
-		build: (city: GeoNamesCity, index: number) => StratumOutcome<SameDataPanelRow>
+		build: (city: GeoNamesCity, index: number) => StratumResult<SameDataPanelRow>
 	): void => {
 		const filled = fillStratum({
 			stratum,
@@ -229,10 +229,10 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	take("unambiguous", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
-		if (!gold) return { outcome: "ungradeable" }
+		if (!gold) return { result: "ungradeable" }
 
 		return {
-			outcome: "row",
+			result: "row",
 			row: {
 				id: `unambiguous-${padRowIndex(index)}`,
 				stratum: "unambiguous",
@@ -284,14 +284,14 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		const target = index % 2 === 0 ? bearers[0]! : bearers[1]!
 		const gold = goldFor(target)
 
-		if (!gold) return { outcome: "ungradeable" }
+		if (!gold) return { result: "ungradeable" }
 
 		const qualifier = index % 4 < 2 ? (countryNames.get(target.country) ?? target.country) : target.admin1
 
-		if (!qualifier) return { outcome: "unbuildable" }
+		if (!qualifier) return { result: "unbuildable" }
 
 		return {
-			outcome: "row",
+			result: "row",
 			row: {
 				id: `homograph_qualified-${padRowIndex(index)}`,
 				stratum: "homograph_qualified",
@@ -306,12 +306,12 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	take("reordered", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
-		if (!gold) return { outcome: "ungradeable" }
+		if (!gold) return { result: "ungradeable" }
 
-		if (!city.admin1) return { outcome: "unbuildable" }
+		if (!city.admin1) return { result: "unbuildable" }
 
 		return {
-			outcome: "row",
+			result: "row",
 			row: {
 				id: `reordered-${padRowIndex(index)}`,
 				stratum: "reordered",
@@ -338,16 +338,16 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	take("contradictory_postcode", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
-		if (!gold) return { outcome: "ungradeable" }
+		if (!gold) return { result: "ungradeable" }
 
 		const conflictingKey = adminKeysByCountry.get(city.country)?.find((key) => key !== `${city.country}/${city.admin1}`)
 
 		const conflicting = conflictingKey ? postcodeByAdmin.get(conflictingKey) : undefined
 
-		if (!conflicting) return { outcome: "unbuildable" }
+		if (!conflicting) return { result: "unbuildable" }
 
 		return {
-			outcome: "row",
+			result: "row",
 			row: {
 				id: `contradictory_postcode-${padRowIndex(index)}`,
 				stratum: "contradictory_postcode",
@@ -364,10 +364,10 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	take("gold_absent", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
-		if (!gold) return { outcome: "ungradeable" }
+		if (!gold) return { result: "ungradeable" }
 
 		return {
-			outcome: "row",
+			result: "row",
 			row: {
 				id: `gold_absent-${padRowIndex(index)}`,
 				stratum: "gold_absent",

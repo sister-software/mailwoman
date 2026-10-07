@@ -297,24 +297,23 @@ row.
 `GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmExtracts` and
 `hardCountrySafelist` are omitted as evaluation and build-time wiring.
 
-| Field                    | Type                                          | Default                       | Effect                                                                                                    |
-| ------------------------ | --------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `classifier`             | `GeocodeClassifier`                           | required                      | The parser                                                                                                |
-| `inputMode`              | `"fragmented"`, `"formatted"` or `"auto"`     | `"auto"`: from the query kind | Which register the evidence channels run in                                                               |
-| `resolver`               | `Resolver`                                    | required                      | The gazetteer walk                                                                                        |
-| `extracts`               | `RegionDatabaseResolver`                      | none                          | Per-state rooftop and interpolation lookups                                                               |
-| `nationalExtracts`       | `(country) => RegionDatabases`                | none                          | Per-country lookups, for example the French rooftop database                                              |
-| `defaultCountry`         | `{ country, source: "caller" \| "inferred" }` | none                          | Scopes the resolver to one country. `"inferred"` marks a locale guess that stronger evidence can override |
-| `bias`                   | proximity points                              | none                          | Soft re-rank toward a viewport or a user location                                                         |
-| `interpCalibration`      | `number` or a table                           | the database's value          | Multiplier on the interpolation tier's uncertainty radius                                                 |
-| `caseNormalization`      | `"title-case"` or `"preserve"`                | `"title-case"`                | Title-cases detected all-caps input                                                                       |
-| `normalizeInput`         | `boolean`                                     | on                            | Runs the normalize stage                                                                                  |
-| `placeCountry`           | `"auto"`, `"none"` or a function              | `"auto"`: the bundled placer  | Soft country prior                                                                                        |
-| `placerCountryUse`       | `"filter" \| "prior"`                         | `"filter"`                    | `"filter"` hard-filters inside the coverage safelist                                                      |
-| `adminCoherence`         | `boolean`                                     | on                            | Joint admin-consistency re-pick                                                                           |
-| `postcodeCountryPrior`   | `boolean`                                     | on                            | Postcode shape informs the country                                                                        |
-| `retryAlternateRegister` | `boolean`                                     | on                            | Retries the parse in the other input register on a weak result                                            |
-| `parsedTree`             | `AddressTree`                                 | none                          | Skips the parse when you already have the tree                                                            |
+| Field                  | Type                                          | Default                       | Effect                                                                                                    |
+| ---------------------- | --------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `classifier`           | `GeocodeClassifier`                           | required                      | The parser                                                                                                |
+| `inputMode`            | `"fragmented"`, `"formatted"` or `"auto"`     | `"auto"`: from the query kind | Which register the evidence channels run in                                                               |
+| `resolver`             | `Resolver`                                    | required                      | The gazetteer walk                                                                                        |
+| `extracts`             | `RegionDatabaseResolver`                      | none                          | Per-state rooftop and interpolation lookups                                                               |
+| `nationalExtracts`     | `(country) => RegionDatabases`                | none                          | Per-country lookups, for example the French rooftop database                                              |
+| `defaultCountry`       | `{ country, source: "caller" \| "inferred" }` | none                          | Scopes the resolver to one country. `"inferred"` marks a locale guess that stronger evidence can override |
+| `bias`                 | proximity points                              | none                          | Soft re-rank toward a viewport or a user location                                                         |
+| `interpCalibration`    | `number` or a table                           | the database's value          | Multiplier on the interpolation tier's uncertainty radius                                                 |
+| `caseNormalization`    | `"title-case"` or `"preserve"`                | `"title-case"`                | Title-cases detected all-caps input                                                                       |
+| `normalizeInput`       | `boolean`                                     | on                            | Runs the normalize stage                                                                                  |
+| `placeCountry`         | `"auto"`, `"none"` or a function              | `"auto"`: the bundled placer  | Soft country prior                                                                                        |
+| `placerCountryUse`     | `"filter" \| "prior"`                         | `"filter"`                    | `"filter"` hard-filters inside the coverage safelist                                                      |
+| `adminCoherence`       | `boolean`                                     | on                            | Joint admin-consistency re-pick                                                                           |
+| `postcodeCountryPrior` | `boolean`                                     | on                            | Postcode shape informs the country                                                                        |
+| `parsedTree`           | `AddressTree`                                 | none                          | Skips the parse when you already have the tree                                                            |
 
 ### Resolution tiers
 

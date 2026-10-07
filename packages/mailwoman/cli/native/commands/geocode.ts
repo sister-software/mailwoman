@@ -21,7 +21,6 @@ import {
 	renderInkCommand,
 	runNativeCommand,
 	stringValue,
-	triStateValue,
 } from "#cli/native/spec"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 
@@ -127,11 +126,15 @@ export const spec = {
 				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
 		},
 		"capital-tier": {
-			type: "boolean",
-			description: "Bounded national-capital promotion on bare city names (default on); --no-capital-tier disables it.",
+			type: "string",
+			default: "auto",
+			choices: ["auto", "required", "off"],
+			description:
+				"Bounded national-capital promotion on bare city names: auto (skip when the capitals reference is missing), required (fail when it is missing), or off.",
 		},
 		"variant-alias-exemption": {
 			type: "boolean",
+			default: true,
 			description:
 				"Own-name variant aliases keep their holder's rank in cross-country contests (default on); --no-variant-alias-exemption disables it.",
 		},
@@ -181,8 +184,6 @@ type GeocodeOptions = GeocodeCommandOptions
 
 async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
 	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/data-root")).dataRootPath()
-	const capitalTier = triStateValue(values, "capital-tier")
-	const variantAliasExemption = triStateValue(values, "variant-alias-exemption")
 
 	return {
 		locale: stringValue(values, "locale")!,
@@ -205,8 +206,8 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
-		...(capitalTier === null ? {} : { capitalTier }),
-		...(variantAliasExemption === null ? {} : { variantAliasExemption }),
+		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
+		variantAliasExemption: booleanValue(values, "variant-alias-exemption"),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),

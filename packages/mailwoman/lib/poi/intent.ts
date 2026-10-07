@@ -51,6 +51,8 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 						mechanism: "exact",
 						inputPhrase: phrase,
 						wikidata: null,
+						reading: "preference",
+						countryScope: null,
 					},
 				]
 			: []
@@ -97,13 +99,15 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			mechanism: "exact",
 			inputPhrase: phrase,
 			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
 	const localeNormalizedHits = lookupPOICategoryLocaleNormalized(phrase, locale)
 
 	if (localeNormalizedHits.length) {
-		return localeNormalizedHits.map((m) => ({
+		return localeNormalizedHits.map((m): POIPhraseMatch => ({
 			kind: "category",
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
@@ -111,13 +115,15 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			mechanism: "locale_normalized",
 			inputPhrase: phrase,
 			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
 	const typoHits = lookupPOICategoryTypo(phrase, locale)
 
 	if (typoHits.length) {
-		return typoHits.map((m) => ({
+		return typoHits.map((m): POIPhraseMatch => ({
 			kind: "category",
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
@@ -125,6 +131,8 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			mechanism: "typo",
 			inputPhrase: phrase,
 			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
@@ -139,6 +147,8 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			confidence: m.confidence,
 			mechanism: "exact",
 			inputPhrase: phrase,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
@@ -160,13 +170,15 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			confidence,
 			mechanism: "locale_normalized",
 			inputPhrase: phrase,
+			reading: "preference",
+			countryScope: null,
 		}
 	})
 }
 
 /**
  * Supplies {@link createPOIIntentStage} with its phrase lookup, the parser for the anchor
- * remainder and an optional executor that turns an intent into an outcome.
+ * remainder and an optional executor that turns an intent into a result.
  */
 export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
@@ -259,7 +271,7 @@ export function bindCountryScope(
 	matches: ReadonlyArray<POIPhraseMatch>,
 	anchorCountry: string | null
 ): { anchorCountry: string | null; categoryIDs: string[]; excludedCategoryIDs: string[] } | null {
-	if (!matches.some((hit) => hit.countryScope?.length)) return null
+	if (!matches.some((hit) => hit.countryScope)) return null
 
 	const reached: string[] = []
 	const admitted = new Set<string>()
@@ -271,7 +283,7 @@ export function bindCountryScope(
 
 		const scope = hit.countryScope
 
-		if (!scope?.length || (anchorCountry && scope.some((country) => country.toUpperCase() === anchorCountry))) {
+		if (!scope || (anchorCountry && scope.some((country) => country.toUpperCase() === anchorCountry))) {
 			admitted.add(hit.categoryID)
 		}
 	}
