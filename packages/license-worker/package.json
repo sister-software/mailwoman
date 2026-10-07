@@ -60,8 +60,8 @@
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"@vitest/runner": "^4.1.11",
-		"@vitest/snapshot": "^5.0.3",
-		"vitest": "5.0.3",
+		"@vitest/snapshot": "^4.1.11",
+		"vitest": "^4.1.11",
 		"wrangler": "^4.148.0"
 	},
 	"engines": {
