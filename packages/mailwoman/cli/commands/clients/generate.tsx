@@ -51,7 +51,7 @@ const ClientsGenerate: CommandComponent<typeof spec> = ({ options }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	// Progress streams to stderr until the summary lands. `CommandTaskResult` renders that summary.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	const { ok, checks, receipt } = state.result

@@ -18,7 +18,7 @@
  *     stamp and serves as `availableAt`.
  *   - NYC DCP PLUTO 26v2 (Socrata 64uk-42ks, rowsUpdatedAt 2026-08-24): 375 residential units, 379
  *     total, 13 floors, year built 2022, owner of record International Baptist Church (the ground
- *     lessor. JEMB Realty is the development entity named as owner on the DOB filings).
+ *     lessor. JEMB Realty is the development entity the DOB filings list as owner).
  *   - NYC Planning Geosearch (PAD 26c), live lookup: address 11 Ocean Parkway ↔ BIN 3429422 ↔ BBL
  *     3053220010, at the point [-73.97264, 40.65017] (longitude, latitude), which is the building's
  *     position below. A live service, so `availableAt` is the retrieval date. The lookup is the evidence

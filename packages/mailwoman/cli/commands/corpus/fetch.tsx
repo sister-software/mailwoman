@@ -227,7 +227,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchMatrikkelen(
 				{
 					...base,
-					// Undefined takes both areas the address-source register carries rows for,
+					// Undefined takes both areas the address-source register holds rows for,
 					// `0000` for the mainland and `2100` for Svalbard.
 					areas: options.areas === undefined ? undefined : extractDelimited(options.areas),
 				},
