@@ -1,4 +1,5 @@
 import type { KnownFormat, NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 import {
@@ -20,12 +21,17 @@ const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) 
 	confidence,
 })
 
-const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
+const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ ...EMPTY_QUERY_SHAPE_VIEW, ...o })
 
 test("scorePoBox: fires (boosted) on a po_box format hit, zero otherwise", () => {
-	expect(scorePoBox(input("PO Box 123"), shape({ knownFormats: [fmt("po_box", 0, 6, 0.8)] }))).toBeCloseTo(0.9, 5)
+	expect(
+		scorePoBox(input("PO Box 123"), shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("po_box", 0, 6, 0.8)] }))
+	).toBeCloseTo(0.9, 5)
 
-	expect(scorePoBox(input("PO Box 123"), shape({ knownFormats: [fmt("po_box", 0, 6, 0.95)] }))).toBe(1)
+	expect(
+		scorePoBox(input("PO Box 123"), shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("po_box", 0, 6, 0.95)] }))
+	).toBe(1)
+
 	expect(scorePoBox(input("350 5th Ave"), shape())).toBe(0)
 })
 
@@ -49,15 +55,24 @@ test("scoreVenueLandmark: short capitalized non-address phrases; rejects address
 
 	expect(scoreVenueLandmark(input("Main Street"), shape())).toBe(0)
 
-	expect(scoreVenueLandmark(input("Pier 39"), shape({ knownFormats: [fmt("us_zip", 0, 5)] }))).toBe(0)
+	expect(
+		scoreVenueLandmark(input("Pier 39"), shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip", 0, 5)] }))
+	).toBe(0)
 
 	expect(scoreVenueLandmark(input("x".repeat(60)), shape())).toBe(0)
 })
 
 test("scorePostcodeOnly: a bare postcode fires; a postcode buried in an address does not", () => {
-	expect(scorePostcodeOnly(input("10118"), shape({ knownFormats: [fmt("us_zip", 0, 5)] }))).toBeGreaterThan(0.8)
+	expect(
+		scorePostcodeOnly(input("10118"), shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip", 0, 5)] }))
+	).toBeGreaterThan(0.8)
 
-	expect(scorePostcodeOnly(input("350 5th Ave 10118"), shape({ knownFormats: [fmt("us_zip", 12, 17)] }))).toBe(0)
+	expect(
+		scorePostcodeOnly(
+			input("350 5th Ave 10118"),
+			shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip", 12, 17)] })
+		)
+	).toBe(0)
 
 	expect(scorePostcodeOnly(input("10118"), shape())).toBe(0)
 })

@@ -43,8 +43,15 @@ function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline 
 		return {
 			input: raw,
 			normalized: { raw, normalized: raw },
-			queryShape: { knownFormats: [] },
-			locale: { locale: "en-US", confidence: 1, alternatives: [], source: "detected" },
+			queryShape: {
+				knownFormats: [],
+				segments: null,
+				characterClass: null,
+				scripts: null,
+				tokenClasses: null,
+				totalLength: null,
+			},
+			locale: { locale: "en-US", confidence: 1, alternatives: [], source: "detected", script: [], evidence: null },
 			kind: { kind: "structured_address", confidence: 1, alternatives: [], intentMarkers: null },
 			phraseProposals: [],
 			tree,

@@ -206,7 +206,11 @@ const CA_POOL = [QUEBEC, ONTARIO, ILLINOIS, MAINE, MONTREAL_CA, MONTREAL_WI, LON
 describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	it("rescues 'Montreal QC' from the US namesake to Montréal, Quebec under a US default country", async () => {
 		const resolver = createWOFResolver(await makeBackend(CA_POOL))
-		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const loc = localityOf(out)
 
 		expect(loc?.lat).toBeCloseTo(45.5019, 3)
@@ -221,7 +225,11 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("also rescues the region FULL NAME 'Montreal, Quebec' (no abbreviation needed)", async () => {
 		const resolver = createWOFResolver(await makeBackend(CA_POOL))
-		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "Quebec"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "Quebec"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const loc = localityOf(out)
 
 		expect(loc?.lat).toBeCloseTo(45.5019, 3)
@@ -231,7 +239,11 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("rescues 'London ON' to London, Ontario (generality — a second CA subdivision)", async () => {
 		const resolver = createWOFResolver(await makeBackend(CA_POOL))
-		const out = await resolver.resolveTree(regionLocalityTree("London", "ON"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(regionLocalityTree("London", "ON"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const loc = localityOf(out)
 
 		expect(loc?.lat).toBeCloseTo(42.9834, 3)
@@ -241,7 +253,11 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("stays inert for the domestic control 'Springfield IL' (region resolves under US → trigger never fires)", async () => {
 		const resolver = createWOFResolver(await makeBackend([ILLINOIS, MAINE, QUEBEC, SPRINGFIELD_IL]))
-		const out = await resolver.resolveTree(regionLocalityTree("Springfield", "IL"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(regionLocalityTree("Springfield", "IL"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const loc = localityOf(out)
 
 		expect(loc?.lat).toBeCloseTo(39.7817, 3)
@@ -253,7 +269,11 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("stays inert for the domestic control 'Portland ME'", async () => {
 		const resolver = createWOFResolver(await makeBackend([ILLINOIS, MAINE, QUEBEC, ONTARIO, PORTLAND_ME]))
-		const out = await resolver.resolveTree(regionLocalityTree("Portland", "ME"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(regionLocalityTree("Portland", "ME"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const loc = localityOf(out)
 
 		expect(loc?.lat).toBeCloseTo(43.6591, 3)
@@ -273,7 +293,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 		const resolver = createWOFResolver(await makeBackend(CA_POOL))
 
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			adminCoherence: false,
 		})
 
@@ -285,7 +305,11 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("keeps the greedy result when the foreign country has no same-named locality (fail-safe)", async () => {
 		const resolver = createWOFResolver(await makeBackend([QUEBEC, ILLINOIS]))
-		const out = await resolver.resolveTree(regionLocalityTree("Gotham", "QC"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(regionLocalityTree("Gotham", "QC"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const loc = localityOf(out)
 
 		expect(loc?.metadata?.["region_country_repicked"]).toBeUndefined()

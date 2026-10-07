@@ -9,6 +9,7 @@
  */
 
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, test } from "vitest"
 
 import { runPipeline } from "#pipeline/runtime-pipeline"
@@ -65,7 +66,12 @@ describe("PipelineResult.intentMarkers", () => {
 
 	test("survives the fast path, which returns before the classifier ever runs", async () => {
 		const stages: RuntimePipelineStages = {
-			computeQueryShape: () => ({ knownFormats: [], characterClass: "alpha", totalLength: 5 }),
+			computeQueryShape: () => ({
+				...EMPTY_QUERY_SHAPE_VIEW,
+				knownFormats: [],
+				characterClass: "alpha",
+				totalLength: 5,
+			}),
 			classifyKind: kindStage({
 				kind: "locality_only",
 				confidence: 0.99,
@@ -81,12 +87,12 @@ describe("PipelineResult.intentMarkers", () => {
 	})
 
 	test("survives the POI branch", async () => {
-		const outcome: POIQueryResult = { type: "abstain", reason: "no executor" }
+		const poiResult: POIQueryResult = { type: "abstain", reason: "no executor" }
 
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),
 			classifyKind: kindStage({ kind: "poi_query", confidence: 0.92, alternatives: [], intentMarkers: [FORK] }),
-			poiIntent: async () => outcome,
+			poiIntent: async () => poiResult,
 		}
 
 		const result = await runPipeline("hospital", stages)
@@ -113,21 +119,21 @@ describe("PipelineResult.intentMarkers", () => {
 
 describe("the POI branch accepts poi_category", () => {
 	test("a bare category takes the same branch poi_query does", async () => {
-		const outcome: POIQueryResult = { type: "abstain", reason: "resolution out of scope" }
+		const poiResult: POIQueryResult = { type: "abstain", reason: "resolution out of scope" }
 
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),
 			classifyKind: kindStage({ kind: "poi_category", confidence: 0.93, alternatives: [], intentMarkers: null }),
-			poiIntent: async () => outcome,
+			poiIntent: async () => poiResult,
 		}
 
 		const result = await runPipeline("tacos", stages)
 
 		expect(result.path).toBe("poi")
-		expect(result.poiIntent).toEqual(outcome)
+		expect(result.poiIntent).toEqual(poiResult)
 	})
 
-	test("and still falls through to the full pipeline on a null outcome, exactly as poi_query does", async () => {
+	test("and still falls through to the full pipeline on a null result, exactly as poi_query does", async () => {
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),
 			classifyKind: kindStage({ kind: "poi_category", confidence: 0.93, alternatives: [], intentMarkers: null }),

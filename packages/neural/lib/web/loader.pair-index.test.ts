@@ -93,13 +93,13 @@ function nzIndexBytes(): Uint8Array {
 function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch {
 	return async (input) => {
 		const url = String(input)
-		const outcome = respond(url)
+		const response = respond(url)
 
-		if (typeof outcome === "number") {
-			return new Response(null, { status: outcome, statusText: outcome === 404 ? "Not Found" : "Server Error" })
+		if (typeof response === "number") {
+			return new Response(null, { status: response, statusText: response === 404 ? "Not Found" : "Server Error" })
 		}
 
-		return new Response(outcome.slice().buffer)
+		return new Response(response.slice().buffer)
 	}
 }
 
@@ -108,10 +108,10 @@ function baseOpts(fetchImpl: typeof fetch, pairIndexURLs: readonly string[], cou
 		modelURL: MODEL_URL,
 		tokenizerURL: TOKENIZER_URL,
 
-		gazetteerLexiconURL: null,
-		countryLexiconURL: null,
-		streetTypeLexiconURL: null,
-		localitySurfaceLexiconURL: null,
+		gazetteerLexicon: "none" as const,
+		countryLexicon: "none" as const,
+		streetTypeLexicon: "none" as const,
+		localitySurfaceLexicon: "none" as const,
 		pairIndexURLs,
 		...(country ? { country } : {}),
 		runner: { useWebGPU: false },

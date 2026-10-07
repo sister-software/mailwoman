@@ -161,7 +161,11 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 	it("stands down under an EXPLICIT caller country scope (the #912 posture)", async () => {
 		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
 
-		await resolveWith([{ id: 1, country: "US" }], { adminContainmentRerank: true, defaultCountry: "US" }, seen)
+		await resolveWith(
+			[{ id: 1, country: "US" }],
+			{ adminContainmentRerank: true, defaultCountry: { country: "US", source: "caller" } },
+			seen
+		)
 
 		expect(seen.every((q) => q.regionQualifier === undefined)).toBe(true)
 	})
@@ -171,7 +175,7 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 
 		await resolveWith(
 			[{ id: 1, country: "US" }],
-			{ adminContainmentRerank: true, defaultCountry: "US", defaultCountryIsInferred: true },
+			{ adminContainmentRerank: true, defaultCountry: { country: "US", source: "inferred" } },
 			seen
 		)
 

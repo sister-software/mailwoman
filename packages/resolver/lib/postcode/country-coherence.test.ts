@@ -1021,7 +1021,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: false,
 		})
 
@@ -1039,7 +1039,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 		})
 
@@ -1056,7 +1056,11 @@ describe("resolveTree + postcode-country coherence", () => {
 
 	it("runs by default when the flag is UNSET (operator-promoted to default-ON 2026-08-05)", async () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
-		const out = await resolver.resolveTree(addressTree("75001", "Paris"), { defaultCountry: "US" })
+
+		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const locality = nodeByTag(out, "locality")
 
 		expect(locality?.metadata?.["postcode_country_scope"]).toBe("FR")
@@ -1074,7 +1078,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 		})
 
@@ -1090,7 +1094,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Addison"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 		})
 
@@ -1104,12 +1108,12 @@ describe("resolveTree + postcode-country coherence", () => {
 		const pool = [PC_62701_US, SPRINGFIELD_IL]
 
 		const off = await createWOFResolver(await makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: false,
 		})
 
 		const on = await createWOFResolver(await makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 		})
 
@@ -1130,7 +1134,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const backend = await makeBackend(RIVOLI_POOL)
 
 		const out = await createWOFResolver(backend).resolveTree(addressTree(null, "Paris"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 		})
 
@@ -1142,7 +1146,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 			postcodeCountryCoherenceThresholdKm: 0.0001,
 		})
@@ -1160,7 +1164,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		}
 
 		const out = await createWOFResolver(backend).resolveTree(addressTree("75001", "Paris"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			postcodeCountryCoherence: true,
 		})
 

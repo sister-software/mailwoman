@@ -13,6 +13,7 @@ import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/pla
 import { collectNodes, type AddressNode, type AddressTree, type Interpretation } from "@mailwoman/core/decoder"
 import {
 	type BackendCapabilityGap,
+	type DefaultCountry,
 	type ResolveNodeTrace,
 	type ResolvedPlace,
 	type ResolveOpts,
@@ -95,6 +96,23 @@ function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 	return matched.iso2
 }
 
+/**
+ * The default country a lookup filters by, or undefined when none applies.
+ * `country` lookups ignore an inferred scope.
+ */
+function scopedCountryFor(placetype: string, scope: DefaultCountry | null): string | undefined {
+	if (!scope || (placetype === "country" && scope.source === "inferred")) return undefined
+
+	return scope.country
+}
+
+/**
+ * Reports whether the caller chose the default country scope.
+ */
+function isCallerScope(scope: DefaultCountry | null): boolean {
+	return scope?.source === "caller"
+}
+
 class WOFResolver implements Resolver {
 	readonly #backend: ResolverBackend
 	/**
@@ -130,8 +148,7 @@ class WOFResolver implements Resolver {
 			minWinningScore: opts.minWinningScore ?? 0,
 			minScoreRefusals: 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
-			defaultCountry: opts.defaultCountry,
-			defaultCountryIsInferred: opts.defaultCountryIsInferred === true,
+			defaultCountry: opts.defaultCountry ?? null,
 			bareLocalityNode: loneBareLocalityNode(tree, opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP),
 			parentFallback: opts.parentFallback ?? true,
 			// Only enable unreachable diagnostics when a trace sink exists.
@@ -173,19 +190,18 @@ class WOFResolver implements Resolver {
 		// Explicit scope outranks inferred default scope.
 		let explicitScope: string | null = null
 
-		if (!state.defaultCountry || state.defaultCountryIsInferred) {
+		if (state.defaultCountry?.source !== "caller") {
 			explicitScope = explicitCountryScope(tree.roots)
 
 			if (explicitScope) {
-				state.defaultCountry = explicitScope
-				state.defaultCountryIsInferred = false
+				state.defaultCountry = { country: explicitScope, source: "caller" }
 			}
 		}
 
 		if (opts.postcodeCountryCoherence !== false && state.postcode) {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
-				defaultCountry: state.defaultCountry,
+				defaultCountry: state.defaultCountry?.country ?? null,
 				...(shapeVerdict?.narrowing ? { candidateSystems: shapeVerdict.narrowing } : {}),
 				...(opts.postcodeCountryCoherenceThresholdKm != null
 					? { thresholdKm: opts.postcodeCountryCoherenceThresholdKm }
@@ -194,7 +210,8 @@ class WOFResolver implements Resolver {
 
 			if (postcodeScope) {
 				// Override default country for the walk.
-				state.defaultCountry = postcodeScope.country
+				// The postcode's country replaces the scope but keeps its source.
+				state.defaultCountry = { country: postcodeScope.country, source: state.defaultCountry?.source ?? "caller" }
 			}
 		}
 
@@ -231,7 +248,7 @@ class WOFResolver implements Resolver {
 			// Re-resolve locality when explicit country contradicts it.
 			await applyExplicitCountryCoherence(newRoots, this.#backend)
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
-			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
+			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
 		}
 
 		// Postcode/locality consistency pass (default on).
@@ -428,8 +445,7 @@ class WOFResolver implements Resolver {
 		const countryHint = node.metadata?.["country_hint"]
 
 		// Do not apply inferred default-country filtering to country lookups.
-		const defaultCountryForLookup =
-			placetype === "country" && state.defaultCountryIsInferred ? undefined : state.defaultCountry
+		const defaultCountryForLookup = scopedCountryFor(placetype, state.defaultCountry)
 
 		const country =
 			parentResolved?.country ??
@@ -451,7 +467,7 @@ class WOFResolver implements Resolver {
 			state.adminContainmentRerank &&
 			placetype === "locality" &&
 			state.regionQualifier != null &&
-			(!state.defaultCountry || state.defaultCountryIsInferred)
+			!isCallerScope(state.defaultCountry)
 
 		if (containmentEligible) {
 			query.regionQualifier = state.regionQualifier!

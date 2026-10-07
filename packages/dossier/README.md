@@ -96,7 +96,7 @@ Otherwise it shows each explanation's scenarios. A later reading that holds reco
 exception, and the explanations stay hypotheses about the earlier date. Every statement in the section
 carries one of five kinds: fact, deduction, estimate, hypothesis or decision. An operator disposition
 records which explanation the operator investigated and what the investigation found, and
-`reportOutcomes` measures blocker accuracy and time saved with their denominators.
+`reportOperatorResults` measures blocker accuracy and time saved with their denominators.
 
 The One Park Point fixture (`test/fixtures/one-park-point.ts`) demonstrates the section on public records
 in `lib/explanations.test.ts`. As of 2023-06-30, a zero at the building's census block leaves
@@ -241,7 +241,7 @@ Checked without a supporting record: identity and capacity.
 
 Ranking: none. The access, installation and route explanations have no documented probability, so each explanation states the next action if it holds and if it fails.
 
-Decisions and outcomes:
+Decisions and results:
 
 - decision (operator-log-2022): On 2022-06-01 the operator decided to investigate access: "Ask Example Management Co whether the provider holds permission for the south entrance".
 - fact (operator-log-2022): On 2022-06-20 the operator recorded that the access explanation held.
@@ -300,10 +300,10 @@ Neither a subject nor an admitted membership places these readings at a building
 - cable over cell-3 as of 2022-03-15: records present (survey-2022)
   - would resolve: a record that places a building in cell-3
 
-## Operator outcomes
+## Operator results
 
-- estimate (operator-log-2022): The investigated explanation held in 1 of 1 dispositions with a recorded outcome.
-- estimate (operator-log-2022): Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times.
+- estimate (operator-log-2022): The investigated explanation held in 1 of 1 dispositions with a recorded result.
+- estimate (operator-log-2022): Against the operator's baselines, the investigations saved 60 minutes over 1 result that records both times.
 
 ## Sources
 

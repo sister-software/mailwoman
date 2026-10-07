@@ -3,6 +3,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it, vi } from "vitest"
@@ -11,12 +12,19 @@ import { loadDefaultReverseGeocoder } from "#default"
 import { bindCountryScope, createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi"
 import { createRuntimePipeline } from "#runtime-pipeline"
 
-const LOCALE: LocaleHint = { locale: "en-US", confidence: 1, alternatives: [], source: "caller" }
+const LOCALE: LocaleHint = {
+	locale: "en-US",
+	confidence: 1,
+	alternatives: [],
+	source: "caller",
+	script: [],
+	evidence: null,
+}
 
 const anchorResult = (raw: string): PipelineResult => ({
 	input: raw,
 	normalized: { raw, normalized: raw },
-	queryShape: { knownFormats: [] },
+	queryShape: { ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] },
 	locale: LOCALE,
 	kind: { kind: "structured_address", confidence: 0.5, alternatives: [], intentMarkers: null },
 	phraseProposals: [],
@@ -55,7 +63,15 @@ describe("poiTaxonomyLookup adapter", () => {
 
 	it("falls through to the brand table on a category miss (exact brand name)", () => {
 		const hits = poiTaxonomyLookup("chevron", "en-US")
-		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", confidence: 1 })
+
+		expect(hits[0]).toMatchObject({
+			kind: "brand",
+			categoryID: "Chevron",
+			wikidata: "Q319642",
+			confidence: 1,
+			mechanism: "exact",
+			inputPhrase: "chevron",
+		})
 	})
 
 	it("chains through variant-aliases for locale-restricted brand slang, resolving a QID", () => {
@@ -116,6 +132,9 @@ describe("createPOINameLookup", () => {
 				categoryID: "Statue of Liberty",
 				matchedPhrase: "Statue of Liberty",
 				confidence: 1,
+				mechanism: "exact",
+				inputPhrase: "statue OF liberty",
+				wikidata: null,
 			},
 		])
 	})
@@ -144,7 +163,7 @@ describe("createPOINameLookup", () => {
 
 		const result = await classify(
 			{ raw: "Statue of Liberty", normalized: "Statue of Liberty" },
-			{ knownFormats: [] },
+			{ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] },
 			LOCALE
 		)
 
@@ -156,9 +175,9 @@ describe("createPOIIntentStage", () => {
 	it("returns a name intent for an exact known POI", async () => {
 		const lookup = createPOINameLookup({ search: () => [{ name: "Statue of Liberty", confidence: 0.99 }] })
 		const stage = createPOIIntentStage({ lookup, parseAnchor: async (text) => anchorResult(text) })
-		const outcome = await stage({ raw: "Statue of Liberty", normalized: "Statue of Liberty" }, LOCALE)
+		const poiResult = await stage({ raw: "Statue of Liberty", normalized: "Statue of Liberty" }, LOCALE)
 
-		expect(outcome).toEqual({
+		expect(poiResult).toEqual({
 			type: "intent",
 			intent: { subject: { kind: "name", text: "Statue of Liberty" }, relation: null, anchor: null, limit: null },
 			results: null,
@@ -177,24 +196,24 @@ describe("createPOIIntentStage", () => {
 			},
 		})
 
-		const outcome = await stage(
+		const poiResult = await stage(
 			{ raw: "hospital near Springfield IL", normalized: "hospital near Springfield IL" },
 			LOCALE
 		)
 
-		expect(outcome?.type).toBe("intent")
+		expect(poiResult?.type).toBe("intent")
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "category",
 			categoryIDs: ["hospital"],
 			matched: "hospital",
 			countryBinding: null,
 		})
 
-		expect(outcome.intent.anchor?.text).toBe("Springfield IL")
-		expect(outcome.intent.relation).toBe("near")
+		expect(poiResult.intent.anchor?.text).toBe("Springfield IL")
+		expect(poiResult.intent.relation).toBe("near")
 		expect(parsed).toEqual(["Springfield IL"])
 	})
 
@@ -204,20 +223,20 @@ describe("createPOIIntentStage", () => {
 			parseAnchor: async (text) => anchorResult(text),
 		})
 
-		const outcome = await stage({ raw: "chevron near Houston TX", normalized: "chevron near Houston TX" }, LOCALE)
+		const poiResult = await stage({ raw: "chevron near Houston TX", normalized: "chevron near Houston TX" }, LOCALE)
 
-		expect(outcome?.type).toBe("intent")
+		expect(poiResult?.type).toBe("intent")
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "brand",
 			name: "Chevron",
 			wikidata: "Q319642",
 			matched: "Chevron",
 		})
 
-		expect(outcome.intent.anchor?.text).toBe("Houston TX")
+		expect(poiResult.intent.anchor?.text).toBe("Houston TX")
 	})
 
 	it("returns a bare-subject intent with no anchor and no anchor parse", async () => {
@@ -228,16 +247,16 @@ describe("createPOIIntentStage", () => {
 			},
 		})
 
-		const outcome = await stage({ raw: "fire hydrant", normalized: "fire hydrant" }, LOCALE)
+		const poiResult = await stage({ raw: "fire hydrant", normalized: "fire hydrant" }, LOCALE)
 
-		expect(outcome?.type).toBe("intent")
+		expect(poiResult?.type).toBe("intent")
 	})
 
 	it("returns null when no subject matches (fall-through)", async () => {
 		const stage = createPOIIntentStage({ lookup: poiTaxonomyLookup, parseAnchor: async (t) => anchorResult(t) })
-		const outcome = await stage({ raw: "Empire State Building", normalized: "Empire State Building" }, LOCALE)
+		const poiResult = await stage({ raw: "Empire State Building", normalized: "Empire State Building" }, LOCALE)
 
-		expect(outcome).toBeNull()
+		expect(poiResult).toBeNull()
 	})
 })
 
@@ -267,10 +286,22 @@ const PRESCRIPTION_SET: POIPhraseMatch[] = [
 		categoryID: "drugstore",
 		matchedPhrase: "prescription",
 		confidence: 1,
+		mechanism: null,
+		inputPhrase: null,
+		wikidata: null,
 		searchAsSet: true,
 		countryScope: ["US"],
 	},
-	{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+	{
+		kind: "category",
+		categoryID: "pharmacy",
+		matchedPhrase: "prescription",
+		confidence: 1,
+		searchAsSet: true,
+		mechanism: null,
+		inputPhrase: null,
+		wikidata: null,
+	},
 ]
 
 const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
@@ -283,14 +314,14 @@ describe("The place binding of a country-scoped claim", () => {
 			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
 		})
 
-		const outcome = await stage(
+		const poiResult = await stage(
 			{ raw: "prescription near Garancières", normalized: "prescription near Garancières" },
 			LOCALE
 		)
 
-		if (outcome?.type !== "intent") throw new Error(`expected an intent, got ${stringifyJSON(outcome)}`)
+		if (poiResult?.type !== "intent") throw new Error(`expected an intent, got ${stringifyJSON(poiResult)}`)
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "category",
 			categoryIDs: ["pharmacy"],
 			matched: "prescription",
@@ -304,14 +335,14 @@ describe("The place binding of a country-scoped claim", () => {
 			parseAnchor: async (text) => resolvedAnchor(text, "US"),
 		})
 
-		const outcome = await stage(
+		const poiResult = await stage(
 			{ raw: "prescription near Denver CO", normalized: "prescription near Denver CO" },
 			LOCALE
 		)
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "category",
 			categoryIDs: ["drugstore", "pharmacy"],
 			matched: "prescription",
@@ -332,13 +363,13 @@ describe("The place binding of a country-scoped claim", () => {
 			},
 		})
 
-		for (const outcome of [
+		for (const poiResult of [
 			await countryless({ raw: "prescription near Zzyzx", normalized: "prescription near Zzyzx" }, LOCALE),
 			await bare({ raw: "prescription", normalized: "prescription" }, LOCALE),
 		]) {
-			if (outcome?.type !== "intent") throw new Error("unreachable")
+			if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-			expect(outcome.intent.subject).toMatchObject({
+			expect(poiResult.intent.subject).toMatchObject({
 				categoryIDs: ["pharmacy"],
 				countryBinding: { anchorCountry: null, excludedCategoryIDs: ["drugstore"] },
 			})
@@ -354,9 +385,12 @@ describe("The place binding of a country-scoped claim", () => {
 			},
 		})
 
-		const outcome = await stage({ raw: "prescription near Toulouse", normalized: "prescription near Toulouse" }, LOCALE)
+		const poiResult = await stage(
+			{ raw: "prescription near Toulouse", normalized: "prescription near Toulouse" },
+			LOCALE
+		)
 
-		expect(outcome).toEqual({ type: "abstain", reason: "country_scope_excluded" })
+		expect(poiResult).toEqual({ type: "abstain", reason: "country_scope_excluded" })
 	})
 
 	it("records no binding when no reached category carries a scope — there was nothing to bind", async () => {
@@ -365,11 +399,11 @@ describe("The place binding of a country-scoped claim", () => {
 			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
 		})
 
-		const outcome = await stage({ raw: "hospital near Toulouse", normalized: "hospital near Toulouse" }, LOCALE)
+		const poiResult = await stage({ raw: "hospital near Toulouse", normalized: "hospital near Toulouse" }, LOCALE)
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toHaveProperty("countryBinding", null)
+		expect(poiResult.intent.subject).toHaveProperty("countryBinding", null)
 	})
 
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
@@ -591,7 +625,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
-	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
+	it("object form: reverse-geocoder degrade is hermetic — no throw, intent result, results (if any) carry no ancestry", async () => {
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
 
 		try {

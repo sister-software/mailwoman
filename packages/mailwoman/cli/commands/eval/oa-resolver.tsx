@@ -30,8 +30,11 @@ export const spec = {
 		"default-country": { type: "string", description: "Default country" },
 		"ablate-to-anchor": booleanOption("Disable gazetteer and conventions"),
 		"anchor-off": booleanOption("Disable anchor input"),
-		"normalize-case": booleanOption("Force title-casing of all-caps input"),
-		"raw-case": booleanOption("Keep the raw case"),
+		"case-normalization": {
+			type: "string",
+			choices: ["title-case", "preserve"],
+			description: "Pin case handling. Omitted, the library default applies",
+		},
 		"admin-coherence": booleanOption("Force admin coherence on"),
 		"admin-coherence-off": booleanOption("Force admin coherence off"),
 		"postcode-country-coherence": booleanOption("Force postcode-country coherence on"),

@@ -23,6 +23,7 @@ export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipel
 
 export {
 	DEFAULT_CASE_NORMALIZATION,
+	DEFAULT_PLACER_COUNTRY_USE,
 	deriveInputMode,
 	InputModeSchema,
 	InputModeSelectionSchema,
@@ -56,6 +57,7 @@ export type {
 	PipelineResult,
 	PipelineTiming,
 	PlacetypePairSelection,
+	PlacerCountryUse,
 	POIIntent,
 	POIQueryResult,
 	POIResult,

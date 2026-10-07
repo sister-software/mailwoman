@@ -251,9 +251,9 @@ export async function buildRoutedMailwomanArm(
 					? {}
 					: { adminContainmentRerank: config.admin_containment_rerank }),
 				...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
-				...(config.variant_alias_exemption === undefined
-					? {}
-					: { variantAliasExemption: config.variant_alias_exemption }),
+				...(config.variant_alias_exemption
+					? { variantAliasExemption: config.variant_alias_exemption === "applied" }
+					: {}),
 				...(config.poi_venue_tier === undefined ? {} : { poiVenueTier: config.poi_venue_tier }),
 			},
 		})

@@ -188,15 +188,15 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 			dispatchTimes.push(clock.now())
 		}
 
-		const outcome = outcomes[Math.min(index, outcomes.length - 1)]!
+		const stub = outcomes[Math.min(index, outcomes.length - 1)]!
 
 		index++
 
-		if (outcome.throws) {
-			throw axiosLikeError(outcome.throws.message, outcome.throws.code, config)
+		if (stub.throws) {
+			throw axiosLikeError(stub.throws.message, stub.throws.code, config)
 		}
 
-		const status = outcome.status ?? HTTP_OK
+		const status = stub.status ?? HTTP_OK
 
 		const response = {
 			// Axios's `transformResponse` runs on the raw body, so the stub passes
@@ -205,12 +205,12 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 			// Bytes also pass through unchanged.
 			// The stub serializes other values as a JSON endpoint would.
 			data:
-				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)
-					? outcome.body
-					: stringifyJSON(outcome.body ?? defaultBody),
+				typeof stub.body === "string" || Buffer.isBuffer(stub.body)
+					? stub.body
+					: stringifyJSON(stub.body ?? defaultBody),
 			status,
-			statusText: outcome.statusText ?? "OK",
-			headers: outcome.headers ?? {},
+			statusText: stub.statusText ?? "OK",
+			headers: stub.headers ?? {},
 			config,
 		}
 

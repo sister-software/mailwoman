@@ -126,21 +126,21 @@ describe("renderReport: the serviceability section", () => {
 		)
 	})
 
-	test("prints the operator's decision and its outcome", () => {
+	test("prints the operator's decision and its result", () => {
 		expect(lines).toContain(
 			'- decision (operator-log-2022): On 2022-06-01 the operator decided to investigate access: "Ask Example Management Co whether the provider holds permission for the south entrance".'
 		)
 	})
 
 	test("reports blocker accuracy and time saved with their denominators", () => {
-		const outcomes = report.split("## Operator outcomes\n")[1]!
+		const results = report.split("## Operator results\n")[1]!
 
-		expect(outcomes).toContain(
-			"- estimate (operator-log-2022): The investigated explanation held in 1 of 1 dispositions with a recorded outcome."
+		expect(results).toContain(
+			"- estimate (operator-log-2022): The investigated explanation held in 1 of 1 dispositions with a recorded result."
 		)
 
-		expect(outcomes).toContain(
-			"- estimate (operator-log-2022): Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times."
+		expect(results).toContain(
+			"- estimate (operator-log-2022): Against the operator's baselines, the investigations saved 60 minutes over 1 result that records both times."
 		)
 	})
 
@@ -671,7 +671,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 		})
 	})
 
-	test("the count of dispositions that await an outcome cites their records", () => {
+	test("the count of dispositions that await an result cites their records", () => {
 		const dossier = buildDossier(
 			{
 				...EXAMPLE_RECORDS,
@@ -684,7 +684,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 						decision: "Request the provider's plant record for cell-1",
 						decidedAt: "2022-06-02",
 						evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
-						outcome: null,
+						result: null,
 					},
 				],
 			},
@@ -692,11 +692,11 @@ describe("reportLines: the citation that each line without one gains", () => {
 		)
 
 		expect(
-			reportLines(dossier).filter((line) => line.part === ReportPart.Outcomes && line.text.startsWith("- fact"))
+			reportLines(dossier).filter((line) => line.part === ReportPart.OperatorResults && line.text.startsWith("- fact"))
 		).toEqual([
 			{
-				text: "- fact (operator-log-2022): 1 of 2 dispositions awaits an outcome.",
-				part: ReportPart.Outcomes,
+				text: "- fact (operator-log-2022): 1 of 2 dispositions awaits an result.",
+				part: ReportPart.OperatorResults,
 				kind: ReportLineKind.Conclusion,
 				building: null,
 				sources: ["operator-log-2022"],
@@ -707,25 +707,25 @@ describe("reportLines: the citation that each line without one gains", () => {
 	test("a conclusion whose statement cites no record prints source unstated and stays a conclusion", () => {
 		const built = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
 
-		// A hand-built outcome report whose pending disposition gives no record.
+		// A hand-built result report whose pending disposition gives no record.
 		const dossier: Dossier = {
 			...built,
-			outcomes: { ...built.outcomes, dispositions: 2, pending: 1, pendingSources: [] },
+			operatorResults: { ...built.operatorResults, dispositions: 2, pending: 1, pendingSources: [] },
 		}
 
 		expect(
-			reportLines(dossier).filter((line) => line.part === ReportPart.Outcomes && line.text.startsWith("- fact"))
+			reportLines(dossier).filter((line) => line.part === ReportPart.OperatorResults && line.text.startsWith("- fact"))
 		).toEqual([
 			{
-				text: "- fact (source unstated): 1 of 2 dispositions awaits an outcome.",
-				part: ReportPart.Outcomes,
+				text: "- fact (source unstated): 1 of 2 dispositions awaits an result.",
+				part: ReportPart.OperatorResults,
 				kind: ReportLineKind.Conclusion,
 				building: null,
 				sources: [],
 			},
 		])
 
-		expect(uncitedConclusions(dossier)).toEqual(["- fact (source unstated): 1 of 2 dispositions awaits an outcome."])
+		expect(uncitedConclusions(dossier)).toEqual(["- fact (source unstated): 1 of 2 dispositions awaits an result."])
 	})
 })
 
@@ -749,7 +749,7 @@ describe("reportLines: the kind of each line", () => {
 		[ReportLineKind.Heading, "Explanations checked: identity, access, capacity, installation and route."],
 		[ReportLineKind.Heading, "- explanation: route"],
 		[ReportLineKind.Heading, "  - supporting:"],
-		[ReportLineKind.Heading, "Decisions and outcomes:"],
+		[ReportLineKind.Heading, "Decisions and results:"],
 		[ReportLineKind.Blank, ""],
 		[ReportLineKind.Source, "Admitted (4): permit-2021, inspection-2022, survey-2022, operator-log-2022"],
 		[ReportLineKind.Source, "Excluded, available after the cutoff (1): manager-2023 (available 2023-02-01)"],
@@ -771,7 +771,7 @@ describe("reportLines: the kind of each line", () => {
 		[ReportLineKind.Absence, "Extents: none"],
 		[ReportLineKind.Absence, "- occupied: unresolved — no occupied count on 2022-06-30 for building:example-house"],
 		[ReportLineKind.Absence, "Every admitted reading attaches to a building."],
-		[ReportLineKind.Absence, "Decisions and outcomes: none on record."],
+		[ReportLineKind.Absence, "Decisions and results: none on record."],
 		[ReportLineKind.Absence, "Checked without a supporting record: identity and capacity."],
 		[ReportLineKind.Absence, "  - conflicting: none on record"],
 		[
@@ -824,18 +824,18 @@ describe("reportLines: the kind of each line", () => {
 			"Checked without a supporting record: identity, capacity and route.",
 			"  - conflicting: none on record",
 			"Ranking: none. The access and installation explanations have no documented probability, so each explanation states the next action if it holds and if it fails.",
-			"Decisions and outcomes: none on record.",
+			"Decisions and results: none on record.",
 		])
 
 		expect(
 			unread
-				.filter((line) => line.part === ReportPart.Outcomes && line.text.startsWith("- "))
+				.filter((line) => line.part === ReportPart.OperatorResults && line.text.startsWith("- "))
 				.map((line) => [line.kind, line.text])
 		).toEqual([
-			[ReportLineKind.Absence, "- deduction: Blocker accuracy is unknown because no disposition records an outcome."],
+			[ReportLineKind.Absence, "- deduction: Blocker accuracy is unknown because no disposition records an result."],
 			[
 				ReportLineKind.Absence,
-				"- deduction: Time saved is unknown because no outcome records both the minutes spent and the operator's baseline.",
+				"- deduction: Time saved is unknown because no result records both the minutes spent and the operator's baseline.",
 			],
 		])
 	})

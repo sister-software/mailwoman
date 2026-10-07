@@ -277,7 +277,7 @@ async function main(): Promise<void> {
 	console.error("[conformal-calibrate] running cascade …")
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
-	const resolveOpts = { defaultCountry: "US", addressPoints, interpolation }
+	const resolveOpts = { defaultCountry: { country: "US", source: "caller" as const }, addressPoints, interpolation }
 
 	for (const row of rows) {
 		nTotal++

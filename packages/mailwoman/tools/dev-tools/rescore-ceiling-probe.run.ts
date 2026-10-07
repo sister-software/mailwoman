@@ -95,7 +95,7 @@ async function main() {
 		}>(file).take(N)) {
 			s.n++
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
-			const r = await resolver.resolveTree(tree, { defaultCountry: cc })
+			const r = await resolver.resolveTree(tree, { defaultCountry: { country: cc, source: "caller" } })
 
 			if (firstNodeWhere(r.roots, (n) => Boolean(n.placeID?.startsWith("wof:")))) {
 				s.res++

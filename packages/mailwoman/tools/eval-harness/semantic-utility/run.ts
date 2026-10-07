@@ -34,7 +34,7 @@ import {
 	POI_BOARD_FIXTURES,
 	type POIBoardFixture,
 	type POIBoardOptions,
-	type POIBoardOutcome,
+	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
 import {
@@ -205,7 +205,7 @@ async function gradeRow(
 ): Promise<ProbeRowOutcome> {
 	const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 	const result = await pipeline(fixture.query, runOpts)
-	const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent ?? null }
+	const outcome: POIBoardResult = { path: result.path, poiIntent: result.poiIntent ?? null }
 	const shape = poiOutcomeShape(outcome)
 
 	return {

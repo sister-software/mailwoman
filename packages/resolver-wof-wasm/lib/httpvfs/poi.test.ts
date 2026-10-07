@@ -83,7 +83,7 @@ describe("searchPOICategory", () => {
 			{ ring: 4, category: 1, rank: -1, name: "Ring Four Cafe" },
 		])
 
-		const hits = await searchPOICategory(database, { categoryID: "cafe", center: CENTER, limit: 2 })
+		const hits = await searchPOICategory(database, { categoryIDs: ["cafe"], center: CENTER, limit: 2 })
 
 		expect(hits.map((hit) => hit.name)).toEqual(["Origin Cafe", "Ring Two Cafe"])
 		expect(queries).toHaveLength(3)
@@ -92,7 +92,7 @@ describe("searchPOICategory", () => {
 
 	test("reads every ring up to maxRings when the limit is not reached", async () => {
 		const { database, queries } = fixture([{ ring: 0, category: 1, rank: -1, name: "Origin Cafe" }])
-		const hits = await searchPOICategory(database, { categoryID: "cafe", center: CENTER, maxRings: 4 })
+		const hits = await searchPOICategory(database, { categoryIDs: ["cafe"], center: CENTER, maxRings: 4 })
 
 		expect(hits).toHaveLength(1)
 		expect(queries).toHaveLength(4)
@@ -105,7 +105,7 @@ describe("searchPOICategory", () => {
 			{ ring: 0, category: 1, rank: -1, name: "Third" },
 		])
 
-		const hits = await searchPOICategory(database, { categoryID: "cafe", center: CENTER, limit: 2, maxRings: 1 })
+		const hits = await searchPOICategory(database, { categoryIDs: ["cafe"], center: CENTER, limit: 2, maxRings: 1 })
 
 		expect(hits.map((hit) => hit.name).toSorted()).toEqual(["First", "Second"])
 	})
@@ -119,7 +119,6 @@ describe("searchPOICategory", () => {
 		])
 
 		const hits = await searchPOICategory(database, {
-			categoryID: "cafe",
 			categoryIDs: ["cafe", "coffee_shop", "absent_leaf"],
 			center: CENTER,
 		})
@@ -130,7 +129,7 @@ describe("searchPOICategory", () => {
 	test("returns an empty list for a category the database does not carry", async () => {
 		const { database, queries } = fixture([{ ring: 0, category: 1, rank: -1, name: "Cafe" }])
 
-		expect(await searchPOICategory(database, { categoryID: "absent", center: CENTER })).toEqual([])
+		expect(await searchPOICategory(database, { categoryIDs: ["absent"], center: CENTER })).toEqual([])
 		expect(queries).toHaveLength(0)
 	})
 })

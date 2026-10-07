@@ -14,6 +14,7 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 import { errorMessage } from "#errors/schema"
 import {
 	DEFAULT_CASE_NORMALIZATION,
+	DEFAULT_PLACER_COUNTRY_USE,
 	PipelineFaultStage,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	deriveInputMode,
@@ -28,12 +29,14 @@ import type {
 	PipelineFault,
 	PipelineOpts,
 	PipelineResult,
+	PlacerCountryUse,
 	PlacetypePairSelection,
 	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "#pipeline/types"
+import type { ResolveOpts } from "#resolver/types"
 
 /**
  * A query kind needs at least this confidence to take the fast path.
@@ -95,25 +98,25 @@ export function isBarePostcodeTree(tree: AddressTree): boolean {
 }
 
 /**
- * Returns the placed country as a hard filter, or `undefined` when the option is off,
- * confidence is too low, the country is outside the safelist, or the caller already set a country.
+ * Returns the placed country as a hard filter, or `null` when the use is `"prior"`, confidence
+ * is too low, the country is outside the safelist, or the caller already set a country.
+ *
+ * A `null` safelist means {@link HARD_PLACE_COUNTRY_SAFELIST}.
  */
 export function hardCountryFor(
-	placedCountry: string,
-	placedConfidence: number,
-	existing: { hardCountry?: string; defaultCountry?: string },
-	hardPlaceCountry: boolean | null,
-	safelist: ReadonlySet<string> | undefined
+	placed: { country: string; confidence: number },
+	existing: Pick<ResolveOpts, "hardCountry" | "defaultCountry">,
+	setting: { use: PlacerCountryUse; safelist: ReadonlySet<string> | null }
 ): string | null {
-	if (!hardPlaceCountry) return null
+	if (setting.use !== "filter") return null
 
-	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return null
+	if (placed.confidence < HARD_PLACE_COUNTRY_MIN_CONF) return null
 
-	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return null
+	if (!(setting.safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placed.country)) return null
 
 	if (existing.hardCountry || existing.defaultCountry) return null
 
-	return placedCountry
+	return placed.country
 }
 
 function isPostcodeFormatHit(hit: { format: string }): boolean {
@@ -134,7 +137,14 @@ function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedI
  * The pipeline uses it when no query-shape stage is configured.
  */
 function emptyQueryShape(): QueryShapeLite {
-	return { knownFormats: [] }
+	return {
+		knownFormats: [],
+		segments: null,
+		characterClass: null,
+		scripts: null,
+		tokenClasses: null,
+		totalLength: null,
+	}
 }
 
 /**
@@ -151,6 +161,8 @@ async function defaultDetectLocale(
 		locale,
 		confidence: opts?.hint ? 1 : 0,
 		alternatives: [],
+		script: [],
+		evidence: null,
 		source: opts?.hint ? "caller" : "detected",
 	}
 }
@@ -272,11 +284,12 @@ export async function runPipeline(
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
 			const hardCountry = hardCountryFor(
-				placed.country,
-				placed.confidence,
+				{ country: placed.country, confidence: placed.confidence },
 				opts?.resolveOpts ?? {},
-				opts?.hardPlaceCountry ?? null,
-				opts?.hardCountrySafelist ?? stages.resolver?.artifactCoverage?.hardCountrySafelist
+				{
+					use: opts?.placerCountryUse ?? DEFAULT_PLACER_COUNTRY_USE,
+					safelist: opts?.hardCountrySafelist ?? stages.resolver?.artifactCoverage?.hardCountrySafelist ?? null,
+				}
 			)
 
 			placerAnchorApplied = true

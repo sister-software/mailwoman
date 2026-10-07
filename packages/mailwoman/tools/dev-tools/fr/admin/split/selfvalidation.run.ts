@@ -98,7 +98,7 @@ const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 using backend = new WOFSQLitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend)
-const resolveOpts = { defaultCountry: "FR" }
+const resolveOpts = { defaultCountry: { country: "FR", source: "caller" as const } }
 
 /**
  * Unresolved penalty = the coordinate the geocoder actually falls back to

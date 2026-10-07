@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
@@ -210,7 +211,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 		admin_containment_rerank: z.boolean().optional(),
 		poi_venue_tier: z.boolean().optional(),
 		capital_tier: z.boolean().optional(),
-		variant_alias_exemption: z.boolean().optional(),
+		variant_alias_exemption: VariantAliasExemptionSchema.optional(),
 	})
 	.strict()
 	.describe("Every pin, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")

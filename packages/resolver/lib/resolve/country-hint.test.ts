@@ -178,7 +178,7 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 			],
 		}
 
-		const out = await resolver.resolveTree(input, { defaultCountry: "AU" })
+		const out = await resolver.resolveTree(input, { defaultCountry: { country: "AU", source: "caller" } })
 		const loc = localityOf(out)
 
 		expect(loc?.lat).toBeCloseTo(-31.74, 2)

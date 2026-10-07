@@ -135,6 +135,8 @@ describe("createRuntimePipeline — wiring", () => {
 			confidence: 0.92,
 			alternatives: [],
 			source: "detected" as const,
+			script: [],
+			evidence: null,
 		}))
 
 		const pipeline = createRuntimePipeline({ detectLocale: customDetect })

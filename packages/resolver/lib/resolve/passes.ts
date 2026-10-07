@@ -8,6 +8,7 @@ import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type CoincidentLocality,
+	type DefaultCountry,
 	EMPTY_PLACE_FIELDS,
 	compareReferential,
 	type ResolveCandidateTrace,
@@ -179,14 +180,12 @@ export interface ResolutionState {
 	 */
 	minScoreRefusals: number
 	candidatesPerLookup: number
-	defaultCountry?: string
-
 	/**
-	 * Whether {@link ResolutionState.defaultCountry} came from the locale instead of the caller.
+	 * The default country scope, or null for none.
 	 *
 	 * `country` lookups ignore an inferred default.
 	 */
-	defaultCountryIsInferred: boolean
+	defaultCountry: DefaultCountry | null
 
 	/**
 	 * The tree's only value-bearing node when it maps to `locality`, or null otherwise.
@@ -389,7 +388,7 @@ export async function applySpanRescore(
 
 	try {
 		hit = await findRescoreCandidate(raw, roots, backend, {
-			country: opts.defaultCountry,
+			country: opts.defaultCountry?.country,
 			postcode: firstPostcodeValue(roots),
 			thresholdKm: opts.spanRescoreThresholdKm,
 
@@ -402,7 +401,7 @@ export async function applySpanRescore(
 
 	if (!hit && opts.postalCompoundRecovery !== false) {
 		try {
-			await recoverPostcodeNode(roots, backend, opts.defaultCountry ?? null, opts.traceSink)
+			await recoverPostcodeNode(roots, backend, opts.defaultCountry?.country ?? null, opts.traceSink)
 		} catch {}
 	}
 
@@ -426,7 +425,7 @@ export async function applySpanRescore(
 	if (opts.traceSink) {
 		const rec = createNodeTraceRecorder(opts.traceSink)
 
-		rec.bind(node, "locality", opts.defaultCountry ? { country: opts.defaultCountry } : {}, 1)
+		rec.bind(node, "locality", opts.defaultCountry ? { country: opts.defaultCountry.country } : {}, 1)
 		rec.check("span_rescore")
 		rec.check(hit.postcodeVerified ? "rescore_postcode_verified" : "rescore_postcode_unverified")
 		rec.stage("rescore", [hit.place, ...hit.alternatives])

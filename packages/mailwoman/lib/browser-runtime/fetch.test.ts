@@ -21,14 +21,14 @@ afterEach(() => {
  * Drive a `fetchWithRetry` call to completion while the retry pauses are on fake timers.
  */
 async function settle<T>(work: Promise<T>): Promise<T> {
-	const outcome = work.then(
+	const settled = work.then(
 		(value) => ({ value }),
 		(error: unknown) => ({ error })
 	)
 
 	await vi.runAllTimersAsync()
 
-	const result = await outcome
+	const result = await settled
 
 	if ("error" in result) throw result.error
 

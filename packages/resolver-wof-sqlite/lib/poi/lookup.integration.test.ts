@@ -244,7 +244,7 @@ describe("POILookup", () => {
 	test("category search returns cafes nearest-first with distanceM ascending", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
-		const hits = lk.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 10 })
+		const hits = lk.search({ categoryIDs: ["cafe"], center: SPRINGFIELD, limit: 10 })
 		expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
 		expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
 		expect(hits[1]!.distanceM).toBeLessThan(hits[2]!.distanceM!)
@@ -315,14 +315,14 @@ describe("POILookup", () => {
 	test("category/brand search without a center throws", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
-		expect(() => lk.search({ categoryID: "cafe" })).toThrow(/center/)
+		expect(() => lk.search({ categoryIDs: ["cafe"] })).toThrow(/center/)
 		expect(() => lk.search({ brandWikidata: "Q38076" })).toThrow(/center/)
 	})
 
 	test("limit is respected", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
-		const hits = lk.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 2 })
+		const hits = lk.search({ categoryIDs: ["cafe"], center: SPRINGFIELD, limit: 2 })
 		expect(hits).toHaveLength(2)
 		expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta"])
 	})
@@ -330,20 +330,20 @@ describe("POILookup", () => {
 	test("a category with no rows within maxRings returns []", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
-		expect(lk.search({ categoryID: "museum", center: SPRINGFIELD })).toEqual([])
+		expect(lk.search({ categoryIDs: ["museum"], center: SPRINGFIELD })).toEqual([])
 	})
 
 	test("sparse category: the default budget reaches a gridDistance-13 instance the old 12-ring budget missed (nm-04)", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
-		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
+		expect(lk.search({ categoryIDs: ["trail"], center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
 		// The old 12-ring budget (covers gridDistance ≤ 11) does not.
 		// This is the exact boundary miss nm-04 exposed.
-		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
+		expect(lk.search({ categoryIDs: ["trail"], center: SPRINGFIELD, maxRings: 12 })).toEqual([])
 		// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
-		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])
+		expect(lk.search({ categoryIDs: ["trail"], center: SPRINGFIELD, maxRings: 13 })).toEqual([])
 
-		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 14 }).map((h) => h.name)).toEqual([
+		expect(lk.search({ categoryIDs: ["trail"], center: SPRINGFIELD, maxRings: 14 }).map((h) => h.name)).toEqual([
 			"Ridge Trail",
 		])
 	})
@@ -375,7 +375,7 @@ describe("POILookup", () => {
 	test("an unknown category id is a clean miss, not a throw", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
-		expect(lk.search({ categoryID: "zoo", center: SPRINGFIELD })).toEqual([])
+		expect(lk.search({ categoryIDs: ["zoo"], center: SPRINGFIELD })).toEqual([])
 	})
 
 	test("the name_key index exists (FTS-hydration path, not a full table scan)", () => {

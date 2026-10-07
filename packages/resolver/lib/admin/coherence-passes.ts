@@ -291,7 +291,7 @@ async function reconcileExplicitCountry(
 export async function applyRegionCountryCoherence(
 	roots: readonly AddressNode[],
 	backend: ResolverBackend,
-	defaultCountry: string | undefined
+	defaultCountry: string | null
 ): Promise<void> {
 	if (!defaultCountry) return
 

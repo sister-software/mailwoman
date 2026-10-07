@@ -102,16 +102,16 @@ export async function reconcileLedger(
 
 			if (!license) throw new Error(`token ${token.invoice_id} names license ${token.lid}, which has no row`)
 
-			const outcome = await sendTokenEmail(deps, license, token)
+			const delivery = await sendTokenEmail(deps, license, token)
 
-			if (outcome.state === "sent") {
+			if (delivery.state === "sent") {
 				report.resent.push(token.invoice_id)
 			} else {
 				report.failed.push({
 					stage: "email",
 					invoiceID: token.invoice_id,
 					lid: token.lid,
-					reason: `provider refused: ${failureReason(outcome.reason)}`,
+					reason: `provider refused: ${failureReason(delivery.reason)}`,
 				})
 			}
 		} catch (error) {

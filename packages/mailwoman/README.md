@@ -148,7 +148,7 @@ const parse = createRuntimePipeline({
 
 await parse("350 5TH AVE, NEW YORK, NY 10118", {
 	locale: "en-US", // assert a locale instead of detecting it
-	hardPlaceCountry: true, // confine resolution to a confidently-detected country (default: on)
+	placerCountryUse: "filter", // confine resolution to a confidently-detected country (the default)
 })
 ```
 

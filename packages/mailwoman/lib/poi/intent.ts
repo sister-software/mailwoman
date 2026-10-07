@@ -41,7 +41,19 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 			return candidate.name.normalize("NFKC").trim().replaceAll(/\s+/g, " ").toLocaleLowerCase() === expected
 		})
 
-		return hit?.name ? [{ kind: "name", categoryID: hit.name, matchedPhrase: hit.name, confidence: 1 }] : []
+		return hit?.name
+			? [
+					{
+						kind: "name",
+						categoryID: hit.name,
+						matchedPhrase: hit.name,
+						confidence: 1,
+						mechanism: "exact",
+						inputPhrase: phrase,
+						wikidata: null,
+					},
+				]
+			: []
 	}
 }
 
@@ -77,11 +89,14 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	}
 
 	if (categoryHits.length) {
-		return categoryHits.map((m) => ({
+		return categoryHits.map((m): POIPhraseMatch => ({
 			kind: "category",
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
+			mechanism: "exact",
+			inputPhrase: phrase,
+			wikidata: null,
 		}))
 	}
 
@@ -95,6 +110,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			confidence: m.confidence,
 			mechanism: "locale_normalized",
 			inputPhrase: phrase,
+			wikidata: null,
 		}))
 	}
 
@@ -108,6 +124,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			confidence: m.confidence,
 			mechanism: "typo",
 			inputPhrase: phrase,
+			wikidata: null,
 		}))
 	}
 
@@ -120,6 +137,8 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			wikidata: m.brand.wikidata,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
+			mechanism: "exact",
+			inputPhrase: phrase,
 		}))
 	}
 
@@ -136,9 +155,11 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 		return {
 			kind: "brand",
 			categoryID: alias.brand,
-			wikidata: brand?.wikidata,
+			wikidata: brand?.wikidata ?? null,
 			matchedPhrase: alias.variant,
 			confidence,
+			mechanism: "locale_normalized",
+			inputPhrase: phrase,
 		}
 	})
 }
@@ -186,7 +207,7 @@ export function createPOIIntentStage(
 						? {
 								kind: "brand",
 								name: matched.match.categoryID,
-								wikidata: matched.match.wikidata ?? null,
+								wikidata: matched.match.wikidata,
 								matched: matched.match.matchedPhrase,
 							}
 						: {

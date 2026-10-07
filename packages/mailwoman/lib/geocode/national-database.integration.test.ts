@@ -45,7 +45,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: "none",
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			nationalDatabases: frRegister,
 			osmDatabases: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
 		})
@@ -62,7 +62,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: "none",
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 			nationalDatabases: frRegister,
 			osmDatabases: (c) => (c === "de" ? { addressPoints: osmLookup } : {}),
 		})
@@ -80,7 +80,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: "none",
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			nationalDatabases,
 		})
 
@@ -96,7 +96,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: "none",
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			nationalDatabases: (c) => (c === "fr" ? { streetCentroids: streetLookup } : {}),
 		})
 
@@ -114,7 +114,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: "none",
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 		})
 
 		expect(seen[0]?.streetCentroids).toBeUndefined()
@@ -128,7 +128,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: "none",
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			osmDatabases: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
 		})
 

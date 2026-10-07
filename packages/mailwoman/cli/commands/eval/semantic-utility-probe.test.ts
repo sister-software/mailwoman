@@ -6,7 +6,7 @@ import type { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "#tools/eval-harness/poi/board"
+import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
 import {
 	auditProbeDefinition,
 	canonicalJSON,
@@ -183,7 +183,7 @@ describe("the freeze mechanism", () => {
 describe("execution refusals", () => {
 	it("refuses an unregistered comparator", async () => {
 		const fixture = definition.targetRows[0]!
-		const outcome: POIBoardOutcome = { path: "full", poiIntent: null }
+		const outcome: POIBoardResult = { path: "full", poiIntent: null }
 
 		const unregistered = "resolution_identity" as ProbeComparatorName
 

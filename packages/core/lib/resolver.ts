@@ -64,6 +64,8 @@ export type {
 	ResolveCandidateTrace,
 	ResolveNodeTrace,
 	ResolveOpts,
+	DefaultCountry,
+	DefaultCountrySource,
 	ResolvedPlace,
 	Resolver,
 	ResolverBackend,

@@ -39,7 +39,7 @@ const geoDeps = {
 	classifier,
 	resolver,
 	databases: databases.for,
-	defaultCountry: cfg.country ?? "US",
+	defaultCountry: { country: cfg.country ?? "US", source: "caller" },
 	placeCountry: "none",
 } as const
 

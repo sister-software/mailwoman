@@ -225,6 +225,26 @@ export interface CoincidentLocality extends ResolvedPlace {
  */
 export type WeakResolutionReading = "score" | "containment" | "either"
 
+/**
+ * Who chose a default country scope.
+ *
+ * - `"caller"`: the caller asked for the country.
+ * - `"inferred"`: the locale supplied it.
+ *   `country` lookups ignore an inferred scope, and stronger evidence in the input can override it.
+ */
+export type DefaultCountrySource = "caller" | "inferred"
+
+/**
+ * A default top-level country scope for resolution.
+ */
+export interface DefaultCountry {
+	/**
+	 * ISO 3166-1 alpha-2 code.
+	 */
+	country: string
+	source: DefaultCountrySource
+}
+
 export interface ResolveOpts {
 	/**
 	 * Max backend lookups per tree.
@@ -239,13 +259,9 @@ export interface ResolveOpts {
 	 */
 	candidatesPerLookup?: number
 	/**
-	 * Default top-level country scope.
+	 * Default top-level country scope, and who chose it.
 	 */
-	defaultCountry?: string
-	/**
-	 * True if defaultCountry is locale-inferred.
-	 */
-	defaultCountryIsInferred?: boolean
+	defaultCountry?: DefaultCountry
 	/**
 	 * Country scope for fuzzy matching only.
 	 */

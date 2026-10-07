@@ -68,7 +68,7 @@ test("buildCandidate folds a build-local database when asked, and says so before
 
 	// The build then fails on the absent admin gazetteer.
 	// That failure differs from the refusal above.
-	const outcome = await buildCandidate({
+	const candidate = await buildCandidate({
 		adminDB: root.path("nope.db"),
 		out: root.path("candidate-local.db"),
 		postcodeDatabases: [ni.toString()],
@@ -82,7 +82,7 @@ test("buildCandidate folds a build-local database when asked, and says so before
 		(error: unknown) => (error as Error).message
 	)
 
-	expect(outcome).not.toMatch(/permits no publication/)
+	expect(candidate).not.toMatch(/permits no publication/)
 
 	expect(phases).toContainEqual(
 		"fold-terms: folding 1 database(s) whose tier permits no publication, as asked: postalcode-ni-osm (build-local)"

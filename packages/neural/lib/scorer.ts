@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
+import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AddressSystemTable } from "#address-system"
 import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
-import { NeuralAddressClassifier } from "#classifier"
+import { NeuralAddressClassifier, type AddressSystemConventions } from "#classifier"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
@@ -555,7 +555,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		suppressGazetteerNearPostcode,
 
-		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
+		addressSystemConventions: (addressSystemConventions ?? "off") as AddressSystemConventions,
 		bridgePunctuationGaps,
 	})
 }

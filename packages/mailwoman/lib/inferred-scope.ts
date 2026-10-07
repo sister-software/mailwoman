@@ -10,6 +10,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { DefaultCountry } from "@mailwoman/core/resolver"
 
 /**
  * Whether a locale-inferred `defaultCountry` should be withheld from the resolve:
@@ -25,12 +26,11 @@ import type { AddressTree } from "@mailwoman/core/decoder"
  */
 export function shouldDropInferredScope(
 	tree: AddressTree,
-	defaultCountry: string,
-	defaultCountryIsInferred: boolean,
+	defaultCountry: DefaultCountry,
 	formatCountries: readonly string[] = []
 ): boolean {
-	if (!defaultCountryIsInferred) return false
-	const inferred = defaultCountry.toUpperCase()
+	if (defaultCountry.source !== "inferred") return false
+	const inferred = defaultCountry.country.toUpperCase()
 	const verdict = tree.localeCountry
 
 	if (verdict && verdict.country.toUpperCase() !== inferred) return true

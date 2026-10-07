@@ -44,7 +44,7 @@ import {
 } from "#explanations"
 import type { EntityID } from "#identifiers"
 import type { AliasResolution } from "#links"
-import { outcomeStatements } from "#outcomes"
+import { operatorResultStatements } from "#operator-results"
 import type { ExtentMembership, PositionAnswer } from "#placement"
 import { distinctSources, type SourceRecord, type SourceRecordID } from "#sources"
 import type { ISODate } from "#time"
@@ -84,7 +84,7 @@ export type ReportLineKind = (typeof ReportLineKind)[keyof typeof ReportLineKind
  * Each building's section opens with its heading and its identity lines.
  *
  * The section's other parts follow in the order this object lists them.
- * The unplaced readings, the operator outcomes and the sources part close the report.
+ * The unplaced readings, the operator results and the sources part close the report.
  */
 export const ReportPart = {
 	Title: "title",
@@ -100,7 +100,7 @@ export const ReportPart = {
 	Unresolved: "unresolved",
 	Checks: "checks",
 	Unplaced: "unplaced",
-	Outcomes: "outcomes",
+	OperatorResults: "operator-results",
 	Sources: "sources",
 } as const
 
@@ -304,13 +304,13 @@ function checkRecords(result: CheckResult, asOf: string): ReportLine[] {
 
 	if (result.decisions.length) {
 		lines.push(
-			heading(part, "Decisions and outcomes:"),
+			heading(part, "Decisions and results:"),
 			blank(part),
 			...result.decisions.map((entry) => statementRecord(part, entry)),
 			blank(part)
 		)
 	} else {
-		lines.push(line(part, ReportLineKind.Absence, "Decisions and outcomes: none on record."), blank(part))
+		lines.push(line(part, ReportLineKind.Absence, "Decisions and results: none on record."), blank(part))
 	}
 
 	return lines
@@ -781,10 +781,12 @@ export function reportLines(dossier: Dossier): readonly ReportLine[] {
 
 	if (dossier.buildings.some((section) => section.checks.length)) {
 		lines.push(
-			heading(ReportPart.Outcomes, "## Operator outcomes"),
-			blank(ReportPart.Outcomes),
-			...outcomeStatements(dossier.outcomes).map((entry) => statementRecord(ReportPart.Outcomes, entry)),
-			blank(ReportPart.Outcomes)
+			heading(ReportPart.OperatorResults, "## Operator results"),
+			blank(ReportPart.OperatorResults),
+			...operatorResultStatements(dossier.operatorResults).map((entry) =>
+				statementRecord(ReportPart.OperatorResults, entry)
+			),
+			blank(ReportPart.OperatorResults)
 		)
 	}
 

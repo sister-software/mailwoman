@@ -123,7 +123,14 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 				const sync = classifyKindSync(input, shape).kind
 
 				const wired = (
-					await classify(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
+					await classify(input, shape, {
+						locale: "en-US",
+						confidence: 1,
+						alternatives: [],
+						source: "caller",
+						script: [],
+						evidence: null,
+					})
 				).kind
 
 				if (sync !== wired && !CATEGORY_QUERY_INPUTS.has(raw)) {

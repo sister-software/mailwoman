@@ -99,7 +99,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		})
 
 		// Baseline sanity: without the prior this weak/fragmented logit set triggers a heal.
-		const baseline = await classifier.traceParse(text, { spanProposer: false })
+		const baseline = await classifier.traceParse(text, { spanProposer: "none" })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 
 		// With the prior's B-first/I-rest write at delta 6.0, "shoreditch"'s three pieces are
@@ -107,7 +107,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const biased = await classifier.traceParse(text, {
-			spanProposer: false,
+			spanProposer: "none",
 			placetypePair: { index, probeMode: "window" },
 		})
 
@@ -146,7 +146,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const trace = await classifier.traceParse(text, {
-			spanProposer: false,
+			spanProposer: "none",
 			placetypePair: { index, probeMode: "window" },
 		})
 
@@ -192,7 +192,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const trace = await classifier.traceParse("Shoreditch London", {
-			spanProposer: false,
+			spanProposer: "none",
 			placetypePair: { index },
 		})
 
@@ -213,12 +213,12 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(fusedLogits()) })
 
 		const betaLess = await classifier.traceParse("Shoreditch London", {
-			spanProposer: false,
+			spanProposer: "none",
 			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality") },
 		})
 
 		const withBeta = await classifier.traceParse("Shoreditch London", {
-			spanProposer: false,
+			spanProposer: "none",
 			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6, 5) },
 		})
 
@@ -236,7 +236,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 
 		// And the flip lands in the tree the user sees.
 		const json = await classifier.parseJSON("Shoreditch London", {
-			spanProposer: false,
+			spanProposer: "none",
 			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6, 5) },
 		})
 

@@ -265,16 +265,16 @@ describe("the conjunction's other half — the artifact", () => {
 	// covers one, so the whole searched set must be the surveyed class or the cell is not decidable.
 	it("refuses a searched union that reaches past the surveyed class", async () => {
 		const route = await routeOver()
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty)
 
-		if (outcome.type !== "intent" || outcome.intent.subject.kind !== "category") throw new Error("unreachable")
+		if (poiResult.type !== "intent" || poiResult.intent.subject.kind !== "category") throw new Error("unreachable")
 
 		// The same cell and answer, with the second class added to the search.
-		expect(await route.observe(outcome)).toMatchObject({ fired: true })
+		expect(await route.observe(poiResult)).toMatchObject({ fired: true })
 
-		outcome.intent.subject.categoryIDs = ["drugstore", "pharmacy"]
+		poiResult.intent.subject.categoryIDs = ["drugstore", "pharmacy"]
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "category_not_surveyed" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "category_not_surveyed" })
 	})
 })
 
@@ -292,11 +292,11 @@ describe("the silences that are about the answer rather than the world", () => {
 
 	it("refuses an intent the executor never ran — a search that did not happen returns nothing for its own reasons", async () => {
 		const route = await routeOver()
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty)
 
 		const unexecuted: POIQueryResult = {
 			type: "intent",
-			intent: (outcome as { intent: POIIntent }).intent,
+			intent: (poiResult as { intent: POIIntent }).intent,
 			results: null,
 		}
 
@@ -306,19 +306,19 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses a non-category subject", async () => {
 		const route = await routeOver()
 
-		const outcome: POIQueryResult = {
+		const poiResult: POIQueryResult = {
 			type: "intent",
 			intent: { subject: { kind: "name", text: "Pharmacie du Centre" }, relation: null, anchor: null, limit: null },
 			results: [],
 		}
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "subject_not_a_category" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "subject_not_a_category" })
 	})
 
 	it("refuses an un-anchored search — there is no cell to qualify", async () => {
 		const route = await routeOver()
 
-		const outcome: POIQueryResult = {
+		const poiResult: POIQueryResult = {
 			type: "intent",
 			intent: {
 				subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy", countryBinding: null },
@@ -329,27 +329,27 @@ describe("the silences that are about the answer rather than the world", () => {
 			results: [],
 		}
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "no_search_center" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "no_search_center" })
 	})
 
 	it("refuses when the answer returns a row inside the cell the coverage row calls empty", async () => {
 		const route = await routeOver()
 
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty, [
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty, [
 			poiRow(POINTS.surveyedEmpty.latitude, POINTS.surveyedEmpty.longitude),
 		])
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "coverage_contradicted_by_answer" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "coverage_contradicted_by_answer" })
 	})
 
 	it("still fires when the answer returns rows from OTHER cells — the claim is about the queried cell", async () => {
 		const route = await routeOver()
 
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty, [
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty, [
 			poiRow(POINTS.surveyedPopulated.latitude, POINTS.surveyedPopulated.longitude),
 		])
 
-		const decision = await route.observe(outcome)
+		const decision = await route.observe(poiResult)
 
 		expect(decision.fired).toBe(true)
 

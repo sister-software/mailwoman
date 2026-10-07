@@ -170,14 +170,12 @@ export async function buildParseRig(
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
-	// `--normalize-case` pins title-casing on, `--raw-case` pins it off, neither = the library default.
+	// `--case-normalization` pins case handling.
+	// Without it, the library default applies.
 	// Pin explicitly in pre-registered legs.
-	const caseNormalization =
-		(options.normalizeCase ?? false) ? "title-case" : (options.rawCase ?? false) ? "preserve" : null
-
 	const parseOpts = {
 		postcodeRepair: true,
-		...(caseNormalization ? { caseNormalization } : {}),
+		...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
 	} as Parameters<typeof neural.parse>[1]
 
 	// `defaultCountry` is the hard country filter applied to admin lookups

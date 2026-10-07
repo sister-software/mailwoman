@@ -105,7 +105,7 @@ async function main(): Promise<void> {
 		const outcome = (await geocodeAddress(row.raw, {
 			classifier,
 			resolver,
-			defaultCountry: country,
+			defaultCountry: { country, source: "caller" },
 			adminContainmentRerank: true,
 			...(values.normalize === "false" ? { normalizeInput: false } : {}),
 		})) as { lat: number | null; lon: number | null; resolution_tier?: string | null }

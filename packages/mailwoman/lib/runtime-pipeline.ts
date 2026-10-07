@@ -7,6 +7,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type CaseNormalization,
+	type PlacerCountryUse,
 	type FSTMatcherLike,
 	runPipeline,
 	type StageSource,
@@ -94,12 +95,12 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * The classification stage, typically a `NeuralAddressClassifier`.
 	 */
-	classifier?: RuntimePipelineStages["classifier"] | null
+	classifier?: RuntimePipelineStages["classifier"]
 
 	/**
 	 * The resolution stage, typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`.
 	 */
-	resolver?: RuntimePipelineStages["resolver"] | null
+	resolver?: RuntimePipelineStages["resolver"]
 
 	/**
 	 * The FST gazetteer matcher that biases emissions during classification.
@@ -149,13 +150,12 @@ export interface CreateRuntimePipelineOpts {
 	caseNormalization?: CaseNormalization
 
 	/**
-	 * The default for each call's `hardPlaceCountry`, which turns a confident placer
-	 * guess into a hard country filter for safelisted countries.
+	 * The default for each call's `placerCountryUse`.
 	 *
-	 * It defaults to `true`.
+	 * It defaults to `"filter"`.
 	 * A per-call value overrides it.
 	 */
-	hardPlaceCountry?: boolean
+	placerCountryUse?: PlacerCountryUse
 
 	/**
 	 * The default for each call's `hardCountrySafelist`.
@@ -263,7 +263,7 @@ export function getMachinePreferences(): MachinePreferences {
  * Creates a production parse function that runs the full pipeline with the given stages.
  *
  * Omitted stages use bundled defaults that load on the first call.
- * `hardPlaceCountry` is on unless the options or the call turn it off.
+ * The placer country use is `"filter"` unless the options or the call choose otherwise.
  */
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
@@ -318,11 +318,11 @@ export function createRuntimePipeline(
 				? wrapWithStreetEvidence(opts.classifier, streetEvidenceSource)
 				: opts.classifier,
 
-		fst: typeof fstSource === "object" ? fstSource : null,
-		streetMorphology: typeof streetMorphologySource === "object" ? streetMorphologySource : null,
-		resolver: opts.resolver,
+		...(typeof fstSource === "object" ? { fst: fstSource } : {}),
+		...(typeof streetMorphologySource === "object" ? { streetMorphology: streetMorphologySource } : {}),
+		...(opts.resolver ? { resolver: opts.resolver } : {}),
 
-		placeCountry: typeof placeCountrySource === "function" ? placeCountrySource : null,
+		...(typeof placeCountrySource === "function" ? { placeCountry: placeCountrySource } : {}),
 
 		detectLocale:
 			opts.detectLocale ??
@@ -427,15 +427,14 @@ export function createRuntimePipeline(
 			}
 		}
 
-		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
 		let effectiveRunOpts = runOpts
 
 		if (opts.caseNormalization && !effectiveRunOpts?.caseNormalization) {
 			effectiveRunOpts = { ...effectiveRunOpts, caseNormalization: opts.caseNormalization }
 		}
 
-		if (factoryHardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {
-			effectiveRunOpts = { ...effectiveRunOpts, hardPlaceCountry: true }
+		if (opts.placerCountryUse && !effectiveRunOpts?.placerCountryUse) {
+			effectiveRunOpts = { ...effectiveRunOpts, placerCountryUse: opts.placerCountryUse }
 		}
 
 		if (opts.hardCountrySafelist && !effectiveRunOpts?.hardCountrySafelist) {

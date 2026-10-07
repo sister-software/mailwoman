@@ -16,38 +16,41 @@ function tree(localeCountry?: { country: string; confidence: number }): AddressT
 	return { raw: "x", roots: [], ...(localeCountry ? { localeCountry } : {}) }
 }
 
+const INFERRED_US = { country: "US", source: "inferred" } as const
+const CALLER_US = { country: "US", source: "caller" } as const
+
 describe("shouldDropInferredScope (#1684)", () => {
 	it("drops an inferred scope on a confident CONTRARY read — the Nanjing/Chat-qui-Pêche class", () => {
-		expect(shouldDropInferredScope(tree({ country: "GB", confidence: 1 }), "US", true)).toBe(true)
-		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 0.99 }), "US", true)).toBe(true)
+		expect(shouldDropInferredScope(tree({ country: "GB", confidence: 1 }), INFERRED_US)).toBe(true)
+		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 0.99 }), INFERRED_US)).toBe(true)
 	})
 
 	it("keeps the scope when the head AGREES — the 75008 protection", () => {
-		expect(shouldDropInferredScope(tree({ country: "US", confidence: 1 }), "US", true)).toBe(false)
-		expect(shouldDropInferredScope(tree({ country: "us", confidence: 1 }), "US", true)).toBe(false)
+		expect(shouldDropInferredScope(tree({ country: "US", confidence: 1 }), INFERRED_US)).toBe(false)
+		expect(shouldDropInferredScope(tree({ country: "us", confidence: 1 }), INFERRED_US)).toBe(false)
 	})
 
 	it("keeps the scope on an ABSENT verdict — unknown is not foreign (the Sacremento protection)", () => {
-		expect(shouldDropInferredScope(tree(), "US", true)).toBe(false)
+		expect(shouldDropInferredScope(tree(), INFERRED_US)).toBe(false)
 	})
 
 	it("never touches an EXPLICIT scope, whatever the head says", () => {
-		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 1 }), "US", false)).toBe(false)
+		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 1 }), CALLER_US)).toBe(false)
 	})
 
 	it("drops on a postcode FORMAT that excludes the inferred country — the A1V 0A9 Gander class", () => {
-		expect(shouldDropInferredScope(tree(), "US", true, ["CA"])).toBe(true)
+		expect(shouldDropInferredScope(tree(), INFERRED_US, ["CA"])).toBe(true)
 	})
 
 	it("keeps the scope when the format set INCLUDES the inferred country — the 75008 protection again", () => {
-		expect(shouldDropInferredScope(tree(), "US", true, ["US", "FR", "DE"])).toBe(false)
+		expect(shouldDropInferredScope(tree(), INFERRED_US, ["US", "FR", "DE"])).toBe(false)
 	})
 
 	it("an empty format set is silence, not foreignness", () => {
-		expect(shouldDropInferredScope(tree(), "US", true, [])).toBe(false)
+		expect(shouldDropInferredScope(tree(), INFERRED_US, [])).toBe(false)
 	})
 
 	it("the format signal never overrides an EXPLICIT scope either", () => {
-		expect(shouldDropInferredScope(tree(), "US", false, ["CA"])).toBe(false)
+		expect(shouldDropInferredScope(tree(), CALLER_US, ["CA"])).toBe(false)
 	})
 })

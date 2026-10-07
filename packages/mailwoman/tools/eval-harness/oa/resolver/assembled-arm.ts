@@ -65,7 +65,7 @@ export async function buildAssembledArm(
 				},
 				resolver,
 				placeCountry: evalPlacer ?? "none",
-				hardPlaceCountry: useHardCountry && !!evalPlacer,
+				placerCountryUse: useHardCountry && evalPlacer ? "filter" : "prior",
 				// `--place-country-hard-all` overrides the production coverage safelist with
 				// the full in-map set so every confident country hard-filters.
 				// Plain `--place-country-hard` leaves it undefined.

@@ -471,6 +471,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			locale: "en-US",
 			confidence: 1,
 			alternatives: [],
+			script: [],
+			evidence: null,
 			source: "caller",
 		})
 
@@ -622,7 +624,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		geoOpts: GauntletGeocodeOpts | null,
 		extra: Pick<GeocodeDeps, "resolveTraceSink">
 	): Promise<GeocodeResult> => {
-		const { caseCountry, ...forwarded } = geoOpts ?? {}
+		const { caseCountry, defaultCountry, ...forwarded } = geoOpts ?? {}
 		const caseClassifier = await classifierFor(caseCountry)
 
 		return geocodeAddress(input, {
@@ -640,6 +642,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 			...forkEntityDeps,
 			...forwarded,
+			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
 			...extra,
 		})
 	}

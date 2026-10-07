@@ -310,7 +310,7 @@ export function neuralClassifierLoadURLs(
 		modelCardURL: assetURL(locale, version, "model-card.json"),
 		// Gazetteer-trained bundles require the lexicon.
 		// Older releases may not include it.
-		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
+		gazetteerLexicon: { url: assetURL(locale, version, "anchor-lexicon-v1.json") },
 		runner: { useWebGPU: !opts.forceWASM },
 		...(opts.hasAnchor
 			? {

@@ -11,7 +11,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
-import type { Resolver } from "@mailwoman/core/resolver"
+import type { DefaultCountry, Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
 import type { Section } from "@mailwoman/core/types"
@@ -268,7 +268,7 @@ async function resolveWithCandidates(
 ): Promise<AddressTree> {
 	const opts: {
 		candidatesPerLookup?: number
-		defaultCountry?: string
+		defaultCountry?: DefaultCountry
 		adminCoherence?: boolean
 		postcodeCountryCoherence?: boolean
 		postcodeShapeCoherence?: boolean
@@ -301,7 +301,7 @@ async function resolveWithCandidates(
 			: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 	if (dc) {
-		opts.defaultCountry = dc
+		opts.defaultCountry = { country: dc, source: "caller" }
 	}
 
 	// The resolver enables admin coherence by default, so only the opt-out is passed.
@@ -434,7 +434,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	const resolveOpts: {
 		candidatesPerLookup?: number
-		defaultCountry?: string
+		defaultCountry?: DefaultCountry
 		postcodeCountryCoherence?: boolean
 		postcodeShapeCoherence?: boolean
 		postcodeContainmentCoherence?: boolean
@@ -471,7 +471,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 				: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 		if (dc) {
-			resolveOpts.defaultCountry = dc
+			resolveOpts.defaultCountry = { country: dc, source: "caller" }
 		}
 	}
 
@@ -479,7 +479,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		locale?: string
 		resolveOpts?: {
 			candidatesPerLookup?: number
-			defaultCountry?: string
+			defaultCountry?: DefaultCountry
 			postcodeCountryCoherence?: boolean
 			postcodeShapeCoherence?: boolean
 			postcodeContainmentCoherence?: boolean

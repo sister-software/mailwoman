@@ -79,8 +79,10 @@ describe("byte-identity of the measured record vs the code constants (the fallba
 		const derived = hardCountrySafelistFromCoverage(MEASURED_COUNTRY_COVERAGE)
 
 		for (const fact of MEASURED_COUNTRY_COVERAGE) {
-			expect(hardCountryFor(fact.country, 1, {}, true, derived)).toBe(
-				hardCountryFor(fact.country, 1, {}, true, undefined)
+			const placed = { country: fact.country, confidence: 1 }
+
+			expect(hardCountryFor(placed, {}, { use: "filter", safelist: derived })).toBe(
+				hardCountryFor(placed, {}, { use: "filter", safelist: null })
 			)
 		}
 	})

@@ -315,15 +315,15 @@ describe("gauntletObserver", () => {
 			authoritative: null,
 		})
 
-		const outcome = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
+		const observed = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
 
-		expect(outcome.result.tier).toBe("address_point")
-		expect(outcome.result.country).toBe("United Kingdom")
-		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
+		expect(observed.result.tier).toBe("address_point")
+		expect(observed.result.country).toBe("United Kingdom")
+		expect(observed.result.hierarchy[0]?.placeID).toBe("wof:101750367")
 		// The observer supplies no shape vocabulary, so `mechanismShapes` and `candidates`
 		// are absent rather than empty — the distinction `candidate_admissibility` reads.
-		expect(outcome.mechanismShapes).toBeUndefined()
-		expect(outcome.candidates).toBeUndefined()
+		expect(observed.mechanismShapes).toBeUndefined()
+		expect(observed.candidates).toBeUndefined()
 	})
 })
 
@@ -390,12 +390,12 @@ describe("tracedGauntletObserver", () => {
 	})
 
 	it("attaches the resolver's own records, projecting the result through the same mapping", async () => {
-		const outcome = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
+		const observed = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
 
-		expect(outcome.result.locality).toBe("Springfield")
-		expect(outcome.candidates).toHaveLength(1)
-		expect(outcome.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
-		expect(outcome.candidates![0]!.query.limit).toBe(5)
+		expect(observed.result.locality).toBe("Springfield")
+		expect(observed.candidates).toHaveLength(1)
+		expect(observed.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
+		expect(observed.candidates![0]!.query.limit).toBe(5)
 	})
 
 	it("reads a refinement pair end to end, through the closed comparator set", async () => {

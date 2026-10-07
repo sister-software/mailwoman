@@ -5,6 +5,7 @@
  * @file The flag interface for the OpenAddresses real-point resolver eval.
  */
 
+import type { CaseNormalization } from "@mailwoman/core/pipeline"
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
 import type { PathBuilderLike } from "path-ts"
 
@@ -146,9 +147,11 @@ export interface OAResolverEvalOptions {
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
-	 * Pins `caseNormalization` to `"title-case"`.
+	 * Pins the classifier's `caseNormalization`.
+	 *
+	 * Unset leaves the library default.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 	/**
 	 * Tri-state pin: force `postcodeCountryCoherence` on.
 	 *
@@ -213,10 +216,6 @@ export interface OAResolverEvalOptions {
 	 * Omitted, the harness writes no file and costs two `performance.now()` calls per row.
 	 */
 	profileJSON?: string
-	/**
-	 * Pins `caseNormalization` to `"preserve"`.
-	 */
-	rawCase?: boolean
 	/**
 	 * Candidate tokenizer.
 	 */

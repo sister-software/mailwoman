@@ -84,7 +84,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 
 	return createRuntimePipeline({
 		classifier,
-		resolver,
+		...(resolver ? { resolver } : {}),
 		poiQueryKind: opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : "extract",
 	})
 }

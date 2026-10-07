@@ -60,7 +60,7 @@ async function main() {
 	const base = await mk(values["base"] || "")
 	const cand = await mk(values["cand"] || "")
 	const resolver = createWOFResolver(new WOFSQLitePlaceLookup({ databasePath: resolvePath(WOF) }))
-	const opts = { defaultCountry: cc }
+	const opts = { defaultCountry: { country: cc, source: "caller" as const } }
 
 	const didResolve = async (tree: AddressTree): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree, opts)

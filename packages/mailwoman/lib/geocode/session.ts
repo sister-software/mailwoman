@@ -33,7 +33,13 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
-import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
+import {
+	GEOCODE_SWITCH_DEFAULTS,
+	geocodeAddress,
+	geocodeParseInputs,
+	parseForGeocode,
+	type GeocodeDeps,
+} from "#geocode/core"
 import { layerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
@@ -556,6 +562,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			locale: options.locale ?? "en-US",
 			confidence: 1,
 			alternatives: [],
+			script: [],
+			evidence: null,
 			source: "caller",
 		})
 
@@ -663,21 +671,19 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
-			...(inferredScopeOK && localeCountry ? { defaultCountry: localeCountry } : {}),
-
-			defaultCountryIsInferred: !options.defaultCountry,
+			...(inferredScopeOK && localeCountry
+				? { defaultCountry: { country: localeCountry, source: options.defaultCountry ? "caller" : "inferred" } }
+				: {}),
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
 
 			...(capitalLevel ? { capitalLevel } : {}),
 
 			...(localeCountry ? { fuzzyCountryScope: localeCountry } : {}),
 
-			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
-
-			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
-			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
-
-			adminContainmentRerank: options.adminContainmentRerank !== false,
+			postcodeCountryCoherence: options.postcodeCountryCoherence,
+			postcodeShapeCoherence: options.postcodeShapeCoherence,
+			postcodeContainmentCoherence: options.postcodeContainmentCoherence,
+			adminContainmentRerank: options.adminContainmentRerank ?? GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 
@@ -686,7 +692,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
 
-			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
+			poiVenueTier: options.poiVenueTier ?? GEOCODE_SWITCH_DEFAULTS.poiVenueTier,
 
 			...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
 
@@ -696,7 +702,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 			...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
-			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
+			diagnoseUnreachable: !!trace && (options.diagnoseUnreachable ?? GEOCODE_SWITCH_DEFAULTS.diagnoseUnreachable),
 		})
 
 		const finishedAt = performance.now()

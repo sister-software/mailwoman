@@ -338,6 +338,9 @@ export async function createSemanticObservationRoute(
 				kind: "category",
 				categoryID: String(mapping.externalID),
 				matchedPhrase: declared.entry.phrase,
+				mechanism: null,
+				inputPhrase: candidate,
+				wikidata: null,
 				// The confidence selects a query kind and never orders candidates: 1 for an unscoped
 				// phrase or an exact locale match, half that when only the language matches.
 				confidence: localeMatch.confidence,

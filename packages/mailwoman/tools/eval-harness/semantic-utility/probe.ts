@@ -14,7 +14,7 @@ import {
 	gradeCase,
 	type POIBoardExpect,
 	type POIBoardFixture,
-	type POIBoardOutcome,
+	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
 import {
 	canonicalJSON,
@@ -49,7 +49,7 @@ export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 /**
  * Classifies the POI outcome shape of a pipeline result.
  */
-export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
+export function poiOutcomeShape(outcome: POIBoardResult): POIOutcomeShape {
 	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"
 
 	if (outcome.poiIntent.type === "abstain") return "poi_abstain"
@@ -73,7 +73,7 @@ export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
 	fixture: POIBoardFixture,
-	outcome: POIBoardOutcome
+	outcome: POIBoardResult
 ): CaseGrade {
 	if (comparator !== "poi_board_assembled_answer") {
 		throw new Error(`semantic-utility probe: unregistered outcome comparator ${stringifyJSON(comparator)}`)

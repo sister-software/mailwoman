@@ -24,6 +24,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
+import type { DefaultCountry } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { mean } from "@mailwoman/core/utils"
@@ -191,8 +192,12 @@ async function main() {
 		tier: "server",
 	})
 
-	const tri = (on: keyof typeof args, off: keyof typeof args): boolean | undefined =>
-		args[on] === true ? true : args[off] === true ? false : undefined
+	/**
+	 * The positive flag pins a behavior on, the inverse flag pins it off,
+	 * and neither keeps the library default.
+	 */
+	const pin = (on: keyof typeof args, off: keyof typeof args): "on" | "off" | "library-default" =>
+		args[on] === true ? "on" : args[off] === true ? "off" : "library-default"
 
 	const officialNameExact = args["official-name-exact"] === true
 
@@ -200,17 +205,16 @@ async function main() {
 		new WOFSQLitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
 	)
 
-	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")
-	const normalizeCasePin = tri("normalize-case", "raw-case")
-	const postcodeConsistencyPin = args["postcode-consistency"] === true ? true : undefined
-	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
+	const adminCoherencePin = pin("admin-coherence", "no-admin-coherence")
+	const normalizeCasePin = pin("normalize-case", "raw-case")
+	const postalCompoundPin = pin("postal-compound-recovery", "no-postal-compound-recovery")
 	// `--default-country none` = truly unscoped resolution (no country prior at all).
 	// The namesake legs need it.
 	// An empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = args["default-country"] || "FR"
 
 	const resolveOpts: {
-		defaultCountry?: string
+		defaultCountry?: DefaultCountry
 		adminCoherence?: boolean
 		postcodeConsistency?: boolean
 		postalCompoundRecovery?: boolean
@@ -218,10 +222,12 @@ async function main() {
 		anchorWeight?: number
 		hardCountry?: string
 	} = {
-		...(defaultCountryArg === "none" ? {} : { defaultCountry: defaultCountryArg }),
-		...(adminCoherencePin !== undefined ? { adminCoherence: adminCoherencePin } : {}),
-		...(postcodeConsistencyPin !== undefined ? { postcodeConsistency: postcodeConsistencyPin } : {}),
-		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
+		...(defaultCountryArg === "none"
+			? {}
+			: { defaultCountry: { country: defaultCountryArg, source: "caller" as const } }),
+		...(adminCoherencePin === "library-default" ? {} : { adminCoherence: adminCoherencePin === "on" }),
+		...(args["postcode-consistency"] === true ? { postcodeConsistency: true } : {}),
+		...(postalCompoundPin === "library-default" ? {} : { postalCompoundRecovery: postalCompoundPin === "on" }),
 	}
 
 	// When `--hard-country` is set, load the bundled coarse placer and apply the same scoping
@@ -242,9 +248,7 @@ async function main() {
 				.toArray()
 		: undefined
 
-	const hardCountrySafelist = extraSafelist?.length
-		? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist])
-		: undefined
+	const hardCountrySafelist = extraSafelist?.length ? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist]) : null
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
@@ -271,7 +275,9 @@ async function main() {
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
 			enforceWordConsistency: parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null),
-			...(normalizeCasePin !== undefined ? { caseNormalization: normalizeCasePin ? "title-case" : "preserve" } : {}),
+			...(normalizeCasePin === "library-default"
+				? {}
+				: { caseNormalization: normalizeCasePin === "on" ? "title-case" : "preserve" }),
 		})
 
 		const flat = decodeAsJSON(tree) as Record<string, string>
@@ -308,7 +314,10 @@ async function main() {
 			const placed = placeCountry(row.raw)
 
 			if (placed.country && placed.country !== "OTHER") {
-				const hardCountry = hardCountryFor(placed.country, placed.confidence, resolveOpts, true, hardCountrySafelist)
+				const hardCountry = hardCountryFor({ country: placed.country, confidence: placed.confidence }, resolveOpts, {
+					use: "filter",
+					safelist: hardCountrySafelist,
+				})
 
 				rowResolveOpts = {
 					...resolveOpts,

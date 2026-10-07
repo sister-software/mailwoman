@@ -12,8 +12,8 @@ import type { POIQueryResult, QueryKindResult } from "#pipeline/types"
 const POI_KIND: QueryKindResult = { kind: "poi_query", confidence: 0.92, alternatives: [], intentMarkers: null }
 
 describe("poi_query pipeline branch", () => {
-	it("routes to stages.poiIntent and returns path 'poi' with the outcome", async () => {
-		const outcome: POIQueryResult = {
+	it("routes to stages.poiIntent and returns path 'poi' with the result", async () => {
+		const poiResult: POIQueryResult = {
 			type: "intent",
 			intent: {
 				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
@@ -26,11 +26,11 @@ describe("poi_query pipeline branch", () => {
 
 		const result = await runPipeline("hospital", {
 			classifyKind: async () => POI_KIND,
-			poiIntent: async () => outcome,
+			poiIntent: async () => poiResult,
 		})
 
 		expect(result.path).toBe("poi")
-		expect(result.poiIntent).toEqual(outcome)
+		expect(result.poiIntent).toEqual(poiResult)
 		expect(result.kind.kind).toBe("poi_query")
 		expect(result.tree.roots).toEqual([])
 		expect(result.timing["poi-intent"]).toBeTypeOf("number")
@@ -51,7 +51,7 @@ describe("poi_query pipeline branch", () => {
 			],
 		}
 
-		const outcome: POIQueryResult = {
+		const poiResult: POIQueryResult = {
 			type: "intent",
 			intent: {
 				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
@@ -64,7 +64,7 @@ describe("poi_query pipeline branch", () => {
 
 		const result = await runPipeline("hospital near Springfield IL", {
 			classifyKind: async () => POI_KIND,
-			poiIntent: async () => outcome,
+			poiIntent: async () => poiResult,
 		})
 
 		expect(result.tree).toEqual(anchorTree)
@@ -90,15 +90,15 @@ describe("poi_query pipeline branch", () => {
 		expect(result.poiIntent).toBeNull()
 	})
 
-	it("returns an abstain outcome verbatim", async () => {
-		const outcome: POIQueryResult = { type: "abstain", reason: "no_executor" }
+	it("returns an abstain result verbatim", async () => {
+		const poiResult: POIQueryResult = { type: "abstain", reason: "no_executor" }
 
 		const result = await runPipeline("drinking fountain", {
 			classifyKind: async () => POI_KIND,
-			poiIntent: async () => outcome,
+			poiIntent: async () => poiResult,
 		})
 
 		expect(result.path).toBe("poi")
-		expect(result.poiIntent).toEqual(outcome)
+		expect(result.poiIntent).toEqual(poiResult)
 	})
 })

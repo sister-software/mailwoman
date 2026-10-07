@@ -32,6 +32,7 @@ import type { PathBuilderLike } from "path-ts"
 import { confidentLocaleCountry, LOCALE_COUNTRIES, localeHintID, resolveSystemVerdict } from "#address-system"
 import { encodeCharUnits } from "#char-encoder"
 import type {
+	AddressSystemConventions,
 	NeuralAddressClassifierConfig,
 	ParseOpts,
 	ParseWithLogitsResult,
@@ -67,10 +68,13 @@ import {
 import { enforceWordConsistency } from "#word-consistency"
 
 export type {
+	AddressSystemConventions,
 	NeuralAddressClassifierConfig,
 	ParseOpts,
 	ParseWithLogitsResult,
+	PlacetypeCensusSelection,
 	SpanProposerConfig,
+	SpanProposerSelection,
 } from "#classifier/options"
 
 export {
@@ -214,6 +218,27 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
+	 * Resolves the span proposer for one parse, or `null` when it is disabled.
+	 */
+	private spanProposerFor(opts: ParseOpts | undefined): SpanProposerConfig | null {
+		const selection = opts?.spanProposer ?? "inherit"
+		const source = selection === "inherit" ? (this.cfg.spanProposer ?? "auto") : selection
+
+		if (source === "none") return null
+
+		return source === "auto" ? this.defaultProposer() : source
+	}
+
+	/**
+	 * Resolves the address-system conventions for one parse.
+	 */
+	private conventionsFor(opts: ParseOpts | undefined): AddressSystemConventions {
+		const selection = opts?.addressSystemConventions ?? "inherit"
+
+		return selection === "inherit" ? (this.cfg.addressSystemConventions ?? "off") : selection
+	}
+
+	/**
 	 * Loads a classifier from a weights package through `#classifier/loader`, Node-only
 	 * because a browser bundle resolves the loader to a module that throws.
 	 */
@@ -305,10 +330,7 @@ export class NeuralAddressClassifier {
 				spanScores: null,
 				localeCountries: null,
 				detectedSystem: null,
-				systemSource: resolveSystemVerdict(
-					opts?.addressSystemConventions ?? this.cfg.addressSystemConventions ?? null,
-					null
-				).systemSource,
+				systemSource: resolveSystemVerdict(this.conventionsFor(opts), null).systemSource,
 				priors: TRACE_PRIOR_KINDS.map((kind) => untracedPrior(kind, false)),
 				emissions: [],
 				labels,
@@ -460,9 +482,7 @@ export class NeuralAddressClassifier {
 		// A prior counts as applied only when at least one cell is nonzero.
 		const matrixHasBias = (m: readonly (readonly number[])[]): boolean => m.some((row) => row.some((v) => v !== 0))
 
-		// A null system applies no conventions.
-		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions ?? null
-		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits)
+		const { detectedSystem, systemSource } = resolveSystemVerdict(this.conventionsFor(opts), localeLogits)
 		const conventions = conventionsForSystem(detectedSystem)
 
 		const queryShapePrior = opts?.queryShape
@@ -519,12 +539,11 @@ export class NeuralAddressClassifier {
 			untracedPrior("streetMorphology", morphologyPrior !== undefined && matrixHasBias(morphologyPrior))
 		)
 
-		// The span proposer adds phrase priors and is on by default, with `spanProposer: false` turning it off.
-		const configured = this.cfg.spanProposer === false ? undefined : (this.cfg.spanProposer ?? this.defaultProposer())
-		const proposerCfg = (opts?.spanProposer ?? true) ? configured : undefined
+		// The span proposer adds phrase priors and is on by default.
+		const proposerCfg = this.spanProposerFor(opts)
 		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
 
-		if (spanProposals.length) {
+		if (proposerCfg && spanProposals.length) {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
 
@@ -546,7 +565,10 @@ export class NeuralAddressClassifier {
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
 		// The census is probed only when tracing.
 		// Its observations enter the trace without changing a logit.
-		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
+		const censusSelection = opts?.placetypeCensus ?? "inherit"
+
+		const placetypeCensusOpt: PlacetypeCensusLike | undefined =
+			censusSelection === "inherit" ? this.cfg.placetypeCensus : censusSelection === "off" ? undefined : censusSelection
 
 		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
 

@@ -144,6 +144,9 @@ describe("the phrase rule", () => {
 				categoryID: "drugstore",
 				matchedPhrase: "pick up a prescription",
 				confidence: 1,
+				mechanism: null,
+				inputPhrase: "where can i pick up a prescription",
+				wikidata: null,
 				searchAsSet: true,
 				countryScope: ["US"],
 			},
@@ -152,6 +155,9 @@ describe("the phrase rule", () => {
 				categoryID: "pharmacy",
 				matchedPhrase: "pick up a prescription",
 				confidence: 1,
+				mechanism: null,
+				inputPhrase: "where can i pick up a prescription",
+				wikidata: null,
 				searchAsSet: true,
 			},
 		])
@@ -328,10 +334,22 @@ describe("a plural affordance", () => {
 				categoryID: "drugstore",
 				matchedPhrase: "prescription",
 				confidence: 1,
+				mechanism: null,
+				inputPhrase: "prescription",
+				wikidata: null,
 				searchAsSet: true,
 				countryScope: ["US"],
 			},
-			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+			{
+				kind: "category",
+				categoryID: "pharmacy",
+				matchedPhrase: "prescription",
+				confidence: 1,
+				searchAsSet: true,
+				mechanism: null,
+				inputPhrase: "prescription",
+				wikidata: null,
+			},
 		])
 	})
 
@@ -353,8 +371,26 @@ describe("a plural affordance", () => {
 
 	it("carries the whole set through the query surface", () => {
 		const plural: ReturnType<POIPhraseLookup> = [
-			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
-			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+			{
+				kind: "category",
+				categoryID: "drugstore",
+				matchedPhrase: "prescription",
+				confidence: 1,
+				searchAsSet: true,
+				mechanism: null,
+				inputPhrase: "prescription",
+				wikidata: null,
+			},
+			{
+				kind: "category",
+				categoryID: "pharmacy",
+				matchedPhrase: "prescription",
+				confidence: 1,
+				searchAsSet: true,
+				mechanism: null,
+				inputPhrase: "prescription",
+				wikidata: null,
+			},
 		]
 
 		const matched = matchPOISubject("prescription near Denver CO", "en-US", (phrase) =>
@@ -433,6 +469,9 @@ describe("the assertion's country scope", () => {
 					categoryID: "drugstore",
 					matchedPhrase: "prescription",
 					confidence: 1,
+					mechanism: null,
+					inputPhrase: "prescription",
+					wikidata: null,
 					searchAsSet: true,
 					countryScope: ["US"],
 				},
@@ -502,6 +541,9 @@ describe("the assertion's country scope", () => {
 					categoryID: "drugstore",
 					matchedPhrase: "collect a prescription",
 					confidence: 1,
+					mechanism: null,
+					inputPhrase: "collect a prescription",
+					wikidata: null,
 					searchAsSet: true,
 					countryScope: ["US"],
 				},

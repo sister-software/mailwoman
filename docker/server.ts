@@ -92,7 +92,7 @@ async function buildEngine() {
 				const extracts = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
 				// The candidate database covers every country.
 				// The FTS backend falls back to US.
-				const countryScope = candidateDB ? {} : { defaultCountry: "US" }
+				const countryScope = candidateDB ? {} : { defaultCountry: { country: "US", source: "caller" as const } }
 
 				const oneGeocode: GeocodeCallback = (address, { inputMode }) =>
 					geocodeAddress(address, { classifier, resolver, databases: extracts.for, ...countryScope, inputMode })

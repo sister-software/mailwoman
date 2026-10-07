@@ -150,7 +150,11 @@ const lookup = new WOFCandidateTableLookup({ databasePath: await resolveCandidat
 const resolver = createWOFResolver(lookup)
 
 export async function handler(event) {
-	const result = await geocodeAddress(event.address, { classifier, resolver, defaultCountry: "US" })
+	const result = await geocodeAddress(event.address, {
+		classifier,
+		resolver,
+		defaultCountry: { country: "US", source: "caller" },
+	})
 
 	return { statusCode: 200, body: JSON.stringify(result) }
 }

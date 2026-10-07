@@ -28,7 +28,6 @@ export async function applyStreetMissFallback(
 		 */
 		deps: {
 			resolver?: { resolveTree(tree: AddressTree, opts: ResolveOpts): Promise<AddressTree> }
-			defaultCountryIsInferred?: boolean
 		}
 		input: string
 		forkDeclared: boolean
@@ -47,11 +46,14 @@ export async function applyStreetMissFallback(
 		roots: [{ tag: "locality", value: bare, start: 0, end: bare.length, confidence: 1, children: [] }],
 	}
 
-	const retryOpts = {
-		...opts,
-		hardCountry: undefined,
-		anchorPosterior: undefined,
-		...(deps.defaultCountryIsInferred === true ? { defaultCountry: undefined } : {}),
+	// The retry drops the placer's country evidence and any locale-inferred scope.
+	// A caller's scope stays.
+	const retryOpts: ResolveOpts = { ...opts }
+	delete retryOpts.hardCountry
+	delete retryOpts.anchorPosterior
+
+	if (retryOpts.defaultCountry?.source === "inferred") {
+		delete retryOpts.defaultCountry
 	}
 
 	const reresolved = await deps.resolver.resolveTree(localityTree, retryOpts)

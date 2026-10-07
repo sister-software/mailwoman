@@ -85,12 +85,12 @@ export interface PostcodeCountryScopeOpts {
 	postcode: string
 
 	/**
-	 * The caller's default country filter, or `undefined` when no default applies.
+	 * The caller's default country filter, or null when no default applies.
 	 *
 	 * Without a default, only the `pair` test runs.
 	 * The pass returns a scope when exactly one country qualifies.
 	 */
-	defaultCountry: string | undefined
+	defaultCountry: string | null
 
 	/**
 	 * The consistency radius in kilometers.
@@ -250,7 +250,7 @@ export async function findPostcodeCountryScope(
 	opts: PostcodeCountryScopeOpts
 ): Promise<PostcodeCountryScope | null> {
 	const postcode = opts.postcode.trim()
-	const defaultCountry = opts.defaultCountry?.trim().toUpperCase() || undefined
+	const defaultCountry = opts.defaultCountry?.trim().toUpperCase() || null
 
 	if (!postcode) return null
 

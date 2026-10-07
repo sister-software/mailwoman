@@ -1,4 +1,5 @@
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -35,35 +36,46 @@ function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
 }
 
 describe("HardCountryFor — coverage-guarded hard country filter", () => {
-	const ON = true
-
 	it("returns the country when confident AND safelisted (the pure-win case)", () => {
-		expect(hardCountryFor("ES", 0.99, {}, ON, undefined)).toBe("ES")
+		expect(hardCountryFor({ country: "ES", confidence: 0.99 }, {}, { use: "filter", safelist: null })).toBe("ES")
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("ES")).toBe(true)
 	})
 
 	it("stays SOFT (undefined) for a confident but NON-safelisted country — the low-coverage tail", () => {
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("FI")).toBe(false)
-		expect(hardCountryFor("FI", 1, {}, ON, undefined)).toBeNull()
+		expect(hardCountryFor({ country: "FI", confidence: 1 }, {}, { use: "filter", safelist: null })).toBeNull()
 	})
 
 	it("stays SOFT below the confidence bar even when safelisted", () => {
-		expect(hardCountryFor("ES", 0.5, {}, ON, undefined)).toBeNull()
+		expect(hardCountryFor({ country: "ES", confidence: 0.5 }, {}, { use: "filter", safelist: null })).toBeNull()
 	})
 
-	it("is OFF when hardPlaceCountry is false/undefined", () => {
-		expect(hardCountryFor("ES", 0.99, {}, false, undefined)).toBeNull()
-		expect(hardCountryFor("ES", 0.99, {}, null, undefined)).toBeNull()
+	it("is OFF when the placer country is only a prior", () => {
+		expect(hardCountryFor({ country: "ES", confidence: 0.99 }, {}, { use: "prior", safelist: null })).toBeNull()
 	})
 
 	it("never overwrites a caller's own hardCountry / defaultCountry", () => {
-		expect(hardCountryFor("ES", 0.99, { defaultCountry: "US" }, ON, undefined)).toBeNull()
-		expect(hardCountryFor("ES", 0.99, { hardCountry: "US" }, ON, undefined)).toBeNull()
+		expect(
+			hardCountryFor(
+				{ country: "ES", confidence: 0.99 },
+				{ defaultCountry: { country: "US", source: "caller" } },
+				{ use: "filter", safelist: null }
+			)
+		).toBeNull()
+
+		expect(
+			hardCountryFor({ country: "ES", confidence: 0.99 }, { hardCountry: "US" }, { use: "filter", safelist: null })
+		).toBeNull()
 	})
 
 	it("honors a safelist override (how the eval measures unrestricted to grow the list)", () => {
-		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
-		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeNull()
+		expect(hardCountryFor({ country: "FI", confidence: 0.99 }, {}, { use: "filter", safelist: new Set(["FI"]) })).toBe(
+			"FI"
+		)
+
+		expect(
+			hardCountryFor({ country: "ES", confidence: 0.99 }, {}, { use: "filter", safelist: new Set(["FI"]) })
+		).toBeNull()
 	})
 })
 
@@ -94,7 +106,7 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 				placeCountry: () => ({ country: opts.placed, confidence: 1 }),
 			},
 			{
-				hardPlaceCountry: true,
+				placerCountryUse: "filter",
 				...(opts.override ? { hardCountrySafelist: opts.override } : {}),
 			}
 		)
@@ -191,12 +203,19 @@ describe("runPipeline — stage composition", () => {
 			computeQueryShape: vi.fn((_input) => {
 				order.push("queryShape")
 
-				return { knownFormats: [] }
+				return { ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] }
 			}),
 			detectLocale: vi.fn(async (_in, _sh, opts) => {
 				order.push("detectLocale")
 
-				return { locale: opts?.hint ?? "und", confidence: 1, alternatives: [], source: "caller" as const }
+				return {
+					locale: opts?.hint ?? "und",
+					confidence: 1,
+					alternatives: [],
+					source: "caller" as const,
+					script: [],
+					evidence: null,
+				}
 			}),
 			classifyKind: vi.fn(async (_in, _sh, _lo) => {
 				order.push("classifyKind")
@@ -227,6 +246,7 @@ describe("runPipeline — stage composition", () => {
 
 	it("passes QueryShape into classifier.parse", async () => {
 		const shape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.9 }],
 		}
 
@@ -298,6 +318,7 @@ describe("runPipeline — fast-path routing", () => {
 	}
 
 	const postcodeShape: QueryShapeLite = {
+		...EMPTY_QUERY_SHAPE_VIEW,
 		knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 		totalLength: 5,
 		characterClass: "numeric",
@@ -325,6 +346,7 @@ describe("runPipeline — fast-path routing", () => {
 
 	it("fast-paths locality_only inputs when shape is short + alpha", async () => {
 		const localityShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [],
 			totalLength: 5,
 			characterClass: "alpha",
@@ -389,7 +411,12 @@ describe("runPipeline — fast-path routing", () => {
 		const resolver = fakeResolver((t) => t)
 
 		const stages: RuntimePipelineStages = {
-			computeQueryShape: () => ({ knownFormats: [], totalLength: 5, characterClass: "alpha" }),
+			computeQueryShape: () => ({
+				...EMPTY_QUERY_SHAPE_VIEW,
+				knownFormats: [],
+				totalLength: 5,
+				characterClass: "alpha",
+			}),
 			classifyKind: async () => postcodeOnlyKind,
 			classifier,
 			resolver,
@@ -461,7 +488,7 @@ describe("runPipeline — abort signal", () => {
 
 	it("aborts between normalize and queryShape if signaled", async () => {
 		const controller = new AbortController()
-		const computeQueryShape = vi.fn(() => ({ knownFormats: [] }))
+		const computeQueryShape = vi.fn(() => ({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] }))
 
 		const normalize = vi.fn((raw: string) => {
 			controller.abort()
@@ -534,6 +561,7 @@ describe("runPipeline — abort signal", () => {
 
 describe("runPipeline — timing budget shape", () => {
 	const postcodeShape: QueryShapeLite = {
+		...EMPTY_QUERY_SHAPE_VIEW,
 		knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 		totalLength: 5,
 		characterClass: "numeric",
@@ -639,6 +667,7 @@ describe("RunPipeline — non-graceful stage failures", () => {
 
 	it("Resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
 		const postcodeShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",
@@ -677,6 +706,8 @@ describe("runPipeline — locale + opts threading", () => {
 				confidence: 1,
 				alternatives: [],
 				source: "caller",
+				script: [],
+				evidence: null,
 			})
 		)
 
@@ -742,6 +773,25 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 		expect(seen[0]).toMatchObject({ maxLookups: 7, anchorPosterior: { DE: 0.97 } })
 	})
 
+	it('hard-filters a confident safelisted guess by default, and only adds the prior under "prior"', async () => {
+		const placeCountry = vi.fn(() => ({ country: "DE", confidence: 0.97 }))
+
+		const byDefault = captureResolveOpts()
+		await runPipeline("Hauptstraße 5, Berlin", { resolver: byDefault.resolver, placeCountry })
+		expect(byDefault.seen[0]).toMatchObject({ hardCountry: "DE" })
+
+		const priorOnly = captureResolveOpts()
+
+		await runPipeline(
+			"Hauptstraße 5, Berlin",
+			{ resolver: priorOnly.resolver, placeCountry },
+			{ placerCountryUse: "prior" }
+		)
+
+		expect(priorOnly.seen[0]).toMatchObject({ anchorPosterior: { DE: 0.97 } })
+		expect(priorOnly.seen[0]).not.toHaveProperty("hardCountry")
+	})
+
 	it("abstains (country: null) ⇒ no posterior injected", async () => {
 		const { resolver, seen } = captureResolveOpts()
 		const placeCountry = vi.fn(() => ({ country: null, confidence: 0.3 }))
@@ -789,6 +839,7 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 		const placeCountry = vi.fn(() => ({ country: "US", confidence: 0.96 }))
 
 		const postcodeShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",
@@ -872,6 +923,7 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 
 	it("records a resolver throw on the FAST path too", async () => {
 		const postcodeShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",

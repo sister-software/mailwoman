@@ -212,15 +212,15 @@ export interface KnownFormatHitView {
  */
 export interface QueryShapeFormatsView {
 	knownFormats: ReadonlyArray<KnownFormatHitView>
-	characterClass?: CharacterClass | (string & {})
+	characterClass: CharacterClass | (string & {}) | null
 	/**
 	 * The ranked scripts.
 	 *
 	 * `computeQueryShape` always sets them.
-	 * The field is optional so that hand-built shapes stay valid.
+	 * A hand-built shape may pass null.
 	 */
-	scripts?: ReadonlyArray<{ script: ScriptCode | (string & {}); share: number }>
-	totalLength?: number
+	scripts: ReadonlyArray<{ script: ScriptCode | (string & {}); share: number }> | null
+	totalLength: number | null
 }
 
 /**
@@ -239,7 +239,7 @@ export interface SegmentView {
  * It is the input type of `@mailwoman/kind-classifier`.
  */
 export interface QueryShapeSegmentsView extends QueryShapeFormatsView {
-	segments?: ReadonlyArray<SegmentView>
+	segments: ReadonlyArray<SegmentView> | null
 }
 
 /**
@@ -249,7 +249,7 @@ export interface TokenClassView {
 	span: { start: number; end: number; body: string }
 	class: TokenCharacterClass | (string & {})
 	length: number
-	script?: ScriptCode | (string & {})
+	script: ScriptCode | (string & {}) | null
 }
 
 /**
@@ -257,7 +257,21 @@ export interface TokenClassView {
  * It is the input type of `@mailwoman/phrase-grouper`.
  */
 export interface QueryShapeTokensView extends QueryShapeSegmentsView {
-	tokenClasses?: ReadonlyArray<TokenClassView>
+	tokenClasses: ReadonlyArray<TokenClassView> | null
+}
+
+/**
+ * A query-shape view with no format hits and every optional part null.
+ *
+ * Hand-built shapes spread it and set the parts they need.
+ */
+export const EMPTY_QUERY_SHAPE_VIEW: QueryShapeTokensView = {
+	knownFormats: [],
+	characterClass: null,
+	scripts: null,
+	totalLength: null,
+	segments: null,
+	tokenClasses: null,
 }
 
 /**

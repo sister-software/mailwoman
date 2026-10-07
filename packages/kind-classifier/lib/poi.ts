@@ -31,17 +31,24 @@ export interface POIPhraseMatch {
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
-	mechanism?: "exact" | "locale_normalized" | "typo"
-	inputPhrase?: string
 	/**
-	 * Absent means `"category"`; optional so existing `POIPhraseLookup` implementors stay source-compatible.
+	 * How the phrase matched, or `null` when the lookup does not report it.
 	 */
-	kind?: "category" | "brand" | "name"
+	mechanism: "exact" | "locale_normalized" | "typo" | null
+	/**
+	 * The phrase the lookup received, or `null` when the lookup does not report it.
+	 */
+	inputPhrase: string | null
+	/**
+	 * What `categoryID` identifies.
+	 */
+	kind: "category" | "brand" | "name"
 	/**
 	 * Wikidata QID when known, `kind: "brand"` only.
-	 * Absent when a brand resolved using its name only.
+	 *
+	 * It is `null` when a brand resolved using its name only, and for other kinds.
 	 */
-	wikidata?: string
+	wikidata: string | null
 	/**
 	 * Whether this hit is one member of a set the caller must search together
 	 * rather than one candidate in a preference list.
@@ -83,9 +90,7 @@ export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray
 export type POIQuerySpan = TextSpan
 
 /**
- * Which lexicon this hit came from.
- *
- * Category lookups set `"category"` as the backward-compatible default.
+ * The subject phrase {@link matchPOISubject} chose and the lexicon hits for it.
  */
 export interface POISubjectMatch {
 	/**
@@ -295,7 +300,7 @@ export function createScorePOICategory(
 
 		if (!matched || matched.remainder !== "") return 0
 
-		if ((matched.match.kind ?? "category") !== "category") return 0
+		if (matched.match.kind !== "category") return 0
 
 		return POI_CATEGORY_CONFIDENCE * matched.match.confidence
 	}
@@ -311,7 +316,7 @@ export function matchPOICategory(text: string, locale: string | null, lookup: PO
 
 	if (!matched || matched.remainder !== "") return null
 
-	if ((matched.match.kind ?? "category") !== "category") return null
+	if (matched.match.kind !== "category") return null
 
 	return matched.match
 }

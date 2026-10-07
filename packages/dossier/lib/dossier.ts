@@ -40,7 +40,7 @@ import {
 } from "#explanations"
 import type { EntityID, ExternalID } from "#identifiers"
 import { type AliasResolution, type Containment, entrancesOf, resolveAlias } from "#links"
-import { type OutcomeReport, reportOutcomes } from "#outcomes"
+import { type OperatorResultReport, reportOperatorResults } from "#operator-results"
 import {
 	type BuildingPosition,
 	type ExtentMembership,
@@ -147,7 +147,7 @@ export interface Dossier {
 	/**
 	 * Blocker accuracy and time saved over the admitted operator dispositions.
 	 */
-	outcomes: OutcomeReport
+	operatorResults: OperatorResultReport
 	/**
 	 * The admitted readings that attach to no building.
 	 * No building's section shows them.
@@ -237,11 +237,11 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	const memberships = admittedOnly(records.memberships ?? [])
 	const positions = admittedOnly(records.positions ?? [])
 
-	// A disposition and its outcome cite separate records, so a dossier dated between
-	// the two shows the decision with its outcome pending.
+	// A disposition and its result cite separate records, so a dossier dated between
+	// the two shows the decision with its result pending.
 	const dispositions = admittedOnly(records.dispositions ?? []).map((disposition) =>
-		disposition.outcome && !admittedSet.has(disposition.outcome.evidence.source)
-			? { ...disposition, outcome: null }
+		disposition.result && !admittedSet.has(disposition.result.evidence.source)
+			? { ...disposition, result: null }
 			: disposition
 	)
 
@@ -279,7 +279,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 		buildings: sections,
 		unresolved: sections.flatMap((section) => section.unresolved),
 		issues,
-		outcomes: reportOutcomes(dispositions),
+		operatorResults: reportOperatorResults(dispositions),
 		unplaced: unplaced.map((group) => ({
 			layer: group.layer,
 			extent: group.extent,

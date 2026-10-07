@@ -6,15 +6,15 @@
 
 import { describe, expect, test } from "vitest"
 
-import { ExplanationKind, type OperatorDisposition, type OperatorOutcome } from "#explanations"
-import { outcomeStatements, reportOutcomes } from "#outcomes"
+import { ExplanationKind, type OperatorDisposition, type OperatorResult } from "#explanations"
+import { operatorResultStatements, reportOperatorResults } from "#operator-results"
 
 /**
  * A synthetic disposition on one check.
  *
- * Each outcome cites the log `outcome-<id>` for the disposition's id.
+ * Each result cites the log `result-<id>` for the disposition's id.
  */
-function disposition(id: string, outcome?: Omit<OperatorOutcome, "at" | "evidence">): OperatorDisposition {
+function disposition(id: string, result?: Omit<OperatorResult, "at" | "evidence">): OperatorDisposition {
 	return {
 		id,
 		check: "house-fiber",
@@ -22,33 +22,33 @@ function disposition(id: string, outcome?: Omit<OperatorOutcome, "at" | "evidenc
 		decision: "Request the provider's plant record for cell-9",
 		decidedAt: "2022-06-01",
 		evidence: { source: "operator-log", observedAt: null, validFrom: null, validTo: null },
-		outcome: outcome
+		result: result
 			? {
-					...outcome,
+					...result,
 					at: "2022-06-20",
-					evidence: { source: `outcome-${id}`, observedAt: null, validFrom: null, validTo: null },
+					evidence: { source: `result-${id}`, observedAt: null, validFrom: null, validTo: null },
 				}
 			: null,
 	}
 }
 
-describe("reportOutcomes", () => {
+describe("reportOperatorResults", () => {
 	test("with zero dispositions, blocker accuracy and time saved are unknown", () => {
-		expect(reportOutcomes([])).toEqual({
+		expect(reportOperatorResults([])).toEqual({
 			dispositions: 0,
 			pending: 0,
 			pendingSources: [],
-			blockerAccuracy: { status: "unknown", reason: "no disposition records an outcome" },
+			blockerAccuracy: { status: "unknown", reason: "no disposition records an result" },
 			timeSaved: {
 				status: "unknown",
-				reason: "no outcome records both the minutes spent and the operator's baseline",
+				reason: "no result records both the minutes spent and the operator's baseline",
 			},
 		})
 	})
 
-	test("dispositions that await an outcome are counted with their records and leave both measures unknown", () => {
+	test("dispositions that await an result are counted with their records and leave both measures unknown", () => {
 		expect(
-			reportOutcomes([
+			reportOperatorResults([
 				disposition("d1"),
 				{
 					...disposition("d2"),
@@ -64,8 +64,8 @@ describe("reportOutcomes", () => {
 		})
 	})
 
-	test("blocker accuracy counts the investigated explanations that held over every recorded outcome", () => {
-		const report = reportOutcomes([
+	test("blocker accuracy counts the investigated explanations that held over every recorded result", () => {
+		const report = reportOperatorResults([
 			disposition("d1", { held: true, minutesSpent: null, baselineMinutes: null }),
 			disposition("d2", { held: false, minutesSpent: null, baselineMinutes: null }),
 			disposition("d3", { held: true, minutesSpent: null, baselineMinutes: null }),
@@ -78,12 +78,12 @@ describe("reportOutcomes", () => {
 			status: "measured",
 			held: 2,
 			denominator: 3,
-			sources: ["outcome-d1", "outcome-d2", "outcome-d3"],
+			sources: ["result-d1", "result-d2", "result-d3"],
 		})
 	})
 
-	test("time saved sums the baseline less the minutes spent over the outcomes that record both", () => {
-		const report = reportOutcomes([
+	test("time saved sums the baseline less the minutes spent over the results that record both", () => {
+		const report = reportOperatorResults([
 			disposition("d1", { held: true, minutesSpent: 30, baselineMinutes: 90 }),
 			disposition("d2", { held: false, minutesSpent: 50, baselineMinutes: 40 }),
 			disposition("d3", { held: true, minutesSpent: 20, baselineMinutes: null }),
@@ -93,17 +93,17 @@ describe("reportOutcomes", () => {
 			status: "measured",
 			minutes: 50,
 			denominator: 2,
-			sources: ["outcome-d1", "outcome-d2"],
+			sources: ["result-d1", "result-d2"],
 		})
 
 		expect(report.blockerAccuracy).toMatchObject({ status: "measured", held: 2, denominator: 3 })
 	})
 })
 
-describe("outcomeStatements", () => {
+describe("operatorResultStatements", () => {
 	test("a measured accuracy and time saved are estimates that state their denominators", () => {
-		const statements = outcomeStatements(
-			reportOutcomes([
+		const statements = operatorResultStatements(
+			reportOperatorResults([
 				disposition("d1", { held: true, minutesSpent: 30, baselineMinutes: 90 }),
 				disposition("d2", { held: false, minutesSpent: null, baselineMinutes: null }),
 				disposition("d3"),
@@ -113,42 +113,44 @@ describe("outcomeStatements", () => {
 		expect(statements).toEqual([
 			{
 				kind: "estimate",
-				text: "The investigated explanation held in 1 of 2 dispositions with a recorded outcome.",
-				sources: ["outcome-d1", "outcome-d2"],
+				text: "The investigated explanation held in 1 of 2 dispositions with a recorded result.",
+				sources: ["result-d1", "result-d2"],
 				absence: false,
 			},
 			{
 				kind: "estimate",
-				text: "Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times.",
-				sources: ["outcome-d1"],
+				text: "Against the operator's baselines, the investigations saved 60 minutes over 1 result that records both times.",
+				sources: ["result-d1"],
 				absence: false,
 			},
-			{ kind: "fact", text: "1 of 3 dispositions awaits an outcome.", sources: ["operator-log"], absence: false },
+			{ kind: "fact", text: "1 of 3 dispositions awaits an result.", sources: ["operator-log"], absence: false },
 		])
 	})
 
 	test("time spent beyond the baseline is stated as time lost, not as negative savings", () => {
 		expect(
-			outcomeStatements(reportOutcomes([disposition("d1", { held: true, minutesSpent: 50, baselineMinutes: 40 })]))
+			operatorResultStatements(
+				reportOperatorResults([disposition("d1", { held: true, minutesSpent: 50, baselineMinutes: 40 })])
+			)
 		).toContainEqual({
 			kind: "estimate",
-			text: "Against the operator's baselines, the investigations took 10 minutes longer over 1 outcome that records both times.",
-			sources: ["outcome-d1"],
+			text: "Against the operator's baselines, the investigations took 10 minutes longer over 1 result that records both times.",
+			sources: ["result-d1"],
 			absence: false,
 		})
 	})
 
-	test("with zero outcomes, each unknown measure is a deduction that states the missing record as an absence", () => {
-		expect(outcomeStatements(reportOutcomes([]))).toEqual([
+	test("with zero results, each unknown measure is a deduction that states the missing record as an absence", () => {
+		expect(operatorResultStatements(reportOperatorResults([]))).toEqual([
 			{
 				kind: "deduction",
-				text: "Blocker accuracy is unknown because no disposition records an outcome.",
+				text: "Blocker accuracy is unknown because no disposition records an result.",
 				sources: [],
 				absence: true,
 			},
 			{
 				kind: "deduction",
-				text: "Time saved is unknown because no outcome records both the minutes spent and the operator's baseline.",
+				text: "Time saved is unknown because no result records both the minutes spent and the operator's baseline.",
 				sources: [],
 				absence: true,
 			},

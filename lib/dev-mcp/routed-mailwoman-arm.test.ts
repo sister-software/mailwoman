@@ -179,7 +179,7 @@ describe("buildRoutedMailwomanArm", () => {
 				gazetteer_prior: false,
 				admin_containment_rerank: true,
 				capital_tier: true,
-				variant_alias_exemption: true,
+				variant_alias_exemption: "applied",
 			},
 			[resolvedInput({ id: "us", input: "1 Main St", country: "us" })],
 			deps

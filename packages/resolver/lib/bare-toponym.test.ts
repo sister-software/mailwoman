@@ -367,7 +367,7 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	it("stands down under a hard country scope (a scope makes the prior a no-op by construction)", async () => {
-		const out = await walk(WHITBY, { localeCountryPrior: "GB", defaultCountry: "CA" })
+		const out = await walk(WHITBY, { localeCountryPrior: "GB", defaultCountry: { country: "CA", source: "caller" } })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
 
@@ -534,7 +534,7 @@ describe("bare-country class", () => {
 
 	it("stays inside an EXPLICIT country scope — the race cannot promote a foreign country row", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"), {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 		})
 
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("US")
@@ -543,8 +543,7 @@ describe("bare-country class", () => {
 
 	it("resolves a country-TAGGED node under an inferred scope (bare 'Germany' under the en-US default)", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("country", "Germany"), {
-			defaultCountry: "us",
-			defaultCountryIsInferred: true,
+			defaultCountry: { country: "us", source: "inferred" },
 		})
 
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("DE")
@@ -552,7 +551,7 @@ describe("bare-country class", () => {
 
 	it("keeps an EXPLICIT scope supreme on country-tagged nodes (byte-stable legacy behavior)", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("country", "Germany"), {
-			defaultCountry: "us",
+			defaultCountry: { country: "us", source: "caller" },
 		})
 
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBeUndefined()

@@ -17,7 +17,7 @@ import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
-import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
+import type { DefaultCountry, Resolver, ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Globerator } from "spliterator/node/fs"
@@ -43,7 +43,7 @@ interface GeocodeDepsBundle {
 	 * The concrete US provider, because the engine's `reload` calls its `reload`.
 	 */
 	databases: USStateDatabaseProvider
-	defaultCountry: string | null
+	defaultCountry: DefaultCountry | null
 }
 
 async function wofPaths(): Promise<string[]> {
@@ -254,7 +254,13 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
 	const databases = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
-	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? null : "US" }
+
+	const deps: GeocodeDepsBundle = {
+		classifier,
+		resolver,
+		databases,
+		defaultCountry: candidateDB ? null : { country: "US", source: "caller" },
+	}
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts.inputMode)
@@ -296,7 +302,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 			const opts: ResolveOpts = {
 				...incomingOpts,
-				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry ?? undefined,
+				...((incomingOpts.defaultCountry ?? deps.defaultCountry)
+					? { defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry! }
+					: {}),
 				...(addressPoints ? { addressPoints } : {}),
 				// Calibration ladder: an explicit incoming factor wins, then the artifact's own
 				// header value (`interpolation.radiusCalibration`), then the in-code per-region

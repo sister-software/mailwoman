@@ -97,7 +97,12 @@ describe("postcodeCodeSubset", () => {
 describe("postal-compound recovery (#942)", () => {
 	it("flag OFF (explicit): the tree stays unresolved — the pre-#942 behavior", async () => {
 		const resolver = createWOFResolver(await makeBackend())
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: false })
+
+		const out = await resolver.resolveTree(failingTree(), {
+			defaultCountry: { country: "SI", source: "caller" },
+			postalCompoundRecovery: false,
+		})
+
 		const resolved = out.roots.filter((n) => n.placeID)
 
 		expect(resolved).toHaveLength(0)
@@ -105,7 +110,7 @@ describe("postal-compound recovery (#942)", () => {
 
 	it("DEFAULT (flag ON since the 2026-07-03 promote): the compound recovers without opting in", async () => {
 		const resolver = createWOFResolver(await makeBackend())
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI" })
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: { country: "SI", source: "caller" } })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
 		expect(locality).toBeDefined()
@@ -114,7 +119,12 @@ describe("postal-compound recovery (#942)", () => {
 
 	it("flag ON: recovers the trailing city from the globbed postcode span, check-validated", async () => {
 		const resolver = createWOFResolver(await makeBackend())
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: true })
+
+		const out = await resolver.resolveTree(failingTree(), {
+			defaultCountry: { country: "SI", source: "caller" },
+			postalCompoundRecovery: true,
+		})
+
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
 		expect(locality).toBeDefined()
@@ -142,7 +152,11 @@ describe("postal-compound recovery (#942)", () => {
 			],
 		}
 
-		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
+		const out = await resolver.resolveTree(tree, {
+			defaultCountry: { country: "SI", source: "caller" },
+			postalCompoundRecovery: true,
+		})
+
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc?.placeID).toBeTruthy()
@@ -158,7 +172,11 @@ describe("postal-compound recovery (#942)", () => {
 			roots: [node({ tag: "locality", value: "Kožljek", start: 0, end: 7 })],
 		}
 
-		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
+		const out = await resolver.resolveTree(tree, {
+			defaultCountry: { country: "SI", source: "caller" },
+			postalCompoundRecovery: true,
+		})
+
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc).toBeUndefined()
@@ -176,7 +194,10 @@ describe("postal-compound recovery (#942)", () => {
 			],
 		}
 
-		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
+		const out = await resolver.resolveTree(tree, {
+			defaultCountry: { country: "SI", source: "caller" },
+			postalCompoundRecovery: true,
+		})
 
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
 	})
@@ -196,7 +217,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 	// the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: { country: "US", source: "caller" } })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
 		expect(locality).toBeDefined()
@@ -209,7 +230,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 			await makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
 		)
 
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: { country: "US", source: "caller" } })
 
 		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID)).toHaveLength(0)
 	})
@@ -225,7 +246,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 			],
 		}
 
-		const out = await resolver.resolveTree(tree, { defaultCountry: "US" })
+		const out = await resolver.resolveTree(tree, { defaultCountry: { country: "US", source: "caller" } })
 
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
 	})

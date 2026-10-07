@@ -5,6 +5,7 @@
  */
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { classifyKindSync } from "#classify"
@@ -14,7 +15,7 @@ function input(normalized: string): NormalizedInputLite {
 }
 
 function shape(opts: Partial<QueryShapeLike> = {}): QueryShapeLike {
-	return { knownFormats: [], ...opts }
+	return { ...EMPTY_QUERY_SHAPE_VIEW, ...opts }
 }
 
 describe("classifyKind — postcode_only", () => {
@@ -22,6 +23,7 @@ describe("classifyKind — postcode_only", () => {
 		const result = classifyKindSync(
 			input("10118"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
 				characterClass: "numeric",
 				totalLength: 5,
@@ -36,6 +38,7 @@ describe("classifyKind — postcode_only", () => {
 		const result = classifyKindSync(
 			input("350 5th Ave 10118"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 12, end: 17 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 17,
@@ -50,6 +53,7 @@ describe("classifyKind — postcode_only", () => {
 		const result = classifyKindSync(
 			input("10118-1234"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip4", span: { start: 0, end: 10 }, confidence: 0.95 }],
 				characterClass: "alphanumeric",
 				totalLength: 10,
@@ -66,6 +70,7 @@ describe("classifyKind — locality_only", () => {
 		const result = classifyKindSync(
 			input("Paris"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 5,
@@ -80,6 +85,7 @@ describe("classifyKind — locality_only", () => {
 		const result = classifyKindSync(
 			input("Paris FR"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 8,
@@ -97,6 +103,7 @@ describe("classifyKind — locality_only", () => {
 		const result = classifyKindSync(
 			input("The Magnificent Republic of Eastern Suburbia Hills"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 50,
@@ -111,6 +118,7 @@ describe("classifyKind — locality_only", () => {
 		const result = classifyKindSync(
 			input("Apt 4"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 5,
@@ -127,6 +135,7 @@ describe("classifyKind — structured_address", () => {
 		const result = classifyKindSync(
 			input("350 5th Ave, New York, NY 10118"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 26, end: 31 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 31,
@@ -145,6 +154,7 @@ describe("classifyKind — structured_address", () => {
 		const result = classifyKindSync(
 			input("350 5th Ave NYC NY 10118"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 19, end: 24 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 24,
@@ -161,6 +171,7 @@ describe("classifyKind — po_box", () => {
 		const result = classifyKindSync(
 			input("PO Box 1234"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "po_box", span: { start: 0, end: 11 }, confidence: 0.85 }],
 				characterClass: "alphanumeric",
 				totalLength: 11,
@@ -175,6 +186,7 @@ describe("classifyKind — po_box", () => {
 		const result = classifyKindSync(
 			input("BP 42"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "po_box", span: { start: 0, end: 5 }, confidence: 0.85 }],
 				characterClass: "alphanumeric",
 				totalLength: 5,
@@ -189,6 +201,7 @@ describe("classifyKind — po_box", () => {
 		const result = classifyKindSync(
 			input("PO Box 1234, San Francisco, CA"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "po_box", span: { start: 0, end: 11 }, confidence: 0.85 }],
 				characterClass: "alphanumeric",
 				totalLength: 30,
@@ -209,6 +222,7 @@ describe("classifyKind — intersection", () => {
 		const result = classifyKindSync(
 			input("Corner of 5th and Main"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 22,
@@ -223,6 +237,7 @@ describe("classifyKind — intersection", () => {
 		const result = classifyKindSync(
 			input("5th & 42nd"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 10,
@@ -237,6 +252,7 @@ describe("classifyKind — intersection", () => {
 		const result = classifyKindSync(
 			input("Broadway and 42nd Street"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 24,
@@ -253,6 +269,7 @@ describe("classifyKind — landmark", () => {
 		const result = classifyKindSync(
 			input("Behind the gas station"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 22,
@@ -267,6 +284,7 @@ describe("classifyKind — landmark", () => {
 		const result = classifyKindSync(
 			input("Across from the church"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 22,
@@ -281,6 +299,7 @@ describe("classifyKind — landmark", () => {
 		const result = classifyKindSync(
 			input("Near the old post office"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 24,
@@ -297,6 +316,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("Pier 39"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 7,
@@ -311,6 +331,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("Empire State Building"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 21,
@@ -325,6 +346,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("Wrigley Field"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 13,
@@ -339,6 +361,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("Grand Central Terminal"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 22,
@@ -353,6 +376,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("350 5th Ave"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 11,
@@ -367,6 +391,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("123 Main St"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alphanumeric",
 				totalLength: 11,
@@ -381,6 +406,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 		const result = classifyKindSync(
 			input("Pier 39, San Francisco, CA 94133"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 27, end: 32 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 32,
@@ -401,6 +427,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 		const result = classifyKindSync(
 			input("Paris"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 5,
@@ -418,6 +445,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 		const result = classifyKindSync(
 			input("Paris"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 5,
@@ -433,6 +461,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 		const result = classifyKindSync(
 			input("350 5th Ave, New York, NY 10118"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 26, end: 31 }, confidence: 0.6 }],
 				characterClass: "alphanumeric",
 				totalLength: 31,
@@ -455,6 +484,7 @@ describe("classifyKind — vague fallback", () => {
 		const result = classifyKindSync(
 			input("???"),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "mixed",
 				totalLength: 3,
@@ -469,6 +499,7 @@ describe("classifyKind — vague fallback", () => {
 		const result = classifyKindSync(
 			input(""),
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				characterClass: "alpha",
 				totalLength: 0,

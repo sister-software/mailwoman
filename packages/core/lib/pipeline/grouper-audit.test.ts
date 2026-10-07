@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { runPipeline } from "#pipeline/runtime-pipeline"
@@ -18,6 +19,7 @@ function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipe
 			const normalized = typeof input === "string" ? input : input.normalized
 
 			return {
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [],
 				segments: [{ body: normalized, index: 0 }],
 			}

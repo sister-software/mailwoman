@@ -5,11 +5,12 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { StageSource } from "@mailwoman/core/pipeline"
 
 import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
-import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier"
+import { type AddressSystemConventions, NeuralAddressClassifier } from "#classifier"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
@@ -165,48 +166,45 @@ export interface LoadFromURLsOptions {
 	/**
 	 * The URL of the gazetteer lexicon.
 	 *
-	 * By default, the loader uses `anchor-lexicon-v1.json` beside `modelURL`.
-	 *
-	 * The value `null` skips the fetch.
+	 * `"auto"` (the default) uses `anchor-lexicon-v1.json` beside `modelURL`,
+	 * `"none"` skips the fetch and `{ url }` names the file.
 	 * A failed fetch does not throw.
 	 *
 	 * A model trained with this channel then runs on zero-filled features.
 	 * The loader logs an error.
 	 */
-	gazetteerLexiconURL?: string | null
+	gazetteerLexicon?: LexiconSource
 
 	/**
 	 * The URL of the country-surface lexicon.
 	 *
-	 * By default, the loader uses `country-surface-lexicon-v1.json` beside `modelURL`.
-	 *
-	 * The value `null` skips the fetch.
+	 * `"auto"` (the default) uses `country-surface-lexicon-v1.json` beside `modelURL`,
+	 * `"none"` skips the fetch and `{ url }` names the file.
 	 * A failed fetch does not throw.
 	 *
 	 * A model trained with this channel then runs without it.
 	 * The loader logs an error.
 	 */
-	countryLexiconURL?: string | null
+	countryLexicon?: LexiconSource
 
 	/**
 	 * The URL of the street-type evidence lexicon.
 	 *
-	 * By default, the loader uses the card's declared file beside `modelURL`.
-	 *
-	 * The value `null` skips the fetch.
+	 * `"auto"` (the default) uses the card's declared file beside `modelURL`,
+	 * `"none"` skips the fetch and `{ url }` names the file.
 	 * A failed fetch does not throw.
 	 *
 	 * A model trained with this channel then runs without it.
 	 * The loader logs an error.
 	 */
-	streetTypeLexiconURL?: string | null
+	streetTypeLexicon?: LexiconSource
 
 	/**
 	 * The URL of the locality-surface evidence lexicon.
 	 *
-	 * Its defaults and failure behavior match {@link streetTypeLexiconURL}.
+	 * Its defaults and failure behavior match {@link streetTypeLexicon}.
 	 */
-	localitySurfaceLexiconURL?: string | null
+	localitySurfaceLexicon?: LexiconSource
 
 	/**
 	 * Whether to zero the gazetteer channel next to postcode-anchor hits.
@@ -217,11 +215,8 @@ export interface LoadFromURLsOptions {
 	/**
 	 * The address-system conventions mode.
 	 * The default is `"auto"`.
-	 *
-	 * A `SystemCode` pins the system.
-	 * `null` disables conventions.
 	 */
-	addressSystemConventions?: NeuralAddressClassifierConfig["addressSystemConventions"] | null
+	addressSystemConventions?: AddressSystemConventions
 
 	/**
 	 * Whether to merge same-tag spans split by punctuation, as in `P.O. Box`.
@@ -234,6 +229,23 @@ export interface LoadFromURLsOptions {
 	 * The default is `globalThis.fetch`.
 	 */
 	fetchImpl?: typeof fetch
+}
+
+/**
+ * Where the loader fetches an evidence lexicon from.
+ *
+ * - `"auto"` uses the default file beside `modelURL`.
+ * - `"none"` skips the fetch.
+ * - `{ url }` names the file.
+ */
+export type LexiconSource = StageSource<{ url: string }>
+
+function lexiconURLFor(source: LexiconSource | undefined, defaultURL: () => string): string | null {
+	const resolved = source ?? "auto"
+
+	if (resolved === "none") return null
+
+	return resolved === "auto" ? defaultURL() : resolved.url
 }
 
 async function loadPostcodeAnchorLookup(
@@ -319,23 +331,16 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		throw new Error("loadNeuralClassifierFromURLs: the card declares no char encoder, so tokenizerURL is required")
 	}
 
-	const gazetteerLexiconURL =
-		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
+	const gazetteerLexiconURL = lexiconURLFor(opts.gazetteerLexicon, () => defaultGazetteerLexiconURL(opts.modelURL))
+	const countryLexiconURL = lexiconURLFor(opts.countryLexicon, () => defaultCountryLexiconURL(opts.modelURL))
 
-	const countryLexiconURL =
-		opts.countryLexiconURL === null ? null : (opts.countryLexiconURL ?? defaultCountryLexiconURL(opts.modelURL))
+	const streetTypeLexiconURL = lexiconURLFor(opts.streetTypeLexicon, () =>
+		defaultStreetTypeLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "street_type"))
+	)
 
-	const streetTypeLexiconURL =
-		opts.streetTypeLexiconURL === null
-			? null
-			: (opts.streetTypeLexiconURL ??
-				defaultStreetTypeLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "street_type")))
-
-	const localitySurfaceLexiconURL =
-		opts.localitySurfaceLexiconURL === null
-			? null
-			: (opts.localitySurfaceLexiconURL ??
-				defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface")))
+	const localitySurfaceLexiconURL = lexiconURLFor(opts.localitySurfaceLexicon, () =>
+		defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface"))
+	)
 
 	const [modelBytes, tokenizerBytes, gazetteerLexicon, countryLexicon, streetTypeLexicon, localitySurfaceLexicon] =
 		await Promise.all([
@@ -376,8 +381,6 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		}
 	}
 
-	const conventions = opts.addressSystemConventions === null ? null : (opts.addressSystemConventions ?? "auto")
-
 	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : null
 
 	const classifier = new NeuralAddressClassifier({
@@ -392,7 +395,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
 		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
-		...(conventions ? { addressSystemConventions: conventions } : {}),
+		addressSystemConventions: opts.addressSystemConventions ?? "auto",
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
 	})
 

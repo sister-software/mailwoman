@@ -536,7 +536,7 @@ export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void 
 
 	for (const collision of census.categoryLexicon.collisions) {
 		console.log(
-			`  ${stringifyJSON(collision.probe)} [${collision.locale ?? "no locale"}] → ${collision.match.kind ?? "category"} ${collision.match.categoryID} (${collision.match.matchedPhrase})`
+			`  ${stringifyJSON(collision.probe)} [${collision.locale ?? "no locale"}] → ${collision.match.kind} ${collision.match.categoryID} (${collision.match.matchedPhrase})`
 		)
 	}
 

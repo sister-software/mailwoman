@@ -81,11 +81,14 @@ describe("GeocodeAddress — coarse-placer soft prior", () => {
 		await geocodeAddress("Hauptstraße 5, Berlin", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 			placeCountry,
 		})
 
-		expect(seen[0]).toMatchObject({ defaultCountry: "DE", anchorPosterior: { DE: 0.97 } })
+		expect(seen[0]).toMatchObject({
+			defaultCountry: { country: "DE", source: "caller" },
+			anchorPosterior: { DE: 0.97 },
+		})
 	})
 
 	test("abstain (country: null) ⇒ no posterior injected", async () => {

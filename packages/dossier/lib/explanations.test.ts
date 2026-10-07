@@ -37,9 +37,9 @@ import type { DossierRecords } from "#validate"
 const CHECK: AvailabilityCheck = { id: "house-fiber", subject: HOUSE, layer: "fiber", extent: "cell-9" }
 
 const STUDY: SourceRecord = {
-	id: "outcome-study-2022",
+	id: "exception-study-2022",
 	publisher: "Example Operator",
-	title: "Exception outcome study",
+	title: "Exception result study",
 	observedAt: "2022-01-10",
 	availableAt: "2022-01-15",
 	url: null,
@@ -66,7 +66,7 @@ const DECISION_LOG: SourceRecord = {
 	retrievedAt: null,
 }
 
-const OUTCOME_LOG: SourceRecord = {
+const RESULT_LOG: SourceRecord = {
 	id: "operator-log-2022-07",
 	publisher: "Example Operator",
 	title: "Investigation log, July",
@@ -134,7 +134,7 @@ const HOUSE_MEMBERSHIPS = [
 function recordsWith(overrides: Partial<DossierRecords> = {}): DossierRecords {
 	return {
 		...EMPTY_RECORDS,
-		sources: [...SOURCES, STUDY, LATER_SURVEY, DECISION_LOG, OUTCOME_LOG],
+		sources: [...SOURCES, STUDY, LATER_SURVEY, DECISION_LOG, RESULT_LOG],
 		entities: ENTITIES,
 		containment: CONTAINMENT,
 		memberships: HOUSE_MEMBERSHIPS,
@@ -616,7 +616,7 @@ describe("explainCheck: statement kinds", () => {
 					decision: "Request the certificate of occupancy",
 					decidedAt: "2022-06-01",
 					evidence: { source: DECISION_LOG.id, observedAt: null, validFrom: null, validTo: null },
-					outcome: null,
+					result: null,
 				},
 			],
 		})
@@ -667,7 +667,7 @@ describe("explainCheck: statement kinds", () => {
 			{
 				kind: "estimate",
 				text: "The probability that the installation explanation holds is 0.3 (held in 3 of 10 comparable exceptions).",
-				sources: ["outcome-study-2022"],
+				sources: ["exception-study-2022"],
 				absence: false,
 			},
 		])
@@ -745,7 +745,7 @@ describe("rankExplanations", () => {
 	})
 })
 
-describe("explainCheck: decisions and outcomes", () => {
+describe("explainCheck: decisions and results", () => {
 	const records = recordsWith({
 		windows: [OPEN_WINDOW],
 		dispositions: [
@@ -756,12 +756,12 @@ describe("explainCheck: decisions and outcomes", () => {
 				decision: "Request the certificate of occupancy.",
 				decidedAt: "2022-06-01",
 				evidence: { source: DECISION_LOG.id, observedAt: null, validFrom: null, validTo: null },
-				outcome: {
+				result: {
 					held: false,
 					at: "2022-07-08",
 					minutesSpent: 45,
 					baselineMinutes: 120,
-					evidence: { source: OUTCOME_LOG.id, observedAt: null, validFrom: null, validTo: null },
+					evidence: { source: RESULT_LOG.id, observedAt: null, validFrom: null, validTo: null },
 				},
 			},
 		],
@@ -774,14 +774,14 @@ describe("explainCheck: decisions and outcomes", () => {
 		absence: false,
 	}
 
-	test("a disposition is a decision, and its outcome waits for the outcome's own record", () => {
+	test("a disposition is a decision, and its result waits for the result's own record", () => {
 		expect(checkResult(records, "2022-06-30").decisions).toEqual([decision])
 	})
 
-	test("once the outcome's record is admitted, the outcome is a fact", () => {
+	test("once the result's record is admitted, the result is a fact", () => {
 		expect(checkResult(records, "2022-07-31").decisions).toEqual([
 			decision,
-			fact("On 2022-07-08 the operator recorded that the installation explanation did not hold.", [OUTCOME_LOG.id]),
+			fact("On 2022-07-08 the operator recorded that the installation explanation did not hold.", [RESULT_LOG.id]),
 		])
 	})
 })

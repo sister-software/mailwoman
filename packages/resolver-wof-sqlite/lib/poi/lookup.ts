@@ -54,23 +54,18 @@ const DEFAULT_LIMIT = 20
 
 export interface POISearchQuery {
 	/**
-	 * Poi-taxonomy category id (string side of the dictionary).
+	 * Poi-taxonomy category ids (string side of the dictionary) to search.
 	 *
-	 * Ignored when `brandWikidata` is also set, since brand wins.
-	 */
-	categoryID?: string
-	/**
-	 * Fan-out category ids that a single canonical Overture `taxonomy.primary` category
-	 * rolls up into, as in `supermarket` → `grocery_store`, `organic_grocery_store`, ….
+	 * A single category is a one-element list.
+	 * A canonical Overture `taxonomy.primary` category passes every leaf it rolls up into,
+	 * as in `supermarket` → `grocery_store`, `organic_grocery_store`, ….
 	 *
-	 * When set, the k-ring walk probes every resolvable leaf per cell and unions the rows.
+	 * The k-ring walk probes every resolvable leaf per cell and unions the rows.
 	 * Unknown leaves are skipped.
-	 *
-	 * Supersedes `categoryID` (which is treated as a one-element list `[categoryID]` when this is absent).
 	 *
 	 * Ignored when `brandWikidata` is set, since brand wins.
 	 */
-	categoryIDs?: string[]
+	categoryIDs?: readonly string[]
 	/**
 	 * Wikidata QID for brand-exact search.
 	 */
@@ -189,7 +184,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 			return this.#searchByName(query.name, limit, query.center)
 		}
 
-		if (query.categoryID || (query.categoryIDs && query.categoryIDs.length) || query.brandWikidata) {
+		if (query.categoryIDs?.length || query.brandWikidata) {
 			if (!query.center) {
 				throw new Error("POILookup.search: category/brand search requires a `center`")
 			}
@@ -233,12 +228,9 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
 		const categoryIDs: number[] = []
 
-		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`.
 		// Each id resolves through the dictionary.
 		// Unresolved ids are dropped to cover Overture taxonomy drift and identity ids with no rows.
-		const seedIDs = query.categoryIDs?.length ? query.categoryIDs : query.categoryID ? [query.categoryID] : []
-
-		for (const id of seedIDs) {
+		for (const id of query.categoryIDs ?? []) {
 			const resolved = this.#categoryToID.get(id)
 
 			if (resolved !== undefined) {

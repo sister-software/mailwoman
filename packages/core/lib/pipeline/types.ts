@@ -52,6 +52,20 @@ export type CaseNormalization = "title-case" | "preserve"
 export type StageSource<T extends object> = "auto" | "none" | T
 
 /**
+ * How the pipeline uses the coarse placer's country guess.
+ *
+ * - `"filter"` turns a confident guess for a country in the hard-country safelist
+ *   into a hard country filter, and keeps the soft prior otherwise.
+ * - `"prior"` only adds the guess as a soft country prior.
+ */
+export type PlacerCountryUse = "filter" | "prior"
+
+/**
+ * The placer-country use every parse and geocode applies unless a caller chooses otherwise.
+ */
+export const DEFAULT_PLACER_COUNTRY_USE = "filter" satisfies PlacerCountryUse
+
+/**
  * The case normalization every parse uses unless a caller chooses otherwise.
  */
 export const DEFAULT_CASE_NORMALIZATION = "title-case" satisfies CaseNormalization
@@ -129,9 +143,10 @@ export interface PipelineOpts {
 	 */
 	placetypePair?: PlacetypePairSelection
 	/**
-	 * Allows a confident placer result for a safelisted country to become a hard country filter.
+	 * How the coarse placer's country guess constrains resolution.
+	 * The default is {@link DEFAULT_PLACER_COUNTRY_USE}.
 	 */
-	hardPlaceCountry?: boolean
+	placerCountryUse?: PlacerCountryUse
 	/**
 	 * Replaces the artifact's hard-country safelist.
 	 */
@@ -148,22 +163,22 @@ export interface QueryShapeLite {
 		span: { start: number; end: number }
 		confidence: number
 	}>
-	segments?: ReadonlyArray<{ body: string; index: number }>
-	characterClass?: string
+	segments: ReadonlyArray<{ body: string; index: number }> | null
+	characterClass: string | null
 	/**
 	 * ISO 15924 scripts ranked by share of script-bearing characters.
 	 */
-	scripts?: ReadonlyArray<{ script: string; share: number }>
+	scripts: ReadonlyArray<{ script: string; share: number }> | null
 	/**
 	 * The class and script of each token.
 	 */
-	tokenClasses?: ReadonlyArray<{
+	tokenClasses: ReadonlyArray<{
 		span: { start: number; end: number; body: string }
 		class: string
 		length: number
-		script?: string
-	}>
-	totalLength?: number
+		script: string | null
+	}> | null
+	totalLength: number | null
 }
 
 /**
@@ -180,16 +195,16 @@ export interface LocaleHint {
 	 * The array is empty when the input has no script-bearing text.
 	 * `locale` stays a BCP-47 language tag.
 	 */
-	script?: ReadonlyArray<{ script: string; confidence: number }>
+	script: ReadonlyArray<{ script: string; confidence: number }>
 	/**
-	 * Diagnostic values that fed the inferred preferences.
+	 * Diagnostic values that fed the inferred preferences, or null when none did.
 	 * Locale and time zone are independent signals.
 	 */
-	evidence?: {
-		intlLocale?: string
-		timeZone?: string
-		environmentLocale?: Intl.UnicodeBCP47LocaleIdentifier
-	}
+	evidence: {
+		intlLocale: string | null
+		timeZone: string | null
+		environmentLocale: Intl.UnicodeBCP47LocaleIdentifier | null
+	} | null
 }
 
 /**
@@ -503,7 +518,11 @@ export interface FSTMatcherLike {
  * Options for {@link AddressClassifier.parse}.
  */
 export interface ClassifierOpts {
-	queryShape?: QueryShapeLite
+	/**
+	 * The pipeline's query shape.
+	 * Classifiers read its format hits.
+	 */
+	queryShape?: Pick<QueryShapeLite, "knownFormats">
 	inputMode?: InputMode
 	fst?: FSTMatcherLike | null
 	fstBiasScale?: number
@@ -564,7 +583,8 @@ export type LocaleDetector = (
 
 /**
  * The stage implementations that the runtime pipeline composes.
- * Every stage is optional.
+ *
+ * Every stage is optional, and a missing stage is skipped or replaced by its built-in default.
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
@@ -579,43 +599,37 @@ export interface RuntimePipelineStages {
 	 *
 	 * The optional posterior contains the full country distribution.
 	 */
-	placeCountry?:
-		| null
-		| ((normalizedText: string) => {
-				country: string | null
-				confidence: number
-				posterior?: Record<string, number>
-		  })
+	placeCountry?: (normalizedText: string) => {
+		country: string | null
+		confidence: number
+		posterior?: Record<string, number>
+	}
 	/**
 	 * The POI handler.
 	 * A `null` result falls through to the full parse.
 	 */
-	poiIntent?:
-		| null
-		| ((input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIQueryResult | null>)
+	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIQueryResult | null>
 	/**
 	 * The phrase grouper.
 	 *
 	 * Its proposals appear in the result and feed the grouper audit.
 	 */
-	groupPhrases?:
-		| null
-		| ((input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>)
-	classifier?: AddressClassifier | null
+	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>
+	classifier?: AddressClassifier
 	/**
 	 * The FST matcher that adds gazetteer emission biases.
 	 */
-	fst?: FSTMatcherLike | null
+	fst?: FSTMatcherLike
 	/**
 	 * The street-morphology matcher.
 	 * The street-context check runs only when `fst` is also set.
 	 */
-	streetMorphology?: FSTMatcherLike | null
-	resolver?: Resolver | null
+	streetMorphology?: FSTMatcherLike
+	resolver?: Resolver
 	/**
 	 * The backend for resolver candidate and parent-chain lookups during reconciliation.
 	 */
-	resolverBackend?: ResolverBackend | null
+	resolverBackend?: ResolverBackend
 }
 
 /**

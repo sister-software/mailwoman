@@ -4,13 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
-import { NeuralAddressClassifier } from "#classifier"
+import { NeuralAddressClassifier, type AddressSystemConventions } from "#classifier"
 import { ScriptRoutedClassifier } from "#classifier/script-router"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
@@ -235,7 +234,9 @@ export async function loadClassifierFromWeights(
 	const suppressGazetteerNearPostcode =
 		opts.suppressGazetteerNearPostcode ?? declared?.suppress_gazetteer_near_postcode ?? false
 
-	const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
+	const addressSystemConventions = (
+		declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : "off"
+	) as AddressSystemConventions
 
 	const addressSystems =
 		(await readAddressSystemsFromModelCard(resolved.modelCardPath ?? null)) ??
@@ -264,6 +265,6 @@ export async function loadClassifierFromWeights(
 		weightsSource: resolved.source,
 		...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 
-		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
+		addressSystemConventions,
 	})
 }

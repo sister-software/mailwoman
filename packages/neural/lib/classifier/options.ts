@@ -10,6 +10,7 @@ import type {
 	CaseNormalization,
 	PlacetypePairSelection,
 	SpanProposerLexicon,
+	StageSource,
 	WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
@@ -153,9 +154,11 @@ export interface NeuralAddressClassifierConfig {
 
 	/**
 	 * The default address-system conventions mode.
-	 * See `ParseOpts.addressSystemConventions`.
+	 *
+	 * It defaults to `"off"`.
+	 * See {@link AddressSystemConventions}.
 	 */
-	addressSystemConventions?: "auto" | SystemCode
+	addressSystemConventions?: AddressSystemConventions
 
 	/**
 	 * The model's address-system ids, from its card's `address_systems` field.
@@ -172,12 +175,14 @@ export interface NeuralAddressClassifierConfig {
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * The span proposer configuration, omitted meaning a default built from the
-	 * codex lexicon and `false` disabling it.
+	 * The span proposer.
+	 *
+	 * `"auto"` (the default) builds one from the codex lexicon, `"none"` disables it,
+	 * and a config object replaces it.
 	 *
 	 * Its proposals add emission priors and annotation and quoted spans block punctuation-bridge merges.
 	 */
-	spanProposer?: SpanProposerConfig | false
+	spanProposer?: StageSource<SpanProposerConfig>
 
 	/**
 	 * The default placetype-pair prior options, overridden per parse by `ParseOpts.placetypePair`
@@ -199,6 +204,34 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	enforceWordConsistency?: WordConsistencySetting
 }
+
+/**
+ * Which address-system conventions a parse enforces.
+ *
+ * - `"off"` applies no conventions.
+ * - `"auto"` detects the system from the model's locale head at a probability of 0.8 or higher.
+ * - A `SystemCode` pins the system.
+ */
+export type AddressSystemConventions = "off" | "auto" | SystemCode
+
+/**
+ * The span proposer for one parse.
+ *
+ * - `"inherit"` uses the config's `spanProposer`.
+ * - `"auto"` uses the default codex proposer, even when the config disabled it.
+ * - `"none"` disables the proposer.
+ * - A config object replaces the config's proposer.
+ */
+export type SpanProposerSelection = "inherit" | StageSource<SpanProposerConfig>
+
+/**
+ * The placetype census for one parse.
+ *
+ * - `"inherit"` uses the config's `placetypeCensus`.
+ * - `"off"` disables the census.
+ * - A census replaces the config's.
+ */
+export type PlacetypeCensusSelection = "inherit" | "off" | PlacetypeCensusLike
 
 /**
  * Configures the span proposer.
@@ -325,16 +358,20 @@ export interface ParseOpts {
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * Whether to run the configured span proposer for this parse, defaulting to true,
-	 * though `true` cannot enable a proposer the config disabled.
+	 * The span proposer for this parse.
+	 *
+	 * The default `"inherit"` uses the config's.
+	 * See {@link SpanProposerSelection}.
 	 */
-	spanProposer?: boolean
+	spanProposer?: SpanProposerSelection
 
 	/**
-	 * The address-system conventions to enforce, `auto` detecting the system from the model's
-	 * locale head at a probability of 0.8 or higher and a `SystemCode` pinning it.
+	 * The address-system conventions to enforce for this parse.
+	 *
+	 * The default `"inherit"` uses the config's.
+	 * See {@link AddressSystemConventions}.
 	 */
-	addressSystemConventions?: "auto" | SystemCode
+	addressSystemConventions?: "inherit" | AddressSystemConventions
 
 	/**
 	 * The ISO 3166-1 alpha-2 country the caller expects the address to be in,
@@ -356,10 +393,10 @@ export interface ParseOpts {
 	placetypePair?: PlacetypePairSelection<PlacetypePairPriorOpts>
 
 	/**
-	 * Per-parse override of the config's `placetypeCensus`.
+	 * The placetype census for this parse.
 	 *
-	 * Set it to `false` to disable the census.
+	 * The default `"inherit"` uses the config's.
 	 * This changes only what `traceParse` records.
 	 */
-	placetypeCensus?: PlacetypeCensusLike | false
+	placetypeCensus?: PlacetypeCensusSelection
 }
