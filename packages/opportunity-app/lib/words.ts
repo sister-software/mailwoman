@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The words the application shows for the model's values. Each building state, segment status, selection and
- *   synthetic figure has a word that a screen reader reads and a search of the page text finds, so color never
- *   carries one of them alone. An unresolved unit total is written as the word unresolved and never as a number.
+ *   synthetic figure has a word that a screen reader reads and a search of the page text finds, so color
+ *   never provides one of them on its own. An unresolved unit total is written as the word unresolved and
+ *   never as a number.
  */
 
 import { type EntityID, type ISODate, proseList } from "@mailwoman/dossier"
@@ -69,7 +70,7 @@ export function inputBasisText(basis: InputBasis): string {
 }
 
 /**
- * The origin word that every economic figure carries.
+ * The origin word that every economic figure shows.
  */
 export function originText(synthetic: boolean): string {
 	return synthetic ? "synthetic" : "operator supplied"

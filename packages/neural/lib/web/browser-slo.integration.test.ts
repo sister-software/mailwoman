@@ -554,7 +554,7 @@ declare global {
 	var mwSLO: BrowserSLOAPI
 
 	/**
-	 * The range reader's opener, which `/gazetteer.js` installs.
+	 * The range reader's opener. `/gazetteer.js` installs it.
 	 */
 	// oxlint-disable-next-line no-var -- see above.
 	var openRangeDatabase: (
@@ -580,7 +580,7 @@ const RANGE_WORKER_ENTRY_SOURCE = 'import "@mailwoman/resolver-wof-wasm/httpvfs/
 
 const BROWSER_ENTRY_SOURCE = [
 	'import * as ort from "onnxruntime-web/webgpu"',
-	// These two lines are the bundled entry's source, which esbuild resolves from
+	// These two lines are the bundled entry's source. esbuild resolves them from
 	// `BUNDLE_RESOLVE_DIR`, the repository root.
 	// A `#` specifier resolves against the nearest `package.json`, so it reads
 	// the root manifest there and fails.
@@ -817,7 +817,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 		})
 
 		// An inline route is matched before a mount, so the bundled worker is served from the same
-		// directory as the runtime files the mount below provides, which is the layout a host stages.
+		// directory as the runtime files the mount below provides. That is the layout a host stages.
 		inlineRoutes.set(`${SQLITE_RUNTIME_PREFIX}range-worker.js`, {
 			body: await bundleBrowserEntry(RANGE_WORKER_ENTRY_SOURCE, "range-worker-entry.ts", BUNDLE_RESOLVE_DIR),
 			contentType: javascript,

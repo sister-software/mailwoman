@@ -40,11 +40,11 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
  *
  * `resolveWeights` reports a name, a path and an origin.
  * Two arms can resolve one name from one origin and read different bytes, so a comparison
- * of names alone cannot establish that the arms were fed the same artifact.
+ * of names by itself cannot establish that the arms were fed the same artifact.
  * The digest is what settles it.
  *
- * The routed arm writes `digest` as `null` only when the artifact resolved to no path,
- * which states that this arm fed no such artifact rather than that its bytes are unknown.
+ * The routed arm writes `digest` as `null` only when the artifact resolved to no path.
+ * That states this arm fed no such artifact rather than that its bytes are unknown.
  */
 export interface RoutedArtifactRecord {
 	name: string

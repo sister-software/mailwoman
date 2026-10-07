@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fixture `test/fixtures/202605_BDUK_uprn_release_sample.csv` copies eight rows verbatim from
- *   Building Digital UK's published sample file for the May 2026 release, retrieved 2026-10-05 and
- *   published under OGL v3.0. It keeps the sample's published file name and header. The sample's rows are
- *   all `Gigabit Grey/Black`, so the tests that read the other statuses replace one cell.
+ *   The fixture `test/fixtures/202605_BDUK_uprn_release_sample.csv` copies eight rows verbatim from the
+ *   published Building Digital UK sample file for the May 2026 release, retrieved 2026-10-05 under
+ *   OGL v3.0. It keeps the sample's published file name and header. The sample's rows are all
+ *   `Gigabit Grey/Black`, so the tests that read the other statuses replace one cell.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -357,7 +357,7 @@ describe("parseBDUKRelease refusals", () => {
 
 describe("readBDUKReleaseDirectory", () => {
 	/**
-	 * Splits the fixture's rows between two files named as a region's files are.
+	 * Splits the fixture's rows between two files that take a region's file names.
 	 */
 	async function regionDirectory(text: string) {
 		const scratch = await temporaryDirectory("bduk-release-")

@@ -192,8 +192,8 @@ type ResolvedByName = Map<string, Pick<RoutedArtifactRecord, "origin" | "path" |
  * Reads one locale's artifact records, with a `null` digest where the arm recorded none.
  *
  * Two recorded digests that differ make isolation ambiguous.
- * A `null` on either side leaves the comparison unable to say whether the bytes agree,
- * which is a different reading from agreement.
+ * A `null` on either side leaves the comparison unable to establish whether the bytes agree.
+ * That is a different reading from agreement.
  */
 function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
 	if (!Array.isArray(value)) return null
@@ -312,8 +312,8 @@ export function artifactSetWarnings(provenanceA: unknown, provenanceB: unknown):
 			divergences.push(`${locale}: arm B fed ${onlyB.join(", ")} and arm A left ${pronounFor(onlyB)} unresolved.`)
 		}
 
-		// An artifact both arms resolved under one name can still hold different bytes,
-		// which the name comparison above reads as agreement.
+		// An artifact both arms resolved under one name can still hold different bytes.
+		// The name comparison above reads that as agreement.
 		for (const name of [...a.keys()].filter((key) => b.has(key)).toSorted()) {
 			const left = a.get(name)!
 			const right = b.get(name)!
