@@ -6,6 +6,7 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
@@ -23,7 +24,6 @@ import {
 	triStateValue,
 } from "#cli/native/spec"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
-import type { GeocodeResult } from "#geocode/result"
 
 const debugSizePattern = /^\d+x\d+$/u
 

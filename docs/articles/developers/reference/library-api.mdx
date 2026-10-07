@@ -109,7 +109,7 @@ factory default.
 | `kind`            | `QueryKindResult`                   | The query kind, for example `structured_address`                    |
 | `phraseProposals` | `PhraseProposal[]`                  | Stage 2.7 proposals. Empty when a fast path skipped the stage       |
 | `tree`            | `AddressTree`                       | The parse                                                           |
-| `poiIntent`       | `POIIntentOutcome` or absent        | Present only when `path` is `"poi"`                                 |
+| `poiIntent`       | `POIQueryResult` or absent          | Present only when `path` is `"poi"`                                 |
 | `timing`          | `Record<string, number>`            | Milliseconds per stage                                              |
 | `path`            | `"fast-path"`, `"full"`, or `"poi"` | Which route the input took                                          |
 

@@ -5,7 +5,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
 import type { WOFAncestor } from "@mailwoman/core/resolver"
 import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
 
@@ -52,14 +52,14 @@ export interface POIExecutorOpts {
  * abstaining with `requires_build_local_layer` for a build-local category with no lookup
  * or rows and `anchor_required` for a category or brand search with no center.
  */
-export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) => POIIntentOutcome {
+export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) => POIQueryResult {
 	const { lookup, requiresBuildLocal, reverseGeocode } = opts
 
 	const resolveOvertureCategories = opts.resolveOvertureCategories ?? ((categoryID: string) => [categoryID])
 
 	const toResult = (hit: POISearchHit): POIResult => decorateAncestry(toPOIResult(hit), reverseGeocode)
 
-	return (intent: POIIntent): POIIntentOutcome => {
+	return (intent: POIIntent): POIQueryResult => {
 		const { subject } = intent
 
 		const buildLocalCategory = subject.kind === "category" && subject.categoryIDs.every(requiresBuildLocal)

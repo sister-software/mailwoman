@@ -15,12 +15,17 @@
  *   the defect this package exists to prevent.
  */
 
-import type { Exclusion } from "#coverage"
-import { Assertion } from "#status"
+import { z } from "zod"
 
-export interface Observation {
-	kind: "observation"
-	source: string
+import { ExclusionSchema } from "#coverage"
+import { Assertion, AssertionSchema } from "#status"
+
+/**
+ * A value retrieved from an identified source.
+ */
+export const ObservationSchema = z.object({
+	kind: z.literal("observation"),
+	source: z.string(),
 	/**
 	 * The vintage the source recorded this at.
 	 *
@@ -29,27 +34,46 @@ export interface Observation {
 	 * It does not identify the extract's date.
 	 * A `null` means the source did not record a date.
 	 */
-	vintage: string | null
-	value: unknown
-}
+	vintage: z.string().nullable(),
+	value: z.unknown(),
+})
 
-export interface Relation {
-	kind: "relation"
-	source: string
-	vintage: string
-	relationship: string
-	assertion: Assertion
-	score: number | null
-}
+export type Observation = z.infer<typeof ObservationSchema>
 
-export interface Prior {
-	kind: "prior"
-	source: string
-	label: string
-	weight: number
-}
+/**
+ * Structural compatibility between entities.
+ */
+export const RelationSchema = z.object({
+	kind: z.literal("relation"),
+	source: z.string(),
+	vintage: z.string(),
+	relationship: z.string(),
+	assertion: AssertionSchema,
+	score: z.number().nullable(),
+})
 
-export type Evidence = Observation | Exclusion | Relation | Prior
+export type Relation = z.infer<typeof RelationSchema>
+
+/**
+ * Evidence that moves probability without proving or excluding.
+ */
+export const PriorSchema = z.object({
+	kind: z.literal("prior"),
+	source: z.string(),
+	label: z.string(),
+	weight: z.number(),
+})
+
+export type Prior = z.infer<typeof PriorSchema>
+
+/**
+ * The typed evidence union, discriminated by `kind`.
+ */
+export const EvidenceSchema = z
+	.discriminatedUnion("kind", [ObservationSchema, ExclusionSchema, RelationSchema, PriorSchema])
+	.meta({ id: "Evidence", description: "One piece of typed evidence, discriminated by `kind`." })
+
+export type Evidence = z.infer<typeof EvidenceSchema>
 
 export interface RelationInput {
 	source: string

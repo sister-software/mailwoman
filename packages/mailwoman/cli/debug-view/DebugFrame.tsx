@@ -6,6 +6,7 @@
 
 import { Badge, Spinner } from "@inkjs/ui"
 import { losslessSegments, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { frameToANSILines, type MapFrame } from "@mailwoman/map-tui"
 import { Box, Text } from "ink"
 import React, { memo, useMemo } from "react"
@@ -13,7 +14,6 @@ import React, { memo, useMemo } from "react"
 import { outputLines, type OutputLine } from "#cli/debug-view/output-lines"
 import { tagColor } from "#cli/debug-view/tag-colors"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#cli/debug-view/trace-rows"
-import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
 export type DebugPane = "input" | "output" | "map"

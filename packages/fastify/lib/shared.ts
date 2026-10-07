@@ -5,9 +5,10 @@
  * Shared types and interfaces for the @mailwoman/fastify plugin.
  */
 
-import type { ParseResponse } from "@mailwoman/api/operations/parse-address"
-import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
-import type { GeocodeResult } from "mailwoman/geocode"
+import type { ParseResponse } from "@mailwoman/api/operations/parse/address"
+import type { POISearchResponse } from "@mailwoman/api/operations/search-poi"
+import type { PipelineOpts, PipelineResult } from "@mailwoman/core"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 
 /**
  * Describes the pipeline function and lets callers inject test doubles.
@@ -50,13 +51,6 @@ export interface MailwomanFastifyOptions {
 export type FastifyParseResult = ParseResponse & { path: PipelineResult["path"] }
 
 /**
- * Returned when the input did not produce a POI intent.
- */
-export interface NotPOIQuery {
-	type: "not_poi_query"
-}
-
-/**
  * Methods exposed on `fastify.mailwoman`; all use the same pipeline.
  */
 export interface MailwomanDecorator {
@@ -69,10 +63,10 @@ export interface MailwomanDecorator {
 	 */
 	geocode(text: string, opts?: PipelineOpts): Promise<GeocodeResult>
 	/**
-	 * Run a POI query and return an intent outcome or `NotPOIQuery`.
+	 * Run a POI query and return its intent and results, an abstention, or `not_poi_query`.
 	 * The method throws when POI is not configured.
 	 */
-	poi(text: string, opts?: PipelineOpts): Promise<POIIntentOutcome | NotPOIQuery>
+	poi(text: string, opts?: PipelineOpts): Promise<POISearchResponse>
 }
 
 declare module "fastify" {

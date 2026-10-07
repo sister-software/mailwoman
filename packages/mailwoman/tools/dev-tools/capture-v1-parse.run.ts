@@ -40,7 +40,7 @@ if (!engine.parse) throw new Error("serve engine has no parse handler")
 const rows: unknown[] = []
 
 for (const input of inputs) {
-	rows.push({ input, outcome: await engine.parse(input, { debug: false }) })
+	rows.push({ input, outcome: await engine.parse(input, { debug: false, inputMode: "auto" }) })
 }
 
 {

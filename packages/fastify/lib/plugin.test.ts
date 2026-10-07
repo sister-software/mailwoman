@@ -84,9 +84,9 @@ describe("@mailwoman/fastify", () => {
 		expect(body.tree.roots).toHaveLength(1)
 	})
 
-	it("POST /geocode returns a GeocodeResult with the resolved coordinate", async () => {
+	it("POST /v1/geocode returns a GeocodeResult with the resolved coordinate", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline() })
-		const res = await app.inject({ method: "POST", url: "/geocode", payload: { text: "New York" } })
+		const res = await app.inject({ method: "POST", url: "/v1/geocode", payload: { address: "New York" } })
 
 		expect(res.statusCode).toBe(200)
 		const body = res.json()
@@ -97,7 +97,7 @@ describe("@mailwoman/fastify", () => {
 		expect(body.locality).toBe("New York")
 	})
 
-	it("POST /poi returns the pipeline's POI intent when a database is configured", async () => {
+	it("POST /v1/poi returns the pipeline's POI intent when a database is configured", async () => {
 		const poiIntent = {
 			type: "intent" as const,
 			intent: { subject: { kind: "category" as const, categoryIDs: ["eat_and_drink.coffee"], matched: "coffee" } },
@@ -109,15 +109,15 @@ describe("@mailwoman/fastify", () => {
 			poiDatabasePath: "/tmp/poi.db",
 		})
 
-		const res = await app.inject({ method: "POST", url: "/poi", payload: { text: "coffee near Union Square" } })
+		const res = await app.inject({ method: "POST", url: "/v1/poi", payload: { query: "coffee near Union Square" } })
 
 		expect(res.statusCode).toBe(200)
 		expect(res.json()).toMatchObject({ type: "intent" })
 	})
 
-	it("POST /poi answers 501 with a clean envelope when no poiDatabasePath is configured", async () => {
+	it("POST /v1/poi answers 501 with a clean envelope when no poiDatabasePath is configured", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline() })
-		const res = await app.inject({ method: "POST", url: "/poi", payload: { text: "coffee near Union Square" } })
+		const res = await app.inject({ method: "POST", url: "/v1/poi", payload: { query: "coffee near Union Square" } })
 
 		expect(res.statusCode).toBe(501)
 
@@ -127,10 +127,10 @@ describe("@mailwoman/fastify", () => {
 		expect(body.detail).toContain("poiDatabasePath")
 	})
 
-	it("POST /poi returns not_poi_query when the pipeline produced no intent", async () => {
+	it("POST /v1/poi returns not_poi_query when the pipeline produced no intent", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline(), poiDatabasePath: "/tmp/poi.db" })
 
-		const res = await app.inject({ method: "POST", url: "/poi", payload: { text: "New York" } })
+		const res = await app.inject({ method: "POST", url: "/v1/poi", payload: { query: "New York" } })
 
 		expect(res.statusCode).toBe(200)
 		expect(res.json()).toEqual({ type: "not_poi_query" })

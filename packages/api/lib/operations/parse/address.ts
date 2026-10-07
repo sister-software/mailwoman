@@ -7,10 +7,11 @@
 import { APIErrorSchema, stampedResponseSchema } from "@mailwoman/api-kit"
 import { type APIOperation, type APIOperationSchema, Ref } from "@mailwoman/api-kit/operation"
 import { AddressTreeSchema, ParseComponentSchema } from "@mailwoman/core/decoder"
-import { InputModeSchema } from "@mailwoman/core/pipeline"
 import { z } from "zod"
 
 import { MAX_ADDRESS_LENGTH } from "#input-limits"
+import { NotImplementedErrorSchema } from "#operations/errors"
+import { RequestInputModeSchema } from "#operations/input-mode"
 import { ParsingTag } from "#operations/tags"
 
 /**
@@ -19,8 +20,8 @@ import { ParsingTag } from "#operations/tags"
 export const ParseRequestSchema = z
 	.object({
 		address: z.string().max(MAX_ADDRESS_LENGTH),
-		debug: z.boolean().optional(),
-		input_mode: InputModeSchema.optional(),
+		debug: z.boolean().default(false),
+		input_mode: RequestInputModeSchema.default("auto"),
 	})
 	.meta({ id: "ParseRequest" })
 
@@ -46,14 +47,14 @@ export type ParseResponse = z.infer<typeof ParseResponseSchema>
 export const StampedParseResponseSchema = stampedResponseSchema(ParseResponseSchema, "StampedParseResponse")
 
 const ParseAddress = {
-	operationId: "parsePost",
+	operationId: "parseAddress",
 	summary: "Parse an address (JSON body)",
 	tags: [ParsingTag.name],
 	body: Ref(ParseRequestSchema),
 	response: {
 		200: StampedParseResponseSchema,
 		400: APIErrorSchema.meta({ description: "`address` is required." }),
-		501: APIErrorSchema.meta({ description: "The backing engine method is not wired for this deployment." }),
+		501: NotImplementedErrorSchema,
 	},
 } as const satisfies APIOperationSchema
 

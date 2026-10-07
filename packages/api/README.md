@@ -18,7 +18,7 @@ import type { MailwomanAPIEngine } from "@mailwoman/api"
 
 const engine: MailwomanAPIEngine = {
 	parse: async (address, opts) => {
-		/* → { input, solutions, debug? } */
+		/* → { input, components, tree, debug } */
 	},
 	geocode: async (address) => {
 		/* → GeocodeResult, passed through verbatim */

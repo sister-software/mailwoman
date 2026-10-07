@@ -8,9 +8,9 @@
  *   `@mailwoman/spatial` (pure arithmetic, officially-vectored).
  */
 
-import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { collectNodes, firstNodeWhere, slotNodes } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
 
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -41,7 +41,7 @@ const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJ
  * A short code with no resolved reference stays an abstention.
  * A cell modulo 20° is not an answer.
  */
-export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string, resolved: AddressTree): void {
+export function applyPlusCodeOverride(result: GeocodeResult, input: string, resolved: AddressTree): void {
 	const token = PLUS_CODE_TOKEN.exec(input)?.[1]
 
 	if (token) {
@@ -114,7 +114,7 @@ const COMPONENT_SLOTS = [
  *
  * Runs whether or not the code decodes: a short code with no reference is still not a postcode.
  */
-function evictCodeFromComponents(result: GeocodeOutcomeLike, tree: AddressTree, token: string): void {
+function evictCodeFromComponents(result: GeocodeResult, tree: AddressTree, token: string): void {
 	const upper = token.toUpperCase()
 	const isCode = (value: string): boolean => value.trim().toUpperCase() === upper
 	const components = result.components as Partial<Record<string, string>>

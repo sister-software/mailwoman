@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LocaleHint, PipelineOpts, PipelineResult, POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { LocaleHint, PipelineOpts, PipelineResult, POIIntent, POIQueryResult } from "@mailwoman/core/pipeline"
 import { matchPOISubject, type POIPhraseLookup, type POIPhraseMatch } from "@mailwoman/kind-classifier"
 import {
 	lookupPOIBrand,
@@ -164,7 +164,7 @@ export interface POIIntentStageDeps {
 	 *
 	 * Without it, the stage returns the intent unexecuted.
 	 */
-	execute?: (intent: POIIntent) => POIIntentOutcome
+	execute?: (intent: POIIntent) => POIQueryResult
 }
 
 /**
@@ -172,7 +172,7 @@ export interface POIIntentStageDeps {
  */
 export function createPOIIntentStage(
 	deps: POIIntentStageDeps
-): (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null> {
+): (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIQueryResult | null> {
 	return async (input, locale, opts) => {
 		const matched = matchPOISubject(input.normalized, locale.locale, deps.lookup)
 

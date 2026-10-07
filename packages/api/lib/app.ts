@@ -19,8 +19,8 @@ import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
 import type { MailwomanAPIEngine } from "#engine"
+import { FormattingTag, GeocodingTag, MetaTag, ParsingTag, ResolvingTag } from "#operations/tags"
 import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "#routes"
-import type { GeocodeOutcomeLike } from "#schema"
 
 /**
  * Default maximum request body size in bytes.
@@ -81,13 +81,7 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 		},
 	],
 	security: [],
-	tags: [
-		{ name: "parsing", description: "Free-text address parsing." },
-		{ name: "geocoding", description: "Address-to-coordinate resolution." },
-		{ name: "resolving", description: "Gazetteer resolution over an already-decoded address tree." },
-		{ name: "formatting", description: "Component-dict rendering — the inverse of parsing." },
-		{ name: "meta", description: "Health, metrics, and deploy-time operations." },
-	],
+	tags: [ParsingTag, GeocodingTag, ResolvingTag, FormattingTag, MetaTag],
 }
 
 /**
@@ -96,10 +90,7 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
  * The CLI passes the real parse and geocode stack.
  * Tests pass fixtures.
  */
-export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike>(
-	engine: MailwomanAPIEngine<T>,
-	options: MailwomanAPIOptions = {}
-): OpenAPIHono {
+export function createMailwomanAPI(engine: MailwomanAPIEngine, options: MailwomanAPIOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono({
 		// Routes may override this fallback with their own validation messages.
 		defaultHook: (result, c) => {

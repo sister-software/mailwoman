@@ -6,10 +6,10 @@
  *   The test would turn the strongest available nondeterminism check into a tautology if it derived the identity law's second side from the first. It observes both sides independently.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import type { GeocodeResult } from "#geocode"
 import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {

@@ -13,21 +13,9 @@
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
 import { walkNodes } from "@mailwoman/core/decoder"
+import type { AdminCoherenceReport, AdminCoherenceVerdict } from "@mailwoman/core/geocode"
 import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-
-/**
- * Verdict for one parsed qualifier.
- */
-type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
-
-/**
- * Verdicts for the parsed `region` and `country` qualifiers.
- */
-export interface AdminCoherenceReport {
-	region: AdminCoherenceVerdict
-	country: AdminCoherenceVerdict
-}
 
 /**
  * Parsed `region` and `country` qualifiers.

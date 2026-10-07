@@ -13,12 +13,11 @@
  *   ungradable.
  */
 
+import type { AuthoritativeAssertion, GeocodeResult } from "@mailwoman/core/geocode"
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { AuthoritativeAssertion } from "#authoritative"
 import { geocodeAddress, type GeocodeDeps } from "#geocode/core"
-import type { GeocodeResult } from "#geocode/result"
 import type { PremiseLinkageAdapter } from "#tools/eval-harness/premise-linkage/adapter"
 import { assertUsableSalt, caseIDFor } from "#tools/eval-harness/premise-linkage/case-id"
 import {

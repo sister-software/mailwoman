@@ -5,12 +5,13 @@
  */
 
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
-import { createMailwomanAPI, type MailwomanAPIEngine, type ParsedAddressResult } from "#index"
-import { type GeocodeOutcomeLike, MAX_ADDRESS_LENGTH } from "#schema"
+import { createMailwomanAPI, MAX_ADDRESS_LENGTH, type MailwomanAPIEngine } from "#index"
+import type { ParseResponse } from "#operations/parse/address"
 
 beforeEach(() => {
 	resetMetricsForTest()
@@ -23,7 +24,7 @@ beforeEach(() => {
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
-function fixtureParseOutcome(address: string, debug?: boolean): ParsedAddressResult {
+function fixtureParseResponse(address: string, debug?: boolean): ParseResponse {
 	return {
 		input: address,
 		components: [
@@ -35,22 +36,48 @@ function fixtureParseOutcome(address: string, debug?: boolean): ParsedAddressRes
 	}
 }
 
-interface GeocodeResultWithAddress extends Pick<GeocodeOutcomeLike, "lat" | "lon" | "resolution_tier"> {
-	address: string
-}
-
-function fixtureGeocodeOutcome(address: string): GeocodeResultWithAddress {
-	return { address, lat: 38.8977, lon: -77.0365, resolution_tier: "address_point" }
+function fixtureGeocodeResult(address: string): GeocodeResult {
+	return {
+		input: address,
+		components: {},
+		dropped_components: null,
+		unfollowed_components: null,
+		lat: 38.8977,
+		lon: -77.0365,
+		resolution_tier: "address_point",
+		epistemic_status: "observed",
+		derivation: null,
+		entity: null,
+		rooftop: null,
+		uncertainty_m: 1,
+		locality: null,
+		region: null,
+		postcode: null,
+		house_number: null,
+		street: null,
+		venue: null,
+		dependent_locality: null,
+		unit: null,
+		countryCode: null,
+		hierarchy: [],
+		candidates: [],
+		postcode_country_scope: null,
+		capital_promotion: null,
+		variant_alias_exemption: null,
+		intent_markers: [],
+		admin_coherence: null,
+		authoritative: null,
+	}
 }
 
 /**
  * A fully-wired fixture engine — every method present, exercising every 200 happy path.
  */
-const fullEngine: MailwomanAPIEngine<GeocodeResultWithAddress> = {
-	parse: async (address, opts) => fixtureParseOutcome(address, opts.debug),
-	geocode: async (address) => fixtureGeocodeOutcome(address),
+const fullEngine: MailwomanAPIEngine = {
+	parse: async (address, opts) => fixtureParseResponse(address, opts.debug),
+	geocode: async (address) => fixtureGeocodeResult(address),
 	batch: async (addresses) => ({
-		results: addresses.map((a) => (a === "bad" ? { input: a, error: "boom" } : fixtureGeocodeOutcome(a))),
+		results: addresses.map((a) => (a === "bad" ? { input: a, error: "boom" } : fixtureGeocodeResult(a))),
 	}),
 	resolveTree: async (tree) => ({ tree }),
 	reload: async () => ({ reloaded: true, versions: { wof: "v1" } }),
@@ -69,7 +96,7 @@ test("POST /v1/parse: happy path returns the components + decoded tree", async (
 	})
 
 	expect(res.status).toBe(200)
-	const body = (await res.json()) as ParsedAddressResult
+	const body = (await res.json()) as ParseResponse
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.components).toHaveLength(2)
 	expect(body.tree.roots).toEqual([])
@@ -85,7 +112,7 @@ test("POST /v1/parse: debug:true reaches the engine and rides back in the respon
 		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW", debug: true }),
 	})
 
-	const body = (await res.json()) as ParsedAddressResult
+	const body = (await res.json()) as ParseResponse
 	expect(body.debug).toBe("diagnostic report")
 })
 
@@ -94,7 +121,7 @@ test("GET /v1/parse?address=&debug=: happy path, first-value query reads", async
 
 	const res = await app.request("/v1/parse?address=1600+Pennsylvania+Ave+NW&debug=true")
 	expect(res.status).toBe(200)
-	const body = (await res.json()) as ParsedAddressResult
+	const body = (await res.json()) as ParseResponse
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.debug).toBe("diagnostic report")
 })
@@ -156,7 +183,7 @@ test("GET /v1/parse: engine.parse absent -> 501", async () => {
 
 // MARK: /v1/geocode
 
-test("POST /v1/geocode: happy path passes the GeocodeOutcome through verbatim", async () => {
+test("POST /v1/geocode: happy path passes the GeocodeResult through verbatim", async () => {
 	const app = createMailwomanAPI(fullEngine)
 
 	const res = await app.request("/v1/geocode", {
@@ -166,7 +193,7 @@ test("POST /v1/geocode: happy path passes the GeocodeOutcome through verbatim", 
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual(fixtureGeocodeOutcome("1600 Pennsylvania Ave NW"))
+	expect(await res.json()).toEqual(fixtureGeocodeResult("1600 Pennsylvania Ave NW"))
 })
 
 test('POST /v1/geocode: missing address -> 400 { error: "address is required" }', async () => {
@@ -229,7 +256,7 @@ test("POST /v1/batch: happy path returns one row per address, in order, per-row 
 
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as { results: unknown[] }
-	expect(body.results).toEqual([fixtureGeocodeOutcome("1600 Pennsylvania Ave NW"), { input: "bad", error: "boom" }])
+	expect(body.results).toEqual([fixtureGeocodeResult("1600 Pennsylvania Ave NW"), { input: "bad", error: "boom" }])
 })
 
 test("POST /v1/batch: empty addresses array -> 200 { results: [] }, even with no engine", async () => {

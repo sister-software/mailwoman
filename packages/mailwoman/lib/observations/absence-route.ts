@@ -5,7 +5,7 @@
  */
 
 import { type CoverageCell, type LayerManifest, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIQueryResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import type {
@@ -158,7 +158,7 @@ export interface AbsenceObservationRoute extends Disposable {
 	/**
 	 * Decides one answered query without changing the outcome.
 	 */
-	observe: (outcome: POIIntentOutcome | null) => Promise<AbsenceDecision>
+	observe: (outcome: POIQueryResult | null) => Promise<AbsenceDecision>
 }
 
 /**
@@ -296,7 +296,7 @@ interface DecisionContext {
 	identity: AbsenceRouteIdentity
 }
 
-async function decide(outcome: POIIntentOutcome | null, context: DecisionContext): Promise<AbsenceDecision> {
+async function decide(outcome: POIQueryResult | null, context: DecisionContext): Promise<AbsenceDecision> {
 	if (!outcome || outcome.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
 
 	const { intent, results } = outcome

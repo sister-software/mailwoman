@@ -9,7 +9,7 @@
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import { z } from "zod"
 
-import type { AddressTree } from "#decoder/types"
+import { type AddressTree, AddressTreeSchema } from "#decoder/types"
 import type { MachinePreferences } from "#pipeline/preferences"
 import type { ResolveOpts, Resolver, ResolverBackend } from "#resolver/types"
 import type { Section } from "#types/classifier"
@@ -126,33 +126,33 @@ export interface LocaleHint {
 /**
  * The query kinds the kind classifier emits.
  *
- * The last four kinds describe the requested operation instead of the input's structure.
+ * The last four kinds describe the requested operation instead of the input's structure:
+ *
+ * - `bare_toponym`: a bare place name with no address components.
+ *   Resolution uses it to report ambiguity.
+ * - `route_pair`: two place names with no address grammar between them.
+ *   The pipeline reports both readings and does no routing.
+ * - `near_me`: a relative location query that needs the caller's position.
+ * - `poi_category`: a POI category query with no search anchor.
  */
-export type QueryKind =
-	| "postcode_only"
-	| "locality_only"
-	| "structured_address"
-	| "intersection"
-	| "po_box"
-	| "landmark"
-	| "poi_query"
-	| "vague"
-	/**
-	 * A bare place name with no address components. Resolution uses it to report ambiguity.
-	 */
-	| "bare_toponym"
-	/**
-	 * Two place names with no address grammar between them. The pipeline reports both readings and does no routing.
-	 */
-	| "route_pair"
-	/**
-	 * A relative location query that needs the caller's position.
-	 */
-	| "near_me"
-	/**
-	 * A POI category query with no search anchor.
-	 */
-	| "poi_category"
+export const QueryKindSchema = z
+	.enum([
+		"postcode_only",
+		"locality_only",
+		"structured_address",
+		"intersection",
+		"po_box",
+		"landmark",
+		"poi_query",
+		"vague",
+		"bare_toponym",
+		"route_pair",
+		"near_me",
+		"poi_category",
+	])
+	.meta({ id: "QueryKind", description: "The query kind the kind classifier assigned." })
+
+export type QueryKind = z.infer<typeof QueryKindSchema>
 
 /**
  * Advisory codes that report how a query was interpreted or what evidence is missing.
@@ -190,35 +190,46 @@ export const QueryIntentCode = {
 } as const
 
 /**
+ * {@link QueryIntentCode} as a schema.
+ */
+export const QueryIntentCodeSchema = z.enum(QueryIntentCode).meta({ id: "QueryIntentCode" })
+
+/**
  * One of the {@link QueryIntentCode} values.
  */
-export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentCode]
+export type QueryIntentCode = z.infer<typeof QueryIntentCodeSchema>
 
 /**
  * An advisory from query-intent logic.
  * It leaves the selected answer unchanged.
  */
-export interface QueryIntentMarker {
-	/**
-	 * The query kind that produced the marker.
-	 * It must appear in the classifier result.
-	 */
-	kind: QueryKind
-	code: QueryIntentCode
-	/**
-	 * A `family:rule` identifier for the producer.
-	 */
-	mechanism: string
-	/**
-	 * Human-readable text.
-	 * Branch on `code`, which is stable.
-	 */
-	message: string
-	/**
-	 * Measurements from supporting sources, when available.
-	 */
-	evidence?: Record<string, unknown>
-}
+export const QueryIntentMarkerSchema = z
+	.object({
+		/**
+		 * The query kind that produced the marker.
+		 * It must appear in the classifier result.
+		 */
+		kind: QueryKindSchema,
+		code: QueryIntentCodeSchema,
+		/**
+		 * A `family:rule` identifier for the producer.
+		 */
+		mechanism: z.string(),
+		/**
+		 * Human-readable text.
+		 * Branch on `code`, which is stable.
+		 */
+		message: z.string(),
+		/**
+		 * Measurements from supporting sources, when available.
+		 *
+		 * Each `code` has its own measurement, so the record stays open.
+		 */
+		evidence: z.record(z.string(), z.unknown()).optional(),
+	})
+	.meta({ id: "QueryIntentMarker", description: "A query-intent advisory; it never changes the answer." })
+
+export type QueryIntentMarker = z.infer<typeof QueryIntentMarkerSchema>
 
 /**
  * The kind classifier's result.
@@ -261,73 +272,111 @@ export function deriveInputMode(kind: QueryKind): InputMode {
 }
 
 /**
+ * The relation between a POI subject and its anchor, as the query phrased it.
+ */
+export const POISpatialRelationSchema = z.enum(["comma", "near", "in", "at", "around", "to"])
+
+export type POISpatialRelation = z.infer<typeof POISpatialRelationSchema>
+
+const POICategorySubjectSchema = z.object({
+	kind: z.literal("category"),
+	/**
+	 * Category IDs to search together.
+	 * The order does not rank these values.
+	 */
+	categoryIDs: z.array(z.string()),
+	matched: z.string(),
+	/**
+	 * Categories that the resolved anchor country excludes.
+	 */
+	countryBinding: z
+		.object({ anchorCountry: z.string().nullable(), excludedCategoryIDs: z.array(z.string()) })
+		.optional(),
+})
+
+const POIBrandSubjectSchema = z.object({
+	kind: z.literal("brand"),
+	name: z.string(),
+	wikidata: z.string().optional(),
+	matched: z.string(),
+})
+
+const POINameSubjectSchema = z.object({ kind: z.literal("name"), text: z.string() })
+
+/**
+ * The parsed spatial anchor of a POI query.
+ */
+const POIAnchorSchema = z.object({
+	text: z.string().optional(),
+	tree: AddressTreeSchema.optional(),
+	/**
+	 * A caller-supplied location, used when no anchor tree is available.
+	 */
+	biasPoint: z.object({ latitude: z.number(), longitude: z.number() }).optional(),
+	radiusM: z.number().optional(),
+})
+
+/**
  * A structured POI query that classification hands to search executors.
  */
-export interface POIIntent {
-	subject:
-		| {
-				kind: "category"
-				/**
-				 * Category IDs to search together.
-				 * The order does not rank these values.
-				 */
-				categoryIDs: string[]
-				matched: string
-				/**
-				 * Categories that the resolved anchor country excludes.
-				 */
-				countryBinding?: { anchorCountry: string | null; excludedCategoryIDs: string[] }
-		  }
-		| { kind: "brand"; name: string; wikidata?: string; matched: string }
-		| { kind: "name"; text: string }
-	/**
-	 * The relation between the subject and the anchor.
-	 */
-	relation?: "comma" | "near" | "in" | "at" | "around" | "to"
-	/**
-	 * The parsed spatial anchor, when the query has one.
-	 */
-	anchor?: {
-		text?: string
-		tree?: AddressTree
+export const POIIntentSchema = z
+	.object({
+		subject: z.discriminatedUnion("kind", [POICategorySubjectSchema, POIBrandSubjectSchema, POINameSubjectSchema]),
 		/**
-		 * A caller-supplied location, used when no anchor tree is available.
+		 * The relation between the subject and the anchor.
 		 */
-		biasPoint?: { latitude: number; longitude: number }
-		radiusM?: number
-	}
-	limit?: number
-}
+		relation: POISpatialRelationSchema.optional(),
+		/**
+		 * The parsed spatial anchor, when the query has one.
+		 */
+		anchor: POIAnchorSchema.optional(),
+		limit: z.number().optional(),
+	})
+	.meta({ id: "POIIntent", description: "A structured POI query." })
+
+export type POIIntent = z.infer<typeof POIIntentSchema>
 
 /**
  * One POI search result.
  */
-export interface POIResult {
-	name: string | null
-	categoryID: string | null
-	brandWikidata: string | null
-	latitude: number
-	longitude: number
-	country: string
-	confidence: number
-	/**
-	 * The Overture GERS ID.
-	 */
-	gersID: string | null
-	/**
-	 * WOF ancestry, deepest first.
-	 * It is absent when no reverse geocoder is configured.
-	 */
-	ancestry?: ReadonlyArray<{ placetype: string; name: string; wofID: number }>
-	distanceM?: number
-}
+export const POIResultSchema = z
+	.object({
+		name: z.string().nullable(),
+		categoryID: z.string().nullable(),
+		brandWikidata: z.string().nullable(),
+		latitude: z.number(),
+		longitude: z.number(),
+		country: z.string(),
+		confidence: z.number(),
+		/**
+		 * The Overture GERS ID.
+		 */
+		gersID: z.string().nullable(),
+		/**
+		 * WOF ancestry, deepest first.
+		 * It is absent when no reverse geocoder is configured.
+		 */
+		ancestry: z
+			.array(z.object({ placetype: z.string(), name: z.string(), wofID: z.number() }))
+			.readonly()
+			.optional(),
+		distanceM: z.number().optional(),
+	})
+	.meta({ id: "POIResult", description: "One POI search result." })
+
+export type POIResult = z.infer<typeof POIResultSchema>
 
 /**
- * The outcome of POI handling: an intent with optional results, or an abstention with a reason.
+ * The result of POI handling: an intent with optional results, or an abstention with a reason.
  */
-export type POIIntentOutcome =
-	| { type: "intent"; intent: POIIntent; results?: POIResult[] }
-	| { type: "abstain"; reason: string }
+export const POIQueryResultSchema = z
+	.discriminatedUnion("type", [
+		z.object({ type: z.literal("intent"), intent: POIIntentSchema, results: z.array(POIResultSchema).optional() }),
+		z.object({ type: z.literal("abstain"), reason: z.string() }),
+	])
+	.meta({ id: "POIQueryResult", description: "A POI intent with its results, or an abstention." })
+
+export type POIQueryResult = z.infer<typeof POIQueryResultSchema>
 
 /**
  * Structural phrase shapes that the phrase grouper proposes before classification.
@@ -464,7 +513,7 @@ export interface RuntimePipelineStages {
 	 */
 	poiIntent?:
 		| null
-		| ((input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>)
+		| ((input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIQueryResult | null>)
 	/**
 	 * The phrase grouper.
 	 *

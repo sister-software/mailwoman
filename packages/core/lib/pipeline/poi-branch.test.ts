@@ -7,13 +7,13 @@
 import { describe, expect, it } from "vitest"
 
 import { runPipeline } from "#pipeline/runtime-pipeline"
-import type { POIIntentOutcome, QueryKindResult } from "#pipeline/types"
+import type { POIQueryResult, QueryKindResult } from "#pipeline/types"
 
 const POI_KIND: QueryKindResult = { kind: "poi_query", confidence: 0.92, alternatives: [], intentMarkers: null }
 
 describe("poi_query pipeline branch", () => {
 	it("routes to stages.poiIntent and returns path 'poi' with the outcome", async () => {
-		const outcome: POIIntentOutcome = {
+		const outcome: POIQueryResult = {
 			type: "intent",
 			intent: { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } },
 		}
@@ -45,7 +45,7 @@ describe("poi_query pipeline branch", () => {
 			],
 		}
 
-		const outcome: POIIntentOutcome = {
+		const outcome: POIQueryResult = {
 			type: "intent",
 			intent: {
 				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
@@ -82,7 +82,7 @@ describe("poi_query pipeline branch", () => {
 	})
 
 	it("returns an abstain outcome verbatim", async () => {
-		const outcome: POIIntentOutcome = { type: "abstain", reason: "no_executor" }
+		const outcome: POIQueryResult = { type: "abstain", reason: "no_executor" }
 
 		const result = await runPipeline("drinking fountain", {
 			classifyKind: async () => POI_KIND,

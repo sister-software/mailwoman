@@ -7,9 +7,9 @@
  *   geocode file holds the cascade, this one holds the retry). Interface in {@link applyStreetMissFallback}.
  */
 
-import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { loneValueNode } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 
 /**
@@ -18,7 +18,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
  * The retry omits inferred country constraints but preserves an explicit default country.
  */
 export async function applyStreetMissFallback(
-	result: GeocodeOutcomeLike,
+	result: GeocodeResult,
 	ctx: {
 		tree: AddressTree
 		opts: ResolveOpts
@@ -32,9 +32,9 @@ export async function applyStreetMissFallback(
 		}
 		input: string
 		forkDeclared: boolean
-		extract: (input: string, tree: AddressTree) => GeocodeOutcomeLike
+		extract: (input: string, tree: AddressTree) => GeocodeResult
 	}
-): Promise<GeocodeOutcomeLike> {
+): Promise<GeocodeResult> {
 	const { tree, opts, deps, input, forkDeclared, extract } = ctx
 
 	if (result.lat !== null || !deps.resolver || forkDeclared) return result

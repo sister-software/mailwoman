@@ -14,10 +14,10 @@
  * Database access is injected via {@link RegionDatabaseResolver}.
  */
 
-import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { placetypeMapForCountry } from "@mailwoman/codex/placetype-map"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	deriveInputMode,
@@ -335,7 +335,7 @@ export async function parseForGeocode(
  * Returns a result.
  * It throws only on a fatal parse or resolve error.
  */
-export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
+export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Optional first-refusal check for thing queries.
 	if (deps.classifyKind && !deps.inputMode) {
 		const parseInput =
@@ -416,7 +416,7 @@ const OPT_IN_RESOLVER_PINS = [
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeDeps & keyof ResolveOpts)[]
 
-async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
+async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Normalize input for parse/placer while keeping raw input for output.
 	const parseInput =
 		deps.normalizeInput === false

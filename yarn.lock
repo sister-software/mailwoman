@@ -6271,7 +6271,6 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/evidence": "workspace:*"
     hono: "npm:^4.13.13"
     zod: "npm:^4.6.5"
   languageName: unknown
@@ -6388,6 +6387,7 @@ __metadata:
   resolution: "@mailwoman/core@workspace:packages/core"
   dependencies:
     "@duckdb/node-api": "npm:1.5.6-r.1"
+    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
@@ -6553,6 +6553,8 @@ __metadata:
 "@mailwoman/evidence@workspace:*, @mailwoman/evidence@workspace:packages/evidence":
   version: 0.0.0-use.local
   resolution: "@mailwoman/evidence@workspace:packages/evidence"
+  dependencies:
+    zod: "npm:^4.6.5"
   languageName: unknown
   linkType: soft
 

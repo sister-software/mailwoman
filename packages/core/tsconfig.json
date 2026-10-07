@@ -9,6 +9,7 @@
 	},
 	"references": [
 		{ "path": "../sqlite" },
+		{ "path": "../annotations" },
 		{ "path": "../codex" },
 		{ "path": "../evidence" },
 		{ "path": "../query-shape" }

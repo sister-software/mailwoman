@@ -11,6 +11,8 @@
  * proposition a source asserts in a given field, live here because each is defined against this axis.
  */
 
+import { z } from "zod"
+
 /**
  * The five claims the evidence can license about a value, ordered from the strongest authority
  * to none, with each answer naming exactly one and the constants as the wire values.
@@ -41,7 +43,14 @@ export const EpistemicStatus = {
 	Unresolved: "unresolved",
 } as const
 
-export type EpistemicStatus = (typeof EpistemicStatus)[keyof typeof EpistemicStatus]
+/**
+ * {@link EpistemicStatus} as a schema.
+ */
+export const EpistemicStatusSchema = z
+	.enum(EpistemicStatus)
+	.meta({ id: "EpistemicStatus", description: "What the evidence permits a consumer to claim about a value." })
+
+export type EpistemicStatus = z.infer<typeof EpistemicStatusSchema>
 
 /**
  * Whether a relationship is stated by a source or concluded by us, enforced by `filer.db`'s
@@ -53,7 +62,12 @@ export const Assertion = {
 	Inferred: "inferred",
 } as const
 
-export type Assertion = (typeof Assertion)[keyof typeof Assertion]
+/**
+ * {@link Assertion} as a schema.
+ */
+export const AssertionSchema = z.enum(Assertion)
+
+export type Assertion = z.infer<typeof AssertionSchema>
 
 /**
  * Which proposition a source asserts about a record, recorded per field rather than per source:

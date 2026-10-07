@@ -5,7 +5,7 @@
  *
  *   Tests the coverage-qualified absence route: its conjunction, recorded absences, observation authority, plus construction refusals.
  *
- *   The route reads a finished `POIIntentOutcome` and a sealed coverage layer supplied here.
+ *   The route reads a finished `POIQueryResult` and a sealed coverage layer supplied here.
  *   The same query and empty answer produce opposite readings for two cells that differ only in `basis`.
  *
  *   The committed pre-registration is asserted too, because its hash is what stops a row that failed from being rewritten into a row that passes.
@@ -21,7 +21,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
@@ -152,7 +152,7 @@ function answered(
 	categoryID: string,
 	center: { latitude: number; longitude: number },
 	results: POIResult[] = []
-): POIIntentOutcome {
+): POIQueryResult {
 	const node: AddressNode = {
 		tag: "locality",
 		value: "anchor",
@@ -290,7 +290,7 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses an intent the executor never ran — a search that did not happen returns nothing for its own reasons", async () => {
 		const route = await routeOver()
 		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
-		const unexecuted: POIIntentOutcome = { type: "intent", intent: (outcome as { intent: POIIntent }).intent }
+		const unexecuted: POIQueryResult = { type: "intent", intent: (outcome as { intent: POIIntent }).intent }
 
 		expect(await route.observe(unexecuted)).toEqual({ fired: false, refusal: "executor_did_not_run" })
 	})
@@ -298,7 +298,7 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses a non-category subject", async () => {
 		const route = await routeOver()
 
-		const outcome: POIIntentOutcome = {
+		const outcome: POIQueryResult = {
 			type: "intent",
 			intent: { subject: { kind: "name", text: "Pharmacie du Centre" } },
 			results: [],
@@ -310,7 +310,7 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses an un-anchored search — there is no cell to qualify", async () => {
 		const route = await routeOver()
 
-		const outcome: POIIntentOutcome = {
+		const outcome: POIQueryResult = {
 			type: "intent",
 			intent: { subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy" } },
 			results: [],

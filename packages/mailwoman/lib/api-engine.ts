@@ -6,19 +6,15 @@
  * `createServeEngine` builds the shared stack once at boot. The CLI's `serve` command awaits it before listening, so a misconfigured deployment fails at boot rather than on the first request. A degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503. When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback. `health` always answers.
  */
 
-import type {
-	BatchResultEntry,
-	GeocodeCallback,
-	GeocodeOutcome,
-	HealthData,
-	MailwomanAPIEngine,
-	ResolveTreeOutcome,
-} from "@mailwoman/api"
+import type { GeocodeCallback, HealthData, MailwomanAPIEngine } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
+import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
+import type { RequestInputMode } from "@mailwoman/api/operations/input-mode"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
@@ -157,18 +153,14 @@ async function buildHealthData(): Promise<HealthData> {
 	}
 }
 
-function oneGeocode(
-	deps: GeocodeDepsBundle,
-	address: string,
-	inputMode?: "fragmented" | "formatted"
-): Promise<GeocodeOutcome> {
+function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: RequestInputMode): Promise<GeocodeResult> {
 	return geocodeAddress(address, {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
 		databases: deps.databases.for,
 		defaultCountry: deps.defaultCountry,
 		interpCalibration: INTERP_RADIUS_CALIBRATION,
-		inputMode,
+		inputMode: inputMode === "auto" ? undefined : inputMode,
 	})
 }
 
@@ -221,7 +213,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const shape = computeQueryShape(address)
 
 			const inputMode =
-				opts.inputMode ?? deriveInputMode(classifyKindSync({ raw: address, normalized: address }, shape).kind)
+				opts.inputMode !== "auto"
+					? opts.inputMode
+					: deriveInputMode(classifyKindSync({ raw: address, normalized: address }, shape).kind)
 
 			const tree = await parseClassifier.parse(address, { postcodeRepair: true, inputMode })
 
@@ -271,15 +265,15 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? null : "US" }
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
-	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
+	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts.inputMode)
 
 	// Sequential because `onnxruntime-node`'s `session.run()` blocks the JS thread
 	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process.
 	// Results land in input order and a thrown row is isolated to its own `{ input, error }` slot.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
-		const inputMode = opts?.inputMode ?? "formatted"
+		const { inputMode } = opts
 		const inputs = addresses.map((a) => a.trim())
-		const results: BatchResultEntry[] = new Array<BatchResultEntry>(inputs.length)
+		const results: BatchRow[] = new Array<BatchRow>(inputs.length)
 
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i]!
@@ -329,9 +323,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
 			recordTimed(performance.now() - t0, street ?? "admin")
 
-			const outcome: ResolveTreeOutcome = { tree: resolved }
-
-			return outcome
+			return { tree: resolved }
 		} catch (error) {
 			recordTimed(performance.now() - t0, "error")
 			throw error

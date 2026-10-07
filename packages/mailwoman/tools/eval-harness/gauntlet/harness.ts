@@ -8,6 +8,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import type { AdminCoherenceReport, GeocodeResult } from "@mailwoman/core/geocode"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
@@ -21,10 +22,8 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AdminCoherenceReport } from "#admin-coherence"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import type { GeocodeResult } from "#geocode/result"
 import { poiTaxonomyLookup } from "#poi/intent"
 import { createResolverBackend, loadCapitalIndex, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"

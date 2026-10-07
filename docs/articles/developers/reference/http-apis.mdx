@@ -2,7 +2,7 @@
 title: HTTP APIs
 description: The native /v1 surface and the three drop-in servers — endpoints, request shapes, error tables, and the emitted OpenAPI documents.
 role: reference
-source-of-truth: api/routes.ts, api/schema.ts, api/app.ts, api-kit/error.ts, nominatim/routes.ts, photon/routes.ts, libpostal/routes.ts
+source-of-truth: api/operations/*.ts, api/routes.ts, api/app.ts, core/geocode/result.ts, api-kit/error.ts, nominatim/routes.ts, photon/routes.ts, libpostal/routes.ts
 ---
 
 # HTTP APIs
@@ -56,20 +56,26 @@ because the drop-ins reproduce paths their originals already fixed.
 `@mailwoman/api` takes an engine object in which every method is optional. An absent method answers a
 status rather than throwing, which is what makes a partial deployment legible.
 
-| Method | Path          | Body or query                            | 200 response                                                        |
-| ------ | ------------- | ---------------------------------------- | ------------------------------------------------------------------- |
-| `GET`  | `/v1/parse`   | `?address`, `?debug=true`, `?input_mode` | `input`, `components[]`, `tree`, `debug?`                           |
-| `POST` | `/v1/parse`   | `{ address, debug?, input_mode? }`       | `input`, `components[]`, `tree`, `debug?`                           |
-| `POST` | `/v1/geocode` | `{ address, input_mode? }`               | The geocode result: `lat`, `lon`, `resolution_tier`, `hierarchy`, … |
-| `POST` | `/v1/batch`   | `{ addresses: string[], input_mode? }`   | `{ results: [] }`, each a geocode result or `{ input, error }`      |
-| `POST` | `/v1/resolve` | `{ tree, opts? }`                        | `{ tree }`                                                          |
-| `POST` | `/v1/format`  | `{ components, country, options? }`      | `{ formatted, canonicalKey }`                                       |
-| `POST` | `/v1/reload`  | none                                     | `{ reloaded, versions }`                                            |
-| `GET`  | `/health`     | none                                     | `status`, `uptime_s`, plus whatever the engine reports              |
-| `GET`  | `/metrics`    | none                                     | `uptime_s`, `timings`                                               |
+| Method | Path          | Operation ID        | Body or query                            | 200 response                                                       |
+| ------ | ------------- | ------------------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| `GET`  | `/v1/parse`   | `parseAddressQuery` | `?address`, `?debug=true`, `?input_mode` | `input`, `components[]`, `tree`, `debug`                           |
+| `POST` | `/v1/parse`   | `parseAddress`      | `{ address, debug?, input_mode? }`       | `input`, `components[]`, `tree`, `debug`                           |
+| `POST` | `/v1/geocode` | `geocodeAddress`    | `{ address, input_mode? }`               | A `GeocodeResult`: `lat`, `lon`, `resolution_tier`, `hierarchy`, … |
+| `POST` | `/v1/batch`   | `geocodeBatch`      | `{ addresses: string[], input_mode? }`   | `{ results: [] }`, each a `GeocodeResult` or `{ input, error }`    |
+| `POST` | `/v1/resolve` | `resolveTree`       | `{ tree, opts? }`                        | `{ tree }`                                                         |
+| `POST` | `/v1/format`  | `formatAddress`     | `{ components, country, options? }`      | `{ formatted, canonicalKey }`                                      |
+| `POST` | `/v1/reload`  | `reloadData`        | none                                     | `{ reloaded, versions }`                                           |
+| `GET`  | `/health`     | `retrieveHealth`    | none                                     | `status`, `uptime_s`, plus whatever the engine reports             |
+| `GET`  | `/metrics`    | `retrieveMetrics`   | none                                     | `uptime_s`, `timings`                                              |
 
-`address` is required on `/v1/parse` and `/v1/geocode`. `input_mode` is `fragmented` or `formatted`;
-`/v1/batch` defaults it to `formatted` while the other two derive it from the input. On `/v1/format`,
+Each operation is defined once in `@mailwoman/api/operations/*`, and both the Hono app and
+`@mailwoman/fastify` serve those definitions. The `GeocodeResult` schema lives in
+`@mailwoman/core/geocode`. `@mailwoman/fastify` also serves `POST /v1/poi` (`searchPOI`), which
+takes `{ query }`.
+
+`address` is required on `/v1/parse` and `/v1/geocode`. `input_mode` is `fragmented`, `formatted` or
+`auto`. `/v1/batch` defaults it to `formatted`, and the other two default to `auto`, which derives it
+from the input. On `/v1/format`,
 a `components` entry whose value is an array collapses to its first element.
 
 Four behaviors decide how a client reads a response, and none of them is visible in the table.

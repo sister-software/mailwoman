@@ -15,7 +15,7 @@ import { runPipeline } from "#pipeline/runtime-pipeline"
 import type {
 	AddressClassifier,
 	LocaleHint,
-	POIIntentOutcome,
+	POIQueryResult,
 	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
@@ -81,7 +81,7 @@ describe("PipelineResult.intentMarkers", () => {
 	})
 
 	test("survives the POI branch", async () => {
-		const outcome: POIIntentOutcome = { type: "abstain", reason: "no executor" }
+		const outcome: POIQueryResult = { type: "abstain", reason: "no executor" }
 
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),
@@ -113,7 +113,7 @@ describe("PipelineResult.intentMarkers", () => {
 
 describe("the POI branch accepts poi_category", () => {
 	test("a bare category takes the same branch poi_query does", async () => {
-		const outcome: POIIntentOutcome = { type: "abstain", reason: "resolution out of scope" }
+		const outcome: POIQueryResult = { type: "abstain", reason: "resolution out of scope" }
 
 		const stages: RuntimePipelineStages = {
 			classifier: classifierStub(),

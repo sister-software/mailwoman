@@ -7,7 +7,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { PipelineOpts, PipelineResult, POIQueryResult } from "@mailwoman/core/pipeline"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
@@ -148,7 +148,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
  */
 export interface POIBoardOutcome {
 	path: PipelineResult["path"]
-	poiIntent: POIIntentOutcome | null
+	poiIntent: POIQueryResult | null
 }
 
 /**

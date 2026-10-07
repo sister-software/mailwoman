@@ -1,4 +1,4 @@
-import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult } from "@mailwoman/core/pipeline"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
@@ -19,7 +19,7 @@ import { canonicalJSON, loadProbeDefinition } from "#tools/eval-harness/semantic
 const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
 const probeDefinition = await loadProbeDefinition()
 
-function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
+function intentOutcome(poiIntent: POIQueryResult): POIBoardOutcome {
 	return { path: "poi", poiIntent }
 }
 
@@ -58,7 +58,7 @@ const addressFixture: POIBoardFixture = {
 }
 
 function poiResult(
-	overrides: Partial<NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>[number]> = {}
+	overrides: Partial<NonNullable<Extract<POIQueryResult, { type: "intent" }>["results"]>[number]> = {}
 ) {
 	return {
 		name: "Some Place",

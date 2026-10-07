@@ -19,7 +19,7 @@ export const HealthResponseSchema = z
 export type HealthResponse = z.infer<typeof HealthResponseSchema>
 
 const RetrieveHealth = {
-	operationId: "health",
+	operationId: "retrieveHealth",
 	summary: "Liveness + engine health",
 	tags: [MetaTag.name],
 	response: { 200: HealthResponseSchema },

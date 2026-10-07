@@ -6,7 +6,7 @@
  *   Types for decoded address trees and the labeled tokens they are built from.
  */
 
-import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import { type BIOLabel, COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { z } from "zod"
 
 import { isRecordLike } from "#objects"
@@ -110,6 +110,13 @@ export interface Interpretation {
 	confidence?: number
 	metadata?: Record<string, unknown>
 }
+
+/**
+ * Every recognized address component tag, as a schema.
+ */
+export const ComponentTagSchema = z
+	.enum(COMPONENT_TAGS)
+	.meta({ id: "ComponentTag", description: "A recognized address component tag." })
 
 /**
  * The wire schema of an {@link AddressNode}.

@@ -107,6 +107,11 @@
 			"node": "./lib/decoder.ts",
 			"default": "./out/decoder.js"
 		},
+		"./geocode": {
+			"types": "./out/geocode/result.d.ts",
+			"node": "./lib/geocode/result.ts",
+			"default": "./out/geocode/result.js"
+		},
 		"./env": {
 			"types": "./out/env.d.ts",
 			"node": "./lib/env.ts",
@@ -622,6 +627,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",

@@ -8,6 +8,7 @@ import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -36,7 +37,6 @@ import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps }
 import { layerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
-import type { GeocodeResult } from "#geocode/result"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
 import type { AuthorityDesignationRoute } from "#observations/flood-route"

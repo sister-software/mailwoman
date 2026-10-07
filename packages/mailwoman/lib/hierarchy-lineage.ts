@@ -23,6 +23,8 @@
  *   parse-anchored entries and states each one's standing.
  */
 
+import type { HierarchyEntry } from "@mailwoman/core/geocode"
+
 /**
  * One link of the winner's stamped lineage.
  *
@@ -44,17 +46,6 @@ export interface HierarchySourceNode {
 	lon?: number | undefined
 	placeID?: string | undefined
 	metadata?: Record<string, unknown> | undefined
-}
-
-/**
- * One `GeocodeResult.hierarchy` entry, locality → country (most specific first).
- */
-export interface HierarchyEntry extends HierarchyLineageEntry {
-	tag: string
-	value: string
-	name: string
-	lat: number | null
-	lon: number | null
 }
 
 /**

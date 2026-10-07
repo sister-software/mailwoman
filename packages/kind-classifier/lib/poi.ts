@@ -9,6 +9,7 @@
  * Spec §3.1.
  */
 
+import type { POISpatialRelation } from "@mailwoman/core/pipeline"
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
 /**
  * Comma-segment ceiling for a POI-led query.
@@ -75,10 +76,6 @@ export interface POIPhraseMatch {
  * Injected phrase→category lookup, exact-phrase and locale-aware, returning `[]` on miss.
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
-
-// TODO: unify with API schema.
-// This is likely the correct home, but the schema should come here
-export type POISpatialRelation = "comma" | "near" | "in" | "at" | "around" | "to"
 
 /**
  * A span of the normalized input, with half-open character offsets.

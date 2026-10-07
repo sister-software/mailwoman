@@ -5,25 +5,27 @@
  *
  * Fastify plugin for mailwoman's local parsing, geocoding, and POI pipeline.
  *
- * Routes: `GET`/`POST /v1/parse` and `GET /health` (the shared `@mailwoman/api` operations), `POST /geocode`, and `POST /poi`.
+ * Routes are the shared `@mailwoman/api` operations: `GET`/`POST /v1/parse`, `POST /v1/geocode`, `POST /v1/poi`, and `GET /health`.
  * The `fastify.mailwoman` decorator also exposes parse, geocode, and POI methods.
  *
  * Provide a ready-to-use pipeline with `pipeline`, or let the plugin build one
  * lazily on the first request. Lazy setup uses `locale` and the optional database
  * paths. The plugin resolves model weights and gazetteer data as the CLI does.
  *
- * The parse response extends `@mailwoman/api`'s parse outcome with the pipeline path.
- * Geocode returns a `GeocodeResult`. Errors use `{ error, detail? }`.
+ * The decorator's parse result extends `@mailwoman/api`'s parse response with the pipeline path.
+ * Geocode returns a `GeocodeResult`. Errors use `{ error, detail }`.
  */
 
-import { ParseAddressOperation } from "@mailwoman/api/operations/parse-address"
-import { ParseAddressQueryOperation } from "@mailwoman/api/operations/parse-address-query"
-import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve-health"
-import { GeocodeOutcomeLikeSchema, POIIntentOutcomeSchema } from "@mailwoman/api/schema"
-import type { POIIntentOutcome, PipelineOpts } from "@mailwoman/core"
+import { GeocodeAddressOperation } from "@mailwoman/api/operations/geocode/address"
+import type { RequestInputMode } from "@mailwoman/api/operations/input-mode"
+import { ParseAddressOperation } from "@mailwoman/api/operations/parse/address"
+import { ParseAddressQueryOperation } from "@mailwoman/api/operations/parse/address/query"
+import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/health"
+import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
+import type { PipelineOpts } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import type { Resolver } from "@mailwoman/core/resolver/types"
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest, FastifySchema, RouteHandler } from "fastify"
+import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import {
 	hasZodFastifySchemaValidationErrors,
@@ -32,9 +34,8 @@ import {
 	type ZodTypeProvider,
 } from "fastify-type-provider-zod"
 import type { extractGeocodeResult } from "mailwoman/geocode"
-import { z } from "zod"
 
-import type { MailwomanFastifyOptions, NotPOIQuery, RuntimePipeline, MailwomanDecorator } from "#shared"
+import type { MailwomanFastifyOptions, RuntimePipeline, MailwomanDecorator } from "#shared"
 import { POINotConfiguredError } from "#shared"
 
 // #region Pipeline Helpers
@@ -99,52 +100,11 @@ function withLocale(opts: PipelineOpts | null | undefined, locale: string): Pipe
 }
 
 /**
- * Extract non-empty text from the request body.
- *
- * @returns the trimmed text, or sends a 400 response and returns null when it is missing or blank.
+ * The pipeline's input mode for a request's: `"auto"` leaves the pipeline to derive it.
  */
-function extractTextFromRequest(request: FastifyRequest, reply: FastifyReply): string | null {
-	const body = request.body as { text?: unknown } | undefined
-
-	const text = typeof body?.text === "string" ? body.text.trim() : ""
-
-	if (!text) {
-		reply.code(400).send({ error: "text is required" })
-
-		return null
-	}
-
-	return text
+function pipelineInputMode(mode: RequestInputMode): PipelineOpts["inputMode"] {
+	return mode === "auto" ? undefined : mode
 }
-
-// #endregion
-
-// #region Route Schema
-
-const GeocodeRouteRequestSchema = z.object({ text: z.string().min(1) })
-const POIRouteRequestSchema = z.object({ text: z.string().min(1) })
-
-const POIRouteResponseSchema = z.union([
-	POIIntentOutcomeSchema,
-	z.object({ type: z.literal("not_poi_query") }),
-]) satisfies z.ZodType<POIIntentOutcome | NotPOIQuery>
-
-/**
- * Schemas for the `/geocode` request and response, shared with `@mailwoman/api`.
- */
-export const GeocodeRouteSchema = {
-	body: z.toJSONSchema(GeocodeRouteRequestSchema, { target: "draft-7" }),
-	response: { 200: z.toJSONSchema(GeocodeOutcomeLikeSchema, { target: "draft-7", unrepresentable: "any" }) },
-} satisfies FastifySchema
-
-/**
- * Schemas for the `/poi` request and response.
- * The response shape follows the core POI outcome types.
- */
-export const POIRouteSchema = {
-	body: z.toJSONSchema(POIRouteRequestSchema, { target: "draft-7" }),
-	response: { 200: z.toJSONSchema(POIRouteResponseSchema, { target: "draft-7", unrepresentable: "any" }) },
-} satisfies FastifySchema
 
 // #endregion
 
@@ -209,102 +169,99 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 
 	fastify.decorate("mailwoman", mailwoman)
 
+	// The shared API operations validate and serialize with Zod in their own scope,
+	// so the host app's compilers stay untouched.
 	fastify.register(
-		(routes) => {
-			// The shared API operations validate and serialize with Zod, scoped so the host app's compilers stay untouched.
-			routes.register((operations) => {
-				const api = operations.withTypeProvider<ZodTypeProvider>()
+		(operations) => {
+			const api = operations.withTypeProvider<ZodTypeProvider>()
 
-				api.setValidatorCompiler(validatorCompiler)
-				api.setSerializerCompiler(serializerCompiler)
+			api.setValidatorCompiler(validatorCompiler)
+			api.setSerializerCompiler(serializerCompiler)
 
-				api.setErrorHandler((error, _request, reply) => {
-					if (hasZodFastifySchemaValidationErrors(error)) {
-						return reply.code(400).send({ error: "invalid request", detail: error.message })
-					}
+			api.setErrorHandler((error, _request, reply) => {
+				if (hasZodFastifySchemaValidationErrors(error)) {
+					return reply.code(400).send({ error: "invalid request", detail: error.message })
+				}
 
-					throw error
-				})
-
-				api.route({
-					method: RetrieveHealthOperation.method,
-					url: RetrieveHealthOperation.pathname,
-					schema: RetrieveHealthOperation.schema,
-					handler: () => ({
-						status: "ok" as const,
-						uptime_s: Math.round((Date.now() - startedAt) / 1000),
-						version: packageJSON.version,
-					}),
-				})
-
-				api.route({
-					method: ParseAddressOperation.method,
-					url: ParseAddressOperation.pathname,
-					schema: ParseAddressOperation.schema,
-					handler: async (request, reply) => {
-						const address = request.body.address.trim()
-
-						if (!address) return reply.code(400).send({ error: "address is required", detail: null })
-
-						const { input, components, tree, debug } = await mailwoman.parse(address, {
-							inputMode: request.body.input_mode,
-						})
-
-						return { input, components, tree, debug }
-					},
-				})
-
-				api.route({
-					method: ParseAddressQueryOperation.method,
-					url: ParseAddressQueryOperation.pathname,
-					schema: ParseAddressQueryOperation.schema,
-					handler: async (request, reply) => {
-						const address = request.query.address?.trim()
-
-						if (!address) return reply.code(400).send({ error: "address is required", detail: null })
-
-						const { input, components, tree, debug } = await mailwoman.parse(address, {
-							inputMode: request.query.input_mode,
-						})
-
-						return { input, components, tree, debug }
-					},
-				})
+				throw error
 			})
 
-			routes.route({
-				method: "POST",
-				url: "/geocode",
-				schema: GeocodeRouteSchema,
-				handler: (request, reply) => {
-					const text = extractTextFromRequest(request, reply)
+			api.route({
+				method: RetrieveHealthOperation.method,
+				url: RetrieveHealthOperation.pathname,
+				schema: RetrieveHealthOperation.schema,
+				handler: () => ({
+					status: "ok" as const,
+					uptime_s: Math.round((Date.now() - startedAt) / 1000),
+					version: packageJSON.version,
+				}),
+			})
 
-					if (text) {
-						return mailwoman.geocode(text)
-					}
+			api.route({
+				method: ParseAddressOperation.method,
+				url: ParseAddressOperation.pathname,
+				schema: ParseAddressOperation.schema,
+				handler: async (request, reply) => {
+					const address = request.body.address.trim()
+
+					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
+
+					const { input, components, tree, debug } = await mailwoman.parse(address, {
+						inputMode: pipelineInputMode(request.body.input_mode),
+					})
+
+					return { input, components, tree, debug }
 				},
 			})
 
-			const handler: RouteHandler = poiEnabled
-				? async (request, reply) => {
-						const text = extractTextFromRequest(request, reply)
+			api.route({
+				method: ParseAddressQueryOperation.method,
+				url: ParseAddressQueryOperation.pathname,
+				schema: ParseAddressQueryOperation.schema,
+				handler: async (request, reply) => {
+					const address = request.query.address?.trim()
 
-						if (text) {
-							return mailwoman.poi(text)
-						}
-					}
-				: (_request, reply) => {
+					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
+
+					const { input, components, tree, debug } = await mailwoman.parse(address, {
+						inputMode: pipelineInputMode(request.query.input_mode),
+					})
+
+					return { input, components, tree, debug }
+				},
+			})
+
+			api.route({
+				method: GeocodeAddressOperation.method,
+				url: GeocodeAddressOperation.pathname,
+				schema: GeocodeAddressOperation.schema,
+				handler: async (request, reply) => {
+					const address = request.body.address.trim()
+
+					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
+
+					return mailwoman.geocode(address, { inputMode: pipelineInputMode(request.body.input_mode) })
+				},
+			})
+
+			api.route({
+				method: SearchPOIOperation.method,
+				url: SearchPOIOperation.pathname,
+				schema: SearchPOIOperation.schema,
+				handler: async (request, reply) => {
+					if (!poiEnabled) {
 						return reply.code(501).send({
 							error: "poi search not configured",
-							detail: "register @mailwoman/fastify with { poiDatabasePath } to enable POST /poi",
+							detail: `register @mailwoman/fastify with { poiDatabasePath } to enable POST ${SearchPOIOperation.pathname}`,
 						})
 					}
 
-			routes.route({
-				method: "POST",
-				url: "/poi",
-				schema: POIRouteSchema,
-				handler,
+					const query = request.body.query.trim()
+
+					if (!query) return reply.code(400).send({ error: "query is required", detail: null })
+
+					return mailwoman.poi(query)
+				},
 			})
 		},
 		{ prefix }

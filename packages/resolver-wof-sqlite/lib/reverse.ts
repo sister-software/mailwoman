@@ -265,7 +265,7 @@ export class WOFReverseGeocoder implements Disposable {
 	 * The async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
 	 *
 	 * Exposed directly for callers that can't await mid-call
-	 * (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`, whose `POIIntentOutcome`
+	 * (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`, whose `POIQueryResult`
 	 * return type is synchronous by interface. See `poi-intent.ts`'s `deps.execute`).
 	 */
 	reverseGeocodeSync(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): ReverseGeocodeResult {

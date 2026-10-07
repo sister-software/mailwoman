@@ -11,8 +11,9 @@
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
-import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResultEntry } from "@mailwoman/api"
+import type { MailwomanAPIEngine, GeocodeCallback } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
+import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -44,8 +45,8 @@ function wofPaths(): Promise<string[]> {
 /**
  * Build the engine, enabling geocoding only when weights and a gazetteer are available.
  */
-async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() {
-	const engine: MailwomanAPIEngine<T> = {
+async function buildEngine() {
+	const engine: MailwomanAPIEngine = {
 		health: async () => ({
 			data: {
 				data_root: DATA_ROOT,
@@ -88,20 +89,26 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 				// The FTS backend falls back to US.
 				const defaultCountry = candidateDB ? undefined : "US"
 
-				const oneGeocode: GeocodeCallback<T> = (address: string) =>
-					geocodeAddress(address, { classifier, resolver, databases: extracts.for, defaultCountry }) as Promise<T>
+				const oneGeocode: GeocodeCallback = (address, { inputMode }) =>
+					geocodeAddress(address, {
+						classifier,
+						resolver,
+						databases: extracts.for,
+						defaultCountry,
+						inputMode: inputMode === "auto" ? undefined : inputMode,
+					})
 
-				engine.geocode = async (address) => oneGeocode(address)
+				engine.geocode = oneGeocode
 
-				engine.batch = async (addresses) => {
+				engine.batch = async (addresses, opts) => {
 					const inputs = addresses.map((a) => a.trim())
-					const results: BatchResultEntry<T>[] = Array.from({ length: inputs.length })
+					const results: BatchRow[] = Array.from({ length: inputs.length })
 
 					for (let i = 0; i < inputs.length; i++) {
 						const input = inputs[i]!
 
 						try {
-							results[i] = await oneGeocode(input)
+							results[i] = await oneGeocode(input, opts)
 						} catch (error) {
 							results[i] = { input, error: error instanceof Error ? error.message : String(error) }
 						}

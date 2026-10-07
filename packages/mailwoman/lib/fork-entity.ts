@@ -8,10 +8,11 @@
 
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
+import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
+import { type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 

@@ -8,10 +8,10 @@
  *   still renders. The only symptom is that a resolved city opens on a view of the continent.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { describe, expect, it } from "vitest"
 
 import { initialZoomForTier } from "#cli/debug-view/view-policy"
-import type { GeocodeResult } from "#geocode"
 
 /**
  * A result at `tier` whose hierarchy runs deepest-first, the order the geocoder actually produces.

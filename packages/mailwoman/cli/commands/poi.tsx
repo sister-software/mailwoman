@@ -27,7 +27,7 @@
 
 import { Spinner } from "@inkjs/ui"
 import { prettyJSON } from "@mailwoman/core/json"
-import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
@@ -164,7 +164,7 @@ function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
 	return parts.length ? ` · ${parts.join(", ")}` : ""
 }
 
-function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>): string[] {
+function formatResultsTable(results: NonNullable<Extract<POIQueryResult, { type: "intent" }>["results"]>): string[] {
 	if (!results.length) return ["(no results)"]
 
 	const lines = [
@@ -187,7 +187,7 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 	return lines
 }
 
-async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promise<string> {
+async function formatOutcome(outcome: POIQueryResult, options: Options): Promise<string> {
 	const lines: string[] = []
 
 	if (outcome.type === "abstain") {

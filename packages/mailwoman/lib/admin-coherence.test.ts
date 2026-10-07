@@ -7,10 +7,10 @@
  *   `toGauntletResult`.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { describe, expect, it } from "vitest"
 
 import { assessAdminCoherence, type AdminCoherenceWinner } from "#admin-coherence"
-import type { GeocodeResult } from "#geocode"
 import { toGauntletResult } from "#tools/eval-harness/gauntlet/harness"
 
 /**

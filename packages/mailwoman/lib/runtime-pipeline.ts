@@ -11,7 +11,7 @@ import {
 	type PipelineOpts,
 	type PipelineResult,
 	type POIIntent,
-	type POIIntentOutcome,
+	type POIQueryResult,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
 import type { WOFAncestor } from "@mailwoman/core/resolver"
@@ -320,7 +320,7 @@ export function createRuntimePipeline(
 		return category ? requiresBuildLocalLayer(category) : false
 	}
 
-	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | null = poiQueryKindEffective
+	let poiExecute: ((intent: POIIntent) => POIQueryResult) | null = poiQueryKindEffective
 		? createPOIExecutor({ lookup: null, requiresBuildLocal, resolveOvertureCategories })
 		: null
 

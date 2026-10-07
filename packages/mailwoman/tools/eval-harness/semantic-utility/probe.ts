@@ -25,7 +25,7 @@ import {
 } from "#tools/eval-harness/preregistration"
 
 /**
- * Outcome shapes derived from `PipelineResult.path` and `POIIntentOutcome.type`.
+ * Outcome shapes derived from `PipelineResult.path` and `POIQueryResult.type`.
  *
  * - `no_poi_branch`: the coordinator did not take the POI branch.
  * - `poi_abstain`: the POI branch declined.
