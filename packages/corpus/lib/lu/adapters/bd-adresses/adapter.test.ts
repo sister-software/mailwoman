@@ -45,7 +45,7 @@ describe("bd-adresses adapter against fixture sample.csv", () => {
 
 		const rows = await readCanonicalRows(scratch.path, BD_ADRESSES_ADAPTER_ID)
 
-		// Every fixture record carries a street and a postcode, so none is refused.
+		// Every fixture record holds a street and a postcode, so none is refused.
 		expect(manifest.yielded).toBe(rows.length)
 		expect(rows.length).toBeGreaterThan(10)
 		expect(rows.every((r) => r.license === BD_ADRESSES_DEFAULT_LICENSE)).toBe(true)
@@ -111,7 +111,7 @@ describe("bd-adresses adapter against fixture sample.csv", () => {
 		const dated = rows.find((r) => r.components.street === "Rue du 9 août 2019")
 
 		// 175 of the published street names end in a digit.
-		// Splitting a number off the street name would move `1` and `2019` out of the street.
+		// A number split off the street name would move `1` and `2019` out of the street.
 		expect(nationale?.components.house_number).toBe("1")
 		expect(nationale?.raw).toBe("1 Route Nationale 1, L-6776 Grevenmacher")
 		expect(dated?.components.house_number).toBe("1")
@@ -154,7 +154,7 @@ describe("bd-adresses adapter against fixture sample.csv", () => {
 
 		expect(rows.every((r) => r.locale === "und-LU")).toBe(true)
 
-		// The one column holds both languages, which is why no row claims one.
+		// The one column holds both languages. No row claims one.
 		const streets = rows.map((r) => r.components.street)
 
 		expect(streets).toContain("Kaesfurterstrooss")
@@ -169,7 +169,7 @@ describe("bd-adresses adapter against fixture sample.csv", () => {
 		expect(rows[0]!.source_id).toBe("bd-adresses-058F00436002710_7984_20")
 		expect(new Set(rows.map((r) => r.source_id)).size).toBe(rows.length)
 
-		// 21 rows in the published file carry `domaine_public` where a parcel id would be,
+		// 21 rows in the published file hold `domaine_public` where a parcel id would be,
 		// because the address sits on public land rather than on a cadastral parcel.
 		expect(rows.some((r) => r.source_id.includes("domaine_public"))).toBe(true)
 	})

@@ -25,7 +25,7 @@
  *     counts and each postcode's gigabit percentage, for all premises and for residential premises. A
  *     figure describes every premises in an area, so it enters as an inferred claim on the network axis
  *     and never as a layer reading, an availability record or a check.
- *   - Building Digital UK's UPRN-level release, May 2026 OMR and premises in BDUK plans, London archive:
+ *   - The UPRN-level release from Building Digital UK, May 2026 OMR and premises in BDUK plans, London archive:
  *     for each of a building's postcodes, the UPRNs the release lists with that postcode, how many of
  *     them NSUL places within 50 m of the planning grid reference, and four counts over those within
  *     50 m: `current_gigabit` true, classed Gigabit White, classed Gigabit Under Review, and in BDUK's
@@ -44,7 +44,7 @@
  *   permission date, and a difference between them stays a conflict. The fixture holds zero completed or
  *   occupied counts, zero availability checks and zero provider records.
  *
- *   A source that dates its observation to a month carries the month in its title and the month's last
+ *   A source that dates its observation to a month records the month in its title and the month's last
  *   day as `observedAt`. The ONS Postcode Directory became available on 2026-02-27, before the last day
  *   of its month, so its record states no observation date and the claims that cite it print as undated.
  */
@@ -133,7 +133,7 @@ export const FLOOD_MAP = "ea-flood-map-2026-05-20"
 export const FLOOD_LAYER = "flood-zones-ea-england"
 
 /**
- * The flood map's revision date, which the host `flood.db` manifest gives as its source vintage.
+ * The flood map's revision date. The host `flood.db` manifest gives it as its source vintage.
  */
 export const FLOOD_VINTAGE = "2026-05-20"
 
@@ -570,7 +570,7 @@ function bdukExplanation(site: LondonSite, { postcode, listed, within50m }: BDUK
 				: `places ${within50m} of them within 50 m of`
 
 	// The record infers no planning-row postcode as a postcode of the dwellings,
-	// so a premises listed with one is linked to the building by the radius alone.
+	// so a premises listed with one is linked to the building through the radius only.
 	const link =
 		postcode === site.postcode
 			? `The planning row states ${postcode} as the site's postcode, and the record does not infer it as a postcode of the dwellings, so the link between the building and a premises that BDUK lists there rests on the 50 m rule alone.`

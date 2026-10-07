@@ -37,7 +37,7 @@ import { decomposeFrStreet } from "#fr/street-decompose"
  * and TRE-R35's own display for `HLM` is the acronym.
  *
  * `LD` maps to `null`.
- * A lieu-dit is written by its name alone, so the code adds no word to the line.
+ * A lieu-dit is written by its name only, so the code adds no word to the line.
  *
  * `VAL` keeps the code as its word.
  * TRE-R35 displays it as `Vallée, vallon`, two words the code does not choose between,
@@ -145,7 +145,7 @@ export interface FrenchStreetSplit {
  *
  * The BAN reader's {@linkcode decomposeFrStreet} is consulted first, then TRE-R35's words and the
  * codex's `FR_VOIE_TYPES`, which hold the overseas types it lacks (`quartier`, `lotissement`, `ZAC`).
- * The name may come back empty, as it does for a line reading `Rue` alone.
+ * The name may come back empty, as it does for a line reading only `Rue`.
  */
 export function splitFrenchStreetType(line: string): FrenchStreetSplit | null {
 	const decomposed = decomposeFrStreet(line)
@@ -168,7 +168,8 @@ export function splitFrenchStreetType(line: string): FrenchStreetSplit | null {
 }
 
 /**
- * The French month names, folded, which a date-named street writes after its day.
+ * The French month names, folded.
+ * A street name with a date writes the month after the day.
  */
 const MONTHS = "janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre"
 

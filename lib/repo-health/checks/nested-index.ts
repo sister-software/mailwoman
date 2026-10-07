@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A module below a package's `lib/` is named for what it holds, so `lib/<dir>/index.ts` sits beside its directory as
- *   `lib/<dir>.ts`. The source roots beside `lib/` (`sdk/`, `tools/`, `cli/`) follow the same rule. The `"./*"` export pattern resolves `<package>/<dir>` to that file, which keeps the specifier a
+ *   A module below a package's `lib/` takes the directory's name, so `lib/<dir>/index.ts` sits beside that directory as
+ *   `lib/<dir>.ts`. The source roots beside `lib/` (`sdk/`, `tools/`, `cli/`) follow the same rule. The `"./*"` export pattern resolves `<package>/<dir>` to that file, keeping the specifier a
  *   directory index used to provide. The package root `lib/index.ts` is the one index a package keeps.
  *
  *   A test of the index moves with it, so `lib/<dir>/index.test.ts` and `lib/<dir>/<dir>.test.ts` become
@@ -35,7 +35,7 @@ const insideRoutedTree = (path: string): boolean => ROUTED_TREES.some((tree) => 
 interface NestedIndex {
 	directory: string
 	/**
-	 * Every tracked file named `index.<suffix>` in the directory: the module and the tests beside it.
+	 * Every tracked file whose name is `index.<suffix>` in the directory: the module and the tests beside it.
 	 */
 	files: Array<{ path: string; suffix: string }>
 	/**
@@ -81,7 +81,7 @@ export function findNestedIndexes(trackedFiles: readonly string[]): NestedIndex[
 		// A directory holding only index tests has no module to rename, so it is not reported here.
 		if (entry.files.every((file) => TEST_SUFFIX.test(file.suffix))) continue
 
-		// A test named for the directory covers the index when no module of that name sits beside it.
+		// A test with the directory's name covers the index when no module of that name sits beside it.
 		const basename = entry.directory.slice(entry.directory.lastIndexOf("/") + 1)
 
 		for (const path of trackedFiles) {
@@ -108,7 +108,7 @@ export function findNestedIndexes(trackedFiles: readonly string[]): NestedIndex[
 /**
  * Every group module in a routed tree that sits beside its directory, with its tests.
  *
- * A group whose directory already holds an index module is left alone.
+ * A group whose directory already holds an index module is left in place.
  */
 export function findMisplacedGroupModules(trackedFiles: readonly string[]): MisplacedGroupModule[] {
 	const directories = new Set<string>()

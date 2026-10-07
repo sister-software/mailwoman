@@ -7,11 +7,11 @@
  *   than a sample, and report whether the publisher writes the elements through which a natural
  *   person's name reaches an address.
  *
- *   A register source needs a personal-data reading before it is ingest-eligible, and the reading that
- *   admits a source is `absent`. For the INSPIRE Addresses schema that reading rests on one fact:
+ *   A register source needs a personal-data reading before it is ingest-eligible, and only `absent`
+ *   admits a source. For the INSPIRE Addresses schema that reading rests on one fact:
  *   `ad:locatorName` is the free-text `GeographicalName` through which a family name or a business name
- *   reaches an address, so a publisher that never writes it carries no party on an address. A count of
- *   zero over a sample does not establish absence, which is why this reads the whole member.
+ *   reaches an address, so a publisher that never writes it holds no party on an address. A count of
+ *   zero over a sample does not establish absence, so this reads the whole member.
  *
  *   It reads the archive through {@linkcode inspireGMLChunks}, the same entry every INSPIRE adapter
  *   uses, so the census and the adapters read the same bytes. It counts element names over the decoded
@@ -20,7 +20,7 @@
  *
  *   Two boundary conditions decide whether the count is right. A chunk boundary can fall inside a tag
  *   name or inside a multi-byte character, so the stream is decoded with a stateful decoder and the
- *   text after the final `<` is carried into the next chunk. Without the carry an element split across
+ *   text after the final `<` is held for the next chunk. Without that hold an element split across
  *   a boundary goes uncounted, and without the stateful decoder a split character becomes U+FFFD.
  *
  *   Run:
@@ -118,8 +118,8 @@ for await (const chunk of chunks) {
 	const text = carry + decoder.decode(buffer, { stream: true })
 
 	// A tag starting before the boundary may not have ended yet, so everything from
-	// the final `<` onward is carried rather than scanned.
-	// Scanning it here would count a truncated name.
+	// the final `<` onward waits for the next chunk.
+	// A scan here would count a truncated name.
 	const lastOpen = text.lastIndexOf("<")
 
 	if (lastOpen === -1) {

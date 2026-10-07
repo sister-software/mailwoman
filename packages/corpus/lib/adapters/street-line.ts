@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading a house number and a street out of the columns a publisher supplies.
+ *   This module reads a house number and a street out of the columns a publisher supplies.
  *
  * Publishers divide the same address two ways. Some write one street line that holds the number and
- * the street together, which {@linkcode splitStreetLine} separates for a number-first country and
+ * the street together. {@linkcode splitStreetLine} separates that line for a number-first country and
  * {@linkcode splitTrailingStreetLine} for a number-last one. Others write the number across
- * two columns, which {@linkcode composeHouseNumber} joins. Every adapter facing either shape uses
+ * two columns. {@linkcode composeHouseNumber} joins those. Every adapter facing either shape uses
  * these, so an edge case fixed here is fixed for all of them.
  *
  * Which of the two split functions a country takes is `STREET_ORDERS` in
@@ -73,7 +73,7 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
  *
  * The street and the number are separated by whitespace, a comma, or both,
  * because a publisher in a number-last country may write either: Italy's ANAC release
- * carries `VIA INDIPENDENZA, 41` and `VIA MAZZINI 7` in the same column.
+ * holds `VIA INDIPENDENZA, 41` and `VIA MAZZINI 7` in the same column.
  * The separator is required, so `VIA1` stays one street name.
  *
  * Group 1 starts at `\S` and the lazy `.*?` is bounded by that required separator,
@@ -85,8 +85,8 @@ export const HOUSE_NUMBER_SUFFIX = /^(\S.*?)[\s,]+(\d+[A-Za-z]?(?:\s*[/-]\s*[0-9
 /**
  * Split a number-last street line on {@link HOUSE_NUMBER_SUFFIX}.
  *
- * A number-last country writes the number after the street name, which is what
- * `STREET_ORDERS` records for Italy, Germany, Finland and 150 other jurisdictions.
+ * A number-last country writes the number after the street name.
+ * `STREET_ORDERS` records that order for Italy, Germany, Finland and 150 other jurisdictions.
  * Whitespace inside the line is collapsed, and the separators inside a subdivided
  * number are closed up, so `VIA PERUGIA 2 / A` yields `2/A`.
  *

@@ -10,7 +10,7 @@
  * `fr-en-annuaire-education` on `data.education.gouv.fr`. Its Explore API v2.1 serves the catalog
  * record (license, `modified`, record count) at `/api/explore/v2.1/catalog/datasets/<id>` and a whole
  * or filtered export at `/exports/jsonl?where=<ODSQL>`. The fetcher asks the export for the overseas
- * departments the adapter reads, which is 3,145 records of the dataset's 68,564 on 2026-10-03, and
+ * departments the adapter reads: 3,145 of the dataset's 68,564 records on 2026-10-03. It
  * writes them as JSON Lines.
  *
  * Two checks keep a short transfer from reading as a small directory. The records endpoint is asked
@@ -49,12 +49,12 @@ export const ANNUAIRE_EDUCATION_DATASET_ID = "fr-en-annuaire-education"
 export const ANNUAIRE_EDUCATION_API_URL = `https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/${ANNUAIRE_EDUCATION_DATASET_ID}`
 
 /**
- * The dataset's page, which states the license.
+ * The dataset's page. It states the license.
  */
 export const ANNUAIRE_EDUCATION_PAGE_URL = `https://data.education.gouv.fr/explore/dataset/${ANNUAIRE_EDUCATION_DATASET_ID}/`
 
 /**
- * The file the export is written to, which is the adapter's input.
+ * The file the export is written to. The adapter reads it as input.
  */
 export const ANNUAIRE_EDUCATION_FILENAME = "fr-en-annuaire-education-overseas.jsonl"
 
@@ -105,7 +105,7 @@ export interface AnnuaireExportManifest extends SourceManifest {
 	dataset_license: string | null
 	dataset_license_url: string | null
 	/**
-	 * The record count the filter selected, which the written line count matched.
+	 * The record count the filter selected. The written line count must match it.
 	 */
 	records: number
 }
