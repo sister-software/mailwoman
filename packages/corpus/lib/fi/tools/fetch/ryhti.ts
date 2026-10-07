@@ -14,31 +14,27 @@
  * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace does
  * not declare.
  *
- * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0, which the
- * address-source register elects, and states the attribution as `Lähde: Syke Ryhti`. The manifest
+ * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0 and states the
+ * attribution as `Lähde: Syke Ryhti`. The address-source register elects that license. The manifest
  * records both, and `#fi/adapters/ryhti/adapter` records the license on every row.
  *
  * Four measured properties decide what this module does:
  *
- * 1. **The file is republished daily and its length changes with it.** `HEAD` answered
- *    `content-length: 351290196` and `last-modified: Fri, 2 Oct 2026 05:20:14 GMT` on 2026-10-02,
- *    against `351288399` and `Thu, 1 Oct 2026 05:20:03 GMT` the day before. So the re-run check is
- *    a `HEAD` compared against the manifest, which costs one small request instead of 351 MB, and
- *    neither number is written into this module as a constant.
+ * 1. **The file is republished daily and its length changes with it.** The re-run check is a `HEAD`
+ *    compared against the manifest, so one small request replaces the whole body and no length is a
+ *    constant here.
  * 2. **The host ignores `Range`.** `bytes=0-4095` answers HTTP 200 with no `content-range` and the
  *    whole `content-length`, and `accept-ranges` is absent, so a resumed transfer is not available
  *    and an interrupted one restarts. {@linkcode resumableDownload} would refuse the response.
- * 3. **This module moves bytes and decodes none of them.** The body is streamed to disk compressed, then
- *    decompressed stream to stream, so no chunk boundary is ever interpreted as a character
- *    boundary. A `chunk.toString("utf8")` per gzip chunk produces a U+FFFD at every boundary that
- *    splits a multi-byte character, and 60,014,592 decompressed bytes of this file were scanned for
- *    `EF BF BD` with 0 found: the replacement characters such a reader reports are its own.
+ * 3. **This module moves bytes and decodes none of them.** The body is streamed to disk compressed
+ *    and then decompressed stream to stream, so no chunk boundary is interpreted as a character
+ *    boundary. A `chunk.toString("utf8")` per gzip chunk would write U+FFFD at every split
+ *    multi-byte character.
  * 4. **The decompressed CSV is what the adapter can read.** `#fi/adapters/ryhti/adapter` hands
- *    `opts.inputPath` to `CSVSpliterator.fromAsync`, which reads the bytes as they are on disk, so
- *    a path to the `.gz` would be parsed as CSV over gzip bytes. The `.gz` is therefore removed once the CSV is
- *    written: 793 MB of readable input instead of 351 MB plus a reader the adapter does not have.
+ *    `opts.inputPath` to `CSVSpliterator.fromAsync`, which reads the bytes on disk. A path to the
+ *    `.gz` would be parsed as CSV over gzip bytes, so the `.gz` is removed once the CSV is written.
  *    A caller that wants the compressed copy kept passes
- *    {@linkcode FetchRyhtiOptions.keepCompressed}, which costs 1.14 GB for both.
+ *    {@linkcode FetchRyhtiOptions.keepCompressed}.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -64,7 +60,7 @@ import { assertHeaderColumns, readDelimitedHeader } from "#tools/fetch/header"
 export const FI_RYHTI_CSV_URL = "https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz"
 
 /**
- * The directory the download is written under, which is the adapter's `inputPath`'s parent.
+ * The download directory, the adapter's `inputPath`'s parent.
  */
 const SLUG = RYHTI_ADAPTER_ID
 
@@ -84,7 +80,7 @@ const COMPRESSED_FILENAME = "open_address.csv.gz"
 export const FI_RYHTI_LICENSE = "CC-BY-4.0"
 
 /**
- * The attribution SYKE states for its open data, which the model card must carry.
+ * The attribution SYKE states for its open data. The model card must record it.
  */
 export const FI_RYHTI_ATTRIBUTION = "Lähde: Syke Ryhti"
 
@@ -115,8 +111,8 @@ export const FI_RYHTI_REQUIRED_COLUMNS: readonly string[] = [
 /**
  * What the manifest records about the one file.
  *
- * {@linkcode SourceManifest}'s five fields describe the decompressed CSV,
- * which is what the adapter reads and what the digest covers.
+ * {@linkcode SourceManifest}'s five fields describe the decompressed CSV.
+ * That file is what the adapter reads and what the digest covers.
  * The three added fields describe the transfer, and they are what the re-run
  * check compares before it downloads 351 MB.
  */
@@ -132,7 +128,7 @@ export interface RyhtiManifest extends SourceManifest {
 	 */
 	compressed_bytes: number | null
 	/**
-	 * The columns the header named when this file was downloaded, in order.
+	 * The columns the header held when this file was downloaded, in order.
 	 *
 	 * Recorded rather than counted, so a later edition's added, removed or renamed
 	 * column is a diff against this list rather than a count that moved.
@@ -202,13 +198,13 @@ export interface DownloadRyhtiOptions {
 	 * Keep the compressed copy beside the CSV.
 	 *
 	 * The adapter reads the CSV, so the default removes the archive once the CSV is written.
-	 * Keeping both holds 1.14 GB for the one file.
+	 * Both together hold 1.14 GB for the one file.
 	 */
 	keepCompressed?: boolean
 	/**
 	 * Re-read the CSV's sha256 on a re-run instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size, which is one `stat`.
+	 * The default compares the recorded byte count against the file's size. That check is one `stat`.
 	 * This re-hashes 793 MB.
 	 */
 	verifyDigest?: boolean
@@ -344,8 +340,8 @@ export async function downloadRyhti(
 				const contentType = response.headers.get("content-type") ?? ""
 
 				// The host serves `application/x-gzip`.
-				// An `text/html` body under http 200 is a portal page, which would otherwise
-				// be written to disk and fail later as a corrupt archive.
+				// An `text/html` body under http 200 is a portal page.
+				// A portal page saved to disk would fail later as a corrupt archive.
 				if (contentType.includes("text/html")) {
 					throw new Error(`${FI_RYHTI_CSV_URL} answered ${contentType}, which is a page rather than the file`)
 				}

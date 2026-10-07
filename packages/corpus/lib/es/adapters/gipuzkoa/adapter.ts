@@ -4,21 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  * `es-gipuzkoa`: the INSPIRE Addresses theme the Diputación Foral de Gipuzkoa publishes, read from
- * the one zipped GML that carries the whole province.
+ * the one zipped GML that holds the whole province.
  *
- * The ATOM service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` is 4,469 bytes and
- * holds a single entry for the province rather than one per municipality. That entry links its
- * dataset through `rel="alternate"` and not `rel="enclosure"`, so a fetcher that looks only for an
- * enclosure finds no dataset here. The adapter is handed the archive and the feed is acquisition's
- * concern. The archive `ES.GFA.AD.zip` is 7,959,103 bytes and its one member `ES.GFA.AD.gml` is
- * 313,162,472 bytes, a ratio of 39, so the member is read as a chunk sequence and never buffered.
+ * The ATOM service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` holds a single entry
+ * for the province and links its dataset through `rel="alternate"` rather than `rel="enclosure"`, so
+ * a fetcher that looks only for an enclosure finds no dataset here. The adapter is handed the
+ * archive and the feed is acquisition's concern. The archive holds one 313 MB GML member. The
+ * adapter reads that member as a chunk sequence and never buffers it.
  *
- * The member is self-contained and its order decides the reader. Counted over all 313,162,472 bytes:
- * 68,744 `ad:Address`, 4,250 `ad:ThoroughfareName`, 178 `ad:PostalDescriptor` and 88
- * `ad:AdminUnitName`, which is every one of the 73,260 `gml:featureMember` elements. The 4,516
- * reference features are written last, beginning at byte 306,440,816. Holding an address until the
- * document ends would therefore hold all 68,744, so the adapter reads the member twice through
- * {@linkcode streamIndexedInspireRows} and indexes 4,516 features instead.
+ * The member is self-contained and its order decides the reader. Addresses number 68,744, and the
+ * 4,516 reference features they point at are written last. An address held until the document ends
+ * would keep all 68,744 pending, so the adapter reads the member twice through
+ * {@linkcode streamIndexedInspireRows} and indexes the 4,516 references instead.
  *
  * A reference is a WFS stored-query URL whose `ID` parameter equals the target's `gml:id`, written
  * against the internal host `http://b5mdev/` and with the id repeated as the URL's fragment:
@@ -28,31 +25,26 @@
  *
  * A postal-descriptor reference whose final segment is empty, `…&ID=ES.GFA.PD.059. #…`, states that
  * the publisher holds no postcode, and `referenceStatesNoValue` separates it from a broken join.
- * The Cadastre writes the same form, which is why the predicate has one home.
+ * The Cadastre writes the same form. The predicate therefore has one home.
  *
- * The locator vocabulary is one type. 68,743 of 68,744 addresses write exactly one designator, typed
- * `LocatorDesignatorTypeValue/addressIdentifierGeneral`; one address writes none. The municipality is
- * the only `ad:AdminUnitName` level published, `4thOrder`, and the province publishes 88 of them for
- * its 88 municipalities.
+ * The locator vocabulary is one type,
+ * `LocatorDesignatorTypeValue/addressIdentifierGeneral`. The municipality is the only
+ * `ad:AdminUnitName` level published, `4thOrder`.
  *
  * The publisher writes its street names in Basque, with the street type as a trailing word rather
  * than a leading abbreviation: `Samikolla ibilbidea`. The name is taken as written.
  *
- * `ad:LocatorName` is populated on 46,365 of 68,744 addresses and holds a building name as a Basque
- * and Spanish pair, `Gasolinera` with `Gasolindegia` and `Agirre, baserria` with `Agirre, caserío`.
- * The adapter writes none of them. The address-source register's personal-data review reads `absent`
- * on the ground that these name the building rather than its occupant, and it records that a Basque
- * *baserri* name is commonly also a surname. Keeping them out of the corpus keeps that reading from
- * resting on the stronger claim that the name is safe to publish as address text.
+ * `ad:LocatorName` holds a building name as a Basque and Spanish pair, `Gasolinera` with
+ * `Gasolindegia` and `Agirre, baserria` with `Agirre, caserío`. The adapter writes none of them: the
+ * address-source register's personal-data review reads `absent` because these identify the building
+ * rather than its occupant, and a Basque *baserri* name is commonly also a surname. The review
+ * therefore does not rest on the stronger claim that the name is safe to publish as address text.
  *
- * No publisher-side rendering of a whole address was found for this source. `ad:alternativeIdentifier`
- * is populated on all 68,744 addresses and holds a serial number such as `36798` rather than an
- * address. What the file does state twice is the join: the address `gml:id`
- * `ES.GFA.AD.056_1110_003` concatenates the municipality code `056`, the thoroughfare code `1110`
- * and the number `003`, and the references it carries are `AU_ADMINISTRATIVEUNIT_34162020056`,
- * `ES.GFA.TN.056.1110` and `ES.GFA.PD.056.20830`. The adapter's test checks the composed street and
- * number against that identifier, which is a check that the right features were joined rather than a
- * check of the address the publisher would print.
+ * The address `gml:id` `ES.GFA.AD.056_1110_003` concatenates the municipality code `056`, the
+ * thoroughfare code `1110` and the number `003`, and holds references
+ * `AU_ADMINISTRATIVEUNIT_34162020056`, `ES.GFA.TN.056.1110` and `ES.GFA.PD.056.20830`. The
+ * adapter's test checks the composed street and number against that identifier. That check confirms
+ * the right features were joined. It does not check the address the publisher would print.
  */
 
 import type { MarkupElement } from "@mailwoman/core/html/elements"
@@ -88,7 +80,7 @@ export const ES_GIPUZKOA_ADAPTER_ID = "es-gipuzkoa"
 /**
  * The jurisdiction this adapter emits.
  *
- * Coverage is the province of Gipuzkoa, which the feed states as the dataset's whole extent.
+ * Coverage is the province of Gipuzkoa. The feed states that as the dataset's whole extent.
  */
 export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
 
@@ -97,14 +89,14 @@ export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
  *
  * Gipuzkoa states four things, and the register elects the one addressing this dataset:
  * the `otherConstraints` of its ISO 19139 dataset record, `CC BY-SA 4.0`.
- * Its feed states attribution alone and its website states CC BY 4.0, and the register
+ * Its feed states attribution only and its website states CC BY 4.0, and the register
  * records why the stricter reading is the one to err towards: the share-alike filter reads
  * this label, so recording CC BY 4.0 would hide an obligation the publisher may hold.
  *
  * The value is the SPDX identifier the register elected rather than the license's title,
  * because `licenseVerdict` resolves an identifier and reads a title as unrecognized.
  * Under `LicensePolicy.ShareAlikeFree` the title returns `{refusal: null, mentionsShareAlike: false}`
- * and `CC-BY-SA-4.0` returns `{refusal: "share-alike-carried"}`, so the title admits
+ * and `CC-BY-SA-4.0` returns a share-alike refusal, so the title admits
  * these rows to a corpus assembled to hold no share-alike source.
  */
 export const ES_GIPUZKOA_LICENSE = "CC-BY-SA-4.0"
@@ -181,7 +173,7 @@ export function createESGipuzkoaAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or undefined when it carries too little to render.
+ * One address's row, or undefined when it holds too little to render.
  *
  * The reference index is complete before this is called, so a reference resolving to no
  * feature is a value the reader asked for and could not read, and it raises.
