@@ -8,17 +8,17 @@
  *
  *   This answers the planet-scale question the coverage register cannot: which countries contribute
  *   training, validation and test rows to the decoder being trained, and through which source and written
- *   surface. `censusCoverage` in `mailwoman/coverage` reads the train split alone and reports rows and
+ *   surface. `censusCoverage` in `mailwoman/coverage` reads only the train split and reports rows and
  *   street rows per country, so it cannot separate a source from a surface or a component from a row.
  *
  *   Three outputs stay separate because they count different things. A row-level count answers how many
- *   rows a stratum holds. A component-level count answers how many spans carry a tag, and those overlap
+ *   rows a stratum holds. A component-level count answers how many spans hold a tag, and those overlap
  *   within a row, so the two never sum to each other. A file-level record answers which inputs the pass
  *   actually read.
  *
  *   The recorded `surface` is reported exactly as the corpus stores it. Three adapters declared
  *   `attested` while rendering the line until `d397d140a`, so a row in a corpus built before that commit
- *   carries a label its adapter would no longer write. This tool preserves the stored value and leaves
+ *   holds a surface label its adapter would no longer write. This tool preserves the stored value and leaves
  *   that interpretation to its reader, because rewriting an immutable corpus version's label inside a
  *   census would make the census disagree with the artifact it describes.
  *
@@ -148,7 +148,7 @@ interface Census {
 	rowStrata: RowStratum[]
 	componentStrata: ComponentStratum[]
 	/**
-	 * Absent when no `--config` was named, which is a census without an admission reading
+	 * Absent when no `--config` was given. That is a census without an admission reading
 	 * rather than a census reporting no deficit.
 	 */
 	deficits?: Deficits

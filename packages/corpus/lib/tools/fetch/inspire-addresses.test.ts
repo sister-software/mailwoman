@@ -172,7 +172,7 @@ describe("paging", () => {
 
 	it("reports an uncounted total as unstated rather than as zero", async () => {
 		// WFS 2.0 permits the server to decline a count.
-		// Reading that as 0 would turn a refusal to count into a measurement of none.
+		// A reader that takes that as 0 would turn a refusal to count into a measurement of none.
 		const page = await readFeaturePage(
 			stubFetchingBodies(stringifyJSON({ numberMatched: "unknown", numberReturned: 0, features: [] })),
 			{
@@ -192,7 +192,7 @@ describe("paging", () => {
 	it("refuses a WFS 2.0 exception report as a report rather than as unparseable JSON", async () => {
 		// This body used to reach `JSON.parse` and surface as "not JSON", because the
 		// detector knew only the OGC 1.x `ServiceExceptionReport` spelling.
-		// A service's refusal is now named as one.
+		// The reader now recognizes the WFS 2.0 `ows:ExceptionReport` spelling as a refusal.
 		await expect(
 			readFeaturePage(stubFetchingBodies("<ows:ExceptionReport/>"), {
 				wfsURL: "https://example.invalid/wfs",
@@ -300,8 +300,8 @@ describe("component references", () => {
 	})
 
 	it("reads a flattened component slot, and reads a bare void reason as no reference", () => {
-		// Reading only the `component` array reported 0 references for every Estonian
-		// address, where each carries four.
+		// A reader of only the `component` array reported 0 references for every Estonian
+		// address, where each holds four.
 		const references = componentReferences(estonianAddress)
 
 		expect(references).toHaveLength(2)
@@ -318,8 +318,8 @@ describe("component references", () => {
 	})
 
 	it("decides joinability against the features a service published rather than against a URL's shape", () => {
-		// Deciding from the shape reported 15 of Flanders' 20 references as another register's,
-		// when each addresses a feature of the same service.
+		// A decision from the URL shape reported 15 of Flanders' 20 references as another
+		// register's. Each addresses a feature of the same service.
 		const resolution = resolveComponents([flemishAddress], flemishComponents)
 
 		expect(resolution.joined).toBe(1)

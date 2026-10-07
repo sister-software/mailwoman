@@ -60,9 +60,9 @@ interface LieuDitTuple {
 	locality: string
 	dependentLocality: string
 	/**
-	 * The row's INSEE commune code, which decides its jurisdiction.
+	 * The row's INSEE commune code. This code decides the row's jurisdiction.
 	 *
-	 * BAN's overseas department files carry the same columns as the metropolitan ones,
+	 * BAN's overseas department files hold the same columns as the metropolitan ones,
 	 * so a recipe that reads the fetched BAN directory receives Guadeloupe, Martinique,
 	 * French Guiana, Réunion and Mayotte rows beside the metropolitan ones.
 	 */
@@ -238,9 +238,9 @@ export const frLieuditRecipe: CorpusRecipe = {
 			// `countryFraction <= 0` (the default) never draws from `random`,
 			// so the byte-stream is unaffected when the flag is unset.
 			//
-			// Codex states surface forms for `FR` alone among the jurisdictions BAN covers, so an overseas
+			// Among the jurisdictions BAN covers, codex states surface forms only for `FR`, so an overseas
 			// row draws from `random` and then leaves `raw` and `components.country` as they were.
-			// The draw happens either way, which keeps the byte-stream a function of `countryFraction`
+			// The draw happens either way. This keeps the byte-stream a function of `countryFraction`
 			// rather than of the mixture of jurisdictions in the input files.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms: readonly string[] | undefined =
@@ -270,7 +270,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components,
 				country,
 				// Every jurisdiction BAN publishes writes its addresses in French,
-				// so the language is constant and the region carries the jurisdiction.
+				// so the language is constant and the region holds the jurisdiction.
 				locale: `fr-${country}`,
 				source,
 				source_id: sourceID,

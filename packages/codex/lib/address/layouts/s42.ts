@@ -34,7 +34,7 @@ export interface S42LayoutRecord {
 	/**
 	 * SAFD `SAMPLE SIZE`.
 	 *
-	 * Note: Zimbabwe says 0 even though examples are printed.
+	 * Note: Zimbabwe records 0 even though examples are printed.
 	 */
 	sampleSize: number
 	/**
@@ -136,13 +136,13 @@ export const S42_LAYOUT_RECORDS: Readonly<Record<string, S42LayoutRecord>> = {
 /**
  * SAFD layouts kept for comparison rather than for rendering.
  *
- * `layoutForCountry` reads {@linkcode S42_ADDRESS_LAYOUTS} alone.
+ * `layoutForCountry` reads only {@linkcode S42_ADDRESS_LAYOUTS}.
  * This table sets the approved crosswalk against libaddressinput and the board.
  *
  * That comparison turns the `upu-s42` observation from `unread` into a stance.
  *
- * It holds the eight countries below plus the United Kingdom, whose template was retrieved
- * and whose printed order the board already states.
+ * It holds the eight countries below plus the United Kingdom. Its template was retrieved.
+ * The board already states its printed order.
  */
 export const S42_READ_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// SAFD lines: PO-BOX, SUB-BLDG-NAME, BLDG-NAME, BLDG-NO-THORO, DEP-LOC,
@@ -230,7 +230,7 @@ ${postcode} ${locality}
 ${country}`,
 
 	// Zimbabwe registers no postcode element.
-	// `STREET-ADDRESS` carries district level 2, `DISTRICT-1-LINE` level 1.
+	// `STREET-ADDRESS` holds district level 2, `DISTRICT-1-LINE` level 1.
 	ZW: addr`${attention}
 ${venue}
 ${numberFirstStreet}

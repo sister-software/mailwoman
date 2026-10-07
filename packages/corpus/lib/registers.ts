@@ -61,7 +61,7 @@ export const SourceRegister = {
 	 */
 	CuzkInspireAddresses: "cz-cuzk-inspire-addresses",
 	/**
-	 * Suomen ympäristökeskus' Ryhti built-environment system, whose building address data
+	 * Suomen ympäristökeskus' Ryhti built-environment system. Its building address data
 	 * covers Åland's sixteen municipalities beside the Finnish mainland in one national file.
 	 *
 	 * The prefix is the publisher's own country, as `fr-ban`'s is.
@@ -136,7 +136,7 @@ export const SourceRegister = {
 	 * The INSPIRE Addresses theme of the Diputación Foral de Bizkaia.
 	 *
 	 * Coverage is the province of Bizkaia, as 112 municipality archives.
-	 * The archives carry addresses alone, and the features they reference are served
+	 * The archives hold addresses only, and the features they reference are served
 	 * by the publisher's WFS rather than by the ATOM feed.
 	 */
 	BizkaiaInspireAddresses: "es-bizkaia-inspire-ad",
@@ -150,7 +150,7 @@ export const SourceRegister = {
 	 * The INSPIRE Addresses theme of the Gobierno de Navarra.
 	 *
 	 * The province is split across 272 zipped GML partitions, each titled `Address Navarra`
-	 * rather than named for a municipality.
+	 * The title states no municipality.
 	 */
 	NavarraInspireAddresses: "es-navarra-inspire-ad",
 	/**
@@ -166,7 +166,7 @@ export const SourceRegister = {
 	 * of Public Contracts, reached through the Open Contracting Partnership's Data Registry.
 	 *
 	 * Every address in the release belongs to a contracting authority or a paying office,
-	 * because the `supplier` role carries no address object.
+	 * because the `supplier` role holds no address object.
 	 */
 	ANACContracts: "it-anac-ocds-contracts",
 	/**
