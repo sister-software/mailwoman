@@ -9,15 +9,15 @@
  * The ATOM service at
  * `https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml`
  * is 671,131 bytes and splits the province across 272 entries. Every entry is titled `Address
- * Navarra`, so a partition cannot be selected by place from the feed alone. The three measured each
- * turned out to hold one municipality, partition 1 Abáigar, partition 100 Eulate and partition 250
- * Bera, but the feed states no such mapping and this adapter claims none. It reads one archive or a
- * directory of them, which is how a caller harvests all 272.
+ * Navarra`, and the feed states no place for a partition. The three measured each held one
+ * municipality: partition 1 Abáigar, partition 100 Eulate and partition 250 Bera. The feed states
+ * no such mapping and this adapter claims none. It reads one archive or a directory of them. A
+ * caller harvests all 272 by pointing it at the directory.
  *
  * This publisher is read entirely from its references' titles, and that is what separates it from
  * every other INSPIRE reader here. Its own file publishes no `AD:ThoroughfareName`,
  * `AD:PostalDescriptor` or `AD:AdminUnitName` feature at all: partition 1 holds 29 distinct element
- * names across 115 addresses and none of them is a component feature. Each address instead carries
+ * names across 115 addresses and none of them is a component feature. Each address instead holds
  * six `AD:component` references whose `xlink:title` states the value:
  *
  * | `xlink:href` | `xlink:title` | read as |
@@ -30,7 +30,7 @@
  * | `PostalDescriptor` | `31280` | the postcode |
  *
  * The counts are exact and regular: 690 references over 115 addresses in partition 1, 1,728 over 288
- * in partition 100 and 6,324 over 1,054 in partition 250, which is six per address in each, one of
+ * in partition 100 and 6,324 over 1,054 in partition 250. Each address holds six references, one of
  * each shape above.
  *
  * The two place titles are not the same value. In Abáigar and Eulate the `5thOrder` title repeats the
@@ -39,7 +39,7 @@
  * dependent locality where it differs from the municipality and left out where it repeats it.
  *
  * `Comunidad Foral de Navarra` is the autonomous community's own name rather than the province name a
- * Spanish address writes, and the publisher's own address layer carries no region column, so no
+ * Spanish address writes, and the publisher's own address layer has no region column, so no
  * `region` is written.
  *
  * The publisher's own rendering is in a different service, and it agrees. `IDENA` publishes
@@ -47,12 +47,12 @@
  * `VIA` and `PORTAL`. Partition 1's `AD.Address.1` composes `CALLE CALLEJA, 4, 31280 Abáigar`, and
  * that layer's `DIRECC_Txt_Direcciones.1` reads `MUNICIPIO` `Abáigar`, `ENTIDAD` `Abáigar`,
  * `CODPOSTAL` `31280`, `VIA` `CALLE CALLEJA`, `PORTAL` `4`. The adapter's integration test checks a
- * sample of rows against that layer, which is this source's publisher-side oracle.
+ * sample of rows against that layer, the publisher-side oracle for this source.
  *
  * Two values state an absence rather than a value. A `PostalDescriptor` title of `0` is the publisher
- * holding no postcode, measured in Bera, and a designator of `S/N` is *sin número*, which
- * `#es/cadastre` reads for all four Spanish cadastres. A designator may also carry a space-separated
- * letter, `18 A` and `34 A` in Eulate, which is kept as the publisher wrote it.
+ * holding no postcode, measured in Bera. A designator of `S/N` is *sin número*, and `#es/cadastre`
+ * reads it for all four Spanish cadastres. A designator may also hold a space-separated letter,
+ * `18 A` and `34 A` in Eulate. The adapter keeps that letter as the publisher wrote it.
  */
 
 import { type MarkupElement, streamMarkupElements } from "@mailwoman/core/html/elements"
@@ -93,10 +93,10 @@ export const ES_NAVARRA_COUNTRIES: readonly string[] = ["ES"]
  * Creative Commons Attribution 4.0 International (CC BY 4.0)`, and all 272 of its entries repeat it.
  * The version is stated, so the register records `CC-BY-4.0` as the SPDX identifier.
  *
- * The row carries that identifier rather than the license's title.
- * `licenseVerdict` resolves an identifier and reads a title as unrecognized,
- * and a row whose license resolves to no expression has unknown obligations
- * rather than none, which the build reports separately from a refusal.
+ * The row states that identifier rather than the license's title.
+ * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
+ * A row whose license resolves to no expression has unknown obligations
+ * rather than none. The build reports that separately from a refusal.
  */
 export const ES_NAVARRA_LICENSE = "CC-BY-4.0"
 
@@ -146,7 +146,7 @@ const SETTLEMENT_LEVEL = "5thOrder"
 /**
  * The postcode title that states that the publisher holds none.
  *
- * Measured in Bera, which writes `0` beside its `31780`.
+ * Bera writes `0` beside its `31780`.
  */
 const NO_POSTCODE_TITLE = "0"
 
@@ -234,7 +234,7 @@ export function createESNavarraAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or undefined when it carries too little to render.
+ * One address's row, or undefined when it holds too little to render.
  */
 function composeRow(address: MarkupElement): CanonicalRow | undefined {
 	const addressID = address.attributes["gml:id"]?.trim()
@@ -245,8 +245,8 @@ function composeRow(address: MarkupElement): CanonicalRow | undefined {
 
 	const { street, postcode, locality, settlement } = navarraReferencedTitles(address)
 
-	// Navarra's settlement is a fifth-order title, a *concejo* within the municipality, which
-	// `cadastralRow` writes as a dependent locality only where it differs from the municipality.
+	// Navarra's settlement is a fifth-order title, a *concejo* within the municipality.
+	// `cadastralRow` writes it as a dependent locality only where it differs from the municipality.
 	return cadastralRow(
 		{
 			street,

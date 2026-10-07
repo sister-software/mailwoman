@@ -9,10 +9,10 @@
  * a page. It does not fit a feature collection: one INSPIRE Addresses download inflates to roughly 32
  * GB of GML, and the caller wants each `ad:Address` subtree rather than the document.
  *
- * This module yields one named element at a time, with its attributes and its nested children, and
- * holds only the elements a single chunk completed. A caller reads an attribute, which
- * `./document.ts` cannot do except on the root, and walks a nested path, which `elementTexts`
- * flattens.
+ * This module yields one matching element at a time, with its attributes and its nested children, and
+ * holds only the elements a single chunk completed. A caller reads an attribute. `./document.ts`
+ * cannot do that except on the root. A caller also walks a nested path. `elementTexts` flattens
+ * that path.
  *
  * It decodes bytes with a streaming `TextDecoder`, so a multi-byte character split across two chunks
  * survives.
@@ -48,7 +48,7 @@ export interface MarkupElement {
 	/**
 	 * The text directly inside this element, trimmed, with no text from its children.
 	 *
-	 * Keeping a child's text out means a caller reading a leaf gets that leaf's value
+	 * A child's text stays out, so a caller reading a leaf gets that leaf's value
 	 * rather than a concatenation of everything beneath its parent.
 	 */
 	readonly text: string
@@ -66,7 +66,7 @@ interface MutableElement {
  */
 export interface StreamMarkupOptions {
 	/**
-	 * Parse as XML, which preserves tag case and requires every element to close.
+	 * Parse as XML. It preserves tag case and requires every element to close.
 	 *
 	 * GML and every other INSPIRE payload needs this.
 	 * It defaults to false, matching `./document.ts`.
@@ -83,7 +83,7 @@ export interface StreamMarkupOptions {
 }
 
 /**
- * The elements named `name`, each complete, in document order.
+ * The elements matching `name`, each complete, in document order.
  *
  * A nested element of the same name is not yielded separately: capture starts at the
  * outermost occurrence and ends when that one closes, so one `ad:Address` arrives
@@ -223,7 +223,7 @@ export async function* streamMarkupElements(
 	 *
 	 * A caller that buffers a whole document and yields it once would otherwise
 	 * ask for a string past V8's maximum length.
-	 * The decoder's state carries across the pieces, so a multi-byte character spanning
+	 * The decoder's state persists across the pieces, so a multi-byte character spanning
 	 * a slice boundary survives, as it does across chunks.
 	 */
 	const decodePieces = (chunk: Uint8Array): string[] => {
@@ -262,14 +262,14 @@ export async function* streamMarkupElements(
 }
 
 /**
- * The first child of `element` named `name`, or undefined.
+ * The first child of `element` with the tag `name`, or undefined.
  */
 export function childElement(element: MarkupElement, name: string): MarkupElement | undefined {
 	return element.children.find((child) => child.name === name)
 }
 
 /**
- * Every child of `element` named `name`, in document order.
+ * Every child of `element` with the tag `name`, in document order.
  */
 export function childElements(element: MarkupElement, name: string): readonly MarkupElement[] {
 	return element.children.filter((child) => child.name === name)
@@ -296,7 +296,7 @@ export function elementAtPath(element: MarkupElement, ...path: readonly string[]
 /**
  * The text at `path`, or undefined when any step of the path is absent.
  *
- * An empty element answers an empty string, which a caller distinguishes from undefined:
+ * An empty element answers an empty string. A caller distinguishes that from undefined:
  * the publisher wrote the element and left it blank, rather than omitting it.
  */
 export function textAtPath(element: MarkupElement, ...path: readonly string[]): string | undefined {

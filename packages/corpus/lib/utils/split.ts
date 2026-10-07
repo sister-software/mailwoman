@@ -109,10 +109,10 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			// Cornwall matches the admin rows for the same place `TR` covers.
 			regions: ["Cornwall"],
 		},
-		// The eight countries below enter training through OpenStreetMap rows, most of which carry no
-		// region and many no postcode, so each holdout matches its place three ways: the region an admin
-		// row carries, the postcode prefix, and the city as the OSM rows spell it. The spellings are the
-		// ones the 2026-10-02 extracts write.
+		// The eight countries below enter training through OpenStreetMap rows. Most hold no
+		// region and many no postcode, so each holdout matches its place three ways: the region an
+		// admin row holds, the postcode prefix, and the city as the OSM rows spell it. The spellings
+		// are the ones the 2026-10-02 extracts write.
 		CN: {
 			// Gansu by its province and capital, and Qinghai `81` and Tibet `85` by postcode.
 			regions: ["甘肃省", "甘肃", "Gansu"],
@@ -120,20 +120,20 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			localities: ["兰州市", "兰州", "Lanzhou"],
 		},
 		IN: {
-			// Kerala, whose PIN codes run 67 to 69.
+			// Kerala. Its PIN codes run 67 to 69.
 			regions: ["Kerala"],
 			postcodePrefixes: ["67", "68", "69"],
 			localities: ["Kochi", "Kollam", "Thiruvananthapuram", "Kozhikode"],
 		},
 		ID: {
-			// Bali, whose postcodes begin `80`.
+			// Bali. Its postcodes begin `80`.
 			regions: ["Bali"],
 			postcodePrefixes: ["80"],
 			localities: ["Denpasar", "Bali"],
 		},
 		NG: {
 			// Enugu State.
-			// OSM Nigeria rows carry almost no postcode or region, so the cities carry it.
+			// OSM Nigeria rows hold almost no postcode or region, so the city names supply the holdout.
 			regions: ["Enugu"],
 			localities: ["Enugu", "Nsukka"],
 		},
@@ -144,7 +144,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			localities: ["Islamabad", "islamabad", "اسلام آباد"],
 		},
 		BD: {
-			// Chattogram, Khulna and Sylhet, whose postcodes begin 4, 9 and 3 respectively.
+			// Chattogram, Khulna and Sylhet. Their postcodes begin 4, 9 and 3 respectively.
 			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
 			localities: ["Chittagong", "Chattogram", "Khulna", "Sylhet"],
 		},
@@ -153,7 +153,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			localities: ["Cần Thơ", "Thành phố Cần Thơ", "Huế", "Thành phố Huế"],
 		},
 		RU: {
-			// Primorsky Krai, whose postcodes run 690 to 692.
+			// Primorsky Krai. Its postcodes run 690 to 692.
 			regions: ["Приморский край"],
 			postcodePrefixes: ["690", "691", "692"],
 			localities: ["Владивосток", "Уссурийск", "Находка"],
@@ -169,13 +169,13 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		PM: { localities: ["Miquelon-Langlade"] },
 		YT: { localities: ["Dzaoudzi", "Pamandzi"] },
 		// Tumaraa holds 1,522 of PF's 6,755 rows with a street, more than a tenth,
-		// because Pirae's 958 rows carry no street name and Papeete holds the remaining 5,233.
+		// because Pirae's 958 rows have no street name and Papeete has the remaining 5,233.
 		PF: { localities: ["Tumaraa"] },
 		NC: { localities: ["Koné", "Pouembout", "Kaala-Gomen"] },
 		LV: {
-			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni
-			// municipalities, whose postcodes begin LV-56, LV-57, LV-45 and LV-53,
-			// and the state city Rēzekne, which lies in no municipality.
+			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni municipalities.
+			// Their postcodes begin LV-56, LV-57, LV-45 and LV-53.
+			// The state city Rēzekne lies in no municipality.
 			// The address register writes `nov.`; other sources spell the municipality out.
 			regions: [
 				"Krāslavas nov.",
