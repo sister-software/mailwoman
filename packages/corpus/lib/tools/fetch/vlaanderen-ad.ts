@@ -14,7 +14,7 @@
  *    adapter joins locally rather than resolving four references per address against 4,563,062 of
  *    them.
  * 2. `sortBy=gml:identifier` answers HTTP 504, so the service grants no ordering. The manifest
- *    records the pages taken and their order, which is what makes a harvest reproducible even though
+ *    records the pages taken and their order. That record makes a harvest reproducible even though
  *    a second harvest need not match the first.
  * 3. A bare `resultType=hits` answers `numberMatched="10000"` whatever `count` asks for. The count
  *    has to be taken past index 0: `startIndex=1` answers `numberMatched="4563062"`, and the
@@ -22,7 +22,7 @@
  *    returns none.
  *
  * Article 3 of the elected `Modellicentie voor gratis hergebruik Vlaanderen` grants reproduction and
- * transmission, which is what paging performs, and article 6 states that access is free. The
+ * transmission, and article 6 states that access is free. Those two grants cover paging. The
  * capabilities document's `ows:Fees` and `ows:AccessConstraints` describe the service rather than
  * the data, so neither is read here.
  */
@@ -48,7 +48,7 @@ export const VLAANDEREN_AD_WFS = "https://geo.api.vlaanderen.be/ad/wfs"
  * The `outputFormat` the harvest is written in.
  *
  * GML is the format whose `ad:component/@xlink:href` the adapter reads.
- * `application/json` carries the same references under `@href` and serves the same lost characters,
+ * `application/json` holds the same references under `@href` and serves the same lost characters,
  * so the choice is a matter of which reader the adapter uses rather than of what the service knows.
  */
 const OUTPUT_FORMAT = "application/gml+xml; version=3.2"
@@ -68,7 +68,7 @@ export const MAX_PAGE_SIZE = 10_000
  * Measured 2026-10-02, `ad:ThoroughfareName` holds 167,218 features against a 10,000 page cap,
  * so it needs 17 pages, while the other two hold 1,190 and 609 and fit in one.
  *
- * Writing the small ones as a single file would leave the harvester correct only
+ * A single file for the small ones would leave the harvester correct only
  * until one of them passed the cap.
  */
 const COMPONENT_STEMS = {
@@ -103,8 +103,8 @@ export interface FeaturePageBody {
 /**
  * Issues one `GetFeature` against the service.
  *
- * `#tools/fetch/wfs-harvest` owns the request, the exception check and the counts,
- * which every markup-serving WFS in this directory shares.
+ * `#tools/fetch/wfs-harvest` owns the request, the exception check and the counts.
+ * Every markup-serving WFS in this directory shares them.
  * This states the service and its context.
  *
  * @throws When the service answers an OGC exception report, so a 400 carrying
@@ -162,7 +162,7 @@ export interface HarvestVlaanderenOptions {
 	 * Features per component page, capped at {@link MAX_PAGE_SIZE} and defaulting to it.
 	 *
 	 * Only a test lowers this.
-	 * A component type is always taken whole, so a smaller page buys requests alone.
+	 * A component type is always taken whole, so a smaller page yields only more requests.
 	 */
 	componentPageSize?: number
 	signal?: AbortSignal
@@ -173,14 +173,14 @@ export interface HarvestVlaanderenOptions {
  *
  * The component types are taken first and whole, so a harvest that stops early
  * holds address pages whose references all resolve.
- * Taking addresses first would leave every page unjoinable.
+ * Addresses first would leave every page unjoinable.
  *
  * @returns The manifest as written.
  */
 /**
  * How much of a page is read to find its root attributes.
  *
- * `numberReturned` sits on the `wfs:FeatureCollection` element, which opens the document.
+ * `numberReturned` sits on the `wfs:FeatureCollection` element that opens the document.
  * A page of this service is about 20 MB, and reading all of one to find an attribute in
  * its first kilobyte would cost 1.6 GB of reads across a whole-region harvest.
  */
@@ -204,8 +204,8 @@ interface PageOnDisk {
  *
  * The feature count is read from each file's own `numberReturned` rather than assumed
  * from the page size, so a page the service answered short is recorded as short.
- * A file whose opening bytes state no `numberReturned` is left out, which makes the
- * harvest request that index again: a page of unknown extent is not a page this
+ * A file whose opening bytes state no `numberReturned` is left out. The harvest
+ * then requests that index again: a page of unknown extent is not a page this
  * harvest can count, and a run killed mid-write leaves exactly that.
  *
  * A group small enough for one page is written under `<stem>.gml` with no index,

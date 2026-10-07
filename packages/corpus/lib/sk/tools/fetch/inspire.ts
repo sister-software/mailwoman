@@ -12,15 +12,15 @@
  * this WFS as the theme's only distributions and states one condition of use, `Neuplatňujú sa žiadne
  * podmienky (CC0 Voľné dielo)`, which the address-source register elected. There is no INSPIRE ATOM
  * download service for this theme: the feeds under `inspirews.skgeodesy.sk` belong to the
- * Geodetický a kartografický ústav, which is a different publisher and a different record.
+ * Geodetický a kartografický ústav. That is a different publisher and a different record.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.
  * What is particular to Slovakia is that an address is assembled from five feature types rather
- * than read from one, which is what shapes the layout this writes.
+ * than read from one. That shapes the layout this writes.
  *
  * ## Five types, five documents, one directory
  *
- * `ad:Address` carries a locator and references its street, its settlement part, its administrative
+ * `ad:Address` has a locator and references its street, its settlement part, its administrative
  * units and its postcode through `ad:component`. The adapter resolves those references locally
  * against an index it builds in a first pass over every document in `inputPath`, so every type has
  * to be on disk before the first address is composed. Measured 2026-10-03, `resultType=hits` past
@@ -51,7 +51,7 @@
  *
  * `CountDefault` is 5000 and no type reports 5000 features, so `statedFeatureCount` accepts each
  * type's `numberMatched` as a count rather than refusing it as a page cap. The register records one
- * response in nine that carried no `numberMatched` attribute at all;
+ * response in nine with no `numberMatched` attribute at all.
  * `readCheckedWFSFeatureCount` reads such a response as no usable count, and the harvest then ends
  * on the first page that returns no features instead of recording a wrong total.
  */
@@ -80,16 +80,16 @@ import {
 export const SK_INSPIRE_WFS = "https://rageo.minv.sk/geoserver/ad/wfs"
 
 /**
- * The output format the harvest asks for, which is the GML the adapter's markup reader takes.
+ * The output format the harvest asks for. It is the GML the adapter's markup reader takes.
  */
 export const SK_INSPIRE_OUTPUT_FORMAT = "application/gml+xml; version=3.2"
 
 /**
  * The property the pages are ordered by.
  *
- * Every AD feature type carries `ad:inspireId`, so one sort serves all five.
+ * Every AD feature type has `ad:inspireId`, so one sort serves all five.
  * Without a sort, a resumed harvest would rest on the service returning the same
- * features in the same order as the earlier run, which no WFS guarantees.
+ * features in the same order as the earlier run. No WFS guarantees that.
  */
 export const SK_INSPIRE_SORT_BY = "ad:inspireId"
 
@@ -193,7 +193,7 @@ export async function readSKInspireCapabilities(client: Pick<APIClient, "fetch">
 /**
  * The count the service states for one type, with how it was obtained.
  *
- * `statedFeatureCount` carries no count forward where the reported number equals
+ * `statedFeatureCount` withholds a count where the reported number equals
  * the advertised page cap, because such a number describes the largest page the
  * service will serve rather than what the type holds.
  * This service's cap is 5000 and no type reports 5000.
@@ -271,8 +271,8 @@ export async function harvestSKInspireType(
 			sortBy: SK_INSPIRE_SORT_BY,
 		},
 		license: SK_INSPIRE_DEFAULT_LICENSE,
-		// The elected statement names no attribution clause.
-		// Crediting the Ministerstvo vnútra SR stays good practice.
+		// The elected statement has no attribution clause.
+		// Attribution to the Ministerstvo vnútra SR stays good practice.
 		attribution: "",
 		featureCount,
 		pageSize,

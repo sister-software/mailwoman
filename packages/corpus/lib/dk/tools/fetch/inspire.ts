@@ -20,11 +20,11 @@
  *
  * Five properties of this host were measured, and each one breaks a reader that assumes otherwise:
  *
- * 1. `content-length` on the feed is the gzip-compressed length. The header says 1,455 while 3,130
+ * 1. `content-length` on the feed is the gzip-compressed length. The header reports 1,455 while 3,130
  *    bytes are delivered, so a reader that trusts it truncates the feed. Every byte count here is
  *    counted off the delivered body.
  * 2. The entry's `rel="alternate"` href is a Wing FTP weblink landing page, HTTP 200 `text/html`,
- *    3,811 bytes. The file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended, which answers
+ *    3,811 bytes. The file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended. That query answers
  *    HTTP 200 `application/zip`.
  * 3. The host ignores `Range`. `bytes=0-4095` answers HTTP 200 with no `content-range` and the whole
  *    101 MB body, so the one-byte range GET that sizes an OpenAddresses source cannot be used here.
@@ -70,7 +70,7 @@ export const DK_ADDRESSES_GEOPACKAGE_MEMBER = "ad_inspire.gpkg"
 /**
  * The query parameter that turns the entry's weblink landing page into the file itself.
  *
- * Wing FTP serves a listing page for a weblink and the file only when the member is named.
+ * Wing FTP serves the file only when the request asks for the member.
  */
 const REAL_FILENAME_PARAMETER = "realfilename"
 
@@ -91,7 +91,7 @@ export interface AddressesFeedEntry {
 	 */
 	title: string
 	/**
-	 * The download URL, with the member named so the host serves the file rather than its landing page.
+	 * The download URL, with the member in the query so the host serves the file.
 	 */
 	downloadURL: string
 	/**
@@ -106,7 +106,7 @@ export interface AddressesFeedEntry {
  * Parsed with `@mailwoman/core/html/elements` rather than matched with a pattern.
  *
  * The feed needs both of the things a pattern handles badly.
- * Its entry tag carries an `xml:lang` attribute, so a reader has to keep attributes.
+ * Its entry tag has an `xml:lang` attribute, so a reader has to keep attributes.
  *
  * Its hrefs escape the ampersand between query parameters, so a reader has to decode entities.
  *
@@ -115,7 +115,7 @@ export interface AddressesFeedEntry {
  *
  * @param xml The whole feed, 3,130 bytes, taken as one string rather than as a stream.
  * @throws When the feed holds no entry, or its entry no usable link.
- * A feed holding neither reads as a change at the publisher, which a caller has to see.
+ * A feed holding neither reads as a change at the publisher. A caller has to see that.
  */
 export async function readAddressesFeed(xml: string, feedURL: string): Promise<AddressesFeedEntry> {
 	async function* oneChunk(): AsyncIterable<string> {
@@ -136,8 +136,8 @@ export async function readAddressesFeed(xml: string, feedURL: string): Promise<A
 	const title = childElement(entry, "title")?.text ?? ""
 
 	// The alternate link is the dataset.
-	// The same entry carries a `describedby` link to the ISO 19139 record,
-	// and either would download as a dataset without this check.
+	// The same entry also has a `describedby` link to the ISO 19139 record.
+	// Either would download as a dataset without this check.
 	const alternate = childElements(entry, "link").find(
 		(link: MarkupElement) => (link.attributes.rel ?? "").toLowerCase() === "alternate"
 	)
@@ -244,7 +244,7 @@ export async function fetchDKAddresses(
 	// MARK: Download the dataset
 	//
 	// Streamed rather than buffered, and the byte count comes from the body rather than
-	// from the entry's `length` attribute, which understates the file by 23 times.
+	// from the entry's `length` attribute. That attribute understates the file by 23 times.
 
 	const datasetResponse = await fetch(entry.downloadURL, { redirect: "follow" })
 
@@ -256,8 +256,8 @@ export async function fetchDKAddresses(
 
 	const contentType = datasetResponse.headers.get("content-type") ?? ""
 
-	// The bare weblink href answers HTTP 200 `text/html` with a landing page,
-	// which would otherwise be written to disk and fail later as a corrupt zip.
+	// The bare weblink href answers HTTP 200 `text/html` with a landing page.
+	// A write to disk would fail later as a corrupt zip.
 	if (contentType.includes("text/html")) {
 		report?.(`  ✗ The dataset URL answered ${contentType}, which is the weblink's landing page rather than the file`)
 

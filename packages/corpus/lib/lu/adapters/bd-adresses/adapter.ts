@@ -19,11 +19,11 @@
  * `CC0-1.0` for `lu-property-building-1` on that statement, so the adapter records that license on
  * every row.
  *
- * Luxembourg writes the house number before the street, which `STREET_ORDERS` records as
+ * Luxembourg writes the house number before the street. `STREET_ORDERS` records that order as
  * `number-first`, and `COMMA_JOINED_STREET_COUNTRIES` does not list it. `formatAddressRow` therefore
  * renders `20 Kaesfurterstrooss, L-9755 Hupperdange`.
  *
- * ## The file carries one street name, in no single language
+ * ## The file holds one street name, in no single language
  *
  * Luxembourg is trilingual, and the CSV declares one street column.
  * There is no `rue_fr`, `rue_de` or `rue_lb` to choose between, so the adapter emits `rue` as the
@@ -38,7 +38,7 @@
  * No column marks a row's language, so `locale` reads `und-LU`.
  * `und` is BCP-47's undetermined language subtag, and the repository already stores it in
  * `#recipes/bare/country` and `#tools/postcode-triples`.
- * Labeling every row `fr-LU` or `lb-LU` would assert a language for a name the publisher did not
+ * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher did not
  * tag.
  *
  * ## The number comes from `numero`, and never from the street line
@@ -46,10 +46,10 @@
  * `rue` and `numero` are separate columns and the publisher never composes them, so neither
  * `splitStreetLine` nor `composeHouseNumber` applies here: there is no line to split and no second
  * column to join.
- * Splitting the street would also be wrong in both directions.
+ * A street split would also be wrong in both directions.
  * 175 `rue` values end in a digit, among them `Route Nationale 1`, `Rue du 9 août 2019` and
  * `Cité des Sacrifiés 1940-1945`.
- * `numero` already carries its own suffix as one token: 162,273 rows hold bare digits, 17,087 a
+ * `numero` already holds its own suffix as one token: 162,273 rows hold bare digits, 17,087 a
  * trailing letter such as `12A`, 239 a hyphenated range such as `22-26`, eight the word `BIS` or
  * `bis`, and 15 are empty.
  *
@@ -59,15 +59,15 @@
  * The file publishes no preformatted address line, so a rendered single line has no publisher-side
  * counterpart to be asserted against.
  *
- * ## Reading the file needs a quote-aware parser
+ * ## The file needs a quote-aware parser
  *
  * 22 rows RFC 4180-quote `rue` and double its interior quotes:
  * `"Cité ""Pënscherbierg""";3;Wilwerwiltz;…`.
- * Those rows carry no semicolon inside the quotes, so a naive split on `;` still yields 13 fields
+ * Those rows hold no semicolon inside the quotes, so a naive split on `;` still yields 13 fields
  * and passes a field-count check while handing the street to the corpus as
  * `"Cité ""Pënscherbierg"""`.
  * `CSVSpliterator` unescapes it to `Cité "Pënscherbierg"`.
- * The same edition carries 0 fields with an embedded newline and 0 carriage returns in the whole
+ * The same edition holds 0 fields with an embedded newline and 0 carriage returns in the whole
  * file.
  *
  * The file opens with a UTF-8 byte-order mark, the three bytes `EF BB BF`, which the reader strips.
@@ -102,7 +102,7 @@ export const BD_ADRESSES_DEFAULT_LICENSE = "CC0-1.0"
  * Every jurisdiction this adapter emits, checked against a caller's `--country`.
  *
  * BD-Adresses is one national file and Luxembourg has no dependency, so this is a single entry
- * where `ban`, `matrikkelen` and `ryhti` each carry more than one.
+ * where `ban`, `matrikkelen` and `ryhti` each hold more than one.
  */
 export const BD_ADRESSES_COUNTRIES: readonly string[] = ["LU"]
 
@@ -185,7 +185,7 @@ export function createBDAdressesAdapter(): CorpusAdapter {
 
 					// 15 of the 179,622 rows publish an empty `numero`, among them `Al Géidgen`
 					// in Goedange and `Jaanshaff` in Walferdange.
-					// Those are named places, so they keep their street and postcode
+					// These describe a place, so they keep their street and postcode
 					// rather than being assigned a number.
 					if (house) {
 						components.house_number = house
