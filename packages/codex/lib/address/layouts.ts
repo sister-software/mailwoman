@@ -339,7 +339,7 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 	}
 
 	// A SAFD entry is last because it exists only where libaddressinput states `fmt: null`.
-	// Reading it ahead of a generated skeleton would replace a stated order with a second reading of one.
+	// A SAFD entry read ahead of a generated skeleton would replace a stated order with a second reading.
 	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code] ?? null
 }
 
@@ -354,15 +354,14 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
  * and a board entry states what real addresses do.
  *
  * A jurisdiction in UPU's S42 template inventory contributes an `upu-s42` observation
- * whose stance is `unread`, because an approved crosswalk of its address semantics exists
- * and nobody here has retrieved it.
- * A jurisdiction outside that inventory contributes none, which states that no
- * crosswalk exists rather than that one went unread.
+ * whose stance is `unread`: an approved crosswalk of its address semantics exists,
+ * and this repository has not retrieved it. A jurisdiction outside that inventory
+ * contributes none. That states that no crosswalk exists, rather than that one went unread.
  *
  * `national-postal-authority` and `upu-pas` contribute no observation for any jurisdiction yet.
  *
- * An absent observation reads as unexamined rather than as agreement, which is what
- * {@linkcode ObservationStance.Silent} exists to separate.
+ * An absent observation reads as unexamined rather than as agreement.
+ * {@linkcode ObservationStance.Silent} exists to separate the two.
  */
 export function conventionClaimForCountry(
 	claim: ConventionClaimID,
@@ -389,7 +388,7 @@ export function conventionClaimForCountry(
 	// so its `fmt` answers a line-order claim.
 	// Its `lfmt` is a second statement by the same source about the Latin order.
 	// A hand-authored country appears in no rendering table, so its `fmt` comes from the
-	// skeleton table, which exists for this comparison rather than for printing.
+	// skeleton table. That table exists for this comparison rather than for printing.
 	for (const [layout, readFrom] of [
 		[local ?? generated ?? HAND_AUTHORED_FORMAT_SKELETONS[code], READ_FROM.generated],
 		[latin, READ_FROM.latin],
@@ -464,7 +463,7 @@ export function conventionClaimForCountry(
 
 	// A country in UPU's template inventory has an approved crosswalk of its address semantics.
 	// A retrieved template states an order and therefore answers the claim.
-	// `Unread` on the rest says a document exists to go and read.
+	// `Unread` on the rest records that a document exists to go and read.
 	// That separates these 72 from the jurisdictions with no crosswalk to read at all.
 	const cohort = s42CohortForJurisdiction(code)
 

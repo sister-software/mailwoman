@@ -48,8 +48,8 @@ export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 /**
  * The attribution OSM requires in redistributed data and derived works.
  *
- * A database built from OSM embeds it, and a model card carries it when OSM-derived
- * rows reached the checkpoint, which the effective training manifest records.
+ * A database built from OSM embeds it. A model card holds it when OSM-derived rows
+ * reach the checkpoint. The effective training manifest records those rows.
  */
 export const OSM_ATTRIBUTION =
 	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
@@ -142,10 +142,10 @@ function parseLine(line: string): OSMCorpusRow | null {
  * A row with no `addr:street` at all is admitted as a streetless premise when its house
  * number is designator-shaped and a tag that maps to `locality` or `dependent_locality`
  * (`addr:city`, `addr:place`, `addr:suburb`, `addr:subdistrict`, `addr:district`)
- * carries the identity the street would have carried.
+ * holds the identity the street would have held.
  *
- * That is OSM's documented scheme for addresses numbered within a named place
- * rather than along a street, and it is the `streetless-premise-identity` shape.
+ * That is OSM's documented scheme for addresses numbered within a place rather than
+ * along a street, and it is the `streetless-premise-identity` shape.
  * A row whose `addr:street` holds a line rather than a name stays refused:
  * the mapper supplied a street, and the value is a line.
  *
@@ -224,8 +224,8 @@ export function componentsForOSMRow(
 		components.region = province
 	}
 
-	// A streetless premise is a house number within a named place, so it needs a locality
-	// or a dependent locality, from any of the tags that map to them.
+	// A streetless premise is a house number within a place that has a name, so it needs a
+	// locality or a dependent locality, from any of the tags that map to them.
 	if (!street && !components.locality && !components.dependent_locality) {
 		countDropped(tally, "row:streetless-no-locality")
 
