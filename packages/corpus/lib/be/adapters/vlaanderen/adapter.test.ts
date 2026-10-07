@@ -14,8 +14,8 @@
  *
  *   The four `adres_9000000x` members are hand-authored from a real member's bytes, changing only
  *   the `gml:id`, the `gml:identifier` and the component references, so each defect the service
- *   carries is exercised against one address: a lost character, a void designator, a reference the
- *   harvest cannot answer, and a street name carrying a homonym discriminator. Each member sits on
+ *   has is exercised against one address: a lost character, a void designator, a reference the
+ *   harvest cannot answer, and a street name holding a homonym discriminator. Each member sits on
  *   its own line, where the service writes one member per line. Element and attribute bytes are
  *   unchanged.
  */
@@ -52,7 +52,7 @@ describe("vlaanderen adapter against the fixture harvest", () => {
 	it("emits a row per readable address under the elected Modellicentie", async () => {
 		const manifest = await run()
 
-		// Nine addresses: one carries a lost character in its street, one states a void
+		// Nine addresses: one has a lost character in its street, one states a void
 		// house number, and one references a street the harvest cannot answer.
 		expect(manifest.yielded).toBe(6)
 
@@ -196,7 +196,7 @@ describe("vlaanderen adapter against the fixture harvest", () => {
 
 		controller.abort()
 
-		// Asked of the adapter rather than of the runner, which refuses an aborted write of its own.
+		// Asked of the adapter rather than of the runner. The runner refuses an aborted write of its own.
 		const rows = await Array.fromAsync(
 			createVlaanderenAdapter().rows({ inputPath: fixtureHarvest, signal: controller.signal })
 		)

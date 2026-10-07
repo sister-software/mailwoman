@@ -10,7 +10,7 @@ Each ``--arm`` names a label, the arm's config, the trainer's ``exposure-realize
 ``grade_exposure`` report. The expected draws are read off the config: the source's weight share of
 ``max_steps × batch_size``, the arithmetic the d0 config's header states. Realized draws are the
 trainer's count of the country's rows in consumed batches, so they include rows of the country from
-every source. The expected column counts the named source alone. Both are reported, side by side.
+every source. The expected column counts only that source. Both are reported, side by side.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from ..config import load_config
 
 
 def expected_draws(cfg: Any, source: str) -> float:
-    """The named source's expected draws over the run, from its weight share.
+    """The source's expected draws over the run, from its weight share.
 
     A source weighted through ``source_reps`` has a weight only after ``resolve_config_reps`` has read
     the corpus, so a caller grading such a config resolves it first. The v4.15.0 arms weight every

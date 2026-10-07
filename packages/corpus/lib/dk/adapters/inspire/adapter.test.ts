@@ -86,7 +86,7 @@ describe("dk-inspire adapter against the fixture GeoPackage", () => {
 
 		const rows = await readCanonicalRows(scratch.path, DK_INSPIRE_ADAPTER_ID)
 
-		// `locator_designator_1_designator` carries the letter, `thoroughfarename.name_name`
+		// `locator_designator_1_designator` holds the letter, `thoroughfarename.name_name`
 		// the street, and `postaldescriptor` both the postcode and the postal town.
 		expect(rows[0]!.components).toEqual({
 			house_number: "2A",
@@ -126,7 +126,7 @@ describe("dk-inspire adapter against the fixture GeoPackage", () => {
 		const rows = await readCanonicalRows(scratch.path, DK_INSPIRE_ADAPTER_ID)
 		const byRaw = new Map(rows.map((r) => [r.raw, r]))
 
-		// A floor alone, a floor with a door, and a door with no floor.
+		// A floor only, a floor with a door, and a door with no floor.
 		expect(byRaw.get("Viborgvej 149 st, 8210 Aarhus V")?.components.unit).toBe("st")
 		expect(byRaw.get("Knivholtvej 9 st tv, 2720 Vanløse")?.components.unit).toBe("st tv")
 		expect(byRaw.get("Klosterhaven 1 6, 8620 Kjellerup")?.components.unit).toBe("6")
@@ -173,7 +173,7 @@ describe("dk-inspire adapter against the fixture GeoPackage", () => {
 				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
-			// The message carries the address's own id and the column that could not be read,
+			// The message holds the address's own id and the column that could not be read,
 			// so the failure identifies the row rather than the run.
 		).rejects.toThrow(/address 0a3f5084-5ced-32b8-e044-0003ba298018 carries component_thoroughfarename=/)
 	})

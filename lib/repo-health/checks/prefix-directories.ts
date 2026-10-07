@@ -38,7 +38,7 @@ const PREFIXED = /^(?<prefix>[a-z0-9]+)-.+$/u
 const SOURCE_FILE = /\.tsx?$/u
 const TEST_FILE = /\.(?:test|spec)\.tsx?$/u
 
-// The root package exposes these as separate named modules through its imports and exports maps.
+// The root package exposes these as separate modules through its imports and exports maps.
 const ROOT_MODULE_DIRECTORIES = ["lib/release-kit", "lib/release-mcp"] as const
 
 interface PrefixMember {
@@ -52,7 +52,8 @@ interface PrefixMember {
 	 */
 	path: string
 	/**
-	 * For a directory, the sibling module named for it (`x.ts` beside `x/`), which moves with the directory.
+	 * For a directory, the sibling module that takes its name (`x.ts` beside `x/`). It moves with the
+	 * directory.
 	 */
 	companion?: string
 }
@@ -126,7 +127,7 @@ function memberStem(member: PrefixMember): string {
 }
 
 /**
- * Folds each module named for a sibling directory into that directory's member.
+ * Folds each module that takes a sibling directory's name into that directory's member.
  *
  * `x.ts` beside `x/` is the directory's own module rather than a second sibling,
  * so the pair counts once toward a prefix group and moves as one.

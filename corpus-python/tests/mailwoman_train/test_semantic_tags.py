@@ -1,4 +1,4 @@
-"""The shared semantic tag registry: one global id per concept, whatever family's head carries it."""
+"""The shared semantic tag registry: one global id per concept, whichever family's head holds it."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def test_registry_covers_the_js_component_union() -> None:
     js_tags = set(re.findall(r'"([a-z_]+)"', block))
     assert js_tags <= set(SEMANTIC_TAGS)
     # The STAGE4 secondary-address tags are defined in Python and absent from the JS union. They stay
-    # inactive until a stage4 family ships, which must extend the JS union in the same commit.
+    # inactive until a stage4 family ships. That commit must extend the JS union.
     assert set(SEMANTIC_TAGS) - js_tags == set(STAGE4_FINE_TAGS)
 
 
@@ -87,7 +87,7 @@ def test_the_long_form_number_projects_to_one_house_number_span() -> None:
         "I-house_number",
         "I-house_number",
     ]
-    # Two adjacent spans of a tag the head carries stay two spans.
+    # Two adjacent spans of a tag the head holds stay two spans.
     assert ledger.project_sequence(["B-street", "B-street"]) == ["B-street", "B-street"]
 
 

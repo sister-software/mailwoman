@@ -7,8 +7,8 @@
  *   features they reference, extracted from the publisher's own file.
  *
  *   Every byte is the Brussels Regional Informatics Center's own. It was taken on 2026-10-02 from
- *   `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip`, 11,521,182 bytes,
- *   whose member `UrbAdm_Adresses.gml` is 474,245,978 bytes. The fixture is that member with its own
+ *   `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip`, 11,521,182 bytes. Its
+ *   member `UrbAdm_Adresses.gml` is 474,245,978 bytes. The fixture is that member with its own
  *   XML declaration, root element and `gml:boundedBy` kept, holding 21 of its 231,947
  *   `gml:featureMember` elements verbatim. Every byte stands as the publisher wrote it: `diff`
  *   against the extraction reports no difference.
@@ -73,9 +73,9 @@ describe("brussels adapter against the fixture member", () => {
 
 		expect(rows).toHaveLength(9)
 
-		// The register elects CC-BY-4.0 for Paradigm, and the row carries the SPDX identifier
+		// The register elects CC-BY-4.0 for Paradigm, and the row records the SPDX identifier
 		// so that `licenseVerdict` resolves it.
-		// A license title resolves to no expression, which a build reads as unknown
+		// A license title resolves to no expression. A build reads that as unknown
 		// obligations rather than as none.
 		expect(BRUSSELS_DEFAULT_LICENSE).toBe("CC-BY-4.0")
 		expect(licenseVerdict(BRUSSELS_DEFAULT_LICENSE, LicensePolicy.ShareAlikeFree, []).resolved).toBe(true)
