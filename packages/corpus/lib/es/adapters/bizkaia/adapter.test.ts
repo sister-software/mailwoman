@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fixture is both halves of this publisher's join, which is what makes it worth having.
+ *   The fixture holds both halves of this publisher's join. That is what makes it worth having.
  *
  * `fixtures/es-bizkaia/ES.BFA.AD.001.gml` holds five `ad:Address` features copied out of the member
  * of `ES.BFA.AD.001.zip`, Abadiño's archive, and `components.gml` holds the seven features they
@@ -16,14 +16,14 @@
  * text: the archive's member uses CRLF line endings and the fixture uses LF. The component file is
  * byte-for-byte as the service served it.
  *
- * The five addresses are one of each shape the designator's number field takes, which this
- * publisher's adapter header tabulates: `003`, `008A`, `001BIS`, `033005` and `019A02`. Their
+ * The five addresses are one of each shape the designator's number field takes: `003`, `008A`,
+ * `001BIS`, `033005` and `019A02`. The publisher's adapter header tabulates those shapes. Their
  * `ad:LocatorName` values are the publisher's own cross-rendering, and
  * `reconstructs the publisher's own LocatorName from the joined street and the designator` puts the
  * composed street and number back against them.
  *
- * Counts quoted against the whole publication come from reading `ES.BFA.AD.001.zip`, 108,458 bytes,
- * whose member is 5,916,116 bytes holding 1,360 addresses, and from the WFS: 6,921
+ * Counts quoted against the whole publication come from reading `ES.BFA.AD.001.zip`, 108,458 bytes.
+ * Its member holds 5,916,116 bytes and 1,360 addresses. The WFS holds 6,921
  * `ad:ThoroughfareName`, 96 `ad:PostalDescriptor` and 113 `ad:AdminUnitName` features, all 113 of
  * the last at `3rdOrder`.
  */
@@ -123,8 +123,7 @@ describe("es-bizkaia adapter against the fixture archive and WFS pages", () => {
 
 			// The archive states `48 001 BO\MURUETA(00026) 003` inside the address,
 			// while the street itself comes from a separate WFS document.
-			// Rebuilding that string from the joined feature and the designator's fields
-			// therefore checks the join rather than copying it.
+			// The check rebuilds that string from the joined feature and the designator's fields.
 			const joined = [...thoroughfares.keys()].find((key) => key.endsWith(`\u0000${Number(fields[2])}`))
 			const [street, code] = (joined ?? "").split("\u0000")
 
@@ -142,7 +141,7 @@ describe("es-bizkaia adapter against the fixture archive and WFS pages", () => {
 		const { rows } = await rowsFrom(fixtureDir)
 
 		// The five shapes the field takes, in the order the fixture writes them.
-		// The last two carry a second field whose meaning the publisher states nowhere, so the row
+		// The last two hold a second field whose meaning the publisher states nowhere, so the row
 		// transcribes the publisher's own concatenation rather than splitting it on a guessed separator.
 		expect(rows.map((row) => row.components.house_number)).toEqual(["3", "8A", "1BIS", "33005", "19A02"])
 
@@ -177,7 +176,7 @@ describe("es-bizkaia adapter against the fixture archive and WFS pages", () => {
 		const { rows } = await rowsFrom(fixtureDir)
 
 		// Czechia, Slovakia and Gipuzkoa write the municipality at `4thOrder`.
-		// A reader keyed on that level finds no municipality here, and every row would carry no locality.
+		// A reader keyed on that level finds no municipality here, and every row would hold no locality.
 		expect(text).toContain("AdministrativeHierarchyLevel/3rdOrder")
 		expect(text).not.toContain("AdministrativeHierarchyLevel/4thOrder")
 		expect(rows.every((row) => row.components.locality === "ABADIÑO")).toBe(true)
@@ -197,7 +196,7 @@ describe("es-bizkaia adapter against the fixture archive and WFS pages", () => {
 
 		await copyFileTo(addresses, scratch.path("partial", "ES.BFA.AD.001.gml"))
 
-		// The postal descriptor alone.
+		// Only the postal descriptor remains.
 		// Every address's thoroughfare reference then resolves to no feature while the index holds one.
 		const text = await readLocalTextFile(components)
 

@@ -14,8 +14,8 @@
  *   That procedure is why a template is worth more to this repository than an international formatting
  *   recommendation would be. For a jurisdiction in {@linkcode S42_TEMPLATE_JURISDICTIONS} there exists a
  *   crosswalk of that country's own address semantics which the country approved, whether or not anybody in that
- *   country posts mail by it. A jurisdiction absent from the list has no such crosswalk, which is a different
- *   statement from having one nobody here has read.
+ *   country posts mail by it. A jurisdiction absent from the list has no such crosswalk. That differs from
+ *   a crosswalk this repository has not yet read.
  */
 
 /**
@@ -27,7 +27,7 @@
  * That page holds a 72-option selector of alpha-3 codes, and each option maps onto
  * one of these 72 alpha-2 codes, each of these 72 onto one option.
  *
- * Reading UPU's list required one repair first.
+ * UPU's list required one repair first.
  * The selector answers `ROU` for Romania, and codex's alpha-3 table had filed Romania under `ROM`,
  * the code ISO replaced in 2002, so Romania was the single entry that would not resolve.
  */
@@ -124,20 +124,20 @@ export const S42_COHORT_2006: readonly string[] = ["AU", "BR", "CL", "FI", "FR",
  * Canada, Chile, Finland, France, Germany, Great Britain, Italy, Morocco, Netherlands,
  * New Zealand, Portugal, Saudi Arabia, South Africa, the United States and Venezuela."
  *
- * That wording says the countries joined a certification programme rather than that they
- * use the standard operationally, which is a weaker claim than the earlier note recorded.
+ * That wording records the countries joining a certification programme. That claim is weaker
+ * than the one the earlier note recorded.
  */
 export const S42_COHORT_2010_ADDITIONS: readonly string[] = ["CA", "DE", "IT", "PT", "SA", "ZA"]
 
 /**
  * When a jurisdiction entered the S42 template group.
  *
- * The cohort says how long the crosswalk has been in place rather than how widely the country uses it.
+ * The cohort records how long the crosswalk has been in place.
  * An early cohort member is one whose template has had longer to be revised against real mail.
  */
 export const S42Cohort = {
 	/**
-	 * Named in UPU's 2006 description of countries using the standard.
+	 * Appears in UPU's 2006 description of countries using the standard.
 	 */
 	Original2006: "2006",
 	/**
@@ -164,8 +164,7 @@ const COHORT_2010 = new Set(S42_COHORT_2010_ADDITIONS)
  * when the inventory covers no template for it.
  *
  * `null` states that no approved crosswalk exists for that country.
- * It does not state that the country lacks an addressing system, which is what
- * its own postal authority publishes.
+ * It does not state that the country lacks an addressing system.
  */
 export function s42CohortForJurisdiction(iso2: string | null | undefined): S42Cohort | null {
 	if (!iso2) return null

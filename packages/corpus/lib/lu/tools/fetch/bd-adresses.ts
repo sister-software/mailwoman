@@ -11,13 +11,13 @@
  * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace does
  * not declare.
  *
- * `data.public.lu` states `cc-zero` for this dataset, which the address-source register elects as
- * `CC0-1.0` under `lu-property-building-1`. CC0 asks for no attribution, and crediting the ACT
+ * `data.public.lu` states `cc-zero` for this dataset. The address-source register elects
+ * `CC0-1.0` for it under `lu-property-building-1`. CC0 asks for no attribution, and crediting the ACT
  * remains good practice, so the manifest records the publisher beside the license.
  *
  * Four measured properties decide what this module does:
  *
- * 1. **The download URL carries the edition's own timestamp.** The dataset is republished weekly
+ * 1. **The download URL holds the edition's own timestamp.** The dataset is republished weekly
  *    and the CSV resource's `url` reads
  *    `https://download.data.public.lu/resources/adresses-georeferencees-bd-adresses/20260928-023119/addresses.csv`,
  *    where the path segment is the publication time. A hardcoded URL therefore pins one edition and
@@ -26,14 +26,14 @@
  *    `https://data.public.lu/fr/datasets/r/<resource id>`, answers http 302 to the same dated path,
  *    and the dated path is the one downloaded, so the bytes and the checksum recorded beside them
  *    belong to one edition.
- * 2. **The publisher states an md5 for the file.** The resource carries
+ * 2. **The publisher states an md5 for the file.** The resource records
  *    `checksum: {type: "md5", value: "…"}` and a `filesize`, measured as
  *    `c2df2f3c18b846144bb5d5dc57fc14ca` and 28,186,970 on the 2026-09-28 edition. The transfer is
  *    checked against both, so a truncated body is a reported failure rather than a short CSV that
  *    parses. A publisher that one day states a digest of another type is reported rather than
  *    skipped silently.
- * 3. **The file opens with a UTF-8 byte-order mark**, `EF BB BF`. The portal's `filesize` counts it,
- *    which is why a reader that discards the mark reports three bytes fewer than the portal does.
+ * 3. **The file opens with a UTF-8 byte-order mark**, `EF BB BF`. The portal's `filesize` counts it.
+ *    A reader that discards the mark therefore reports three bytes fewer than the portal does.
  *    The module writes the body to disk unaltered and checks the digest over the bytes as delivered.
  * 4. **The re-run check is the stated checksum against the manifest.** The dataset API answer is
  *    roughly 15 KB, so comparing it costs one small request instead of 28 MB.
@@ -65,7 +65,7 @@ import { assertHeaderColumns, readDelimitedHeader } from "#tools/fetch/header"
 export const LU_BD_ADRESSES_DATASET_URL = "https://data.public.lu/api/1/datasets/adresses-georeferencees-bd-adresses/"
 
 /**
- * The directory the download is written under, which is the adapter's `inputPath`'s parent.
+ * The directory the download is written under, the adapter's `inputPath`'s parent.
  */
 const SLUG = BD_ADRESSES_ADAPTER_ID
 
@@ -91,7 +91,7 @@ export const LU_BD_ADRESSES_DELIMITER = ";"
  */
 export interface BDAdressesResource {
 	/**
-	 * The dated download URL, which names one edition.
+	 * The dated download URL. It identifies one edition.
 	 */
 	url: string
 	/**
@@ -116,7 +116,7 @@ export interface BDAdressesManifest extends SourceManifest {
 	attribution: string
 	dataset_url: string
 	/**
-	 * The md5 the dataset record stated, which the downloaded bytes were checked against.
+	 * The md5 the dataset record stated. The downloaded bytes were checked against it.
 	 */
 	publisher_md5: string | null
 	/**
@@ -143,7 +143,7 @@ interface DatasetRecord {
 /**
  * The CSV resource of a dataset record.
  *
- * @throws When the record carries no `csv` resource with a URL, because the publisher
+ * @throws When the record holds no `csv` resource with a URL, because the publisher
  * having moved the file is a reported failure rather than an empty transfer.
  */
 export function readBDAdressesResource(record: DatasetRecord): BDAdressesResource {
