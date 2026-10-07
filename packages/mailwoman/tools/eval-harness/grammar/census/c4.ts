@@ -13,14 +13,9 @@
 
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { FSTAcceptedMatch } from "@mailwoman/neural/fst-prior"
-import type { QueryShape } from "@mailwoman/query-shape"
+import type { CharRange, QueryShape } from "@mailwoman/query-shape"
 
 import type { CensusSpan } from "#tools/eval-harness/grammar/census"
-
-export interface CensusPiece {
-	start: number
-	end: number
-}
 
 export interface PhraseBoundaryReceipt {
 	kind: PhraseProposal["kindHypothesis"]
@@ -108,7 +103,7 @@ function tokenClassAt(shape: QueryShape, character: number) {
  */
 export function observeC4Boundaries(
 	spans: ReadonlyArray<CensusSpan>,
-	pieces: ReadonlyArray<CensusPiece>,
+	pieces: ReadonlyArray<CharRange>,
 	phraseProposals: ReadonlyArray<PhraseProposal>,
 	shape: QueryShape,
 	registryMatches?: ReadonlyArray<FSTAcceptedMatch>,

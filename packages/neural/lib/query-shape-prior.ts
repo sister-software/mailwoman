@@ -12,6 +12,7 @@
  *   its owner rather than restated, because a restated convention drops the formats added after it.
  */
 
+import type { CharRange } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
@@ -45,10 +46,7 @@ export interface KnownFormatHitLike {
 /**
  * Minimal subset of `TokenizedPiece` this module consumes.
  */
-export interface TokenLike {
-	start: number
-	end: number
-}
+export type TokenLike = CharRange
 
 /**
  * The BIO label a non-postcode `KnownFormat` biases.

@@ -199,6 +199,14 @@ export interface CreateOGCFeaturesBBoxReaderOptions {
 }
 
 /**
+ * One feature as an OGC API Features service publishes it, reduced to the fields a comparison reads.
+ */
+export interface OGCFeature<Properties = Record<string, unknown>> {
+	properties?: Properties
+	geometry?: { type: string; coordinates: unknown }
+}
+
+/**
  * A reader answering an OGC API Features bbox query around a point.
  *
  * The service answers a bbox rather than a point, so this returns what it published nearby

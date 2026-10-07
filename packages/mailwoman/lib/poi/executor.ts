@@ -6,6 +6,7 @@
 
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { WOFAncestor } from "@mailwoman/core/resolver"
 import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
 
 /**
@@ -14,15 +15,6 @@ import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlit
  */
 export interface POIExecutorLookup {
 	search(query: POISearchQuery): POISearchHit[]
-}
-
-/**
- * One place in a POI result's `ancestry`, which lists places deepest first.
- */
-export interface POIAncestryEntry {
-	placetype: string
-	name: string
-	wofID: number
 }
 
 /**
@@ -52,7 +44,7 @@ export interface POIExecutorOpts {
 	 * The lookup must be synchronous.
 	 * Results get no `ancestry` key when it is missing or returns no entries.
 	 */
-	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | null
+	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<WOFAncestor> | null
 }
 
 /**

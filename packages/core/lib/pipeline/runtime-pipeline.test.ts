@@ -1,3 +1,4 @@
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -11,7 +12,6 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
 import type {
 	AddressClassifier,
 	LocaleHint,
-	NormalizedInputLite,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,

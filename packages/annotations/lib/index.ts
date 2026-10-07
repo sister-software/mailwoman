@@ -15,12 +15,17 @@ export interface DMS {
 }
 
 /**
- * Web Mercator (epsg:3857) coordinate.
+ * A point on a plane, as an `x` and `y` pair whose units the naming type states.
  */
-export interface Mercator {
+export interface PlanarPoint {
 	x: number
 	y: number
 }
+
+/**
+ * Web Mercator (epsg:3857) coordinate, in meters.
+ */
+export type Mercator = PlanarPoint
 
 /**
  * ISO 4217 currency.

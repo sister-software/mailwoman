@@ -7,6 +7,7 @@
  */
 
 import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
+import type { PlanarPoint } from "@mailwoman/annotations"
 
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 
@@ -26,6 +27,24 @@ export interface GeoCoordinate {
 export interface LatLon {
 	lat: number
 	lon: number
+}
+
+/**
+ * A place's display name and its point in decimal degrees under the `lat` and `lon` keys.
+ */
+export interface NamedLatLon {
+	name: string
+	lat: number
+	lon: number
+}
+
+/**
+ * A geocoder's answer under the `lat` and `lon` keys.
+ * Both are `null` when the geocoder returned no point.
+ */
+export interface NullableLatLon {
+	lat: number | null
+	lon: number | null
 }
 
 /**
@@ -143,24 +162,10 @@ export type Coordinates3D = [
 ]
 
 /**
- * A record of internal coordinates, typically used by the US Census.
+ * A record of internal coordinates, typically used by the US Census: `x` is the
+ * longitude in [-180, 180] and `y` the latitude in [-90, 90].
  */
-export interface InternalPointCoordinates {
-	/**
-	 * Internal Longitude (X) Coordinates
-	 *
-	 * @minimum -180
-	 * @maximum 180
-	 */
-	x: number
-	/**
-	 * Internal Latitude (Y) Coordinates
-	 *
-	 * @minimum -90
-	 * @maximum 90
-	 */
-	y: number
-}
+export type InternalPointCoordinates = PlanarPoint
 
 /**
  * Type-predicate to determine if the given input is a GeoJSON Point geometry.

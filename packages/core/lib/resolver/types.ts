@@ -23,11 +23,14 @@ export type {
 	AddressPointLookup,
 	InterpolatedPointHit,
 	InterpolationLookup,
+	POIDistanceHit,
+	PostcodePlace,
 	PostcodePrefixAncestor,
 	PostcodePrefixIndexLike,
 	PostcodePrefixNode,
 	StreetCentroidHit,
 	StreetCentroidLookup,
+	WOFAncestor,
 } from "#resolver/lookup-types"
 
 export interface ResolvedPlace {

@@ -1,3 +1,4 @@
+import type { PostcodePlace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -5,7 +6,6 @@ import {
 	extractPostcodeAnchors,
 	gbOutwardCode,
 	normalizePostcode,
-	type PostcodePlace,
 	type PostcodeResolver,
 } from "#postcode"
 

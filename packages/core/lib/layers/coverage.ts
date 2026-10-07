@@ -145,6 +145,33 @@ export interface ResolutionMeasurementOptions {
 }
 
 /**
+ * What a resolution instrument reports for a single-layer source: the features it streamed,
+ * the count the source declares for itself, and one measurement per candidate resolution.
+ *
+ * A streamed total that differs from the declared count means a truncated read.
+ */
+export interface ResolutionMeasurementReport<Measurement> {
+	features: number
+	declaredFeatureCount: number
+	measurements: Measurement[]
+}
+
+/**
+ * A verification sample point outside the authority's published coverage.
+ *
+ * `passed` is true when the artifact answered `unknown` with no designation,
+ * the only acceptable reading there.
+ */
+export interface OutsideCoverageRow {
+	label: string
+	latitude: number
+	longitude: number
+	kind: string
+	designations: number
+	passed: boolean
+}
+
+/**
  * The area a build streamed, beside the area the source reports for itself.
  */
 export interface AreaAgreement {

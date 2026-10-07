@@ -14,6 +14,7 @@
  */
 
 import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
+import type { NamedLatLon } from "@mailwoman/spatial"
 
 /**
  * GB unit postcode shape in stripped form (`SW1A2AA`).
@@ -76,15 +77,6 @@ export function browserGranularityFor(country: string): GBGranularity | null {
 	return POSTCODE_BINARY_SOURCES.find((source) => source.country === country.toUpperCase())?.browserGranularity ?? null
 }
 
-/**
- * Raw postcode row from the source database.
- */
-export interface PostcodeDatabaseRow {
-	name: string
-	lat: number
-	lon: number
-}
-
 export interface BuildPostcodeBinaryOptions {
 	/**
 	 * GB key granularity.
@@ -145,7 +137,7 @@ function isPlaced(lat: number, lon: number): boolean {
  */
 export function buildPostcodeBinaryEntries(
 	country: string,
-	rows: readonly PostcodeDatabaseRow[],
+	rows: readonly NamedLatLon[],
 	options: BuildPostcodeBinaryOptions = {}
 ): BuildPostcodeBinaryResult {
 	const cc = country.toUpperCase()

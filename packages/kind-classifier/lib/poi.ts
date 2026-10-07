@@ -9,7 +9,7 @@
  * Spec §3.1.
  */
 
-import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
 /**
  * Comma-segment ceiling for a POI-led query.
  *
@@ -78,14 +78,10 @@ export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray
 
 export type POISpatialRelation = "comma" | "near" | "in" | "at" | "around" | "to"
 
-export interface POIQuerySpan {
-	text: string
-	/**
-	 * Half-open character offsets into the normalized input.
-	 */
-	start: number
-	end: number
-}
+/**
+ * A span of the normalized input, with half-open character offsets.
+ */
+export type POIQuerySpan = TextSpan
 
 /**
  * Which lexicon this hit came from.

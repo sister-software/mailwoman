@@ -109,6 +109,16 @@ export interface Interpretation {
 }
 
 /**
+ * One parsed component in reading order: a `ComponentTag` and the text it covers.
+ *
+ * HTTP surfaces put a list of these beside the full {@link AddressTree}.
+ */
+export interface ParseComponent {
+	tag: string
+	value: string
+}
+
+/**
  * A decoded address with its top-level components in source order.
  */
 export interface AddressTree {

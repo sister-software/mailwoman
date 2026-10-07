@@ -8,13 +8,13 @@
  *   a marker the classifier did not raise or drops one the classifier did raise.
  */
 
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import { describe, expect, test } from "vitest"
 
 import { runPipeline } from "#pipeline/runtime-pipeline"
 import type {
 	AddressClassifier,
 	LocaleHint,
-	NormalizedInputLite,
 	POIIntentOutcome,
 	QueryIntentMarker,
 	QueryKindResult,

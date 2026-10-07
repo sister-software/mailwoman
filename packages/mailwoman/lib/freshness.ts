@@ -14,7 +14,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { PathBuilderLike } from "path-ts"
+import type { NamedPath } from "@mailwoman/core/paths"
 
 import { probeManifest } from "#data/inventory"
 
@@ -107,20 +107,12 @@ export interface FreshnessReport {
 }
 
 /**
- * An artifact to report on, with its role and path.
- */
-export interface FreshnessArtifact {
-	name: string
-	path: PathBuilderLike
-}
-
-/**
  * Reads one artifact's `layer_manifest` through `data-inventory`'s {@link probeManifest}.
  *
  * It skips the `readLayerManifest` validator because that validator enforces spine-key and tier invariants.
  * This report can still include the build date from a layer with an incorrect spine declaration.
  */
-async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Promise<ArtifactFreshness> {
+async function readArtifact({ name, path: artifactPath }: NamedPath): Promise<ArtifactFreshness> {
 	const path = artifactPath.toString()
 
 	if (!(await pathExists(path))) {
@@ -203,7 +195,7 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
  * A server holds its database handles open for its whole life, so the artifact it serves
  * from is the one it opened at start, whatever a later symlink swap points at.
  */
-export async function readFreshness(artifacts: readonly FreshnessArtifact[]): Promise<FreshnessReport> {
+export async function readFreshness(artifacts: readonly NamedPath[]): Promise<FreshnessReport> {
 	const read: ArtifactFreshness[] = []
 
 	for (const artifact of artifacts) {

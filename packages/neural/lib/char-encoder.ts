@@ -1,4 +1,5 @@
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { TextSpan } from "@mailwoman/query-shape"
 
 import { familyFallbackFor } from "#weights/families"
 
@@ -39,18 +40,6 @@ export interface CharEncoderInterface {
 	ctxChars: number
 }
 
-export interface CharUnit {
-	/**
-	 * The unit's text — one code point in char mode.
-	 */
-	text: string
-	/**
-	 * UTF-16 offsets into the original string, so a decoded span can be read back out of the input as typed.
-	 */
-	start: number
-	end: number
-}
-
 export interface CharEncoding {
 	/**
 	 * `(S, W)` code-point ids, row-major, padded to S.
@@ -63,7 +52,7 @@ export interface CharEncoding {
 	/**
 	 * The real units, in order — the token list the decoder receives (length ≤ S).
 	 */
-	units: CharUnit[]
+	units: TextSpan[]
 }
 
 /**
@@ -79,7 +68,7 @@ export function encodeCharUnits(
 	const codePoints = Array.from(raw)
 	const kept = codePoints.slice(0, maxUnits)
 	const charIDs: number[][] = []
-	const units: CharUnit[] = []
+	const units: TextSpan[] = []
 	let offset = 0
 
 	for (const [index, codePoint] of kept.entries()) {

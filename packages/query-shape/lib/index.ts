@@ -49,6 +49,7 @@ export { segment } from "#segmentation"
  */
 export type {
 	CharacterClass,
+	CharRange,
 	ComputeQueryShapeOpts,
 	KnownFormat,
 	KnownFormatHit,
@@ -65,6 +66,7 @@ export type {
 	SegmentSeparator,
 	SegmentView,
 	SpanRange,
+	TextSpan,
 	TokenCharacterClass,
 	TokenClass,
 	TokenClassView,

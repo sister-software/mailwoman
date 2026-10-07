@@ -12,7 +12,7 @@
  *   "not equivalent and not different", the answer an underpowered run should give.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversineKm, type NullableLatLon } from "@mailwoman/spatial"
 
 import { normalCDF, type RowGrade } from "#dev-mcp/grade"
 import { wilsonInterval } from "#dev-mcp/power"
@@ -43,18 +43,10 @@ const Z_CRITICAL_95_ONE_SIDED = 1.645
 const PERCENT = 100
 
 /**
- * A point an arm answered with, or the absence of one.
- */
-export interface GeoPoint {
-	lat: number | null
-	lon: number | null
-}
-
-/**
  * `null` is not infinity: it flows into {@link hitAt} as a miss at every threshold
  * while staying distinguishable from an arm that missed by 400 km.
  */
-export function distanceKm(answer: GeoPoint, truthLat: number, truthLon: number): number | null {
+export function distanceKm(answer: NullableLatLon, truthLat: number, truthLon: number): number | null {
 	if (answer.lat === null || answer.lon === null) return null
 
 	return haversineKm(answer.lat, answer.lon, truthLat, truthLon)

@@ -5,22 +5,10 @@
  */
 
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
+import type { NamedLatLon } from "@mailwoman/spatial"
 
 import type { RangeDatabase } from "#httpvfs/database"
 import { WOFCandidateTableLookup } from "#httpvfs/resolver"
-
-/**
- * Describes the locality that {@link resolveAnchorCenter} placed an anchor at, by its centroid and name.
- */
-export interface AnchorCenter {
-	lat: number
-	lon: number
-
-	/**
-	 * The resolved locality's canonical name, so a UI can show what the anchor text resolved to.
-	 */
-	name: string
-}
 
 function splitAnchor(text: string): { localityText: string; regionText?: string } {
 	const commaIndex = text.indexOf(",")
@@ -47,12 +35,13 @@ function splitAnchor(text: string): { localityText: string; regionText?: string 
  * only the admin candidate gazetteer.
  * The caller opens that database with `openRangeDatabase`.
  *
- * @returns `null` when no place resolves.
+ * @returns The locality's centroid and canonical name, so a UI can show what the
+ * anchor text resolved to, or `null` when no place resolves.
  */
 export async function resolveAnchorCenter(
 	candidateDatabase: RangeDatabase,
 	anchorText: string
-): Promise<AnchorCenter | null> {
+): Promise<NamedLatLon | null> {
 	const trimmed = anchorText.trim()
 
 	if (!trimmed) return null

@@ -21,7 +21,7 @@
  *   Fastify-native, so it reuses those shapes rather than `@mailwoman/api-kit`'s Hono plumbing.
  */
 
-import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
+import type { AddressTree, ParseComponent, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
@@ -82,16 +82,6 @@ export interface MailwomanFastifyOptions {
 	 * Defaults to `""` (no prefix).
 	 */
 	routePrefix?: string
-}
-
-/**
- * One parsed component in reading order — a `ComponentTag` + the covered text.
- *
- * Mirrors `@mailwoman/api`'s shape.
- */
-export interface ParseComponent {
-	tag: string
-	value: string
 }
 
 /**

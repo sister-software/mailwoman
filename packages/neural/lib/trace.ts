@@ -9,6 +9,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
+import type { TokenizedPiece } from "#tokenizer"
 
 /**
  * Every prior kind the decode path records, in the order it records them; `"placetypeCensus"`
@@ -83,16 +84,6 @@ export interface TraceRepair {
 }
 
 /**
- * A tokenizer piece as fed to the model, in a JSON-serializable shape.
- */
-export interface TracePiece {
-	piece: string
-	id: number
-	start: number
-	end: number
-}
-
-/**
  * The full trace of one `traceParse` call, from tokenizer pieces through emissions, decoding and repairs.
  */
 export interface NeuralParseTrace {
@@ -102,7 +93,7 @@ export interface NeuralParseTrace {
 	text: string
 
 	caseNormalized: boolean
-	pieces: TracePiece[]
+	pieces: TokenizedPiece[]
 
 	/**
 	 * The postcode-anchor channel as fed to the model, null when the channel was not fed.

@@ -4,20 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { PostcodePlace } from "@mailwoman/core/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
-
-/**
- * One postcode row from the WOF gazetteer, where a `lat`/`lon` of 0 means the
- * postcode is known but has no centroid.
- */
-export interface PostcodePlace {
-	country: string
-	lat: number
-	lon: number
-}
 
 const LOOKUP_SQL =
 	"SELECT country, latitude AS lat, longitude AS lon FROM spr WHERE name = ? AND placetype = 'postalcode' AND is_current != 0"

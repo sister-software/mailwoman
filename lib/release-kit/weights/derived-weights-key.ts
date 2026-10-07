@@ -12,7 +12,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { createHash } from "@mailwoman/core/hash"
-import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { type NamedPath, repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/tools/gazetteer-pipeline/postcode/binary"
 import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -80,26 +80,9 @@ async function postcodePipelinePaths(): Promise<string[]> {
 }
 
 /**
- * One hashed input: a stable name plus wherever this checkout happens to keep it.
- */
-export interface DerivedWeightsInput {
-	/**
-	 * Repo-relative identity of the input.
-	 *
-	 * Hashed.
-	 * The value must not vary by checkout location.
-	 */
-	name: string
-	/**
-	 * Absolute path to read, deliberately not hashed — see {@link derivedWeightsKeyFrom}.
-	 */
-	path: PathBuilderLike
-}
-
-/**
  * Every input this checkout's key is computed over, listed relative to the repository root.
  */
-async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
+async function derivedWeightsInputs(): Promise<NamedPath[]> {
 	const root = repoRootPath()
 	const [gazetteerData, postcodePipeline] = await Promise.all([gazetteerDataPaths(), postcodePipelinePaths()])
 
@@ -116,12 +99,14 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
  * Exported for testing.
  * Production callers want {@link derivedWeightsKey}.
  *
+ * Each input's `name` is its repo-relative identity and `path` is where to read it.
  * Only the repo-relative name is hashed, never the absolute path, so checkouts at
  * different roots agree on the key over byte-identical inputs.
+ *
  * A missing input contributes a `\0absent` marker rather than an empty contribution,
  * so a gone file and an empty file do not collide.
  */
-export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): Promise<string> {
+export async function derivedWeightsKeyFrom(inputs: readonly NamedPath[]): Promise<string> {
 	const hash = createHash("sha256")
 
 	for (const { name, path } of inputs.toSorted((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {

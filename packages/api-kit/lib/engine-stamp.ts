@@ -79,3 +79,25 @@ export function withEngineStamp<T extends object>(
 ): T & { engine?: EngineStamp } {
 	return stamp ? { ...body, engine: stamp } : body
 }
+
+/**
+ * Options every compatibility app factory (`nominatim`, `photon`, `libpostal`) takes.
+ */
+export interface CompatibilityAppOptions {
+	/**
+	 * Whether to send permissive CORS headers and answer preflight `OPTIONS` requests.
+	 *
+	 * It defaults to `true` because browser clients call these APIs from other origins.
+	 * Set it to `false` when a reverse proxy already sets the CORS headers.
+	 */
+	cors?: boolean
+
+	/**
+	 * The engine stamp added to each response body and sent in the `Server`
+	 * and `Link: rel="license"` headers.
+	 *
+	 * The package's CLI always passes one.
+	 * An embedding application may omit it.
+	 */
+	engine?: EngineStamp
+}

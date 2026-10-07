@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
@@ -61,14 +62,7 @@ export interface POISearchOpts {
 /**
  * One POI result returned by {@link searchPOICategory}, with its distance from the search center in meters.
  */
-export interface POISearchHit {
-	name: string
-	lat: number
-	lon: number
-	distanceM: number
-	country: string
-	confidence: number
-}
+export type POISearchHit = POIDistanceHit
 
 interface POIRow {
 	name: string | null

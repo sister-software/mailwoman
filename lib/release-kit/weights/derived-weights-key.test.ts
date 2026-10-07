@@ -15,12 +15,12 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePath, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { NamedPath } from "@mailwoman/core/paths"
 import { basename, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
 	DERIVED_WEIGHTS_INPUTS,
-	type DerivedWeightsInput,
 	derivedStoreServeViolation,
 	derivedWeightsDir,
 	derivedWeightsKey,
@@ -36,7 +36,7 @@ afterAll(() => fixtures.disposeAsync())
  *
  * The shape production uses (repo-relative name, absolute read path).
  */
-function at(path: PathBuilder, name?: string): DerivedWeightsInput {
+function at(path: PathBuilder, name?: string): NamedPath {
 	return { name: name ?? basename(path), path }
 }
 

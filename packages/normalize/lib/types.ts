@@ -4,11 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export interface SpanRange {
-	start: number
-	end: number
-	body: string
-}
+import type { SpanRange } from "@mailwoman/query-shape"
 
 /**
  * A single normalization step, as recorded on `NormalizedInput.transforms`.

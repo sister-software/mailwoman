@@ -36,7 +36,7 @@ export const ParseRequestSchema = z
 	.openapi("ParseRequest")
 
 /**
- * One `ParseOutcome.components` entry — mirrors {@linkcode ParseComponent} (`engine.ts`).
+ * One `ParseOutcome.components` entry — mirrors `ParseComponent` (`@mailwoman/core`).
  */
 export const ParseComponentSchema = z.object({ tag: z.string(), value: z.string() }).openapi("ParseComponent")
 

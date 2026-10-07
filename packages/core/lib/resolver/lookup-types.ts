@@ -194,13 +194,54 @@ export interface StreetCentroidLookup {
 }
 
 /**
- * One admin-ancestry entry a PFX1 node asserts (coarsest-first: country → constituent country → district).
+ * One Who's On First place in an administrative ancestry.
+ *
+ * A PFX1 node lists them coarsest first.
+ * A POI result lists them deepest first.
  */
-export interface PostcodePrefixAncestor {
+export interface WOFAncestor {
+	/**
+	 * The WOF placetype, such as `"country"`, `"macroregion"` or `"region"`.
+	 */
 	placetype: string
+	/**
+	 * The Who's On First ID that consumers join against the gazetteer.
+	 */
 	wofID: number
+	/**
+	 * The display name.
+	 * It keeps a trace readable without a gazetteer lookup.
+	 */
 	name: string
 }
+
+/**
+ * One POI found near a search center, with its distance from that center in meters.
+ */
+export interface POIDistanceHit {
+	name: string
+	lat: number
+	lon: number
+	distanceM: number
+	country: string
+	confidence: number
+}
+
+/**
+ * One gazetteer hit for a postcode.
+ *
+ * A `lat` and `lon` of 0 mean the postcode is known but has no centroid.
+ */
+export interface PostcodePlace {
+	country: string
+	lat: number
+	lon: number
+}
+
+/**
+ * One admin-ancestry entry a PFX1 node asserts (coarsest-first: country → constituent country → district).
+ */
+export type PostcodePrefixAncestor = WOFAncestor
 
 /**
  * A PFX1 postcode-prefix node, the partial-code prior's payload ({@link ResolveOpts.postcodePrefixPrior}).

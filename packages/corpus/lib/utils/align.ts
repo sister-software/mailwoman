@@ -33,10 +33,11 @@
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import type { TextSpan } from "@mailwoman/query-shape"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
-import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "#utils/tokenize"
+import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
 
 /**
  * Options for `alignRow`.
@@ -291,7 +292,7 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 /**
  * Assign BIO labels to tokens from component spans sorted by start offset.
  */
-function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
+function labelTokens(tokens: readonly TextSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
 	const out: BIOLabel[] = []
 	const seenSpan = new Set<number>()
 

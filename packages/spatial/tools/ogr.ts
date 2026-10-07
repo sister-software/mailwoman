@@ -19,16 +19,24 @@ import { runFile } from "@mailwoman/core/process"
 import { assertDatumTransformationAvailable } from "#projection/transform"
 
 /**
- * What one layer declares about itself.
+ * A layer's EPSG code, feature count, name and attribute field names, read before any feature.
  */
-export interface OGRLayerIdentity {
+export interface OGRLayerSchema {
 	epsg: number
 	featureCount: number
 	layer: string
 	/**
 	 * The layer's own attribute field names — empty when the source reports none.
+	 *
+	 * ogr2ogr rejects a `select` that asks for a missing column, so query builders read this set.
 	 */
 	fields: ReadonlySet<string>
+}
+
+/**
+ * What one layer declares about itself.
+ */
+export interface OGRLayerIdentity extends OGRLayerSchema {
 	/**
 	 * The layer's own declared extent, `[minLon, minLat, maxLon, maxLat]`, where the source declares one.
 	 */

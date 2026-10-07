@@ -6,6 +6,8 @@
  *   Declares the types for the runtime pipeline and its injected stages.
  */
 
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
+
 import type { AddressTree } from "#decoder/types"
 import type { MachinePreferences } from "#pipeline/preferences"
 import type { ResolveOpts, Resolver, ResolverBackend } from "#resolver/types"
@@ -65,15 +67,6 @@ export interface PipelineOpts {
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	signal?: AbortSignal
-}
-
-/**
- * The fields of a normalized input that the pipeline reads.
- */
-export interface NormalizedInputLite {
-	raw: string
-	normalized: string
-	appliedLocale?: string | null
 }
 
 /**

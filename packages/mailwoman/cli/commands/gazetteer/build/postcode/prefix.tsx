@@ -200,8 +200,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]
 		const readUnits = readNodes.reduce((sum, node) => sum + node.unitCount, 0)
-		const readRadii = readNodes.flatMap((node) => (node.radiusP95Km === undefined ? [] : [node.radiusP95Km]))
-		const withCoordinate = readNodes.filter((node) => node.lat !== undefined).length
+		const readRadii = readNodes.flatMap((node) => (node.radiusP95Km === null ? [] : [node.radiusP95Km]))
+		const withCoordinate = readNodes.filter((node) => node.lat !== null).length
 		const readMedianRadius = median(readRadii)
 
 		if (resolver.size !== built.nodes.length) {
@@ -220,7 +220,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			const ancestry = node.ancestors.map((a) => `${a.name}(${a.placetype} ${a.wofID})`).join(" › ")
 
 			const place =
-				node.lat === undefined
+				node.lat === null
 					? "no coordinate (ancestry-only)"
 					: `${node.lat.toFixed(4)},${node.lon!.toFixed(4)} ±p95 ${node.radiusP95Km!.toFixed(2)} km`
 

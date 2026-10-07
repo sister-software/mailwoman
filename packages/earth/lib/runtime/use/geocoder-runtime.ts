@@ -29,6 +29,7 @@ import type {
 	ResolvedMapPlace,
 	Suggestion,
 } from "@mailwoman/react/map"
+import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
@@ -61,7 +62,7 @@ import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
-import { loadPolygonDB, type PlaceGeometry, type PolygonDB } from "#runtime/basemap"
+import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 

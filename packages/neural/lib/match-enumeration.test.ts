@@ -1,6 +1,7 @@
+import type { AncestrieMatch } from "@mailwoman/ancestrie"
 import { describe, expect, it } from "vitest"
 
-import { findFSTAcceptedMatches, type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "#fst-prior"
+import { findFSTAcceptedMatches, type FSTMatcherLike, type FSTPlaceEntryLike } from "#fst-prior"
 
 function mockFST(entries: ReadonlyMap<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 	const paths = [...entries.keys()].map((path) => path.split(" "))
@@ -20,13 +21,13 @@ function mockFST(entries: ReadonlyMap<string, FSTPlaceEntryLike[]>): FSTMatcherL
 	const pathByState = new Map([...states].map(([path, state]) => [state, path]))
 
 	return {
-		walk(tokens): FSTMatchLike | null {
+		walk(tokens): AncestrieMatch | null {
 			const path = tokens.join(" ")
 			const stateID = states.get(path)
 
 			return stateID === undefined ? null : { stateID, accepted: entries.has(path), depth: tokens.length }
 		},
-		walkFrom(previous, token): FSTMatchLike | null {
+		walkFrom(previous, token): AncestrieMatch | null {
 			const previousPath = pathByState.get(previous.stateID)
 
 			if (!previousPath) return null

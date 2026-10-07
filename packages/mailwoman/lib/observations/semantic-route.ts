@@ -9,8 +9,6 @@
 import {
 	type ActivityPhraseEntry,
 	type ActivityPhraseLexicon,
-	type ActivityPhraseLocaleMatch,
-	type ActivityPhraseLocaleScope,
 	auditActivityLexicon,
 	normalizeActivityPhrase,
 	readActivityLexicon,
@@ -26,6 +24,7 @@ import type {
 	SourceProvenance,
 } from "@mailwoman/geographic-model"
 import type { POIPhraseLookup, POIPhraseMatch } from "@mailwoman/kind-classifier"
+import type { LocaleScope, LocaleScopeMatch } from "@mailwoman/variant-aliases"
 
 import { localeToCountry } from "#country-scope"
 import { readCommittedModel } from "#observations/committed-model"
@@ -65,7 +64,7 @@ export interface SemanticObservation {
 	/**
 	 * How the entry's locale scope matched the query's locale.
 	 */
-	localeScope: ActivityPhraseLocaleScope
+	localeScope: LocaleScope
 	/**
 	 * The locale tags that the entry declares, or `null` when the entry is unscoped.
 	 */
@@ -298,7 +297,7 @@ export async function createSemanticObservationRoute(
 	const claim = (
 		declared: ResolvedPhrase,
 		candidate: string,
-		localeMatch: ActivityPhraseLocaleMatch,
+		localeMatch: LocaleScopeMatch,
 		localeCountry: string | null,
 		admitted: ReachedKind[]
 	): POIPhraseMatch[] => {

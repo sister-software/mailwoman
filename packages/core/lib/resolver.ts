@@ -56,6 +56,8 @@ export type {
 	GazetteerArtifactCoverage,
 	InterpolatedPointHit,
 	InterpolationLookup,
+	POIDistanceHit,
+	PostcodePlace,
 	PostcodePrefixAncestor,
 	PostcodePrefixIndexLike,
 	PostcodePrefixNode,
@@ -68,4 +70,5 @@ export type {
 	StreetCentroidHit,
 	StreetCentroidLookup,
 	WeakResolutionReading,
+	WOFAncestor,
 } from "#resolver/types"

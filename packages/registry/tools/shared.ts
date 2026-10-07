@@ -10,7 +10,7 @@ import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { makeLcg } from "@mailwoman/core/random"
-import { block, gbtScore, trainGBT, type TermFrequencyTable } from "@mailwoman/match"
+import { block, gbtScore, trainGBT, type GBTOpts, type TermFrequencyTable } from "@mailwoman/match"
 import { dirname } from "path-ts"
 
 import {
@@ -505,17 +505,7 @@ export const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	},
 ]
 
-/**
- * The GBT hyperparameter shape the trainers stamp into their model meta.
- */
-export interface GBTHyperparameters {
-	rounds: number
-	depth: number
-	lr: number
-	minLeaf: number
-}
-
-const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
+const CROSS_SOURCE_HYPERPARAMS: GBTOpts = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 const FIT_SPLIT_FRACTION = 0.8
 
@@ -544,7 +534,7 @@ export interface CrossSourceTrainingFigures {
 	f1Max: number
 	recommendedThreshold: number
 	features: number
-	hyperparams: GBTHyperparameters
+	hyperparams: GBTOpts
 }
 
 /**

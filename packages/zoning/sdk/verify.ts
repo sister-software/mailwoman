@@ -30,7 +30,9 @@
  *   tolerance stricter and report a rendering difference as a conversion defect.
  */
 
+import type { OGCFeature } from "@mailwoman/core/api"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { OutsideCoverageRow } from "@mailwoman/core/layers"
 import {
 	nearestRingEdgeMetres,
 	pointInEncodedRings,
@@ -85,22 +87,6 @@ export interface AgreementRow {
 	nearestEdgeMetres: number | null
 }
 
-/**
- * The negative half: a point this product's publication does not reach.
- */
-export interface OutsideRow {
-	label: string
-	latitude: number
-	longitude: number
-	kind: string
-	designations: number
-	/**
-	 * True when the artifact answered `unknown` with no designation.
-	 * The only acceptable reading here.
-	 */
-	passed: boolean
-}
-
 export interface VerifyZoningResult {
 	agreement: AgreementRow[]
 	agreed: number
@@ -110,7 +96,7 @@ export interface VerifyZoningResult {
 	 * Points where both paths placed the location inside a zone and the local codes differed.
 	 */
 	codeMismatches: number
-	outside: OutsideRow[]
+	outside: OutsideCoverageRow[]
 	outsidePassed: number
 }
 
@@ -162,10 +148,7 @@ const BOUNDARY_TOLERANCE_METRES = 0.5
  * One feature as the service publishes it.
  * The only shape the comparison reads.
  */
-export interface ServiceFeature {
-	properties?: Record<string, unknown>
-	geometry?: { type: string; coordinates: unknown }
-}
+export type ServiceFeature = OGCFeature
 
 /**
  * The one call the verification makes against the service: the features it publishes near a point.
@@ -234,7 +217,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
 		}
 
-		const outside: OutsideRow[] = []
+		const outside: OutsideCoverageRow[] = []
 
 		for (const point of options.outsidePoints ?? OUTSIDE_PUBLICATION_POINTS) {
 			const reading = lookup.lookup(point.latitude, point.longitude)

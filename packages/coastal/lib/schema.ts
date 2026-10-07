@@ -31,7 +31,7 @@
  *   and throws when a table mixes them.
  */
 
-import type { layerschemadatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase, MappedExtentTable } from "@mailwoman/core/layers"
 import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
@@ -245,23 +245,7 @@ export interface CoastalGroundInstabilityTable {
  * The union of "at risk" areas differs from the mapped area.
  * That distinction determines what a negative answer means.
  */
-export interface CoastalMappedExtentTable {
-	extent_id: string
-	/**
-	 * Which published product this footprint came from.
-	 */
-	source: string
-	/**
-	 * The coverage statement, verbatim.
-	 */
-	statement: string
-	statement_url: string
-	effective_date: string | null
-	min_lat: number
-	min_lon: number
-	max_lat: number
-	max_lon: number
-}
+export type CoastalMappedExtentTable = MappedExtentTable
 
 /**
  * The authority's declared scenario and policy domains, as shipped, so a reader can refuse a

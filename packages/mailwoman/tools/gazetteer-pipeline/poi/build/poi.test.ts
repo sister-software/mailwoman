@@ -10,6 +10,7 @@ import { isFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
+import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell, type LatLonBounds } from "@mailwoman/spatial"
@@ -18,7 +19,7 @@ import { cellToParent, latLngToCell } from "h3-js"
 import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { bboxCoverageCells, buildPOIDatabase, type POISourceRow } from "#gazetteer/poi/build/poi"
+import { bboxCoverageCells, buildPOIDatabase } from "#gazetteer/poi/build/poi"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as const }
 const PARIS = { latitude: 48.8566, longitude: 2.3522, country: "FR" as const }

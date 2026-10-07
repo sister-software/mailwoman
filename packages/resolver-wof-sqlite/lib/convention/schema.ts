@@ -9,6 +9,7 @@
  *   other.
  */
 
+import type { KeyValueMetaTable } from "@mailwoman/sqlite/database-schema"
 import type { Kysely } from "kysely"
 
 import { ADDRESS_CONVENTION_TABLE } from "#convention"
@@ -30,17 +31,9 @@ export interface AddressConventionTable {
 	source: string
 }
 
-/**
- * Key/value provenance for the sealed artifact.
- */
-export interface ConventionMetaTable {
-	key: string
-	value: string | null
-}
-
 export interface ConventionDatabase {
 	address_convention: AddressConventionTable
-	meta: ConventionMetaTable
+	meta: KeyValueMetaTable
 }
 
 /**

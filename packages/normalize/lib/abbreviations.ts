@@ -7,8 +7,7 @@
  */
 
 import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
-
-import type { SpanRange } from "#types"
+import type { SpanRange } from "@mailwoman/query-shape"
 
 export interface AbbreviationResult {
 	text: string

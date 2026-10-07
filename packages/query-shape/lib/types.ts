@@ -15,6 +15,23 @@ export interface SpanRange {
 }
 
 /**
+ * A half-open `[start, end)` character range into a string.
+ */
+export interface CharRange {
+	start: number
+	end: number
+}
+
+/**
+ * A piece of text with half-open UTF-16 offsets into the string it was read from.
+ */
+export interface TextSpan {
+	text: string
+	start: number
+	end: number
+}
+
+/**
  * The character class of one token.
  */
 export type TokenCharacterClass = "digit" | "alpha" | "mixed" | "punct" | "cjk" | "cyrillic" | "arabic"

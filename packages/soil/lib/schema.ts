@@ -23,7 +23,12 @@
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
-import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
+import {
+	addBoundingBoxColumns,
+	addCellIndexColumns,
+	addRingGeometryColumns,
+	type AreaCellIndexTable,
+} from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -90,28 +95,10 @@ export interface SoilMapUnitAreaTable {
  *
  * Rows use the delineation as the key because the reduction weights by covered area.
  * Two delineations from one map unit can reach the same cell while covering different ground.
+ *
+ * `containment` is one of {@link SoilCellContainment}.
  */
-export interface SoilMapUnitCellTable {
-	/**
-	 * 48-bit short H3 cell.
-	 *
-	 * Uses mixed resolutions.
-	 * `whole` rows are compacted parent-ward; `partial` rows stay at the index resolution.
-	 */
-	h3_cell: number
-	/**
-	 * The resolution this row's cell was captured at.
-	 *
-	 * A short cell has no resolution of its own.
-	 * A table that mixes resolutions requires this column for probes.
-	 */
-	resolution: number
-	area_id: string
-	/**
-	 * One of {@link SoilCellContainment}.
-	 */
-	containment: string
-}
+export type SoilMapUnitCellTable = AreaCellIndexTable
 
 /**
  * One ssurgo map unit, the attribute row every delineation joins to.

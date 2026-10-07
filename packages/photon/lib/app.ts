@@ -5,34 +5,17 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo, readServedDocumentInfo } from "@mailwoman/api-kit"
-import type { EngineStamp } from "@mailwoman/core/license"
+import {
+	attachOpenAPIDocs,
+	type CompatibilityAppOptions,
+	engineHeaders,
+	type OpenAPIDocInfo,
+	readServedDocumentInfo,
+} from "@mailwoman/api-kit"
 import { cors } from "hono/cors"
 
 import type { PhotonEngine } from "#engine"
 import { registerPhotonRoutes } from "#routes"
-
-/**
- * Options for {@link createPhotonApp}.
- */
-export interface PhotonAppOptions {
-	/**
-	 * Whether to send permissive CORS headers and answer preflight `OPTIONS` requests.
-	 *
-	 * It defaults to true because browser map widgets call Photon from other origins.
-	 * Set it to `false` when a reverse proxy already sets the CORS headers.
-	 */
-	cors?: boolean
-
-	/**
-	 * The engine stamp added to every FeatureCollection and sent in the `Server`
-	 * and `Link: rel="license"` headers.
-	 *
-	 * The `photon` command always passes one.
-	 * An embedding application may omit it.
-	 */
-	engine?: EngineStamp
-}
 
 /**
  * The OpenAPI document info for the Photon API.
@@ -63,7 +46,7 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 /**
  * Builds the Photon-compatible app around the given {@link PhotonEngine}.
  */
-export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
+export function createPhotonApp(engine: PhotonEngine, options: CompatibilityAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
 	if (options.cors !== false) {

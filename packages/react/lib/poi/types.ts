@@ -8,6 +8,7 @@
  */
 
 import type { QueryKindResult } from "@mailwoman/core/pipeline"
+import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import type { POIPhraseLookup, createKindClassifier } from "@mailwoman/kind-classifier"
 import type { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
@@ -92,14 +93,7 @@ export interface POIExplorerResult {
 /**
  * One live poi.db hit, as the results list renders it.
  */
-export interface POISearchHit {
-	name: string
-	lat: number
-	lon: number
-	distanceM: number
-	country: string
-	confidence: number
-}
+export type POISearchHit = POIDistanceHit
 
 /**
  * The result of an injected live search.

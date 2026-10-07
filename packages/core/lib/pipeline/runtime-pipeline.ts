@@ -7,6 +7,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
 
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -17,7 +18,6 @@ import type {
 	FSTMatcherLike,
 	InputMode,
 	LocaleHint,
-	NormalizedInputLite,
 	PhraseProposal,
 	PipelineFault,
 	PipelineOpts,

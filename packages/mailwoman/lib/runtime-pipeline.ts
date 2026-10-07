@@ -14,6 +14,7 @@ import {
 	type POIIntentOutcome,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
+import type { WOFAncestor } from "@mailwoman/core/resolver"
 import {
 	classifyKind as defaultClassifyKind,
 	createKindClassifier,
@@ -36,7 +37,7 @@ import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
 import { loadDefaultStreetEvidence } from "#default/street-evidence"
 import { $public } from "#env"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
-import { createPOIExecutor, type POIAncestryEntry } from "#poi/executor"
+import { createPOIExecutor } from "#poi/executor"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"
 import { stampSpanScripts } from "#span-script"
 
@@ -49,7 +50,7 @@ interface ReverseGeocoderLike {
 
 function buildSyncReverseGeocode(
 	geocoder: ReverseGeocoderLike
-): (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | null {
+): (latitude: number, longitude: number) => ReadonlyArray<WOFAncestor> | null {
 	return (latitude, longitude) => {
 		try {
 			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)

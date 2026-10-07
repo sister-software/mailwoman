@@ -6,7 +6,7 @@
  *   The per-locale street abbreviation tables for en-US, fr-FR, es-ES and the locale-unknown geocode path.
  */
 
-export interface AbbreviationEntry {
+interface AbbreviationEntry {
 	/**
 	 * The short form, matched case-insensitively.
 	 */

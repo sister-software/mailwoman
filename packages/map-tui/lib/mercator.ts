@@ -22,7 +22,7 @@ import type { LatLon } from "@mailwoman/spatial"
  */
 export const TILE_SIZE = 256
 
-export interface WorldPx {
+interface WorldPx {
 	x: number
 	y: number
 }

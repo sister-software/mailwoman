@@ -7,23 +7,13 @@
  * runs out of headroom runs the candidates in separate invocations.
  */
 
-import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+import type { ResolutionMeasurementOptions, ResolutionMeasurementReport } from "@mailwoman/core/layers"
 import { classifyFeatureCells } from "@mailwoman/spatial"
 
 import { FloodCellIndex, type CellIndexMeasurement } from "#sdk/cells"
 import { readFloodSourceFeatures, readFloodSourceIdentity, type FloodIngestOptions } from "#sdk/ingest"
 
 export interface MeasureResolutionsOptions extends FloodIngestOptions, ResolutionMeasurementOptions {}
-
-export interface ResolutionMeasurementReport {
-	features: number
-	/**
-	 * The count the source declares for itself.
-	 * A streamed total that differs means a truncated read.
-	 */
-	declaredFeatureCount: number
-	measurements: CellIndexMeasurement[]
-}
 
 const DEFAULT_PROGRESS_EVERY = 50_000
 
@@ -33,7 +23,7 @@ const DEFAULT_PROGRESS_EVERY = 50_000
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions
-): Promise<ResolutionMeasurementReport> {
+): Promise<ResolutionMeasurementReport<CellIndexMeasurement>> {
 	const identity = await readFloodSourceIdentity(options)
 	const indexes = options.resolutions.map((resolution) => new FloodCellIndex(resolution))
 	const progressEvery = options.progressEvery ?? DEFAULT_PROGRESS_EVERY

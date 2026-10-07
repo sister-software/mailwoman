@@ -50,15 +50,6 @@ export type PlacetypeID =
 	| "street_affix"
 
 /**
- * The result of walking a token sequence through the FST.
- */
-export interface FSTMatchResult {
-	stateID: number
-	accepted: boolean
-	depth: number
-}
-
-/**
  * One outgoing edge from an FST state, with the number of places its target state accepts.
  */
 export interface FSTContinuation {

@@ -20,9 +20,9 @@ import { runFile } from "#process"
 import { streamToDisk } from "#utils/stream-to-disk"
 
 /**
- * Options for {@link downloadZippedGeodatabase}.
+ * One product vintage of a published geodatabase, and where to cache it.
  */
-export interface DownloadZippedGeodatabaseOptions {
+export interface GeodatabaseVintageOptions {
 	/**
 	 * The direct file URL from the catalogue entry.
 	 *
@@ -31,13 +31,22 @@ export interface DownloadZippedGeodatabaseOptions {
 	url: string
 	/**
 	 * The product's ISO revision date.
-	 * It keys the cache.
+	 *
+	 * It keys the cache, so a re-run against the same vintage never re-transfers
+	 * and a new vintage never overwrites the old one in place.
 	 */
 	revisionDate: string
 	/**
 	 * The directory that holds one subdirectory per vintage.
 	 */
 	cacheRoot: PathBuilderLike
+	onProgress?: (message: string) => void
+}
+
+/**
+ * Options for {@link downloadZippedGeodatabase}.
+ */
+export interface DownloadZippedGeodatabaseOptions extends GeodatabaseVintageOptions {
 	/**
 	 * The archive's file name from the catalogue entry.
 	 */
@@ -50,7 +59,6 @@ export interface DownloadZippedGeodatabaseOptions {
 	 * A label for the caller in error messages, such as `"flood download"`.
 	 */
 	context: string
-	onProgress?: (message: string) => void
 }
 
 /**

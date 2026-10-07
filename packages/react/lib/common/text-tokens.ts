@@ -10,6 +10,8 @@
  *   the owner walk live here.
  */
 
+import type { CharRange } from "@mailwoman/query-shape"
+
 export interface WordToken {
 	/**
 	 * The word text as it appears in the input.
@@ -62,19 +64,11 @@ export function tokenizeWords(input: string): WordToken[] {
 }
 
 /**
- * A half-open `[start, end)` character range into the input.
- */
-export interface CharSpan {
-	start: number
-	end: number
-}
-
-/**
  * Per-word index of the most specific (shortest) span covering it, or `-1` when no span overlaps the word.
  *
  * A word is covered when any part of it falls within the span.
  */
-export function shortestSpanOwners(words: readonly CharSpan[], spans: readonly CharSpan[]): number[] {
+export function shortestSpanOwners(words: readonly CharRange[], spans: readonly CharRange[]): number[] {
 	return words.map((word) => {
 		let best = -1
 		let bestLen = Infinity
