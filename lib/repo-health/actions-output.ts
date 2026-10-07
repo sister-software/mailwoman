@@ -34,7 +34,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 		throw new Error("A pull request requires valid CI_BASE_SHA and CI_HEAD_SHA commits")
 	}
 
-	// Disabling rename detection includes both paths of a move, so both workspaces are selected.
+	// A diff without rename detection includes both paths of a move, so both workspaces are selected.
 	const changed =
 		event === "pull_request"
 			? (await git(["diff", "--name-only", "--no-renames", "-z", `${base}...${head}`, "--"], root, 64 * 1024 * 1024))

@@ -8,7 +8,7 @@
  *   An app's worker calls `skipWaiting` and `clients.claim`, so a deploy's new worker takes control of
  *   an open page right after it installs. The page itself keeps running the JavaScript the previous
  *   worker served, while every fetch it makes from then on reaches current data, such as a releases
- *   manifest that points at a model the old code cannot load. Reloading once on that takeover makes
+ *   manifest that points at a model the old code cannot load. A single reload on that takeover makes
  *   the page run the code the new worker serves.
  */
 

@@ -39,7 +39,7 @@ async function publishSet(repoRoot: PathBuilderLike): Promise<Map<string, string
  * and lookup kits, and the server adapters.
  *
  * Hand-maintained on purpose — the CLI and MCP bins are probed by execution below,
- * and the data-only weights packages carry no importable entrypoint.
+ * and the data-only weights packages have no importable entrypoint.
  * Add a package here when its import-time behavior is something a consumer can
  * break without the CLI ever running.
  */

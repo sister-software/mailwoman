@@ -37,7 +37,7 @@ const ACCEPTANCE: [query: string, url: string][] = [
 
 // The acceptance suite needs a docs build.
 // CI has one in the docs-build job and refuses its absence.
-// A local checkout without a build skips and says so.
+// A local checkout without a build skips and reports that.
 const indexAbsent = !(await pathExists(INDEX_FILE))
 // oxlint-disable-next-line sister-software/no-process-globals -- the runner's `CI` flag is not a project setting
 const skipSuite = indexAbsent && !process.env.CI

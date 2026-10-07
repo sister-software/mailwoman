@@ -19,7 +19,7 @@ const REPO_ROOT = repoRootPathBuilder()
 
 let entries: PurposeEntry[]
 
-// Loading the index parses every tracked source file in the repository.
+// This parses every tracked source file in the repository.
 beforeAll(async () => {
 	entries = await loadPurposeIndex(REPO_ROOT)
 }, 60_000)

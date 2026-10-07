@@ -10,7 +10,7 @@
  *   constant from this file rather than a string literal.
  *
  *   MapLibre requests one fontstack per URL, so a `text-font` list cannot fall back across files on a static bucket.
- *   Each Bliss Pro stack therefore carries Bliss Pro's Latin, Greek and Cyrillic glyphs merged over the Noto Sans
+ *   Each Bliss Pro stack therefore merges Bliss Pro's Latin, Greek and Cyrillic glyphs over the Noto Sans
  *   glyphs of the same style, and a label in any other script draws from the Noto glyphs inside the same file.
  */
 
