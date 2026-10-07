@@ -63,7 +63,7 @@ def _exposure(report: Mapping[str, Any], stage: str, jurisdiction: str, phenomen
 
 
 def preflight(report: Mapping[str, Any], claims: Iterable[tuple[str, str]], *, epochs: int = 1) -> list[Finding]:
-    """Refuse a claim whose expected draws are zero. ``report`` must carry the ``replayed_draws`` stage."""
+    """Refuse a claim whose expected draws are zero. ``report`` must include the ``replayed_draws`` stage."""
     findings: list[Finding] = []
     for jurisdiction, phenomenon in claims:
         draws = _exposure(report, "replayed_draws", jurisdiction, phenomenon)

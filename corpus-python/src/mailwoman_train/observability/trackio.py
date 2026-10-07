@@ -9,7 +9,7 @@ What this does
         ``~/.cache/huggingface/trackio``.
 
 Non-negotiable rule
-- Tracking must never crash training.
+- The tracker must never crash training.
 
 Failure behavior (by design)
 - ``cfg.train.trackio_enabled=False`` (default) -> no-op tracker.

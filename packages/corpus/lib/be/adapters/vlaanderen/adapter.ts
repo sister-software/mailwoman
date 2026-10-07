@@ -10,24 +10,24 @@
  * through their own services, so this adapter emits `BE` on every row it yields, and a Belgian build needs
  * two more sources beside it.
  *
- * The schema-level reading is `#inspire/address`, which owns every part of an `ad:Address` that the
- * publishers spell alike. This module holds only what is Flanders' own: the `resourceId` rewrite its
- * references need, the homonym discriminator its street names carry, and the lost characters its
- * values carry.
+ * The schema-level reading is `#inspire/address`. That module owns every part of an `ad:Address` the
+ * publishers spell alike. This module holds only Flanders' own additions: the `resourceId` rewrite
+ * its references need, the homonym discriminator appended to its street names, and the lost
+ * characters in its values.
  *
  * The adapter records `Modellicentie voor gratis hergebruik Vlaanderen` on every row, the terms the
  * address-source register elects for `be-property-building-1` in `electedTerms`. Article 3 grants
  * reproduction, adaptation and commercial exploitation for any lawful purpose. Article 4 makes
- * attribution the only condition, in the form the licensor specifies, so the model card must carry
+ * attribution the only condition, in the form the licensor specifies, so the model card must state
  * `Bron: Digitaal Vlaanderen`.
  *
  * The capabilities document's `ows:Fees` and `ows:AccessConstraints` state what calling the service
  * costs and who may call it. They describe the service rather than licensing the data, so the
- * license comes from the register and this adapter reads the capabilities for feature types alone.
+ * license comes from the register and this adapter reads the capabilities only for feature types.
  *
  * ## Why the input is a harvest rather than the service
  *
- * An `ad:Address` carries its house number inline and everything else by reference. Each address
+ * An `ad:Address` states its house number inline and everything else by reference. Each address
  * holds exactly four `ad:component/@xlink:href` values, measured over 1,000 addresses at six
  * `startIndex` offsets with all four prefixes occurring 1,000 times each. The references are
  * absolute URIs that resolve back into the same service under the `resourceId` rewrite that
@@ -40,7 +40,7 @@
  * | `https://data.vlaanderen.be/id/gemeentenaam/44083` | `gemeentenaam_44083` | `ad:AdminUnitName`    |
  * | `http://vocab.belgif.be/auth/refnis1995/1000#id`   | `refnis1995_1000`    | `ad:AdminUnitName`    |
  *
- * Resolving per address would cost four requests per row against 4,563,062 addresses. The component
+ * A per-address resolution would cost four requests per row against 4,563,062 addresses. The component
  * types are small — 167,218 thoroughfare names, 1,190 postal descriptors, 609 administrative-unit
  * names — so the harvest takes each component type whole and the adapter joins locally.
  *
@@ -98,9 +98,9 @@ export const VLAANDEREN_ADAPTER_ID = "vlaanderen"
 /**
  * The terms the address-source register elects for `be-property-building-1`.
  *
- * The value is the register's `electedTerms` for license
- * `unchecked-access-free-be-agentschap-digitaal-vlaanderen`, which carries no `spdx`,
- * so `electedLicenseLabel` answers this string and the share-alike prefix filter matches it.
+ * The register's `electedTerms` for license
+ * `unchecked-access-free-be-agentschap-digitaal-vlaanderen` states this value. That license has no
+ * `spdx`, so `electedLicenseLabel` answers this string and the share-alike prefix filter matches it.
  */
 export const VLAANDEREN_DEFAULT_LICENSE = "Modellicentie voor gratis hergebruik Vlaanderen"
 
@@ -108,8 +108,8 @@ export const VLAANDEREN_DEFAULT_LICENSE = "Modellicentie voor gratis hergebruik 
  * The one jurisdiction this adapter emits.
  *
  * The service publishes the Flemish Region.
- * ISO 3166-1 assigns that region no code of its own, so its own, so the set holds one code
- * and a caller naming any other gets {@linkcode UnsupportedCountryError} rather than zero rows.
+ * ISO 3166-1 assigns that region no code of its own, so the set holds one code. A caller that
+ * requests any other gets {@linkcode UnsupportedCountryError} rather than zero rows.
  */
 export const VLAANDEREN_COUNTRIES: readonly string[] = ["BE"]
 
@@ -121,18 +121,18 @@ export const VLAANDEREN_COUNTRIES: readonly string[] = ["BE"]
  * Flanders uses one type across 1,000 addresses sampled.
  *
  * Czechia and Brussels write `buildingIdentifier` and the Netherlands `addressNumber` for
- * the same part, which is why `#inspire/address` leaves the vocabulary to the caller.
+ * the same part. `#inspire/address` therefore leaves the vocabulary to the caller.
  */
 const HOUSE_NUMBER_DESIGNATOR = "addressIdentifierGeneral"
 
 /**
- * The `ad:level` of the administrative unit that carries the municipality name.
+ * The `ad:level` of the administrative unit that states the municipality name.
  *
  * An address references two `ad:AdminUnitName` features.
  * `gemeentenaam_44083` is `5thOrder` and resolves to the municipality `Deinze`.
  *
  * `refnis1995_1000` is `1stOrder` and resolves to the country (`België`).
- * Taking whichever arrives first would write `België` into the `locality` of some rows.
+ * A reader that takes whichever arrives first would write `België` into the `locality` of some rows.
  */
 const MUNICIPALITY_LEVEL = "5thOrder"
 
@@ -146,8 +146,8 @@ const MUNICIPALITY_LEVEL = "5thOrder"
  * for `straatnaam_138007`, with zero bytes above 0x7F in either body.
  *
  * Measured over 20,000 `ad:ThoroughfareName` values at twenty offsets,
- * 1,657 carry a `?` and 0 carry any non-ASCII character.
- * `ad:AdminUnitName` carries 34 of 609 and `ad:PostalDescriptor` 161 of 1,189 — and `ad:AdminUnitName`
+ * 1,657 have a `?` and 0 have any non-ASCII character.
+ * `ad:AdminUnitName` has 34 of 609 and `ad:PostalDescriptor` 161 of 1,189 — and `ad:AdminUnitName`
  * also serves `België` intact, so the loss is per-value rather than a service-wide transcode.
  *
  * No address component is written with a question mark, so a value holding one
@@ -279,24 +279,18 @@ export function componentResourceID(href: string): string | null {
 /**
  * A Flemish street name read apart from the homonym discriminator that follows it.
  *
- * `gn:text` on an `ad:ThoroughfareName` is not the street name alone: it is the name,
- * an underscore, and a discriminator that is usually empty.
- * Over 20,000 values at twenty offsets, 19,979 end with `_` and the remaining 21 carry a
- * discriminator after it — `Rue de Cronwez_01`, `Rue de Cronwez_02`, `Heide_01`, `Heide_02`,
- * `Kattenberg_BO`, `Kattenberg_EK`, `Ringlaan_ME`, `Ringlaan_BEWI`, `Berkenlaan_WI`,
- * `Weerstandlaan_BO`, `Weerstandlaan_HO`, `Cit? du Repos_01` through `_04`, `Rue du Roeulx_01`,
- * `Rue du Roeulx_02`, `Rue Verte_01`, `Rue Verte_02` and `Rue des Par?onniers_01`/`_02`.
+ * `gn:text` on an `ad:ThoroughfareName` states more than the street name: the name, an
+ * underscore, and a discriminator that is usually empty. Over 20,000 values at twenty offsets,
+ * 19,979 end with `_` and the remaining 21 have a discriminator after it.
  *
- * Exactly 21 values carry an `_` anywhere but at the end, and they are the same 21: no value holds
- * both a discriminator and a trailing separator, so the field is one separator at one position.
+ * Exactly 21 values have an `_` somewhere other than the end. Those same 21 values hold the only
+ * discriminators, so the field has one separator at one position.
  *
- * The same streets read through `ad:AddressRepresentation/ad:thoroughfare` carry
- * no separator at all, 0 of 10,000, which is the publisher's own evidence that
- * everything from the `_` onward is bookkeeping rather than name.
+ * The same streets read through `ad:AddressRepresentation/ad:thoroughfare` have no separator, 0 of
+ * 10,000. The publisher's own data therefore marks everything from the `_` onward as bookkeeping.
  *
- * So the split takes the last `_` and keeps the head.
- * Stripping only a trailing `_` would leave `Rue de Cronwez_01` in a corpus,
- * and keeping the whole value would leave `Acacialaan_`.
+ * The split takes the last `_` and keeps the head. That drops a trailing separator and any
+ * discriminator in one step.
  */
 export interface SplitStreetName {
 	/**
@@ -312,10 +306,9 @@ export interface SplitStreetName {
 /**
  * Splits an `ad:ThoroughfareName` `gn:text` value into its {@link SplitStreetName}.
  *
- * @throws {@linkcode VlaanderenHarvestError} when the value carries no `_`,
- * which no value of the 20,000 measured did.
- * That is a change in the publisher's field rather than an odd street, and guessing at
- * it would write a bookkeeping suffix into every row sharing the new shape.
+ * @throws {@linkcode VlaanderenHarvestError} when the value has no `_`. Every one of the 20,000
+ * measured values had one. That would be a change in the publisher's field. A guess at it would
+ * write a bookkeeping suffix into every row sharing the new shape.
  */
 export function splitStreetName(value: string): SplitStreetName {
 	const separator = value.lastIndexOf("_")
@@ -582,7 +575,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 
 						// A reference the harvest cannot answer is a street, postcode
 						// or locality this run could not read.
-						// Emitting the row without it would record an absence the publisher never stated.
+						// A row emitted without it would record an absence the publisher never stated.
 						if (unreadable || street === undefined || postcode === undefined || locality === undefined) {
 							refused.unjoined++
 
@@ -637,8 +630,8 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 					}
 
 					// A short page is a page this run could not read whole.
-					// Reading it as a smaller page would drop its tail silently,
-					// and a harvest of 457 pages hides one missing tail.
+					// A smaller-page read would drop its tail silently, and a harvest of
+					// 457 pages hides one missing tail.
 					const bounded = opts.limit !== undefined || Boolean(opts.signal?.aborted)
 
 					if (!bounded && seen !== page.numberReturned) {

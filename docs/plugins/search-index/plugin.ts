@@ -15,7 +15,7 @@ import { resolvePath } from "path-ts"
 import { SEARCH_INDEX_FILENAME } from "../../src/search/constants.ts"
 
 /**
- * Docusaurus loads this file through jiti, which cannot resolve `node:sqlite` or parse `using`.
+ * Docusaurus loads this file through jiti. That loader cannot resolve `node:sqlite` or parse `using`.
  *
  * The extractor and the writer load through the runtime's own module loader instead.
  * `process.getBuiltinModule` keeps jiti from rewriting the lookup of `node:module`.
