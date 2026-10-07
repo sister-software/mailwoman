@@ -14,8 +14,8 @@
  *   positions for Example Building C.
  *
  *   The scenario plans A, B and C. A and B share a proposed trench. C reaches an existing duct that a
- *   synthetic plant record verifies. Construction costs USD 13,000.00 for A alone, USD 16,000.00 for A
- *   and B, and USD 3,000.00 for C alone.
+ *   synthetic plant record verifies. Construction costs USD 13,000.00 for A only, USD 16,000.00 for A
+ *   and B, and USD 3,000.00 for C only.
  */
 
 import {

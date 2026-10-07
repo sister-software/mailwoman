@@ -21,7 +21,7 @@ EXPORT_ONNX = REPO_ROOT / "corpus-python" / "src" / "mailwoman_train" / "export"
 
 
 #: Files that run ruff. They must invoke `uv run ruff` so the [dev] pin in pyproject is the only
-#: version named anywhere. A `uvx ruff@<version>` here is a second pin that drifts.
+#: version cited anywhere. A `uvx ruff@<version>` here is a second pin that drifts.
 RUFF_CALL_SITES = (REPO_ROOT / "package.json", REPO_ROOT / ".husky" / "pre-commit")
 RUFF_UVX_RE = re.compile(r"uvx ruff@([0-9][^\s\"']*)")
 

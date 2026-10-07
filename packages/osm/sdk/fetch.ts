@@ -32,11 +32,11 @@ export function geofabrikURL(regionPath: string): string {
  * What one Geofabrik download retrieved, recorded beside the extract so a corpus
  * row can be traced to the exact bytes it was read from.
  *
- * `last_modified` is the server's `Last-Modified` header, which dates the OSM snapshot inside the file.
+ * `last_modified` is the server's `Last-Modified` header. It dates the OSM snapshot inside the file.
  * `retrieved_at` dates the download.
  *
- * A `-latest` URL serves a different file every day, so the URL alone does not
- * identify the bytes; `sha256` does.
+ * A `-latest` URL serves a different file every day, so the URL does not
+ * identify the bytes by itself; `sha256` does.
  */
 export interface GeofabrikExtractReceipt {
 	readonly region: string

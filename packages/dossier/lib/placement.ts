@@ -7,7 +7,7 @@
  *   building lies in an extent. It writes the extent as a layer reading writes it, so a reading over that
  *   extent can attach to the building.
  *
- *   A reading with a subject attaches to that building alone. A reading without one attaches to each
+ *   A reading with a subject attaches to that building only. A reading without one attaches to each
  *   building that a membership places in the reading's extent, and to no building otherwise. A position
  *   is a source's latitude and longitude for a building. Two positions that state different locations
  *   leave the building's position unresolved, and the answer lists both. The dossier computes no
@@ -77,7 +77,7 @@ export type PositionAnswer =
 /**
  * The buildings a layer reading attaches to.
  *
- * A reading with a subject attaches to that building alone.
+ * A reading with a subject attaches to that building only.
  * A reading without one attaches to each building that a membership places in the reading's extent.
  * An empty list means that neither rule places the reading.
  */

@@ -5,8 +5,9 @@
  *
  *   The docs search modal. A native `<dialog>` opened with `showModal()` supplies the focus trap, the inert
  *   background, the backdrop, the close on Escape and the return of focus to the opener. The query field is an
- *   `<input type="search">` with the ARIA combobox role. DOM focus stays on the input, and the selected hit is
- *   named by `aria-activedescendant`. The component owns no data access: `search` is passed in.
+ *   `<input type="search">` with the ARIA combobox role. DOM focus stays on the input, and
+ *   `aria-activedescendant` identifies the selected hit. The component owns no data access: `search` is
+ *   passed in.
  */
 
 import { type KeyboardEvent, type MouseEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react"
@@ -119,7 +120,7 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 	useEffect(() => {
 		if (debounced === "") return
 
-		// Aborting the earlier request is what keeps a late response from replacing newer results.
+		// The abort of the earlier request keeps a late response from replacing newer results.
 		const controller = new AbortController()
 		const loadingTimer = setTimeout(() => setLoading(true), LOADING_ANNOUNCE_MS)
 

@@ -105,9 +105,9 @@ export async function fetchNaturalEarthFile(
  *
  * `ISO_A2` holds `-99` for France and Norway and a subdivision code such as `FR-973`
  * for French Guiana, so the code is read from `ISO_A2_EH`.
- * The US Minor Outlying Islands carry `ISO_A2_EH` `US` and are told apart by `ADM0_A3` `UMI`.
+ * The US Minor Outlying Islands have `ISO_A2_EH` `US` and are told apart by `ADM0_A3` `UMI`.
  *
- * A disputed or special area, such as Bir Tawil or the Cyprus buffer zone, carries `-99` in both fields.
+ * A disputed or special area, such as Bir Tawil or the Cyprus buffer zone, has `-99` in both fields.
  */
 export function mapUnitJurisdiction(properties: NaturalEarthUnitProperties): string | undefined {
 	if (properties.ADM0_A3 === "UMI") return "UM"
