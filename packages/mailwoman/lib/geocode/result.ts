@@ -12,7 +12,7 @@ import { adminLadderForNodes } from "@mailwoman/resolver"
 import { adminCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
 import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode/tree-reads"
-import { assembleHierarchy, lineageAnchorNode } from "#hierarchy-lineage"
+import { assembleHierarchy, type HierarchySourceNode, lineageAnchorNode } from "#hierarchy-lineage"
 import { assembleStreetName } from "#street/name-assembly"
 
 /**
@@ -29,6 +29,17 @@ function resolverNamedNode(
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null) ??
 		null
 	)
+}
+
+function hierarchySourceNodeOf(node: AddressNode): HierarchySourceNode {
+	return {
+		tag: node.tag,
+		value: node.value,
+		lat: node.lat ?? null,
+		lon: node.lon ?? null,
+		placeID: node.placeID ?? null,
+		metadata: node.metadata ?? null,
+	}
 }
 
 function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedComponent[] {
@@ -158,7 +169,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	const primaryNode = resolverNamedNode(allNodes, lat, lon)
 
-	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? lineageAnchorNode(allNodes))
+	const sourceNodes = allNodes.map(hierarchySourceNodeOf)
+
+	const hierarchy = assembleHierarchy(
+		sourceNodes,
+		streetLocality,
+		adminWinnerNode ? hierarchySourceNodeOf(adminWinnerNode) : lineageAnchorNode(sourceNodes)
+	)
 
 	const candidates: GeocodeResult["candidates"] = []
 
@@ -230,7 +247,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		admin_coherence: adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
 		capital_promotion: capitalPromotionOf(tree),
-		variant_alias_exemption: variantAliasExemptionOf(tree) === true ? true : null,
+		variant_alias_exemption: variantAliasExemptionOf(tree),
 
 		intent_markers: [],
 		derivation: null,

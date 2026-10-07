@@ -22,8 +22,10 @@ export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "#pipeline/span-propos
 export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipeline/span-proposer"
 
 export {
+	DEFAULT_CASE_NORMALIZATION,
 	deriveInputMode,
 	InputModeSchema,
+	InputModeSelectionSchema,
 	PipelineFaultStage,
 	POIIntentSchema,
 	POIQueryResultSchema,
@@ -38,9 +40,11 @@ export {
 
 export type {
 	AddressClassifier,
+	CaseNormalization,
 	ClassifierOpts,
 	FSTMatcherLike,
 	InputMode,
+	InputModeSelection,
 	LocaleDetector,
 	LocaleHint,
 	MachinePreferences,
@@ -51,7 +55,7 @@ export type {
 	PipelineOpts,
 	PipelineResult,
 	PipelineTiming,
-	PlacetypePairPassthrough,
+	PlacetypePairSelection,
 	POIIntent,
 	POIQueryResult,
 	POIResult,
@@ -61,5 +65,8 @@ export type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
+	StageSource,
 	UserLocation,
+	WordConsistencyOpts,
+	WordConsistencySetting,
 } from "#pipeline/types"

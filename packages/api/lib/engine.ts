@@ -10,9 +10,9 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import type { InputModeSelection } from "@mailwoman/core/pipeline"
 
 import type { BatchResponse } from "#operations/geocode/batch"
-import type { RequestInputMode } from "#operations/input-mode"
 import type { ParseResponse } from "#operations/parse/address"
 import type { ReloadResponse } from "#operations/reload-data"
 import type { ResolveResponse } from "#operations/resolve-tree"
@@ -30,7 +30,7 @@ export interface ParseInit {
 	 * The input register; `formatted` runs the evidence-bundle channels off,
 	 * and `auto` derives it from the input.
 	 */
-	inputMode: RequestInputMode
+	inputMode: InputModeSelection
 	/**
 	 * Whether to include a diagnostic report.
 	 */

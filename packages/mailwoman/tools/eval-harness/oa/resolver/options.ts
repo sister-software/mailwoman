@@ -146,7 +146,7 @@ export interface OAResolverEvalOptions {
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
-	 * Tri-state pin: force `normalizeCase` on.
+	 * Pins `caseNormalization` to `"title-case"`.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -214,7 +214,7 @@ export interface OAResolverEvalOptions {
 	 */
 	profileJSON?: string
 	/**
-	 * Tri-state pin: force `normalizeCase` off.
+	 * Pins `caseNormalization` to `"preserve"`.
 	 */
 	rawCase?: boolean
 	/**

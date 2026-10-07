@@ -33,6 +33,7 @@ export async function thingQueryRefusalMarkers(
 			message:
 				"The query asks for a kind of place rather than an address — the address lanes abstain. " +
 				"Use the POI search surface (the pipeline's poiIntent stage / poi_search) for an answer.",
+			evidence: null,
 		})
 	}
 

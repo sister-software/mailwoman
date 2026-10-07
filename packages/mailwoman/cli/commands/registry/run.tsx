@@ -167,9 +167,9 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 				classifier,
 				resolver,
 				databases,
-				defaultCountry,
+				...(defaultCountry ? { defaultCountry } : {}),
 				interpCalibration: INTERP_RADIUS_CALIBRATION,
-				...(options.placeCountry ? {} : { placeCountry: false }),
+				...(options.placeCountry ? {} : { placeCountry: "none" }),
 			}),
 		country: defaultCountry,
 	})
@@ -217,7 +217,7 @@ export interface EvalGeocoderFlags {
 
 /**
  * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take,
- * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: false`,
+ * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: "none"`,
  * and `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
@@ -253,8 +253,8 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 				resolver,
 				databases: regionDatabaseProvider.for,
 				defaultCountry: "US",
-				placeCountry: false,
-				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
+				placeCountry: "none",
+				...(init?.caseNormalization ? { caseNormalization: init.caseNormalization } : {}),
 			})
 
 		const geocodeForIngest = geocodeAddressVia({

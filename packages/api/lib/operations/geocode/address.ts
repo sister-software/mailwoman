@@ -7,11 +7,11 @@
 import { APIErrorSchema, stampedResponseSchema } from "@mailwoman/api-kit"
 import { type APIOperation, type APIOperationSchema, Ref } from "@mailwoman/api-kit/operation"
 import { GeocodeResultSchema } from "@mailwoman/core/geocode"
+import { InputModeSelectionSchema } from "@mailwoman/core/pipeline"
 import { z } from "zod"
 
 import { MAX_ADDRESS_LENGTH } from "#input-limits"
 import { GeocoderUnavailableErrorSchema } from "#operations/errors"
-import { RequestInputModeSchema } from "#operations/input-mode"
 import { GeocodingTag } from "#operations/tags"
 
 /**
@@ -20,7 +20,7 @@ import { GeocodingTag } from "#operations/tags"
 export const GeocodeRequestSchema = z
 	.object({
 		address: z.string().max(MAX_ADDRESS_LENGTH),
-		input_mode: RequestInputModeSchema.default("auto"),
+		input_mode: InputModeSelectionSchema.default("auto"),
 	})
 	.meta({ id: "GeocodeRequest" })
 

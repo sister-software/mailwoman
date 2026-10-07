@@ -271,7 +271,7 @@ async function main() {
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
 			enforceWordConsistency: parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null),
-			...(normalizeCasePin !== undefined ? { normalizeCase: normalizeCasePin } : {}),
+			...(normalizeCasePin !== undefined ? { caseNormalization: normalizeCasePin ? "title-case" : "preserve" } : {}),
 		})
 
 		const flat = decodeAsJSON(tree) as Record<string, string>

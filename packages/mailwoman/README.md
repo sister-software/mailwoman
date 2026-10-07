@@ -143,7 +143,7 @@ ones you'll reach for most:
 const parse = createRuntimePipeline({
 	classifier,
 	resolver, // optional — see "Geocoding" below
-	normalizeCase: true, // title-case detected all-caps input before the model (default: off)
+	caseNormalization: "title-case", // title-case detected all-caps input before the model (the default)
 })
 
 await parse("350 5TH AVE, NEW YORK, NY 10118", {

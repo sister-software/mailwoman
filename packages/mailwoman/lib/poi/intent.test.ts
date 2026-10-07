@@ -160,7 +160,8 @@ describe("createPOIIntentStage", () => {
 
 		expect(outcome).toEqual({
 			type: "intent",
-			intent: { subject: { kind: "name", text: "Statue of Liberty" } },
+			intent: { subject: { kind: "name", text: "Statue of Liberty" }, relation: null, anchor: null, limit: null },
+			results: null,
 		})
 	})
 
@@ -185,7 +186,13 @@ describe("createPOIIntentStage", () => {
 
 		if (outcome?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({ kind: "category", categoryIDs: ["hospital"], matched: "hospital" })
+		expect(outcome.intent.subject).toEqual({
+			kind: "category",
+			categoryIDs: ["hospital"],
+			matched: "hospital",
+			countryBinding: null,
+		})
+
 		expect(outcome.intent.anchor?.text).toBe("Springfield IL")
 		expect(outcome.intent.relation).toBe("near")
 		expect(parsed).toEqual(["Springfield IL"])
@@ -362,7 +369,7 @@ describe("The place binding of a country-scoped claim", () => {
 
 		if (outcome?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
+		expect(outcome.intent.subject).toHaveProperty("countryBinding", null)
 	})
 
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
@@ -382,7 +389,7 @@ describe("The place binding of a country-scoped claim", () => {
 	})
 })
 
-const HERMETIC = { placeCountry: false as const, streetEvidence: false as const }
+const HERMETIC = { placeCountry: "none" as const, streetEvidence: "none" as const }
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
 	it("ON by default: a category phrase takes the poi path without opting in", async () => {
@@ -397,8 +404,8 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.intentMarkers.map((m) => m.code)).toEqual(["poi_category"])
 	})
 
-	it("OFF: poiQueryKind: false disables the poi path entirely", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: false })
+	it("OFF: poiQueryKind: none disables the poi path entirely", async () => {
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "none" })
 		const result = await pipeline("hospital")
 
 		expect(result.path).not.toBe("poi")
@@ -407,7 +414,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a category phrase takes the poi path end-to-end", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("hospital near Springfield")
 
 		expect(result.path).toBe("poi")
@@ -419,6 +426,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			kind: "category",
 			categoryIDs: ["hospital"],
 			matched: "hospital",
+			countryBinding: null,
 		})
 
 		expect(result.poiIntent.intent.anchor?.text).toBe("Springfield")
@@ -433,7 +441,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		["churches near Church of the Holy Sepulchre", "place_of_worship", "near", "Church of the Holy Sepulchre"],
 		["places of worship in Stratford-upon-Avon", "place_of_worship", "in", "Stratford-upon-Avon"],
 	] as const)("keeps span-first POI semantics for %s", async (query, categoryID, relation, anchor) => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline(query, { locale: "en-GB" })
 
 		expect(result.path).toBe("poi")
@@ -457,7 +465,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		["restaurant in 東京", "ja-JP", "restaurant", "東京"],
 		["hotel near Санкт-Петербург", "ru-RU", "hotel", "Санкт-Петербург"],
 	] as const)("preserves the multilingual anchor in %s", async (query, locale, categoryID, anchor) => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline(query, { locale })
 
 		expect(result.path).toBe("poi")
@@ -474,7 +482,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	it.each(["Carmel-by-the-Sea", "12 Carmel-by-the-Sea Road", "Church of the Holy Sepulchre"])(
 		"does not route the control %s as a category query",
 		async (query) => {
-			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 			const result = await pipeline(query, { locale: "en-GB" })
 
 			expect(result.path).not.toBe("poi")
@@ -568,7 +576,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a plain address stays on the normal path", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("350 5th Ave, New York, NY 10118")
 
 		expect(result.path).not.toBe("poi")
@@ -576,7 +584,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a bare build-local-only category (neither local layer nor db) abstains", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("fire hydrant")
 
 		expect(result.path).toBe("poi")
@@ -621,7 +629,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		if (first.poiIntent?.type !== "intent") throw new Error("unreachable")
 
-		expect(first.poiIntent.results).toBeUndefined()
+		expect(first.poiIntent.results).toBeNull()
 
 		const second = await pipeline("hospital near Springfield")
 		expect(second.poiIntent?.type).toBe("intent")

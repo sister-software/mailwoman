@@ -397,7 +397,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  */
 async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
-	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
+	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
 	const result = await pipeline(input, { locale: options.locale })
 	emitFaultWarnings(result)
 
@@ -500,7 +500,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	// The `undefined` value keeps the pipeline's default street-evidence rerank.
 	// A `false` value disables it.
-	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
+	const streetEvidence = options.streetEvidenceRerank ? "auto" : "none"
 
 	const { createRuntimePipeline } = await import("#index")
 
@@ -511,9 +511,9 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 			const pipeline = createRuntimePipeline({
 				classifier: classifier ?? undefined,
 				resolver,
-				fst: fst ?? undefined,
+				fst: fst ?? "auto",
 				streetEvidence,
-				poiQueryKind: options.poi,
+				poiQueryKind: options.poi ? "extract" : "none",
 			})
 
 			const result = await pipeline(input, pipelineOpts)
@@ -529,9 +529,9 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	const pipeline = createRuntimePipeline({
 		classifier: classifier ?? undefined,
-		fst: fst ?? undefined,
+		fst: fst ?? "auto",
 		streetEvidence,
-		poiQueryKind: options.poi,
+		poiQueryKind: options.poi ? "extract" : "none",
 	})
 
 	const result = await pipeline(input, pipelineOpts)
@@ -621,9 +621,17 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>
-				collect(createRuntimePipeline({ classifier: classifier ?? undefined, resolver, poiQueryKind: options.poi }))
+				collect(
+					createRuntimePipeline({
+						classifier: classifier ?? undefined,
+						resolver,
+						poiQueryKind: options.poi ? "extract" : "none",
+					})
+				)
 			)
-		: await collect(createRuntimePipeline({ classifier: classifier ?? undefined, poiQueryKind: options.poi }))
+		: await collect(
+				createRuntimePipeline({ classifier: classifier ?? undefined, poiQueryKind: options.poi ? "extract" : "none" })
+			)
 
 	const lines: string[] = [
 		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,

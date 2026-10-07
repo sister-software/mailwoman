@@ -383,7 +383,7 @@ describe("a seeded punctuation regression", () => {
 				unit: null,
 				postcode_country_scope: null,
 				capital_promotion: null,
-				variant_alias_exemption: null,
+				variant_alias_exemption: "not_applied",
 				admin_coherence: null,
 				hierarchy: [],
 			},

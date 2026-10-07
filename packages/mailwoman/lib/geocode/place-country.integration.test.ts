@@ -27,13 +27,13 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 const emptyTree: AddressTree = { raw: "x", roots: [] }
 
 describe("GeocodeAddress — coarse-placer soft prior", () => {
-	test("placeCountry: false ⇒ no anchorPosterior (the disable / byte-stable path)", async () => {
+	test("placeCountry: none ⇒ no anchorPosterior (the disable / byte-stable path)", async () => {
 		const { resolver, seen } = captureResolver()
 
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 		})
 
 		expect(seen[0]?.anchorPosterior).toBeUndefined()

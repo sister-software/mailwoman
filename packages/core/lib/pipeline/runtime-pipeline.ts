@@ -12,9 +12,15 @@ import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { errorMessage } from "#errors/schema"
-import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "#pipeline/types"
+import {
+	DEFAULT_CASE_NORMALIZATION,
+	PipelineFaultStage,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+	deriveInputMode,
+} from "#pipeline/types"
 import type {
 	AddressClassifier,
+	CaseNormalization,
 	FSTMatcherLike,
 	InputMode,
 	LocaleHint,
@@ -22,7 +28,7 @@ import type {
 	PipelineFault,
 	PipelineOpts,
 	PipelineResult,
-	PlacetypePairPassthrough,
+	PlacetypePairSelection,
 	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
@@ -377,11 +383,11 @@ export async function runPipeline(
 		const tClassify = performance.now()
 
 		tree = await safeClassify(faults, stages.classifier, normalized.normalized, queryShape, {
-			fst: stages.fst,
-			normalizeCase: opts?.normalizeCase,
-			placetypePair: opts?.placetypePair,
-			streetMorphology: stages.streetMorphology,
-			inputMode: opts?.inputMode ?? deriveInputMode(kind.kind),
+			fst: stages.fst ?? null,
+			caseNormalization: opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
+			placetypePair: opts?.placetypePair ?? "inherit",
+			streetMorphology: stages.streetMorphology ?? null,
+			inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
 		})
 
 		timing["token-classify"] = performance.now() - tClassify
@@ -455,25 +461,24 @@ async function safeClassify(
 	text: string,
 	queryShape: QueryShapeLite,
 	knobs: {
-		fst?: FSTMatcherLike | null
-		normalizeCase?: boolean
-		placetypePair?: PlacetypePairPassthrough
-		streetMorphology?: FSTMatcherLike | null
-		inputMode?: InputMode
-	} = {}
+		fst: FSTMatcherLike | null
+		caseNormalization: CaseNormalization
+		placetypePair: PlacetypePairSelection
+		streetMorphology: FSTMatcherLike | null
+		inputMode: InputMode
+	}
 ): Promise<AddressTree> {
-	const { fst, normalizeCase, placetypePair, streetMorphology, inputMode } = knobs
+	const { fst, caseNormalization, placetypePair, streetMorphology, inputMode } = knobs
 
 	try {
-		// The spreads omit unset options so the classifier keeps its own defaults.
 		return await classifier.parse(text, {
 			queryShape,
 			inputMode,
 			fst,
 			postcodeRepair: true,
-			normalizeCase,
+			caseNormalization,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			...(placetypePair !== undefined ? { placetypePair } : {}),
+			placetypePair,
 			...streetContextRequirementFor({ fst, streetMorphology }),
 		})
 	} catch (error) {

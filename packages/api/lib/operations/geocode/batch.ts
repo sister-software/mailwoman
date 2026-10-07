@@ -7,11 +7,11 @@
 import { APIErrorSchema, stampedResponseSchema } from "@mailwoman/api-kit"
 import { type APIOperation, type APIOperationSchema, Ref } from "@mailwoman/api-kit/operation"
 import { GeocodeResultSchema } from "@mailwoman/core/geocode"
+import { InputModeSelectionSchema } from "@mailwoman/core/pipeline"
 import { z } from "zod"
 
 import { MAX_ADDRESS_LENGTH } from "#input-limits"
 import { GeocoderUnavailableErrorSchema } from "#operations/errors"
-import { RequestInputModeSchema } from "#operations/input-mode"
 import { GeocodingTag } from "#operations/tags"
 
 /**
@@ -27,7 +27,7 @@ export const BatchRequestSchema = z
 		 *
 		 * It defaults to `"formatted"`, because batch rows are the record register by nature.
 		 */
-		input_mode: RequestInputModeSchema.default("formatted"),
+		input_mode: InputModeSelectionSchema.default("formatted"),
 	})
 	.meta({ id: "BatchRequest" })
 

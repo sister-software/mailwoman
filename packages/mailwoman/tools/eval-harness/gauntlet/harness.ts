@@ -8,7 +8,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import type { AdminCoherenceReport, GeocodeResult } from "@mailwoman/core/geocode"
+import type { AdminCoherenceReport, GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
@@ -630,7 +630,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// Same lexicon-aware kind classifier the CLI session wires, so the harness grades the user's path.
 			classifyKind: poiKindClassifier,
 			// Unset on every shipping path, so the register comes from the verdict as production derives it.
-			...(opts.forceQueryKind ? { inputMode: deriveInputMode(opts.forceQueryKind) } : {}),
+			...(opts.forceQueryKind ? { inputMode: deriveInputMode("auto", opts.forceQueryKind) } : {}),
 			resolver,
 			databases: regionDatabaseProvider.for,
 			nationalDatabases: banProvider.for,
@@ -716,10 +716,10 @@ export interface GauntletResult {
 	 */
 	capital_promotion: string | null
 	/**
-	 * The variant-exemption firing receipt, projected verbatim: `true` when the exemption
-	 * spared the winning candidate the cross-country alias penalty, and null otherwise.
+	 * The variant-exemption firing receipt, projected verbatim: `applied` when the exemption
+	 * spared the winning candidate the cross-country alias penalty, and `not_applied` otherwise.
 	 */
-	variant_alias_exemption: true | null
+	variant_alias_exemption: VariantAliasExemption
 	/**
 	 * The resolved admin chain, locality → country, verbatim from
 	 * {@linkcode GeocodeResult.hierarchy}; Cases do not assert this value.
@@ -765,7 +765,7 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
 		capital_promotion: g.capital_promotion ?? null,
-		variant_alias_exemption: g.variant_alias_exemption === true ? true : null,
+		variant_alias_exemption: g.variant_alias_exemption,
 		admin_coherence: g.admin_coherence ?? null,
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,

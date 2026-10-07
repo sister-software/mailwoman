@@ -186,7 +186,7 @@ export function createPOIIntentStage(
 						? {
 								kind: "brand",
 								name: matched.match.categoryID,
-								wikidata: matched.match.wikidata,
+								wikidata: matched.match.wikidata ?? null,
 								matched: matched.match.matchedPhrase,
 							}
 						: {
@@ -194,16 +194,16 @@ export function createPOIIntentStage(
 
 								categoryIDs: [...new Set(matched.matches.map((hit) => hit.categoryID))],
 								matched: matched.match.matchedPhrase,
+								countryBinding: null,
 							},
-		}
-
-		if (matched.relation) {
-			intent.relation = matched.relation
+			relation: matched.relation ?? null,
+			anchor: null,
+			limit: null,
 		}
 
 		if (matched.remainder) {
 			const anchor = await deps.parseAnchor(matched.remainder, opts)
-			intent.anchor = { text: matched.remainder, tree: anchor.tree }
+			intent.anchor = { text: matched.remainder, tree: anchor.tree, biasPoint: null, radiusM: null }
 		}
 
 		if (intent.subject.kind === "category") {
@@ -223,7 +223,7 @@ export function createPOIIntentStage(
 			}
 		}
 
-		return deps.execute ? deps.execute(intent) : { type: "intent", intent }
+		return deps.execute ? deps.execute(intent) : { type: "intent", intent, results: null }
 	}
 }
 

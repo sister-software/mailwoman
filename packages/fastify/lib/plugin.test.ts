@@ -100,7 +100,17 @@ describe("@mailwoman/fastify", () => {
 	it("POST /v1/poi returns the pipeline's POI intent when a database is configured", async () => {
 		const poiIntent = {
 			type: "intent" as const,
-			intent: { subject: { kind: "category" as const, categoryIDs: ["eat_and_drink.coffee"], matched: "coffee" } },
+			intent: {
+				subject: {
+					kind: "category" as const,
+					categoryIDs: ["eat_and_drink.coffee"],
+					matched: "coffee",
+					countryBinding: null,
+				},
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [],
 		}
 
@@ -112,7 +122,7 @@ describe("@mailwoman/fastify", () => {
 		const res = await app.inject({ method: "POST", url: "/v1/poi", payload: { query: "coffee near Union Square" } })
 
 		expect(res.statusCode).toBe(200)
-		expect(res.json()).toMatchObject({ type: "intent" })
+		expect(res.json()).toMatchObject({ type: "intent", results: [] })
 	})
 
 	it("POST /v1/poi answers 501 with a clean envelope when no poiDatabasePath is configured", async () => {

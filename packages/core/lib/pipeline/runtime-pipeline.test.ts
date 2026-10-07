@@ -241,7 +241,9 @@ describe("runPipeline — stage composition", () => {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-
+			fst: null,
+			caseNormalization: "title-case",
+			placetypePair: "inherit",
 			inputMode: "formatted",
 		})
 	})
@@ -252,10 +254,24 @@ describe("runPipeline — stage composition", () => {
 		expect(classifier.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ inputMode: "fragmented" }))
 	})
 
-	it("Threads PipelineOpts.normalizeCase to classifier.parse", async () => {
+	it("Threads PipelineOpts.caseNormalization to classifier.parse", async () => {
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
-		await runPipeline("214 JONES RD", { classifier }, { normalizeCase: true })
-		expect(classifier.parse).toHaveBeenCalledWith("214 JONES RD", expect.objectContaining({ normalizeCase: true }))
+		await runPipeline("214 JONES RD", { classifier }, { caseNormalization: "preserve" })
+
+		expect(classifier.parse).toHaveBeenCalledWith(
+			"214 JONES RD",
+			expect.objectContaining({ caseNormalization: "preserve" })
+		)
+	})
+
+	it("Defaults caseNormalization to title-case and placetypePair to inherit", async () => {
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
+		await runPipeline("214 JONES RD", { classifier })
+
+		expect(classifier.parse).toHaveBeenCalledWith(
+			"214 JONES RD",
+			expect.objectContaining({ caseNormalization: "title-case", placetypePair: "inherit" })
+		)
 	})
 
 	it("skips resolver when not wired", async () => {

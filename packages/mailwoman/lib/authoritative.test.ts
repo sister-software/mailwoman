@@ -41,7 +41,7 @@ function testDeps(): GeocodeDeps {
 		capabilityGaps: null,
 	}
 
-	return { classifier, resolver, placeCountry: false }
+	return { classifier, resolver, placeCountry: "none" }
 }
 
 const INPUT = "1 Example Terrace, Testtown TT1 1TT"

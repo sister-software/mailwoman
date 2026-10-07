@@ -19,7 +19,13 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
-import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import {
+	DEFAULT_CASE_NORMALIZATION,
+	proposeSpans,
+	type ProposedSpan,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+	type WordConsistencySetting,
+} from "@mailwoman/core/pipeline"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
@@ -234,9 +240,12 @@ export class NeuralAddressClassifier {
 
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (!text) return { raw: text, roots: [] }
+
 		// The model trained on mixed case, so this converts all-caps ASCII input to title case.
 		// The conversion preserves length and keeps offsets valid.
-		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const modelText =
+			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
+
 		const { tokens, localeCountry } = await this.#decode(modelText, opts)
 
 		return treeWithLocaleCountry(
@@ -256,7 +265,9 @@ export class NeuralAddressClassifier {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
 
-		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const modelText =
+			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
+
 		const { tokens, logits, pieces, localeCountry } = await this.#decode(modelText, opts)
 
 		return {
@@ -308,7 +319,9 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const modelText =
+			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
+
 		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
 
 		if (!trace) throw new Error("traceParse: #decode returned no trace despite trace=true (invariant)")
@@ -520,7 +533,15 @@ export class NeuralAddressClassifier {
 		// The placetype-pair prior stays off unless options or config enable it.
 		// It runs before the conventions mask, so the mask still removes any
 		// forbidden tag that the prior favors.
-		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
+		const placetypePairSelection = opts?.placetypePair ?? "inherit"
+
+		const placetypePairOpt =
+			placetypePairSelection === "inherit"
+				? this.cfg.placetypePair
+				: placetypePairSelection === "off"
+					? undefined
+					: placetypePairSelection
+
 		// This record, allocated only when tracing, receives the probe path that fired.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
 		// The census is probed only when tracing.
@@ -629,14 +650,13 @@ export class NeuralAddressClassifier {
 		// The default matches the shipped pipeline so a bare classifier decodes as
 		// production does, but the character path never runs the repair because unspaced
 		// text such as a Japanese address would become one word.
-		const wordConsistency = this.cfg.charEncoder
-			? false
+		const wordConsistency: WordConsistencySetting = this.cfg.charEncoder
+			? "off"
 			: (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT)
 
-		if (wordConsistency) {
+		if (wordConsistency !== "off") {
 			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
-			const wcOpts = typeof wordConsistency === "object" ? wordConsistency : undefined
-			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices, wcOpts)
+			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices, wordConsistency)
 			labelIndices = wc.labelIndices
 			healedConfidence = wc.healedConfidence
 

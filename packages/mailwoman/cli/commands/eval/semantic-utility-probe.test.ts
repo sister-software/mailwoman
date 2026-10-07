@@ -67,7 +67,12 @@ async function scratchPair(
 	return { definitionPath, freezePath }
 }
 
-const pharmacyIntent: POIIntent = { subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy" } }
+const pharmacyIntent: POIIntent = {
+	subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy", countryBinding: null },
+	relation: null,
+	anchor: null,
+	limit: null,
+}
 
 const pharmacyResult: POIResult = {
 	name: "Some Pharmacy",
@@ -78,6 +83,8 @@ const pharmacyResult: POIResult = {
 	country: "US",
 	confidence: 0.9,
 	gersID: "gers-1",
+	ancestry: null,
+	distanceM: null,
 }
 
 function counts(overrides: Partial<ProbeCounts> = {}): ProbeCounts {
@@ -244,7 +251,7 @@ describe("the outcome-shape vocabulary", () => {
 			"poi_abstain"
 		)
 
-		expect(poiOutcomeShape({ path: "poi", poiIntent: { type: "intent", intent: pharmacyIntent } })).toBe(
+		expect(poiOutcomeShape({ path: "poi", poiIntent: { type: "intent", intent: pharmacyIntent, results: null } })).toBe(
 			"poi_intent_no_results"
 		)
 

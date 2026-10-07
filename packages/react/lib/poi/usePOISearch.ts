@@ -83,9 +83,7 @@ export interface UsePOISearch {
 
 function buildOverpass(
 	runtime: POIRuntime,
-	categoryID: string,
-	matchedPhrase: string,
-	remainder: string
+	categoryID: string
 ): { overpassQL: string | null; overpassError: string | null } {
 	const category = runtime.lookup.getPOICategory(categoryID)
 
@@ -94,8 +92,8 @@ function buildOverpass(
 	}
 
 	const intent: OverpassIntentLike = {
-		subject: { kind: "category", categoryIDs: [categoryID], matched: matchedPhrase },
-		...(remainder ? { anchor: { text: remainder } } : {}),
+		subject: { kind: "category", categoryIDs: [categoryID] },
+		anchor: null,
 	}
 
 	try {
@@ -210,7 +208,7 @@ export function usePOISearch({
 						remainder: matched.remainder,
 						buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
 					},
-					...buildOverpass(runtime, matched.match.categoryID, matched.match.matchedPhrase, matched.remainder),
+					...buildOverpass(runtime, matched.match.categoryID),
 				},
 			})
 		})

@@ -15,7 +15,13 @@ describe("poi_query pipeline branch", () => {
 	it("routes to stages.poiIntent and returns path 'poi' with the outcome", async () => {
 		const outcome: POIQueryResult = {
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
+			results: null,
 		}
 
 		const result = await runPipeline("hospital", {
@@ -48,9 +54,12 @@ describe("poi_query pipeline branch", () => {
 		const outcome: POIQueryResult = {
 			type: "intent",
 			intent: {
-				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-				anchor: { text: "Springfield IL", tree: anchorTree },
+				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+				anchor: { text: "Springfield IL", tree: anchorTree, biasPoint: null, radiusM: null },
+				relation: null,
+				limit: null,
 			},
+			results: null,
 		}
 
 		const result = await runPipeline("hospital near Springfield IL", {

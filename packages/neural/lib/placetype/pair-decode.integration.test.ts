@@ -95,7 +95,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const classifier = new NeuralAddressClassifier({
 			tokenizer,
 			runner: new FakeRunner(logits),
-			enforceWordConsistency: true,
+			enforceWordConsistency: {},
 		})
 
 		// Baseline sanity: without the prior this weak/fragmented logit set triggers a heal.

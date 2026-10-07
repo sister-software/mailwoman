@@ -6,10 +6,10 @@
 
 import { APIErrorSchema } from "@mailwoman/api-kit"
 import type { APIOperation, APIOperationSchema } from "@mailwoman/api-kit/operation"
+import { InputModeSelectionSchema } from "@mailwoman/core/pipeline"
 import { z } from "zod"
 
 import { NotImplementedErrorSchema } from "#operations/errors"
-import { RequestInputModeSchema } from "#operations/input-mode"
 import { StampedParseResponseSchema } from "#operations/parse/address"
 import { ParsingTag } from "#operations/tags"
 
@@ -19,7 +19,7 @@ import { ParsingTag } from "#operations/tags"
 export const ParseQuerySchema = z.object({
 	address: z.string().optional().meta({ description: "The address to parse." }),
 	debug: z.enum(["true", "false"]).default("false").meta({ description: '`"true"` to include a diagnostic report.' }),
-	input_mode: RequestInputModeSchema.default("auto"),
+	input_mode: InputModeSelectionSchema.default("auto"),
 })
 
 const ParseAddressQuery = {

@@ -68,7 +68,7 @@ describe.skipIf(!haveModel)("sequence-length clamp", () => {
 		const classifier = await enUSClassifier()
 		const long = PREFIX.repeat(6) + TAIL
 
-		await expect(classifier.parse(long, { enforceWordConsistency: false })).resolves.toBeDefined()
+		await expect(classifier.parse(long, { enforceWordConsistency: "off" })).resolves.toBeDefined()
 		await expect(classifier.traceParse(long)).resolves.toBeDefined()
 	})
 

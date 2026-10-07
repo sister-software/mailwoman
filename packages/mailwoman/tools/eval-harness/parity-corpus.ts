@@ -189,7 +189,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				queryShape: computeQueryShape(fixture.input),
 				...(fstStreetMorphology ? { fstStreetMorphology } : {}),
 				...(fstGazetteer ? { fst: fstGazetteer } : {}),
-				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
+				enforceWordConsistency: options.wordConsistency === false ? "off" : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
 

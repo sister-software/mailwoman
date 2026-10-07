@@ -42,7 +42,7 @@ export interface POIExecutorOpts {
 	 * Looks up a result's WOF ancestry, deepest first.
 	 *
 	 * The lookup must be synchronous.
-	 * Results get no `ancestry` key when it is missing or returns no entries.
+	 * A result's `ancestry` is `null` when it is missing or returns no entries.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<WOFAncestor> | null
 }
@@ -61,6 +61,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 	return (intent: POIIntent): POIQueryResult => {
 		const { subject } = intent
+		const limit = intent.limit !== null ? { limit: intent.limit } : {}
 
 		const buildLocalCategory = subject.kind === "category" && subject.categoryIDs.every(requiresBuildLocal)
 
@@ -69,7 +70,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		}
 
 		if (!lookup) {
-			return { type: "intent", intent }
+			return { type: "intent", intent, results: null }
 		}
 
 		if (subject.kind === "name") {
@@ -78,7 +79,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			const results = lookup.search({
 				name: subject.text,
 				...(center ? { center } : {}),
-				limit: intent.limit,
+				...limit,
 			})
 
 			return { type: "intent", intent, results: results.map(toResult) }
@@ -92,8 +93,8 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 		if (subject.kind === "brand") {
 			const query: POISearchQuery = subject.wikidata
-				? { brandWikidata: subject.wikidata, center, limit: intent.limit }
-				: { name: subject.name, center, limit: intent.limit }
+				? { brandWikidata: subject.wikidata, center, ...limit }
+				: { name: subject.name, center, ...limit }
 
 			return { type: "intent", intent, results: lookup.search(query).map(toResult) }
 		}
@@ -103,7 +104,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		const results = lookup.search({
 			categoryIDs: [...canonicalByLeaf.keys()],
 			center,
-			limit: intent.limit,
+			...limit,
 		})
 
 		if (buildLocalCategory && !results.length) {
@@ -203,6 +204,7 @@ function toPOIResult(hit: POISearchHit): POIResult {
 		country: hit.country,
 		confidence: hit.confidence,
 		gersID: hit.gersID,
-		...(hit.distanceM !== null ? { distanceM: hit.distanceM } : {}),
+		ancestry: null,
+		distanceM: hit.distanceM,
 	}
 }

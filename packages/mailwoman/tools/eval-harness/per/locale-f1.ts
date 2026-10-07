@@ -94,7 +94,7 @@ export interface PerLocaleF1Options {
 	bridgeGaps?: boolean
 	outJSON?: string
 	/**
-	 * Disable the all-caps title-case shim (`normalizeCase: false`), the all-caps read.
+	 * Disable the all-caps title-case shim (`caseNormalization: "preserve"`), the all-caps read.
 	 * Default false.
 	 */
 	rawCase?: boolean
@@ -498,7 +498,7 @@ export async function perLocaleF1(
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
 				// `--raw-case` disables the all-caps title-case shim.
 				// The shim would hide the model's own case handling from this measurement.
-				...(args.rawCase ? { normalizeCase: false } : {}),
+				...(args.rawCase ? { caseNormalization: "preserve" } : {}),
 			})
 
 			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country ?? null))

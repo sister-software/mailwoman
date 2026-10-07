@@ -148,9 +148,9 @@ export interface GeocodeTrace {
 	queryShape: QueryShape
 
 	/**
-	 * The kind verdict behind {@link inputMode}, absent when the caller set the input mode.
+	 * The kind verdict behind {@link inputMode}, or `null` when the caller set the input mode.
 	 */
-	kind?: QueryKindResult
+	kind: QueryKindResult | null
 	inputMode: InputMode
 
 	/**
@@ -598,7 +598,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const parseDeps: Pick<
 		GeocodeDeps,
-		"classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"
+		"classifier" | "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
@@ -614,7 +614,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			return {
 				parse: await routed.traceParse(inputs.parseInput, inputs.opts),
 				queryShape: inputs.queryShape,
-				...(inputs.kind ? { kind: inputs.kind } : {}),
+				kind: inputs.kind,
 				inputMode: inputs.inputMode,
 				locale: options.locale,
 			}
@@ -663,7 +663,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
-			defaultCountry: (inferredScopeOK && localeCountry) || null,
+			...(inferredScopeOK && localeCountry ? { defaultCountry: localeCountry } : {}),
 
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
@@ -681,7 +681,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 
-			placeCountry: placer ? (t: string) => placer.predict(t) : false,
+			placeCountry: placer ? (t: string) => placer.predict(t) : "none",
 
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,

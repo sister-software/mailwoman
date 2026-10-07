@@ -65,7 +65,7 @@ function routingKey(text: string, classify: (i: NormalizedInputLite, s: QuerySha
 	const input: NormalizedInputLite = { raw: text, normalized: text }
 	const verdict = classify(input, computeQueryShape(text))
 
-	return `${verdict.kind}|${verdict.confidence}|${deriveInputMode(verdict.kind)}`
+	return `${verdict.kind}|${verdict.confidence}|${deriveInputMode("auto", verdict.kind)}`
 }
 
 let corpus: string[] = []

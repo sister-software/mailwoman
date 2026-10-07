@@ -157,7 +157,11 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
 		expect(placetypePair).not.toBeNull()
 
-		const json = await result.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
+		const json = await result.classifier.parseJSON("Shoreditch London", {
+			spanProposer: false,
+			placetypePair: placetypePair ?? "inherit",
+		})
+
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
 	})
@@ -177,7 +181,11 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const placetypePair = loaded.selectPairIndexForText("Shoreditch London")
 		expect(placetypePair).toBeNull()
 
-		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
+		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", {
+			spanProposer: false,
+			placetypePair: placetypePair ?? "inherit",
+		})
+
 		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
 		expect(loadedJSON).toEqual(priorFreeJSON)

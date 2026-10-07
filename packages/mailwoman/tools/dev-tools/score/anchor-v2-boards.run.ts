@@ -48,7 +48,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 })
 
-const pipeline = createRuntimePipeline({ classifier, ...(values["raw-case"] ? { normalizeCase: false } : {}) })
+const pipeline = createRuntimePipeline({ classifier, ...(values["raw-case"] ? { caseNormalization: "preserve" } : {}) })
 
 interface Miss {
 	register: Register
@@ -125,7 +125,9 @@ if (board === "gb") {
 		}
 	}
 
-	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} · normalizeCase ${!values["raw-case"]} ===`)
+	console.log(
+		`\n=== gb-golden · ${values.label} · locale ${locale} · caseNormalization ${values["raw-case"] ? "preserve" : "title-case"} ===`
+	)
 	console.log("board                                   hit/total   per register")
 
 	reportBoard("exact postcode", postcode)

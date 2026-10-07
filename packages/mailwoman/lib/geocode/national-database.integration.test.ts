@@ -44,7 +44,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			defaultCountry: "FR",
 			nationalDatabases: frRegister,
 			osmDatabases: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
@@ -61,7 +61,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("Hauptstraße 5, Berlin", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			defaultCountry: "DE",
 			nationalDatabases: frRegister,
 			osmDatabases: (c) => (c === "de" ? { addressPoints: osmLookup } : {}),
@@ -79,7 +79,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("350 5th Ave, New York, NY 10118", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			defaultCountry: "US",
 			nationalDatabases,
 		})
@@ -95,7 +95,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("Place Bellecour, Lyon", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			defaultCountry: "FR",
 			nationalDatabases: (c) => (c === "fr" ? { streetCentroids: streetLookup } : {}),
 		})
@@ -113,7 +113,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("Place Bellecour, Lyon", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			defaultCountry: "FR",
 		})
 
@@ -127,7 +127,7 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			defaultCountry: "FR",
 			osmDatabases: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
 		})

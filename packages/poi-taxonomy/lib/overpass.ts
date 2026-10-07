@@ -29,22 +29,13 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
  */
 export interface OverpassIntentLike {
 	subject:
-		| { kind: "category"; categoryIDs: string[]; matched: string }
-		| { kind: "brand"; name: string; wikidata?: string; matched: string }
+		| { kind: "category"; categoryIDs: string[] }
+		| { kind: "brand"; name: string }
 		| { kind: "name"; text: string }
 	/**
-	 * Spatial anchor: the split-off remainder text and its parse, when the query included one.
+	 * Spatial anchor: the parse of the split-off remainder text, or `null` when the query has none.
 	 */
-	anchor?: {
-		text?: string
-		tree?: { roots: ReadonlyArray<{ tag: string; value: string }> }
-		/**
-		 * Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved.
-		 */
-		biasPoint?: { latitude: number; longitude: number }
-		radiusM?: number
-	}
-	limit?: number
+	anchor: { tree: { roots: ReadonlyArray<{ tag: string; value: string }> } | null } | null
 }
 
 /**

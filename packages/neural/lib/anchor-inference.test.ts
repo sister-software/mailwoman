@@ -268,7 +268,7 @@ describe("buildAnchorFeatures — span modes", () => {
  * keyer fired 0/120 on the gb-golden board when case normalization was off.
  *
  * The default parse path never saw it because `normalizeInputCase` restores GB postcode
- * casing first, but lowercase is the user register and a `normalizeCase: false`
+ * casing first, but lowercase is the user register and a `caseNormalization: "preserve"`
  * parse lost the entire GB/NL anchor channel in silence.
  */
 describe("buildAnchorFeatures — shaped mode case-folds before shape detection (#1512)", () => {

@@ -40,7 +40,7 @@ const geoDeps = {
 	resolver,
 	databases: databases.for,
 	defaultCountry: cfg.country ?? "US",
-	placeCountry: false,
+	placeCountry: "none",
 } as const
 
 // Parse once per address (the ~3 ms/row inference is the dominant cost): share the tree

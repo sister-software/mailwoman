@@ -6,7 +6,12 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
-import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import type {
+	CaseNormalization,
+	PlacetypePairSelection,
+	SpanProposerLexicon,
+	WordConsistencySetting,
+} from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AddressSystemTable } from "#address-system"
@@ -23,7 +28,6 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
-import type { WordConsistencyOpts } from "#word-consistency"
 
 /**
  * Configures a neural address classifier.
@@ -193,7 +197,7 @@ export interface NeuralAddressClassifierConfig {
 	 * tag by a confidence-weighted vote, defaulting to `WORD_CONSISTENCY_SHIP_DEFAULT`
 	 * and never running on the character path.
 	 */
-	enforceWordConsistency?: boolean | WordConsistencyOpts
+	enforceWordConsistency?: WordConsistencySetting
 }
 
 /**
@@ -291,10 +295,10 @@ export interface ParseOpts {
 	postcodeRepair?: boolean
 
 	/**
-	 * A per-parse override of the config's `enforceWordConsistency`, where an options
-	 * object sets the vote thresholds and `true` runs the unthresholded vote.
+	 * A per-parse override of the config's `enforceWordConsistency`, where an options object
+	 * sets the vote thresholds, `{}` runs the unthresholded vote and `"off"` skips it.
 	 */
-	enforceWordConsistency?: boolean | WordConsistencyOpts
+	enforceWordConsistency?: WordConsistencySetting
 
 	/**
 	 * Whether to snap or add secondary-unit spans such as "Apt 4B", "Ste 12"
@@ -303,10 +307,11 @@ export interface ParseOpts {
 	unitRepair?: boolean
 
 	/**
-	 * Whether to title-case all-caps ASCII input before inference, defaulting to true,
-	 * since the model trains on mixed-case text and mixed-case input is left unchanged.
+	 * How to treat letter case before inference, defaulting to `"title-case"`,
+	 * which title-cases all-caps ASCII input since the model trains on mixed-case text.
+	 * Mixed-case input is left unchanged.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 
 	/**
 	 * A calibrator that maps each decoded span's confidence to a calibrated probability
@@ -341,14 +346,14 @@ export interface ParseOpts {
 	localeHint?: string
 
 	/**
-	 * Per-parse override of the config's `placetypePair`.
+	 * Per-parse selection of the placetype-pair prior.
 	 *
-	 * Set it to `false` to disable the prior.
-	 * A `null` value falls back to the config default.
+	 * The default `"inherit"` uses the config's `placetypePair`, `"off"` disables the prior,
+	 * and an options object replaces the config's.
 	 *
 	 * The prior biases a place name toward the tag the pair index recorded beside another input name.
 	 */
-	placetypePair?: PlacetypePairPriorOpts | false | null
+	placetypePair?: PlacetypePairSelection<PlacetypePairPriorOpts>
 
 	/**
 	 * Per-parse override of the config's `placetypeCensus`.

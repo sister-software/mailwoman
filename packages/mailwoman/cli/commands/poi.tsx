@@ -232,7 +232,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 	const resolverHandle = await tryLoadResolver(options)
 
 	try {
-		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : true
+		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : "extract"
 
 		const pipeline = createRuntimePipeline({
 			classifier: classifier ?? undefined,

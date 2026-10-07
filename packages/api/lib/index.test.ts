@@ -63,7 +63,7 @@ function fixtureGeocodeResult(address: string): GeocodeResult {
 		candidates: [],
 		postcode_country_scope: null,
 		capital_promotion: null,
-		variant_alias_exemption: null,
+		variant_alias_exemption: "not_applied",
 		intent_markers: [],
 		admin_coherence: null,
 		authoritative: null,

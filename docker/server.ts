@@ -20,7 +20,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { $public } from "mailwoman/env"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { deriveGeocodeRegister, geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend, resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
 import { AsyncSequence } from "spliterator"
 
@@ -58,14 +58,19 @@ async function buildEngine() {
 	const classifier: NeuralAddressClassifier | null = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		.then((c) => {
 			engine.parse = (address, opts) =>
-				c.parse(address, { postcodeRepair: true }).then((tree) => {
-					return {
-						input: address,
-						components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
-						tree,
-						debug: opts.debug ? decodeAsXML(tree) : null,
-					}
-				})
+				c
+					.parse(address, {
+						postcodeRepair: true,
+						inputMode: opts.inputMode === "auto" ? deriveGeocodeRegister(address) : opts.inputMode,
+					})
+					.then((tree) => {
+						return {
+							input: address,
+							components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
+							tree,
+							debug: opts.debug ? decodeAsXML(tree) : null,
+						}
+					})
 
 			return c
 		})
@@ -87,16 +92,10 @@ async function buildEngine() {
 				const extracts = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
 				// The candidate database covers every country.
 				// The FTS backend falls back to US.
-				const defaultCountry = candidateDB ? undefined : "US"
+				const countryScope = candidateDB ? {} : { defaultCountry: "US" }
 
 				const oneGeocode: GeocodeCallback = (address, { inputMode }) =>
-					geocodeAddress(address, {
-						classifier,
-						resolver,
-						databases: extracts.for,
-						defaultCountry,
-						inputMode: inputMode === "auto" ? undefined : inputMode,
-					})
+					geocodeAddress(address, { classifier, resolver, databases: extracts.for, ...countryScope, inputMode })
 
 				engine.geocode = oneGeocode
 

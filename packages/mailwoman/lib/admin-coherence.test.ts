@@ -230,7 +230,7 @@ describe("toGauntletResult threading (nullable field)", () => {
 		unfollowed_components: null,
 		derivation: null,
 		entity: null,
-		variant_alias_exemption: null,
+		variant_alias_exemption: "not_applied",
 		admin_coherence: null,
 		authoritative: null,
 		intent_markers: [],

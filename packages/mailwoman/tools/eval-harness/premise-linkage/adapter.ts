@@ -380,5 +380,5 @@ export function syntheticFixtureDeps(): GeocodeDeps {
 		}),
 	}
 
-	return { classifier, resolver, placeCountry: false }
+	return { classifier, resolver, placeCountry: "none" }
 }

@@ -9,7 +9,6 @@
 import type { GeocodeCallback, HealthData, MailwomanAPIEngine } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
 import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
-import type { RequestInputMode } from "@mailwoman/api/operations/input-mode"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
@@ -17,17 +16,15 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { deriveInputMode } from "@mailwoman/core/pipeline"
+import type { InputModeSelection } from "@mailwoman/core/pipeline"
 import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { classifyKindSync } from "@mailwoman/kind-classifier"
-import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Globerator } from "spliterator/node/fs"
 
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
-import { geocodeAddress, type GeocodeClassifier } from "#geocode/core"
+import { deriveGeocodeRegister, geocodeAddress, type GeocodeClassifier } from "#geocode/core"
 import { regionSlugFromTree, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
@@ -153,14 +150,14 @@ async function buildHealthData(): Promise<HealthData> {
 	}
 }
 
-function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: RequestInputMode): Promise<GeocodeResult> {
+function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: InputModeSelection): Promise<GeocodeResult> {
 	return geocodeAddress(address, {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
 		databases: deps.databases.for,
-		defaultCountry: deps.defaultCountry,
+		...(deps.defaultCountry ? { defaultCountry: deps.defaultCountry } : {}),
 		interpCalibration: INTERP_RADIUS_CALIBRATION,
-		inputMode: inputMode === "auto" ? undefined : inputMode,
+		inputMode,
 	})
 }
 
@@ -210,12 +207,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		const parseClassifier = classifier
 
 		parse = async (address, opts) => {
-			const shape = computeQueryShape(address)
-
-			const inputMode =
-				opts.inputMode !== "auto"
-					? opts.inputMode
-					: deriveInputMode(classifyKindSync({ raw: address, normalized: address }, shape).kind)
+			const inputMode = opts.inputMode === "auto" ? deriveGeocodeRegister(address) : opts.inputMode
 
 			const tree = await parseClassifier.parse(address, { postcodeRepair: true, inputMode })
 

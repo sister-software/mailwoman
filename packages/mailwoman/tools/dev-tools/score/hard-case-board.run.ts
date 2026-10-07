@@ -84,7 +84,7 @@ for (const arm of arms) {
 			createRuntimePipeline({
 				classifier: classifiers.get(locale)!,
 				resolver,
-				fst,
+				fst: fst || "none",
 			})
 		)
 	}

@@ -61,7 +61,7 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	return {
 		classifier,
 		resolver,
-		placeCountry: false,
+		placeCountry: "none",
 		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [], intentMarkers: null }),
 	}
 }

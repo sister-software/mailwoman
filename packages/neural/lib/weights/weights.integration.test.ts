@@ -249,7 +249,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 	)
 
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
+		"en-gb: explicit `placetypePair: off` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
@@ -258,7 +258,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			const wiredTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			expect(wiredTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
 
-			const disabledTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, { placetypePair: false })
+			const disabledTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, { placetypePair: "off" })
 
 			expect(disabledTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 				kind: "placetypePair",

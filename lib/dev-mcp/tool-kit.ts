@@ -457,7 +457,7 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 		Boolean((row[arm] as { capital_promotion?: string }).capital_promotion)
 
 	const exempted = (row: ComparedRow, arm: "a" | "b"): boolean =>
-		(row[arm] as { variant_alias_exemption?: true }).variant_alias_exemption === true
+		(row[arm] as { variant_alias_exemption?: string }).variant_alias_exemption === "applied"
 
 	return {
 		postcode_country_scope: {

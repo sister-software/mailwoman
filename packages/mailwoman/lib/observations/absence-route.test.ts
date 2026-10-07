@@ -167,9 +167,10 @@ function answered(
 	const tree: AddressTree = { raw: "anchor", roots: [node] }
 
 	const intent: POIIntent = {
-		subject: { kind: "category", categoryIDs: [categoryID], matched: categoryID },
+		subject: { kind: "category", categoryIDs: [categoryID], matched: categoryID, countryBinding: null },
 		relation: "near",
-		anchor: { text: "anchor", tree },
+		anchor: { text: "anchor", tree, biasPoint: null, radiusM: null },
+		limit: null,
 	}
 
 	return { type: "intent", intent, results }
@@ -185,6 +186,8 @@ function poiRow(latitude: number, longitude: number): POIResult {
 		country: "FR",
 		confidence: 1,
 		gersID: null,
+		ancestry: null,
+		distanceM: null,
 	}
 }
 
@@ -290,7 +293,12 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses an intent the executor never ran — a search that did not happen returns nothing for its own reasons", async () => {
 		const route = await routeOver()
 		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
-		const unexecuted: POIQueryResult = { type: "intent", intent: (outcome as { intent: POIIntent }).intent }
+
+		const unexecuted: POIQueryResult = {
+			type: "intent",
+			intent: (outcome as { intent: POIIntent }).intent,
+			results: null,
+		}
 
 		expect(await route.observe(unexecuted)).toEqual({ fired: false, refusal: "executor_did_not_run" })
 	})
@@ -300,7 +308,7 @@ describe("the silences that are about the answer rather than the world", () => {
 
 		const outcome: POIQueryResult = {
 			type: "intent",
-			intent: { subject: { kind: "name", text: "Pharmacie du Centre" } },
+			intent: { subject: { kind: "name", text: "Pharmacie du Centre" }, relation: null, anchor: null, limit: null },
 			results: [],
 		}
 
@@ -312,7 +320,12 @@ describe("the silences that are about the answer rather than the world", () => {
 
 		const outcome: POIQueryResult = {
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [],
 		}
 

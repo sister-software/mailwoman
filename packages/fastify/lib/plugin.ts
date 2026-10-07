@@ -17,7 +17,6 @@
  */
 
 import { GeocodeAddressOperation } from "@mailwoman/api/operations/geocode/address"
-import type { RequestInputMode } from "@mailwoman/api/operations/input-mode"
 import { ParseAddressOperation } from "@mailwoman/api/operations/parse/address"
 import { ParseAddressQueryOperation } from "@mailwoman/api/operations/parse/address/query"
 import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/health"
@@ -86,7 +85,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 	return createRuntimePipeline({
 		classifier,
 		resolver,
-		poiQueryKind: opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : null,
+		poiQueryKind: opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : "extract",
 	})
 }
 
@@ -97,13 +96,6 @@ function withLocale(opts: PipelineOpts | null | undefined, locale: string): Pipe
 	if (opts?.locale) return opts
 
 	return { ...opts, locale }
-}
-
-/**
- * The pipeline's input mode for a request's: `"auto"` leaves the pipeline to derive it.
- */
-function pipelineInputMode(mode: RequestInputMode): PipelineOpts["inputMode"] {
-	return mode === "auto" ? undefined : mode
 }
 
 // #endregion
@@ -207,7 +199,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
 
 					const { input, components, tree, debug } = await mailwoman.parse(address, {
-						inputMode: pipelineInputMode(request.body.input_mode),
+						inputMode: request.body.input_mode,
 					})
 
 					return { input, components, tree, debug }
@@ -224,7 +216,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
 
 					const { input, components, tree, debug } = await mailwoman.parse(address, {
-						inputMode: pipelineInputMode(request.query.input_mode),
+						inputMode: request.query.input_mode,
 					})
 
 					return { input, components, tree, debug }
@@ -240,7 +232,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 
 					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
 
-					return mailwoman.geocode(address, { inputMode: pipelineInputMode(request.body.input_mode) })
+					return mailwoman.geocode(address, { inputMode: request.body.input_mode })
 				},
 			})
 

@@ -6,7 +6,10 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
+	type CaseNormalization,
+	type FSTMatcherLike,
 	runPipeline,
+	type StageSource,
 	type MachinePreferences,
 	type PipelineOpts,
 	type PipelineResult,
@@ -65,20 +68,28 @@ function buildSyncReverseGeocode(
 }
 
 /**
+ * How {@link createRuntimePipeline} handles POI queries.
+ *
+ * - `"extract"` detects POI queries and extracts intents without executing them.
+ * - `"none"` removes the POI stage.
+ * - `{ poiDatabasePath }` also executes intents against a lookup opened on the first call.
+ */
+export type POIQueryKindSetting = "extract" | "none" | { poiDatabasePath: PathBuilderLike }
+
+/**
  * Options for {@link createRuntimePipeline}.
  *
- * For `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`, an undefined
- * option loads the bundled default on the first parse.
- * `false` disables the stage.
+ * `machinePreferences`, `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`
+ * take a {@link StageSource} and default to `"auto"`.
  */
 export interface CreateRuntimePipelineOpts {
 	/**
 	 * Host locale preferences, used only when neither the caller nor the input identifies a locale.
 	 *
-	 * `undefined` reads the current `Intl` defaults and `false` disables host inference.
+	 * `"auto"` reads the current `Intl` defaults and `"none"` disables host inference.
 	 * `MW_LOCALE` overrides both.
 	 */
-	machinePreferences?: MachinePreferences | false
+	machinePreferences?: StageSource<MachinePreferences>
 
 	/**
 	 * The classification stage, typically a `NeuralAddressClassifier`.
@@ -93,17 +104,17 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * The FST gazetteer matcher that biases emissions during classification.
 	 *
-	 * When it is omitted, the pipeline loads the classifier's `fstPath` if one exists.
+	 * `"auto"` loads the classifier's `fstPath` if one exists.
 	 */
-	fst?: RuntimePipelineStages["fst"] | false
+	fst?: StageSource<FSTMatcherLike>
 
 	/**
 	 * The street-morphology matcher for the FST street-context check.
 	 *
-	 * When it is omitted and an FST matcher is active, the pipeline loads the sealed artifact
-	 * or builds one from the bundled dictionaries.
+	 * `"auto"` loads the sealed artifact, or builds one from the bundled dictionaries,
+	 * when an FST matcher is active.
 	 */
-	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
+	streetMorphology?: StageSource<FSTMatcherLike>
 
 	/**
 	 * A replacement for the default locale detector.
@@ -127,15 +138,15 @@ export interface CreateRuntimePipelineOpts {
 	 *
 	 * Its confident guess becomes a soft country prior for the resolver.
 	 */
-	placeCountry?: RuntimePipelineStages["placeCountry"] | false
+	placeCountry?: StageSource<NonNullable<RuntimePipelineStages["placeCountry"]>>
 
 	/**
-	 * The default for each call's `normalizeCase`, which title-cases all-caps input before the model.
+	 * The default for each call's `caseNormalization`.
 	 *
-	 * When it is unset, the classifier decides.
+	 * It defaults to `"title-case"`.
 	 * A per-call value overrides it.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 
 	/**
 	 * The default for each call's `hardPlaceCountry`, which turns a confident placer
@@ -158,19 +169,15 @@ export interface CreateRuntimePipelineOpts {
 	 *
 	 * The rerank can add a confirmed street but never removes one.
 	 *
-	 * When it is omitted and the classifier has a span grammar, the bundled
-	 * French index loads on the first call.
+	 * `"auto"` loads the bundled French index on the first call when the classifier has a span grammar.
 	 */
-	streetEvidence?: StreetLocalityEvidence | false
+	streetEvidence?: StageSource<StreetLocalityEvidence>
 
 	/**
 	 * Controls POI-query detection and intent extraction.
-	 *
-	 * The default `true` extracts intents without executing them.
-	 * `{ poiDatabasePath }` also executes them against a lookup opened on the first call.
-	 * `false` removes the POI stage.
+	 * It defaults to `"extract"`.
 	 */
-	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike } | null
+	poiQueryKind?: POIQueryKindSetting
 
 	/**
 	 * A fallback phrase lookup, consulted only when the category lexicon and the POI name lookup both miss.
@@ -180,7 +187,7 @@ export interface CreateRuntimePipelineOpts {
 
 function wrapWithStreetEvidence(
 	classifier: RuntimePipelineStages["classifier"],
-	evidence: StreetLocalityEvidence | undefined
+	evidence: StreetLocalityEvidence | null
 ): RuntimePipelineStages["classifier"] {
 	if (!classifier || !evidence) return classifier
 	const grammar = (classifier as Partial<NeuralAddressClassifier>).spanGrammar
@@ -261,10 +268,20 @@ export function getMachinePreferences(): MachinePreferences {
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
-	const poiQueryKindEffective = opts.poiQueryKind ?? true
+	const poiQueryKind = opts.poiQueryKind ?? "extract"
+	const poiQueryKindEffective = poiQueryKind !== "none"
+	const machinePreferencesSource = opts.machinePreferences ?? "auto"
+	const fstSource = opts.fst ?? "auto"
+	const streetMorphologySource = opts.streetMorphology ?? "auto"
+	const placeCountrySource = opts.placeCountry ?? "auto"
+	const streetEvidenceSource = opts.streetEvidence ?? "auto"
 
 	const machinePreferences =
-		opts.machinePreferences === false ? undefined : (opts.machinePreferences ?? getMachinePreferences())
+		machinePreferencesSource === "none"
+			? null
+			: machinePreferencesSource === "auto"
+				? getMachinePreferences()
+				: machinePreferencesSource
 
 	let poiNameLookup: POIPhraseLookup | null = null
 
@@ -296,13 +313,16 @@ export function createRuntimePipeline(
 
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
 
-		classifier: opts.streetEvidence ? wrapWithStreetEvidence(opts.classifier, opts.streetEvidence) : opts.classifier,
+		classifier:
+			typeof streetEvidenceSource === "object"
+				? wrapWithStreetEvidence(opts.classifier, streetEvidenceSource)
+				: opts.classifier,
 
-		fst: opts.fst === false ? null : opts.fst,
-		streetMorphology: opts.streetMorphology === false ? null : opts.streetMorphology,
+		fst: typeof fstSource === "object" ? fstSource : null,
+		streetMorphology: typeof streetMorphologySource === "object" ? streetMorphologySource : null,
 		resolver: opts.resolver,
 
-		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : null,
+		placeCountry: typeof placeCountrySource === "function" ? placeCountrySource : null,
 
 		detectLocale:
 			opts.detectLocale ??
@@ -335,16 +355,12 @@ export function createRuntimePipeline(
 		})
 	}
 
-	const autoPlaceCountry = opts.placeCountry == null
-	let placeCountryResolved = !autoPlaceCountry
+	let placeCountryResolved = placeCountrySource !== "auto"
+	let streetEvidenceResolved = streetEvidenceSource !== "auto"
+	let fstResolved = fstSource !== "auto"
+	let morphologyResolved = streetMorphologySource !== "auto"
 
-	let streetEvidenceResolved = opts.streetEvidence != null
-
-	const autoFST = opts.fst == null
-	let fstResolved = !autoFST
-	let morphologyResolved = opts.streetMorphology != null
-
-	const poiDatabasePath = typeof opts.poiQueryKind === "object" ? opts.poiQueryKind?.poiDatabasePath : null
+	const poiDatabasePath = typeof poiQueryKind === "object" ? poiQueryKind.poiDatabasePath : null
 	let poiLookupResolved = !poiDatabasePath
 
 	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
@@ -414,8 +430,8 @@ export function createRuntimePipeline(
 		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
 		let effectiveRunOpts = runOpts
 
-		if (opts.normalizeCase !== undefined && effectiveRunOpts?.normalizeCase === undefined) {
-			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: opts.normalizeCase }
+		if (opts.caseNormalization && !effectiveRunOpts?.caseNormalization) {
+			effectiveRunOpts = { ...effectiveRunOpts, caseNormalization: opts.caseNormalization }
 		}
 
 		if (factoryHardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {

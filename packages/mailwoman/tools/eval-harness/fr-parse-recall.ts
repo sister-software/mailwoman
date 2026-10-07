@@ -242,8 +242,8 @@ export async function frParseRecall(
 		const want = normalizeStreetForKeyLocale(r.street_raw, "fr")
 		const bareQ = `${r.number} ${r.street_raw}, ${r.locality_norm}`
 		const anchQ = `${r.number} ${r.street_raw}, ${r.postcode} ${r.locality_norm}`
-		const bare = streetKeyOf(await classifier.parse(bareQ, { postcodeRepair: true, normalizeCase: true }))
-		const anch = streetKeyOf(await classifier.parse(anchQ, { postcodeRepair: true, normalizeCase: true }))
+		const bare = streetKeyOf(await classifier.parse(bareQ, { postcodeRepair: true, caseNormalization: "title-case" }))
+		const anch = streetKeyOf(await classifier.parse(anchQ, { postcodeRepair: true, caseNormalization: "title-case" }))
 
 		if (bare === want) {
 			bareOk++

@@ -598,7 +598,7 @@ describe("The lineage-attachment wiring", () => {
 			capabilityGaps: null,
 		}
 
-		return { classifier, resolver, placeCountry: false }
+		return { classifier, resolver, placeCountry: "none" }
 	}
 
 	it("opts into includeAncestors by default — the stamp the admin-coherence verdicts read", async () => {
@@ -668,7 +668,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
 
-		placeCountry: false,
+		placeCountry: "none",
 	})
 
 	it("returns every namesake, not just the winner", async () => {

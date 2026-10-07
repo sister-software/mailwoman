@@ -20,12 +20,16 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
+	type CaseNormalization,
+	DEFAULT_CASE_NORMALIZATION,
 	deriveInputMode,
 	type InputMode,
+	type InputModeSelection,
 	hardCountryFor,
 	isBareLocalityTree,
 	isBarePostcodeTree,
 	type QueryKindResult,
+	type StageSource,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
@@ -106,10 +110,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	classifier: GeocodeClassifier
 	resolver: Resolver
 	/**
-	 * Explicit input register.
-	 * If unset, it is derived from kind.
+	 * The input register.
+	 * The default `"auto"` derives it from the query kind.
 	 */
-	inputMode?: InputMode
+	inputMode?: InputModeSelection
 	/**
 	 * Per-state database resolver.
 	 */
@@ -128,8 +132,9 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	authoritativeProvider?: AuthoritativeProvider
 	/**
 	 * Country constraint passed to the resolver.
+	 * When it is unset, the resolver has no default country.
 	 */
-	defaultCountry?: string | null
+	defaultCountry?: string
 	/**
 	 * Locale country as a soft ranking prior when no hard country scope is set.
 	 */
@@ -147,10 +152,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	fuzzyCountryScope?: string
 	/**
-	 * Normalize ALL-CAPS ASCII to title case before parsing.
-	 * Default true.
+	 * How the classifier treats letter case.
+	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 	/**
 	 * Deterministic input normalization before parse.
 	 * Default true.
@@ -166,8 +171,9 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	interpCalibration?: number | InterpCalibrationTable
 	/**
 	 * Coarse country router for soft country priors.
+	 * The default `"auto"` loads the bundled placer.
 	 */
-	placeCountry?: PlaceCountryFn | false
+	placeCountry?: StageSource<PlaceCountryFn>
 	/**
 	 * Proximity bias points forwarded to resolver bias.
 	 */
@@ -242,7 +248,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
  * Kind-derived register for geocode input.
  */
 export function deriveGeocodeRegister(parseInput: string, queryShape = computeQueryShape(parseInput)): InputMode {
-	return deriveInputMode(classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
+	return deriveInputMode("auto", classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
 }
 
 /**
@@ -256,15 +262,15 @@ export interface GeocodeParseInputs {
 	queryShape: QueryShape
 	inputMode: InputMode
 	/**
-	 * Kind verdict used to derive inputMode, when derived.
+	 * The kind verdict behind `inputMode`, or `null` when the caller chose the register.
 	 */
-	kind?: QueryKindResult
+	kind: QueryKindResult | null
 	opts: NonNullable<Parameters<GeocodeClassifier["parse"]>[1]>
 }
 
 export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"> &
+	deps: Pick<GeocodeDeps, "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
 	// Stage-1 input normalization before parse.
@@ -275,22 +281,25 @@ export function geocodeParseInputs(
 
 	// An explicit register wins.
 	// Otherwise the mode derives from the kind.
-	let inputMode = deps.inputMode
+	const inputModeSelection = deps.inputMode ?? "auto"
 	let kind: QueryKindResult | null = null
+	let inputMode: InputMode
 
-	if (!inputMode) {
+	if (inputModeSelection === "auto") {
 		kind = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)
-		inputMode = deriveInputMode(kind.kind)
+		inputMode = deriveInputMode(inputModeSelection, kind.kind)
+	} else {
+		inputMode = inputModeSelection
 	}
 
 	return {
 		parseInput,
 		queryShape,
 		inputMode,
-		...(kind ? { kind } : {}),
+		kind,
 		opts: {
 			postcodeRepair: true,
-			normalizeCase: deps.normalizeCase ?? true,
+			caseNormalization: deps.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 			queryShape,
 			inputMode,
 			// Default word-consistency enforcement.
@@ -312,7 +321,10 @@ export function geocodeParseInputs(
  */
 export async function parseForGeocode(
 	input: string,
-	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
+	deps: Pick<
+		GeocodeDeps,
+		"classifier" | "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"
+	>
 ): Promise<AddressTree> {
 	const classifier = await classifierForInput(deps.classifier, input)
 	const { parseInput, opts, queryShape } = geocodeParseInputs(input, { ...deps, classifier })
@@ -337,7 +349,7 @@ export async function parseForGeocode(
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Optional first-refusal check for thing queries.
-	if (deps.classifyKind && !deps.inputMode) {
+	if (deps.classifyKind && (deps.inputMode ?? "auto") === "auto") {
 		const parseInput =
 			deps.normalizeInput === false
 				? input
@@ -358,6 +370,15 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 	// Single-pass geocoding.
 	return geocodeAddressOnce(input, deps)
+}
+
+/**
+ * Resolves the coarse country router from its source, loading the bundled placer for `"auto"`.
+ */
+async function resolvePlaceCountry(source: StageSource<PlaceCountryFn>): Promise<PlaceCountryFn | null> {
+	if (source === "none") return null
+
+	return source === "auto" ? loadDefaultPlaceCountry() : source
 }
 
 /**
@@ -450,8 +471,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	// Coarse country router: default loader, custom function, or disabled.
-	const placeCountry: PlaceCountryFn | null =
-		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
+	const placeCountry = await resolvePlaceCountry(deps.placeCountry ?? "auto")
 
 	// Placer country reused for later country-dependent steps.
 	let placedCountry: string | null = null

@@ -134,7 +134,7 @@ async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
 	const pipeline = createRuntimePipeline({
 		classifier,
 		resolver,
-		poiQueryKind: dbPath ? { poiDatabasePath: dbPath } : true,
+		poiQueryKind: dbPath ? { poiDatabasePath: dbPath } : "extract",
 	})
 
 	poiPipelines.set(key, pipeline)

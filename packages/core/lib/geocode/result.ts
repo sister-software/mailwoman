@@ -75,6 +75,15 @@ export const AdminCoherenceVerdictSchema = z.enum(["confirmed", "contradicted", 
 export type AdminCoherenceVerdict = z.infer<typeof AdminCoherenceVerdictSchema>
 
 /**
+ * Whether the variant-alias exemption lifted a node's winner past the cross-country alias penalty.
+ */
+export const VariantAliasExemptionSchema = z
+	.enum(["applied", "not_applied"])
+	.meta({ id: "VariantAliasExemption", description: "Whether the variant-alias exemption chose a node's winner." })
+
+export type VariantAliasExemption = z.infer<typeof VariantAliasExemptionSchema>
+
+/**
  * Whether the winner's resolved ancestry confirms, contradicts or cannot check
  * the parsed `region` and `country`.
  *
@@ -292,9 +301,10 @@ export const GeocodeResultSchema = z
 		capital_promotion: z.string().nullable(),
 
 		/**
-		 * Set when the variant-alias exemption lifted a node's winner past the cross-country alias penalty.
+		 * `applied` when the variant-alias exemption lifted a node's winner past
+		 * the cross-country alias penalty.
 		 */
-		variant_alias_exemption: z.literal(true).nullable(),
+		variant_alias_exemption: VariantAliasExemptionSchema,
 
 		/**
 		 * Query-intent advisories.
