@@ -15,7 +15,7 @@ import type { LicenseWorkerEnv } from "#env"
 /**
  * The version the installed SDK's types describe (`stripe/esm/apiVersion.js`); the two move together.
  */
-export const STRIPE_API_VERSION = "2026-08-26.dahlia"
+export const STRIPE_API_VERSION = "2026-09-30.endive"
 
 /**
  * The http status Stripe answers for an id it does not know.
