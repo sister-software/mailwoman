@@ -6,17 +6,17 @@
  *   Harvests the INSPIRE Addresses theme the Diputación Foral de Bizkaia publishes into the
  *   directory `#es/adapters/bizkaia/adapter` reads.
  *
- *   ## Two services, because the archives carry addresses alone
+ *   ## Two services, because the archives hold only addresses
  *
  *   The ATOM download service at `https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml` lists
  *   one entry per municipality, each offering that municipality's addresses as a zipped GML through a
  *   `rel="enclosure"` link. Those archives hold no `ad:ThoroughfareName`, `ad:PostalDescriptor` or
  *   `ad:AdminUnitName` feature: every `ad:component` reference an address writes is a stored-query
- *   URL on the publisher's WFS, which the ATOM service does not republish. An adapter handed the
- *   archives alone therefore reads every address in the province without its street, its postcode or
- *   its municipality, which is why this harvest acquires both services into one directory.
+ *   URL on the publisher's WFS that the ATOM service does not republish. An adapter handed only those
+ *   archives therefore reads every address in the province without its street, its postcode or
+ *   its municipality. This harvest acquires both services into one directory for that reason.
  *
- *   Each component type is read in one request, which is the only way this service serves it. Its
+ *   Each component type is read in one request, and that is the only way this service serves it. Its
  *   capabilities document states `ImplementsResultPaging` as `FALSE` and `CountDefault` as `1000`, so
  *   a reader that paged a type would receive the first page again. The harvest therefore asks
  *   `RESULTTYPE=hits` for the type's count and then asks for that many features in one `GetFeature`,
@@ -24,7 +24,7 @@
  *   count. A truncated component document is the failure that would otherwise reach the adapter as
  *   an unresolved reference per address.
  *
- *   A component document's own bytes are not reproducible. Its `wfs:FeatureCollection` carries a
+ *   A component document's own bytes are not reproducible. Its `wfs:FeatureCollection` holds a
  *   `timeStamp` attribute holding the moment of the request, so two identical harvests differ in
  *   that element and therefore in their digests. The manifest records each document's byte count and
  *   sha256 as what arrived, never as a value a later run compares against.
@@ -44,7 +44,7 @@
  *   The component documents state no version at all. The WFS answers them under `Cache-Control:
  *   no-cache` with no `Last-Modified`, so a run holds no value to compare and every run that
  *   harvests them downloads them again. {@linkcode HarvestESBizkaiaOptions.components} is how a run that wants
- *   the archives alone declines the 14 MB.
+ *   only the archives declines the 14 MB.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -74,7 +74,7 @@ export const ES_BIZKAIA_SERVICE_URL = "https://apli.bizkaia.eus/apps/Danok/INSPI
 /**
  * The WFS the municipality archives reference their components on.
  *
- * Read from the `xlink:href` the archives themselves write, which addresses this
+ * Read from the `xlink:href` the archives themselves write. That link addresses this
  * endpoint through the `GetFeatureById` stored query.
  */
 export const ES_BIZKAIA_WFS_URL =
@@ -115,8 +115,8 @@ export const ES_BIZKAIA_REQUEST_INTERVAL_MS = 250
 /**
  * Per-request timeout for a body, in milliseconds.
  *
- * Ten minutes, which covers both a municipality archive and the one component
- * document that carries every street in the province.
+ * Ten minutes. That covers both a municipality archive and the one component
+ * document with every street in the province.
  */
 const BODY_TIMEOUT_MS = 600_000
 
@@ -174,7 +174,7 @@ export interface ESBizkaiaMunicipalityDataset {
 	 */
 	downloadURL: string
 	/**
-	 * The file name the archive is written under, which is what the adapter globs.
+	 * The file name the archive is written under. The adapter globs this name.
 	 */
 	filename: string
 }
@@ -188,8 +188,8 @@ export interface ESBizkaiaMunicipalityDataset {
  * a municipality would store one municipality's addresses under another's name.
  *
  * @throws When the feed lists no entry, when an entry states neither spelling of its municipality,
- * when the two spellings disagree, when two entries claim one file name — which would make
- * one archive overwrite the other — or when an entry carries no `rel="enclosure"` link.
+ * when the two spellings disagree, when two entries claim one file name and one archive would
+ * overwrite the other, or when an entry has no `rel="enclosure"` link.
  */
 export function readESBizkaiaServiceFeed(feed: AtomFeed): readonly ESBizkaiaMunicipalityDataset[] {
 	if (!feed.entries.length) {
@@ -220,7 +220,7 @@ export function readESBizkaiaServiceFeed(feed: AtomFeed): readonly ESBizkaiaMuni
 			)
 		}
 
-		// The identifier carries the three-digit tail of the five-digit municipality code:
+		// The identifier holds the three-digit tail of the five-digit municipality code:
 		// `48915` is published as `ES.BFA.AD.915.zip`.
 		if (!fromTitle.endsWith(identified[2]!)) {
 			throw new Error(
@@ -288,7 +288,7 @@ export interface ESBizkaiaComponentEntry extends SourceManifest {
 	 */
 	feature_count: number
 	/**
-	 * The `numberReturned` the saved document states, which the harvest requires to
+	 * The `numberReturned` the saved document states. The harvest requires it to
 	 * equal {@linkcode ESBizkaiaComponentEntry.feature_count}.
 	 */
 	features_returned: number
@@ -311,7 +311,7 @@ export interface ESBizkaiaHarvestManifest extends SourceCollectionManifest {
 	municipalities_listed: number
 	files: ESBizkaiaArchiveEntry[]
 	/**
-	 * The saved WFS documents, kept apart from `files` because they carry no
+	 * The saved WFS documents, kept apart from `files` because they have no
 	 * municipality and no stated version.
 	 */
 	components: ESBizkaiaComponentEntry[]
@@ -319,12 +319,12 @@ export interface ESBizkaiaHarvestManifest extends SourceCollectionManifest {
 
 export interface HarvestESBizkaiaOptions {
 	/**
-	 * Where the archives, the component documents and the manifest are written,
-	 * which is the adapter's `inputPath`.
+	 * Where the archives, the component documents and the manifest are written.
+	 * This path is the adapter's `inputPath`.
 	 */
 	outputDir: PathBuilderLike
 	/**
-	 * Harvest only these five-digit municipality codes, for a probe or for a repair of named ones.
+	 * Harvest only these five-digit municipality codes, for a probe or to repair specific ones.
 	 *
 	 * A code the service document does not list is reported as a failure rather than ignored.
 	 */
@@ -338,7 +338,7 @@ export interface HarvestESBizkaiaOptions {
 	 * Defaults to true.
 	 *
 	 * An adapter run needs them: an archive references its street, its postcode
-	 * and its municipality and carries none of the three.
+	 * and its municipality and has none of the three.
 	 */
 	components?: boolean
 	/**
@@ -348,7 +348,7 @@ export interface HarvestESBizkaiaOptions {
 	/**
 	 * Re-read the sha256 of every archive already on disk instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size, which is one `stat`.
+	 * The default compares the recorded byte count against the file's size, one `stat`.
 	 */
 	verifyDigests?: boolean
 	signal?: AbortSignal
@@ -377,7 +377,7 @@ async function archiveIsCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata, which is why it is opt-in.
+	// The digest check reads the whole file rather than its metadata. It is opt-in.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
@@ -514,7 +514,7 @@ export async function harvestESBizkaia(
 	const recordedManifest = await readManifest<ESBizkaiaHarvestManifest>(manifestPath)
 	const files = new Map<string, ESBizkaiaArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is carried through,
+	// An entry for a municipality this run does not consider is kept,
 	// so a bounded run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESBizkaiaArchiveEntry)
@@ -625,7 +625,7 @@ export async function harvestESBizkaia(
 }
 
 /**
- * The municipalities this run considers, and the codes a caller named that the feed does not list.
+ * The municipalities this run considers, and the codes a caller asked for that the feed does not list.
  *
  * A code the caller asked for and the service document does not list is returned
  * rather than dropped, because a municipality that is not published is a different
@@ -696,7 +696,7 @@ async function fetchArchive(
  * The path `#es/adapters/bizkaia/adapter` reads, given the root a fetch wrote under.
  *
  * The directory rather than a file: the adapter reads every archive and every saved WFS
- * document under it, and it is the component documents that carry the streets.
+ * document under it, and the component documents hold the streets.
  */
 export function esBizkaiaInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilderLike {
 	return outRoot(ES_BIZKAIA_ADAPTER_ID)
