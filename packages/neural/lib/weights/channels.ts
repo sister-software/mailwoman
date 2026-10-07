@@ -494,8 +494,8 @@ export async function readLabelsFromModelCard(
 /**
  * Reads the `address_systems` table from a `model-card.json` file.
  *
- * It returns `undefined` when the file is missing or the card has no such field,
- * which is every model trained without the address-system head or the locale hint.
+ * It returns `undefined` when the file is missing or the card has no such field.
+ * That covers every model trained without the address-system head or the locale hint.
  *
  * @throws When the field is present but malformed.
  */

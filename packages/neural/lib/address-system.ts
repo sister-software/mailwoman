@@ -18,7 +18,7 @@ import { softmax } from "#viterbi"
  * A model's address-system ids, read from its card's `address_systems` field.
  *
  * `members` maps `"<ISO 3166-1 alpha-2>/<local|latin>"` to the id the model was trained against.
- * `noHint` is the id that states no hint, which a graph with a `locale_hint` input receives by default.
+ * `noHint` is the id that states no hint. A graph with a `locale_hint` input receives it by default.
  */
 export interface AddressSystemTable {
 	noHint: number
