@@ -154,7 +154,8 @@ describe("bd-adresses adapter against fixture sample.csv", () => {
 
 		expect(rows.every((r) => r.locale === "und-LU")).toBe(true)
 
-		// The one column holds both languages. No row claims one.
+		// The one column holds both languages.
+		// No row claims one.
 		const streets = rows.map((r) => r.components.street)
 
 		expect(streets).toContain("Kaesfurterstrooss")

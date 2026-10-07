@@ -75,8 +75,8 @@ describe("brussels adapter against the fixture member", () => {
 
 		// The register elects CC-BY-4.0 for Paradigm, and the row records the SPDX identifier
 		// so that `licenseVerdict` resolves it.
-		// A license title resolves to no expression. A build reads that as unknown
-		// obligations rather than as none.
+		// A license title resolves to no expression.
+		// A build reads that as unknown obligations rather than as none.
 		expect(BRUSSELS_DEFAULT_LICENSE).toBe("CC-BY-4.0")
 		expect(licenseVerdict(BRUSSELS_DEFAULT_LICENSE, LicensePolicy.ShareAlikeFree, []).resolved).toBe(true)
 		expect(rows.every((row) => row.license === BRUSSELS_DEFAULT_LICENSE)).toBe(true)

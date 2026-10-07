@@ -141,7 +141,8 @@ export const S42_LAYOUT_RECORDS: Readonly<Record<string, S42LayoutRecord>> = {
  *
  * That comparison turns the `upu-s42` observation from `unread` into a stance.
  *
- * It holds the eight countries below plus the United Kingdom. Its template was retrieved.
+ * It holds the eight countries below plus the United Kingdom.
+ * Its template was retrieved.
  * The board already states its printed order.
  */
 export const S42_READ_LAYOUTS: Readonly<Record<string, AddressLayout>> = {

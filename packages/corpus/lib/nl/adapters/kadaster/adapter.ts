@@ -161,7 +161,8 @@ const COMPONENT_TYPES = ["ad:ThoroughfareName", "ad:AddressAreaName", "ad:AdminU
  */
 interface ReferencedValue {
 	/**
-	 * The feature's element name. That decides where its value goes.
+	 * The feature's element name.
+	 * That decides where its value goes.
 	 */
 	readonly type: string
 

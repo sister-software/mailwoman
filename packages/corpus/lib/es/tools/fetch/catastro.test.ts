@@ -54,7 +54,8 @@ function officeXML(code: string, name: string, updated = PUBLICATION): string {
 }
 
 /**
- * The entry of a foral cadastre. It publishes through this feed under its own terms.
+ * The entry of a foral cadastre.
+ * It publishes through this feed under its own terms.
  */
 const BIZKAIA_XML =
 	`<entry><title>Provincial Council of Bizkaia</title>` +
@@ -62,7 +63,8 @@ const BIZKAIA_XML =
 	`<id>https://web.bizkaia.eus/inspire/AD/ES.BFA.AD.atom.xml</id><updated>${PUBLICATION}</updated></entry>`
 
 /**
- * The national service document. It declares UTF-8 and writes it.
+ * The national service document.
+ * It declares UTF-8 and writes it.
  */
 function serviceXML(entries = officeXML("55", "Ceuta") + officeXML("15", "Coruña") + BIZKAIA_XML): string {
 	return (
@@ -91,7 +93,8 @@ function municipalityXML(province: string, code: string, name: string, updated =
 }
 
 /**
- * A province feed's bytes. They declare ISO-8859-1.
+ * A province feed's bytes.
+ * They declare ISO-8859-1.
  *
  * Encoded with `latin1` rather than with the default UTF-8, because the one byte
  * that distinguishes the two encodings is what the harvest has to read correctly:
@@ -202,8 +205,9 @@ describe("readESCatastroServiceFeed", () => {
 		const entries = officeXML("02", "Albacete") + officeXML("03", "Alicante") + BIZKAIA_XML
 		const feed = await readAtomFeed(feedChunks(serviceXML(entries)))
 
-		// The publisher adds and merges offices, so the selection must hold exactly the entries
-		// whose title matches an office. Every entry here matches but one.
+		// The publisher adds and merges offices, so the selection must hold exactly
+		// the entries whose title matches an office.
+		// Every entry here matches but one.
 		expect(readESCatastroServiceFeed(feed)).toHaveLength(feed.entries.length - 1)
 	})
 
@@ -335,7 +339,8 @@ describe("harvestESCatastro", () => {
 
 		expect(summary).toMatchObject({ fetched: 2, skipped: 0, failed: 0 })
 
-		// The accented archive is requested percent-encoded. That is the URL that serves it.
+		// The accented archive is requested percent-encoded.
+		// That is the URL that serves it.
 		expect(client.calls).toEqual([
 			ES_CATASTRO_SERVICE_FEED_URL,
 			CEUTA_FEED_URL,

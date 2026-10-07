@@ -40,16 +40,17 @@ import { feedChunks, readAtomFeed } from "#tools/fetch/atom"
 import { readManifest } from "#tools/fetch/download"
 
 /**
- * The one `<updated>` every entry of this service repeats. That value is the feed document's
- * own modification time and the harvest's whole freshness signal.
+ * The one `<updated>` every entry of this service repeats.
+ *
+ * That value is the feed document's own modification time and the harvest's whole freshness signal.
  */
 const FEED_UPDATED = "2026-10-01T02:40:20Z"
 
 /**
  * One municipality's entry, as the service document writes it.
  *
- * `code` is the five-digit municipality code the title opens with, and `stem` is
- * the three-digit tail in the archive's name.
+ * `code` is the five-digit municipality code the title opens with, and `stem`
+ * is the three-digit tail in the archive's name.
  */
 function entryXML(code: string, name: string, stem: string, updated = FEED_UPDATED): string {
 	return (

@@ -49,12 +49,14 @@ export const ANNUAIRE_EDUCATION_DATASET_ID = "fr-en-annuaire-education"
 export const ANNUAIRE_EDUCATION_API_URL = `https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/${ANNUAIRE_EDUCATION_DATASET_ID}`
 
 /**
- * The dataset's page. It states the license.
+ * The dataset's page.
+ * It states the license.
  */
 export const ANNUAIRE_EDUCATION_PAGE_URL = `https://data.education.gouv.fr/explore/dataset/${ANNUAIRE_EDUCATION_DATASET_ID}/`
 
 /**
- * The file the export is written to. The adapter reads it as input.
+ * The file the export is written to.
+ * The adapter reads it as input.
  */
 export const ANNUAIRE_EDUCATION_FILENAME = "fr-en-annuaire-education-overseas.jsonl"
 
@@ -105,7 +107,8 @@ export interface AnnuaireExportManifest extends SourceManifest {
 	dataset_license: string | null
 	dataset_license_url: string | null
 	/**
-	 * The record count the filter selected. The written line count must match it.
+	 * The record count the filter selected.
+	 * The written line count must match it.
 	 */
 	records: number
 }

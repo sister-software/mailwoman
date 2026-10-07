@@ -133,7 +133,9 @@ export const FLOOD_MAP = "ea-flood-map-2026-05-20"
 export const FLOOD_LAYER = "flood-zones-ea-england"
 
 /**
- * The flood map's revision date. The host `flood.db` manifest gives it as its source vintage.
+ * The flood map's revision date.
+ *
+ * The host `flood.db` manifest gives it as its source vintage.
  */
 export const FLOOD_VINTAGE = "2026-05-20"
 

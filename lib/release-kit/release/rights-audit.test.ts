@@ -98,8 +98,8 @@ describe("auditRights", () => {
 		}
 
 		// No single blocker covers every source.
-		// One resolved condition on one source breaks that, so a blocker widening
-		// back to the full count would mean a recorded resolution stopped being read.
+		// One resolved condition on one source breaks that, so a blocker widening back to
+		// the full count would mean a recorded resolution stopped being read.
 		// The assertions above leave each blocker's own count free, because every review moves it.
 		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(audit.register.sources)
 	})

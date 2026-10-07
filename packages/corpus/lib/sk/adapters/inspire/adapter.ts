@@ -155,7 +155,8 @@ const MUNICIPALITY_LEVEL = "4thOrder"
  */
 interface ReferencedValue {
 	/**
-	 * The feature's element name. It decides where its value goes.
+	 * The feature's element name.
+	 * It decides where its value goes.
 	 */
 	readonly type: string
 
@@ -326,8 +327,8 @@ function composeRow(
 		components.street = street
 	}
 
-	// The settlement part is a dependent locality only where it differs from
-	// the municipality. 101 of 426 address-area references do.
+	// The settlement part is a dependent locality only where it differs from the
+	// municipality. 101 of 426 address-area references do.
 	if (settlement && municipality && settlement !== municipality) {
 		components.dependent_locality = settlement
 	}

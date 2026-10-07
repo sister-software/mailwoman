@@ -228,7 +228,8 @@ export type VarisRefusal = (typeof VarisRefusal)[keyof typeof VarisRefusal]
  */
 export const VarisAddressType = {
 	/**
-	 * A street address in one of the state cities. Those cities lie under no municipality.
+	 * A street address in one of the state cities.
+	 * Those cities lie under no municipality.
 	 */
 	StateCityStreet: "state-city-street",
 	/**
@@ -419,8 +420,8 @@ export function readVarisBuilding(record: VarisRecord, places: VarisPlaces): Var
 /**
  * Streams one table's records, each value as stored.
  *
- * The reader turns trimming off because `STD` keeps a stored trailing space inside a
- * building name's quotes. The composition check compares the two.
+ * The reader turns trimming off because `STD` keeps a stored trailing space inside a building name's quotes.
+ * The composition check compares the two.
  */
 export function readVarisTable(path: PathBuilderLike): AsyncIterable<VarisRecord> {
 	return CSVSpliterator.fromAsync(path, { normalizeKeys: false, trim: false }) as AsyncIterable<VarisRecord>

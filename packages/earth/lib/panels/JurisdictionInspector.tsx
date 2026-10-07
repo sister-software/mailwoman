@@ -147,7 +147,8 @@ export function JurisdictionInspector({ map }: { map: MapLibreMap | null }): Rea
 	useEffect(() => {
 		if (!map) return
 
-		// The layer toggle changes visibility through the style. That change fires `styledata`.
+		// The layer toggle changes visibility through the style.
+		// That change fires `styledata`.
 		const syncLayer = () => {
 			const next = visibleFill(map)
 

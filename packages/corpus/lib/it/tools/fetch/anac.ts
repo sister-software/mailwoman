@@ -52,8 +52,8 @@ import { loadCollectionFiles, resumableDownload, writeManifest } from "#tools/fe
  * The publication the registry serves this release under.
  *
  * Italy has four publications on the registry and id 117 is ANAC's.
- * Id 87 is OpenTender's Italian publication, so a reader that filters by country would take the
- * wrong publication.
+ * Id 87 is OpenTender's Italian publication, so a reader that filters by country
+ * would take the wrong publication.
  */
 export const IT_ANAC_PUBLICATION_ID = 117
 
@@ -72,7 +72,8 @@ const SLUG = IT_ANAC_ADAPTER_ID
 /**
  * The edition fetched when a caller names none.
  *
- * `full` is every year in one file. A corpus build reads that edition.
+ * `full` is every year in one file.
+ * A corpus build reads that edition.
  * A caller measuring one year names that year instead.
  */
 export const IT_ANAC_DEFAULT_EDITIONS: readonly string[] = ["full"]

@@ -149,8 +149,9 @@ export const IT_ANAC_COUNTRIES: readonly string[] = ["IT"]
 export const IT_ANAC_LICENSE = "CC-BY-4.0"
 
 /**
- * The credit CC BY 4.0 obliges. The model card records it beside the license and a statement that
- * the data was changed.
+ * The credit CC BY 4.0 obliges.
+ *
+ * The model card records it beside the license and a statement that the data was changed.
  */
 export const IT_ANAC_ATTRIBUTION = "Autorità Nazionale Anticorruzione (ANAC), via the OCP Data Registry"
 
@@ -173,8 +174,8 @@ export const IT_ANAC_PARTY_ROLES: readonly string[] = ["buyer", "payer"]
  */
 export const ANACRefusal = {
 	/**
-	 * The party holds a role other than `buyer` or `payer`, so its address is out
-	 * of scope even where one appears.
+	 * The party holds a role other than `buyer` or `payer`, so its address is
+	 * out of scope even where one appears.
 	 */
 	RoleNotAdmitted: "role-not-admitted",
 	/**
@@ -208,8 +209,8 @@ export const ANACRefusal = {
 	/**
 	 * The rendered line holds one component, so it is a place name rather than an address.
 	 *
-	 * A party leaves only the locality when its name holds no letter, its postcode is the
-	 * publisher's placeholder and its street line is absent.
+	 * A party leaves only the locality when its name holds no letter, its postcode is
+	 * the publisher's placeholder and its street line is absent.
 	 */
 	ComponentsTooFew: "components-too-few",
 } as const
@@ -247,8 +248,8 @@ export interface ANACParty {
  * One line of the input: an OCDS release.
  *
  * The adapter reads only `parties`.
- * A release also has `tender`, `awards` and `contracts`, and no address
- * sits on any of them in this publication.
+ * A release also has `tender`, `awards` and `contracts`, and no address sits
+ * on any of them in this publication.
  */
 export interface ANACRelease {
 	ocid?: string
@@ -294,8 +295,9 @@ const CIVIC_MARKER = /(?<=^|[\s,])(?:n|nr|num|civ|civico)\s*\.?\s*(?=\d)/giu
 const SENZA_NUMERO = /[\s,]+(?:snc|sn)\.?$/iu
 
 /**
- * A number introduced by a kilometer marker. Such a number points at a place on a highway rather than
- * a premise on a street.
+ * A number introduced by a kilometer marker.
+ *
+ * Such a number points at a place on a highway rather than a premise on a street.
  */
 const KILOMETRE_POINT = /[\s,]+km\.?[\s,]*\d+(?:[.,]\d+)?$/iu
 
@@ -338,8 +340,8 @@ function fieldValue(value: string | null | undefined): string {
  * The street line with the three Italian conventions normalized away: a trailing copy
  * of the locality, a civic marker before the number, and a `senza numero` tail.
  *
- * `locality` is the publisher's own value for this party. That value authorizes removing the
- * trailing copy.
+ * `locality` is the publisher's own value for this party.
+ * That value authorizes removing the trailing copy.
  * An empty string leaves the line as it is.
  */
 export function normalizeANACStreetLine(line: string, locality: string): string {
@@ -498,8 +500,9 @@ export function createITANACAdapter(): CorpusAdapter {
  * The registry serves one file per year beside an all-time `full.jsonl.gz`,
  * and `fetchITANAC` writes whichever editions a caller asked for into one directory,
  * so a build reading several years points at that directory.
- * The editions are read in sorted order. That puts the years in chronological order and `full` after
- * them.
+ * The editions are read in sorted order.
+ *
+ * That puts the years in chronological order and `full` after them.
  *
  * A directory holding no edition raises rather than yielding zero rows, so a wrong path
  * reports itself instead of reading as a publisher with no contracts.

@@ -25,8 +25,9 @@ import type { CanonicalRow } from "#types"
  * `S-N` is the Dirección General del Catastro's spelling, on 856 of Ceuta's 8,126 addresses.
  * `S/N` is the Gobierno de Navarra's and the Diputación Foral de Gipuzkoa's.
  *
- * All four readers accept both. Neither is a number under any jurisdiction's rules, and a reader
- * scoped to one spelling would write the other spelling into a row.
+ * All four readers accept both.
+ * Neither is a number under any jurisdiction's rules, and a reader scoped to one
+ * spelling would write the other spelling into a row.
  */
 const SIN_NUMERO = new Set(["s-n", "s/n"])
 
@@ -102,11 +103,13 @@ export interface CadastralAddress {
 	 */
 	locality: string | undefined
 	/**
-	 * The address-area name. It is a settlement within the municipality.
+	 * The address-area name.
+	 * It is a settlement within the municipality.
 	 */
 	settlement: string | undefined
 	/**
-	 * The publisher's own identifier for the address. It keys `source_id` where it exists.
+	 * The publisher's own identifier for the address.
+	 * It keys `source_id` where it exists.
 	 */
 	addressID: string | undefined
 }
@@ -136,6 +139,7 @@ export interface CadastralSource {
  *
  * Returns `undefined` in two cases.
  * The address holds neither a municipality nor an address area, so the row would have no locality.
+ *
  * Otherwise `formatAddressRow` returns `undefined` for the components it was given.
  */
 export function cadastralRow(address: CadastralAddress, source: CadastralSource): CanonicalRow | undefined {
@@ -177,7 +181,8 @@ export function cadastralRow(address: CadastralAddress, source: CadastralSource)
 		components: aligned,
 		country: "ES",
 		locale: "es-ES",
-		// The row omits `register`. `runAdapter` stamps the adapter's own declaration onto it.
+		// The row omits `register`.
+		// `runAdapter` stamps the adapter's own declaration onto it.
 		// A per-row `register` would repeat what the adapter already states once.
 		source: source.adapterID,
 		source_id: address.addressID

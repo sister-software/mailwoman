@@ -23,10 +23,12 @@ import { CSVSpliterator } from "spliterator"
  * a split of a fetch module's own: which columns a publisher quotes is a property of
  * the edition, and a second reader would be a second answer to that question.
  * `columnScan: "rows"` keeps the first row from decoding the whole file.
+ *
  * The default `"auto"` decodes the whole file even for one row.
  *
  * @param path The written file.
- * @param columnDelimiter The publisher's delimiter. Defaults to a comma.
+ * @param columnDelimiter The publisher's delimiter.
+ * Defaults to a comma.
  * @throws When the file holds no row at all, so an empty or truncated file reports itself
  * rather than reading as a file with no columns.
  */
@@ -53,7 +55,8 @@ export async function readDelimitedHeader(path: PathBuilderLike, columnDelimiter
  *
  * @param columns The header {@linkcode readDelimitedHeader} returned.
  * @param required The columns the adapter indexes by name.
- * @param context What is being checked. This value opens the message.
+ * @param context What is being checked.
+ * This value opens the message.
  * @throws Naming the columns that are absent, so a renamed column is a reported failure
  * rather than an empty string on every row the adapter emits.
  */

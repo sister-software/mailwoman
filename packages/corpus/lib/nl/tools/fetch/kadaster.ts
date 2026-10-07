@@ -44,12 +44,14 @@ import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetc
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 /**
- * The ATOM download service for the theme. It holds the country's one entry.
+ * The ATOM download service for the theme.
+ * It holds the country's one entry.
  */
 export const NL_KADASTER_FEED_URL = "https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml"
 
 /**
- * The name the download is written under. The adapter's `inputPath` states this name.
+ * The name the download is written under.
+ * The adapter's `inputPath` states this name.
  *
  * The publisher's own name for the file.
  * The adapter reads a `.gml.gz` by inflating it, so the suffix is load-bearing.
@@ -59,8 +61,8 @@ export const NL_KADASTER_DOWNLOAD_FILENAME = "addresses.gml.gz"
 /**
  * The attribution recorded in the manifest.
  *
- * CC0 1.0 reserves no act and owes no attribution clause. This attribution is a credit the
- * repository chooses, rather than a condition of the grant.
+ * CC0 1.0 reserves no act and owes no attribution clause.
+ * This attribution is a credit the repository chooses, rather than a condition of the grant.
  */
 export const NL_KADASTER_ATTRIBUTION = "Kadaster"
 
@@ -70,8 +72,9 @@ const SLUG = NL_KADASTER_ADAPTER_ID
  * What one run recorded.
  *
  * `feed_updated` is the entry's own `<updated>`.
- * A later run downloads again when that value changes. That is the freshness signal the
- * ATOM feed offers in place of an HTTP validator.
+ * A later run downloads again when that value changes.
+ *
+ * That is the freshness signal the ATOM feed offers in place of an HTTP validator.
  *
  * `rights` is the license URL the feed states, recorded so a change of terms is
  * visible in the artifact rather than only in the register.
@@ -179,6 +182,7 @@ export async function readNLKadasterPublication(
  *
  * A skip requires the feed to state an `<updated>` value.
  * Where it states none, both sides read `null` and an equality test would hold.
+ *
  * A skip there would keep a download of unknown age for as long as the feed stayed silent.
  *
  * A second 782 MiB download is the slower error and the recoverable one.

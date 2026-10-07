@@ -185,8 +185,9 @@ export function createADSAdapter(): CorpusAdapter {
 
 					components.street = street
 				} else if (locatorName) {
-					// With no thoroughfare the locator name is the site or building name that
-					// designates the addressable unit. That is how a rural Estonian address works.
+					// With no thoroughfare the locator name is the site or building name
+					// that designates the addressable unit.
+					// That is how a rural Estonian address works.
 					components.venue = locatorName
 				}
 

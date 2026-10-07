@@ -47,7 +47,8 @@ function capabilities(options: { formats?: string[]; paging?: boolean; countDefa
 }
 
 /**
- * The `resultType=hits` answer. Its `numberMatched` is real on this service.
+ * The `resultType=hits` answer.
+ * Its `numberMatched` is real on this service.
  */
 function hits(numberMatched: number | string): string {
 	return `<?xml version="1.0" encoding="UTF-8"?><wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" numberMatched="${numberMatched}" numberReturned="0"></wfs:FeatureCollection>`
@@ -125,7 +126,8 @@ describe("featuresAsJSONL", () => {
 
 describe("harvestADSEE", () => {
 	it("pages at the size the service's CountDefault allows", () => {
-		// The service advertises CountDefault 1000000 and honors count=10000. That page is 31,198,909 bytes.
+		// The service advertises CountDefault 1000000 and honors count=10000.
+		// That page is 31,198,909 bytes.
 		expect(EE_ADS_PAGE_SIZE).toBe(10_000)
 	})
 

@@ -308,7 +308,8 @@ async function readReportedNumberMatched(
  *
  * This takes the service's word for the count.
  * A caller that cannot check the number against the publisher's own figure reads
- * {@linkcode readCheckedWFSFeatureCount} instead. That reader asks a second time.
+ * {@linkcode readCheckedWFSFeatureCount} instead.
+ * That reader asks a second time.
  *
  * @param options.subject Names the layer in the refusal, where the caller reads more than one.
  */
@@ -360,26 +361,27 @@ const COUNT_PROBE_SIZE = 10
 /**
  * The feature count a WFS reports for one type, checked against a page of that type.
  *
- * A bare `resultType=hits` request over a capped service answers with the cap, so the
- * number cannot tell a reader whether it describes the type. This asks past index 0 and
- * then probes a page.
+ * A bare `resultType=hits` request over a capped service answers with the cap,
+ * so the number cannot tell a reader whether it describes the type.
+ * This asks past index 0 and then probes a page.
  *
  * Flanders (`geo.api.vlaanderen.be/ad/wfs`) answers `numberMatched="10000"` without a
  * `startIndex` and its real count with one, so this asks past index 0.
  *
- * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) reports MapServer's
- * feature cap for a bare request, `unknown` for a feature page, and another number at
- * `startIndex=1`. Its type held 8,625,921 features. The tell is that a page of the same
- * type returns more features than the count admits, so this asks for one page and refuses
- * a count that page contradicts. Such a service is counted by paging instead:
- * {@linkcode countWFSFeaturesByPaging}.
+ * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) reports MapServer's feature
+ * cap for a bare request, `unknown` for a feature page, and another number at `startIndex=1`.
+ * Its type held 8,625,921 features.
  *
- * A missing `numberMatched` can also be transient. Slovakia's
- * `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with no such attribute.
+ * The tell is that a page of the same type returns more features than the count admits,
+ * so this asks for one page and refuses a count that page contradicts.
+ * Such a service is counted by paging instead: {@linkcode countWFSFeaturesByPaging}.
  *
- * This reports that response as unusable rather than inventing a count, so a caller that
- * needs the number retries, through `APIClient`'s `retry` configuration or by reading the
- * `numberMatched` a feature page holds.
+ * A missing `numberMatched` can also be transient.
+ * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with no such attribute.
+ *
+ * This reports that response as unusable rather than inventing a count,
+ * so a caller that needs the number retries, through `APIClient`'s `retry` configuration
+ * or by reading the `numberMatched` a feature page holds.
  *
  * @param options.subject Names the layer in the reason, where the caller reads more than one.
  */
@@ -434,13 +436,13 @@ export async function readCheckedWFSFeatureCount(
 
 	// A page no larger than the reported count agrees with it whatever the truth is,
 	// so agreement does not establish that the count describes the type.
-	// One request does: asking for one feature at the reported index. A service holding
-	// exactly that many returns none there.
+	// One request does: asking for one feature at the reported index.
+	// A service holding exactly that many returns none there.
 	//
-	// Poland's address service is why this request exists. It answers `numberMatched="1000"`,
-	// MapServer's own feature cap, and its pages cap at 1,000 too. A 10-feature probe therefore
-	// agreed with 1,000 while the type held 8,626,951. A caller trusting that would have stored
-	// 1,000 features and recorded the type as read whole.
+	// Poland's address service is why this request exists.
+	// It answers `numberMatched="1000"`, MapServer's own feature cap, and its pages cap at 1,000 too.
+	// A 10-feature probe therefore agreed with 1,000 while the type held 8,626,951.
+	// A caller trusting that would have stored 1,000 features and recorded the type as read whole.
 	const { data: beyond } = await client.fetch<string>({
 		method: "GET",
 		url: options.wfsURL,
@@ -480,7 +482,8 @@ export async function readCheckedWFSFeatureCount(
 export interface PagedWFSFeatureCount {
 	count: number
 	/**
-	 * Requests this measurement sent. This is the cost a caller is choosing to pay.
+	 * Requests this measurement sent.
+	 * This is the cost a caller is choosing to pay.
 	 */
 	requests: number
 	/**

@@ -88,8 +88,8 @@ describe("es-gipuzkoa adapter against the fixture member", () => {
 		// and the number, and its references are `AU_ADMINISTRATIVEUNIT_34162020056`,
 		// `ES.GFA.TN.056.1110` and `ES.GFA.PD.056.20830`.
 		// Across all 68,744 addresses of the whole member, every one joined the
-		// thoroughfare feature its own identifier points at and every number agreed with the
-		// identifier's third field, the 26 `S/N` cases included.
+		// thoroughfare feature its own identifier points at and every number agreed with
+		// the identifier's third field, the 26 `S/N` cases included.
 		const first = rows.find((row) => row.source_id.endsWith("056_1110_003"))
 
 		expect(first?.components).toEqual({

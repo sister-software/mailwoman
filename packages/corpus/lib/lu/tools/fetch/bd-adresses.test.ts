@@ -38,8 +38,9 @@ const EDITION_BYTES = 28_186_970
 /**
  * The UTF-8 byte-order mark the published file opens with.
  *
- * Built from its code point rather than written into a string literal. The character is invisible
- * in source, so a reader cannot tell a fixture that has it from one that does not.
+ * Built from its code point rather than written into a string literal.
+ * The character is invisible in source, so a reader cannot tell a fixture
+ * that has it from one that does not.
  */
 const BYTE_ORDER_MARK = String.fromCodePoint(0xfe_ff)
 

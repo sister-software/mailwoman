@@ -80,7 +80,8 @@ const COMPRESSED_FILENAME = "open_address.csv.gz"
 export const FI_RYHTI_LICENSE = "CC-BY-4.0"
 
 /**
- * The attribution SYKE states for its open data. The model card must record it.
+ * The attribution SYKE states for its open data.
+ * The model card must record it.
  */
 export const FI_RYHTI_ATTRIBUTION = "Lähde: Syke Ryhti"
 
@@ -113,6 +114,7 @@ export const FI_RYHTI_REQUIRED_COLUMNS: readonly string[] = [
  *
  * {@linkcode SourceManifest}'s five fields describe the decompressed CSV.
  * That file is what the adapter reads and what the digest covers.
+ *
  * The three added fields describe the transfer, and they are what the re-run
  * check compares before it downloads 351 MB.
  */
@@ -204,7 +206,8 @@ export interface DownloadRyhtiOptions {
 	/**
 	 * Re-read the CSV's sha256 on a re-run instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size. That check is one `stat`.
+	 * The default compares the recorded byte count against the file's size.
+	 * That check is one `stat`.
 	 * This re-hashes 793 MB.
 	 */
 	verifyDigest?: boolean

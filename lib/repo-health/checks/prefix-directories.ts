@@ -52,8 +52,8 @@ interface PrefixMember {
 	 */
 	path: string
 	/**
-	 * For a directory, the sibling module that takes its name (`x.ts` beside `x/`). It moves with the
-	 * directory.
+	 * For a directory, the sibling module that takes its name (`x.ts` beside `x/`).
+	 * It moves with the directory.
 	 */
 	companion?: string
 }

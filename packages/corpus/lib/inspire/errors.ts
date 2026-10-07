@@ -55,9 +55,10 @@ export class VoidDesignatorError extends Error {
  * Raised when a publication's archive cannot answer what the adapter asked it for.
  *
  * An archive holding no component feature is not a smaller publication.
- * Every address references a fixed set of components, so an empty index turns
- * each row into a row with no street rather than into fewer rows. That is the
- * absence the repository's partial-read rule refuses.
+ * Every address references a fixed set of components, so an empty index turns each
+ * row into a row with no street rather than into fewer rows.
+ *
+ * That is the absence the repository's partial-read rule refuses.
  *
  * The adapter id records which publisher failed, so one class serves every
  * publisher that ships its theme as one archive.

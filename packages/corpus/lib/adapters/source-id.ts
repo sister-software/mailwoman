@@ -20,8 +20,8 @@ import { sha256Hex } from "@mailwoman/core/hash"
  * The deterministic content-addressed source id for a row, keyed by its components.
  *
  * The output is `<adapterID>-<first 12 hex characters of sha256>`.
- * Twelve hex characters give 48 bits, about 17 million rows per adapter before the
- * expected collision count passes 1.
+ * Twelve hex characters give 48 bits, about 17 million rows per adapter
+ * before the expected collision count passes 1.
  * An adapter above that extends the prefix.
  */
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {

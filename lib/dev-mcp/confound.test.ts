@@ -231,7 +231,8 @@ describe("artifactSetWarnings", () => {
 	})
 
 	/**
-	 * A digested artifact record. The routed arm writes one per resolved artifact.
+	 * A digested artifact record.
+	 * The routed arm writes one per resolved artifact.
 	 */
 	const digested = (name: string, artifacts: Array<[string, string | null, string | null]>) => ({
 		locale: name,
@@ -263,8 +264,8 @@ describe("artifactSetWarnings", () => {
 	})
 
 	it("stays silent when one name resolves from the same bytes at different paths", () => {
-		// Two staged caches hold the same artifact at their own paths. That is the
-		// ordinary shape of a candidate comparison rather than a confound.
+		// Two staged caches hold the same artifact at their own paths.
+		// That is the ordinary shape of a candidate comparison rather than a confound.
 		const armA = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/a/model.onnx", "same-digest"]])] }
 		const armB = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/b/model.onnx", "same-digest"]])] }
 

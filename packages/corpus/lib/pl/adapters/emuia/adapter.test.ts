@@ -18,8 +18,8 @@ const scratch = useScratchDir("emuia")
  * Ten `ms:AD.Address` members of a real `GetFeature` page, retrieved 2026-10-02,
  * inside that page's own envelope.
  *
- * Five sit on a street with a name, including one `16/18` and one `17a`, and five sit
- * on a locality only, with an empty `ms:ulica`.
+ * Five sit on a street with a name, including one `16/18` and one `17a`,
+ * and five sit on a locality only, with an empty `ms:ulica`.
  * Only `numberReturned` was edited, from the page's 60 down to the ten kept,
  * so the document states its own contents.
  */

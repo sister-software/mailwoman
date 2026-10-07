@@ -35,7 +35,8 @@ import type { CanonicalRow } from "#types"
  * What a {@linkcode ComposeInspireRow} callback answers for one address.
  *
  * A row is emitted.
- * `undefined` refuses the address. The caller counts each refusal.
+ * `undefined` refuses the address.
+ * The caller counts each refusal.
  *
  * `deferred` states that the address holds a reference the pass has not indexed yet,
  * so the driver holds it and asks again once the document has ended.
@@ -68,12 +69,14 @@ export interface StreamInspireRowsOptions<Indexed> {
 	chunks: AsyncIterable<string | Uint8Array>
 
 	/**
-	 * The element each address is written as. Every INSPIRE publisher spells it `ad:Address`.
+	 * The element each address is written as.
+	 * Every INSPIRE publisher spells it `ad:Address`.
 	 */
 	addressElement?: string
 
 	/**
-	 * The elements an address references. The reader indexes them as they arrive.
+	 * The elements an address references.
+	 * The reader indexes them as they arrive.
 	 */
 	componentElements: readonly string[]
 
@@ -90,8 +93,8 @@ export interface StreamInspireRowsOptions<Indexed> {
 	 * What to keep per referenced feature.
 	 *
 	 * Czechia keeps the subtree, because it reads several values off one feature.
-	 * The Netherlands keeps the one string it needs. That holds 300,318 strings
-	 * rather than 300,318 subtrees.
+	 * The Netherlands keeps the one string it needs.
+	 * That holds 300,318 strings rather than 300,318 subtrees.
 	 */
 	index: (feature: MarkupElement) => Indexed
 
@@ -202,8 +205,9 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
 	 * Called once per pass, so it must deliver the same bytes each time.
 	 *
 	 * A factory rather than an iterable, because a byte stream is consumed by the first pass.
-	 * `inspireGMLChunks` inflates the archive member again. That is what makes the
-	 * second pass cheap relative to holding every address.
+	 * `inspireGMLChunks` inflates the archive member again.
+	 *
+	 * That is what makes the second pass cheap relative to holding every address.
 	 */
 	chunks: () => AsyncIterable<string | Uint8Array>
 

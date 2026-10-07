@@ -99,8 +99,9 @@ export const VLAANDEREN_ADAPTER_ID = "vlaanderen"
  * The terms the address-source register elects for `be-property-building-1`.
  *
  * The register's `electedTerms` for license
- * `unchecked-access-free-be-agentschap-digitaal-vlaanderen` states this value. That license has no
- * `spdx`, so `electedLicenseLabel` answers this string and the share-alike prefix filter matches it.
+ * `unchecked-access-free-be-agentschap-digitaal-vlaanderen` states this value.
+ * That license has no `spdx`, so `electedLicenseLabel` answers this string
+ * and the share-alike prefix filter matches it.
  */
 export const VLAANDEREN_DEFAULT_LICENSE = "Modellicentie voor gratis hergebruik Vlaanderen"
 
@@ -108,8 +109,9 @@ export const VLAANDEREN_DEFAULT_LICENSE = "Modellicentie voor gratis hergebruik 
  * The one jurisdiction this adapter emits.
  *
  * The service publishes the Flemish Region.
- * ISO 3166-1 assigns that region no code of its own, so the set holds one code. A caller that
- * requests any other gets {@linkcode UnsupportedCountryError} rather than zero rows.
+ * ISO 3166-1 assigns that region no code of its own, so the set holds one code.
+ *
+ * A caller that requests any other gets {@linkcode UnsupportedCountryError} rather than zero rows.
  */
 export const VLAANDEREN_COUNTRIES: readonly string[] = ["BE"]
 
@@ -120,8 +122,8 @@ export const VLAANDEREN_COUNTRIES: readonly string[] = ["BE"]
  * rather than by position.
  * Flanders uses one type across 1,000 addresses sampled.
  *
- * Czechia and Brussels write `buildingIdentifier` and the Netherlands `addressNumber` for
- * the same part. `#inspire/address` therefore leaves the vocabulary to the caller.
+ * Czechia and Brussels write `buildingIdentifier` and the Netherlands `addressNumber` for the same part.
+ * `#inspire/address` therefore leaves the vocabulary to the caller.
  */
 const HOUSE_NUMBER_DESIGNATOR = "addressIdentifierGeneral"
 
@@ -279,18 +281,19 @@ export function componentResourceID(href: string): string | null {
 /**
  * A Flemish street name read apart from the homonym discriminator that follows it.
  *
- * `gn:text` on an `ad:ThoroughfareName` states more than the street name: the name, an
- * underscore, and a discriminator that is usually empty. Over 20,000 values at twenty offsets,
- * 19,979 end with `_` and the remaining 21 have a discriminator after it.
+ * `gn:text` on an `ad:ThoroughfareName` states more than the street name: the name,
+ * an underscore, and a discriminator that is usually empty.
+ * Over 20,000 values at twenty offsets, 19,979 end with `_` and the remaining
+ * 21 have a discriminator after it.
  *
- * Exactly 21 values have an `_` somewhere other than the end. Those same 21 values hold the only
- * discriminators, so the field has one separator at one position.
+ * Exactly 21 values have an `_` somewhere other than the end.
+ * Those same 21 values hold the only discriminators, so the field has one separator at one position.
  *
- * The same streets read through `ad:AddressRepresentation/ad:thoroughfare` have no separator, 0 of
- * 10,000. The publisher's own data therefore marks everything from the `_` onward as bookkeeping.
+ * The same streets read through `ad:AddressRepresentation/ad:thoroughfare` have no separator, 0 of 10,000.
+ * The publisher's own data therefore marks everything from the `_` onward as bookkeeping.
  *
- * The split takes the last `_` and keeps the head. That drops a trailing separator and any
- * discriminator in one step.
+ * The split takes the last `_` and keeps the head.
+ * That drops a trailing separator and any discriminator in one step.
  */
 export interface SplitStreetName {
 	/**
@@ -306,9 +309,10 @@ export interface SplitStreetName {
 /**
  * Splits an `ad:ThoroughfareName` `gn:text` value into its {@link SplitStreetName}.
  *
- * @throws {@linkcode VlaanderenHarvestError} when the value has no `_`. Every one of the 20,000
- * measured values had one. That would be a change in the publisher's field. A guess at it would
- * write a bookkeeping suffix into every row sharing the new shape.
+ * @throws {@linkcode VlaanderenHarvestError} when the value has no `_`.
+ * Every one of the 20,000 measured values had one.
+ * That would be a change in the publisher's field.
+ * A guess at it would write a bookkeeping suffix into every row sharing the new shape.
  */
 export function splitStreetName(value: string): SplitStreetName {
 	const separator = value.lastIndexOf("_")

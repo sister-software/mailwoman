@@ -65,8 +65,9 @@ export const DK_INSPIRE_ADAPTER_ID = "dk-inspire"
 /**
  * The license the address-source register elects for this source.
  *
- * Read from the `spdx` field of the register's `unchecked-access-free-dk-klimadatastyrelsen`
- * license. The register's `dk-property-building-1` source points to it.
+ * Read from the `spdx` field of the register's `unchecked-access-free-dk-klimadatastyrelsen` license.
+ * The register's `dk-property-building-1` source points to it.
+ *
  * The feed's own `<rights>` states the same, but the register is what governs.
  */
 export const DK_INSPIRE_DEFAULT_LICENSE = "CC-BY-4.0"
@@ -81,10 +82,12 @@ export const DK_INSPIRE_DEFAULT_LICENSE = "CC-BY-4.0"
 export const DK_INSPIRE_COUNTRIES: readonly string[] = ["DK"]
 
 /**
- * The tables the adapter reads. It requires `gpkg_contents` to declare them.
+ * The tables the adapter reads.
+ * It requires `gpkg_contents` to declare them.
  *
- * The GeoPackage declares five. `addressareaname` holds a supplementary locality that a Danish
- * address line does not state, and `adminunitname` holds the region and municipality the adapter
+ * The GeoPackage declares five.
+ * `addressareaname` holds a supplementary locality that a Danish address line does
+ * not state, and `adminunitname` holds the region and municipality the adapter
  * leaves to cross-reference, so neither is read.
  */
 export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postaldescriptor", "thoroughfarename"]
@@ -114,8 +117,8 @@ export class AddressGeoPackageSchemaError extends Error {
 /**
  * Raised when an address row's component reference resolves to no row of the referenced table.
  *
- * An unresolved reference means the database is incomplete. The adapter reports it
- * rather than converting it into an address missing its street.
+ * An unresolved reference means the database is incomplete.
+ * The adapter reports it rather than converting it into an address missing its street.
  */
 export class UnresolvedAddressComponentError extends Error {
 	constructor(inspireID: string, column: string, reference: string | null) {
@@ -170,8 +173,8 @@ export interface AddressGeoPackageDatabase {
  * Danish writes the floor first, so the two join in that order.
  *
  * {@linkcode composeHouseNumber} answers the empty string when its first argument is absent.
- * That suits the house-number columns it was written for, and it would drop every door here:
- * 967 measured rows have a door and no floor.
+ * That suits the house-number columns it was written for, and it would drop every
+ * door here: 967 measured rows have a door and no floor.
  * The door is therefore the value when the floor is absent.
  *
  * @returns The joined designator, or the empty string when the publisher states neither.
@@ -219,8 +222,9 @@ export function createDKInspireAdapter(): CorpusAdapter {
 				throw new AddressGeoPackageSchemaError(inputPath, declared, missing)
 			}
 
-			// Left joins, deliberately: an inner join would drop an address whose component reference
-			// does not resolve. That absence has to be reported rather than applied.
+			// Left joins, deliberately: an inner join would drop an address whose
+			// component reference does not resolve.
+			// That absence has to be reported rather than applied.
 			const stream = db
 				.selectFrom("address as a")
 				.leftJoin("thoroughfarename as t", "t.inspireid", "a.component_thoroughfarename")

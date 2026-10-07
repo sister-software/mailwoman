@@ -27,7 +27,8 @@ const DATED_RECORDS: readonly string[] = [
 ]
 
 /**
- * A preregistration freeze or an evaluation receipt. It records the paths it was written against.
+ * A preregistration freeze or an evaluation receipt.
+ * It records the paths it was written against.
  */
 const RECORD_FILE = /-(?:freeze|receipt)\.json$/u
 
@@ -160,8 +161,10 @@ function pathLiteralsIn(file: string, text: string, moves: readonly ModuleMove[]
  * skipping `out/` and the `exempt` prefixes.
  *
  * Moved files are scanned too, because a script's `Usage:` line often quotes its own path.
- * A moved file is read wherever it is on disk, at its source before the move is applied or at its
- * destination after. Its rewrites point at the destination, where the applier edits it.
+ * A moved file is read wherever it is on disk, at its source before the move is applied
+ * or at its destination after.
+ *
+ * Its rewrites point at the destination, where the applier edits it.
  */
 export async function planPathLiteralRewrites(
 	repoRoot: string,

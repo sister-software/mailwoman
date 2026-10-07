@@ -312,9 +312,10 @@ const streetOrderMemo = new Map<string, StreetOrder | null>()
 /**
  * The side a country writes its house number on, or `null` where codex's sources disagree or state none.
  *
- * Read from the `house-number-precedes-street` claim. That claim collects libaddressinput's `fmt` and
- * `lfmt`,
- * the OpenCage street order, the board's hand-authored layout and a retrieved UPU S42 template.
+ * Read from the `house-number-precedes-street` claim.
+ * That claim collects libaddressinput's `fmt` and `lfmt`, the OpenCage street order,
+ * the board's hand-authored layout and a retrieved UPU S42 template.
+ *
  * A side is returned only when at least one source states it and none states the other.
  *
  * Hong Kong's Chinese-script `fmt` writes the number after the street
@@ -584,9 +585,10 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 
 	components.locality = locality
 
-	// The script is passed rather than left to the formatter. That keeps a country's local
-	// order whenever its Latin order has fewer slots: `Weixing Road` and `Changchun` would
-	// otherwise print run together in China's Han-script line, with no separator between them.
+	// The script is passed rather than left to the formatter.
+	// That keeps a country's local order whenever its Latin order has fewer slots:
+	// `Weixing Road` and `Changchun` would otherwise print run together in China's
+	// Han-script line, with no separator between them.
 	const rendered = formatAddressRow(components, country, { singleLine: true, script: scriptOfComponents(components) })
 
 	if (!rendered) return { refused: CORDISRefusal.Unrenderable, country }

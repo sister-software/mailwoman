@@ -60,7 +60,8 @@ interface LieuDitTuple {
 	locality: string
 	dependentLocality: string
 	/**
-	 * The row's INSEE commune code. This code decides the row's jurisdiction.
+	 * The row's INSEE commune code.
+	 * This code decides the row's jurisdiction.
 	 *
 	 * BAN's overseas department files hold the same columns as the metropolitan ones,
 	 * so a recipe that reads the fetched BAN directory receives Guadeloupe, Martinique,
@@ -240,8 +241,9 @@ export const frLieuditRecipe: CorpusRecipe = {
 			//
 			// Among the jurisdictions BAN covers, codex states surface forms only for `FR`, so an overseas
 			// row draws from `random` and then leaves `raw` and `components.country` as they were.
-			// The draw happens either way. This keeps the byte-stream a function of `countryFraction`
-			// rather than of the mixture of jurisdictions in the input files.
+			// The draw happens either way.
+			// This keeps the byte-stream a function of `countryFraction` rather than of
+			// the mixture of jurisdictions in the input files.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms: readonly string[] | undefined =
 					COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]

@@ -88,7 +88,8 @@ export const PL_EMUIA_WFS = "https://mapy.geoportal.gov.pl/wss/service/INSPIRE/A
 export const PL_EMUIA_TYPE_NAME = "ms:AD.Address"
 
 /**
- * The output format the harvest asks for. The service advertises it first.
+ * The output format the harvest asks for.
+ * The service advertises it first.
  */
 export const PL_EMUIA_OUTPUT_FORMAT = "application/gml+xml; version=3.2"
 

@@ -28,7 +28,8 @@ const PAGE_ROOT =
 	'numberMatched="unknown" numberReturned="2" timeStamp="2026-10-02T16:25:34">'
 
 /**
- * A service holding `total` features. It answers a page of at most `pageCap` of them.
+ * A service holding `total` features.
+ * It answers a page of at most `pageCap` of them.
  *
  * The features differ by index, so two pages are never byte-identical and the harvest's
  * repeated-page check is not satisfied by the fixture itself.

@@ -252,7 +252,8 @@ const ARCHIPELAGO_CODE = /^(?:idv|islv|tg|marq|australes)(?![\p{L}\d])/iu
 const LEADING_NUMBER = /^(\d+)(?:\s*(bis|ter|quater)(?![\p{L}])|\s?([A-Za-z])(?![\p{L}'’]))?[\s,]+(.+)$/iu
 
 /**
- * A leading `Lieu-dit` marker. A place line drops it.
+ * A leading `Lieu-dit` marker.
+ * A place line drops it.
  */
 const LIEU_DIT_MARKER = /^lieu[- ]dit\s+/iu
 
@@ -347,7 +348,8 @@ export function readAnnuaireLine(line: string): LineReading {
 
 	if (split) {
 		if (!split.street) {
-			// `Bourg` and `Village` on their own refer to the settlement's center. That center is a place.
+			// `Bourg` and `Village` on their own refer to the settlement's center.
+			// That center is a place.
 			if (!house && split.street_prefix && LONE_PLACE_WORDS.has(foldToken(split.street_prefix))) {
 				return { kind: "place", place: split.street_prefix }
 			}

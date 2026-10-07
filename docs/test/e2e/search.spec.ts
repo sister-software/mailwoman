@@ -3,7 +3,8 @@ import { expect, type Locator, type Page, test } from "@playwright/test"
 /**
  * Opens the search modal with the keyboard shortcut.
  *
- * The shortcut listener attaches when React hydrates the navbar. That can be after `goto` returns.
+ * The shortcut listener attaches when React hydrates the navbar.
+ * That can be after `goto` returns.
  * The press is therefore retried until the dialog is open.
  */
 async function openSearch(page: Page): Promise<Locator> {

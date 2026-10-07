@@ -172,8 +172,9 @@ export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
  *
  * The value is the SPDX identifier rather than the license's title, because
  * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
- * The constant must not hold a placeholder such as `unreviewed-be-brussels-urbis`. That value
- * resolves to no expression, so these rows would reach a build as unknown obligations.
+ * The constant must not hold a placeholder such as `unreviewed-be-brussels-urbis`.
+ *
+ * That value resolves to no expression, so these rows would reach a build as unknown obligations.
  */
 export const BRUSSELS_DEFAULT_LICENSE = "CC-BY-4.0"
 

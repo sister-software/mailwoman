@@ -643,7 +643,8 @@ function placeStreetNumber(
 
 	// A number-first line may close the number with a comma, as Luxembourg's
 	// `49, AVENUE JOHN F. KENNEDY` does.
-	// The layout renders its own separator. The comma stays out of the component.
+	// The layout renders its own separator.
+	// The comma stays out of the component.
 	const split = leads ? splitStreetLine(line.replace(LEADING_NUMBER_COMMA, "$1 ")) : splitTrailingStreetLine(line)
 
 	if (!split?.house_number || ZERO_NUMBER.test(split.house_number) || unplacedDigit(split.street)) {

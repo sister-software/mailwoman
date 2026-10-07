@@ -68,8 +68,7 @@ export const MAX_PAGE_SIZE = 10_000
  * Measured 2026-10-02, `ad:ThoroughfareName` holds 167,218 features against a 10,000 page cap,
  * so it needs 17 pages, while the other two hold 1,190 and 609 and fit in one.
  *
- * A single file for the small ones would leave the harvester correct only
- * until one of them passed the cap.
+ * A single file for the small ones would leave the harvester correct only until one of them passed the cap.
  */
 const COMPONENT_STEMS = {
 	ThoroughfareName: "thoroughfare-name",
@@ -204,9 +203,10 @@ interface PageOnDisk {
  *
  * The feature count is read from each file's own `numberReturned` rather than assumed
  * from the page size, so a page the service answered short is recorded as short.
- * A file whose opening bytes state no `numberReturned` is left out. The harvest
- * then requests that index again: a page of unknown extent is not a page this
- * harvest can count, and a run killed mid-write leaves exactly that.
+ * A file whose opening bytes state no `numberReturned` is left out.
+ *
+ * The harvest then requests that index again: a page of unknown extent is not a page
+ * this harvest can count, and a run killed mid-write leaves exactly that.
  *
  * A group small enough for one page is written under `<stem>.gml` with no index,
  * so that name reads as `startIndex` 0.

@@ -117,9 +117,9 @@ export const ES_CATASTRO_COUNTRIES: readonly string[] = ["ES"]
  * `all rights reserved` template the feed still shows. No Creative Commons label or SPDX identifier
  * covers that instrument, so the row records the instrument's own title.
  *
- * The register reads `refused` for `redistribute-data`: clause 1 withholds distribution of the
- * information as supplied, and requires transformation before any public use. Ingest,
- * transformation and training are permitted, and this adapter performs those.
+ * The register reads `refused` for `redistribute-data`: clause 1 withholds distribution
+ * of the information as supplied, and requires transformation before any public use.
+ * Ingest, transformation and training are permitted, and this adapter performs those.
  */
 export const ES_CATASTRO_LICENSE =
 	"Licencia de acceso y uso de los servicios y conjuntos de datos INSPIRE de la Dirección General del Catastro"
@@ -129,7 +129,8 @@ export const ES_CATASTRO_LICENSE =
  *
  * The archive ships two members and the other is `A.ES.SDGC.AD.MD.<code>.xml`,
  * the ISO 19139 metadata record.
- * A selector matching `.xml` reads that record. That record holds no `AD:Address`.
+ * A selector matching `.xml` reads that record.
+ * That record holds no `AD:Address`.
  */
 const GML_MEMBER = /\.gml$/iu
 
@@ -168,9 +169,12 @@ const MUNICIPALITY_LEVELS = new Set(["4", "4thOrder"])
 /**
  * The designator type the publisher writes on every address.
  *
- * Measured over Ceuta: 8,126 of 8,126 addresses hold exactly one designator, and its
- * `AD:type` is the text `1`. The value is the house number. `Consulta_DNPRC`'s `pnp`
- * and `plp` fields confirm that for the two addresses tabulated in this module's header.
+ * Measured over Ceuta: 8,126 of 8,126 addresses hold exactly one designator,
+ * and its `AD:type` is the text `1`.
+ * The value is the house number.
+ *
+ * `Consulta_DNPRC`'s `pnp` and `plp` fields confirm that for the two addresses
+ * tabulated in this module's header.
  */
 const HOUSE_NUMBER_TYPE = "1"
 

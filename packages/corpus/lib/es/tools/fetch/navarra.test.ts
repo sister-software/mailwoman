@@ -121,8 +121,9 @@ describe("readESNavarraServiceFeed", () => {
 		const feed = await readAtomFeed(feedChunks(serviceXML(entryXML(1) + entryXML(100) + entryXML(908))))
 		const partitions = readESNavarraServiceFeed(feed)
 
-		// Every title is `Address Navarra` and every id is empty. The published numbers
-		// are not contiguous, so the count comes from the feed rather than from a number here.
+		// Every title is `Address Navarra` and every id is empty.
+		// The published numbers are not contiguous, so the count comes from the feed
+		// rather than from a number here.
 		expect(partitions).toHaveLength(feed.entries.length)
 		expect(new Set(feed.entries.map((entry) => entry.title)).size).toBe(1)
 		expect(partitions.at(-1)?.partition).toBe("908")

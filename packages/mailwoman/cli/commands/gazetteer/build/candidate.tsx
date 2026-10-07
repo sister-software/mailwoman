@@ -153,7 +153,8 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		]
 	})
 
-	// Progress streams to stderr until the summary lands. `CommandTaskResult` renders that summary.
+	// Progress streams to stderr until the summary lands.
+	// `CommandTaskResult` renders that summary.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

@@ -174,15 +174,15 @@ export const FINESS_FAMILY_PLACEMENT_CATEGORIES: ReadonlySet<string> = new Set([
 /**
  * An establishment name that states family placement, for one filed under another category.
  *
- * Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` is filed under `377`,
- * Etablissement expérimental pour enfance handicapée, so the category list would admit it without
- * the name check.
+ * Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` is filed under `377`, Etablissement
+ * expérimental pour enfance handicapée, so the category list would admit it without the name check.
  */
 const FAMILY_PLACEMENT_NAME = /\b(?:accueil|placement) famil|\blieux? de vie\b/iu
 
 /**
- * The positions, counted from 0, of the columns this adapter reads. Each entry gives the
- * publisher's column name and what the column holds.
+ * The positions, counted from 0, of the columns this adapter reads.
+ *
+ * Each entry gives the publisher's column name and what the column holds.
  */
 export const FinessColumn = {
 	/**

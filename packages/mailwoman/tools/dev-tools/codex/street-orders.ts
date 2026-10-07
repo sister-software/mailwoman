@@ -127,11 +127,13 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	BM: "number-first",
 	BN: "number-first",
 	BO: "number-last",
-	// Measured across all three islands. Each has its own government and land
-	// registry: `Kaya Irlanda 17` and `Kaya Grandi 30` on Bonaire, `Fort Oranjestraat #5`
-	// and `Kennip Road 11` on Sint Eustatius, `Paris Hill Road 10` and `Powerstreet 1` on Saba.
+	// Measured across all three islands.
+	// Each has its own government and land registry: `Kaya Irlanda 17` and `Kaya Grandi 30`
+	// on Bonaire, `Fort Oranjestraat #5` and `Kennip Road 11` on Sint Eustatius,
+	// `Paris Hill Road 10` and `Powerstreet 1` on Saba.
 	// Ten numbered addresses agreed and none put the number first.
-	// Sint Eustatius writes a `#` before the number. That `#` is a prefix rather than an order.
+	// Sint Eustatius writes a `#` before the number.
+	// That `#` is a prefix rather than an order.
 	// This entry is correct and currently inert: libaddressinput states no `fmt` for `BQ`,
 	// so the generator emits no layout and `formatAddressRow` answers `null` for it,
 	// as it does for `AW`, `CW` and `SX`.
@@ -294,7 +296,8 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	// and the state public-works agency: `Via del Voltone, 120`, `Contrada Omerelli, 20`,
 	// `Via Scialoja, 20`, `Strada del Lavoro, 75`.
 	// San Marino also writes a comma between the street and the number, so it is in
-	// {@linkcode COMMA_JOINED_STREET_COUNTRIES} as well. Italy is not.
+	// {@linkcode COMMA_JOINED_STREET_COUNTRIES} as well.
+	// Italy is not.
 	SM: "number-last",
 	SN: "number-first",
 	SO: "number-last",

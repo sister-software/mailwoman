@@ -76,7 +76,8 @@ import { loadCollectionFiles, writeManifest } from "#tools/fetch/download"
 export const CZ_CUZK_SERVICE_FEED_URL = "https://atom.cuzk.gov.cz/AD/AD.xml"
 
 /**
- * The directory the harvest writes under. This is the adapter's `inputPath`.
+ * The directory the harvest writes under.
+ * This is the adapter's `inputPath`.
  */
 const SLUG = CZ_CUZK_ADAPTER_ID
 
@@ -135,7 +136,9 @@ const MANIFEST_INTERVAL = 25
  */
 export interface CzMunicipalityDataset {
 	/**
-	 * The municipality code. It is both the `obec` code and the archive's file name stem.
+	 * The municipality code.
+	 *
+	 * It is both the `obec` code and the archive's file name stem.
 	 */
 	code: string
 	/**
@@ -143,11 +146,13 @@ export interface CzMunicipalityDataset {
 	 */
 	title: string
 	/**
-	 * The `<updated>` the service document states. This value is the archive's modification time.
+	 * The `<updated>` the service document states.
+	 * This value is the archive's modification time.
 	 */
 	updated: string
 	/**
-	 * The dataset feed for this municipality. It lists the same data in both projections.
+	 * The dataset feed for this municipality.
+	 * It lists the same data in both projections.
 	 */
 	datasetFeedURL: string
 	/**
@@ -155,7 +160,8 @@ export interface CzMunicipalityDataset {
 	 */
 	downloadURL: string
 	/**
-	 * The file name the archive is written under. The adapter globs for this name.
+	 * The file name the archive is written under.
+	 * The adapter globs for this name.
 	 */
 	filename: string
 }
@@ -178,8 +184,8 @@ const TITLE_CODE = /\[(\d+)\]\s*$/u
  * and stored under, so a disagreement between the publisher's two statements of it
  * would silently store one municipality's addresses under another's name.
  *
- * @throws When either statement is missing or the two disagree. That reads as a change
- * in the publisher's layout rather than as a municipality without a code.
+ * @throws When either statement is missing or the two disagree.
+ * That reads as a change in the publisher's layout rather than as a municipality without a code.
  */
 export function municipalityCodeOf(entry: { title: string; identifierCode: string | null }): string {
 	const fromIdentifier = IDENTIFIER_CODE_SUFFIX.exec(entry.identifierCode ?? "")?.[1]
@@ -235,8 +241,9 @@ export function projectionBaseURL(feed: AtomFeed, projection: CzCuzkProjection):
 /**
  * The municipalities the service document lists, with the archive URL for one projection.
  *
- * @throws When the feed lists no entry, when two entries claim one municipality code, or when
- * an entry states no dataset feed link. A repeated code would make one archive overwrite the other.
+ * @throws When the feed lists no entry, when two entries claim one municipality code,
+ * or when an entry states no dataset feed link.
+ * A repeated code would make one archive overwrite the other.
  */
 export function readCzCuzkServiceFeed(feed: AtomFeed, projection: CzCuzkProjection): readonly CzMunicipalityDataset[] {
 	if (!feed.entries.length) {
@@ -355,7 +362,8 @@ export interface CzCuzkHarvestManifest extends SourceCollectionManifest {
 
 export interface HarvestCzCuzkOptions {
 	/**
-	 * Where the archives and the manifest are written. This is the adapter's `inputPath`.
+	 * Where the archives and the manifest are written.
+	 * This is the adapter's `inputPath`.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -385,7 +393,9 @@ export interface HarvestCzCuzkOptions {
 	/**
 	 * Re-read the sha256 of every archive already on disk instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size. That check takes one `stat`.
+	 * The default compares the recorded byte count against the file's size.
+	 * That check takes one `stat`.
+	 *
 	 * This option re-hashes and reads every archive in the directory.
 	 */
 	verifyDigests?: boolean
@@ -412,7 +422,8 @@ async function isCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata. This option is opt-in for that reason.
+	// The digest check reads the whole file rather than its metadata.
+	// This option is opt-in for that reason.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
@@ -466,8 +477,8 @@ export async function harvestCzCuzk(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, CzCuzkArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is kept,
-	// so a bounded run never drops what an earlier run recorded.
+	// An entry for a municipality this run does not consider is kept, so a bounded
+	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as CzCuzkArchiveEntry)
 	}

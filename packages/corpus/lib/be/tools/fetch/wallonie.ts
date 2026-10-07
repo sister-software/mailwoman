@@ -58,8 +58,9 @@ const SLUG = WALLONIE_ADAPTER_ID
  * What one run recorded.
  *
  * `feed_updated` is the dataset feed's own `<updated>`.
- * A later run downloads again when that value changes. The INSPIRE
- * pattern offers that field in place of an HTTP validator.
+ * A later run downloads again when that value changes.
+ *
+ * The INSPIRE pattern offers that field in place of an HTTP validator.
  */
 export interface WallonieManifest extends SourceManifest {
 	service_url: string

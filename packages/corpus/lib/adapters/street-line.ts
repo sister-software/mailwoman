@@ -87,6 +87,7 @@ export const HOUSE_NUMBER_SUFFIX = /^(\S.*?)[\s,]+(\d+[A-Za-z]?(?:\s*[/-]\s*[0-9
  *
  * A number-last country writes the number after the street name.
  * `STREET_ORDERS` records that order for Italy, Germany, Finland and 150 other jurisdictions.
+ *
  * Whitespace inside the line is collapsed, and the separators inside a subdivided
  * number are closed up, so `VIA PERUGIA 2 / A` yields `2/A`.
  *

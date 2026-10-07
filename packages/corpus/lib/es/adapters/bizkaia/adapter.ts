@@ -176,6 +176,7 @@ const DESIGNATOR_FIELDS = 4
  * `BO\TRAÑA-MATIENA(1)` answers `BO TRAÑA-MATIENA`.
  * The backslash is the cadastre's separator between the street-type abbreviation
  * and the name, and the trailing parenthesis holds the street's sequence code.
+ *
  * The address's own designator repeats that code as its third field.
  *
  * @returns The street, or undefined where the feature states no name.
@@ -197,8 +198,8 @@ export function bizkaiaStreet(feature: MarkupElement): string | undefined {
 /**
  * The street's sequence code a thoroughfare feature states, as the feature writes it.
  *
- * The code the address's designator joins on. The publisher's own
- * `ad:LocatorName` therefore checks the join rather than copying it.
+ * The code the address's designator joins on.
+ * The publisher's own `ad:LocatorName` therefore checks the join rather than copying it.
  *
  * @returns The digits inside the trailing parentheses, or undefined where there are none.
  */
@@ -360,8 +361,8 @@ function memberChunks(path: PathBuilderLike): AsyncIterable<string | Uint8Array>
  * The two passes read the same list, so an input holding addresses and an input holding
  * component features need not be told apart: a municipality archive contributes addresses
  * to the second pass and no feature to the first, and a saved WFS page the reverse.
- * Extension cannot decide: a hand-assembled input can hold both, and the publisher's own
- * naming distinguishes neither.
+ * Extension cannot decide: a hand-assembled input can hold both, and the
+ * publisher's own naming distinguishes neither.
  *
  * A path holding no input raises rather than yielding zero rows, so a wrong path
  * reports itself instead of reading as an empty publisher.

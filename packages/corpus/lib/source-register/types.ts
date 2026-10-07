@@ -179,8 +179,8 @@ export const ResearchPass = {
 	 */
 	RightsReview: "2026-09-30-rights-review",
 	/**
-	 * The decoder-exposure survey recorded the authoritative address source of
-	 * each jurisdiction the exposure arc admits through OpenStreetMap.
+	 * The decoder-exposure survey recorded the authoritative address source of each
+	 * jurisdiction the exposure arc admits through OpenStreetMap.
 	 * It located each authority and did not read its terms.
 	 */
 	DecoderExposureSurvey: "2026-10-03-decoder-exposure",
@@ -347,8 +347,9 @@ export interface ElectedLicense {
 	 * Every grant the publisher states, where its surfaces state more than one.
 	 *
 	 * A publisher may state different terms in its dataset metadata, its download service
-	 * and its website, and it may be offering the same material under more than
-	 * one license. Creative Commons permits that.
+	 * and its website, and it may be offering the same material under more than one license.
+	 * Creative Commons permits that.
+	 *
 	 * Where that happens, {@linkcode ElectedLicense.spdx} records the one a build filters on
 	 * and this records what the publisher actually said, so a later reviewer reads
 	 * the conflict rather than one reading presented as settled.
@@ -498,8 +499,7 @@ export interface AddressSourceRecord {
 	sourceURL?: string
 	note?: string
 	/**
-	 * The role of each source address column, keyed by that
-	 * column's path in the published record.
+	 * The role of each source address column, keyed by that column's path in the published record.
 	 *
 	 * A source is ineligible for ingest until at least one column has a role.
 	 * One role per source cannot describe a publication that has two roles on one record:
@@ -529,9 +529,8 @@ export interface AddressSourceRecord {
 	/**
 	 * The id of the corpus adapter that emits this source's rows.
 	 *
-	 * A corpus row has its adapter's id in `source` and its jurisdiction in `country`,
-	 * and the register scopes a source to one publisher in one jurisdiction,
-	 * so that pair addresses one record here.
+	 * A corpus row has its adapter's id in `source` and its jurisdiction in `country`, and the register
+	 * scopes a source to one publisher in one jurisdiction, so that pair addresses one record here.
 	 * One adapter can serve several records: the `ban` reader emits eleven jurisdictions
 	 * from one schema, and each is its own source under its own license decision.
 	 *

@@ -61,8 +61,10 @@ export const SourceRegister = {
 	 */
 	CuzkInspireAddresses: "cz-cuzk-inspire-addresses",
 	/**
-	 * Suomen ympäristökeskus' Ryhti built-environment system. Its building address data
-	 * covers Åland's sixteen municipalities beside the Finnish mainland in one national file.
+	 * Suomen ympäristökeskus' Ryhti built-environment system.
+	 *
+	 * Its building address data covers Åland's sixteen municipalities beside the
+	 * Finnish mainland in one national file.
 	 *
 	 * The prefix is the publisher's own country, as `fr-ban`'s is.
 	 */
@@ -149,8 +151,8 @@ export const SourceRegister = {
 	/**
 	 * The INSPIRE Addresses theme of the Gobierno de Navarra.
 	 *
-	 * The province is split across 272 zipped GML partitions, each titled `Address Navarra`
-	 * The title states no municipality.
+	 * The province is split across 272 zipped GML partitions, each titled
+	 * `Address Navarra` The title states no municipality.
 	 */
 	NavarraInspireAddresses: "es-navarra-inspire-ad",
 	/**

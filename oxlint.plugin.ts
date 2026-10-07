@@ -429,7 +429,8 @@ const noRelativeDynamicImportRule: Rule = {
 /**
  * Package import aliases can resolve a sibling executable without a filesystem path literal.
  *
- * Other module paths use the shared resolver. That resolver returns a filesystem path.
+ * Other module paths use the shared resolver.
+ * That resolver returns a filesystem path.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {

@@ -33,7 +33,8 @@ export const ConventionSource = {
 	 */
 	NationalPostalAuthority: "national-postal-authority",
 	/**
-	 * UPU's Postal Addressing Systems compendium. It describes a member country's system.
+	 * UPU's Postal Addressing Systems compendium.
+	 * It describes a member country's system.
 	 *
 	 * A third party collected the description rather than the country publishing it,
 	 * so it can lag the rules it describes.
@@ -74,7 +75,8 @@ export const ConventionSource = {
 export type ConventionSource = (typeof ConventionSource)[keyof typeof ConventionSource]
 
 /**
- * What kind of authority an observation has. It decides what a reader may conclude from it.
+ * What kind of authority an observation has.
+ * It decides what a reader may conclude from it.
  */
 export const ObservationKind = {
 	/**
@@ -83,6 +85,7 @@ export const ObservationKind = {
 	Authoritative: "authoritative",
 	/**
 	 * A mapping of one country's address semantics into a shared vocabulary.
+	 *
 	 * That country's representative built it and the country approved it.
 	 *
 	 * Stronger than a recommendation, because the country agreed to it.
@@ -91,7 +94,8 @@ export const ObservationKind = {
 	 */
 	ApprovedCrosswalk: "approved-crosswalk",
 	/**
-	 * A third party's account of an authority's system. It can lag the rules it describes.
+	 * A third party's account of an authority's system.
+	 * It can lag the rules it describes.
 	 */
 	Description: "description",
 	/**
@@ -136,6 +140,7 @@ export const KIND_BY_SOURCE: Readonly<Record<ConventionSource, ObservationKind>>
  *
  * `Unread` means a statement exists on record and this repository has not retrieved it.
  * That state tells a reader there is a document to go and read.
+ *
  * A source with no statement at all contributes no observation, so it cannot be mistaken for either.
  */
 export const ObservationStance = {
@@ -193,13 +198,14 @@ export const ConventionClaimID = {
 	 */
 	OrderingReversesWithScript: "ordering-reverses-with-script",
 	/**
-	 * A premise is numbered without a street: a house number belongs to a locality or a place with its own name.
+	 * A premise is numbered without a street: a house number belongs to a locality
+	 * or a place with its own name.
 	 *
 	 * The predicate is a house number present, a street absent, and a locality or dependent locality present.
 	 * A row carrying only a locality describes a locality and falls outside the predicate.
 	 *
-	 * A premise identified by a compound or building name without any number is
-	 * a different shape and needs its own claim.
+	 * A premise identified by a compound or building name without any number is a
+	 * different shape and needs its own claim.
 	 * A reader trained where street plus number dominates has little evidence for this one.
 	 */
 	StreetlessPremiseIdentity: "streetless-premise-identity",
@@ -215,9 +221,11 @@ export const ConventionClaimID = {
 	 * The jurisdiction's postcode is a fixed-width run of digits.
 	 *
 	 * This measures exposure to the shape only.
-	 * Six digits is a postcode in India, in China and in Russia, so whether a reader labels
-	 * a six-digit token by its surrounding grammar rather than by its shape is a contrast
-	 * between contexts. The contrast board tests that. This claim does not.
+	 * Six digits is a postcode in India, in China and in Russia, so whether a reader labels a six-digit
+	 * token by its surrounding grammar rather than by its shape is a contrast between contexts.
+	 *
+	 * The contrast board tests that.
+	 * This claim does not.
 	 */
 	FixedWidthNumericPostcode: "fixed-width-numeric-postcode",
 	/**
@@ -307,9 +315,10 @@ export interface ConventionClaim {
  * Whether the observations disagree: at least one supports the claim and at least one contradicts it.
  *
  * The function reports the disagreement and does not resolve it.
- * A caller that needs one answer decides which {@link ObservationKind} it trusts
- * for its purpose. That choice differs per purpose: a validator wants the
- * implementation's belief and a renderer wants the renderer's.
+ * A caller that needs one answer decides which {@link ObservationKind} it trusts for its purpose.
+ *
+ * That choice differs per purpose: a validator wants the implementation's belief
+ * and a renderer wants the renderer's.
  */
 export function observationsDisagree(claim: ConventionClaim): boolean {
 	const supports = claim.observations.some((entry) => entry.stance === ObservationStance.Supports)
@@ -321,7 +330,9 @@ export function observationsDisagree(claim: ConventionClaim): boolean {
 /**
  * Builds one observation, reading its kind from {@link KIND_BY_SOURCE}.
  *
- * The function name matches its return type. `@mailwoman/evidence` exports an `observation` of its own.
+ * The function name matches its return type.
+ * `@mailwoman/evidence` exports an `observation` of its own.
+ *
  * That one records a value a source reported at a vintage rather than a stance on a claim.
  */
 export function conventionObservation(
@@ -375,15 +386,15 @@ export function stanceFromLayout(
 		}
 
 		default: {
-			// A layout is one rendering in one script, so it answers a claim about component
-			// order or presence within itself.
-			// The remaining four claims need evidence a layout does not contain. They read as
-			// unexamined rather than as agreement until such a source is read.
+			// A layout is one rendering in one script, so it answers a claim about
+			// component order or presence within itself.
+			// The remaining four claims need evidence a layout does not contain.
+			// They read as unexamined rather than as agreement until such a source is read.
 			//
 			// `ordering-reverses-with-script` compares two layouts of one jurisdiction.
 			// `conventionClaimForCountry` holds those and this function does not.
-			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its
-			// place in a line. `@mailwoman/codex/postcode/shapes` answers that.
+			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its place in a line.
+			// `@mailwoman/codex/postcode/shapes` answers that.
 			// `premise-subdivision-present` and `planning-word-names-locality` are propositions
 			// about what a row contains, and a rendering table states no row's content.
 			void layout

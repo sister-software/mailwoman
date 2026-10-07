@@ -124,8 +124,8 @@ export const S42_COHORT_2006: readonly string[] = ["AU", "BR", "CL", "FI", "FR",
  * Canada, Chile, Finland, France, Germany, Great Britain, Italy, Morocco, Netherlands,
  * New Zealand, Portugal, Saudi Arabia, South Africa, the United States and Venezuela."
  *
- * That wording records the countries joining a certification programme. That claim is weaker
- * than the one the earlier note recorded.
+ * That wording records the countries joining a certification programme.
+ * That claim is weaker than the one the earlier note recorded.
  */
 export const S42_COHORT_2010_ADDITIONS: readonly string[] = ["CA", "DE", "IT", "PT", "SA", "ZA"]
 

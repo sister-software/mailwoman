@@ -80,7 +80,8 @@ import {
 export const SK_INSPIRE_WFS = "https://rageo.minv.sk/geoserver/ad/wfs"
 
 /**
- * The output format the harvest asks for. It is the GML the adapter's markup reader takes.
+ * The output format the harvest asks for.
+ * It is the GML the adapter's markup reader takes.
  */
 export const SK_INSPIRE_OUTPUT_FORMAT = "application/gml+xml; version=3.2"
 
@@ -89,7 +90,8 @@ export const SK_INSPIRE_OUTPUT_FORMAT = "application/gml+xml; version=3.2"
  *
  * Every AD feature type has `ad:inspireId`, so one sort serves all five.
  * Without a sort, a resumed harvest would rest on the service returning the same
- * features in the same order as the earlier run. No WFS guarantees that.
+ * features in the same order as the earlier run.
+ * No WFS guarantees that.
  */
 export const SK_INSPIRE_SORT_BY = "ad:inspireId"
 
@@ -193,9 +195,8 @@ export async function readSKInspireCapabilities(client: Pick<APIClient, "fetch">
 /**
  * The count the service states for one type, with how it was obtained.
  *
- * `statedFeatureCount` withholds a count where the reported number equals
- * the advertised page cap, because such a number describes the largest page the
- * service will serve rather than what the type holds.
+ * `statedFeatureCount` withholds a count where the reported number equals the advertised page cap,
+ * because such a number describes the largest page the service will serve rather than what the type holds.
  * This service's cap is 5000 and no type reports 5000.
  */
 export async function readSKInspireFeatureCount(

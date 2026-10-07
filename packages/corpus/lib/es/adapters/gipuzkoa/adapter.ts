@@ -80,7 +80,8 @@ export const ES_GIPUZKOA_ADAPTER_ID = "es-gipuzkoa"
 /**
  * The jurisdiction this adapter emits.
  *
- * Coverage is the province of Gipuzkoa. The feed states that as the dataset's whole extent.
+ * Coverage is the province of Gipuzkoa.
+ * The feed states that as the dataset's whole extent.
  */
 export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
 
@@ -89,15 +90,15 @@ export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
  *
  * Gipuzkoa states four things, and the register elects the one addressing this dataset:
  * the `otherConstraints` of its ISO 19139 dataset record, `CC BY-SA 4.0`.
- * Its feed states attribution only and its website states CC BY 4.0, and the register
- * records why the stricter reading is the one to err towards: the share-alike filter reads
- * this label, so recording CC BY 4.0 would hide an obligation the publisher may hold.
+ * Its feed states attribution only and its website states CC BY 4.0, and the register records
+ * why the stricter reading is the one to err towards: the share-alike filter reads this label,
+ * so recording CC BY 4.0 would hide an obligation the publisher may hold.
  *
  * The value is the SPDX identifier the register elected rather than the license's title,
  * because `licenseVerdict` resolves an identifier and reads a title as unrecognized.
  * Under `LicensePolicy.ShareAlikeFree` the title returns `{refusal: null, mentionsShareAlike: false}`
- * and `CC-BY-SA-4.0` returns a share-alike refusal, so the title admits
- * these rows to a corpus assembled to hold no share-alike source.
+ * and `CC-BY-SA-4.0` returns a share-alike refusal, so the title admits these rows
+ * to a corpus assembled to hold no share-alike source.
  */
 export const ES_GIPUZKOA_LICENSE = "CC-BY-SA-4.0"
 

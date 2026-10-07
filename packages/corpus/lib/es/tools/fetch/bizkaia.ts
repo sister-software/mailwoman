@@ -74,8 +74,8 @@ export const ES_BIZKAIA_SERVICE_URL = "https://apli.bizkaia.eus/apps/Danok/INSPI
 /**
  * The WFS the municipality archives reference their components on.
  *
- * Read from the `xlink:href` the archives themselves write. That link addresses this
- * endpoint through the `GetFeatureById` stored query.
+ * Read from the `xlink:href` the archives themselves write.
+ * That link addresses this endpoint through the `GetFeatureById` stored query.
  */
 export const ES_BIZKAIA_WFS_URL =
 	"https://geo.bizkaia.eus/arcgisserverinspire/rest/services/Catastro/Annex1/MapServer/exts/InspireFeatureDownload/service"
@@ -115,8 +115,8 @@ export const ES_BIZKAIA_REQUEST_INTERVAL_MS = 250
 /**
  * Per-request timeout for a body, in milliseconds.
  *
- * Ten minutes. That covers both a municipality archive and the one component
- * document with every street in the province.
+ * Ten minutes.
+ * That covers both a municipality archive and the one component document with every street in the province.
  */
 const BODY_TIMEOUT_MS = 600_000
 
@@ -174,7 +174,8 @@ export interface ESBizkaiaMunicipalityDataset {
 	 */
 	downloadURL: string
 	/**
-	 * The file name the archive is written under. The adapter globs this name.
+	 * The file name the archive is written under.
+	 * The adapter globs this name.
 	 */
 	filename: string
 }
@@ -187,9 +188,9 @@ export interface ESBizkaiaMunicipalityDataset {
  * the archive is stored under: a disagreement between the publisher's two statements of
  * a municipality would store one municipality's addresses under another's name.
  *
- * @throws When the feed lists no entry, when an entry states neither spelling of its municipality,
- * when the two spellings disagree, when two entries claim one file name and one archive would
- * overwrite the other, or when an entry has no `rel="enclosure"` link.
+ * @throws When the feed lists no entry, when an entry states neither spelling of its
+ * municipality, when the two spellings disagree, when two entries claim one file name
+ * and one archive would overwrite the other, or when an entry has no `rel="enclosure"` link.
  */
 export function readESBizkaiaServiceFeed(feed: AtomFeed): readonly ESBizkaiaMunicipalityDataset[] {
 	if (!feed.entries.length) {
@@ -288,8 +289,9 @@ export interface ESBizkaiaComponentEntry extends SourceManifest {
 	 */
 	feature_count: number
 	/**
-	 * The `numberReturned` the saved document states. The harvest requires it to
-	 * equal {@linkcode ESBizkaiaComponentEntry.feature_count}.
+	 * The `numberReturned` the saved document states.
+	 *
+	 * The harvest requires it to equal {@linkcode ESBizkaiaComponentEntry.feature_count}.
 	 */
 	features_returned: number
 }
@@ -377,7 +379,8 @@ async function archiveIsCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata. It is opt-in.
+	// The digest check reads the whole file rather than its metadata.
+	// It is opt-in.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
@@ -514,8 +517,8 @@ export async function harvestESBizkaia(
 	const recordedManifest = await readManifest<ESBizkaiaHarvestManifest>(manifestPath)
 	const files = new Map<string, ESBizkaiaArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is kept,
-	// so a bounded run never drops what an earlier run recorded.
+	// An entry for a municipality this run does not consider is kept, so a bounded
+	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESBizkaiaArchiveEntry)
 	}
@@ -695,8 +698,8 @@ async function fetchArchive(
 /**
  * The path `#es/adapters/bizkaia/adapter` reads, given the root a fetch wrote under.
  *
- * The directory rather than a file: the adapter reads every archive and every saved WFS
- * document under it, and the component documents hold the streets.
+ * The directory rather than a file: the adapter reads every archive and every saved
+ * WFS document under it, and the component documents hold the streets.
  */
 export function esBizkaiaInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilderLike {
 	return outRoot(ES_BIZKAIA_ADAPTER_ID)

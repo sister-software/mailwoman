@@ -25,8 +25,8 @@ export const FIXTURE_TOKENIZER_PATH = workspacePath("neural", "test", "fixtures"
  * The per-test budget for a suite whose first test loads a model.
  *
  * A load takes a few seconds on an idle host and tens of seconds on the lab host while a CI leg
- * or another session runs beside it, so the default 15 s budget times out the loading
- * test under load while every later test passes, because it reads the loaded instance.
+ * or another session runs beside it, so the default 15 s budget times out the loading test
+ * under load while every later test passes, because it reads the loaded instance.
  */
 export const MODEL_LOAD_TEST_TIMEOUT_MS = 120_000
 
@@ -59,7 +59,8 @@ export async function testModelAssets(): Promise<TestModelAssets | null> {
 			return { modelPath: weights.modelPath, tokenizerPath: weights.tokenizerPath, source: "packaged" }
 		}
 	} catch {
-		// A lean checkout resolves no weights package. That is the `null` answer below.
+		// A lean checkout resolves no weights package.
+		// That is the `null` answer below.
 	}
 
 	return null

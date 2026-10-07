@@ -86,7 +86,8 @@ export interface AtomEntry {
  */
 export interface AtomFeed {
 	/**
-	 * The feed's own links. These sit outside every entry.
+	 * The feed's own links.
+	 * These sit outside every entry.
 	 */
 	links: readonly AtomLink[]
 	entries: readonly AtomEntry[]
@@ -118,8 +119,7 @@ function atomEntryOf(element: MarkupElement): AtomEntry {
 /**
  * Read a feed's links and entries out of its markup.
  *
- * The reader streams because a service document may be large:
- * ČÚZK's lists one entry per municipality.
+ * The reader streams because a service document may be large: ČÚZK's lists one entry per municipality.
  *
  * @param chunks The feed's bytes or text, in order.
  * A Node `Readable` satisfies this.

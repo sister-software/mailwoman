@@ -70,7 +70,8 @@ export const CZ_CUZK_COUNTRIES: readonly string[] = ["CZ"]
 export const CZ_CUZK_LICENSE = "no conditions apply to access and use"
 
 /**
- * The feature types an address references. The adapter indexes them as they arrive.
+ * The feature types an address references.
+ * The adapter indexes them as they arrive.
  *
  * `ad:Address` holds its number inline and is read by the driver rather than listed here.
  * These four hold the street, the postcode and the two place names, and they are read in the same pass
@@ -126,9 +127,11 @@ const DESCRIPTIVE_NUMBER_PREFIX = "č.p."
  *
  * An earlier rule that dropped `č.p.` everywhere disagreed with the publisher on 254 of those 1,669 rows.
  *
- * A prefix other than `č.p.` is kept in every case, including one these two municipalities did
- * not show, because the observed values come from 2 of 6,258 municipalities. An unrecognized
- * prefix stays. That preserves a distinction the publisher drew rather than discarding it.
+ * A prefix other than `č.p.` is kept in every case, including one these two municipalities
+ * did not show, because the observed values come from 2 of 6,258 municipalities.
+ * An unrecognized prefix stays.
+ *
+ * That preserves a distinction the publisher drew rather than discarding it.
  */
 function czechHouseNumber(
 	byType: ReadonlyMap<string, readonly string[]>,
@@ -193,8 +196,8 @@ export function createCzCuzkAdapter(): CorpusAdapter {
  * One address's row, `undefined` when it holds too little to render, or `"deferred"`
  * when a reference it cites is not indexed yet.
  *
- * The caller defers rather than drops because an unresolved reference and an absent
- * one are different conditions, and only the archive's own ordering tells them apart.
+ * The caller defers rather than drops because an unresolved reference and an absent one
+ * are different conditions, and only the archive's own ordering tells them apart.
  * With `final` set the whole member has been read, so an unresolved reference is an
  * absence the publisher is responsible for and the row is rendered without it.
  */

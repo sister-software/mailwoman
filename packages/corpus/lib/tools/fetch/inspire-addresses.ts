@@ -58,8 +58,8 @@ export type ADFeatureType = (typeof AD_FEATURE_TYPES)[number]
  * Poland publishes `ms:AD.Address`.
  *
  * A reader that compares the part after the colon against `Address` finds a type
- * on two services and none on the other two. That reads as a service publishing
- * no addresses rather than as a naming difference.
+ * on two services and none on the other two.
+ * That reads as a service publishing no addresses rather than as a naming difference.
  */
 export function adFeatureTypeOf(qualifiedName: string): ADFeatureType | null {
 	const local = qualifiedName.slice(qualifiedName.lastIndexOf(":") + 1)
@@ -84,8 +84,8 @@ export interface WFSCapabilities {
 	/**
 	 * The advertised format this module would ask for, or `null` when the service offers no JSON.
 	 *
-	 * A service without one is readable through its GML. This module leaves that
-	 * to its caller rather than reporting it as unreadable.
+	 * A service without one is readable through its GML.
+	 * This module leaves that to its caller rather than reporting it as unreadable.
 	 *
 	 * `application/json` is preferred over `application/geo+json` because a service
 	 * may advertise the second and reject it.
@@ -112,8 +112,9 @@ export interface WFSCapabilities {
 	/**
 	 * The `CountDefault` the service advertises, or `null` where it advertises none.
 	 *
-	 * The largest page the service will serve. Its own `numberMatched` reports that
-	 * number when the service caps the query rather than counting it.
+	 * The largest page the service will serve.
+	 * Its own `numberMatched` reports that number when the service caps the query rather than counting it.
+	 *
 	 * Estonia advertises 1000000 and Poland 1000, measured 2026-10-02.
 	 */
 	countDefault: number | null
@@ -130,8 +131,9 @@ export interface WFSCapabilities {
 /**
  * A value a GeoServer JSON response uses for a voidable property that holds no value.
  *
- * INSPIRE marks many attributes voidable. A voidable property must be present
- * with either a value or a void with a reason.
+ * INSPIRE marks many attributes voidable.
+ * A voidable property must be present with either a value or a void with a reason.
+ *
  * GeoServer encodes that void as an object rather than as `null`, so `String(value)`
  * on one yields `[object Object]` and stores it as though it were data.
  */
@@ -246,8 +248,8 @@ export interface FeaturePage<Feature> {
 	/**
 	 * The `timeStamp` the service dated the page with, or `null` where it stated none.
 	 *
-	 * The service's own clock rather than the caller's. A manifest records it to
-	 * date a page against the service that served it.
+	 * The service's own clock rather than the caller's.
+	 * A manifest records it to date a page against the service that served it.
 	 */
 	timeStamp: string | null
 }
@@ -283,7 +285,9 @@ export async function readFeaturePage(
 		 * The property the service orders the results by, where it honors one.
 		 *
 		 * A caller that pages without an ordering assumes the service returns the same
-		 * features in the same order for every request. No WFS guarantees that.
+		 * features in the same order for every request.
+		 * No WFS guarantees that.
+		 *
 		 * Estonia honors `sortBy=gml_id` and Flanders answers HTTP 504 for its identifier,
 		 * so the parameter is the caller's to supply or leave out.
 		 */
@@ -368,12 +372,13 @@ const FLATTENED_COMPONENT = /^component\d*_xlink_href$/iu
  *
  * Estonia writes one flat property per slot, `component1_xlink_href` through `component6_xlink_href`,
  * and fills an unused slot with the string `unpopulated` rather than with a void object.
- * A read of only the array reported 0 references for every Estonian address. Each address has four.
+ * A read of only the array reported 0 references for every Estonian address.
+ * Each address has four.
  *
  * A reference may leave the service: Estonia's first three slots address its Administrative
  * Units theme at `AU_haldusyksused` rather than its Addresses theme.
- * That is a reference this module reads. {@linkcode resolveComponents} reports it as unjoined
- * against Addresses features rather than dropping it.
+ * That is a reference this module reads. {@linkcode resolveComponents} reports it as
+ * unjoined against Addresses features rather than dropping it.
  */
 export function componentReferences(feature: GeoJSONFeature): readonly string[] {
 	const properties = feature.properties ?? {}
@@ -401,8 +406,9 @@ export function componentReferences(feature: GeoJSONFeature): readonly string[] 
 /**
  * The key a component feature publishes for an address to reference it by.
  *
- * `identifier.value` is the INSPIRE external object identifier. Flanders writes
- * it on both sides of the join.
+ * `identifier.value` is the INSPIRE external object identifier.
+ * Flanders writes it on both sides of the join.
+ *
  * `gml_id` is the fallback for a service that publishes no identifier,
  * and a stored-query reference addresses that id.
  */

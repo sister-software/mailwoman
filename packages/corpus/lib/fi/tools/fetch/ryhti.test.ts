@@ -248,7 +248,8 @@ describe("downloadRyhti", () => {
 			retries: 0,
 		})
 
-		// A host that states neither value gives the check no term to compare. That is not agreement.
+		// A host that states neither value gives the check no term to compare.
+		// That is not agreement.
 		expect(summary).toMatchObject({ skipped: 0, failed: 1 })
 	})
 })

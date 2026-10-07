@@ -300,8 +300,8 @@ describe("component references", () => {
 	})
 
 	it("reads a flattened component slot, and reads a bare void reason as no reference", () => {
-		// A reader of only the `component` array reported 0 references for every Estonian
-		// address, where each holds four.
+		// A reader of only the `component` array reported 0 references for every
+		// Estonian address, where each holds four.
 		const references = componentReferences(estonianAddress)
 
 		expect(references).toHaveLength(2)
@@ -318,8 +318,8 @@ describe("component references", () => {
 	})
 
 	it("decides joinability against the features a service published rather than against a URL's shape", () => {
-		// A decision from the URL shape reported 15 of Flanders' 20 references as another
-		// register's. Each addresses a feature of the same service.
+		// A decision from the URL shape reported 15 of Flanders' 20 references as another register's.
+		// Each addresses a feature of the same service.
 		const resolution = resolveComponents([flemishAddress], flemishComponents)
 
 		expect(resolution.joined).toBe(1)

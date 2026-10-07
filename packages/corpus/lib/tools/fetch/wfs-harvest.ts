@@ -69,7 +69,8 @@ export interface MarkupRoot {
 	 */
 	name: string
 	/**
-	 * The text between the name and the tag's terminator. It holds the attributes.
+	 * The text between the name and the tag's terminator.
+	 * It holds the attributes.
 	 */
 	attributes: string
 	/**
@@ -85,7 +86,8 @@ export interface MarkupRoot {
  * opening tag verbatim to open the file it assembles, and parsing a 1.6 MB page per request
  * to recover a tag that the first 400 bytes already hold costs a document parse per page.
  *
- * The leading `[A-Za-z_]` skips the XML declaration. That declaration opens `<?xml`.
+ * The leading `[A-Za-z_]` skips the XML declaration.
+ * That declaration opens `<?xml`.
  */
 const ROOT_OPENING_TAG = /<([A-Za-z_][\w.:-]*)([^>]*)>/u
 
@@ -133,7 +135,8 @@ export function readMarkupRoot(body: string, context: string): MarkupRoot {
 }
 
 /**
- * The content between a document's root tags. For a `wfs:FeatureCollection` those are its members.
+ * The content between a document's root tags.
+ * For a `wfs:FeatureCollection` those are its members.
  *
  * @throws When the root element is not closed, so a truncated transfer reads as
  * unreadable rather than as a page of no features.
@@ -231,8 +234,9 @@ export interface WFSHarvestRequest {
 	/**
 	 * The property the service was asked to order by, or `null` where it grants no ordering.
 	 *
-	 * Without one, a resumed harvest rests on the service returning the same features
-	 * in the same order as the earlier run. No WFS guarantees that order.
+	 * Without one, a resumed harvest rests on the service returning the same
+	 * features in the same order as the earlier run.
+	 * No WFS guarantees that order.
 	 */
 	sortBy: string | null
 }
@@ -252,8 +256,9 @@ export interface FeatureCountStatement {
 /**
  * The count a service states, or no count and the reason there is none.
  *
- * `readCheckedWFSFeatureCount` proves a reported `numberMatched` against a page of the
- * same type. That comparison catches a service whose count is smaller than one of its own pages.
+ * `readCheckedWFSFeatureCount` proves a reported `numberMatched` against a page of the same type.
+ * That comparison catches a service whose count is smaller than one of its own pages.
+ *
  * It cannot catch a count that equals the service's page cap: no page can return more
  * features than the cap, so the page it asks for agrees with the cap every time.
  *
@@ -305,7 +310,8 @@ export interface HarvestedPayload {
 	 */
 	footer?: string
 	/**
-	 * The features the service returned. The next `startIndex` advances by this number.
+	 * The features the service returned.
+	 * The next `startIndex` advances by this number.
 	 *
 	 * `null` where the service stated none.
 	 * The harvest refuses that rather than reading it as zero.
@@ -324,7 +330,8 @@ export interface HarvestedPayload {
 export interface WFSHarvestPageRecord {
 	start_index: number
 	/**
-	 * The page size requested. A service may answer with fewer features.
+	 * The page size requested.
+	 * A service may answer with fewer features.
 	 */
 	count: number
 	offset: number
@@ -832,7 +839,8 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
  */
 export interface RunWFSHarvestOptions {
 	/**
-	 * The slug the harvest is written under and reported by. It matches the adapter's own id.
+	 * The slug the harvest is written under and reported by.
+	 * It matches the adapter's own id.
 	 */
 	slug: string
 
@@ -842,7 +850,8 @@ export interface RunWFSHarvestOptions {
 	outRoot: (segment: string) => PathBuilderLike
 
 	/**
-	 * The data file inside the harvest directory. The adapter's `inputPath` points here.
+	 * The data file inside the harvest directory.
+	 * The adapter's `inputPath` points here.
 	 */
 	filename: string
 
@@ -867,12 +876,14 @@ export interface RunWFSHarvestOptions {
 	harvest: (client: Pick<APIClient, "fetch">) => Promise<WFSHarvestManifest>
 
 	/**
-	 * A client to use rather than constructing one. A test supplies this.
+	 * A client to use rather than constructing one.
+	 * A test supplies this.
 	 */
 	client?: Pick<APIClient, "fetch">
 
 	/**
-	 * A page cap. A capped run treats an incomplete harvest as a success.
+	 * A page cap.
+	 * A capped run treats an incomplete harvest as a success.
 	 */
 	maxPages?: number
 }

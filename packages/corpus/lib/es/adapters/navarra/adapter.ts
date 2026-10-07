@@ -95,8 +95,9 @@ export const ES_NAVARRA_COUNTRIES: readonly string[] = ["ES"]
  *
  * The row states that identifier rather than the license's title.
  * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
- * A row whose license resolves to no expression has unknown obligations
- * rather than none. The build reports that separately from a refusal.
+ *
+ * A row whose license resolves to no expression has unknown obligations rather than none.
+ * The build reports that separately from a refusal.
  */
 export const ES_NAVARRA_LICENSE = "CC-BY-4.0"
 

@@ -55,7 +55,8 @@ import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/downlo
 export const ES_GIPUZKOA_SERVICE_URL = "https://b5m.gipuzkoa.eus/inspire/download/addresses.xml"
 
 /**
- * The name the archive is written under. The adapter's `inputPath` states that name.
+ * The name the archive is written under.
+ * The adapter's `inputPath` states that name.
  */
 export const ES_GIPUZKOA_ARCHIVE_FILENAME = "ES.GFA.AD.zip"
 
@@ -176,8 +177,9 @@ export async function resolveGipuzkoaArchive(
  * What the publisher's HEAD response states about the archive it holds.
  *
  * Both fields read `null` where the header is absent, rather than an empty string or zero.
- * An absent `last-modified` is the service declining to state a version. That differs
- * from a version that happens to match the one on disk.
+ * An absent `last-modified` is the service declining to state a version.
+ *
+ * That differs from a version that happens to match the one on disk.
  */
 export interface GipuzkoaPublication {
 	lastModified: string | null

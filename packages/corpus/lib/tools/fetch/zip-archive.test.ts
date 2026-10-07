@@ -35,8 +35,8 @@ describe("downloadZipArchive", () => {
 		await using client = stubClient([
 			{
 				body: BODY,
-				// The claimed length disagrees with the delivered body. Several INSPIRE
-				// feeds behave this way through their own `length` attribute.
+				// The claimed length disagrees with the delivered body.
+				// Several INSPIRE feeds behave this way through their own `length` attribute.
 				headers: { "last-modified": "Tue, 14 Apr 2026 10:08:19 GMT", "content-length": "34987" },
 			},
 		])

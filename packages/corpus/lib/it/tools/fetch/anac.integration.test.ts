@@ -37,7 +37,8 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("it-anac against data.open-contracting.org"
 			for (const edition of [MEASURED_EDITION, "full"]) {
 				const head = await readANACEditionHead(client, edition)
 
-				// The host states both. That holds a re-run to one small request per edition.
+				// The host states both.
+				// That holds a re-run to one small request per edition.
 				expect(head.lastModified).not.toBeNull()
 				expect(head.contentLength).not.toBeNull()
 				expect(head.contentLength ?? 0).toBeGreaterThan(0)

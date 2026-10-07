@@ -298,7 +298,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	// Progress streams to stderr until the summary lands. `CommandTaskResult` renders it.
+	// Progress streams to stderr until the summary lands.
+	// `CommandTaskResult` renders it.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

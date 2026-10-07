@@ -120,13 +120,15 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			localities: ["兰州市", "兰州", "Lanzhou"],
 		},
 		IN: {
-			// Kerala. Its PIN codes run 67 to 69.
+			// Kerala.
+			// Its PIN codes run 67 to 69.
 			regions: ["Kerala"],
 			postcodePrefixes: ["67", "68", "69"],
 			localities: ["Kochi", "Kollam", "Thiruvananthapuram", "Kozhikode"],
 		},
 		ID: {
-			// Bali. Its postcodes begin `80`.
+			// Bali.
+			// Its postcodes begin `80`.
 			regions: ["Bali"],
 			postcodePrefixes: ["80"],
 			localities: ["Denpasar", "Bali"],
@@ -144,7 +146,8 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			localities: ["Islamabad", "islamabad", "اسلام آباد"],
 		},
 		BD: {
-			// Chattogram, Khulna and Sylhet. Their postcodes begin 4, 9 and 3 respectively.
+			// Chattogram, Khulna and Sylhet.
+			// Their postcodes begin 4, 9 and 3 respectively.
 			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
 			localities: ["Chittagong", "Chattogram", "Khulna", "Sylhet"],
 		},
@@ -153,7 +156,8 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			localities: ["Cần Thơ", "Thành phố Cần Thơ", "Huế", "Thành phố Huế"],
 		},
 		RU: {
-			// Primorsky Krai. Its postcodes run 690 to 692.
+			// Primorsky Krai.
+			// Its postcodes run 690 to 692.
 			regions: ["Приморский край"],
 			postcodePrefixes: ["690", "691", "692"],
 			localities: ["Владивосток", "Уссурийск", "Находка"],

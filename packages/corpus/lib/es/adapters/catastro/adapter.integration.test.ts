@@ -91,8 +91,8 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 			)
 		),
 		// `pnp` and `plp` concatenate: `13` and `D` make `13D`.
-		// A `pnp` of `0` with no `plp`, or no `pnp` at all, is the Cadastre holding no number. Its
-		// own `ldt` shows that by rendering none, and the GML writes it as `S-N`.
+		// A `pnp` of `0` with no `plp`, or no `pnp` at all, is the Cadastre holding no number.
+		// Its own `ldt` shows that by rendering none, and the GML writes it as `S-N`.
 		numbers: new Set(
 			blocks.map((dir) => {
 				const pnp = text(dir, "pnp")

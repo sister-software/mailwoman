@@ -85,7 +85,8 @@ function postalPage(startIndex: number, size: number, numberMatched: number | st
 }
 
 /**
- * The `resultType=hits` answer. This service gives it as a real count.
+ * The `resultType=hits` answer.
+ * This service gives it as a real count.
  */
 function hits(numberMatched: number | string): string {
 	return `<?xml version="1.0" encoding="UTF-8"?><wfs:FeatureCollection ${NAMESPACES} numberMatched="${numberMatched}" numberReturned="0"></wfs:FeatureCollection>`
@@ -243,8 +244,8 @@ describe("harvestSKInspireType", () => {
 		// rather than what the type holds, so the harvest ends on the first empty page.
 		//
 		// The third body is the zero page `readCheckedWFSFeatureCount` asks for at `startIndex = reported`.
-		// A features answer would make core refuse the count as a floor. That is a different
-		// finding and would never reach the cap comparison this covers.
+		// A features answer would make core refuse the count as a floor.
+		// That is a different finding and would never reach the cap comparison this covers.
 		const client = stubClient([
 			hits(5000),
 			postalPage(0, 5, 5000),

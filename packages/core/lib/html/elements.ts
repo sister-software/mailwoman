@@ -66,7 +66,8 @@ interface MutableElement {
  */
 export interface StreamMarkupOptions {
 	/**
-	 * Parse as XML. It preserves tag case and requires every element to close.
+	 * Parse as XML.
+	 * It preserves tag case and requires every element to close.
 	 *
 	 * GML and every other INSPIRE payload needs this.
 	 * It defaults to false, matching `./document.ts`.
@@ -296,8 +297,9 @@ export function elementAtPath(element: MarkupElement, ...path: readonly string[]
 /**
  * The text at `path`, or undefined when any step of the path is absent.
  *
- * An empty element answers an empty string. A caller distinguishes that from undefined:
- * the publisher wrote the element and left it blank, rather than omitting it.
+ * An empty element answers an empty string.
+ * A caller distinguishes that from undefined: the publisher wrote the element
+ * and left it blank, rather than omitting it.
  */
 export function textAtPath(element: MarkupElement, ...path: readonly string[]): string | undefined {
 	return elementAtPath(element, ...path)?.text

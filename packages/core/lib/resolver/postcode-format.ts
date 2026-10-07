@@ -24,8 +24,8 @@ import { wholePostcodeShape } from "@mailwoman/codex/postcode/shapes"
 /**
  * Shapes that identify a country unambiguously, by their codex label.
  *
- * They are a stronger signal than the language-based coarse placer. That placer conflates GB
- * and US and routes some GB addresses to US namesakes.
+ * They are a stronger signal than the language-based coarse placer.
+ * That placer conflates GB and US and routes some GB addresses to US namesakes.
  * Letters-first formats never match a US ZIP.
  *
  * Extend this list only with a shape verified as non-overlapping across jurisdictions,
@@ -50,8 +50,8 @@ const SINGLE_COUNTRY_SHAPE_LABELS: ReadonlyArray<readonly [label: string, countr
 /**
  * The compiled form of {@linkcode SINGLE_COUNTRY_SHAPE_LABELS}, resolved once at module load.
  *
- * A label this module states and codex does not define therefore throws on first import, where
- * resolving per call would instead let that label refuse every postcode it was meant to accept.
+ * A label this module states and codex does not define therefore throws on first import,
+ * where resolving per call would instead let that label refuse every postcode it was meant to accept.
  */
 const SINGLE_COUNTRY_SHAPES: ReadonlyArray<readonly [re: RegExp, country: string]> = SINGLE_COUNTRY_SHAPE_LABELS.map(
 	([label, country]) => [wholePostcodeShape(label), country]

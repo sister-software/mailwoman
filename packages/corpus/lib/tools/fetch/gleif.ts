@@ -56,7 +56,8 @@ import { readManifest, resumableDownload, writeManifest } from "#tools/fetch/dow
 export const GLEIF_LATEST_PUBLISH_URL = "https://goldencopy.gleif.org/api/v2/golden-copies/publishes/latest"
 
 /**
- * The directory the archive and its receipt are written under. It is the adapter's `inputPath`.
+ * The directory the archive and its receipt are written under.
+ * It is the adapter's `inputPath`.
  */
 const SLUG = "gleif"
 
@@ -155,7 +156,8 @@ export async function readGLEIFLatestPublish(client: Pick<APIClient, "fetch">): 
 }
 
 /**
- * The archive's file name. It is the last path segment of the URL the API returns.
+ * The archive's file name.
+ * It is the last path segment of the URL the API returns.
  */
 export function gleifArchiveFilename(url: string): string {
 	const name = new URL(url).pathname.split("/").at(-1) ?? ""

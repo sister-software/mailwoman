@@ -61,7 +61,8 @@ import { loadCollectionFiles, writeManifest } from "#tools/fetch/download"
 import { downloadZipArchive } from "#tools/fetch/zip-archive"
 
 /**
- * The ATOM service document. It lists one zipped GML partition per entry.
+ * The ATOM service document.
+ * It lists one zipped GML partition per entry.
  */
 export const ES_NAVARRA_SERVICE_FEED_URL =
 	"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml"
@@ -84,7 +85,8 @@ export const ES_NAVARRA_ATTRIBUTION = "Gobierno de Navarra"
 export const ES_NAVARRA_REQUEST_INTERVAL_MS = 250
 
 /**
- * The directory the harvest writes under. The adapter reads this directory as its `inputPath`.
+ * The directory the harvest writes under.
+ * The adapter reads this directory as its `inputPath`.
  */
 const SLUG = ES_NAVARRA_ADAPTER_ID
 
@@ -113,7 +115,8 @@ export interface ESNavarraPartition {
 	 */
 	partition: string
 	/**
-	 * The entry's title. Every entry states `Address Navarra`.
+	 * The entry's title.
+	 * Every entry states `Address Navarra`.
 	 */
 	title: string
 	/**
@@ -122,8 +125,8 @@ export interface ESNavarraPartition {
 	updated: string
 	archiveURL: string
 	/**
-	 * The file name the archive is written under. The publisher states it and the
-	 * adapter globs it.
+	 * The file name the archive is written under.
+	 * The publisher states it and the adapter globs it.
 	 */
 	filename: string
 }
@@ -131,9 +134,9 @@ export interface ESNavarraPartition {
 /**
  * The partitions the service document lists.
  *
- * @throws When the document holds no entry, when an entry lists no `enclosure` link, when a
- * linked archive's file name is not `AD_Navarra_<n>.gml.zip`, or when two entries point to one
- * archive. Each of those would otherwise write zero archives while reporting a completed run.
+ * @throws When the document holds no entry, when an entry lists no `enclosure` link, when a linked
+ * archive's file name is not `AD_Navarra_<n>.gml.zip`, or when two entries point to one archive.
+ * Each of those would otherwise write zero archives while reporting a completed run.
  */
 export function readESNavarraServiceFeed(feed: AtomFeed): readonly ESNavarraPartition[] {
 	if (!feed.entries.length) {
@@ -224,7 +227,8 @@ export interface ESNavarraHarvestManifest extends SourceCollectionManifest {
 
 export interface HarvestESNavarraOptions {
 	/**
-	 * Where the archives and the manifest are written. The adapter reads it as its `inputPath`.
+	 * Where the archives and the manifest are written.
+	 * The adapter reads it as its `inputPath`.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -240,8 +244,8 @@ export interface HarvestESNavarraOptions {
 	/**
 	 * Re-read the sha256 of every archive already on disk instead of comparing its byte count.
 	 *
-	 * By default the harvest compares the recorded byte count against the file's size. That
-	 * comparison costs one `stat`.
+	 * By default the harvest compares the recorded byte count against the file's size.
+	 * That comparison costs one `stat`.
 	 */
 	verifyDigests?: boolean
 	signal?: AbortSignal
@@ -253,6 +257,7 @@ export interface HarvestESNavarraOptions {
  *
  * A skip requires the feed to state an `<updated>` value.
  * Where it states none, both sides read an empty string and an equality test would hold.
+ *
  * That test would keep an archive of unknown age for as long as the feed stayed silent.
  */
 async function isCurrent(
@@ -267,7 +272,8 @@ async function isCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata. The caller opts in.
+	// The digest check reads the whole file rather than its metadata.
+	// The caller opts in.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
@@ -318,8 +324,9 @@ function selectPartitions(
  * the pacing. {@linkcode fetchESNavarra} is the registry entry point and supplies both.
  *
  * @returns What was fetched, what the feed states is already recorded, and which partitions failed.
- * @throws When the service document lists no partition. The call would otherwise return
- * `{fetched: 0, skipped: 0, failed: 0}` and read to a caller as a completed fetch of an empty publisher.
+ * @throws When the service document lists no partition.
+ * The call would otherwise return `{fetched: 0, skipped: 0, failed: 0}`
+ * and read to a caller as a completed fetch of an empty publisher.
  */
 export async function harvestESNavarra(
 	client: Pick<APIClient, "fetch">,
@@ -358,8 +365,8 @@ export async function harvestESNavarra(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, ESNavarraArchiveEntry>()
 
-	// An entry for a partition this run does not consider is kept,
-	// so a bounded run never drops what an earlier run recorded.
+	// An entry for a partition this run does not consider is kept, so a bounded
+	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESNavarraArchiveEntry)
 	}

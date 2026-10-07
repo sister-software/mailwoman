@@ -38,7 +38,8 @@ const ARCHIVE_URL = "https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip
 const METADATA_URL = "https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml"
 
 /**
- * The download service. It holds one entry for the whole province.
+ * The download service.
+ * It holds one entry for the whole province.
  *
  * The `describedby` link is written ahead of the `alternate` one, as the publisher writes it,
  * so a reader taking the entry's first link resolves the metadata record instead of the data.

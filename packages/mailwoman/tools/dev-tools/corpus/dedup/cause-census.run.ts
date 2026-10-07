@@ -110,8 +110,9 @@ const { values } = parseArguments({
  *
  * The digest comes from `md5Bytes`, the same hash `FingerprintSet` fingerprints a dedup
  * key with, so the census and the runner agree on what makes two keys the same value.
- * A per-character FNV-1a in `BigInt` arithmetic allocates a `BigInt` per character
- * of every key. That allocation dominates the pass.
+ * A per-character FNV-1a in `BigInt` arithmetic allocates a `BigInt` per character of every key.
+ *
+ * That allocation dominates the pass.
  * This allocates two per key.
  */
 function hash64(value: string): bigint {
@@ -501,8 +502,8 @@ function buildJoinIndex(census: FieldCensus): JoinIndex {
 }
 
 function csvRecords(plan: CensusPlan): AsyncIterable<Record<string, string>> {
-	// `normalizeKeys: false` keeps the publisher's own column spelling, the spelling
-	// `--id-column` expects. Every CSV adapter reads its source under this setting.
+	// `normalizeKeys: false` keeps the publisher's own column spelling, the spelling `--id-column` expects.
+	// Every CSV adapter reads its source under this setting.
 	return CSVSpliterator.fromAsync<Record<string, string>>(PathBuilder.from(plan.sourceCSVPath!), {
 		normalizeKeys: false,
 		columnDelimiter: plan.columnDelimiter,
@@ -511,8 +512,8 @@ function csvRecords(plan: CensusPlan): AsyncIterable<Record<string, string>> {
 
 async function readColumns(plan: CensusPlan): Promise<readonly string[]> {
 	// Every record holds the header's columns, so the first one answers this and the rest are left unread.
-	// The iterator is taken directly rather than through a loop that returns on its
-	// first pass. The loop form would read as a full iteration and is not one.
+	// The iterator is taken directly rather than through a loop that returns on its first pass.
+	// The loop form would read as a full iteration and is not one.
 	const records = csvRecords(plan)[Symbol.asyncIterator]()
 	const first = await records.next()
 
@@ -549,9 +550,8 @@ async function reportSourceColumns(plan: CensusPlan, index: GroupIndex, census: 
 	const columnWords = Math.ceil(columns.length / 32)
 	const columnHashes = new Uint32Array(groups * columns.length)
 	const columnDiffered = new Uint32Array(groups * columnWords)
-	// A column that differs in no group is either constant within every group or empty throughout
-	// the file. Those are different findings, so the population count is read beside the difference
-	// count.
+	// A column that differs in no group is either constant within every group or empty throughout the file.
+	// Those are different findings, so the population count is read beside the difference count.
 	const columnPopulated = new Float64Array(columns.length)
 	const joinedPerSlot = new Uint32Array(groups)
 	const exampleSlots: number[] = []

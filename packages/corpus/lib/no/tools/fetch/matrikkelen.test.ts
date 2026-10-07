@@ -50,7 +50,9 @@ function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 }
 
 /**
- * A recorded entry for Svalbard. The address-source register measured its archive at 58,079 bytes.
+ * A recorded entry for Svalbard.
+ *
+ * The address-source register measured its archive at 58,079 bytes.
  */
 function recordedSvalbard(overrides: Partial<MatrikkelenFileManifest> = {}): MatrikkelenFileManifest {
 	return {

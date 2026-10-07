@@ -115,7 +115,8 @@ export interface AddressesFeedEntry {
  *
  * @param xml The whole feed, 3,130 bytes, taken as one string rather than as a stream.
  * @throws When the feed holds no entry, or its entry no usable link.
- * A feed holding neither reads as a change at the publisher. A caller has to see that.
+ * A feed holding neither reads as a change at the publisher.
+ * A caller has to see that.
  */
 export async function readAddressesFeed(xml: string, feedURL: string): Promise<AddressesFeedEntry> {
 	async function* oneChunk(): AsyncIterable<string> {
@@ -243,8 +244,9 @@ export async function fetchDKAddresses(
 
 	// MARK: Download the dataset
 	//
-	// Streamed rather than buffered, and the byte count comes from the body rather than
-	// from the entry's `length` attribute. That attribute understates the file by 23 times.
+	// Streamed rather than buffered, and the byte count comes from the body
+	// rather than from the entry's `length` attribute.
+	// That attribute understates the file by 23 times.
 
 	const datasetResponse = await fetch(entry.downloadURL, { redirect: "follow" })
 

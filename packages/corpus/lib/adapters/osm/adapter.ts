@@ -48,8 +48,9 @@ export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 /**
  * The attribution OSM requires in redistributed data and derived works.
  *
- * A database built from OSM embeds it. A model card holds it when OSM-derived rows
- * reach the checkpoint. The effective training manifest records those rows.
+ * A database built from OSM embeds it.
+ * A model card holds it when OSM-derived rows reach the checkpoint.
+ * The effective training manifest records those rows.
  */
 export const OSM_ATTRIBUTION =
 	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
@@ -224,8 +225,8 @@ export function componentsForOSMRow(
 		components.region = province
 	}
 
-	// A streetless premise is a house number within a place that has a name, so it needs a
-	// locality or a dependent locality, from any of the tags that map to them.
+	// A streetless premise is a house number within a place that has a name, so it needs
+	// a locality or a dependent locality, from any of the tags that map to them.
 	if (!street && !components.locality && !components.dependent_locality) {
 		countDropped(tally, "row:streetless-no-locality")
 

@@ -554,7 +554,8 @@ declare global {
 	var mwSLO: BrowserSLOAPI
 
 	/**
-	 * The range reader's opener. `/gazetteer.js` installs it.
+	 * The range reader's opener.
+	 * `/gazetteer.js` installs it.
 	 */
 	// oxlint-disable-next-line no-var -- see above.
 	var openRangeDatabase: (
@@ -816,8 +817,9 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 			assetClass: "sqliteRuntime",
 		})
 
-		// An inline route is matched before a mount, so the bundled worker is served from the same
-		// directory as the runtime files the mount below provides. That is the layout a host stages.
+		// An inline route is matched before a mount, so the bundled worker is served from
+		// the same directory as the runtime files the mount below provides.
+		// That is the layout a host stages.
 		inlineRoutes.set(`${SQLITE_RUNTIME_PREFIX}range-worker.js`, {
 			body: await bundleBrowserEntry(RANGE_WORKER_ENTRY_SOURCE, "range-worker-entry.ts", BUNDLE_RESOLVE_DIR),
 			contentType: javascript,

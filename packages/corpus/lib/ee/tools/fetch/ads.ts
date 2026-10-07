@@ -105,8 +105,10 @@ const LICENSE = "CC0-1.0"
  * The spacing between requests.
  *
  * The service answers a 10,000-feature page in about 6 seconds, so this is not what limits the harvest.
- * It bounds the harvest to one request per second against a government host whose published terms
- * state no rate. The shorter requests (the capabilities and the count) would otherwise exceed that rate.
+ * It bounds the harvest to one request per second against a government host
+ * whose published terms state no rate.
+ *
+ * The shorter requests (the capabilities and the count) would otherwise exceed that rate.
  */
 const MIN_REQUEST_INTERVAL_MS = 1000
 

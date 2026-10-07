@@ -355,8 +355,10 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
  *
  * A jurisdiction in UPU's S42 template inventory contributes an `upu-s42` observation
  * whose stance is `unread`: an approved crosswalk of its address semantics exists,
- * and this repository has not retrieved it. A jurisdiction outside that inventory
- * contributes none. That states that no crosswalk exists, rather than that one went unread.
+ * and this repository has not retrieved it.
+ * A jurisdiction outside that inventory contributes none.
+ *
+ * That states that no crosswalk exists, rather than that one went unread.
  *
  * `national-postal-authority` and `upu-pas` contribute no observation for any jurisdiction yet.
  *
@@ -387,8 +389,8 @@ export function conventionClaimForCountry(
 	// libaddressinput settles which components print and in what order,
 	// so its `fmt` answers a line-order claim.
 	// Its `lfmt` is a second statement by the same source about the Latin order.
-	// A hand-authored country appears in no rendering table, so its `fmt` comes from the
-	// skeleton table. That table exists for this comparison rather than for printing.
+	// A hand-authored country appears in no rendering table, so its `fmt` comes from the skeleton table.
+	// That table exists for this comparison rather than for printing.
 	for (const [layout, readFrom] of [
 		[local ?? generated ?? HAND_AUTHORED_FORMAT_SKELETONS[code], READ_FROM.generated],
 		[latin, READ_FROM.latin],

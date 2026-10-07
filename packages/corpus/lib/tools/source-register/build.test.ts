@@ -67,7 +67,8 @@ describe("resolveRecordedDecisions", () => {
 
 		expect([...resolved.keys()]).toEqual(["unchecked-a", "unchecked-b"])
 
-		// Each has its own id. That keeps one reading from becoming one wide election.
+		// Each has its own id.
+		// That keeps one reading from becoming one wide election.
 		expect(resolved.get("unchecked-a")).toMatchObject({ licenseID: "unchecked-a", state: "elected" })
 		expect(resolved.get("unchecked-b")).toMatchObject({ licenseID: "unchecked-b", state: "elected" })
 	})

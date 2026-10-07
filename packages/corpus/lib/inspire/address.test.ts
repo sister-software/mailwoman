@@ -377,8 +377,9 @@ const ES = `<gml:FeatureCollection xmlns:GN="urn:x-inspire:specification:gmlas:G
 /**
  * A Walloon thoroughfare feature, trimmed from the real file.
  *
- * The Service public de Wallonie writes three `gml:name` elements ahead of the `ad:name` that
- * holds the street. The readers compare the prefix, because two namespaces reuse the local name.
+ * The Service public de Wallonie writes three `gml:name` elements ahead of
+ * the `ad:name` that holds the street.
+ * The readers compare the prefix, because two namespaces reuse the local name.
  */
 const BE_WALLONIE = `<gml:FeatureCollection ${NS}>
 	<ad:ThoroughfareName gml:id="BE.WL.ICAR.ThoroughfareName.7700328">

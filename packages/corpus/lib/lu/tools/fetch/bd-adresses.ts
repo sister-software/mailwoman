@@ -91,7 +91,8 @@ export const LU_BD_ADRESSES_DELIMITER = ";"
  */
 export interface BDAdressesResource {
 	/**
-	 * The dated download URL. It identifies one edition.
+	 * The dated download URL.
+	 * It identifies one edition.
 	 */
 	url: string
 	/**
@@ -116,7 +117,8 @@ export interface BDAdressesManifest extends SourceManifest {
 	attribution: string
 	dataset_url: string
 	/**
-	 * The md5 the dataset record stated. The downloaded bytes were checked against it.
+	 * The md5 the dataset record stated.
+	 * The downloaded bytes were checked against it.
 	 */
 	publisher_md5: string | null
 	/**

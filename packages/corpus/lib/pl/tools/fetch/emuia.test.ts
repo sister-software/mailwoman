@@ -77,7 +77,9 @@ function gmlPage(startIndex: number, size: number, numberMatched = "unknown"): s
 }
 
 /**
- * The `resultType=hits` answer. On this service it reports its page cap rather than a count.
+ * The `resultType=hits` answer.
+ *
+ * On this service it reports its page cap rather than a count.
  */
 function hits(numberMatched: number | string): string {
 	return `<?xml version="1.0" encoding="UTF-8"?><wfs:FeatureCollection ${NAMESPACES} numberMatched="${numberMatched}" numberReturned="0"></wfs:FeatureCollection>`
@@ -163,8 +165,8 @@ describe("harvestEMUiAPL", () => {
 			hits(1000),
 			gmlPage(0, 10),
 			// Core's guard asks for one feature at the reported count's index.
-			// This service answers with one. That proves 1,000 is its page cap
-			// rather than the type's size.
+			// This service answers with one.
+			// That proves 1,000 is its page cap rather than the type's size.
 			gmlPage(1000, 1),
 			gmlPage(0, 2),
 			gmlPage(2, 2),
