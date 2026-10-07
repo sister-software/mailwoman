@@ -19,8 +19,8 @@ import type { CanonicalRow } from "#types"
  *
  * License and provenance fields stay out of the key, so two adapters emitting
  * the same address produce the same key.
- * That alone does not deduplicate the corpus across adapters: `runAdapter` holds its key store as a local
- * and discards it when the adapter returns, so each adapter is deduplicated only against itself.
+ * The key store does not deduplicate across adapters: `runAdapter` holds its own as a local and discards it
+ * when the adapter returns, so each adapter is deduplicated only against itself.
  *
  * A cross-adapter pass would hold every adapter's keys at once and would have to choose
  * which adapter's copy of an address survives.

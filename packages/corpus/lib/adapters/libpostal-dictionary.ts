@@ -18,8 +18,6 @@ import { TextSpliterator } from "spliterator"
  * A line opening with `#` is a comment.
  *
  * `resourceDictionaryPath` resolves both layouts, `core/data/…` from source and the packaged `out/` tree.
- * The candidate list this replaced named one of them twice, guessed a third path from `process.cwd()`,
- * and swallowed every error while probing, so a corrupt dictionary reported as a missing one.
  *
  * The largest dictionary is 8.4 KB, and each caller loads it once per process at module load.
  */

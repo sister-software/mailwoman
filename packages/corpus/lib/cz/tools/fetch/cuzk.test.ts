@@ -104,7 +104,7 @@ function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
  *
  * The real client rather than a stubbed `fetch`, so the harvest's requests go through the
  * same adapter, error mapping and `responseType` handling they do against ČÚZK.
- * Pacing is left off: the interval is the caller's choice and {@linkcode harvestCzCuzk} sets none.
+ * This stub sets no interval, because the caller chooses it and {@linkcode harvestCzCuzk} sets none.
  */
 function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 	const transport = stubTransport(outcomes)

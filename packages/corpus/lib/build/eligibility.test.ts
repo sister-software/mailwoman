@@ -64,7 +64,7 @@ describe("readSourceEligibility over the committed register", () => {
 	it("admits every jurisdiction the BAN reader serves, each through its own decision", () => {
 		const banKeys = [...eligibility].filter(([key]) => key.startsWith("ban:"))
 
-		// France plus the ten overseas jurisdictions whose published files carry rows.
+		// France plus the ten overseas jurisdictions whose published files hold rows.
 		expect(banKeys).toHaveLength(11)
 
 		for (const [key, problems] of banKeys) {
