@@ -84,7 +84,7 @@ describe("streamInspireRows", () => {
 		)
 
 		// `AD.2` arrives after the street and is emitted in document order.
-		// `AD.1` was held, so it arrives last rather than being refused for a reference the document did carry.
+		// `AD.1` was held until the end, then emitted because the document holds its reference.
 		expect(rows.map((r) => r.source_id)).toEqual(["AD.2", "AD.1"])
 	})
 

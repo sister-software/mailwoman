@@ -7,11 +7,11 @@
  *
  *   `./ads.test.ts` proves the harvester's decisions against stubbed bodies, and
  *   `#ee/adapters/ads/adapter`'s suite proves the adapter against a fixture of captured bytes.
- *   Neither proves that a harvest of the real service writes a file that adapter reads, which is the
- *   one claim captured bytes cannot make.
+ *   Neither proves that a harvest of the real service writes a file the adapter reads.
+ *   Captured bytes cannot make that claim.
  *
- *   The test takes one 25-feature page. It does not skip when the service is unreachable: a test
- *   that passes on a failed request is indistinguishable from one that passed on an answer.
+ *   The test takes one 25-feature page. An unreachable service fails the test: a pass on a failed
+ *   request is indistinguishable from a pass on an answer.
  */
 
 import { APIClient } from "@mailwoman/core/api"

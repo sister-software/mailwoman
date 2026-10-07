@@ -16,16 +16,16 @@
  *   cadastre et de la topographie under `lu`, the State Address Register under `lv`, Kartverket's Matrikkelen
  *   under `no`, EMUiA under `pl`, Romania's school network under `ro`, and the FCC and USGov readers under `us`. A national publisher
  *   stays there even when its own files cover that state's dependencies, because the publisher is
- *   what the adapter reads: BAN carries France and ten overseas jurisdictions, Matrikkelen carries
- *   Norway and Svalbard, and Ryhti's one national file carries Åland beside the Finnish mainland.
+ *   what the adapter reads: BAN covers France and ten overseas jurisdictions, Matrikkelen covers
+ *   Norway and Svalbard, and Ryhti's one national file covers Åland beside the Finnish mainland.
  *
  *   Flanders is the counter-case worth stating. Its adapter sits under `be` and covers the Flemish
- *   Region alone, because Brussels and Wallonia publish the INSPIRE theme through their own
+ *   Region only, because Brussels and Wallonia publish the INSPIRE theme through their own
  *   services, so Belgium needs three adapters rather than one.
  *
  *   Spain needs four, for the same reason. `es-catastro` reads the Dirección General del Catastro's
- *   52 provinces, and `es-bizkaia`, `es-gipuzkoa` and `es-navarra` read the foral cadastres, which
- *   state their own terms and which the national feed links rather than serves.
+ *   52 provinces. `es-bizkaia`, `es-gipuzkoa` and `es-navarra` read the foral cadastres. Those
+ *   cadastres state their own terms. The national feed links them rather than serving them.
  *
  *   An adapter reading a publisher that is not any one country's lives here, at `lib/adapters/<id>/`.
  *   That is the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
