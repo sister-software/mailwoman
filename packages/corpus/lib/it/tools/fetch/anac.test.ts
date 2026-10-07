@@ -108,7 +108,7 @@ describe("decompressToJSONL", () => {
 	it("keeps an accented place name whole across a gzip chunk boundary", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-it-anac-gunzip-")
 
-		// Two releases whose locality names carry accented characters, padded
+		// Two releases whose locality names hold accented characters, padded
 		// so the compressed stream is written in more than one chunk.
 		const lines = Array.from({ length: 4000 }, (_, index) =>
 			stringifyJSON({
@@ -241,7 +241,7 @@ describe("downloadITANAC", () => {
 		const summary = await downloadITANAC(client, { outputDir: scratch.path, editions: ["2025"] })
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
-		// The HEAD alone.
+		// The HEAD only.
 		// No request for the body was dispatched.
 		expect(client.calls).toHaveLength(1)
 		// The edition on disk is untouched, and the adapter still reads it.

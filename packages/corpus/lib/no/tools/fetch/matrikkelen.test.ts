@@ -50,7 +50,7 @@ function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 }
 
 /**
- * A recorded entry for Svalbard, whose archive the address-source register measured at 58,079 bytes.
+ * A recorded entry for Svalbard. The address-source register measured its archive at 58,079 bytes.
  */
 function recordedSvalbard(overrides: Partial<MatrikkelenFileManifest> = {}): MatrikkelenFileManifest {
 	return {
@@ -203,7 +203,7 @@ describe("MATRIKKELEN_REQUIRED_COLUMNS", () => {
 		])
 
 		// The published header's first column is `lokalid` carrying a byte-order mark,
-		// so a check that named it would fail on every file the publisher writes.
+		// so a check that includes it would fail on every file the publisher writes.
 		expect(MATRIKKELEN_REQUIRED_COLUMNS).not.toContain("lokalid")
 	})
 })

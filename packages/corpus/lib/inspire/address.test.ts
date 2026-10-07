@@ -174,7 +174,7 @@ describe("componentHrefs", () => {
 	it("skips an empty href, which Brussels writes on 9 addresses", async () => {
 		const [address] = await features(CZ, "ad:Address")
 
-		// The third component in the fixture carries `xlink:href=""`.
+		// The third component in the fixture has `xlink:href=""`.
 		expect(componentHrefs(address!)).toHaveLength(2)
 	})
 })
@@ -262,7 +262,7 @@ describe("componentJoinKey", () => {
 
 	it("joins an identifier URI on itself, dropping a fragment the identifier does not carry", () => {
 		// Flanders writes the identifier its component features publish, and writes a fragment
-		// on the vocabulary reference that the vocabulary's own term does not carry.
+		// on the vocabulary reference that the vocabulary's own term omits.
 		expect(componentJoinKey("https://data.vlaanderen.be/id/straatnaam/6301")).toBe(
 			"https://data.vlaanderen.be/id/straatnaam/6301"
 		)
@@ -306,7 +306,7 @@ describe("the name and code readers", () => {
 
 		expect(postalDescriptorCode(czech!)).toBe("66701")
 		// The Spanish cadastre writes the element as an integer, so `02250` arrives as `2250`.
-		// Padding belongs to the caller that knows the jurisdiction's width.
+		// The caller pads, because it knows the jurisdiction's width.
 		expect(postalDescriptorCode(spanish!)).toBe("2250")
 	})
 })
@@ -378,7 +378,7 @@ const ES = `<gml:FeatureCollection xmlns:GN="urn:x-inspire:specification:gmlas:G
  * A Walloon thoroughfare feature, trimmed from the real file.
  *
  * The Service public de Wallonie writes three `gml:name` elements ahead of the `ad:name` that
- * holds the street, which is why the readers compare the prefix rather than the local name alone.
+ * holds the street. The readers compare the prefix, because two namespaces reuse the local name.
  */
 const BE_WALLONIE = `<gml:FeatureCollection ${NS}>
 	<ad:ThoroughfareName gml:id="BE.WL.ICAR.ThoroughfareName.7700328">
@@ -399,7 +399,7 @@ describe("inspireNameIs", () => {
 	})
 
 	it("separates two namespaces that bind the same local name", () => {
-		// The prefix carries the namespace and the namespace carries the meaning.
+		// The prefix holds the namespace and the namespace holds the meaning.
 		expect(inspireNameIs("gml:name", "ad:name")).toBe(false)
 		expect(inspireNameIs("name", "ad:name")).toBe(false)
 	})

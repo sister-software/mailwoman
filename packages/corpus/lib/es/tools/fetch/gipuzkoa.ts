@@ -14,7 +14,7 @@
  *
  *       addresses.xml  →  GML/ES.GFA.AD.zip
  *
- *   That entry links its dataset through `rel="alternate"`. It carries no `rel="enclosure"` link at
+ *   That entry links its dataset through `rel="alternate"`. It holds no `rel="enclosure"` link at
  *   all, and the `rel="describedby"` link beside the alternate is the ISO 19139 metadata record. A
  *   reader that looks for an enclosure therefore finds no dataset here, and a reader that takes the
  *   first link of any relation downloads the metadata record instead of 7,959,103 bytes of
@@ -28,7 +28,7 @@
  *   keep one archive forever. The archive's HTTP `last-modified` is the signal this fetcher compares,
  *   and {@linkcode gipuzkoaPublicationIsRecorded} requires the publisher to state one before it
  *   agrees to skip a download. The feed's value is recorded beside it, unused, because it is what
- *   the publisher says about the dataset.
+ *   the publisher states about the dataset.
  *
  *   ## Why the archive stays compressed
  *
@@ -55,7 +55,7 @@ import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/downlo
 export const ES_GIPUZKOA_SERVICE_URL = "https://b5m.gipuzkoa.eus/inspire/download/addresses.xml"
 
 /**
- * The name the archive is written under, which is what the adapter's `inputPath` states.
+ * The name the archive is written under. The adapter's `inputPath` states that name.
  */
 export const ES_GIPUZKOA_ARCHIVE_FILENAME = "ES.GFA.AD.zip"
 
@@ -104,7 +104,7 @@ export interface DownloadGipuzkoaOptions {
 export interface GipuzkoaArchiveReference {
 	archiveURL: string
 	/**
-	 * The entry's title, which states the theme rather than a municipality.
+	 * The entry's title states the theme rather than a municipality.
 	 */
 	entryTitle: string
 	/**
@@ -116,7 +116,7 @@ export interface GipuzkoaArchiveReference {
 /**
  * Resolves the download service to the one archive its single entry links.
  *
- * Raises where the feed lists no entry, and where the entry carries no `rel="alternate"` link.
+ * Raises where the feed lists no entry, and where the entry holds no `rel="alternate"` link.
  * The alternative would return `{fetched: 0, skipped: 0, failed: 0}`, which a caller
  * reads as a fetch that completed and found the publisher empty.
  *
@@ -176,8 +176,8 @@ export async function resolveGipuzkoaArchive(
  * What the publisher's HEAD response states about the archive it holds.
  *
  * Both fields read `null` where the header is absent, rather than an empty string or zero.
- * An absent `last-modified` is the service declining to state a version, which is a
- * different fact from a version that happens to match the one on disk.
+ * An absent `last-modified` is the service declining to state a version. That differs
+ * from a version that happens to match the one on disk.
  */
 export interface GipuzkoaPublication {
 	lastModified: string | null
@@ -188,7 +188,7 @@ export interface GipuzkoaPublication {
  * Reads the publisher's HEAD response for one archive URL.
  *
  * Separate from {@linkcode downloadGipuzkoa} for the same reason {@linkcode resolveGipuzkoaArchive}
- * is: this request carries the whole freshness decision.
+ * is: this request holds the whole freshness decision.
  */
 export async function readGipuzkoaPublication(
 	client: Pick<APIClient, "fetch">,
@@ -215,7 +215,7 @@ export async function readGipuzkoaPublication(
  * Whether the archive on disk is the one the publisher now serves.
  *
  * A publisher that states no `last-modified` answers false.
- * Comparing an absent header against an absent recorded value makes `null === null` hold,
+ * An absent header compared against an absent recorded value makes `null === null` hold,
  * and that reading keeps a stale archive for as long as the service stays silent.
  */
 export function gipuzkoaPublicationIsRecorded(

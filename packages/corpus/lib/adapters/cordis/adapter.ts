@@ -93,7 +93,7 @@
  *
  * A value holding no letter and no digit (`-`, `.`), or one of `N/A`, `NA`, `none`, `Not applicable`,
  * is treated as absent. A postcode with no digit (`EIRE`, `Clare`, `POSTFACH`) and a postcode of
- * zeroes alone are dropped from the row rather than refusing it, and counted as `component:postcode:*`.
+ * zeroes only are dropped from the row rather than refusing it, and counted as `component:postcode:*`.
  * A postcode written with its country prefix, `LV-1063` or `LT-01103`, is kept as published: Latvia
  * and Lithuania write that prefix in their official form.
  *
@@ -312,7 +312,8 @@ const streetOrderMemo = new Map<string, StreetOrder | null>()
 /**
  * The side a country writes its house number on, or `null` where codex's sources disagree or state none.
  *
- * Read from the `house-number-precedes-street` claim, which collects libaddressinput's `fmt` and `lfmt`,
+ * Read from the `house-number-precedes-street` claim. That claim collects libaddressinput's `fmt` and
+ * `lfmt`,
  * the OpenCage street order, the board's hand-authored layout and a retrieved UPU S42 template.
  * A side is returned only when at least one source states it and none states the other.
  *
@@ -583,7 +584,7 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 
 	components.locality = locality
 
-	// The script is passed rather than left to the formatter, which keeps a country's local
+	// The script is passed rather than left to the formatter. That keeps a country's local
 	// order whenever its Latin order has fewer slots: `Weixing Road` and `Changchun` would
 	// otherwise print run together in China's Han-script line, with no separator between them.
 	const rendered = formatAddressRow(components, country, { singleLine: true, script: scriptOfComponents(components) })

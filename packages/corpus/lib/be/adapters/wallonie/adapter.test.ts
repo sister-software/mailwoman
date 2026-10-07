@@ -107,7 +107,7 @@ describe("wallonie adapter against the fixture member", () => {
 
 		const rows = await readCanonicalRows(scratch.path, WALLONIE_ADAPTER_ID)
 
-		// Every fixture address carries a box number, and each one reaches the row as `unit`.
+		// Every fixture address has a box number, and each one reaches the row as `unit`.
 		expect(rows.map((row) => row.components.unit)).toEqual([
 			"B001",
 			"C003",

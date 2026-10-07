@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Reads one built docs page into search records. A heading starts a record, a table row is a level-5
- *   record named by its first cell, and paragraph and list text joins the record of the heading above it.
+ *   record whose text is its first cell, and paragraph and list text joins the record of the heading above it.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"

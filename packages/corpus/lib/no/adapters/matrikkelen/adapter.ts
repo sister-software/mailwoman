@@ -6,7 +6,7 @@
  * `matrikkelen`: Kartverket's `Matrikkelen - Adresse` CSV adapter, covering Norway and Svalbard.
  *
  * Input is a semicolon-separated CSV from Geonorge, published per area beside a whole-country
- * extract. Both carry the same 46 columns, so one reader serves either. The adapter reads
+ * extract. Both have the same 46 columns, so one reader serves either. The adapter reads
  * `adressenavn` as the street, `nummer` and `bokstav` as the house number, and `postnummer` with
  * `poststed` as the postcode and its postal place.
  *
@@ -55,8 +55,8 @@ export const MATRIKKELEN_COUNTRIES: readonly string[] = ["NO", "SJ"]
  * The subset of the 46 columns the adapter consults.
  *
  * The explicit shape catches a column rename early.
- * The first column's name carries a byte-order mark in the published file, and the
- * adapter reads `adresseId` instead, so no field here depends on that spelling.
+ * The first column's name has a byte-order mark in the published file. The adapter
+ * reads `adresseId` instead, so no field here depends on that spelling.
  */
 interface MatrikkelenRow {
 	kommunenummer: string
@@ -111,7 +111,7 @@ export function createMatrikkelenAdapter(): CorpusAdapter {
 
 					// A `matrikkeladresse` addresses a cadastral unit rather than a street, so its
 					// `adresseTekst` reads as a farm name and a holding number, such as `Øvrabø, 124/1`.
-					// It carries no street to align, and the mainland file holds 34,522 of
+					// It has no street to align, and the mainland file holds 34,522 of
 					// them against 2,568,832 `vegadresse` rows.
 					if ((record.adressetype ?? "").trim() !== "vegadresse") {
 						cadastral += 1

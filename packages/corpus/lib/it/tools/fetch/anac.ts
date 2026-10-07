@@ -8,31 +8,29 @@
  * The Open Contracting Partnership's Data Registry serves publication 117 at
  * `https://data.open-contracting.org/en/publication/117/download?name=<edition>.jsonl.gz`, where an
  * edition is a year, `undated`, or `full` for every year in one file. Each file is JSON Lines, one
- * OCDS release per line, which is the shape `#it/adapters/anac/adapter` reads.
+ * OCDS release per line. That is the shape `#it/adapters/anac/adapter` reads.
  *
  * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
  * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
  * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace does
  * not declare.
  *
- * Three measured properties of the host decide what this module does. Measured on 2026-10-02:
+ * Three host behaviors decide what this module does:
  *
  * 1. **The host honors `Range`.** It answers `accept-ranges: bytes`, so an interrupted transfer
- *    resumes through {@linkcode resumableDownload} rather than restarting. That matters for the
- *    `full` edition, whose `content-length` was 183,974,254.
- * 2. **An edition's length and modification time are both served by `HEAD`.** `full.jsonl.gz`
- *    answered `last-modified` `Sat, 19 Sep 2026 03:30:49 GMT` and `2025.jsonl.gz` answered `Sat, 19
- *    Sep 2026 03:31:23 GMT` with `content-length` 3,963,957. The re-run check compares the pair
- *    against the manifest, which costs one small request per edition instead of the body.
+ *    resumes through {@linkcode resumableDownload} rather than restarting. That matters most for
+ *    the `full` edition.
+ * 2. **An edition's length and modification time are both served by `HEAD`.** The re-run check
+ *    compares the pair against the manifest, so one small request per edition replaces the body.
  * 3. **This module moves bytes and decodes none of them.** The compressed body is streamed to disk
  *    and then decompressed stream to stream, so no chunk boundary is interpreted as a character
- *    boundary. ANAC's data carries accented Italian place names, and a `chunk.toString("utf8")` per
- *    gzip chunk writes U+FFFD at every boundary that splits a multi-byte character.
+ *    boundary. ANAC's data holds accented Italian place names, and a `chunk.toString("utf8")` per
+ *    gzip chunk would write U+FFFD at every split multi-byte character.
  *
- * ANAC updates the publication monthly, on the second of the month, which is why the current year's
+ * ANAC updates the publication monthly, on the second of the month. The current year's
  * edition is re-fetched on a `HEAD` disagreement rather than treated as final.
  *
- * The registry publishes this release under CC BY 4.0, which the address-source register elected.
+ * The registry publishes this release under CC BY 4.0. The address-source register elected it.
  * The manifest records the license and the attribution, and the adapter records the license on every
  * row.
  */
@@ -54,10 +52,8 @@ import { loadCollectionFiles, resumableDownload, writeManifest } from "#tools/fe
  * The publication the registry serves this release under.
  *
  * Italy has four publications on the registry and id 117 is ANAC's.
- * Id 87 is OpenTender's Italian publication.
- *
- * It runs to March 2024 and comes from a different body.
- * Reading the country alone would take the wrong publication.
+ * Id 87 is OpenTender's Italian publication, so a reader that filters by country would take the
+ * wrong publication.
  */
 export const IT_ANAC_PUBLICATION_ID = 117
 
@@ -69,14 +65,14 @@ export function anacEditionURL(edition: string): string {
 }
 
 /**
- * The directory the editions are written under, which is the adapter's `inputPath`.
+ * The directory the editions are written under, the adapter's `inputPath`.
  */
 const SLUG = IT_ANAC_ADAPTER_ID
 
 /**
  * The edition fetched when a caller names none.
  *
- * `full` is every year in one file, which is what a corpus build reads.
+ * `full` is every year in one file. A corpus build reads that edition.
  * A caller measuring one year names that year instead.
  */
 export const IT_ANAC_DEFAULT_EDITIONS: readonly string[] = ["full"]

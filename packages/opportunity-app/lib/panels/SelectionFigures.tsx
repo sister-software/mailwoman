@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The figures of the selection, as `selectionEconomics` returns them, each beside its origin. Every economic
- *   figure carries the word synthetic when the scenario's inputs are synthetic. When the model refuses the
+ *   figure shows the word synthetic when the scenario's inputs are synthetic. When the model refuses the
  *   selection, its message stands in place of the figures, and no figure is shown. The status line is a live region
  *   that announces the recalculated figures after each change, and the links lead to the selection's evidence.
  */

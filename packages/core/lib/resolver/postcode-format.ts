@@ -10,7 +10,7 @@
  * across all jurisdictions to stand as country evidence, and in which calling context.
  *
  * That split matters because the two questions have different answers. Codex's `candidateSystemsForPostcode`
- * asks which of its ten address systems accept a string, so a shape unique among those ten still says
+ * asks which of its ten address systems accept a string, so a shape unique among those ten still reveals
  * little about the other 240 jurisdictions. The tables below are a narrower claim, each entry verified
  * as non-overlapping, and they stay narrow deliberately.
  *
@@ -24,7 +24,7 @@ import { wholePostcodeShape } from "@mailwoman/codex/postcode/shapes"
 /**
  * Shapes that identify a country unambiguously, by their codex label.
  *
- * They are a stronger signal than the language-based coarse placer, which conflates GB
+ * They are a stronger signal than the language-based coarse placer. That placer conflates GB
  * and US and routes some GB addresses to US namesakes.
  * Letters-first formats never match a US ZIP.
  *
@@ -41,8 +41,8 @@ const SINGLE_COUNTRY_SHAPE_LABELS: ReadonlyArray<readonly [label: string, countr
 	["GB", "GB"],
 	// CA `K2P 1L4` — `A#A #A#`, ending `\d[A-Z]\d`, distinct from GB's `\d[A-Z]{2}`.
 	["CA", "CA"],
-	// IE Eircode `D02 AF30` — a routing key plus a 4-alnum unique part,
-	// which separates it from GB's 3-character `\d[A-Z]{2}` inward.
+	// IE Eircode `D02 AF30` is a routing key plus a 4-alnum unique part.
+	// That part separates it from GB's 3-character `\d[A-Z]{2}` inward.
 	// Belfast `BT1 5GS` stays GB, because Northern Ireland uses GB postcodes.
 	["IE", "IE"],
 ]
@@ -50,7 +50,7 @@ const SINGLE_COUNTRY_SHAPE_LABELS: ReadonlyArray<readonly [label: string, countr
 /**
  * The compiled form of {@linkcode SINGLE_COUNTRY_SHAPE_LABELS}, resolved once at module load.
  *
- * A label this module states and codex does not carry therefore throws on first import, where
+ * A label this module states and codex does not define therefore throws on first import, where
  * resolving per call would instead let that label refuse every postcode it was meant to accept.
  */
 const SINGLE_COUNTRY_SHAPES: ReadonlyArray<readonly [re: RegExp, country: string]> = SINGLE_COUNTRY_SHAPE_LABELS.map(

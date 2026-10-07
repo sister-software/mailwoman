@@ -15,8 +15,8 @@
  *
  *   Everything here is built structurally with `isAxiosError: true` and `config`/`code`/`response`.
  *   The adapter uses `APIClientConfig["axios"]` because the packages under test reach Axios integrations through
- *   `@mailwoman/core`. Where an axios type has to be named, such as the response
- *   {@linkcode stubFetchingBodies} resolves, it is named here rather than by the calling test,
+ *   `@mailwoman/core`. The axios type {@linkcode stubFetchingBodies} resolves is stated here
+ *   rather than by the calling test,
  *   so a workspace that stubs a request needs no `axios` dependency of its own.
  */
 
@@ -122,11 +122,11 @@ export interface StubTransportOptions {
  * A client answering each `fetch` with the next of `bodies`, holding on the last once exhausted.
  *
  * A reader that takes `Pick<APIClient, "fetch">` reads only `data`, so the stub states
- * that field alone rather than building headers and a config.
- * Passing several bodies scripts a reader that asks twice, such as a count checked against a page.
+ * that field only rather than building headers and a config.
+ * Several bodies script a reader that asks twice, such as a count checked against a page.
  *
  * This lives beside {@linkcode stubTransport} so that a workspace which does not
- * depend on `axios` can still stub the method: the axios type is named here,
+ * depend on `axios` can still stub the method: the axios type is stated here,
  * in core, rather than by the test that calls this.
  */
 export function stubFetchingBodies(...bodies: string[]): Pick<APIClient, "fetch"> {

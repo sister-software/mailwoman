@@ -69,7 +69,7 @@ export const POSTCODE_SHAPES_VERSION: string = postcodeShapeData.version
  * The anchored form of each shape that states one, keyed by label.
  *
  * {@linkcode POSTCODE_SHAPES} answers whether a line contains a postcode-shaped span.
- * This map answers whether a whole string is one, which is the question a caller asks
+ * This map answers whether a whole string is one. That is the question a caller asks
  * once it already holds a span and wants to know what the span is.
  *
  * A row states a `whole` pattern only where the anchored form differs from its scan form,
@@ -80,7 +80,7 @@ export const POSTCODE_SHAPES_VERSION: string = postcodeShapeData.version
  * way for a person to type a postcode rather than a word that happens to fit.
  *
  * The Python trainer reads `pattern` and never this field, so the anchored form
- * carries no cross-runtime constraint.
+ * has no cross-runtime constraint.
  */
 export const WHOLE_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map(
 	postcodeShapeData.shapes
@@ -91,7 +91,7 @@ export const WHOLE_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map(
 /**
  * The anchored pattern for `label`.
  *
- * @throws When no shape carries that label or the labeled shape states no anchored form,
+ * @throws When no shape holds that label or the labeled shape states no anchored form,
  * because a caller naming a label it cannot have is a typo rather than a reason to answer "no match".
  */
 export function wholePostcodeShape(label: string): RegExp {

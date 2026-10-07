@@ -27,7 +27,7 @@ const DATED_RECORDS: readonly string[] = [
 ]
 
 /**
- * A preregistration freeze or an evaluation receipt, which records the paths it was written against.
+ * A preregistration freeze or an evaluation receipt. It records the paths it was written against.
  */
 const RECORD_FILE = /-(?:freeze|receipt)\.json$/u
 
@@ -161,7 +161,7 @@ function pathLiteralsIn(file: string, text: string, moves: readonly ModuleMove[]
  *
  * Moved files are scanned too, because a script's `Usage:` line often quotes its own path.
  * A moved file is read wherever it is on disk, at its source before the move is applied or at its
- * destination after, and its rewrites name the destination, which is where the applier edits it.
+ * destination after. Its rewrites point at the destination, where the applier edits it.
  */
 export async function planPathLiteralRewrites(
 	repoRoot: string,
@@ -179,9 +179,9 @@ export async function planPathLiteralRewrites(
 		const destination = destinations.get(file) ?? file
 		const location = (await pathExists(resolvePath(repoRoot, file))) ? file : destination
 
-		// A tracked symlink shares its text with the file it points at,
-		// which this loop reads under its own path.
-		// Planning edits for both would splice one file twice.
+		// A tracked symlink shares its text with the file it points at.
+		// This loop reads that file under its own path.
+		// Edits for both would splice one file twice.
 		if (await isSymbolicLink(resolvePath(repoRoot, location))) continue
 
 		let text: string

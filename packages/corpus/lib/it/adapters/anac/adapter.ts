@@ -4,41 +4,41 @@
  * @author Teffen Ellis, et al.
  *
  * `it-anac`: the OCDS release Autorità Nazionale Anticorruzione publishes for Italy's National
- * Database of Public Contracts, read for the addresses of the public bodies named on each contract.
+ * Database of Public Contracts, read for the addresses of the public bodies that appear on each contract.
  *
  * Input is the publisher's own JSON Lines: one OCDS release per line, as
  * `https://data.open-contracting.org/en/publication/117/download?name=<year>.jsonl.gz` serves it
- * once decompressed. A release carries a `parties` array, and each party holds a `roles` list, a
+ * once decompressed. A release has a `parties` array, and each party holds a `roles` list, a
  * `name`, an `identifier` and an `address` whose four fields are `locality`, `postalCode`,
  * `countryName` and `streetAddress`. The adapter streams the file through `JSONSpliterator`, so a
  * year's release never sits in memory whole. `opts.inputPath` is one `.jsonl` edition or a directory
- * holding several, which is what `fetchITANAC` writes.
+ * holding several. `fetchITANAC` writes the directory form.
  *
  * ## Which roles the adapter reads, and why those two
  *
- * The register's `addressRoles` for `it-procurement-grants-1` names exactly two fields,
+ * The register's `addressRoles` for `it-procurement-grants-1` records exactly two fields,
  * `parties[roles=buyer].address` and `parties[roles=payer].address`.
- * Those two are the only address fields the release carries. Measured over the whole 2025 edition, 9,405 releases and
+ * Those two are the only address fields in the release. Measured over the whole 2025 edition, 9,405 releases and
  * 29,823 party objects in three roles: a `supplier` party holds no `address` key at all on 11,075 of
  * 11,075, a `buyer` holds one on 9,381 of 9,381, and a `payer` on 9,359 of 9,367. So every address
  * in this release belongs to a contracting authority or to the office that pays.
  * Both of those are Italian public entities, and a contracting counterparty holds none.
  *
- * That is what makes this source admissible under the policy that a corpus carries the addresses of
+ * That is what makes this source admissible under the policy that admits the addresses of
  * organizations and no address of an identifiable natural person. The two admitted roles are held by
  * public bodies, and the one role whose parties can be sole traders publishes no address.
  * {@linkcode readANACParty} still applies a name check and refuses a party whose name takes the
- * `Surname, Firstname` form, because a later edition could carry one. On the 2025 edition the check
+ * `Surname, Firstname` form, because a later edition could add one. On the 2025 edition the check
  * refuses no party: 0 of the 18,740 address-bearing buyer and payer parties take that form, while 56
  * hold a comma inside an organization name — `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E
- * ALBURNI` and `SETTORE PATRIMONIO, AMBIENTE E LAVORI PUBBLICI` among them — which is why the check
- * requires a single word on each side of the comma rather than a comma alone.
+ * ALBURNI` and `SETTORE PATRIMONIO, AMBIENTE E LAVORI PUBBLICI` among them. The check therefore
+ * requires one word on each side of the comma rather than any comma.
  *
  * ## The street line
  *
- * Italy writes the house number after the street name and joins the two with a space, which is what
- * `STREET_ORDERS` records as `number-last` and what `COMMA_JOINED_STREET_COUNTRIES` records by
- * leaving `IT` out. {@linkcode splitTrailingStreetLine} performs the split. Three Italian
+ * Italy writes the house number after the street name, joined by a space. `STREET_ORDERS` records
+ * that order as `number-last`. `COMMA_JOINED_STREET_COUNTRIES` records it by leaving `IT` out.
+ * {@linkcode splitTrailingStreetLine} performs the split. Three Italian
  * conventions are normalized before it runs, each measured over the 2025 edition's 11,930
  * non-placeholder street lines:
  *
@@ -52,23 +52,24 @@
  * 3. **`senza numero`.** 182 lines end `SNC` or `SN`, which states that the premise has no civic
  *    number, so the tail is dropped and no `house_number` is composed from it.
  *
- * A kilometer point is not a house number. `S.S. 7 APPIA KM 671` names a point on a state highway,
- * so a number preceded by `KM` is left in the street line, which then refuses the row under the rule
- * below.
+ * A number preceded by `KM` names a point on a state highway rather than a house number, as
+ * `S.S. 7 APPIA KM 671` does. That number stays in the street line, and the rule below refuses the
+ * row.
  *
  * **A street line holding a digit the split could not place refuses the row.**
  * {@linkcode ANACRefusal.StreetNumberUnplaced} covers 194 of those 11,930 lines, where the publisher
  * appends a qualifier after the number: `VIA CIRCONVALLAZIONE, 1 PARCO IDROSCALO`, `VIA FELTRE 57
- * 32100 BELLUNO (BL)`, `VIA SAN SECONDO 29 BIS`. Emitting them would label a civic number as part of
- * a street name. A line with no digit at all is emitted as a street with no number, which is the
- * ordinary `PIAZZA CASTELLO` case and 1,416 of the 11,930. The remaining 10,320 carry a number.
+ * 32100 BELLUNO (BL)`, `VIA SAN SECONDO 29 BIS`. The adapter refuses that line, because emitting it
+ * would label a civic number as part of a street name. A line with no digit at all is emitted as a
+ * street with no number. `PIAZZA CASTELLO` is the ordinary case, and 1,416 of the 11,930 lines take
+ * it. The remaining 10,320 state a number.
  *
  * Two limits of the split are the publisher's own ambiguity rather than this reader's. `PIAZZA
  * UMBERTO 1` is Umberto I's square and reads identically to civic number 1, and the release gives no
  * field that separates them. A number written twice, as `CORSO ITALIA 55 55` and `VIALE DEI PIANETI 1
- * 1`, leaves the first copy in the street name. Together with Italy's date-named streets — `VIA 4
- * NOVEMBRE`, `PIAZZA 1 MAGGIO`, `VIA 2 AGOSTO 1980` — 93 of the 10,320 numbered lines keep a digit
- * inside the street, and most of those digits belong to the street's name.
+ * 1`, leaves the first copy in the street name. Together with streets that take a date for a name —
+ * `VIA 4 NOVEMBRE`, `PIAZZA 1 MAGGIO`, `VIA 2 AGOSTO 1980` — 93 of the 10,320 numbered lines keep a
+ * digit inside the street, and most of those digits belong to the street's name.
  *
  * ## What the split was checked against
  *
@@ -82,15 +83,15 @@
  * published token. Which side of the split each token belongs on is the part no field of this
  * publisher's confirms.
  *
- * Every other component is a published value copied unchanged, which the same pass checked: 0 of the
- * 18,473 rows the 2025 edition admits carry a `locality`, `postcode` or `venue` that differs from the
+ * Every other component is a published value copied unchanged. The same pass checked this: 0 of the
+ * 18,473 rows the 2025 edition admits show a `locality`, `postcode` or `venue` that differs from the
  * field it came from.
  *
  * ## Placeholders and the postcode
  *
  * The publisher writes the literal `N.A.` where it holds no value: 476 postcodes, 6 localities and 6
  * street lines on the 2025 edition. {@linkcode isPlaceholderValue} treats it as absent, so no row
- * carries `N.A.` as a postcode.
+ * records `N.A.` as a postcode.
  *
  * An Italian CAP is five digits. A postcode that is neither a placeholder nor five digits is not a
  * CAP, and the row is refused rather than stripped of the field: the one such value on the 2025
@@ -102,14 +103,14 @@
  * ## Identity and license
  *
  * The row id is content-addressed over the aligned components. The publisher's party identifier
- * cannot serve: a buyer's `IT-CF` fiscal code carries more than one address on 17 of 3,119 distinct
+ * cannot serve: a buyer's `IT-CF` fiscal code covers more than one address on 17 of 3,119 distinct
  * codes, and one address recurs across hundreds of releases, so the identifier identifies the
  * organization rather than the address.
  *
- * The OCP Data Registry publishes this release under CC BY 4.0, which the address-source register
- * elected on 2026-09-30 with `spdx` `CC-BY-4.0`. CC BY requires credit, a link to the license and a
- * statement that changes were made, so every row records the license and
- * {@linkcode IT_ANAC_ATTRIBUTION} is the credit the model card carries.
+ * The OCP Data Registry publishes this release under CC BY 4.0. The address-source register elected
+ * that license on 2026-09-30 with `spdx` `CC-BY-4.0`. CC BY requires credit, a link to the license
+ * and a statement that changes were made. Every row records the license, and
+ * {@linkcode IT_ANAC_ATTRIBUTION} is the credit the model card records.
  *
  * The adapter honors `opts.limit`, `opts.signal` and `opts.country`.
  */
@@ -148,15 +149,15 @@ export const IT_ANAC_COUNTRIES: readonly string[] = ["IT"]
 export const IT_ANAC_LICENSE = "CC-BY-4.0"
 
 /**
- * The credit CC BY 4.0 obliges, which the model card carries beside the license
- * and a statement that the data was changed.
+ * The credit CC BY 4.0 obliges. The model card records it beside the license and a statement that
+ * the data was changed.
  */
 export const IT_ANAC_ATTRIBUTION = "Autorità Nazionale Anticorruzione (ANAC), via the OCP Data Registry"
 
 /**
  * The two party roles the adapter reads.
  *
- * The register's `addressRoles` names these two fields alone.
+ * The register's `addressRoles` records exactly these two fields.
  * The `supplier` role is the one role whose parties are contracting counterparties
  * rather than public bodies.
  * That role publishes no `address` object.
@@ -173,11 +174,11 @@ export const IT_ANAC_PARTY_ROLES: readonly string[] = ["buyer", "payer"]
 export const ANACRefusal = {
 	/**
 	 * The party holds a role other than `buyer` or `payer`, so its address is out
-	 * of scope even where it carries one.
+	 * of scope even where one appears.
 	 */
 	RoleNotAdmitted: "role-not-admitted",
 	/**
-	 * The party carries no `address` object, or every field in it is empty or a placeholder.
+	 * The party has no `address` object, or every field in it is empty or a placeholder.
 	 */
 	AddressAbsent: "address-absent",
 	/**
@@ -205,10 +206,10 @@ export const ANACRefusal = {
 	 */
 	Unrenderable: "unrenderable",
 	/**
-	 * The rendered line carries one component, so it is a place name rather than an address.
+	 * The rendered line holds one component, so it is a place name rather than an address.
 	 *
-	 * A party whose name holds no letter, whose postcode is the publisher's placeholder
-	 * and whose street line is absent leaves the locality alone.
+	 * A party leaves only the locality when its name holds no letter, its postcode is the
+	 * publisher's placeholder and its street line is absent.
 	 */
 	ComponentsTooFew: "components-too-few",
 } as const
@@ -245,8 +246,8 @@ export interface ANACParty {
 /**
  * One line of the input: an OCDS release.
  *
- * The adapter reads `parties` alone.
- * A release also carries `tender`, `awards` and `contracts`, and no address
+ * The adapter reads only `parties`.
+ * A release also has `tender`, `awards` and `contracts`, and no address
  * sits on any of them in this publication.
  */
 export interface ANACRelease {
@@ -293,8 +294,8 @@ const CIVIC_MARKER = /(?<=^|[\s,])(?:n|nr|num|civ|civico)\s*\.?\s*(?=\d)/giu
 const SENZA_NUMERO = /[\s,]+(?:snc|sn)\.?$/iu
 
 /**
- * A number introduced by a kilometer marker, which points at a place on a highway
- * rather than at a premise on a street.
+ * A number introduced by a kilometer marker. Such a number points at a place on a highway rather than
+ * a premise on a street.
  */
 const KILOMETRE_POINT = /[\s,]+km\.?[\s,]*\d+(?:[.,]\d+)?$/iu
 
@@ -337,8 +338,8 @@ function fieldValue(value: string | null | undefined): string {
  * The street line with the three Italian conventions normalized away: a trailing copy
  * of the locality, a civic marker before the number, and a `senza numero` tail.
  *
- * `locality` is the publisher's own value for this party, which is what
- * authorizes removing the trailing copy.
+ * `locality` is the publisher's own value for this party. That value authorizes removing the
+ * trailing copy.
  * An empty string leaves the line as it is.
  */
 export function normalizeANACStreetLine(line: string, locality: string): string {
@@ -497,7 +498,8 @@ export function createITANACAdapter(): CorpusAdapter {
  * The registry serves one file per year beside an all-time `full.jsonl.gz`,
  * and `fetchITANAC` writes whichever editions a caller asked for into one directory,
  * so a build reading several years points at that directory.
- * The editions are read in sorted order, which puts the years in chronological order and `full` after them.
+ * The editions are read in sorted order. That puts the years in chronological order and `full` after
+ * them.
  *
  * A directory holding no edition raises rather than yielding zero rows, so a wrong path
  * reports itself instead of reading as a publisher with no contracts.

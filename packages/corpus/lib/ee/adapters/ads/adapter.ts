@@ -14,39 +14,32 @@
  * GeoServer flattens the INSPIRE application schema here, so every component value arrives inline on
  * the feature's `properties` and the adapter resolves no reference. The county, the municipality, the
  * settlement unit, the address area, the thoroughfare and the postal descriptor each occupy one of six
- * fixed `component<n>_xlink_title` slots, and an unused slot carries the string `unpopulated` rather
- * than a void object. The slot a value lands in is fixed: read through `JSONSpliterator` over 1,003
- * features across ten windows spread through the 729,973, slot 1 is `AU.AdministrativeUnit_maakond`
- * on all 1,003, slot 2 is `AU.AdministrativeUnit_ov` on all 1,003 and slot 6 is
- * `AD.Address_PostalDescriptor` on all 1,003, whose title is five digits on all 1,003. Slots 3, 4 and
- * 5 hold the settlement unit (926), the address area (4) and the thoroughfare (314) or `unpopulated`.
+ * fixed `component<n>_xlink_title` slots. An unused slot holds the string `unpopulated` rather than a
+ * void object. The slot a value lands in is fixed: slot 1 holds the county, slot 2 the municipality,
+ * slot 3 the settlement unit, slot 4 the address area, slot 5 the thoroughfare and slot 6 the postal
+ * descriptor.
  *
- * The field named after the INSPIRE designator holds an internal ADS code, and the house number
- * sits in the locator's name-spelling element. Estonia writes that ADS code in
- * `locator_addresslocator_designator_locatordesignator_designator` — `7_1DOW`, `7_3P4Y`, `6_0MU3` —
- * and 0 of 1,003 sampled values take a house-number shape. The human-readable number is in
- * `locator_addresslocator_name_locatorname_name_spelling_text`. The designator's own type says
- * `addressNumber` on the street rows, which is what makes that field tempting to read. Reading it
- * would stamp `7_1DOW` as the house number on all 729,973 rows.
+ * The field whose name matches the INSPIRE designator holds an internal ADS code, and the house
+ * number sits in the locator's name-spelling element. Estonia writes that ADS code in
+ * `locator_addresslocator_designator_locatordesignator_designator` (`7_1DOW`, `7_3P4Y`, `6_0MU3`).
+ * The human-readable number is in `locator_addresslocator_name_locatorname_name_spelling_text`. The
+ * designator's own type states `addressNumber` on the street rows, so that field is tempting to
+ * read. A reader that takes it would stamp `7_1DOW` as the house number on every row.
  *
- * Which of the two the locator name is follows the feature's structure rather than the value's shape.
- * A feature carrying a thoroughfare or an address area writes its number there, and one carrying
- * neither writes the farm or building name that designates the addressable unit. Over the same 1,003
- * features the split is exact: 314 of 314 features with a thoroughfare carry a number-shaped locator
- * name, 4 of 4 with an address area do, and 685 of 685 with neither carry a name instead. The two
- * never co-occur. The adapter therefore reads `house_number` where a thoroughfare element exists and
- * `venue` where none does, so a farm name never arrives labeled as a number.
+ * The locator name takes one of two roles, and the feature's structure decides which. A feature that
+ * holds a thoroughfare or an address area writes its number there, and one that holds neither writes
+ * the farm or building name that designates the addressable unit. The two never co-occur. The adapter
+ * therefore reads `house_number` where a thoroughfare element exists and `venue` where none does, so a
+ * farm name never arrives labeled as a number.
  *
- * Slots 4 and 5 carry a malformed `href`: it addresses the `AU_haldusyksused` workspace with an
+ * Slots 4 and 5 hold a malformed `href`: it addresses the `AU_haldusyksused` workspace with an
  * `AD_Address` type and answers HTTP 400 `Unknown namespace [AD_Address]`. The adapter reads the slot's
  * `title` and never follows an `href`.
  *
- * A row with no thoroughfare element is the ordinary rural case rather than a defect: 685 of those
- * 1,003 features, against the whole-service share of 288,009 thoroughfare-bearing rows in 729,973,
- * which is 39.5%.
+ * A row with no thoroughfare element is the ordinary rural case rather than a defect.
  *
- * Maa- ja Ruumiamet's dataset record states Creative Commons CC0 1.0 in `otherConstraints`, which the
- * address-source register elected and records under `spdx` as `CC0-1.0`. CC0 reserves no act, so the
+ * Maa- ja Ruumiamet's dataset record states Creative Commons CC0 1.0 in `otherConstraints`. The
+ * address-source register elected that license and records it under `spdx` as `CC0-1.0`. CC0 reserves no act, so the
  * adapter stamps that label on every row and the model card needs no attribution clause, although
  * crediting the publisher stays good practice.
  *
@@ -193,7 +186,7 @@ export function createADSAdapter(): CorpusAdapter {
 					components.street = street
 				} else if (locatorName) {
 					// With no thoroughfare the locator name is the site or building name that
-					// designates the addressable unit, which is how a rural Estonian address works.
+					// designates the addressable unit. That is how a rural Estonian address works.
 					components.venue = locatorName
 				}
 

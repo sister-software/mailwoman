@@ -23,7 +23,7 @@ export function nodeSearchDatabase(db: Pick<DatabaseClient, "prepare">): SearchD
 }
 
 /**
- * An in-memory index built from the records, whose connection stays open for the process.
+ * An in-memory index built from the records. Its connection stays open for the process.
  */
 export function fixtureDatabase(records: readonly SearchRecord[]): SearchDatabase {
 	const db = new DatabaseClient<SearchIndexDatabase>(":memory:")

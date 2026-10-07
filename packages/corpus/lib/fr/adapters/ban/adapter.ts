@@ -7,12 +7,12 @@
  *
  * Input is a semicolon-separated CSV dump from `adresse.data.gouv.fr`. The adapter reads `numero`
  * as `house_number`, `rep` as a repetition index appended to it, `nom_voie` as `street`,
- * `code_postal` as `postcode`, and `nom_commune` as `locality`. BAN carries no region column, so
+ * `code_postal` as `postcode`, and `nom_commune` as `locality`. BAN holds no region column, so
  * region is left to the wof-postalcode and wof-admin cross-reference at corpus build time.
  *
  * IGN publishes one file per INSEE department beside the whole-country extract, and the overseas
- * departments carry the same 23-column header as the metropolitan rows. A row's country is therefore
- * derived from `code_insee` rather than asserted by the caller, which reads the same whether the
+ * departments hold the same 23-column header as the metropolitan rows. A row's country is therefore
+ * derived from `code_insee` rather than asserted by the caller. That derivation reads the same whether the
  * input is one department's file or an extract spanning several.
  *
  * The official BAN is dual-licensed under Licence Ouverte 2.0 and ODbL.
@@ -21,7 +21,7 @@
  *
  * The adapter streams with `CSVSpliterator.fromAsync`, so a 25M-row file never sits in memory. It
  * honors `opts.limit` and `opts.signal`. `opts.country` is optional: when set it both rejects a
- * jurisdiction BAN does not publish and keeps only the rows of the one named.
+ * jurisdiction BAN does not publish and keeps only the rows of the one requested.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -94,7 +94,7 @@ export function createBanAdapter(): CorpusAdapter {
 
 				const country = countryOfInseeCode(record.code_insee ?? "")
 
-				// A caller that named one jurisdiction gets that jurisdiction's rows,
+				// A caller that requested one jurisdiction gets that jurisdiction's rows,
 				// so one extract spanning several departments can be read once per country.
 				if (opts.country && country !== opts.country) continue
 
@@ -167,7 +167,7 @@ export function createBanAdapter(): CorpusAdapter {
 					components: aligned,
 					country,
 					// Every jurisdiction BAN publishes writes its addresses in French,
-					// so the language is constant and the region carries the jurisdiction.
+					// so the language is constant and the region holds the jurisdiction.
 					locale: `fr-${country}`,
 					source: BAN_ADAPTER_ID,
 					source_id: sourceID,

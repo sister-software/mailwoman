@@ -27,16 +27,16 @@
  *    excluding three names. A feed that renames its offices then matches zero titles and raises.
  * 2. **A province feed declares ISO-8859-1 and means it, while the national feed declares UTF-8.**
  *    `ES.SDGC.ad.atom_15.xml` writes A Coruña's directory name with the byte `0xD1` for `Ñ`.
- *    Decoding that feed as UTF-8 yields U+FFFD, and the URL built from the replacement character
- *    answers an html error page under http 200 rather than the archive. So both levels are read as
- *    bytes and decoded through {@linkcode decodeDeclaredXML}, which reads each document's own
- *    declaration.
+ *    A UTF-8 decode of that feed yields U+FFFD. The URL built from the replacement character then
+ *    answers an html error page under http 200 rather than the archive. Both levels are therefore
+ *    read as bytes and decoded through {@linkcode decodeDeclaredXML}. That function reads each
+ *    document's own declaration.
  * 3. **An archive URL cannot be composed, and the href it is read from is not request-ready.** The
  *    directory segment is the municipality's own name, so Madrid sits under `28900-MADRID` while
  *    the composable `28079` answers an html page. The publisher writes that segment with literal
  *    spaces and with non-ASCII letters, and {@linkcode archiveRequestURL} percent-encodes both.
  * 4. **The municipality code is stated twice, and the two are checked against each other.** An
- *    entry's title reads `55101-CEUTA addresses` and its archive is named
+ *    entry's title reads `55101-CEUTA addresses` and its archive file is
  *    `A.ES.SDGC.AD.55101.zip`. The file keeps the publisher's own name rather than one built from
  *    the code, so the code decides which entry is read and never where the file lands. A
  *    disagreement between the publisher's two statements of it is a change in the feed's layout
@@ -77,7 +77,7 @@ import { loadCollectionFiles, writeManifest } from "#tools/fetch/download"
 import { downloadZipArchive } from "#tools/fetch/zip-archive"
 
 /**
- * The national ATOM service document, which lists one province feed per territorial office.
+ * The national ATOM service document that lists one province feed per territorial office.
  */
 export const ES_CATASTRO_SERVICE_FEED_URL = "https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml"
 
@@ -100,7 +100,7 @@ export const ES_CATASTRO_ATTRIBUTION = "Dirección General del Catastro (Ministe
 export const ES_CATASTRO_REQUEST_INTERVAL_MS = 250
 
 /**
- * The directory the harvest writes under, which is the adapter's `inputPath`.
+ * The directory the harvest writes under and the adapter reads as `inputPath`.
  */
 const SLUG = ES_CATASTRO_ADAPTER_ID
 
@@ -126,8 +126,8 @@ const DECLARED_ENCODING = /<\?xml[^>]*encoding="([^"]+)"/iu
 /**
  * A national entry's title, `Territorial office 02 Albacete`.
  *
- * The three entries belonging to the foral cadastres are titled `Provincial Council of <name>`
- * and do not match, which is how they are left to their own adapters.
+ * The three foral-cadastre entries are titled `Provincial Council of <name>` and do not match.
+ * Their own adapters read those feeds.
  */
 const TERRITORIAL_OFFICE_TITLE = /^Territorial office\s+(\d{2})\s+(\S.*)$/u
 
@@ -151,7 +151,7 @@ const ARCHIVE_FILENAME = /^A\.ES\.SDGC\.AD\.(\d{5})\.zip$/iu
  *
  * The national feed declares UTF-8 and a province feed declares ISO-8859-1, so a reader
  * that fixed either encoding would mojibake the other publisher's accented place names.
- * A document that declares no encoding is decoded as UTF-8, which is what XML's own default states.
+ * A document that declares no encoding is decoded as UTF-8. XML states that default.
  */
 export function decodeDeclaredXML(bytes: Uint8Array): string {
 	const head = Buffer.from(bytes.subarray(0, DECLARATION_WINDOW)).toString("latin1")
@@ -164,7 +164,7 @@ export function decodeDeclaredXML(bytes: Uint8Array): string {
  *
  * A province feed writes a municipality's directory segment as the publisher spells it,
  * with literal spaces and with non-ASCII letters: `…/15/15900-A CORUÑA/A.ES.SDGC.AD.15900.zip`.
- * `URL` percent-encodes both, which is what the host serves the archive at.
+ * `URL` percent-encodes both. The host serves the archive at that encoded form.
  */
 export function archiveRequestURL(href: string): string {
 	return new URL(href).toString()
@@ -175,7 +175,7 @@ export function archiveRequestURL(href: string): string {
  */
 export interface ESCatastroProvince {
 	/**
-	 * The two-digit province code, which is also the first two digits of each of its municipality codes.
+	 * The two-digit province code. Each municipality code under it starts with these two digits.
 	 */
 	code: string
 	/**
@@ -184,7 +184,7 @@ export interface ESCatastroProvince {
 	name: string
 	title: string
 	/**
-	 * This office's province feed, which lists one archive per municipality.
+	 * This office's province feed. It lists one archive per municipality.
 	 */
 	provinceFeedURL: string
 	/**
@@ -216,8 +216,8 @@ export interface ESCatastroMunicipalityDataset {
 	 */
 	updated: string
 	/**
-	 * The file name the archive is written under, which is the name the publisher gave it
-	 * and the name the adapter globs.
+	 * The file name the archive is written under. It is the publisher's own name and the
+	 * file the adapter globs.
 	 */
 	filename: string
 }
@@ -226,7 +226,7 @@ export interface ESCatastroMunicipalityDataset {
  * The territorial offices the national service document lists.
  *
  * @throws When the document holds no entry, when it holds no territorial-office entry at all,
- * when an office carries no province-feed link, or when two offices claim one province code.
+ * when an office has no province-feed link, or when two offices claim one province code.
  * Each of those would otherwise write zero archives while reporting a completed run.
  */
 export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroProvince[] {
@@ -303,9 +303,9 @@ export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroPr
 /**
  * The municipalities one province feed lists.
  *
- * @throws When the feed holds no entry, when an entry carries no archive link,
- * when the municipality code its title states disagrees with the one its archive
- * is named for, or when two entries name one archive.
+ * @throws When the feed holds no entry, when an entry has no archive link,
+ * when the municipality code its title states disagrees with the code in its archive
+ * file name, or when two entries reference one archive.
  */
 export function readESCatastroProvinceFeed(
 	feed: AtomFeed,
@@ -331,8 +331,8 @@ export function readESCatastroProvinceFeed(
 			)
 		}
 
-		// The publisher's own file name, taken off the href before it is percent-encoded,
-		// so the file on disk is named the way the feed names it.
+		// The publisher's own file name, taken off the href before percent-encoding,
+		// so the file on disk keeps the publisher's spelling.
 		const filename = link.href.slice(link.href.lastIndexOf("/") + 1)
 		const fromFilename = ARCHIVE_FILENAME.exec(filename)?.[1]
 
@@ -395,7 +395,7 @@ export interface ESCatastroArchiveEntry extends SourceManifest {
 	/**
 	 * The `<updated>` the province feed stated when this archive was fetched.
 	 *
-	 * A later run that reads the same value for this municipality leaves the file alone.
+	 * A later run that reads the same value for this municipality reuses the file.
 	 * The publisher moves it when it publishes a new edition.
 	 */
 	feed_updated: string
@@ -429,7 +429,7 @@ export interface ESCatastroHarvestManifest extends SourceCollectionManifest {
 
 export interface HarvestESCatastroOptions {
 	/**
-	 * Where the archives and the manifest are written, which is the adapter's `inputPath`.
+	 * Where the archives and the manifest are written. The adapter reads this directory as `inputPath`.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -452,7 +452,7 @@ export interface HarvestESCatastroOptions {
 	/**
 	 * Re-read the sha256 of every archive already on disk instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size, which is one `stat`.
+	 * The default compares the recorded byte count against the file's size. That check costs one `stat`.
 	 */
 	verifyDigests?: boolean
 	signal?: AbortSignal
@@ -462,9 +462,9 @@ export interface HarvestESCatastroOptions {
 /**
  * Whether the archive recorded for one municipality is still the one the province feed describes.
  *
- * A skip requires the feed to state an `<updated>` value.
- * Where it states none, both sides read an empty string and an equality test would hold,
- * which would keep an archive of unknown age for as long as the feed stayed silent.
+ * A skip requires the feed to state an `<updated>` value. Where it states none, both sides read an
+ * empty string. An equality test would then match, keeping an archive of unknown age for as long as
+ * the feed stayed silent.
  */
 async function isCurrent(
 	recorded: ESCatastroArchiveEntry | undefined,
@@ -478,7 +478,7 @@ async function isCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata, which is why it is opt-in.
+	// The digest check reads the whole file rather than its metadata. That cost is why it is opt-in.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
@@ -508,7 +508,7 @@ async function readFeed(
 }
 
 /**
- * The provinces this run reads, and the codes a caller named that the service document does not list.
+ * The provinces this run reads, and the codes a caller requested that the service document omits.
  */
 function selectProvinces(
 	listed: readonly ESCatastroProvince[],
@@ -578,8 +578,8 @@ export async function harvestESCatastro(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, ESCatastroArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is carried through,
-	// so a bounded run never drops what an earlier run recorded.
+	// The harvest keeps an entry for a municipality this run skips, so a bounded run
+	// never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESCatastroArchiveEntry)
 	}
@@ -683,9 +683,9 @@ export async function harvestESCatastro(
 		}
 	}
 
-	// A municipality a caller named and no selected province feed listed is reported
-	// rather than dropped, because a municipality that is not published is a different
-	// condition from a selection that holds no municipality.
+	// A municipality a caller requested and no selected province feed listed is reported
+	// rather than dropped. A municipality that is not published is a different condition
+	// from a selection that lists no municipality.
 	for (const code of requested ?? []) {
 		if (found.has(code)) continue
 

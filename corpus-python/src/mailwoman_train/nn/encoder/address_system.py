@@ -1,6 +1,6 @@
 """The address-system head and the locale hint.
 
-The address-system head predicts, from the pooled encoder output, which of the registry's address
+The address-system head predicts from the pooled encoder output which of the registry's address
 systems (``address_systems.json``, one per component order in codex's layouts) the row's text follows.
 Its cross-entropy is an auxiliary term: it pushes the grammar the row follows into the pooled vector
 that ``locale_film`` reads. Countries that print the same components in the same order share a target,

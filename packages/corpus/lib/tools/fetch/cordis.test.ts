@@ -180,7 +180,7 @@ describe("downloadCORDIS", () => {
 		const summary = await downloadCORDIS(client, { outputDir: scratch.path, programmes: ["h2020"] })
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
-		// The HEAD alone.
+		// Only the HEAD.
 		expect(client.calls).toHaveLength(1)
 		expect(await readLocalTextFile(path)).toBe("PK archive")
 	})

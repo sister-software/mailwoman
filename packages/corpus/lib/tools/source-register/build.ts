@@ -590,8 +590,8 @@ type RecordedDecision = Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense,
  * One publisher can hold a license over several jurisdictions, and the register
  * scopes a decision to one publisher in one jurisdiction, so reading that publisher's
  * terms once produces several decisions with the same body.
- * Naming the shared body keeps each license id's own decision while the prose behind
- * it has one home, so nine copies cannot drift apart under later editing.
+ * A shared body keeps each license id's own decision while the prose behind
+ * it has one home. Nine copies cannot drift apart under later editing.
  */
 interface SharedDecisionReference {
 	sameAs: string
@@ -613,7 +613,7 @@ function isSharedReference(value: RecordedDecision | SharedDecisionReference): v
 }
 
 /**
- * The source fields a review resolves, which the research CSV records as placeholders.
+ * The source fields a review resolves. The research CSV records placeholders for them.
  *
  * The CSV holds the research pass's findings and is a working document of that pass,
  * so a later review records its own findings here rather than by editing the pass's record.
@@ -652,7 +652,7 @@ async function readSourceResolutions(
  *
  * @throws When a resolution's source id is absent from the register.
  * Such an entry is a typo or a source that has been removed.
- * Keeping it silently would leave a review whose fields reach no row, which reads as work already done.
+ * An entry kept silently would leave a review whose fields reach no row. That reads as work already done.
  */
 export function applySourceResolutions(
 	sources: readonly AddressSourceRecord[],
@@ -697,8 +697,8 @@ async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined):
  * function checks only that the file declares a reading for each reference.
  *
  * @throws When a `sameAs` reads a reading absent from `sharedReadings`.
- * Such a reference would otherwise produce a decision carrying no terms, which the audit
- * would report as an unknown review state rather than as the typo it is.
+ * Such a reference would otherwise produce a decision holding no terms. The audit
+ * would report that as an unknown review state rather than as the typo it is.
  */
 export function resolveRecordedDecisions(file: LicenseDecisionsFile): Map<string, LicenseDecision> {
 	const shared = file.sharedReadings ?? {}

@@ -214,7 +214,7 @@ for (const file of await Globerator.files("json", {
 
 	// A hand-authored country's skeleton is emitted to its own table rather than to the one below.
 	// The rendering tables stay disjoint, so exactly one of them owns each country's printed order,
-	// and the skeleton is still readable as what the dataset says about a country the board settled.
+	// and the skeleton is still readable as what the dataset states about a country the board settled.
 	if (HAND_AUTHORED.has(code)) {
 		handAuthoredEntries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}\n\t${code}: addr\`${source}\`,`)
 

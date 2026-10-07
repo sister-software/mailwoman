@@ -175,7 +175,7 @@ export const reflowRule: CreateRule = {
 		const candidates = new Map<number, ESTree.Node[]>()
 
 		// Only a statement or a member can own a trailing comment, so the visitor
-		// is registered for those node types alone.
+		// is registered for those node types only.
 		// A `"*"` visitor was called for every node of every file, about seven times as often,
 		// and each call read `loc` before `eligibleNode` could refuse the type.
 		const collect = (node: ESTree.Node): void => {

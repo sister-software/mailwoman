@@ -15,7 +15,7 @@
  *
  * The reference form is a WFS stored-query URL: an `ad:component` href is
  * `…/ad/ows?…&storedQuery_id=urn:ogc:def:query:OGC-WFS::GetFeatureById&id=AdminUnitName.199`, and
- * that `id` parameter equals the target's `gml:id` exactly, which a `GetFeatureById` fetch of
+ * that `id` parameter equals the target's `gml:id` exactly. A `GetFeatureById` fetch of
  * `AdminUnitName.199` confirms. `componentJoinKey` reads it. Each reference also repeats its target's
  * value in `xlink:title`, as Czechia's does, and the adapter reads none of those titles. Three of an
  * address's references are `ad:AdminUnitName` features whose titles are a region, a district and a
@@ -37,7 +37,7 @@
  * 1,000 times, `buildingIdentifier` 334 times, and the street count was also exactly 334.
  *
  * The same publisher serves its register's own rendered address through `ra:address` on the same
- * GeoServer, which is what pins the composition. Three records, matched by street, number and postcode:
+ * GeoServer. That rendering pins the composition. Three records, matched by street, number and postcode:
  *
  * | `addressNumber` | `buildingIdentifier` | street | `fulladdress` |
  * | --- | --- | --- | --- |
@@ -46,7 +46,7 @@
  * | `142` | (absent) | (absent) | `142,Sikenička,94359` |
  *
  * So the number is `addressNumber` by itself, or `addressNumber/buildingIdentifier` where the
- * orientation number exists, which is the publisher's own `annotation` field verbatim. A street-less
+ * orientation number exists. That is the publisher's own `annotation` field verbatim. A street-less
  * address is ordinary rather than a defect: 666 of those 1,000 referenced no `ad:ThoroughfareName`.
  *
  * The place names come from two types. `ad:AdminUnitName` at `4thOrder` is the municipality and is
@@ -155,7 +155,7 @@ const MUNICIPALITY_LEVEL = "4thOrder"
  */
 interface ReferencedValue {
 	/**
-	 * The feature's element name, which decides where its value goes.
+	 * The feature's element name. It decides where its value goes.
 	 */
 	readonly type: string
 
@@ -326,8 +326,8 @@ function composeRow(
 		components.street = street
 	}
 
-	// The settlement part is a dependent locality only where it names something other
-	// than the municipality, which 101 of 426 address-area references do.
+	// The settlement part is a dependent locality only where it differs from
+	// the municipality. 101 of 426 address-area references do.
 	if (settlement && municipality && settlement !== municipality) {
 		components.dependent_locality = settlement
 	}

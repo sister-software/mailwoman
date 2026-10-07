@@ -166,15 +166,14 @@ export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
  * The license label recorded on every row.
  *
  * The register's source `be-property-building-3` elects `CC-BY-4.0` for Paradigm, read from
- * the `gmd:useConstraints` of ISO 19139 record `260abd6f-c5b4-4a79-aa80-d6c265002d65`,
- * which names `URBIS_ADM_Adresses.zip` among its distributions.
- * That record governs this archive rather than Paradigm's other address product,
- * the BeSt Brussels register, which is CC0-1.0.
+ * the `gmd:useConstraints` of ISO 19139 record `260abd6f-c5b4-4a79-aa80-d6c265002d65`.
+ * That record lists `URBIS_ADM_Adresses.zip` among its distributions and governs this archive
+ * rather than Paradigm's other address product, the BeSt Brussels register, licensed CC0-1.0.
  *
  * The value is the SPDX identifier rather than the license's title, because
  * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
- * This constant previously held `unreviewed-be-brussels-urbis`, which resolved to no expression,
- * so these rows carried unknown obligations into a build that had no way to filter them.
+ * The constant must not hold a placeholder such as `unreviewed-be-brussels-urbis`. That value
+ * resolves to no expression, so these rows would reach a build as unknown obligations.
  */
 export const BRUSSELS_DEFAULT_LICENSE = "CC-BY-4.0"
 

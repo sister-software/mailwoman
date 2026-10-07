@@ -231,7 +231,7 @@ describe("artifactSetWarnings", () => {
 	})
 
 	/**
-	 * A digested artifact record, which the routed arm writes for every artifact it resolves.
+	 * A digested artifact record. The routed arm writes one per resolved artifact.
 	 */
 	const digested = (name: string, artifacts: Array<[string, string | null, string | null]>) => ({
 		locale: name,
@@ -263,7 +263,7 @@ describe("artifactSetWarnings", () => {
 	})
 
 	it("stays silent when one name resolves from the same bytes at different paths", () => {
-		// Two staged caches hold the same artifact at their own paths, which is the
+		// Two staged caches hold the same artifact at their own paths. That is the
 		// ordinary shape of a candidate comparison rather than a confound.
 		const armA = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/a/model.onnx", "same-digest"]])] }
 		const armB = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/b/model.onnx", "same-digest"]])] }
@@ -272,8 +272,8 @@ describe("artifactSetWarnings", () => {
 	})
 
 	it("reports no byte difference when either arm recorded no digest", () => {
-		// A run recorded before the digest existed carries none.
-		// Reporting agreement there would state that the bytes match, which the record cannot support.
+		// A run recorded before the digest existed holds no digest.
+		// An agreement claim would assert a byte match the record cannot support.
 		const withDigest = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/a/model.onnx", "aaaa1111"]])] }
 		const without = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/b/model.onnx", null]])] }
 

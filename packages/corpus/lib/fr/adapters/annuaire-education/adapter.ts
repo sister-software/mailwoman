@@ -11,8 +11,8 @@
  * `/api/explore/v2.1/catalog/datasets/fr-en-annuaire-education/exports/jsonl`. The export keys each
  * record by the dataset's field names (`nom_etablissement`, `adresse_1`, `adresse_2`, `adresse_3`,
  * `code_postal`, `nom_commune`, `code_departement`, `etat`), and {@linkcode AnnuaireRecord} declares
- * the ones this adapter reads. `fetchAnnuaireEducationOverseas` asks the export for the overseas departments
- * alone, and the adapter filters again, so a whole-country export reads the same.
+ * the ones this adapter reads. `fetchAnnuaireEducationOverseas` asks the export for the overseas
+ * departments only, and the adapter filters again, so a whole-country export reads the same.
  *
  * ## Which rows are read
  *
@@ -25,7 +25,7 @@
  * ## Organizations only
  *
  * Every record is an education establishment or office. One private school among the overseas
- * records writes its address care of a named person (`Chez …`), which places it at that person's
+ * records writes its address care of one person (`Chez …`), which places it at that person's
  * premises, so a line opening with `Chez` refuses the row under {@linkcode AnnuaireRefusal.CareOfPerson}.
  *
  * ## The three address lines
@@ -35,7 +35,7 @@
  * what it holds rather than by its position:
  *
  * - **A street.** `5 rue Maréchal Leclerc` opens with a number and a street-type word, and
- *   `Rue Marcel Bonin` with the word alone. The word becomes `street_prefix` through
+ *   `Rue Marcel Bonin` with the word only. The word becomes `street_prefix` through
  *   {@linkcode splitFrenchStreetType}, which reads the BAN reader's dictionary and then TRE-R35's
  *   street types for the words it lacks (`quartier`, `lotissement`, `ZAC`). A number of `0` is the
  *   publisher's placeholder for none. `Bourg` or `Village` written by itself refers to the
@@ -79,8 +79,8 @@
  * transformer, pour créer des « Informations dérivées », des produits ou des services », « Sous
  * réserve de : mentionner la paternité de l'« Information » : sa source (au moins le nom du «
  * Concédant ») et la date de dernière mise à jour de l'« Information » réutilisée. » Every row
- * records the license, and {@linkcode FR_ANNUAIRE_EDUCATION_ATTRIBUTION} is the credit, which the
- * model card completes with the update date the fetch manifest records.
+ * records the license, and {@linkcode FR_ANNUAIRE_EDUCATION_ATTRIBUTION} is the credit. The model
+ * card completes it with the update date the fetch manifest records.
  *
  * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts every refusal
  * under its reason in `opts.dropped`.
@@ -125,7 +125,7 @@ export const FR_ANNUAIRE_EDUCATION_ATTRIBUTION =
 
 /**
  * The overseas INSEE departments this adapter reads: every prefix in `COUNTRY_BY_INSEE_DEPARTMENT`
- * except `984`, the French Southern Territories, which has no schools.
+ * except `984`, the French Southern Territories, where there are no schools.
  */
 export const FR_ANNUAIRE_EDUCATION_DEPARTEMENTS: readonly string[] = [
 	"971",
@@ -206,7 +206,7 @@ export const AnnuaireRefusal = {
 	 */
 	DeliveryLineAbsent: "row:delivery-line-absent",
 	/**
-	 * The jurisdiction's layout does not print every component the row carries.
+	 * The jurisdiction's layout does not print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
 	/**
@@ -252,7 +252,7 @@ const ARCHIPELAGO_CODE = /^(?:idv|islv|tg|marq|australes)(?![\p{L}\d])/iu
 const LEADING_NUMBER = /^(\d+)(?:\s*(bis|ter|quater)(?![\p{L}])|\s?([A-Za-z])(?![\p{L}'’]))?[\s,]+(.+)$/iu
 
 /**
- * A leading `Lieu-dit` marker, which a place line drops.
+ * A leading `Lieu-dit` marker. A place line drops it.
  */
 const LIEU_DIT_MARKER = /^lieu[- ]dit\s+/iu
 
@@ -299,7 +299,7 @@ const THOROUGHFARE_WORDS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Street-type words that, written alone, name a settlement's center: `Bourg`, `Village`.
+ * Street-type words that stand for a settlement's center: `Bourg`, `Village`.
  */
 const LONE_PLACE_WORDS: ReadonlySet<string> = new Set(["bourg", "village", "le bourg"])
 
@@ -347,7 +347,7 @@ export function readAnnuaireLine(line: string): LineReading {
 
 	if (split) {
 		if (!split.street) {
-			// `Bourg` and `Village` alone name the settlement's center, which is a place.
+			// `Bourg` and `Village` on their own refer to the settlement's center. That center is a place.
 			if (!house && split.street_prefix && LONE_PLACE_WORDS.has(foldToken(split.street_prefix))) {
 				return { kind: "place", place: split.street_prefix }
 			}

@@ -39,7 +39,7 @@ def test_pyproject_and_modal_pins_agree():
 
 
 def test_every_base_requirement_is_installed_in_the_modal_image():
-    # Missing a base dependency means the container fails on first import,
+    # A missing base dependency means the container fails on first import,
     # often after a GPU has already been allocated.
     vt = _load()
     missing = sorted(vt._base_requirements() - vt._modal_packages())

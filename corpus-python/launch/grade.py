@@ -505,7 +505,7 @@ def measure_exposure(config_name: str, countries: str = "", draws: int = 0, repl
 
     Writes ``/data/audits/exposure-<config stem>.json``. ``countries`` limits both stages to a
     comma-separated list, and ``draws`` overrides the epoch length the replay reads. ``replay_only``
-    skips the eligible stage, which reads every admitted row of the corpus.
+    skips the eligible stage. That stage reads every admitted row of the corpus.
     """
     import sys
     from pathlib import Path

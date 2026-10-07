@@ -6,7 +6,7 @@
  * `ro-retea-scolara`: Romania's school network (`Rețea școlară`), the Ministry of Education's list of every
  * education unit for a school year, read for each unit's postal address.
  *
- * Input is the publisher's own workbook, one sheet named `Export`, as data.gov.ro serves it for the
+ * Input is the publisher's own workbook, one sheet titled `Export`, as data.gov.ro serves it for the
  * dataset `69392a50-5750-4a54-90c1-d461de44da6d`. Three rows precede the header. The adapter finds the
  * header by its `Strada` cell rather than by position, because the preamble is a generation timestamp
  * whose length the publisher does not fix.
@@ -23,7 +23,7 @@
  *   has none, on 601 and 180 units. Both are read as absent. A range such as `12-14` is a house number.
  * - `Cod postal` holds a six-digit Romanian postcode on 17,484 units. A value of any other length is
  *   left out of the row rather than refusing the row, because the address is complete without it.
- * - `Judet PJ` holds the county as a two-letter code. The row carries no region, because libaddressinput's
+ * - `Judet PJ` holds the county as a two-letter code. The row holds no region, because libaddressinput's
  *   Romanian layout places the county between postcode and locality, and this reader has no source for
  *   the county name in the form an address prints it.
  *
@@ -32,7 +32,7 @@
  * ## Organizations only
  *
  * Every unit is a school, kindergarten, children's club, county inspectorate or similar public body, and
- * the sheet carries no natural person's address. The venue is the institution's name.
+ * the sheet holds no natural person's address. The venue is the institution's name.
  *
  * ## Identity and license
  *
@@ -42,7 +42,7 @@
  * data.gov.ro publishes the dataset under `CC-BY-4.0`, the license its CKAN record names for the
  * publisher `Ministerul Educației`. CC BY 4.0 requires credit, a link to the license and a statement that
  * changes were made, so every row records the license and {@linkcode RO_RETEA_SCOLARA_ATTRIBUTION} is the
- * credit the model card carries.
+ * credit the model card records.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -90,7 +90,7 @@ export const ReteaScolaraRefusal = {
 	 */
 	LocalityAbsent: "row:locality-absent",
 	/**
-	 * The unit states neither a street nor a house number, so the locality alone would be a place name.
+	 * The unit states neither a street nor a house number, so the locality by itself would be a place name.
 	 */
 	PremiseAbsent: "row:premise-absent",
 	/**

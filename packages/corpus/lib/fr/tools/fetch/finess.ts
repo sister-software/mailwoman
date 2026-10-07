@@ -9,7 +9,7 @@
  * `finess-extraction-du-fichier-des-etablissements`, whose API record at
  * `https://www.data.gouv.fr/api/1/datasets/finess-extraction-du-fichier-des-etablissements/` lists
  * every resource with its URL, `last_modified`, `filesize` and a SHA-1 `checksum`. The establishment
- * extract is the resource whose file is named `etalab-cs1100502-stock-<date>-<time>.csv`; the
+ * extract is the resource whose file matches `etalab-cs1100502-stock-<date>-<time>.csv`. The
  * geolocated extract `etalab-cs1100507-…` and the history archive sit beside it and are not read.
  * {@linkcode selectFinessExtract} picks the newest establishment extract the record lists, so the
  * fetcher follows a republication without a code change.
@@ -27,7 +27,7 @@
  * decides, and the manifest records all three digests. A file that matches neither is an
  * interrupted transfer or an error page and is removed rather than recorded. The manifest records the SHA-256 the corpus tooling compares,
  * the resource's `last_modified`, and the extract's own first line (`finess;etalab;111;2026-05-12`),
- * which carries the extraction date Licence Ouverte's attribution names.
+ * That line states the extraction date Licence Ouverte's attribution requires.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -48,12 +48,12 @@ import { downloadToFile, loadCollectionFiles, writeManifest } from "#tools/fetch
 export const FINESS_DATASET_SLUG = "finess-extraction-du-fichier-des-etablissements"
 
 /**
- * The dataset's API record, which lists its resources.
+ * The API record that lists the dataset's resources.
  */
 export const FINESS_DATASET_API_URL = `https://www.data.gouv.fr/api/1/datasets/${FINESS_DATASET_SLUG}/`
 
 /**
- * The dataset's page, which states the license.
+ * The page that states the dataset's license.
  */
 export const FINESS_DATASET_PAGE_URL = `https://www.data.gouv.fr/datasets/${FINESS_DATASET_SLUG}`
 
@@ -63,7 +63,7 @@ export const FINESS_DATASET_PAGE_URL = `https://www.data.gouv.fr/datasets/${FINE
 const ESTABLISHMENT_EXTRACT = /\/(etalab-cs1100502-stock-\d{8}-\d{4}\.csv)$/u
 
 /**
- * The opening of the extract's comment line, which an HTML error page does not have.
+ * The opening of the extract's comment line.
  */
 const EXTRACT_HEADER = "finess;"
 
@@ -98,7 +98,7 @@ export interface FinessExtractManifest extends SourceManifest {
 	 */
 	dataset_license: string | null
 	/**
-	 * The extract's first line, which ends with the extraction date.
+	 * The extract's first line, ending with the extraction date.
 	 */
 	extract_header: string
 	/**
@@ -164,7 +164,7 @@ export async function readFinessDataset(client: Pick<APIClient, "fetch">): Promi
 }
 
 /**
- * The SHA-1 of a file, which is the digest data.gouv.fr publishes for a resource.
+ * A file's SHA-1, the digest data.gouv.fr publishes for a resource.
  */
 async function sha1File(path: PathBuilderLike): Promise<string> {
 	return createHash("sha1")

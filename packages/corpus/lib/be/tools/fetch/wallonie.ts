@@ -38,12 +38,12 @@ import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetc
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 /**
- * The ATOM service document, which lists the region's one dataset feed.
+ * The ATOM service document for the region's one dataset feed.
  */
 export const BE_WALLONIE_SERVICE_URL = "https://geoservices.wallonie.be/inspire/atom/AD_Service.xml"
 
 /**
- * The name the archive is written under, which is what the adapter's `inputPath` states.
+ * The archive filename, the same one the adapter's `inputPath` states.
  */
 export const BE_WALLONIE_ARCHIVE_FILENAME = "AD.Addresses.gml.zip"
 
@@ -58,8 +58,8 @@ const SLUG = WALLONIE_ADAPTER_ID
  * What one run recorded.
  *
  * `feed_updated` is the dataset feed's own `<updated>`.
- * A later run downloads again when that value changes, which is what the INSPIRE
- * pattern offers in place of an HTTP validator.
+ * A later run downloads again when that value changes. The INSPIRE
+ * pattern offers that field in place of an HTTP validator.
  */
 export interface WallonieManifest extends SourceManifest {
 	service_url: string
@@ -93,7 +93,7 @@ export interface WallonieArchiveReference {
 	 * The archive entry's own `<updated>`, or `null` where the feed states none.
 	 *
 	 * `updated` sits on an Atom entry rather than on the feed, so this reads the
-	 * entry that carried the archive link.
+	 * entry that holds the archive link.
 	 * Wallonia's feed reported `2025-12-11` when this reader was written.
 	 */
 	feedUpdated: string | null

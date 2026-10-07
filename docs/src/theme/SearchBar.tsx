@@ -36,7 +36,7 @@ export default function SearchBar() {
 		return database.current
 	}, [])
 
-	// Opening the modal starts the index download, so the first query need not wait for all of it.
+	// The index download starts when the modal opens, so the first query need not wait for all of it.
 	useEffect(() => {
 		if (open) {
 			openDatabase().catch(() => {})

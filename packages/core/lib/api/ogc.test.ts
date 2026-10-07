@@ -49,7 +49,7 @@ describe("readWFSFeatureCount", () => {
 describe("readCheckedWFSFeatureCount", () => {
 	it("accepts a count a page agrees with and no feature sits past", async () => {
 		// Slovakia's shape: the hits count, a page agreeing with it, and an empty page at the
-		// count's own index, which is what a service holding exactly that many answers.
+		// count's own index. A service holding exactly that many answers this way.
 		const count = await readCheckedWFSFeatureCount(
 			stubFetchingBodies(
 				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="0"/>',
@@ -140,7 +140,7 @@ describe("readCheckedWFSFeatureCount", () => {
 describe("countWFSFeaturesByPaging", () => {
 	/**
 	 * A service holding `extent` features that answers a page honestly and states
-	 * no usable count, which is the shape Poland's does.
+	 * no usable count. That is the shape Poland's service takes.
 	 * It records every `startIndex` it was asked for.
 	 */
 	const servingExtent = (extent: number, asked: number[] = []): Pick<APIClient, "fetch"> => ({

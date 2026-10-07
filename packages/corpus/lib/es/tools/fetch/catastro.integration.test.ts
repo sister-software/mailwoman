@@ -7,7 +7,7 @@
  *
  *   `./catastro.test.ts` proves the harvest's decisions against stubbed bodies, and
  *   `#es/adapters/catastro/adapter`'s suite proves the adapter against captured bytes. Neither
- *   proves that a harvest of the real service writes a directory that adapter reads, which is the
+ *   proves that a harvest of the real service writes a directory that adapter reads. That is the
  *   one claim captured bytes cannot make.
  *
  *   The bounded run takes Ceuta. Ceuta is one municipality in one province feed, so the run makes
@@ -32,7 +32,7 @@ import { feedChunks, readAtomFeed } from "#tools/fetch/atom"
 import { readManifest } from "#tools/fetch/download"
 
 /**
- * The province whose feed lists exactly one municipality, which is what makes a
+ * The province whose feed lists exactly one municipality. That makes a
  * bounded live harvest three requests rather than a national one.
  */
 const CEUTA = "55"
@@ -85,7 +85,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESCatastro against the live service
 		const selected = new Set(provinces.map((province) => province.title))
 
 		// The invariant rather than a count: every entry the reader leaves out is a foral
-		// cadastre, which has its own register row, license and adapter.
+		// cadastre. Each has its own register row, license and adapter.
 		expect(feed.entries.map((entry) => entry.title.trim()).filter((title) => !selected.has(title))).toSatisfy(
 			(titles: readonly string[]) => titles.every((title) => title.startsWith("Provincial Council of"))
 		)

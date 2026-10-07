@@ -5,9 +5,9 @@
  *
  *   Download Geofabrik extracts into `$MAILWOMAN_DATA_ROOT/db/osm/geofabrik` and write a receipt beside each.
  *
- *   A file is named `<leaf>-<YYMMDD>.osm.pbf` from the server's `Last-Modified` date, which matches the
- *   extracts already on disk (`pakistan-260819.osm.pbf`). A file already present under that name is kept,
- *   and its receipt is written only when missing.
+ *   A file takes the name `<leaf>-<YYMMDD>.osm.pbf` from the server's `Last-Modified` date. That name
+ *   matches the extracts already on disk (`pakistan-260819.osm.pbf`). A file already present under that
+ *   name is kept, and its receipt is written only when missing.
  *
  *   Usage:
  *     node packages/osm/tools/fetch/extract.ts --region russia --region asia/china

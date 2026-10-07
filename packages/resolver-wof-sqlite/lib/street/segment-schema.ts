@@ -214,7 +214,7 @@ const STREET_SEGMENT_CLUSTER_ORDER = "street_norm, postcode, min_hn, max_hn, row
  *
  * `street_segment` stays a rowid table, because `postcode` is nullable.
  * A `WITHOUT ROWID` primary key forbids a null column.
- * Loading in key order gives the same page locality.
+ * A load in key order gives the same page locality.
  *
  * Run {@link createStreetSegmentIndexes} and `VACUUM` afterwards.
  */
@@ -233,7 +233,7 @@ export async function clusterStreetSegments(db: Kysely<StreetSegmentDatabase>): 
 /**
  * Create the two probe indexes the readers use (postcode-scope, street-scope).
  *
- * Each index carries `max_hn`.
+ * Each index holds `max_hn`.
  * SQLite therefore rejects a range ending below the house number from the index entry.
  * The rejected row's table page is never fetched.
  */

@@ -11,10 +11,9 @@
  *   fragmentation happens to stay low is not reproducible.
  *
  *   The domain checks run here and throw: an unknown policy, policy interpretation or defense type is a
- *   source-schema change. The ingest step must reject it instead of mapping it to a nearest neighbor or null,
- *   which would convert "the source changed" into
- *   "there is no data here". The defense check compares case-folded and stores the source's own string for the
- *   source's inconsistent capitalization.
+ *   source-schema change. The ingest step rejects it instead of mapping it to a nearest neighbor or null,
+ *   because that mapping converts "the source changed" into "there is no data here". The defense check
+ *   compares case-folded and stores the source's own string for the source's inconsistent capitalization.
  *
  *   The chunk owns no artifact. It appends rows to a database that the parent created and will seal.
  *   It returns counts for the parent to add. Chunks run one at a time against that file, so no writers overlap.

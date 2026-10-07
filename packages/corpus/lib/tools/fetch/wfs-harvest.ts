@@ -22,10 +22,10 @@
  *
  * 1. A service may ignore `startIndex` and answer every page with the first. `countWFSFeaturesByPaging`
  *    in `@mailwoman/core/api` refuses such a service by comparing two pages' leading feature. A
- *    harvest sees the same defect as two consecutive pages with equal bytes, which this refuses.
+ *    harvest sees the same defect as two consecutive pages with equal bytes. It refuses that pair.
  * 2. A service's own `numberMatched` may be a per-request cap rather than a count. The caller states
  *    what its count is and where it came from, and {@linkcode PagedWFSHarvestOptions.featureCount}
- *    carries both. No count is written into this module, and a harvest with no usable count ends on
+ *    holds both. No count is written into this module, and a harvest with no usable count ends on
  *    the first page that returns no features.
  * 3. A page may return fewer features than `count` asks for. The next `startIndex` therefore advances
  *    by the features the service returned rather than by the page size, so a service that caps a page
@@ -69,7 +69,7 @@ export interface MarkupRoot {
 	 */
 	name: string
 	/**
-	 * The text between the name and the tag's terminator, which holds the attributes.
+	 * The text between the name and the tag's terminator. It holds the attributes.
 	 */
 	attributes: string
 	/**
@@ -85,7 +85,7 @@ export interface MarkupRoot {
  * opening tag verbatim to open the file it assembles, and parsing a 1.6 MB page per request
  * to recover a tag that the first 400 bytes already hold costs a document parse per page.
  *
- * The leading `[A-Za-z_]` skips the XML declaration, which opens `<?xml`.
+ * The leading `[A-Za-z_]` skips the XML declaration. That declaration opens `<?xml`.
  */
 const ROOT_OPENING_TAG = /<([A-Za-z_][\w.:-]*)([^>]*)>/u
 
@@ -133,7 +133,7 @@ export function readMarkupRoot(body: string, context: string): MarkupRoot {
 }
 
 /**
- * The content between a document's root tags, which for a `wfs:FeatureCollection` is its members.
+ * The content between a document's root tags. For a `wfs:FeatureCollection` those are its members.
  *
  * @throws When the root element is not closed, so a truncated transfer reads as
  * unreadable rather than as a page of no features.
@@ -232,7 +232,7 @@ export interface WFSHarvestRequest {
 	 * The property the service was asked to order by, or `null` where it grants no ordering.
 	 *
 	 * Without one, a resumed harvest rests on the service returning the same features
-	 * in the same order as the earlier run, which no WFS guarantees.
+	 * in the same order as the earlier run. No WFS guarantees that order.
 	 */
 	sortBy: string | null
 }
@@ -253,7 +253,7 @@ export interface FeatureCountStatement {
  * The count a service states, or no count and the reason there is none.
  *
  * `readCheckedWFSFeatureCount` proves a reported `numberMatched` against a page of the
- * same type, which catches a service whose count is smaller than one of its own pages.
+ * same type. That comparison catches a service whose count is smaller than one of its own pages.
  * It cannot catch a count that equals the service's page cap: no page can return more
  * features than the cap, so the page it asks for agrees with the cap every time.
  *
@@ -263,7 +263,7 @@ export interface FeatureCountStatement {
  *
  * The reported number is the cap, and a harvest that read it as a count would store 1,000
  * of the 8.6 million features the service holds and record the type as read whole.
- * A reported count equal to the cap is therefore carried as no count.
+ * The harvest therefore records no count when the reported number equals the cap.
  *
  * @param pageCap The largest page the service will serve, from its advertised `CountDefault`.
  */
@@ -305,7 +305,7 @@ export interface HarvestedPayload {
 	 */
 	footer?: string
 	/**
-	 * The features the service returned, which is what the next `startIndex` advances by.
+	 * The features the service returned. The next `startIndex` advances by this number.
 	 *
 	 * `null` where the service stated none.
 	 * The harvest refuses that rather than reading it as zero.
@@ -324,7 +324,7 @@ export interface HarvestedPayload {
 export interface WFSHarvestPageRecord {
 	start_index: number
 	/**
-	 * The page size requested, which a service may answer with fewer features.
+	 * The page size requested. A service may answer with fewer features.
 	 */
 	count: number
 	offset: number
@@ -508,15 +508,14 @@ function nextStartIndexOf(pages: readonly WFSHarvestPageRecord[]): number {
 }
 
 /**
- * The recorded pages that are actually on disk, with the file truncated back to the last of them.
+ * The recorded pages present on disk, with the file truncated back to the last of them.
  *
  * An interrupted run can leave a partial page at the end of the file,
  * or a footer the next page has to be appended past.
- * Both are resolved by cutting the file at the last page boundary the file reaches,
- * which is a page boundary rather than an arbitrary offset.
+ * Both are resolved by truncating the file at the last page boundary it reaches.
  *
- * @throws When the last surviving page's bytes no longer hash to what the manifest recorded,
- * which is a file that was altered rather than one that was cut short.
+ * @throws When the last surviving page's bytes no longer hash to what the manifest recorded.
+ * A mismatch means the file was altered after the harvest recorded it.
  */
 async function reconcileHarvestFile(
 	manifest: WFSHarvestManifest,
@@ -601,7 +600,7 @@ export interface HarvestCurrencyExpectation {
  * Two harvests need none:
  *
  * - A complete one whose data file still hashes to the digest the manifest records.
- * - A partial one that already holds `maxPages` pages, which is what a bounded probe asks for.
+ * - A partial one that already holds `maxPages` pages, the cap a bounded probe requests.
  *
  * @throws When a page's recorded byte range no longer hashes to its recorded digest,
  * so a file that was altered under its manifest is reported rather than used.
@@ -833,7 +832,7 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
  */
 export interface RunWFSHarvestOptions {
 	/**
-	 * The slug the harvest is written under and reported by, which matches the adapter's own id.
+	 * The slug the harvest is written under and reported by. It matches the adapter's own id.
 	 */
 	slug: string
 
@@ -843,7 +842,7 @@ export interface RunWFSHarvestOptions {
 	outRoot: (segment: string) => PathBuilderLike
 
 	/**
-	 * The data file inside the harvest directory, which is also the adapter's `inputPath`.
+	 * The data file inside the harvest directory. The adapter's `inputPath` points here.
 	 */
 	filename: string
 
@@ -868,12 +867,12 @@ export interface RunWFSHarvestOptions {
 	harvest: (client: Pick<APIClient, "fetch">) => Promise<WFSHarvestManifest>
 
 	/**
-	 * A client to use rather than constructing one, which a test supplies.
+	 * A client to use rather than constructing one. A test supplies this.
 	 */
 	client?: Pick<APIClient, "fetch">
 
 	/**
-	 * A page cap, which makes an incomplete harvest a success.
+	 * A page cap. A capped run treats an incomplete harvest as a success.
 	 */
 	maxPages?: number
 }

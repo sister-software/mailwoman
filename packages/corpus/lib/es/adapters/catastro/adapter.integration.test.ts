@@ -43,7 +43,7 @@ const fixture = workspacePath("corpus", "fixtures", "es-catastro", "A.ES.SDGC.AD
 /**
  * What the Cadastre holds for one cadastral reference.
  *
- * A reference can carry many units, each with its own `dir`: `9548010TE8794N`
+ * A reference can have many units, each with its own `dir`: `9548010TE8794N`
  * answers eleven, at numbers 45 through 55.
  * The GML writes one address per number, so each field is read as the set the
  * service answers rather than as its first block.
@@ -91,8 +91,8 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 			)
 		),
 		// `pnp` and `plp` concatenate: `13` and `D` make `13D`.
-		// A `pnp` of `0` with no `plp`, or no `pnp` at all, is the Cadastre holding no number,
-		// which its own `ldt` shows by rendering none and which the GML writes as `S-N`.
+		// A `pnp` of `0` with no `plp`, or no `pnp` at all, is the Cadastre holding no number. Its
+		// own `ldt` shows that by rendering none, and the GML writes it as `S-N`.
 		numbers: new Set(
 			blocks.map((dir) => {
 				const pnp = text(dir, "pnp")

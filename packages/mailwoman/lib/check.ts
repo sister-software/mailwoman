@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The result of one named check, produced by tooling and rendered by the command line.
+ * @file The result of a single check, produced by tooling and rendered by the command line.
  */
 
 /**

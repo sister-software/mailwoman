@@ -14,27 +14,26 @@
  * `@mailwoman/sqlite`'s Kysely client. The file is a published artifact and is opened read-only.
  *
  * The INSPIRE address model is normalized, so one address is a join rather than a row. The `address`
- * table carries the locator designators and a reference per component. The street name and the
- * postcode live in `thoroughfarename` and `postaldescriptor` and are reached through
- * `component_thoroughfarename` and `component_postaldescriptor`. Both resolve for every row of the
- * measured file, and a reference that does not resolve raises
+ * table holds the locator designators and a reference per component. The street name and the postcode
+ * live in `thoroughfarename` and `postaldescriptor`, reached through `component_thoroughfarename` and
+ * `component_postaldescriptor`. An unresolved reference raises
  * {@linkcode UnresolvedAddressComponentError} rather than yielding an address missing its street.
  *
- * The adapter reads `locator_designator_1_designator` as `house_number`, which already carries any
- * letter (`2A`, `68A`); `thoroughfarename.name_name` as `street`; `postaldescriptor.postcode` and
- * `postname` as `postcode` and `locality`. Denmark writes a floor and a door after the house number,
- * and the publisher splits them across `locator_designator_2_designator` and
- * `locator_designator_3_designator`; the adapter joins the two into one `unit`, because the Danish
- * address layout places `unit` and leaves `level` unplaced.
+ * The adapter reads `locator_designator_1_designator` as `house_number`. That column already holds
+ * any letter (`2A`, `68A`). It reads `thoroughfarename.name_name` as `street`, and
+ * `postaldescriptor.postcode` and `postname` as `postcode` and `locality`. Denmark writes a floor
+ * and a door after the house number, and the publisher splits them across
+ * `locator_designator_2_designator` and `locator_designator_3_designator`. The adapter joins the two
+ * into one `unit`, because the Danish address layout places `unit` and leaves `level` unplaced.
  *
- * The file carries no region column that belongs in an address. `component_adminunitname_2` and
+ * The file holds no region column that belongs in an address. `component_adminunitname_2` and
  * `_3` name a region and a municipality, neither of which a Danish address line states, so region
  * is left to the wof-postalcode and wof-admin cross-reference at corpus build time, as BAN's is.
  *
- * The address-source register records this source as `dk-property-building-1` and its license as
- * `unchecked-access-free-dk-klimadatastyrelsen`, whose `spdx` field reads `CC-BY-4.0` in an
- * `elected` state with `train` permitted. The adapter records that license on every row, and the
- * model card must attribute Klimadatastyrelsen.
+ * The address-source register lists this source as `dk-property-building-1`. Its
+ * `unchecked-access-free-dk-klimadatastyrelsen` license holds `CC-BY-4.0` in `spdx`, an `elected`
+ * state with `train` permitted. The adapter records that license on every row, and the model card
+ * must attribute Klimadatastyrelsen.
  *
  * The adapter streams through Kysely's `.stream()`, so the `address` table never sits in memory, and
  * orders by `objectid` so two runs over one file emit the same rows in the same order. It honors
@@ -42,9 +41,9 @@
  * Denmark proper, and Greenland and the Faroe Islands are their own jurisdictions and are absent
  * from it.
  *
- * The measured file holds 599,999 `address` rows, which is one short of a round 600,000 against a
- * national register several times that size. Treat it as a possible export cap rather than as
- * Denmark's address count. The register's `coverage` field records the same reading.
+ * The measured file holds 599,999 `address` rows. That is one short of a round 600,000, while the
+ * national register is several times larger, so treat the file as a possible export cap rather than
+ * as Denmark's address count.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -67,8 +66,8 @@ export const DK_INSPIRE_ADAPTER_ID = "dk-inspire"
  * The license the address-source register elects for this source.
  *
  * Read from the `spdx` field of the register's `unchecked-access-free-dk-klimadatastyrelsen`
- * license, which the register's `dk-property-building-1` source names.
- * The feed's own `<rights>` says the same, but the register is what governs.
+ * license. The register's `dk-property-building-1` source points to it.
+ * The feed's own `<rights>` states the same, but the register is what governs.
  */
 export const DK_INSPIRE_DEFAULT_LICENSE = "CC-BY-4.0"
 
@@ -82,12 +81,11 @@ export const DK_INSPIRE_DEFAULT_LICENSE = "CC-BY-4.0"
 export const DK_INSPIRE_COUNTRIES: readonly string[] = ["DK"]
 
 /**
- * The tables the adapter reads, which it requires `gpkg_contents` to declare.
+ * The tables the adapter reads. It requires `gpkg_contents` to declare them.
  *
- * The GeoPackage declares five.
- * `addressareaname` is a supplementary locality that resolves for 206,416 of the 599,999 rows
- * and that a Danish address line does not state, and `adminunitname` holds the region
- * and municipality the adapter leaves to cross-reference, so neither is read.
+ * The GeoPackage declares five. `addressareaname` holds a supplementary locality that a Danish
+ * address line does not state, and `adminunitname` holds the region and municipality the adapter
+ * leaves to cross-reference, so neither is read.
  */
 export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postaldescriptor", "thoroughfarename"]
 
@@ -116,9 +114,8 @@ export class AddressGeoPackageSchemaError extends Error {
 /**
  * Raised when an address row's component reference resolves to no row of the referenced table.
  *
- * Every reference resolves in the measured file.
- * One that does not means the database is incomplete, which is reported
- * rather than converted into an address missing its street.
+ * An unresolved reference means the database is incomplete. The adapter reports it
+ * rather than converting it into an address missing its street.
  */
 export class UnresolvedAddressComponentError extends Error {
 	constructor(inspireID: string, column: string, reference: string | null) {
@@ -172,11 +169,10 @@ export interface AddressGeoPackageDatabase {
  * `locator_designator_3_designator` (`tv` for `til venstre`, or a number).
  * Danish writes the floor first, so the two join in that order.
  *
- * {@linkcode composeHouseNumber} answers the empty string when its first argument is absent,
- * which is right for the house-number columns it was written for and wrong here:
- * 967 of the measured file's rows carry a door and no floor, and passing the pair
- * straight through would drop every one of those doors.
- * The door alone is therefore the value when the floor is absent.
+ * {@linkcode composeHouseNumber} answers the empty string when its first argument is absent.
+ * That suits the house-number columns it was written for, and it would drop every door here:
+ * 967 measured rows have a door and no floor.
+ * The door is therefore the value when the floor is absent.
  *
  * @returns The joined designator, or the empty string when the publisher states neither.
  */
@@ -224,7 +220,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 			}
 
 			// Left joins, deliberately: an inner join would drop an address whose component reference
-			// does not resolve, which is the absence this adapter has to report rather than apply.
+			// does not resolve. That absence has to be reported rather than applied.
 			const stream = db
 				.selectFrom("address as a")
 				.leftJoin("thoroughfarename as t", "t.inspireid", "a.component_thoroughfarename")

@@ -22,7 +22,7 @@ function hitFor(source: string, word: string): ReturnType<typeof classify> {
 
 describe("the classifier reads the rule name Vale emits", () => {
 	it("classifies a record whose rule name carries the style package `.vale-code-census.ini` declares", () => {
-		// Vale prefixes a rule with its style package, which `BasedOnStyles` sets to `styles`.
+		// Vale prefixes a rule with its style package. `BasedOnStyles` sets that package to `styles`.
 		// A pattern naming another package matches no record, so `collectHits` returns an empty
 		// array for a tree that has hits and the census reports a count of zero it did not measure.
 		// The fixtures above spell the emitted form for that reason, and this case

@@ -382,8 +382,8 @@ export interface AdapterOptions {
 	 *
 	 * The runner writes the map into `MANIFEST.json` as `dropped`, so the gap between a
 	 * source's record count and the rows written has a counted reason.
-	 * An adapter that does not count leaves the map empty, which the manifest records
-	 * as an empty object rather than as zero drops of any named kind.
+	 * An adapter that does not count leaves the map empty. The manifest records that
+	 * as an empty object rather than as zero drops of a specific kind.
 	 */
 	dropped?: Map<string, number>
 }

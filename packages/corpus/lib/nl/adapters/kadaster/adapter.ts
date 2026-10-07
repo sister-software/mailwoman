@@ -8,13 +8,13 @@
  * Kadaster serves the whole country in one file. The ATOM service document at
  * `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, holds
  * one entry, and its `rel="alternate"` link is
- * `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes, which
+ * `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes. It
  * inflates to 29,677,448,685 bytes of GML holding 10,066,060 address features. The sibling feed URL
  * the entry's own `<id>` names answers HTTP 404, so the download link is the only live one.
  *
  * The size decides the shape of the reader. The document is never buffered: the adapter opens the
- * local `.gml.gz`, inflates it as a byte stream and takes one feature subtree at a time, and it keeps
- * a value rather than a subtree for each feature an address references, so the index it holds is
+ * local `.gml.gz`, inflates it as a byte stream and takes one feature subtree at a time. Each feature
+ * an address references contributes a value rather than its subtree, so the index is
  * bounded by a string per street and per place name rather than by the document.
  *
  * Four things separate this publisher from the Czech one the shared primitives were first written
@@ -45,8 +45,8 @@
  *
  * So the extension joins the number with no separator and the second extension follows a hyphen.
  * 305,542 of 345,309 addresses in the prefix write an `addressNumberExtension` that is present and
- * empty, spelled `<ad:designator/>`. That states an address with no extension, which is a different
- * condition from void.
+ * empty, spelled `<ad:designator/>`. That states an address with no extension. That condition differs
+ * from void.
  *
  * The place name comes from `ad:AddressAreaName`, the BAG *woonplaats*. The prefix holds exactly one
  * `ad:AdminUnitName` feature and it is the country, `Nederland` at `1stOrder`, so this feed publishes
@@ -60,8 +60,8 @@
  * against 2,622 dot-form ids and 0 hyphen-form ids. The same element on an `ad:AddressAreaName` uses
  * the dot form and resolves. A reader walking `ThoroughfareName → situatedWithin → AddressAreaName`
  * would therefore read an empty locality for every street and report no failure. So the adapter reads
- * the street and the place from the address's own `ad:component` references, which use the dot form,
- * and never follows `ad:situatedWithin`. Every reference it does follow raises when it resolves to no
+ * the street and the place from the address's own `ad:component` references, and those use the dot
+ * form. It never follows `ad:situatedWithin`. Every reference it does follow raises when it resolves to no
  * feature, so the hyphen form reaching an `ad:component` would be reported rather than dropped.
  *
  * Unlike Czechia, this publisher offers no string to check a whole rendered line against.
@@ -70,7 +70,7 @@
  *
  * Kadaster states one license and states it as a URL. Both `rights` elements of the ATOM service
  * document read `https://creativecommons.org/publicdomain/zero/1.0/deed.nl`, the Dutch deed page for
- * CC0 1.0 Universal, which the address-source register elected with `spdx` `CC0-1.0`. CC0 reserves no
+ * CC0 1.0 Universal. The address-source register elected it with `spdx` `CC0-1.0`. CC0 reserves no
  * act, so every row records that identifier and no attribution clause is owed, although crediting
  * Kadaster stays good practice.
  *
@@ -161,7 +161,7 @@ const COMPONENT_TYPES = ["ad:ThoroughfareName", "ad:AddressAreaName", "ad:AdminU
  */
 interface ReferencedValue {
 	/**
-	 * The feature's element name, which decides where its value goes.
+	 * The feature's element name. That decides where its value goes.
 	 */
 	readonly type: string
 
@@ -194,8 +194,8 @@ function referencedValue(feature: MarkupElement): ReferencedValue {
 /**
  * The house number as Kadaster writes it in BAG's `huis_nlt`.
  *
- * The letter joins the number directly and the addition follows a hyphen,
- * which the table in this module's header reads off three records matched against
+ * The letter joins the number directly and the addition follows a hyphen.
+ * The table in this module's header reads that off three records matched against
  * the Locatieserver by their `nummeraanduiding` id.
  *
  * @returns The joined number, or undefined when the publisher states no `addressNumber`.
@@ -240,8 +240,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 				for await (const row of streamInspireRows<ReferencedValue>({
 					chunks: documentChunks(documentPath),
 					componentElements: COMPONENT_TYPES,
-					// One string per feature rather than its subtree, which holds 300,318 strings
-					// instead of 300,318 trees.
+					// One string per feature rather than its subtree.
 					index: referencedValue,
 					compose: (address, referenced, final) => composeRow(address, referenced, { final }),
 					limit: opts.limit === undefined ? undefined : opts.limit - emitted,

@@ -20,12 +20,12 @@
  * and/or download individual LEIs and/or related LE-RD and/or the entire set or a subset of LEIs",
  * which is the golden copy. GLEIF's open-data page states the same: "The data on GLEIF's website is
  * provided under a Creative Commons (CC0) license." The same terms ask a user not to create the
- * impression that derived data or services are provided or endorsed by GLEIF, which is why
+ * impression that derived data or services are provided or endorsed by GLEIF. That is why
  * {@linkcode GLEIF_ATTRIBUTION} credits the source rather than the corpus.
  *
  * ## Organization addresses only
  *
- * The register carries legal entities, and three of its fields identify an entity that is a natural
+ * The register holds legal entities, and three of its fields identify an entity that is a natural
  * person trading in their own name. {@linkcode readGLEIFEntity} refuses each:
  *
  * 1. `Entity.EntityCategory` = `SOLE_PROPRIETOR`.
@@ -67,7 +67,7 @@
  * The value the split leaves as `street` must then read as a street. It is refused where it still holds
  * a comma (`CAVES CORPORATE CENTRE, BUILDING 2` under the Bahamas' number-last layout), where it holds
  * a building or in-building word (`1302 DOMINION CENTRE`, `903 PLATINUM TOWER`, `APTO 2`), and where it
- * is a generic word alone (`910 Street`). Each of those numbers a room, an office or a building, and
+ * is only a generic word (`910 Street`). Each of those numbers a room, an office or a building, and
  * labeling it `house_number` beside a building name labeled `street` would teach the wrong boundary.
  *
  * `AdditionalAddressLine.1`–`3` mix building names, districts, floors and second street lines, and
@@ -77,7 +77,7 @@
  * ## Region
  *
  * `Region` is an ISO 3166-2 code such as `SK-KI`, which is not how an address writes the region.
- * It reaches a row only where the code's suffix is the written form, which
+ * It reaches a row only where the code's suffix is the written form.
  * `matchSubdivisionIn` answers for the United States, Canada and Australia. A code whose
  * country prefix differs from `Country` refuses the address as contradicting it.
  *
@@ -145,7 +145,7 @@ export const GLEIF_LICENSE = "CC0-1.0"
 export const GLEIF_LICENSE_URL = "https://www.gleif.org/en/meta/lei-data-terms-of-use"
 
 /**
- * The credit a model card carries.
+ * The credit a model card includes.
  *
  * CC0 requires none.
  * The terms ask that no derived product imply GLEIF's endorsement, so the credit
@@ -278,7 +278,7 @@ export const GLEIFRefusal = {
 	 */
 	StreetHoldsPremiseWord: "street-holds-premise-word",
 	/**
-	 * The street the split left is a generic word alone, as Qatar's `910 Street` leaves `Street`.
+	 * The street the split left is only a generic word, as Qatar's `910 Street` leaves `Street`.
 	 */
 	StreetNameGenericOnly: "street-name-generic-only",
 	/**
@@ -290,7 +290,7 @@ export const GLEIFRefusal = {
 	 */
 	Unrenderable: "unrenderable",
 	/**
-	 * The rendered line carries fewer than two address components besides the venue.
+	 * The rendered line holds fewer than two address components besides the venue.
 	 */
 	ComponentsTooFew: "components-too-few",
 } as const
@@ -301,7 +301,7 @@ export const GLEIFRefusal = {
 export type GLEIFRefusal = (typeof GLEIFRefusal)[keyof typeof GLEIFRefusal]
 
 /**
- * The two address blocks a record carries for its entity.
+ * The two address blocks a record holds for its entity.
  */
 export const GLEIFAddressBlock = {
 	Legal: "LegalAddress",
@@ -324,7 +324,7 @@ export type GLEIFRecord = Readonly<Record<string, string | undefined>>
 export type GLEIFAddressReading = { readonly admitted: CanonicalRow } | { readonly refused: GLEIFRefusal }
 
 /**
- * The address fields a block carries, in the order the CDF lists them.
+ * The address fields a block holds, in the order the CDF lists them.
  */
 const ADDRESS_FIELDS = [
 	"FirstAddressLine",
@@ -365,7 +365,7 @@ const CARE_OF = /^(?:c\s*\/\s*o\b|c\/-|care\s+of\b|attn\b|attention\b)/iu
 const PO_BOX_LINE = /^(?:p\.?\s?o\.?\s?box|post\s+office\s+box)\s*(?:no\.?\s*)?\d+[a-z]?$/iu
 
 /**
- * An English ordinal written in digits, which is part of a street's name rather than a premise number.
+ * An English ordinal written in digits, such as `5TH`, is part of the street name.
  */
 const ORDINAL_TOKEN = /\b\d+(?:st|nd|rd|th)\b/giu
 
@@ -394,12 +394,12 @@ const PREMISE_WORD =
 	/\b(?:building|bldg|tower|centre|center|plaza|house|complex|chambers|palazzo|edificio|torre|floor|level|suite|room|office|unit|apto|apt|piso|block|lot|plot|box|km)\b/iu
 
 /**
- * A house number of zeros alone.
+ * A house number that holds only zeros.
  */
 const ZERO_NUMBER = /^0+$/u
 
 /**
- * A street generic standing alone, as a number-first split of `910 Street` leaves it.
+ * A street name that is only a generic word, as a number-first split of `910 Street` leaves it.
  */
 const GENERIC_ONLY = /^(?:street|road|avenue|st|rd|ave)\.?$/iu
 
@@ -643,7 +643,7 @@ function placeStreetNumber(
 
 	// A number-first line may close the number with a comma, as Luxembourg's
 	// `49, AVENUE JOHN F. KENNEDY` does.
-	// The layout renders its own separator, so the comma is not carried into a component.
+	// The layout renders its own separator. The comma stays out of the component.
 	const split = leads ? splitStreetLine(line.replace(LEADING_NUMBER_COMMA, "$1 ")) : splitTrailingStreetLine(line)
 
 	if (!split?.house_number || ZERO_NUMBER.test(split.house_number) || unplacedDigit(split.street)) {

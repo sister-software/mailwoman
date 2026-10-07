@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Proves how the Catastro harvest reads a two-level ATOM service, which entries it leaves to
- *   another publisher, and what it does where a feed states less than it needs.
+ *   Proves how the Catastro harvest reads a two-level ATOM service. It states which entries
+ *   belong to another publisher, and what it does where a feed states less than it needs.
  *
- *   The bodies are the shapes `catastro.hacienda.gob.es` served on 2026-10-03, reduced to the
- *   elements this harvest reads. The province feed is built as ISO-8859-1 bytes, which is what that
- *   level declares and writes, because decoding it as UTF-8 is the failure that turns A Coruña's
- *   archive URL into an html error page.
+ *   The bodies are the shapes `catastro.hacienda.gob.es` serves, reduced to the elements this
+ *   harvest reads. The province feed holds ISO-8859-1 bytes because that level declares and
+ *   writes them. A UTF-8 reading turns A Coruña's archive URL into an html error page.
  *
  *   `./catastro.integration.test.ts` reads the live service. This suite stubs the transport and
  *   runs the real `APIClient` over it, so the requests go through the same adapter and error
@@ -55,7 +54,7 @@ function officeXML(code: string, name: string, updated = PUBLICATION): string {
 }
 
 /**
- * The entry of a foral cadastre, which publishes through this feed under its own terms.
+ * The entry of a foral cadastre. It publishes through this feed under its own terms.
  */
 const BIZKAIA_XML =
 	`<entry><title>Provincial Council of Bizkaia</title>` +
@@ -63,7 +62,7 @@ const BIZKAIA_XML =
 	`<id>https://web.bizkaia.eus/inspire/AD/ES.BFA.AD.atom.xml</id><updated>${PUBLICATION}</updated></entry>`
 
 /**
- * The national service document, which declares UTF-8 and writes it.
+ * The national service document. It declares UTF-8 and writes it.
  */
 function serviceXML(entries = officeXML("55", "Ceuta") + officeXML("15", "Coruña") + BIZKAIA_XML): string {
 	return (
@@ -92,7 +91,7 @@ function municipalityXML(province: string, code: string, name: string, updated =
 }
 
 /**
- * A province feed's bytes, which declare ISO-8859-1.
+ * A province feed's bytes. They declare ISO-8859-1.
  *
  * Encoded with `latin1` rather than with the default UTF-8, because the one byte
  * that distinguishes the two encodings is what the harvest has to read correctly:
@@ -203,8 +202,8 @@ describe("readESCatastroServiceFeed", () => {
 		const entries = officeXML("02", "Albacete") + officeXML("03", "Alicante") + BIZKAIA_XML
 		const feed = await readAtomFeed(feedChunks(serviceXML(entries)))
 
-		// The publisher adds and merges offices, so the invariant is that the selection holds
-		// exactly the entries whose title matches an office, which is every entry here but one.
+		// The publisher adds and merges offices, so the selection must hold exactly the entries
+		// whose title matches an office. Every entry here matches but one.
 		expect(readESCatastroServiceFeed(feed)).toHaveLength(feed.entries.length - 1)
 	})
 
@@ -336,7 +335,7 @@ describe("harvestESCatastro", () => {
 
 		expect(summary).toMatchObject({ fetched: 2, skipped: 0, failed: 0 })
 
-		// The accented archive is requested percent-encoded, which is the URL that serves it.
+		// The accented archive is requested percent-encoded. That is the URL that serves it.
 		expect(client.calls).toEqual([
 			ES_CATASTRO_SERVICE_FEED_URL,
 			CEUTA_FEED_URL,

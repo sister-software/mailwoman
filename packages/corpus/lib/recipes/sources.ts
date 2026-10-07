@@ -259,7 +259,7 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"gnaf",
 	"osm",
 	// One id per country for the 2026-10-02 Geofabrik extracts, written by `corpus run osm --source-name`.
-	// A country's OSM rows then carry their own weight, so admitting a country,
+	// A country's OSM rows then hold their own weight, so admitting a country,
 	// admitting its OSM rows and sampling them stay three settings.
 	// The September PK, VN and BD rows keep `osm`.
 	"osm-ru",

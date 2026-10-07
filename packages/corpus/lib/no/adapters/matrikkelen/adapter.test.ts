@@ -29,8 +29,8 @@ describe("matrikkelen adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// Nine records: one `matrikkeladresse` carries no street and the Øvregaten row carries
-		// no house number, which is kept because a street with a postcode still aligns.
+		// Nine records: one `matrikkeladresse` has no street and the Øvregaten row has no house
+		// number. That row is kept because a street with a postcode still aligns.
 		expect(manifest.yielded).toBe(8)
 
 		const rows = await readCanonicalRows(scratch.path, MATRIKKELEN_ADAPTER_ID)

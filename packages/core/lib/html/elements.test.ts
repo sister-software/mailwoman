@@ -11,8 +11,8 @@ import { childElement, childElements, elementAtPath, streamMarkupElements, textA
 /**
  * Two INSPIRE address features, trimmed from the shape Czechia publishes.
  *
- * The second one repeats `ad:designator` with two different types and carries a nil element,
- * which are the two things a text-only reader cannot tell apart.
+ * The second one repeats `ad:designator` with two different types and holds a nil element.
+ * Those are the two cases a text-only reader cannot tell apart.
  */
 const GML = `<?xml version="1.0" encoding="UTF-8"?>
 <base:SpatialDataSet xmlns:base="http://inspire.ec.europa.eu/schemas/base/3.3" xmlns:ad="http://inspire.ec.europa.eu/schemas/ad/4.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -54,7 +54,7 @@ async function* once(text: string): AsyncIterable<string> {
 }
 
 /**
- * The same document delivered one byte at a time, which splits every multi-byte character.
+ * The same document delivered one byte at a time, so every multi-byte character splits.
  */
 async function* perByte(text: string): AsyncIterable<Uint8Array> {
 	const bytes = new TextEncoder().encode(text)
@@ -179,7 +179,7 @@ describe("streamMarkupElements", () => {
 
 	it("decodes a chunk larger than one string, so a buffered document still reads", async () => {
 		// One chunk over the 8 MiB decode bound, with a multi-byte character on the boundary
-		// so a per-slice decoder without carried state would corrupt it.
+		// so a per-slice decoder without retained state would corrupt it.
 		const filler = "x".repeat(8 * 1024 * 1024)
 		const document = `<r>${filler}<a>Mäenpääntie 16</a>${filler}</r>`
 

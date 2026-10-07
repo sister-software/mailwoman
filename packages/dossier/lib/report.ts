@@ -15,7 +15,7 @@
  *   admitted record's publisher, title, URL and three dates.
  *
  *   Every section states what the admitted records support and lists each unresolved question with the
- *   record that would resolve it. Wording rules: an unresolved total or position is written as unresolved
+ *   record that would resolve it. An unresolved total or position is written as unresolved
  *   with its conflicting values. A synthetic position is labeled synthetic. A source-present empty reading
  *   is written as the source having looked, with absence unknown. In the serviceability section every
  *   statement line opens with its kind, so a fact, a deduction, an estimate, a hypothesis and a decision

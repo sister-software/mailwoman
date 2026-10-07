@@ -12,9 +12,9 @@
  * numeric character reference, so the file reads as ASCII while denoting the same characters, and
  * trailing whitespace at the end of a line is gone. Neither changes what the parser sees.
  *
- * The six cover what the member varies. Two addresses on `CL SANTIAGO APOSTOL` carry a plain number
- * and a number with a letter. Three carry the `S-N` designator. Two of those also carry the
- * truncated postal-descriptor reference `#ES.SDGC.PD.55.101.`, which is 70 of the member's 8,126.
+ * The six cover what the member varies. Two addresses on `CL SANTIAGO APOSTOL` have a plain number
+ * and a number with a letter. Three have the `S-N` designator. Two of those also have the
+ * truncated postal-descriptor reference `#ES.SDGC.PD.55.101.`, 70 of the member's 8,126.
  * One stands on the street whose name holds the accented byte.
  *
  * The declaration still reads `ISO-8859-1`, as the publisher's does, and
@@ -22,7 +22,7 @@
  * scratch directory so the decode runs on real high bytes rather than on entity references.
  *
  * Counts quoted against the whole member come from reading
- * `A.ES.SDGC.AD.55101.zip`, 354,647 bytes, whose one member is 11,861,975 bytes: 8,126 addresses,
+ * `A.ES.SDGC.AD.55101.zip`, 354,647 bytes. Its one member is 11,861,975 bytes: 8,126 addresses,
  * 505 thoroughfare names, 5 postal descriptors, one administrative unit, 856 `S-N` designators and
  * 70 truncated postal-descriptor references.
  */
@@ -98,7 +98,7 @@ describe("es-catastro adapter against the fixture member", () => {
 
 		// The thoroughfare feature's text is ` CL SANTIAGO APOSTOL`, leading space included,
 		// and the Cadastre's `ldt` opens `CL SANTIAGO APOSTOL`.
-		// Expanding `CL` to `Calle` would state something the publisher does not.
+		// An expansion of `CL` to `Calle` would state something the publisher does not.
 		expect(rows.every((row) => /^[A-Z]{2} /u.test(row.components.street ?? ""))).toBe(true)
 	})
 
@@ -108,7 +108,7 @@ describe("es-catastro adapter against the fixture member", () => {
 
 		// 856 of the member's 8,126 designators read `S-N`, and the Cadastre's own
 		// `ldt` renders no number for them.
-		// Writing `S-N` would put the token in the component a parser reads as digits.
+		// An `S-N` value would put the token in the component a parser reads as digits.
 		expect(numberless).toHaveLength(3)
 		expect(numberless.every((row) => row.source_id.includes(".S-N."))).toBe(true)
 		expect(rows.some((row) => row.components.house_number === "S-N")).toBe(false)

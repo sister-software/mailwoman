@@ -9,7 +9,7 @@
  * Główny Urząd Geodezji i Kartografii publishes the Państwowy Rejestr Granic through MapServer at
  * {@linkcode PL_EMUIA_WFS}. Its dataset record states one condition of use in `otherConstraints`,
  * `Brak warunków dostępu i użytkowania` — no conditions for access and use — which the
- * address-source register elected. No license instrument is named, so the publisher's own words are
+ * address-source register elected. No license instrument is recorded, so the publisher's own words are
  * the label, and that statement grants the reproduction a paged harvest performs.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.
@@ -35,7 +35,7 @@
  *    harvest ends on the first page that returns no features. The size is read from the service when
  *    a caller asks for it, by `countWFSFeaturesByPaging`, and no count is written into this file.
  * 5. The service honors a sort. `ImplementsSorting` is `TRUE`, `sortBy=ms:id` answers HTTP 200 and
- *    `sortBy=ms:id D` returns the register's last rows first, which proves the parameter is applied.
+ *    `sortBy=ms:id D` returns the register's last rows first. That proves the parameter is applied.
  *    `PagingIsTransactionSafe` is `FALSE`, which is the service stating that a paged sequence may
  *    shift under edits made while it is being read. The sort bounds that shift to the rows whose
  *    `ms:id` changed rather than leaving the whole sequence unordered.
@@ -45,7 +45,7 @@
  * fails reports the first gap rather than the extent. The figure is therefore reported with the date
  * it was taken, never stored as a constant: the register recorded 8,625,921 on 2026-10-01, and on
  * 2026-10-02 `startIndex=8626950` returned one feature while `startIndex=8626951` returned none, so
- * the service then held 8,626,951. That is 1,030 more than the day before, which is ordinary
+ * the service then held 8,626,951. Such growth is ordinary
  * business for a municipal address register.
  *
  * At 1,000 features per page and 1,607,180 bytes per page, a full harvest at that size is 8,627
@@ -88,7 +88,7 @@ export const PL_EMUIA_WFS = "https://mapy.geoportal.gov.pl/wss/service/INSPIRE/A
 export const PL_EMUIA_TYPE_NAME = "ms:AD.Address"
 
 /**
- * The output format the harvest asks for, which is the first the service advertises.
+ * The output format the harvest asks for. The service advertises it first.
  */
 export const PL_EMUIA_OUTPUT_FORMAT = "application/gml+xml; version=3.2"
 
@@ -280,8 +280,8 @@ export async function harvestEMUiAPL(
 			sortBy: PL_EMUIA_SORT_BY,
 		},
 		license: LICENSE,
-		// The elected statement names no attribution clause.
-		// Crediting GUGiK stays good practice.
+		// The elected statement states no attribution clause.
+		// GUGiK credit stays good practice.
 		attribution: "",
 		featureCount,
 		pageSize: Math.min(options.pageSize ?? PL_EMUIA_PAGE_SIZE, PL_EMUIA_PAGE_SIZE),

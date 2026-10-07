@@ -15,25 +15,25 @@
  * The payload is the Polish register's own schema rather than the harmonized INSPIRE model: a member's
  * element names are the register's columns and every address value is inline, so there is no
  * `ad:ThoroughfareName` to join to and no `xlink:href` to resolve. Read with that same function over
- * 500 members across ten windows spread through the service, a member carries 21 children and never a
- * twenty-second: `gml:boundedBy`, `ms:msGeometry` and nineteen columns, which are `ms:id`,
+ * 500 members across ten windows spread through the service, a member holds 21 children and never a
+ * twenty-second. The children are `gml:boundedBy`, `ms:msGeometry` and these nineteen columns: `ms:id`,
  * `ms:gml_id`, `ms:lokalnyid`, `ms:jednostkaadmnistracyjna`, `ms:miejscowosc`,
  * `ms:miejscowosc_lower`, `ms:czescmiejscowosci`, `ms:ulica`, `ms:ulica_pol`, `ms:ulica_skr`,
  * `ms:numer`, `ms:kod`, `ms:teryt`, `ms:simc`, `ms:ulic`, `ms:status`, `ms:data_od`, `ms:wazny_od`
  * and `ms:adres`. The adapter reads `ulica` as the street, `numer` as the house number, `kod` as the
  * postcode and `miejscowosc` as the locality, with `czescmiejscowosci` as the part of the locality
- * where the publisher populates it. Every column is written on every member, and three carry a value
+ * where the publisher populates it. Every column is written on every member, and three hold a value
  * on every one of the 500: `numer`, `kod` and `miejscowosc`. Two are written and populated on none:
  * `status` and `czescmiejscowosci`.
  *
  * A row with no street is the ordinary rural case rather than a defect. Over those 500 members 299
- * carry a street and 201 leave `ms:ulica` written and empty, and the publisher's own `ms:adres` writes
+ * hold a street and 201 leave `ms:ulica` written and empty, and the publisher's own `ms:adres` writes
  * the streetless form as locality and number: `Księżyki 5`, `Jawor 19`. The adapter emits those rows
- * with a locality and a number and no street, which is the address Poland delivers to.
+ * with a locality and a number and no street. Poland delivers to that form.
  *
- * `ms:jednostkaadmnistracyjna` carries the administrative path as a PostgreSQL array literal,
+ * `ms:jednostkaadmnistracyjna` holds the administrative path as a PostgreSQL array literal,
  * `{Polska,łódzkie,"Piotrków Trybunalski","Piotrków Trybunalski"}`, whose second element is the
- * voivodeship. It is left unread: a Polish postal address does not carry the voivodeship, the codex
+ * voivodeship. It is left unread: a Polish postal address does not include the voivodeship, the codex
  * layout for `PL` leaves a `region` component unplaced, and parsing a quoted array literal to reach a
  * value the layout leaves unplaced would cost a parse and reach no rendered component.
  *
@@ -46,7 +46,7 @@
  * GUGiK's dataset record states one condition of use, in `otherConstraints`: `Brak warunków dostępu i
  * użytkowania`, no conditions for access and use. The address-source register elected that and names
  * no license instrument, so no SPDX identifier exists and the publisher's own words are the label the
- * adapter stamps on every row. Crediting GUGiK stays good practice and the statement requires it
+ * adapter stamps on every row. GUGiK credit remains good practice and the statement requires it
  * nowhere.
  *
  * The adapter honors `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `PL`.
@@ -99,8 +99,8 @@ const ADDRESS_ELEMENT = "ms:AD.Address"
  *
  * `textAtPath` answers an empty string for an element the publisher wrote
  * and left blank and `undefined` for one it omitted.
- * Both are an absent value for this adapter's purposes, and all 500 members measured carried
- * every one of the nineteen columns, so the distinction carries no information on this service.
+ * Both are an absent value for this adapter's purposes, and all 500 members measured held
+ * every one of the nineteen columns, so the distinction has no effect on this service.
  */
 function column(feature: MarkupElement, name: string): string {
 	return (textAtPath(feature, `ms:${name}`) ?? "").trim()
@@ -170,8 +170,8 @@ export function createEMUiAAdapter(): CorpusAdapter {
 
 					const { raw, components: aligned } = rendered
 
-					// `ms:gml_id` names the upstream municipal register and its record, which is
-					// the identifier worth keeping; `ms:id` is this service's own row number.
+					// Keep `ms:gml_id`: it gives the upstream municipal register and its record.
+					// `ms:id` is this service's own row number.
 					const seed = column(feature, "gml_id") || column(feature, "id")
 
 					const sourceID = seed ? `${EMUIA_ADAPTER_ID}-${seed}` : stableSourceID(EMUIA_ADAPTER_ID, aligned)

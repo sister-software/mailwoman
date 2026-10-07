@@ -15,11 +15,11 @@
  * Four properties of this service decide the harvest's shape.
  *
  * 1. **The archive link is the `enclosure` link, and the `alternate` link is not it.** Each entry
- *    carries six links, three of which address the same archive under `enclosure`, `section` and
+ *    lists six links, three of which address the same archive under `enclosure`, `section` and
  *    `alternate`. The entry's *first* `alternate` link is the relative href
  *    `Addresses_DatasetATOM_Navarra.xml`, which is the dataset feed, so a reader taking the first
  *    `alternate` link downloads an ATOM document in place of the archive. This harvest takes
- *    `enclosure` and refuses an entry that carries none.
+ *    `enclosure` and refuses an entry that lists none.
  * 2. **An entry leaves its own area unstated.** Every one of the 272 entries is titled
  *    `Address Navarra` and every `<id>` is empty, so the archive's own file name,
  *    `AD_Navarra_<n>.gml.zip`, is the only statement of which partition an entry offers. The
@@ -61,7 +61,7 @@ import { loadCollectionFiles, writeManifest } from "#tools/fetch/download"
 import { downloadZipArchive } from "#tools/fetch/zip-archive"
 
 /**
- * The ATOM service document, which lists one zipped GML partition per entry.
+ * The ATOM service document. It lists one zipped GML partition per entry.
  */
 export const ES_NAVARRA_SERVICE_FEED_URL =
 	"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml"
@@ -84,7 +84,7 @@ export const ES_NAVARRA_ATTRIBUTION = "Gobierno de Navarra"
 export const ES_NAVARRA_REQUEST_INTERVAL_MS = 250
 
 /**
- * The directory the harvest writes under, which is the adapter's `inputPath`.
+ * The directory the harvest writes under. The adapter reads this directory as its `inputPath`.
  */
 const SLUG = ES_NAVARRA_ADAPTER_ID
 
@@ -113,7 +113,7 @@ export interface ESNavarraPartition {
 	 */
 	partition: string
 	/**
-	 * The entry's title, which reads `Address Navarra` on every entry.
+	 * The entry's title. Every entry states `Address Navarra`.
 	 */
 	title: string
 	/**
@@ -122,8 +122,8 @@ export interface ESNavarraPartition {
 	updated: string
 	archiveURL: string
 	/**
-	 * The file name the archive is written under, which is the name the publisher gave it
-	 * and the name the adapter globs.
+	 * The file name the archive is written under. The publisher states it and the
+	 * adapter globs it.
 	 */
 	filename: string
 }
@@ -131,9 +131,9 @@ export interface ESNavarraPartition {
 /**
  * The partitions the service document lists.
  *
- * @throws When the document holds no entry, when an entry carries no `enclosure` link, when a
- * linked archive is not named `AD_Navarra_<n>.gml.zip`, or when two entries name one archive.
- * Each of those would otherwise write zero archives while reporting a completed run.
+ * @throws When the document holds no entry, when an entry lists no `enclosure` link, when a
+ * linked archive's file name is not `AD_Navarra_<n>.gml.zip`, or when two entries point to one
+ * archive. Each of those would otherwise write zero archives while reporting a completed run.
  */
 export function readESNavarraServiceFeed(feed: AtomFeed): readonly ESNavarraPartition[] {
 	if (!feed.entries.length) {
@@ -199,7 +199,7 @@ export interface ESNavarraArchiveEntry extends SourceManifest {
 	/**
 	 * The `<updated>` the service document stated when this archive was fetched.
 	 *
-	 * A later run that reads the same value leaves the file alone.
+	 * A later run that reads the same value skips the archive.
 	 * The publisher moves it when it publishes a new edition.
 	 */
 	feed_updated: string
@@ -224,11 +224,11 @@ export interface ESNavarraHarvestManifest extends SourceCollectionManifest {
 
 export interface HarvestESNavarraOptions {
 	/**
-	 * Where the archives and the manifest are written, which is the adapter's `inputPath`.
+	 * Where the archives and the manifest are written. The adapter reads it as its `inputPath`.
 	 */
 	outputDir: PathBuilderLike
 	/**
-	 * Harvest only these partition numbers, for a probe or for a repair of named partitions.
+	 * Harvest only these partition numbers, for a probe or to repair specific partitions.
 	 *
 	 * A number the service document does not list is reported as a failure rather than ignored.
 	 */
@@ -240,7 +240,8 @@ export interface HarvestESNavarraOptions {
 	/**
 	 * Re-read the sha256 of every archive already on disk instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size, which is one `stat`.
+	 * By default the harvest compares the recorded byte count against the file's size. That
+	 * comparison costs one `stat`.
 	 */
 	verifyDigests?: boolean
 	signal?: AbortSignal
@@ -251,8 +252,8 @@ export interface HarvestESNavarraOptions {
  * Whether the archive recorded for one partition is still the one the feed describes.
  *
  * A skip requires the feed to state an `<updated>` value.
- * Where it states none, both sides read an empty string and an equality test would hold,
- * which would keep an archive of unknown age for as long as the feed stayed silent.
+ * Where it states none, both sides read an empty string and an equality test would hold.
+ * That test would keep an archive of unknown age for as long as the feed stayed silent.
  */
 async function isCurrent(
 	recorded: ESNavarraArchiveEntry | undefined,
@@ -266,14 +267,14 @@ async function isCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata, which is why it is opt-in.
+	// The digest check reads the whole file rather than its metadata. The caller opts in.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
 }
 
 /**
- * The partitions this run considers, and the numbers a caller named that the feed does not list.
+ * The partitions this run considers, and the numbers a caller supplied that the feed does not list.
  *
  * A number the caller asked for and the service document does not list is returned
  * rather than dropped, because a partition that is not published is a different
@@ -317,7 +318,7 @@ function selectPartitions(
  * the pacing. {@linkcode fetchESNavarra} is the registry entry point and supplies both.
  *
  * @returns What was fetched, what the feed states is already recorded, and which partitions failed.
- * @throws When the service document lists no partition, which would otherwise answer
+ * @throws When the service document lists no partition. The call would otherwise return
  * `{fetched: 0, skipped: 0, failed: 0}` and read to a caller as a completed fetch of an empty publisher.
  */
 export async function harvestESNavarra(
@@ -357,7 +358,7 @@ export async function harvestESNavarra(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, ESNavarraArchiveEntry>()
 
-	// An entry for a partition this run does not consider is carried through,
+	// An entry for a partition this run does not consider is kept,
 	// so a bounded run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESNavarraArchiveEntry)

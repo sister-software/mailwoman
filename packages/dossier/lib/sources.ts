@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A source record is the document a claim cites. It carries the publisher, a title, and the three time
+ *   A source record is the document a claim cites. It records the publisher, a title, and the three time
  *   concepts, so a dossier can say when a fact was observed, when the record became available, and when
  *   this application read it.
  */

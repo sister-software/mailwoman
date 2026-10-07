@@ -17,43 +17,40 @@
  * every name column bare.
  *
  * A row's country comes from `municipality_number` rather than from the caller. Åland is part of
- * Finland and its sixteen municipalities carry Finnish municipality numbers, so one national file
- * holds both jurisdictions and {@linkcode ALAND_MUNICIPALITIES} is what separates them.
+ * Finland and its sixteen municipalities have Finnish municipality numbers, so one national file
+ * holds both jurisdictions and {@linkcode ALAND_MUNICIPALITIES} separates them.
  *
  * The street and the house number are read from the publisher's own part columns rather than from
  * its inline address text.
  * `address_name_fin` is the whole of `address_fin` or a space-delimited prefix of it, and the four
  * number-part columns reproduce the publisher's inline number.
- * Measured over the first 292,293 rows of the 2026-10-02 edition: 278,262 rows populate both
- * columns, 0 of them place `address_name_fin` anywhere but at the head of `address_fin`, and the
- * composed number equals the inline remainder byte for byte on all 265,830 numbered rows.
- * No row publishes inline address text with both name columns empty,
- * so reading the name columns loses no address.
+ * No row publishes inline address text with both name columns empty, so the part columns lose no
+ * address.
  *
- * `address_number` is not a house number. It is a 1-based ordinal over the addresses sharing one
- * `building_key`, which is how a corner building's several frontages are numbered, and it holds nine
- * distinct values across the file. The adapter ignores it.
+ * `address_number` is not a house number. It is a 1-based ordinal over the addresses that share one
+ * `building_key`. That is how a corner building's several frontages are numbered. The adapter
+ * ignores it.
  *
- * The file is bilingual, and which column carries which language depends on the municipality. On
+ * The file is bilingual, and which column holds which language depends on the municipality. On
  * mainland Finland `address_name_fin` is the Finnish name and `address_name_swe` the Swedish one. On
  * Åland the `*_fin` columns, where populated at all, hold the **Swedish** name: `address_fin` reads
  * `Skogshyddsvägen 11`.
  * So the adapter prefers `*_swe` on Åland and `*_fin` on the mainland, and emits one row per
  * published record from the preferred language's columns.
- * `locale` names the language of the name it emitted rather than the language of the column that
- * name came from, which gives three values.
- * `fi-FI` is a mainland record named in `address_name_fin`.
- * `sv-FI` is a mainland record that populates `address_name_swe` alone, which is the form a
+ * `locale` states the language of the name it emitted rather than the language of the column that
+ * name came from. That gives three values.
+ * `fi-FI` is a mainland record whose name came from `address_name_fin`.
+ * `sv-FI` is a mainland record that populates `address_name_swe` only. That is the form a
  * Swedish-speaking municipality publishes.
  * `sv-AX` is every Åland record, because the Swedish columns are the populated ones there and the
  * `*_fin` columns hold the Swedish name where they are populated at all.
  * A mainland record's Swedish name, where the record publishes both, is not emitted as a second
- * row: a record is one premise, and `CanonicalRow` carries one written surface.
+ * row: a record is one premise, and `CanonicalRow` holds one written surface.
  *
  * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0 for its open data
  * and the register's two elected decisions for this file record `CC-BY-4.0` in their `spdx` field, so
  * the adapter records that license on every row. SYKE states the attribution it wants as
- * `Lähde: Syke Ryhti`, and the model card must carry it.
+ * `Lähde: Syke Ryhti`, and the model card must state it.
  *
  * The adapter streams with `CSVSpliterator.fromAsync`, so the 3.8M-row file never sits in memory. It
  * honors `opts.limit`, `opts.signal` and `opts.country`.
@@ -79,7 +76,6 @@ export const RYHTI_ADAPTER_ID = "ryhti"
  * The sixteen `municipality_number` values of Åland's municipalities.
  *
  * Every other number in the file belongs to a mainland Finnish municipality.
- * The file holds 308 distinct values, and these sixteen cover 32,518 of its 3,862,609 rows.
  *
  * The column is a zero-padded three-digit string, so a reader compares the padded form.
  */
@@ -154,8 +150,8 @@ export function countryOfFinnishMunicipality(municipalityNumber: string): string
  * as `184-183b` across a second pair of the same two columns.
  * The second pair is appended after a hyphen when either of its halves is populated.
  *
- * @returns The composed number, or an empty string for a row with no number at all,
- * which a caller treats as a named place rather than assigning it a number.
+ * @returns The composed number, or an empty string for a row with no number at all.
+ * A caller treats that empty string as a place name rather than a number.
  */
 export function composeRyhtiHouseNumber(record: Partial<RyhtiNumberParts>): string {
 	const first = composeHouseNumber(
@@ -186,7 +182,7 @@ interface NamedSurface {
 }
 
 /**
- * The surface to emit for one record, or `undefined` for a record that names no street.
+ * The surface to emit for one record, or `undefined` for a record with no street.
  *
  * On Åland the Swedish columns are preferred, and the Finnish ones are read as Swedish.
  * That is the language they hold there.
@@ -195,7 +191,7 @@ interface NamedSurface {
  * The Swedish ones stand in where `address_name_fin` is empty.
  * That is the form a Swedish-speaking municipality publishes.
  *
- * A language whose name column is empty names no street.
+ * A language whose name column is empty has no street.
  * Seven mainland rows publish an `address_swe` of a bare number with an empty `address_name_swe`.
  * This refuses them rather than giving them an empty street.
  */
@@ -251,7 +247,7 @@ export function createRyhtiAdapter(): CorpusAdapter {
 
 					const country = countryOfFinnishMunicipality(record.municipality_number ?? "")
 
-					// A caller that named one jurisdiction gets that jurisdiction's rows,
+					// A caller that requested one jurisdiction gets that jurisdiction's rows,
 					// so the one national file can be read once per country.
 					if (opts.country && country !== opts.country) continue
 

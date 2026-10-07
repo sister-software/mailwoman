@@ -9,8 +9,8 @@
  *   `#pl/adapters/emuia/adapter`'s suite proves the adapter against a fixture of captured bytes.
  *   Neither proves that a harvest of the real service writes a document that adapter reads.
  *
- *   The test takes one 25-feature page, which leaves the document unclosed. That is the state a
- *   partial harvest is in, and the adapter reading it is the claim worth proving.
+ *   The test takes one 25-feature page, so the document stays unclosed. A partial harvest leaves it
+ *   that way, and the adapter reading the result is the claim worth proving.
  */
 
 import { APIClient } from "@mailwoman/core/api"

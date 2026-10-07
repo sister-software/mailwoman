@@ -131,7 +131,7 @@ def test_unknown_reduction_raises():
 
 def test_log_likelihood_finite_with_padding():
     # Regression guard: masked timesteps must not create NaNs.
-    # The masked case produces 0 * -inf in DP updates, which is where NaNs came from.
+    # The masked case produces 0 * -inf in DP updates. That is where the NaNs came from.
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
     torch.manual_seed(0)

@@ -408,7 +408,7 @@ async function runLiteralRepair(ref: string, dryRun: boolean, io: DispatchIO): P
 type MoveFile = ModuleMove[] | { moves: ModuleMove[]; manifests?: Array<{ file: string; from: string }> }
 
 /**
- * `mwops health move` — move modules named on the command line or in a JSON file of `{from, to}`
+ * `mwops health move` — move the modules listed on the command line or in a JSON file of `{from, to}`
  * pairs, rewriting every specifier, manifest target and path literal the move invalidates.
  *
  * The plan is proven before anything is written, as with `health fix`.

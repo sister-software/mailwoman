@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file The model and tokenizer a model-conditional test suite runs against.
  *
- *   `MAILWOMAN_TEST_ONNX_MODEL` names a model to run against the tokenizer fixture. Without it, the
- *   suites use the packaged en-US weights, which `mwops release copy-weights` materializes in CI and
- *   `link-dev-weights.ts` links on a developer host. A checkout with neither answers `null`, and a
+ *   `MAILWOMAN_TEST_ONNX_MODEL` overrides the model to run against the tokenizer fixture. Without it,
+ *   suites use the packaged en-US weights. `mwops release copy-weights` materializes those in CI and
+ *   `link-dev-weights.ts` links them on a developer host. A checkout with neither answers `null`, and a
  *   suite that reads `null` skips rather than asserting on a model it does not have.
  */
 
@@ -26,7 +26,7 @@ export const FIXTURE_TOKENIZER_PATH = workspacePath("neural", "test", "fixtures"
  *
  * A load takes a few seconds on an idle host and tens of seconds on the lab host while a CI leg
  * or another session runs beside it, so the default 15 s budget times out the loading
- * test under load while every later test, which reads the loaded instance, passes.
+ * test under load while every later test passes, because it reads the loaded instance.
  */
 export const MODEL_LOAD_TEST_TIMEOUT_MS = 120_000
 
@@ -59,7 +59,7 @@ export async function testModelAssets(): Promise<TestModelAssets | null> {
 			return { modelPath: weights.modelPath, tokenizerPath: weights.tokenizerPath, source: "packaged" }
 		}
 	} catch {
-		// A lean checkout resolves no weights package, which is the `null` answer below.
+		// A lean checkout resolves no weights package. That is the `null` answer below.
 	}
 
 	return null

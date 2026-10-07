@@ -9,15 +9,14 @@
  * service: a predefined-dataset ATOM feed and a Web Feature Service. Most member states publish the
  * second, so a file download reaches only a minority of them.
  *
- * An `ad:Address` feature carries its point, its lifecycle dates and its locator. It does not carry
- * its street name, its postcode or its administrative units: those are separate feature types, and
- * the address references them through `component`. A complete address is therefore assembled from
- * several feature types rather than read from one.
+ * An `ad:Address` feature holds its point, its lifecycle dates and its locator. Its street name,
+ * postcode and administrative units are separate feature types that the address references through
+ * `component`. A complete address therefore comes from several feature types.
  *
  * Measured on Slovakia's service, one address holds four component references that resolve to three
- * `ad:AdminUnitName` features and one `ad:PostalDescriptor`. Resolving each reference with its own
- * request would cost roughly four requests per address, which is 6.8 million for that service's
- * 1,704,196 addresses. This module therefore pages each feature type in bulk and joins locally.
+ * `ad:AdminUnitName` features and one `ad:PostalDescriptor`. One request per reference would cost
+ * roughly four requests per address, 6.8 million for that service's 1,704,196 addresses. This module
+ * therefore pages each feature type in bulk and joins locally.
  *
  * A service's feature count is read with `readCheckedWFSFeatureCount` from `@mailwoman/core/api`,
  * which owns every WFS count this repository takes.
@@ -59,7 +58,7 @@ export type ADFeatureType = (typeof AD_FEATURE_TYPES)[number]
  * Poland publishes `ms:AD.Address`.
  *
  * A reader that compares the part after the colon against `Address` finds a type
- * on two services and none on the other two, which reads as a service publishing
+ * on two services and none on the other two. That reads as a service publishing
  * no addresses rather than as a naming difference.
  */
 export function adFeatureTypeOf(qualifiedName: string): ADFeatureType | null {
@@ -85,8 +84,8 @@ export interface WFSCapabilities {
 	/**
 	 * The advertised format this module would ask for, or `null` when the service offers no JSON.
 	 *
-	 * A service without one is readable through its GML, which this module leaves
-	 * to its caller rather than reporting as unreadable.
+	 * A service without one is readable through its GML. This module leaves that
+	 * to its caller rather than reporting it as unreadable.
 	 *
 	 * `application/json` is preferred over `application/geo+json` because a service
 	 * may advertise the second and reject it.
@@ -107,14 +106,14 @@ export interface WFSCapabilities {
 	 *
 	 * A service that does not cannot be paged, so a caller has to take the whole
 	 * type in one request or decline it.
-	 * Reading past the first page of such a service silently repeats page one.
+	 * A request past the first page of such a service silently repeats page one.
 	 */
 	supportsPaging: boolean
 	/**
 	 * The `CountDefault` the service advertises, or `null` where it advertises none.
 	 *
-	 * The largest page the service will serve, which is also the number its own
-	 * `numberMatched` reports when that number is a cap rather than a count.
+	 * The largest page the service will serve. Its own `numberMatched` reports that
+	 * number when the service caps the query rather than counting it.
 	 * Estonia advertises 1000000 and Poland 1000, measured 2026-10-02.
 	 */
 	countDefault: number | null
@@ -131,8 +130,8 @@ export interface WFSCapabilities {
 /**
  * A value a GeoServer JSON response uses for a voidable property that holds no value.
  *
- * INSPIRE marks many attributes voidable, which requires the property to be present
- * carrying either a value or a void with a reason.
+ * INSPIRE marks many attributes voidable. A voidable property must be present
+ * with either a value or a void with a reason.
  * GeoServer encodes that void as an object rather than as `null`, so `String(value)`
  * on one yields `[object Object]` and stores it as though it were data.
  */
@@ -215,7 +214,7 @@ export async function readWFSCapabilities(
 
 	// `application/json` is GeoServer's GeoJSON writer, and `application/geo+json` is
 	// the alias a service may advertise without implementing.
-	// The other JSON-ish formats carry a different envelope, so they are left out rather than tried.
+	// The other JSON-ish formats have a different envelope, so they are left out rather than tried.
 	const jsonFormats = ["application/json", "application/geo+json"].filter((format) => outputFormats.includes(format))
 
 	const countDefault = /<(?:\w+:)?Constraint\s+name="CountDefault"[\s\S]{0,240}?<(?:\w+:)?DefaultValue>\s*(\d+)\s*</iu
@@ -247,8 +246,8 @@ export interface FeaturePage<Feature> {
 	/**
 	 * The `timeStamp` the service dated the page with, or `null` where it stated none.
 	 *
-	 * The service's own clock rather than the caller's, which is what a manifest
-	 * records to date a page against the service that served it.
+	 * The service's own clock rather than the caller's. A manifest records it to
+	 * date a page against the service that served it.
 	 */
 	timeStamp: string | null
 }
@@ -283,8 +282,8 @@ export async function readFeaturePage(
 		/**
 		 * The property the service orders the results by, where it honors one.
 		 *
-		 * Paging without an ordering rests on the service returning the same features in
-		 * the same order for every request, which no WFS guarantees.
+		 * A caller that pages without an ordering assumes the service returns the same
+		 * features in the same order for every request. No WFS guarantees that.
 		 * Estonia honors `sortBy=gml_id` and Flanders answers HTTP 504 for its identifier,
 		 * so the parameter is the caller's to supply or leave out.
 		 */
@@ -362,19 +361,19 @@ const VOID_REASON_TEXT = new Set(["unpopulated", "unknown", "withheld"])
 const FLATTENED_COMPONENT = /^component\d*_xlink_href$/iu
 
 /**
- * Every `component` reference an address carries, as the service wrote them.
+ * Every `component` reference an address has, as the service wrote them.
  *
  * Two encodings appear across the services measured.
  * Slovakia and Flanders write a `component` array of objects carrying `@href`.
  *
  * Estonia writes one flat property per slot, `component1_xlink_href` through `component6_xlink_href`,
  * and fills an unused slot with the string `unpopulated` rather than with a void object.
- * Reading only the array reported 0 references for every Estonian address, where each carries four.
+ * A read of only the array reported 0 references for every Estonian address. Each address has four.
  *
  * A reference may leave the service: Estonia's first three slots address its Administrative
  * Units theme at `AU_haldusyksused` rather than its Addresses theme.
- * That is a reference this module reads and {@linkcode resolveComponents} reports as unjoined
- * against Addresses features, which is the honest answer rather than a dropped reference.
+ * That is a reference this module reads. {@linkcode resolveComponents} reports it as unjoined
+ * against Addresses features rather than dropping it.
  */
 export function componentReferences(feature: GeoJSONFeature): readonly string[] {
 	const properties = feature.properties ?? {}
@@ -402,8 +401,8 @@ export function componentReferences(feature: GeoJSONFeature): readonly string[] 
 /**
  * The key a component feature publishes for an address to reference it by.
  *
- * `identifier.value` is the INSPIRE external object identifier, which is what
- * Flanders writes on both sides of the join.
+ * `identifier.value` is the INSPIRE external object identifier. Flanders writes
+ * it on both sides of the join.
  * `gml_id` is the fallback for a service that publishes no identifier,
  * and a stored-query reference addresses that id.
  */

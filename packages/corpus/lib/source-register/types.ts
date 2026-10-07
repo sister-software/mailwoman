@@ -179,7 +179,7 @@ export const ResearchPass = {
 	 */
 	RightsReview: "2026-09-30-rights-review",
 	/**
-	 * The decoder-exposure survey, which recorded the authoritative address source of
+	 * The decoder-exposure survey recorded the authoritative address source of
 	 * each jurisdiction the exposure arc admits through OpenStreetMap.
 	 * It located each authority and did not read its terms.
 	 */
@@ -348,12 +348,12 @@ export interface ElectedLicense {
 	 *
 	 * A publisher may state different terms in its dataset metadata, its download service
 	 * and its website, and it may be offering the same material under more than
-	 * one license, which Creative Commons permits.
+	 * one license. Creative Commons permits that.
 	 * Where that happens, {@linkcode ElectedLicense.spdx} records the one a build filters on
 	 * and this records what the publisher actually said, so a later reviewer reads
 	 * the conflict rather than one reading presented as settled.
 	 *
-	 * Electing the strictest grant is an engineering policy for deciding what a released corpus may carry.
+	 * The engineering policy elects the strictest grant for what a released corpus may include.
 	 * It does not establish which grant governs, and `electedBecause` states
 	 * the substantive ground separately.
 	 */
@@ -498,16 +498,16 @@ export interface AddressSourceRecord {
 	sourceURL?: string
 	note?: string
 	/**
-	 * The role each of the source's address columns carries, keyed by that
+	 * The role of each source address column, keyed by that
 	 * column's path in the published record.
 	 *
 	 * A source is ineligible for ingest until at least one column has a role.
-	 * One role per source cannot describe a publication that carries two roles on one record:
+	 * One role per source cannot describe a publication that has two roles on one record:
 	 * AusTender's OCDS release gives a supplier address and a procuring-entity address on
 	 * every contracting process, and Taiwan's GCIS register gives a registered company address
 	 * and a tax-office business address in separate columns.
 	 *
-	 * A source whose every address carries one role records one entry keyed by the field that holds it.
+	 * A source whose every address has one role records one entry keyed by the field that holds it.
 	 */
 	addressRoles?: Readonly<Record<string, AddressRole>>
 	/**
@@ -529,7 +529,7 @@ export interface AddressSourceRecord {
 	/**
 	 * The id of the corpus adapter that emits this source's rows.
 	 *
-	 * A corpus row carries its adapter's id in `source` and its jurisdiction in `country`,
+	 * A corpus row has its adapter's id in `source` and its jurisdiction in `country`,
 	 * and the register scopes a source to one publisher in one jurisdiction,
 	 * so that pair addresses one record here.
 	 * One adapter can serve several records: the `ban` reader emits eleven jurisdictions
@@ -537,7 +537,7 @@ export interface AddressSourceRecord {
 	 *
 	 * A source that declares no adapter produces no rows, so a build sees zero rows
 	 * under it and has none to admit or refuse.
-	 * Declaring one is what lets `readSourceEligibility` answer for a row at all.
+	 * An adapter id is what lets `readSourceEligibility` answer for a row at all.
 	 */
 	adapterID?: string
 }

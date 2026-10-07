@@ -5,7 +5,7 @@
  *
  *   The canonical-form law against the live pipeline — the leg that actually geocodes.
  *
- *   This test belongs in the integration suite, which the `mailwoman-data` runner executes with
+ *   This test belongs in the integration suite. The `mailwoman-data` runner executes it with
  *   `MAILWOMAN_DATA_ROOT` set and weights materialized. The fast suite remains portable without those artifacts.
  *   This data-dependent suite uses the resolver-based `weightsPresent()` guard shared by integration tests.
  *   The guard asks the resolver for the model path the loader will open. It checks the actual resolution path.

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What each source says about a country's addressing convention, disagreements included.
+ * @file What each source states about a country's addressing convention, disagreements included.
  *
  *   #2323 asks the layouts to cite UPU S42. No layout in this package reads from S42 or from a postal operator's
  *   own description, so neither source contributes an observation yet, and the tests below record that rather
@@ -71,8 +71,8 @@ describe("conventionClaimForCountry", () => {
 	it("sets a dataset observation against the board for every board locale", () => {
 		// The rendering tables stay disjoint, so a hand-authored country appears in none of them
 		// and for a while no dataset statement could be read for the twelve locales that matter most.
-		// `HAND_AUTHORED_FORMAT_SKELETONS` holds their `fmt` skeleton for this comparison alone,
-		// so every board locale now carries both statements and a disagreement between them is visible.
+		// `HAND_AUTHORED_FORMAT_SKELETONS` holds their `fmt` skeleton for this comparison only,
+		// so every board locale holds both statements and any disagreement is visible.
 		const unmatched = Object.keys(ADDRESS_LAYOUTS).filter((code) => {
 			const claim = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!
 
@@ -122,7 +122,7 @@ describe("conventionClaimForCountry", () => {
 	it("reads a retrieved S42 template and marks the rest unread", () => {
 		// The stance separates three states a single boolean would merge.
 		// A template this repository has read can be set against the other sources.
-		// A template nobody has read is waiting.
+		// A template this repository has not read stays unread.
 		// A jurisdiction outside the inventory has no such document at all.
 		const codes = [...new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])]
 
@@ -170,7 +170,7 @@ describe("conventionClaimForCountry", () => {
 
 	it("keeps both sides where the dataset and the Latin order disagree", () => {
 		// A country with a distinct `lfmt` gets two statements from libaddressinput, and they can differ.
-		// Recording one would report agreement that the data does not show.
+		// A single recorded statement would report agreement that the data does not show.
 		const disagreeing: string[] = []
 
 		for (const claim of CLAIMS) {

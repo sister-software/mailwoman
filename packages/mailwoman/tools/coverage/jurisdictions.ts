@@ -8,7 +8,7 @@
  *   and its board rows.
  *
  *   The training numbers come from a run's realized-draws exposure report, the rows the trainer
- *   actually drew, rather than from a corpus census, which counts rows a run may never sample.
+ *   actually drew, rather than from a corpus census. A census counts rows a run may never sample.
  */
 
 import {
@@ -30,7 +30,7 @@ import {
 import type { AddressSystemRegistry } from "#tools/dev-tools/codex/address/systems"
 
 /**
- * The source-layer name the jurisdiction tiles carry.
+ * The source-layer name the jurisdiction tiles use.
  */
 export const JURISDICTION_SOURCE_LAYER = "jurisdictions"
 
@@ -65,7 +65,7 @@ export interface ExposureReport {
 }
 
 /**
- * The properties one jurisdiction feature carries.
+ * The properties one jurisdiction feature holds.
  *
  * A measure with no reading is omitted rather than written as zero, because a vector
  * tile property cannot hold null and zero is a reading.

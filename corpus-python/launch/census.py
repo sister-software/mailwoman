@@ -729,12 +729,12 @@ def locale_supply_census(
     memory=32768,
 )
 def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> None:
-    """Count the rows that carry each head label in a config's validation set and in a train draw.
+    """Count the rows that hold each head label in a config's validation set and in a train draw.
 
     The validation set is the one the trainer scores: the same split, row limit and seed, read
-    through `iter_encoded` with the generator `iter_batches` builds. Macro F1 weights each label equally, so a label carried by a few
+    through `iter_encoded` with the generator `iter_batches` builds. Macro F1 weights each label equally, so a label held by a few
     validation rows moves the macro score by more than its row share. For each label this prints
-    the rows that carry it in both splits, then the sources and countries that supply its train rows,
+    the rows that hold it in both splits, then the sources and countries that supply its train rows,
     each as rows carrying the label over that supplier's rows in the draw.
     """
     import random

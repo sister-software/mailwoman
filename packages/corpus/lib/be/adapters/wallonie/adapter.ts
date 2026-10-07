@@ -78,8 +78,8 @@
  * and states what identifies it: the SPW's ICAR presentation to the Club des utilisateurs du PICC
  * (27 February 2015) lists the communes' validation of sub-addresses identified by their
  * `numéro de boîte`, the box number, and its ICAR address form records each sub-address's `Numéro` apart from the `Index`
- * field. A box number identifies one delivery point inside the numbered premise, which is the
- * concept the `unit` tag carries. It is not a floor, a building, an entrance or a staircase, even
+ * field. A box number identifies one delivery point inside the numbered premise. That is the
+ * concept the `unit` tag records. It is not a floor, a building, an entrance or a staircase, even
  * where a code such as `0RCH` (rez-de-chaussée) names the box after the floor it sits on.
  *
  * The value is rendered as the publisher writes it, with no designator word: `Rue de la Station 29

@@ -28,7 +28,7 @@ describe("WHOLE_POSTCODE_SHAPES", () => {
 
 		expect(scan).toBeDefined()
 
-		// A `g`-flagged RegExp carries `lastIndex` across calls, so the scan form is
+		// A `g`-flagged RegExp keeps `lastIndex` across calls, so the scan form is
 		// re-compiled here rather than reused between assertions.
 		expect(new RegExp(scan!.re.source).test(postcode)).toBe(true)
 		expect(wholePostcodeShape(label).test(postcode)).toBe(true)

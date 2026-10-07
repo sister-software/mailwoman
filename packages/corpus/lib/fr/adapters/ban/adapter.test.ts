@@ -25,8 +25,8 @@ describe("ban adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// The fixture holds 18 records and the Pirae row carries no `nom_voie`, which the
-		// street check drops, as it drops 958 of French Polynesia's 7,713 published rows.
+		// The fixture holds 18 records. The Pirae row has no `nom_voie`, so the street check drops
+		// it and 17 rows remain.
 		expect(manifest.yielded).toBe(17)
 
 		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)

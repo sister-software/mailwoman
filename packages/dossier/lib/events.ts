@@ -6,8 +6,8 @@
  *   Commercial events and organizational roles. An inquiry, a commitment, an order, an active subscription,
  *   a landlord's permission and an accepted build are six different events, each with its own parties,
  *   physical scope and date. A permission reaches only the entities in its scope. An ownership or
- *   management record says who holds the role. Signing authority is a separate fact that stays unknown
- *   until a record states it.
+ *   management record states who holds the role. The signing authority is a separate fact that stays
+ *   unknown until a record states it.
  */
 
 import type { EntityID } from "#identifiers"

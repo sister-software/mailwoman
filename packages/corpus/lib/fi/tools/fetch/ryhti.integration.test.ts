@@ -70,7 +70,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("readRyhtiHead against paikkatiedot.ymparis
 			await response.body?.cancel()
 
 			// A host honoring the range would answer 206 with a `content-range`.
-			// This one answers 200 with the whole length, which is why `resumableDownload` is not on this path.
+			// This host answers 200 with the whole length, so `resumableDownload` stays off this path.
 			expect(response.status).toBe(200)
 			expect(response.headers.get("content-range")).toBeNull()
 			expect(response.headers.get("accept-ranges")).toBeNull()

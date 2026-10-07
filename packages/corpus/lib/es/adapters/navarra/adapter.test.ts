@@ -5,20 +5,20 @@
  *
  *   The fixture holds six addresses, three from each of two of the publisher's 272 partitions.
  *
- * `fixtures/es-navarra/AD_Navarra_1.gml` holds three addresses from partition 1, which covers
- * Abáigar, and `AD_Navarra_250.gml` holds three from partition 250, which covers Bera. Each
+ * `fixtures/es-navarra/AD_Navarra_1.gml` holds three addresses from partition 1 (Abáigar).
+ * `AD_Navarra_250.gml` holds three from partition 250 (Bera). Each
  * `AD:Address` is copied out of the publisher's member as written, and the collection's own root
  * element is kept, so each file parses as the partition it came from. Both partitions are UTF-8, as
  * the publisher writes them.
  *
- * The six cover what the partitions vary. Abáigar's three stand on three streets and one carries the
+ * The six cover what the partitions vary. Abáigar's three stand on three streets and one holds the
  * `S/N` designator. Bera's three are the cases partition 1 has none of: a fifth-order title that
  * differs from the municipality, a `PostalDescriptor` title of `0`, and a designator with a
  * space-separated letter.
  *
  * Counts quoted against the whole partitions come from reading `AD_Navarra_1.gml.zip`,
- * `AD_Navarra_100.gml.zip` and `AD_Navarra_250.gml.zip`: 115, 288 and 1,054 addresses, carrying 690,
- * 1,728 and 6,324 `AD:component` references, which is six per address in each.
+ * `AD_Navarra_100.gml.zip` and `AD_Navarra_250.gml.zip`: 115, 288 and 1,054 addresses, holding 690,
+ * 1,728 and 6,324 `AD:component` references, six per address in each.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

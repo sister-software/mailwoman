@@ -194,7 +194,7 @@ export interface AdapterRunManifest {
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, outputDir, corpusVersion } = opts
 	// A caller that passes its own map reads the counts back from it.
-	// Otherwise the runner supplies one, so every manifest carries the adapter's drop reasons.
+	// Otherwise the runner supplies one, so every manifest records the adapter's drop reasons.
 	const dropped = opts.adapterOptions.dropped ?? new Map<string, number>()
 	const adapterOptions: AdapterOptions = { ...opts.adapterOptions, dropped }
 	const progressEvery = opts.progressEvery ?? 1000

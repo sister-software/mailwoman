@@ -11,9 +11,9 @@ import { datasetURLOf, DK_ADDRESSES_FEED_URL, readAddressesFeed } from "#dk/tool
 /**
  * The feed as `https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml` served it,
  * trimmed to the envelope and the one entry. 3,130 bytes decode to 3,125 characters,
- * and the `content-length` header says 1,455.
+ * and the `content-length` header reports 1,455.
  *
- * The two shapes a reader has to survive are both here: the entry carries `xml:lang`,
+ * The two shapes a reader has to survive are both here: the entry has `xml:lang`,
  * and every href separates its query parameters with `&amp;`.
  */
 const FEED_XML = `<?xml version="1.0" encoding="utf-8"?>

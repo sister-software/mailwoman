@@ -137,7 +137,7 @@ describe("the committed address-source register", () => {
 	it("blocks AusTender on its personal-data reading alone, every other condition being met", () => {
 		// The worked example of #2323's step 6: one source taken through all five conditions.
 		// Its license is elected and its address roles and coverage are resolved.
-		// The publication also gives street addresses for named natural persons.
+		// The publication also gives street addresses for identifiable natural persons.
 		// `present` records that reading, and ingest refuses it.
 		const austender = register.sources.find((source) => source.sourceID === "au-procurement-grants-1")!
 		const decision = register.licenses.find((entry) => entry.licenseID === austender.license)!
@@ -152,10 +152,10 @@ describe("the committed address-source register", () => {
 	})
 
 	it("states a reason on every refused decision, and refuses the sources pointing at one", () => {
-		// A refusal records that the terms were read and no grant was found,
-		// which is a different fact from `unchecked`.
+		// A refusal records that the terms were read and no grant was found.
+		// That is a different fact from `unchecked`.
 		// The reason is what a later request to the publisher starts from, so the audit
-		// requires it and this holds that the committed refusals carry one.
+		// requires it and this holds that the committed refusals have one.
 		const refused = register.licenses.filter((decision) => decision.state === LicenseReviewState.Refused)
 
 		expect(refused.length).toBeGreaterThan(0)
