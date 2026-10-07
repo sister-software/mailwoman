@@ -42,11 +42,11 @@ export const COUNTRY_BY_INSEE_DEPARTMENT: Readonly<Record<string, string>> = {
 }
 
 /**
- * Every jurisdiction an INSEE-coded French source can carry, so a caller's `--country`
+ * Every jurisdiction an INSEE-coded French source can produce, so a caller's `--country`
  * is checked against the set rather than against one value.
  *
  * `TF` and `WF` are in the set and currently yield no rows, because the set describes what
- * the publisher's files can carry rather than what the address-source register has elected.
+ * the publisher's files can contain rather than what the address-source register has elected.
  */
 export const INSEE_COUNTRIES: readonly string[] = ["FR", ...Object.values(COUNTRY_BY_INSEE_DEPARTMENT)]
 

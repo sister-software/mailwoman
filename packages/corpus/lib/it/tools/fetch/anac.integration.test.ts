@@ -37,7 +37,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("it-anac against data.open-contracting.org"
 			for (const edition of [MEASURED_EDITION, "full"]) {
 				const head = await readANACEditionHead(client, edition)
 
-				// The host states both, which is what holds a re-run to one small request per edition.
+				// The host states both. That holds a re-run to one small request per edition.
 				expect(head.lastModified).not.toBeNull()
 				expect(head.contentLength).not.toBeNull()
 				expect(head.contentLength ?? 0).toBeGreaterThan(0)
@@ -74,7 +74,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("it-anac against data.open-contracting.org"
 			expect(file?.sha256).toMatch(/^[0-9a-f]{64}$/u)
 			expect(file?.last_modified).not.toBeNull()
 
-			// The compressed copy is removed by default, so the directory holds editions alone.
+			// The compressed copy is removed by default, so the directory holds only editions.
 			const rows = await Array.fromAsync(createITANACAdapter().rows({ inputPath: scratch.path, limit: 5 }))
 
 			expect(rows.every((row) => row.country === "IT")).toBe(true)

@@ -35,7 +35,7 @@ const ARCHIVE_URL =
 	"https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/b62f8405-2ce3-449f-8a61-5fc2f38d8b73/AD.Addresses.gml.zip"
 
 /**
- * The service document, which lists the region's one dataset feed through a `rel="alternate"` link.
+ * The service document. It lists the region's one dataset feed through a `rel="alternate"` link.
  */
 const SERVICE_FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -50,7 +50,7 @@ const SERVICE_FEED = `<?xml version="1.0" encoding="UTF-8"?>
 </feed>`
 
 /**
- * The dataset feed, which offers one archive for the whole region.
+ * The dataset feed. It offers one archive for the whole region.
  */
 const DATASET_FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">

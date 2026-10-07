@@ -9,7 +9,7 @@
  *   The feed body is the shape `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` serves,
  *   reduced to the elements this fetcher reads, with the publisher's own relations kept: the dataset
  *   is a `rel="alternate"` link and the ISO 19139 record is a `rel="describedby"` link beside it.
- *   There is no `rel="enclosure"` link to find, which is the case a reader of INSPIRE feeds gets
+ *   There is no `rel="enclosure"` link to find. That is the case a reader of INSPIRE feeds gets
  *   wrong.
  *
  *   `./gipuzkoa.integration.test.ts` reads the live service. This suite stubs the transport and runs
@@ -38,7 +38,7 @@ const ARCHIVE_URL = "https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip
 const METADATA_URL = "https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml"
 
 /**
- * The download service, which holds one entry for the whole province.
+ * The download service. It holds one entry for the whole province.
  *
  * The `describedby` link is written ahead of the `alternate` one, as the publisher writes it,
  * so a reader taking the entry's first link resolves the metadata record instead of the data.

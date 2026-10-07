@@ -51,8 +51,8 @@ function archiveURL(partition: number): string {
 /**
  * One partition's entry, with the six links the publisher writes.
  *
- * The `length` is the same 34,987 the publisher states on every entry,
- * which is why no byte count here is read from it.
+ * The `length` is the same 34,987 the publisher states on every entry.
+ * That is why no byte count here is read from it.
  */
 function entryXML(partition: number, updated = PUBLICATION): string {
 	const archive = archiveURL(partition)
@@ -121,7 +121,7 @@ describe("readESNavarraServiceFeed", () => {
 		const feed = await readAtomFeed(feedChunks(serviceXML(entryXML(1) + entryXML(100) + entryXML(908))))
 		const partitions = readESNavarraServiceFeed(feed)
 
-		// Every title is `Address Navarra` and every id is empty, and the published numbers
+		// Every title is `Address Navarra` and every id is empty. The published numbers
 		// are not contiguous, so the count comes from the feed rather than from a number here.
 		expect(partitions).toHaveLength(feed.entries.length)
 		expect(new Set(feed.entries.map((entry) => entry.title)).size).toBe(1)

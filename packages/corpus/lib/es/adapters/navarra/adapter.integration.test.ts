@@ -14,11 +14,11 @@
  *
  *   Two differences between the publisher's own two services are normalized here rather than in the
  *   adapter, because the INSPIRE GML is the elected source and this layer is the check. The layer
- *   writes `S/N` in `PORTAL` where it holds no number, which is the statement the GML designator
+ *   writes `S/N` in `PORTAL` where it holds no number. That is the statement the GML designator
  *   makes. And it separates a letter suffix differently, `3 - A` against the GML's `3 A`, so the
  *   comparison drops the separator on both sides.
  *
- *   Reading all three partitions measured against this layer, 1,298 of 1,457 rows agreed on street,
+ *   Across all three partitions measured against this layer, 1,298 of 1,457 rows agreed on street,
  *   number, postcode and settlement at once. The 159 that did not are two street names in Eulate
  *   where the publisher's two services disagree with each other: the INSPIRE GML writes
  *   `CALLE COPALACIO ALTO` and `CALLE COPALACIO BAJO`, and this layer writes `COPARACIO`. Partition

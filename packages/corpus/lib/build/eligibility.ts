@@ -14,7 +14,7 @@ import type { CanonicalRow } from "#types"
  * The key a row is looked up under: the adapter that emitted it and the jurisdiction it describes.
  *
  * The register scopes a source to one publisher in one jurisdiction,
- * so an adapter id alone cannot address a record.
+ * so an adapter id by itself cannot address a record.
  * One adapter serves several: `ban` emits eleven jurisdictions from one schema
  * and each is its own source under its own license decision.
  */
@@ -24,7 +24,7 @@ export function sourceEligibilityKey(adapterID: string, iso2: string): string {
 
 /**
  * Every register source's ingest-eligibility reasons, keyed by the adapter
- * and jurisdiction of the rows that carry it.
+ * and jurisdiction of the rows that recorded it.
  *
  * A source declaring no `adapterID` is absent from the map, because no adapter emits it
  * and no row can arrive under it.
