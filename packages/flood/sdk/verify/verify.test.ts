@@ -28,7 +28,7 @@ function scriptedService(zone: string | null | undefined, offsetDegrees = 0): Se
 			? []
 			: [
 					{
-						properties: zone === undefined ? {} : { flood_zone: zone },
+						properties: zone ? { flood_zone: zone } : {},
 						geometry: {
 							type: "Polygon",
 							coordinates: [

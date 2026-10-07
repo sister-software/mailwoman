@@ -147,13 +147,13 @@ export async function reconcileLedger(
 		try {
 			const next = await stateStripeSays(deps.stripe, deps, license, subscription)
 
-			if (next === null || next.state === license.license_state) continue
+			if (!next || next.state === license.license_state) continue
 
 			await setLicenseState(
 				deps.ledger,
 				license.lid,
 				next.state,
-				next.paymentState === null ? {} : { paymentState: next.paymentState }
+				next.paymentState ? { paymentState: next.paymentState } : {}
 			)
 
 			report.corrected.push({ lid: license.lid, from: license.license_state, to: next.state })

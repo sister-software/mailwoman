@@ -271,7 +271,7 @@ export class PairIndexResolver {
 		const resolveTag = (idx: number, field: "tagIdx" | "parentTagIdx"): ComponentTag => {
 			const name = header.tagTable[idx]
 
-			if (name === undefined) {
+			if (!name) {
 				throw new Error(`pair index: ${field} ${idx} is outside the header's tagTable (${header.tagTable.length})`)
 			}
 

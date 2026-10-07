@@ -303,7 +303,7 @@ export function inMapPosterior(
 		epsilonFloor?: number
 	}
 ): Record<string, number> | null {
-	if (prediction.country === null || prediction.country === "OTHER") return null
+	if (!prediction.country || prediction.country === "OTHER") return null
 	const floor = opts?.epsilonFloor ?? 0
 	const posterior: Record<string, number> = {}
 

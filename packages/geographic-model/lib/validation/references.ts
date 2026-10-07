@@ -29,7 +29,7 @@ function indexByID<T extends { path: string; id: string | null }>(
 	const index = new Map<string, T>()
 
 	for (const record of records) {
-		if (record.id === null) continue
+		if (!record.id) continue
 
 		if (index.has(record.id)) {
 			add(
@@ -62,9 +62,9 @@ interface EdgeCheck {
  * and range kinds shared by authored assertions, source observations and derived facts.
  */
 function checkEdge(issues: ValidationIssue[], edge: EdgeCheck, tables: ReferenceTables): void {
-	const relation = edge.relationID === null ? null : tables.relations.get(edge.relationID)
+	const relation = edge.relationID ? tables.relations.get(edge.relationID) : null
 
-	if (edge.relationID !== null && !relation) {
+	if (edge.relationID && !relation) {
 		add(
 			issues,
 			edge.relationPath,
@@ -73,9 +73,9 @@ function checkEdge(issues: ValidationIssue[], edge: EdgeCheck, tables: Reference
 		)
 	}
 
-	const object = edge.objectID === null ? null : tables.concepts.get(edge.objectID)
+	const object = edge.objectID ? tables.concepts.get(edge.objectID) : null
 
-	if (edge.objectID !== null && !object) {
+	if (edge.objectID && !object) {
 		add(
 			issues,
 			edge.objectPath,
@@ -132,7 +132,7 @@ function checkRelation(
 		}
 	}
 
-	if (relation.inverse === null) return
+	if (!relation.inverse) return
 
 	const inverse = index.get(relation.inverse)
 
@@ -189,7 +189,7 @@ function checkRelation(
  * leaving the direct self-edge to `checkIsA`'s self-reference report.
  */
 function findIsACycle(start: ConceptView, concepts: ReadonlyMap<string, ConceptView>): string[] | null {
-	if (start.id === null) return null
+	if (!start.id) return null
 
 	const startID = start.id
 	const visited = new Set<string>()
@@ -257,7 +257,7 @@ function checkDerivationInputs(issues: ValidationIssue[], fact: DerivedFactView,
 	}
 
 	for (const input of fact.inputs) {
-		if (input.kind === null || input.id === null) continue
+		if (!input.kind || !input.id) continue
 
 		if (input.kind === DerivationInputKind.DerivedFact && input.id === fact.id) {
 			add(issues, `${input.path}.id`, ValidationIssueCode.SelfReference, "a derived fact is not one of its own inputs")
@@ -319,7 +319,7 @@ export function checkReferences(issues: ValidationIssue[], view: DocumentView): 
 	}
 
 	for (const mapping of view.mappings) {
-		if (mapping.concept !== null && !concepts.has(mapping.concept)) {
+		if (mapping.concept && !concepts.has(mapping.concept)) {
 			add(
 				issues,
 				`${mapping.path}.concept`,
@@ -330,9 +330,9 @@ export function checkReferences(issues: ValidationIssue[], view: DocumentView): 
 	}
 
 	for (const triple of [...view.observations, ...view.derivedFacts]) {
-		const subject = triple.subject === null ? null : concepts.get(triple.subject)
+		const subject = triple.subject ? concepts.get(triple.subject) : null
 
-		if (triple.subject !== null && !subject) {
+		if (triple.subject && !subject) {
 			add(
 				issues,
 				`${triple.path}.subject`,

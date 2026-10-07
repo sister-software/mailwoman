@@ -208,7 +208,7 @@ async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<nu
 	} finally {
 		clearTimeout(overallTimer ?? undefined)
 
-		if (child.exitCode === null && child.signalCode === null) {
+		if (child.exitCode === null && !child.signalCode) {
 			child.kill("SIGKILL")
 		}
 	}

@@ -50,7 +50,7 @@ export function viewportFromSearch(search: string): PlanetaryView | null {
 	const values = ["lon", "lat", "z"].map((key) => {
 		const raw = params.get(key)
 
-		return raw === null || raw.trim() === "" ? Number.NaN : Number(raw)
+		return raw?.trim() ? Number(raw) : Number.NaN
 	})
 
 	if (values.some((value) => !Number.isFinite(value))) return null

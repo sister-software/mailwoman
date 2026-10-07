@@ -47,7 +47,7 @@ function surfaceFor(filePath: string): "code" | "docs" | null {
 function editedPath(payload: Record<string, unknown> | null): string | null {
 	const input = payload?.tool_input
 
-	if (typeof input !== "object" || input === null) return null
+	if (typeof input !== "object" || !input) return null
 
 	const filePath = (input as { file_path?: unknown }).file_path
 

@@ -87,7 +87,7 @@ export function toMapHTML(
 		let i = 0
 
 		for (const f of geojson.features) {
-			const b = f.properties?.["bucket"] != null ? String(f.properties["bucket"]) : "—"
+			const b = f.properties?.["bucket"] ? String(f.properties["bucket"]) : "—"
 
 			if (!(b in bucketColors)) {
 				bucketColors[b] = PALETTE[i++ % PALETTE.length]!
@@ -97,7 +97,7 @@ export function toMapHTML(
 
 	const colorFor = (props: MapFeatureData): string => {
 		if (mode === "bucket") {
-			const b = props["bucket"] != null ? String(props["bucket"]) : "—"
+			const b = props["bucket"] ? String(props["bucket"]) : "—"
 
 			return bucketColors[b] ?? SINGLE_COLOR
 		}

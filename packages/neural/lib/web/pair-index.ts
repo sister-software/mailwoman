@@ -85,7 +85,7 @@ export function resolvePairIndexForText(
 	opts?: { country?: string }
 ): PlacetypePairPriorOpts | null {
 	if (!pairIndexes.length) return null
-	const country = opts?.country != null ? resolvePairIndexCountry(opts.country) : detectPairIndexCountry(text)
+	const country = opts?.country ? resolvePairIndexCountry(opts.country) : detectPairIndexCountry(text)
 	const match = pairIndexes.find((index) => index.country === country)
 
 	return match ? { index: match.resolver } : null

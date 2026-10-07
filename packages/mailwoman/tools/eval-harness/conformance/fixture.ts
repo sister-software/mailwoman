@@ -268,7 +268,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	}
 
 	// `bugRef` is only valid on non-blocking tracked rows.
-	if (bugRef !== undefined && (status === undefined || status === "pass")) {
+	if (bugRef && (!status || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
 				`"${status ?? "pass"}" — a enforcing row that names a defect asserts the defect is fixed.`

@@ -63,7 +63,7 @@ class SmokeRowError extends Error {
 	constructor(sourceLabel: string, rowNumber: number, detail: string, rowText?: string) {
 		super(
 			`${sourceLabel}: row ${rowNumber} is malformed — ${detail}` +
-				(rowText !== undefined
+				(rowText
 					? `\n  row: ${rowText.length > ERROR_ROW_ECHO_LIMIT ? rowText.slice(0, ERROR_ROW_ECHO_LIMIT) + "…" : rowText}`
 					: "")
 		)
@@ -99,7 +99,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			throw new SmokeRowError(sourceLabel, rowNumber, `invalid JSON (${(error as Error).message})`, line)
 		}
 
-		if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		if (typeof parsed !== "object" || !parsed || Array.isArray(parsed)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "row must be a JSON object", line)
 		}
 
@@ -115,7 +115,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`input` must be a non-empty string", line)
 		}
 
-		if (typeof row.expect !== "object" || row.expect === null || Array.isArray(row.expect)) {
+		if (typeof row.expect !== "object" || !row.expect || Array.isArray(row.expect)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`expect` must be an object", line)
 		}
 

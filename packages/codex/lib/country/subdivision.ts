@@ -64,7 +64,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const put = (key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 
-		if (folded.length && !out.has(folded)) {
+		if (folded && !out.has(folded)) {
 			out.set(folded, match)
 		}
 	}
@@ -116,7 +116,7 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
 	const put = (country: string, key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 
-		if (!folded.length) return
+		if (!folded) return
 
 		const scoped = byCountry.get(country) ?? new Map<string, SubdivisionMatch>()
 

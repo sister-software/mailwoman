@@ -167,9 +167,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		...(options.spanRescoreRequireContextRemainder === undefined
 			? {}
 			: { spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder }),
-		...(options.spanRescoreWeakResolution === undefined
-			? {}
-			: { spanRescoreWeakResolution: options.spanRescoreWeakResolution }),
+		...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 	}
 
 	// Absent rather than empty: `null` is what `describeResolverPins` prints as "production defaults".

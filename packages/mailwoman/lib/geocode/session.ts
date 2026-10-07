@@ -232,7 +232,7 @@ function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
 
 			if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new CommandError(`--bias: bad point '${part}'`)
 
-			return { lat: lat!, lon: lon!, ...(w != null ? { weight: Number(w) } : {}) }
+			return { lat: lat!, lon: lon!, ...(w ? { weight: Number(w) } : {}) }
 		})
 		.toArray()
 }

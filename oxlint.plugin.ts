@@ -110,7 +110,7 @@ const preferSpliteratorRule: Rule = {
 				if (callee.property?.type !== "Identifier" || callee.property.name !== "split") return
 
 				const delimiter = literalDelimiter(node.arguments?.[0])
-				const entry = delimiter === null ? undefined : DELIMITER_HINTS.get(delimiter)
+				const entry = delimiter ? DELIMITER_HINTS.get(delimiter) : undefined
 
 				if (!entry) return
 
@@ -412,7 +412,7 @@ const noRelativeDynamicImportRule: Rule = {
 			ImportExpression(node: AstNode) {
 				const specifier = literalDelimiter(node.source)
 
-				if (specifier === null || !/^\.\.?\//.test(specifier)) return
+				if (!specifier || !/^\.\.?\//.test(specifier)) return
 
 				context.report({
 					node,
@@ -489,7 +489,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 
 				const text = literalDelimiter(segment)
 
-				if (text === null || !text.startsWith("..")) return
+				if (!text || !text.startsWith("..")) return
 
 				context.report({
 					node,
@@ -513,7 +513,7 @@ function methodChain(node: AstNode): string[] {
 	while (current?.type === "CallExpression") {
 		const method = calledMethod(current)
 
-		if (method === null) break
+		if (!method) break
 		names.unshift(method)
 		current = current.callee?.object
 	}
@@ -586,7 +586,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 		const elements = (left as ESTreeNode).elements ?? []
 		const bases = elements.map((element) => indexedBaseName(element))
 
-		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1] && elements.every(isVariableIndex)) {
+		if (bases.length === 2 && bases[0] && bases[0] === bases[1] && elements.every(isVariableIndex)) {
 			return true
 		}
 	}
@@ -761,7 +761,7 @@ const noCrossPackageReexportRule: Rule = {
 		const check = (node: AstNode): void => {
 			const specifier = literalDelimiter(node.source)
 
-			if (specifier === null || !/^(?:@mailwoman\/|mailwoman(?:\/|$))/.test(specifier)) return
+			if (!specifier || !/^(?:@mailwoman\/|mailwoman(?:\/|$))/.test(specifier)) return
 
 			context.report({
 				node,

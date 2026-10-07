@@ -134,8 +134,8 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine, sta
 			q: query,
 			limit: Number(q["limit"] ?? DEFAULT_LIMIT) || DEFAULT_LIMIT,
 			lang: asString(q["lang"]),
-			lat: q["lat"] != null ? Number(q["lat"]) : undefined,
-			lon: q["lon"] != null ? Number(q["lon"]) : undefined,
+			lat: q["lat"] ? Number(q["lat"]) : undefined,
+			lon: q["lon"] ? Number(q["lon"]) : undefined,
 			osmTag: asStringArray(q["osm_tag"]),
 			layer: asStringArray(q["layer"]),
 		}
@@ -169,7 +169,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine, sta
 			lon,
 			limit: Number(q["limit"] ?? DEFAULT_LIMIT) || DEFAULT_LIMIT,
 			lang: asString(q["lang"]),
-			radius: q["radius"] != null ? Number(q["radius"]) : undefined,
+			radius: q["radius"] ? Number(q["radius"]) : undefined,
 		}
 
 		const collection = await engine.reverse(params)

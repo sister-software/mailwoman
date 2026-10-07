@@ -91,7 +91,7 @@ export function isJapaneseAdminSuffix(ch: unknown): ch is JapaneseAdminSuffix {
  * returned whole rather than clipped to `北海` — mirroring the same carve-out in `prefecture.ts`.
  */
 export function stripAdminSuffix(name: string): string {
-	if (typeof name !== "string" || !name.length) return name
+	if (typeof name !== "string" || !name) return name
 
 	if (name === "北海道") return name
 	const last = name.at(-1)!

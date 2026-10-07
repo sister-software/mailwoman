@@ -160,7 +160,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 		return () => {
 			controller.abort()
 
-			if (timer !== null) {
+			if (timer) {
 				clearTimeout(timer)
 			}
 		}

@@ -450,7 +450,7 @@ export function normalizeFSTToken(s: string): string {
 		.toLowerCase()
 		.replaceAll(/[\p{P}\p{S}]/gu, "")
 
-	return cleaned.length ? cleaned : ""
+	return cleaned ?? ""
 }
 
 function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {

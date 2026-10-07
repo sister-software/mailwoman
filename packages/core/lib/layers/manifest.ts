@@ -88,7 +88,7 @@ function assertCoverageCellInvariants(cell: CoverageCell): void {
 		throw new Error(`layer coverage: completeness must be a finite value in [0, 1], got ${cell.completeness}`)
 	}
 
-	if (cell.basis !== undefined && !BASES.has(cell.basis)) {
+	if (cell.basis && !BASES.has(cell.basis)) {
 		throw new Error(`layer coverage: unknown basis ${stringifyJSON(cell.basis)}`)
 	}
 
@@ -335,7 +335,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 			freshness_policy: manifest.freshnessPolicy,
 			spine_keys: stringifyJSON(manifest.spineKeys),
 			created_at: manifest.createdAt,
-			source_records: manifest.sourceRecords === null ? null : stringifyJSON(manifest.sourceRecords),
+			source_records: manifest.sourceRecords ? stringifyJSON(manifest.sourceRecords) : null,
 		})
 		.execute()
 }
@@ -368,7 +368,7 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		createdAt: row.created_at,
 		// NULL and a missing column both mean the build recorded no count.
 		// An empty object would make the build appear to have counted its publishers and found none.
-		sourceRecords: row.source_records == null ? null : parseJSONStrict<Record<string, number>>(row.source_records),
+		sourceRecords: row.source_records ? parseJSONStrict<Record<string, number>>(row.source_records) : null,
 	}
 
 	assertManifestInvariants(manifest)

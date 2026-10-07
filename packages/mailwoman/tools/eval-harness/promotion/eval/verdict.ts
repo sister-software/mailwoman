@@ -182,7 +182,7 @@ export async function assemblePromotionVerdict(
 	async function sidecar(f: string): Promise<ScorerSidecar | null> {
 		const raw = await maybeRead(f)
 
-		return raw === null ? null : parseJSONStrict<ScorerSidecar>(raw)
+		return raw ? parseJSONStrict<ScorerSidecar>(raw) : null
 	}
 
 	function tagF1(side: ScorerSidecar | null, md: string, tag: string): number | null {

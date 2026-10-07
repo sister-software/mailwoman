@@ -135,11 +135,11 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 		display_name: displayName,
 	}
 
-	if (r.category != null) {
+	if (r.category) {
 		result.class = r.category
 	}
 
-	if (r.type != null) {
+	if (r.type) {
 		result.type = r.type
 	}
 

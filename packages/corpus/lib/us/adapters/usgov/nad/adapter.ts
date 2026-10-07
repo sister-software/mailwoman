@@ -196,7 +196,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					const record = tryParsingJSON<NADRecord>(line)
 
-					if (record === null) continue
+					if (!record) continue
 
 					const state = (record.State ?? "").toString().trim().toUpperCase()
 

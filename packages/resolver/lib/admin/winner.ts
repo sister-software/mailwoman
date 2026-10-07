@@ -68,7 +68,7 @@ export interface ResolvedPostcodeHit {
  * unit-grade or the address system's area-grade codes are finer than its localities.
  */
 export function adminLadderFor(postcode: ResolvedPostcodeHit | null): ReadonlyArray<string> {
-	if (postcode === null) return ADMIN_LADDER_LOCALITY_FIRST
+	if (!postcode) return ADMIN_LADDER_LOCALITY_FIRST
 
 	const leads =
 		isUnitGradePostcodeHit(postcode.value, postcode.resolverName) || areaPostcodeLeadsLocality(postcode.country ?? null)

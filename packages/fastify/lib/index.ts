@@ -299,7 +299,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	fastify.post(`${prefix}/parse`, async (request, reply) => {
 		const text = readText(request, reply)
 
-		if (text === null) return reply
+		if (!text) return reply
 
 		return reply.send(await mailwoman.parse(text))
 	})
@@ -307,7 +307,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	fastify.post(`${prefix}/geocode`, async (request, reply) => {
 		const text = readText(request, reply)
 
-		if (text === null) return reply
+		if (!text) return reply
 
 		return reply.send(await mailwoman.geocode(text))
 	})
@@ -322,7 +322,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 
 		const text = readText(request, reply)
 
-		if (text === null) return reply
+		if (!text) return reply
 
 		return reply.send(await mailwoman.poi(text))
 	})

@@ -15,7 +15,7 @@ import type { Segment, SegmentSeparator } from "#types"
 export function segment(text: string, _locale?: string | null): Segment[] {
 	const segments: Segment[] = []
 
-	if (!text.length) return segments
+	if (!text) return segments
 
 	let start = 0
 	let lastSeparator: SegmentSeparator = null

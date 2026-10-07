@@ -224,7 +224,7 @@ export function segmentParentPostcodeShape(country: string | null): RegExp | nul
  * It strips a run only when `shape` is non-null.
  */
 export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | null): number {
-	if (shape === null || tokens.length < 2) return 0
+	if (!shape || tokens.length < 2) return 0
 
 	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
 
@@ -244,7 +244,7 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * The segment and every emitted span stay unchanged.
  */
 export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | null): number {
-	if (shape === null || tokens.length < 2) return 0
+	if (!shape || tokens.length < 2) return 0
 
 	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
 

@@ -111,7 +111,7 @@ const EXTENT_ORDINATES = 4
 export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions): Promise<OGRLayerIdentity> {
 	const { stdout } = await runFile(
 		"ogrinfo",
-		["-json", "-so", options.path, ...(options.layer === undefined ? [] : [options.layer])],
+		["-json", "-so", options.path, ...(options.layer ? [options.layer] : [])],
 		{ maxBuffer: OGRINFO_MAX_BUFFER }
 	)
 
@@ -131,13 +131,13 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 
 	if (!described?.name) {
 		throw new Error(
-			options.layer === undefined
-				? `${options.context}: ${options.path} carries no readable layer`
-				: `${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`
+			options.layer
+				? `${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`
+				: `${options.context}: ${options.path} carries no readable layer`
 		)
 	}
 
-	if (options.layer !== undefined && described.name !== options.layer) {
+	if (options.layer && described.name !== options.layer) {
 		throw new Error(`${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`)
 	}
 

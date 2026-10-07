@@ -438,7 +438,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 		const written = await writeOutputs(geojson, options)
 
-		return written === null ? report : `${report}\n\n${written}`
+		return written ? `${report}\n\n${written}` : report
 	}
 
 	const geojson = toGeoJSON(result.entities)
@@ -453,7 +453,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
+	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
@@ -491,7 +491,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
+	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
@@ -504,7 +504,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 
 		const csv = args?.[0]
 
-		if (!csv || !csv.trim().length) {
+		if (!csv || !csv.trim()) {
 			throw new CommandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
 					"e.g. mailwoman registry contacts.csv --out entities.geojson"

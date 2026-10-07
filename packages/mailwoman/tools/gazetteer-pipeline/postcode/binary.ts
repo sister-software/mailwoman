@@ -172,7 +172,7 @@ export function buildPostcodeBinaryEntries(
 		const key = postcodeBinaryKey(cc, row.name)
 		const district = gbOutwardFromKey(key)
 
-		if (district === null) {
+		if (!district) {
 			skipped++
 
 			continue

@@ -47,7 +47,7 @@ export interface PolygonLiteral<P extends PolygonPath = PolygonPath> extends Geo
  * Predicate for checking if a GeoJSON object is a `Polygon` geometry.
  */
 export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unknown): input is PolygonLiteral<P> {
-	if (typeof input !== "object" || input === null) return false
+	if (typeof input !== "object" || !input) return false
 
 	return "type" in input && input.type === "Polygon" && "coordinates" in input && Array.isArray(input.coordinates)
 }

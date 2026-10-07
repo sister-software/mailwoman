@@ -161,7 +161,7 @@ function toSourceFeature(
 		throw new Error(`flood ingest: feature ${properties.area_id} carries no geometry`)
 	}
 
-	if (properties.flood_zone === null) {
+	if (!properties.flood_zone) {
 		throw new Error(`flood ingest: feature ${properties.area_id} carries no flood_zone value`)
 	}
 

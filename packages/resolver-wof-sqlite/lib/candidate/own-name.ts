@@ -135,7 +135,7 @@ export function ownNameSimilarity(primaryKey: string, aliasKey: string): number 
 	const primary = romanizeNameKey(primaryKey)
 	const alias = romanizeNameKey(aliasKey)
 
-	if (primary == null || alias == null || !primary || !alias) return null
+	if (!primary || !alias || !primary || !alias) return null
 
 	return levenshteinSimilarity(expandNameAbbreviations(primary), expandNameAbbreviations(alias))
 }

@@ -527,7 +527,7 @@ export function parseExhibit21(html: string): ParsedExhibit21 {
 	const window = documentWindow(html)
 	const tableRows = extractTableRows(window)
 
-	if (tableRows !== null && !isEntirelyBlankTable(tableRows)) {
+	if (tableRows && !isEntirelyBlankTable(tableRows)) {
 		return subsidiariesFromTableRows(tableRows)
 	}
 

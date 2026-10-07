@@ -140,7 +140,7 @@ export class StyleSpecificationComposer {
 		const styleSpec: StyleSpecification = {
 			version: 8,
 			glyphs: this.glyphs,
-			...(this.sprite === null ? {} : { sprite: this.sprite }),
+			...(this.sprite ? { sprite: this.sprite } : {}),
 			light: createLightSpec(this.light),
 			sky: createSkySpec(this.sky),
 			// terrain: this.terrain,

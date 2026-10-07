@@ -181,7 +181,7 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 	for (const [kind, tally] of Object.entries(aggregate.priors)) {
 		const allowReason = CENSUS_ALLOWLIST[kind]
 
-		if (allowReason !== undefined) {
+		if (allowReason) {
 			aggregate.allowlisted.push({ mechanism: kind, reason: allowReason, expectation_held: tally.l1_applied === 0 })
 
 			continue

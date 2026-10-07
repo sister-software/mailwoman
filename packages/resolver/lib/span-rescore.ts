@@ -122,7 +122,7 @@ function tokenizeRaw(raw: string): RawTok[] {
 	const re = /[^\s,;/]+/g
 	let m: RegExpExecArray | null
 
-	while ((m = re.exec(raw)) !== null) {
+	while ((m = re.exec(raw))) {
 		toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
 	}
 
@@ -451,7 +451,7 @@ export async function findRescoreCandidate(
 					// The qualifier the sub-span left behind.
 					// A backend without the ancestors sidecar ignores this qualifier.
 					// That matches a query without one.
-					...(qualifier === null ? {} : { regionQualifier: qualifier }),
+					...(qualifier ? { regionQualifier: qualifier } : {}),
 				})
 
 		// No primary-name re-check: `exactMatch` is name-or-alias, so re-comparing only
@@ -463,14 +463,13 @@ export async function findRescoreCandidate(
 
 		// The same partition the walk applies: tier-safe, stable and positive-evidence-only,
 		// so a backend that ignored `regionQualifier` is byte-stable.
-		const exact =
-			qualifier === null
-				? ranked
-				: partitionByContainment(
-						ranked,
-						(c) => c.containedByQualifier === true,
-						(c) => c.exactMatch === true
-					)
+		const exact = qualifier
+			? partitionByContainment(
+					ranked,
+					(c) => c.containedByQualifier === true,
+					(c) => c.exactMatch === true
+				)
+			: ranked
 
 		const withinThreshold = (p: ResolvedPlace): boolean =>
 			!anchor || thresholdKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm

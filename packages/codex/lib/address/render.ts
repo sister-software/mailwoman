@@ -175,7 +175,7 @@ export function renderAddress(layout: AddressLayout, components: ComponentDict):
 export function joinRendering(rendering: AddressRendering, separator = "\n", softSeparator = separator): string {
 	return rendering.pieces
 		.map((piece) => {
-			if (piece.tag !== null || piece.text !== "\n") return piece.text
+			if (piece.tag || piece.text !== "\n") return piece.text
 
 			return piece.softBreak ? softSeparator : separator
 		})

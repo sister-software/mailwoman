@@ -43,7 +43,7 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 
 		let matched: Array<{ id: string; input: string }> | null = null
 
-		if (pattern !== undefined) {
+		if (pattern) {
 			let expression: RegExp
 
 			try {
@@ -88,16 +88,16 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 			strata: { by_country: byCountry, by_address_kind: byAddressKind, by_status: byStatus },
 			has_truth: set.hasTruth,
 			not_covered: set.notCovered,
-			...(matched === null
-				? {}
-				: {
+			...(matched
+				? {
 						matching: {
 							pattern,
 							n: matched.length,
 							of: set.n,
 							rows: matched,
 						},
-					}),
+					}
+				: {}),
 			summary:
 				`${set.setID}: ${set.n} rows, selection ${set.selection}` +
 				(set.populationN ? ` drawn from ${set.populationN}` : "") +
@@ -105,10 +105,10 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 				`, ${set.hasTruth.none} carry none` +
 				` (by kind, overlapping: ${set.hasTruth.components} components, ${set.hasTruth.coordinates} coordinates, ${set.hasTruth.tier} tier).` +
 				(set.notCovered.length ? ` Excluded — ${set.notCovered.join("; ")}.` : "") +
-				(matched === null
-					? ""
-					: ` ${matched.length} of ${set.n} rows match /${pattern}/i — a count over THIS set, which is not a` +
-						" production rate."),
+				(matched
+					? ` ${matched.length} of ${set.n} rows match /${pattern}/i — a count over THIS set, which is not a` +
+						" production rate."
+					: ""),
 			notes: set.notes,
 		}
 	},

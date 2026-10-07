@@ -182,7 +182,7 @@ function fixture(): GeographicModelDocument {
 function withReversedKeys(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(withReversedKeys)
 
-	if (typeof value !== "object" || value === null) return value
+	if (typeof value !== "object" || !value) return value
 
 	return Object.fromEntries(
 		Object.entries(value)

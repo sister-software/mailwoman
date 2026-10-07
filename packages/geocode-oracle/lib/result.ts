@@ -97,5 +97,5 @@ export interface OracleGeocodeResult<Raw = unknown> {
  * Lives here rather than in either parser because both need it and neither owns it.
  */
 export function regionPrefix(region: string | null | undefined): string | null {
-	return region != null && /^[A-Za-z]{2}$/.test(region) ? region : null
+	return region && /^[A-Za-z]{2}$/.test(region) ? region : null
 }

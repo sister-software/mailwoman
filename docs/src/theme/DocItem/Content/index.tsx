@@ -53,7 +53,7 @@ function DocRecordChrome(): ReactNode {
 		<aside className={clsx("alert", "alert--info", styles.recordChrome)} role="note">
 			<strong>{STATUS_LABELS[status]}.</strong>
 			{tagline ? <> {tagline}</> : null}
-			{typeof supersededBy === "string" && supersededBy.length ? (
+			{typeof supersededBy === "string" && supersededBy ? (
 				<>
 					{" "}
 					Superseded by <Link to={supersededBy}>{supersededBy}</Link>.

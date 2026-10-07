@@ -100,7 +100,7 @@ function encodePayload(payload: Uint8Array | JSONValue | undefined): EntryMeta["
 
 	const json = JSON.stringify(payload)
 
-	if (json === undefined) {
+	if (!json) {
 		throw new TypeError("payload must be a Uint8Array or JSON-serializable")
 	}
 
@@ -251,7 +251,7 @@ export class AncestrieBuilder {
 		}
 
 		for (const token of tokens) {
-			if (typeof token !== "string" || !token.length) {
+			if (typeof token !== "string" || !token) {
 				throw new TypeError(`entry ${entry.id} has an empty token after normalization`)
 			}
 		}
@@ -490,7 +490,7 @@ export class AncestrieBuilder {
 			this.entriesByID.set(entry.id, {
 				rank: entry.rank,
 				parentIDs: [...entry.parentIDs],
-				...(payload === undefined ? {} : { payload }),
+				...(payload ? { payload } : {}),
 			})
 
 			return
@@ -500,12 +500,11 @@ export class AncestrieBuilder {
 			existing.parentIDs.length === entry.parentIDs.length &&
 			existing.parentIDs.every((p, i) => p === entry.parentIDs[i])
 
-		const samePayload =
-			existing.payload === undefined
-				? payload === undefined
-				: payload !== undefined &&
-					existing.payload.isJSON === payload.isJSON &&
-					bytesEqual(existing.payload.bytes, payload.bytes)
+		const samePayload = existing.payload
+			? payload !== undefined &&
+				existing.payload.isJSON === payload.isJSON &&
+				bytesEqual(existing.payload.bytes, payload.bytes)
+			: payload === undefined
 
 		// Math.fround: the artifact stores rank as f32, so two adds that agree at f32 precision agree.
 		if (Math.fround(existing.rank) !== Math.fround(entry.rank) || !sameParents || !samePayload) {

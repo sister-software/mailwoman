@@ -207,7 +207,7 @@ export function applyInterpolation(
 		...(factor ? { uncertainty_raw_m: hit.uncertaintyM, uncertainty_calibration: factor } : {}),
 		interpolation_method: hit.method,
 		...(hit.parityMatched != null ? { parity_matched: hit.parityMatched } : {}),
-		...(hit.bracket != null ? { interpolation_bracket: hit.bracket } : {}),
+		...(hit.bracket ? { interpolation_bracket: hit.bracket } : {}),
 	}
 }
 
@@ -231,7 +231,7 @@ function foldVoieTokens(s: string): string[] {
 function isVoieShaped(s: string): boolean {
 	const first = foldVoieTokens(s)[0]
 
-	if (first == null) return false
+	if (!first) return false
 
 	return isFrenchStreetWord(first) || FR_GENEROUS_VOIE_TOKENS.has(first)
 }

@@ -51,17 +51,17 @@ export function compareISODate(a: ISODate, b: ISODate): -1 | 0 | 1 {
  * so it is undated rather than admitted.
  */
 export function admitsAsOf(time: SourceTime, asOf: ISODate): Admission {
-	if (time.availableAt === null) return "undated"
+	if (!time.availableAt) return "undated"
 
 	return compareISODate(time.availableAt, asOf) <= 0 ? "admitted" : "excluded"
 }
 
 export function appliesAt(interval: ClaimInterval, date: ISODate): boolean | "unknown" {
-	if (interval.validFrom === null && interval.validTo === null) return "unknown"
+	if (!interval.validFrom && !interval.validTo) return "unknown"
 
-	if (interval.validFrom !== null && compareISODate(date, interval.validFrom) < 0) return false
+	if (interval.validFrom && compareISODate(date, interval.validFrom) < 0) return false
 
-	if (interval.validTo !== null && compareISODate(date, interval.validTo) > 0) return false
+	if (interval.validTo && compareISODate(date, interval.validTo) > 0) return false
 
 	return true
 }

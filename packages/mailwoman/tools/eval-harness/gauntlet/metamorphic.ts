@@ -260,7 +260,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		for (const p of INV) {
 			const perturbed = p.f(base.input, base)
 
-			if (perturbed == null) continue
+			if (!perturbed) continue
 
 			invChecks++
 			bump(invTally, p.name, "checks")
@@ -313,7 +313,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		for (const p of BAND) {
 			const perturbed = p.f(base.input, base)
 
-			if (perturbed == null || perturbed === base.input) continue
+			if (!perturbed || perturbed === base.input) continue
 
 			if (canon.lat == null) continue
 

@@ -224,7 +224,7 @@ function locateSpan(args: {
 }): { start: number; end: number } | null {
 	const { haystack, needle, claimed, maxEditDistance } = args
 
-	if (!needle.length) return null
+	if (!needle) return null
 
 	// Pass 1: verbatim substring.
 	// Word-boundary-aligned matches are preferred over intra-word ones, so a short

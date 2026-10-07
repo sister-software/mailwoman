@@ -114,7 +114,7 @@ function subjectAndQualifiers(tree: AddressTree): { subject: string | null; qual
 
 	for (const tag of ADMIN_TAG_DEPTH) {
 		for (const value of byTag.get(tag) ?? []) {
-			if (subject === null) {
+			if (!subject) {
 				subject = value
 			} else {
 				qualifiers.push(value)
@@ -174,7 +174,7 @@ function regionScopeFromPool(qualifiers: readonly string[], pool: readonly SameD
 export function selectBaseline(tree: AddressTree, pool: readonly SameDataCandidate[]): BaselineSelection {
 	const { subject, qualifiers } = subjectAndQualifiers(tree)
 
-	if (subject === null) {
+	if (!subject) {
 		return { placeID: null, subject: null, confidence: 0, components: null, abstainedBecause: "no_admin_node" }
 	}
 
@@ -192,8 +192,8 @@ export function selectBaseline(tree: AddressTree, pool: readonly SameDataCandida
 		const candidateKey = normalizeLocalityForKey(candidate.name)
 		const exact = candidateKey === subjectKey ? 1 : 0
 		const similarity = exact === 1 ? 1 : jaroWinkler(subjectKey, candidateKey)
-		const countryQualifier = countryScope !== null && candidate.country === countryScope ? 1 : 0
-		const regionQualifier = regionScope !== null && String(candidate.parent_id ?? "") === regionScope ? 1 : 0
+		const countryQualifier = countryScope && candidate.country === countryScope ? 1 : 0
+		const regionQualifier = regionScope && String(candidate.parent_id ?? "") === regionScope ? 1 : 0
 
 		const components: BaselineScoreComponents = {
 			exact,

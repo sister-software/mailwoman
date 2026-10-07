@@ -560,7 +560,7 @@ export interface RemoteArtifactState {
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {
 	if (!local.exists) return true
 
-	if (remote.md5 !== undefined) {
+	if (remote.md5) {
 		return local.md5 !== remote.md5
 	}
 

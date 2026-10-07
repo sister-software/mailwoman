@@ -161,7 +161,7 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 	try {
 		const body = (await c.req.json()) as unknown
 
-		return typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {}
+		return typeof body === "object" && body ? (body as Record<string, unknown>) : {}
 	} catch {
 		return {}
 	}
@@ -196,7 +196,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for types only. a runtime import would be a new dependency.
 			const parsed = raw ? (JSON.parse(raw) as unknown) : {}
 
-			if (typeof parsed === "object" && parsed !== null) {
+			if (typeof parsed === "object" && parsed) {
 				for (const key of ["query", "address"] as const) {
 					const value = (parsed as Record<string, unknown>)[key]
 

@@ -56,7 +56,7 @@ function trigramExpression(token: string): string | null {
 		windows.add(characters.slice(start, start + TRIGRAM).join(""))
 	}
 
-	return !windows.size ? null : [...windows].map(quoteTerm).join(" OR ")
+	return windows.size ? [...windows].map(quoteTerm).join(" OR ") : null
 }
 
 async function correctToken(db: SearchDatabase, token: string): Promise<string | null> {

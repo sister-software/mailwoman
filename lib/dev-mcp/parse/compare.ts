@@ -171,14 +171,13 @@ export function diffSpans(mailwoman: readonly LabelledSpan[], libpostal: readonl
 		const theirs = join(libpostal, label)
 		const collapsedFrom = TAGS_PER_LABEL.get(label) ?? []
 
-		const verdict: SpanVerdict =
-			ours === null
-				? SpanVerdict.LibpostalOnly
-				: theirs === null
-					? SpanVerdict.MailwomanOnly
-					: foldCaseWhitespace(ours) === foldCaseWhitespace(theirs)
-						? SpanVerdict.Agree
-						: SpanVerdict.ValueDiffers
+		const verdict: SpanVerdict = ours
+			? !theirs
+				? SpanVerdict.MailwomanOnly
+				: foldCaseWhitespace(ours) === foldCaseWhitespace(theirs)
+					? SpanVerdict.Agree
+					: SpanVerdict.ValueDiffers
+			: SpanVerdict.LibpostalOnly
 
 		return {
 			label,

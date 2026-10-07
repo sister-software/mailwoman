@@ -233,7 +233,7 @@ export class NeuralAddressClassifier {
 	}
 
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
-		if (!text.length) return { raw: text, roots: [] }
+		if (!text) return { raw: text, roots: [] }
 		// The model trained on mixed case, so this converts all-caps ASCII input to title case.
 		// The conversion preserves length and keeps offsets valid.
 		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
@@ -252,7 +252,7 @@ export class NeuralAddressClassifier {
 	 * same decode path as `parse` and the logits the raw model output before priors and repairs.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
-		if (!text.length) {
+		if (!text) {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
 
@@ -280,7 +280,7 @@ export class NeuralAddressClassifier {
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]
 
-		if (!text.length) {
+		if (!text) {
 			// Empty input still reports the resolved conventions mode and a record for every prior kind.
 			return {
 				text,

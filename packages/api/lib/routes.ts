@@ -241,7 +241,7 @@ function toComponentDict(components: Record<string, string | string[]>): Compone
 	for (const [key, value] of Object.entries(components)) {
 		const first = Array.isArray(value) ? value[0] : value
 
-		if (first !== undefined) {
+		if (first) {
 			out[key as ComponentTag] = first
 		}
 	}

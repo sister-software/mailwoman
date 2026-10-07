@@ -101,7 +101,7 @@ function atomLinkOf(element: MarkupElement): AtomLink {
 		rel: (element.attributes.rel ?? "").toLowerCase(),
 		type: element.attributes.type ?? null,
 		title: element.attributes.title ?? null,
-		length: length !== undefined && /^\d+$/u.test(length) ? Number(length) : null,
+		length: length && /^\d+$/u.test(length) ? Number(length) : null,
 	}
 }
 

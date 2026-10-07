@@ -139,7 +139,7 @@ export function eligibleBuildings(dossier: Dossier, scenario: Scenario): readonl
 		for (const membership of memberships) {
 			const owner = owners.get(membership)
 
-			if (owner !== undefined) throw new SharedUnitMembershipError(membership, [owner, building])
+			if (owner) throw new SharedUnitMembershipError(membership, [owner, building])
 
 			owners.set(membership, building)
 		}

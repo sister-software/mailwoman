@@ -120,7 +120,7 @@ function summarizeServed(record: PublishedBundleRecord): ServedBundleSummary {
 			manifestsMeasured++
 			tiers.add(artifact.manifest.tier)
 
-			if (artifact.manifest.expression !== null) {
+			if (artifact.manifest.expression) {
 				expressions.add(artifact.manifest.expression)
 			}
 		} else {

@@ -58,11 +58,11 @@ export function assertCongruent<Item>(
 	const mergedIterators = zip(actualItemIterators, expectedItemIterators)
 
 	for (const [actualItemIterator, expectedItemIterator, iteratorsIndex] of mergedIterators) {
-		if (expectedItemIterator === null) {
+		if (!expectedItemIterator) {
 			throw new TypeError(`Expected items at index ${iteratorsIndex} not found`)
 		}
 
-		if (actualItemIterator === null) {
+		if (!actualItemIterator) {
 			throw new TypeError(`Actual items at index ${iteratorsIndex} not found`)
 		}
 

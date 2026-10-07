@@ -82,7 +82,7 @@ async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: n
 	const deadline = Date.now() + deadlineMs
 
 	while (Date.now() < deadline) {
-		if (server.child.exitCode !== null || server.child.signalCode !== null) {
+		if (server.child.exitCode !== null || server.child.signalCode) {
 			throw new Error(
 				`server exited before becoming healthy (code ${server.child.exitCode}, signal ${server.child.signalCode})\n` +
 					`stderr:\n${server.stderr}`
@@ -106,7 +106,7 @@ async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: n
 }
 
 async function stopServer(server: SpawnedServer): Promise<void> {
-	if (server.child.exitCode !== null || server.child.signalCode !== null) return
+	if (server.child.exitCode !== null || server.child.signalCode) return
 
 	server.child.kill("SIGTERM")
 

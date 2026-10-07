@@ -129,7 +129,7 @@ export function buildSoftFeatures(
 	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
 
 	const localitySurface =
-		sources.localitySurfaceLexicon && (streetContext || sources.streetTypeLexicon === undefined)
+		sources.localitySurfaceLexicon && (streetContext || !sources.streetTypeLexicon)
 			? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
 			: undefined
 

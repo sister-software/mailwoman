@@ -101,7 +101,7 @@ function refusalFrom(run: () => unknown): PremiseLinkageRedactionError {
 }
 
 function isCount(value: unknown): value is PremiseLinkageCount {
-	if (typeof value !== "object" || value === null) return false
+	if (typeof value !== "object" || !value) return false
 
 	return typeof (value as PremiseLinkageCount).n === "number" && typeof (value as PremiseLinkageCount).of === "number"
 }

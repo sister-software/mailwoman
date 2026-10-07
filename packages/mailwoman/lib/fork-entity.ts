@@ -366,7 +366,7 @@ export function probeVenueNearAnchorFolded(
 	const hits = opts.lookup.search({ name: queryHead, limit: 24 })
 
 	const folded = hits.filter((h) => {
-		if (h.name === null) return false
+		if (!h.name) return false
 		const hitHead = venueHeadSegment(h.name) ?? h.name
 
 		return normalizeLocalityForKey(hitHead) === queryKey

@@ -68,7 +68,7 @@ export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system])
  * run only on the few postcode-shaped spans an address contains.
  */
 export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
-	if (typeof postcode !== "string" || !postcode.length) return []
+	if (typeof postcode !== "string" || !postcode) return []
 	const out: SystemCode[] = []
 
 	for (const [system, accepts] of SYSTEM_ACCEPTS) {

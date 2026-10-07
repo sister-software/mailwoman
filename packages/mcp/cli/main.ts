@@ -245,7 +245,7 @@ const deps: MCPToolDeps = {
 
 		let frn: FRN | null = null
 
-		if (q.frn !== undefined) {
+		if (q.frn) {
 			const parsed = toFRN(q.frn)
 
 			if (!parsed) {

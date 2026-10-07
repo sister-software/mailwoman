@@ -28,7 +28,7 @@ async function main(): Promise<void> {
 	if (!payload || payload["tool_name"] !== "Bash") return
 
 	const input = payload["tool_input"]
-	const command = typeof input === "object" && input !== null ? (input as { command?: unknown }).command : undefined
+	const command = typeof input === "object" && input ? (input as { command?: unknown }).command : undefined
 
 	if (typeof command !== "string" || !command.trim()) return
 

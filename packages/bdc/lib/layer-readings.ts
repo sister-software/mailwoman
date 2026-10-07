@@ -30,7 +30,7 @@ const LAYER_BY_TECHNOLOGY: ReadonlyMap<number, string> = new Map([
 export function bdcTechnologyLayer(technologyCode: number): string {
 	const layer = LAYER_BY_TECHNOLOGY.get(technologyCode)
 
-	if (layer === undefined) {
+	if (!layer) {
 		throw new Error(`bdcTechnologyLayer: technology code ${technologyCode} has no dossier layer name`)
 	}
 

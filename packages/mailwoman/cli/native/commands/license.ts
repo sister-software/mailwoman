@@ -152,7 +152,7 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 	}
 
 	const majorOption = stringValue(parsed.values, "major")
-	const major = majorOption === null ? await thisMajorVersion() : Number.parseInt(majorOption, 10)
+	const major = majorOption ? Number.parseInt(majorOption, 10) : await thisMajorVersion()
 
 	if (!Number.isFinite(major)) throw new CLIUsageError(`--major must be an integer, got ${stringifyJSON(majorOption)}.`)
 

@@ -289,7 +289,7 @@ export function buildAnchorFeatures(
 	const tokenRe = /[A-Za-z0-9]+/g
 	let m: RegExpExecArray | null
 
-	while ((m = tokenRe.exec(text)) !== null) {
+	while ((m = tokenRe.exec(text))) {
 		const entry = lookup.get(m[0].toUpperCase())
 
 		if (!entry) continue

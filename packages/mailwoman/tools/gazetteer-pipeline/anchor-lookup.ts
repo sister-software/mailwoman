@@ -115,7 +115,7 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
 	for (const [pc, [lat, lon, source]] of units) {
-		if (source === null) continue
+		if (!source) continue
 		const outward = pc.slice(0, -GB_INWARD_LENGTH)
 		const bucket = acc.get(outward)
 
@@ -405,7 +405,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 			}
 		}
 
-		if (source === null && members.includes("US") && zcta.has(pc)) {
+		if (!source && members.includes("US") && zcta.has(pc)) {
 			;[lat, lon] = zcta.get(pc)!
 			source = ZCTA_SOURCE
 

@@ -693,17 +693,17 @@ function capacityFinding(context: RuleContext): Finding {
 function openWindowText(window: ConstructionWindow, date: ISODate): string {
 	const named = `The construction window "${window.stage}"`
 
-	if (window.start === null) {
-		return window.end === null
-			? `${named} states no start and no end.`
-			: `${named} states no start and closed ${window.end}, after ${date}.`
+	if (!window.start) {
+		return window.end
+			? `${named} states no start and closed ${window.end}, after ${date}.`
+			: `${named} states no start and no end.`
 	}
 
 	if (compareISODate(window.start, date) > 0) return `${named} opened ${window.start}, after ${date}.`
 
-	return window.end === null
-		? `${named} opened ${window.start} and states no end.`
-		: `${named} opened ${window.start} and closed ${window.end}, after ${date}.`
+	return window.end
+		? `${named} opened ${window.start} and closed ${window.end}, after ${date}.`
+		: `${named} opened ${window.start} and states no end.`
 }
 
 /**

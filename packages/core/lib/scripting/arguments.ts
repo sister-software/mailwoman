@@ -64,7 +64,7 @@ export function extractDelimited(value?: unknown, delimiter = ","): string[] {
  * otherwise fail far from the flag that caused it.
  */
 export function requiredArgument(scope: string, name: string, value: string | null | undefined): string {
-	if (value == null) {
+	if (!value) {
 		throw new Error(`${scope}: --${name} is required`)
 	}
 

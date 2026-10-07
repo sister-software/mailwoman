@@ -80,7 +80,7 @@ describe("taxonomy integrity", () => {
 		for (const category of getAllCategories()) {
 			// The full Overture snapshot has no OSM mapping, so osmTag is a curated field.
 			// The Overpass emitter requires one on the infra classes.
-			if (category.osmTag !== undefined) {
+			if (category.osmTag) {
 				expect(category.osmTag, `malformed osmTag on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
 			}
 

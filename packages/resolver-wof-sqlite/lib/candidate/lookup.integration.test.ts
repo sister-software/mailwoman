@@ -482,7 +482,7 @@ describe("RankByPrimaryPreference firing mark (variantExempted)", () => {
 		neg_rank,
 		is_primary,
 		country_id,
-		...(name_role === undefined ? {} : { name_role }),
+		...(name_role ? { name_role } : {}),
 	})
 
 	test("a cross-country variant the exemption spares carries the mark and no penalty", () => {

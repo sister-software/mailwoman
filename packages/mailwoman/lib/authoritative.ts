@@ -92,7 +92,7 @@ export function authoritativeQueryFrom(
 	for (const [field, tag] of EVIDENCE_TAGS) {
 		const value = evidence[field]
 
-		if (typeof value === "string" && value.length) {
+		if (typeof value === "string" && value) {
 			components.push({ tag, value, start: null, end: null })
 		}
 	}

@@ -60,7 +60,7 @@ async function main(): Promise<number> {
 	if (!isCommandName(command)) {
 		process.stdout.write(`${USAGE}\n`)
 
-		return command === null ? 0 : 2
+		return command ? 2 : 0
 	}
 
 	const raw = cliArguments()

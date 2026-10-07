@@ -141,7 +141,7 @@ function fields(value: unknown): Record<string, unknown> {
 }
 
 function readString(value: unknown): string | null {
-	return typeof value === "string" && value.length ? value : null
+	return typeof value === "string" && value ? value : null
 }
 
 /**
@@ -374,7 +374,7 @@ export class ExternalGeocoderClient extends APIClient {
 		const read = this.#protocol.readIdentity(statusBody, searchBody)
 		const warnings: string[] = []
 
-		if (statusPath === null) {
+		if (!statusPath) {
 			warnings.push(
 				`GET ${this.#protocol.statusPath} did not answer (HTTP ${statusHTTP ?? "no response"}), so this endpoint's ` +
 					`identity could not be observed. Every engine here has a compatible drop-in inside this repo answering ` +
@@ -382,7 +382,7 @@ export class ExternalGeocoderClient extends APIClient {
 			)
 		}
 
-		if (read.data_vintage === null) {
+		if (!read.data_vintage) {
 			warnings.push(
 				"This endpoint reports no data vintage, so the index behind the numbers is undated. A coverage difference " +
 					"between arms cannot be dated to a build from this result."
@@ -391,14 +391,14 @@ export class ExternalGeocoderClient extends APIClient {
 
 		const version = read.version ?? declaredVersion ?? null
 
-		if (read.version === null && declaredVersion) {
+		if (!read.version && declaredVersion) {
 			warnings.push(
 				`Version ${stringifyJSON(declaredVersion)} is CALLER-DECLARED — the endpoint did not confirm it. Recorded ` +
 					"as the caller's claim about what is running, not as an observation."
 			)
 		}
 
-		if (version === null) {
+		if (!version) {
 			throw new Error(
 				`External arm ${this.engine} at ${this.endpoint} will not say what it is: ` +
 					`GET ${this.#protocol.statusPath} answered ${statusHTTP ?? "nothing"} and the search response carries no ` +
@@ -412,7 +412,7 @@ export class ExternalGeocoderClient extends APIClient {
 			engine: this.engine,
 			endpoint: this.endpoint,
 			version,
-			version_source: read.version === null ? "caller-declared" : "endpoint",
+			version_source: read.version ? "endpoint" : "caller-declared",
 			data_vintage: read.data_vintage,
 			// None of the supported engines reports these two fields.
 			system_scope: null,

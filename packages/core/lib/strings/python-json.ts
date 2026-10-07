@@ -60,7 +60,7 @@ function serializeNumber(value: number): string {
 }
 
 function serialize(value: unknown, ensureASCII: boolean): string {
-	if (value === null || value === undefined) return "null"
+	if (value === null || !value) return "null"
 	const t = typeof value
 
 	if (t === "boolean") return value ? "true" : "false"

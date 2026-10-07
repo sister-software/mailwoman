@@ -109,7 +109,7 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 
 			node.metadata = { ...node.metadata, postcode_shape_systems: intersection }
 
-			if (verdict.narrowing == null) {
+			if (!verdict.narrowing) {
 				verdict.narrowing = intersection
 			}
 

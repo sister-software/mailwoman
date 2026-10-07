@@ -140,7 +140,7 @@ export function firstLocalityValue(roots: readonly AddressNode[]): string | null
 
 function collectInDocumentOrder(nodes: readonly AddressNode[], tag: string, out: string[], seen: Set<string>): void {
 	for (const n of nodes) {
-		if (n.tag === tag && n.value.trim().length) {
+		if (n.tag === tag && n.value.trim()) {
 			const value = n.value.trim()
 			const key = value.toLowerCase()
 

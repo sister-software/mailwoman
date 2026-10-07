@@ -421,7 +421,7 @@ export function createRuntimePipeline(
 			effectiveRunOpts = { ...effectiveRunOpts, hardPlaceCountry: true }
 		}
 
-		if (opts.hardCountrySafelist && effectiveRunOpts?.hardCountrySafelist === undefined) {
+		if (opts.hardCountrySafelist && !effectiveRunOpts?.hardCountrySafelist) {
 			effectiveRunOpts = { ...effectiveRunOpts, hardCountrySafelist: opts.hardCountrySafelist }
 		}
 

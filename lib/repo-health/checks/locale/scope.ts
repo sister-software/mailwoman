@@ -36,7 +36,7 @@ export function declaredTiers(markdown: string): Map<string, string[]> {
 		const cells = line.split("|")
 		const locales = cells[2]
 
-		if (locales === undefined) continue
+		if (!locales) continue
 
 		tiers.set(
 			match[1],

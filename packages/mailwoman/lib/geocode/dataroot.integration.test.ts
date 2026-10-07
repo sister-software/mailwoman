@@ -59,7 +59,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		try {
 			const fstPath = outcome.session.artifacts.fstPath
 
-			if (fstPath !== undefined) {
+			if (fstPath) {
 				const envOverlay = dataRootPath("weights")
 
 				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)

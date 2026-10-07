@@ -112,7 +112,7 @@ export function stylesFor(layerName: string, zoom: number): LayerStyle[] {
  */
 export function styleForFeatureKind(styles: readonly LayerStyle[], featureKind: unknown): LayerStyle | null {
 	for (const style of styles) {
-		if (style.featureKinds == null) return style
+		if (!style.featureKinds) return style
 
 		if (typeof featureKind === "string" && style.featureKinds.includes(featureKind)) return style
 	}

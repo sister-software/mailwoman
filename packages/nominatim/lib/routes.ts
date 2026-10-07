@@ -247,7 +247,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		const params: NominatimReverseParams = {
 			lat,
 			lon,
-			zoom: q["zoom"] != null ? Number(q["zoom"]) : undefined,
+			zoom: q["zoom"] ? Number(q["zoom"]) : undefined,
 			// jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
 			addressdetails: parseBool(q["addressdetails"]) || q["format"] === "jsonld",
 			format: parseFormat(q["format"]),

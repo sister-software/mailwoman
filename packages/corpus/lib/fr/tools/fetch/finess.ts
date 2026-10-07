@@ -156,7 +156,7 @@ export function selectFinessExtract(dataset: DataGouvDataset): DataGouvResource 
 export async function readFinessDataset(client: Pick<APIClient, "fetch">): Promise<DataGouvDataset> {
 	const { data } = await client.fetch<DataGouvDataset | string>({ url: FINESS_DATASET_API_URL })
 
-	if (typeof data !== "object" || data === null || !Array.isArray(data.resources)) {
+	if (typeof data !== "object" || !data || !Array.isArray(data.resources)) {
 		throw new Error(`${FR_FINESS_ADAPTER_ID}: ${FINESS_DATASET_API_URL} did not answer a dataset record`)
 	}
 

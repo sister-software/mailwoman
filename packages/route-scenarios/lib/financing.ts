@@ -145,7 +145,7 @@ export function financingView(table: CashFlowTable, flows: readonly FinancingFlo
 		cashBalance += netCashFlow
 		reconciles &&= netCashFlow - financing === projectRow.cashFlow
 
-		if (fundingGap === null && cashBalance < 0) {
+		if (!fundingGap && cashBalance < 0) {
 			fundingGap = { month, calendarMonth: projectRow.calendarMonth, balance: cashBalance }
 		}
 

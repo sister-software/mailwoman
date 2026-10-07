@@ -536,7 +536,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 
 						const house = houseNumberOf(address)
 
-						if (house === null) {
+						if (!house) {
 							refused.noHouseNumber++
 
 							continue
@@ -550,7 +550,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 						for (const href of componentHrefs(address)) {
 							const id = componentResourceID(href)
 
-							if (id === null) {
+							if (!id) {
 								unreadable = true
 
 								break
@@ -558,7 +558,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 
 							const streetValue = index.streets.get(id)
 
-							if (streetValue !== undefined) {
+							if (streetValue) {
 								street = streetValue
 
 								continue
@@ -566,7 +566,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 
 							const postcodeValue = index.postcodes.get(id)
 
-							if (postcodeValue !== undefined) {
+							if (postcodeValue) {
 								postcode = postcodeValue
 
 								continue
@@ -580,7 +580,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 						// A reference the harvest cannot answer is a street, postcode
 						// or locality this run could not read.
 						// A row emitted without it would record an absence the publisher never stated.
-						if (unreadable || street === null || postcode === null || locality === null) {
+						if (unreadable || !street || !postcode || !locality) {
 							refused.unjoined++
 
 							continue

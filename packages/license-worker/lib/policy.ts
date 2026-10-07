@@ -62,7 +62,7 @@ export function licenseStateAfterSubscription(
 	if (!ended) return LicenseState.Active
 
 	// Calendar dates compare as strings.
-	return observation.graceUntil != null && observation.today <= observation.graceUntil
+	return observation.graceUntil && observation.today <= observation.graceUntil
 		? LicenseState.Active
 		: LicenseState.Lapsed
 }

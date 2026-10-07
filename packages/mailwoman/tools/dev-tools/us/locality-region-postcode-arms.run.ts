@@ -222,7 +222,7 @@ for (const arm of ARMS) {
 			words: place.locality.trim().split(/\s+/).length,
 		})
 
-		if (locality === null) {
+		if (!locality) {
 			noLocality++
 		}
 
@@ -296,7 +296,7 @@ for (const arm of ARMS) {
 	const byWord = new Map<string, { rows: number; missed: number }>()
 
 	for (const row of armRows) {
-		if (row.suffixTail === null) continue
+		if (!row.suffixTail) continue
 
 		const tally = byWord.get(row.suffixTail) ?? { rows: 0, missed: 0 }
 

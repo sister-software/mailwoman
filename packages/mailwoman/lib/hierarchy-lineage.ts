@@ -186,7 +186,7 @@ export function annotateHierarchyLineage(
 
 		if (lineage.has(entry.placeID)) {
 			entry.in_winner_lineage = true
-		} else if (ancestors !== undefined) {
+		} else if (ancestors) {
 			// Only a present sidecar can testify to absence.
 			// Without one, "not in the set" is ignorance.
 			entry.in_winner_lineage = false

@@ -139,7 +139,7 @@ function artifactProblem(value: unknown): string | null {
 		return `this reader understands artifact schema version ${ARTIFACT_SCHEMA_VERSION}; the artifact declares ${stringifyJSON(value.schemaVersion)}`
 	}
 
-	if (typeof value.modelVersion !== "string" || !value.modelVersion.trim().length) {
+	if (typeof value.modelVersion !== "string" || !value.modelVersion.trim()) {
 		return "`modelVersion` must be a non-blank string"
 	}
 

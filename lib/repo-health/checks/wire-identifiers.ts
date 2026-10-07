@@ -83,11 +83,11 @@ export function configSourceNames(text: string): ConfigSourceName[] {
 		const indent = /^[\t ]*/.exec(raw)![0].length
 		const opener = /^[\t ]*([A-Za-z_]+):\s*(#.*)?$/.exec(raw)
 
-		if (field !== null && indent <= fieldIndent) {
+		if (field && indent <= fieldIndent) {
 			field = null
 		}
 
-		if (field === null) {
+		if (!field) {
 			if (opener && (KEYED_FIELDS.has(opener[1]!) || opener[1] === LISTED_FIELD || opener[1] === RECEIPTS_FIELD)) {
 				field = opener[1]!
 				fieldIndent = indent

@@ -19,7 +19,7 @@ describe("resolveTilesPath", () => {
 		// The data-root probe is existsSync-guarded.
 		const resolved = await resolveTilesPath()
 
-		if (resolved != null) {
+		if (resolved) {
 			expect(resolved.endsWith("planet.pmtiles")).toBe(true)
 		}
 	})

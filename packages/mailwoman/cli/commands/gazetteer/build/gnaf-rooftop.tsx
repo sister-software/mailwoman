@@ -45,7 +45,7 @@ const GazetteerBuildGNAFRooftop: CommandComponent<typeof spec> = ({ options }) =
 		const r = await buildGNAFRooftopDatabase({
 			standardDir: options.standardDir,
 			out: options.out,
-			states: options.states === undefined ? undefined : extractDelimited(options.states),
+			states: options.states ? extractDelimited(options.states) : undefined,
 			release: options.release,
 			buildSHA: options.buildSha,
 			createdAt: options.createdAt,

@@ -337,19 +337,19 @@ export async function readBrusselsComponents(
 		if (feature.name === "ad:ThoroughfareName") {
 			const street = thoroughfareName(feature)
 
-			if (street !== null) {
+			if (street) {
 				streets.set(id, street)
 			}
 		} else if (feature.name === "ad:PostalDescriptor") {
 			const postcode = postalDescriptorCode(feature)
 
-			if (postcode !== null) {
+			if (postcode) {
 				postcodes.set(id, postcode)
 			}
 		} else if (adminUnitLevel(feature) === MUNICIPALITY_LEVEL) {
 			const municipality = placeNameWithoutNISCode(placeName(feature))
 
-			if (municipality !== null) {
+			if (municipality) {
 				municipalities.set(id, municipality)
 			}
 		}
@@ -454,7 +454,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 					// and an absent one both read as null and `voidDesignatorTypes` separates them below.
 					const house = designator(designatorsByType(address), HOUSE_NUMBER_DESIGNATOR)
 
-					if (house === null) {
+					if (!house) {
 						// A void number is a value this run could not read and an absent one is
 						// a number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
@@ -479,7 +479,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 					for (const href of slots) {
 						const key = componentJoinKey(href)
 
-						if (key === null) continue
+						if (!key) continue
 
 						street = index.streets.get(key) ?? street
 						postcode = index.postcodes.get(key) ?? postcode
@@ -488,7 +488,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 						locality = index.municipalities.get(key) ?? locality
 					}
 
-					if (postcode === null && slots.length < COMPONENTS_PER_ADDRESS) {
+					if (!postcode && slots.length < COMPONENTS_PER_ADDRESS) {
 						// The publisher wrote the postal-zone reference empty.
 						// The row is refused and reported rather than yielded with the postcode missing,
 						// because an unstated value is not an address without a postcode.
@@ -499,7 +499,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 
 					// A component the index cannot answer is a street, postcode or locality this run could not read.
 					// A row emitted without it would record an absence the publisher never stated.
-					if (street === null || postcode === null || locality === null) {
+					if (!street || !postcode || !locality) {
 						refused.unjoined++
 
 						continue

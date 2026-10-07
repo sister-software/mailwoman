@@ -240,10 +240,10 @@ async function readServiceZone(
 			nearest = distance
 		}
 
-		if (zone === null && geometryContains(geometry, longitude, latitude)) {
+		if (!zone && geometryContains(geometry, longitude, latitude)) {
 			const label = feature.properties?.flood_zone
 
-			if (typeof label === "string" && label.length) {
+			if (typeof label === "string" && label) {
 				zone = label
 				insideUnlabelled = false
 			} else {

@@ -368,7 +368,7 @@ export class CoastalErosionLookup implements Disposable {
 				location: row.location,
 				localAuthority: row.local_authority,
 				shorelineManagementPlan:
-					row.smp_no === null || row.smp_name === null
+					row.smp_no === null || !row.smp_name
 						? null
 						: { number: row.smp_no, name: row.smp_name, policyUnits: row.smp_policy_units },
 				rearScarpProbability: row.rear_scarp_probability,
@@ -477,12 +477,12 @@ function toDesignation(area: AreaRow, containment: CoastalContainmentPath): Coas
 		frontageID: area.frontage_id,
 		distanceM: area.distance_m,
 		shorelineManagementPlan:
-			area.smp_no === null || area.smp_name === null
+			area.smp_no === null || !area.smp_name
 				? null
 				: { number: area.smp_no, name: area.smp_name, policyUnit: area.smp_pu ?? "" },
 		// NFI rows have no policy, so the policy is null when both policy fields are null.
 		policy:
-			area.mt_policy === null && area.lt_policy === null
+			!area.mt_policy && !area.lt_policy
 				? null
 				: {
 						mediumTerm: area.mt_policy,

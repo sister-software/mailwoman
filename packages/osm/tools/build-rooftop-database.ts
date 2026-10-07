@@ -167,7 +167,7 @@ async function main(): Promise<void> {
 			let street = rec.street
 			let rowSource = source
 
-			if (street == null) {
+			if (!street) {
 				const hit = recoveryIndex?.nearest(rec.lon, rec.lat, args.recoverRadiusKm)
 
 				if (!hit) {

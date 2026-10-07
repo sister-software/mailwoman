@@ -113,13 +113,13 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 	const labels = new Set<string>()
 
 	return value.map((entry: unknown, index) => {
-		if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+		if (typeof entry !== "object" || !entry || Array.isArray(entry)) {
 			throw new Error(`${source}: arm ${index} is not an object`)
 		}
 
 		const { label, opts } = entry as { label?: unknown; opts?: unknown }
 
-		if (typeof label !== "string" || !label.length) {
+		if (typeof label !== "string" || !label) {
 			throw new Error(`${source}: arm ${index} has no string "label"`)
 		}
 
@@ -127,7 +127,7 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 
 		labels.add(label)
 
-		if (typeof opts !== "object" || opts === null || Array.isArray(opts)) {
+		if (typeof opts !== "object" || !opts || Array.isArray(opts)) {
 			throw new Error(`${source}: arm "${label}" has no "opts" object`)
 		}
 
@@ -138,7 +138,7 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 
 			const kind = KNOB_OPTION_KINDS[key as keyof typeof KNOB_OPTION_KINDS]
 
-			if (kind === null) {
+			if (!kind) {
 				throw new Error(`${source}: arm "${label}" sets "${key}", which a JSON arms file cannot express`)
 			}
 

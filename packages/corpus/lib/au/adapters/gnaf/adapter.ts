@@ -92,7 +92,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 				const t = tryParsingJSON<GNAFTuple>(line)
 
-				if (t === null) continue
+				if (!t) continue
 
 				if (!t.house_number || !t.street || !t.locality || !t.postcode) continue
 

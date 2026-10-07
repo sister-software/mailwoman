@@ -141,7 +141,7 @@ async function parseFeature(
 		const vals = Array.isArray(value) ? value : [value]
 
 		for (const v of vals) {
-			if (typeof v === "string" && v.length) {
+			if (typeof v === "string" && v) {
 				names.push({ name: v, language: lang, privateuse, official })
 			}
 		}

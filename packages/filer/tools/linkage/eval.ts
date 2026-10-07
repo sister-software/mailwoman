@@ -214,7 +214,7 @@ function findTruthPositivePairs(
 			const b = representatives[j]!
 			const familyID = truthGroupOf.get(a)
 
-			if (familyID === undefined || familyID !== truthGroupOf.get(b)) continue
+			if (!familyID || familyID !== truthGroupOf.get(b)) continue
 
 			outcomes.push({ a, b, familyID, recovered: predictedSame(a, b) })
 		}

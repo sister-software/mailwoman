@@ -196,8 +196,7 @@ interface QueriedIdentifier {
  * Resolve the single requested identifier into a node ID.
  */
 function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
-	const suppliedCount =
-		(query.frn != null ? 1 : 0) + (query.form499ID != null ? 1 : 0) + (query.bdcProviderID != null ? 1 : 0)
+	const suppliedCount = (query.frn != null ? 1 : 0) + (query.form499ID ? 1 : 0) + (query.bdcProviderID != null ? 1 : 0)
 
 	if (suppliedCount !== 1) {
 		throw new Error("filerLookup: exactly one of `frn`, `form499ID`, `bdcProviderID` is required")
@@ -207,7 +206,7 @@ function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
 		return { nodeID: `${FilerIdentifierType.FRN}:${query.frn}`, type: FilerIdentifierType.FRN, value: query.frn }
 	}
 
-	if (query.form499ID != null) {
+	if (query.form499ID) {
 		return {
 			nodeID: `${FilerIdentifierType.Form499ID}:${query.form499ID}`,
 			type: FilerIdentifierType.Form499ID,

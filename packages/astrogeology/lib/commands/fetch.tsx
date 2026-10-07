@@ -36,7 +36,7 @@ interface Options {
 const KINDS: readonly PlanetarySourceKind[] = ["nomenclature", "dem"]
 
 function parseKinds(value: string | null): readonly PlanetarySourceKind[] {
-	if (value === null) return KINDS
+	if (!value) return KINDS
 
 	if (KINDS.includes(value as PlanetarySourceKind)) return [value as PlanetarySourceKind]
 

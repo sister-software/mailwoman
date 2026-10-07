@@ -195,7 +195,7 @@ function whereClause(options: ZoningIngestOptions): string[] {
 		bounds.push(`OBJECTID <= ${options.objectIDTo}`)
 	}
 
-	if (options.authorityCode !== undefined) {
+	if (options.authorityCode) {
 		bounds.push(`LA_CODE = '${options.authorityCode.replaceAll("'", "''")}'`)
 	}
 
@@ -206,9 +206,9 @@ function whereClause(options: ZoningIngestOptions): string[] {
  * Returns the value, or null when it is undefined or empty.
  */
 function blankToNull(value: string | null | undefined): string | null {
-	if (value == null) return null
+	if (!value) return null
 
-	return value.length ? value : null
+	return value ?? null
 }
 
 /**

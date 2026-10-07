@@ -150,7 +150,7 @@ export function addressGroups(country: string, tuple: LocaleBaseTuple, withStree
 	let current: Group = []
 
 	for (const piece of renderAddress(layout, components).pieces) {
-		if (piece.tag === null) {
+		if (!piece.tag) {
 			if (GROUP_BREAK.has(piece.text) && current.length) {
 				groups.push(current)
 				current = []

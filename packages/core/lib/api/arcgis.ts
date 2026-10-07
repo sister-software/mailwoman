@@ -42,11 +42,11 @@ export class ArcGISServiceError extends Error {
  * The body counts as an error only when its `error` object has a string `message`.
  */
 export function readArcGISError(payload: unknown): ArcGISErrorEnvelope | null {
-	if (typeof payload !== "object" || payload === null) return null
+	if (typeof payload !== "object" || !payload) return null
 
 	const error = (payload as { error?: unknown }).error
 
-	if (typeof error !== "object" || error === null) return null
+	if (typeof error !== "object" || !error) return null
 
 	const { code, message, details } = error as { code?: unknown; message?: unknown; details?: unknown }
 

@@ -308,25 +308,25 @@ export async function readWallonieComponents(
 		if (feature.name === "ad:ThoroughfareName") {
 			const street = thoroughfareName(feature)
 
-			if (street !== null) {
+			if (street) {
 				streets.set(id, street)
 			}
 		} else if (feature.name === "ad:PostalDescriptor") {
 			const postcode = postalDescriptorCode(feature)
 
-			if (postcode !== null) {
+			if (postcode) {
 				postcodes.set(id, postcode)
 			}
 		} else if (feature.name === "ad:AddressAreaName") {
 			const area = placeName(feature)
 
-			if (area !== null) {
+			if (area) {
 				areas.set(id, area)
 			}
 		} else if (adminUnitLevel(feature) === MUNICIPALITY_LEVEL) {
 			const municipality = placeName(feature)
 
-			if (municipality !== null) {
+			if (municipality) {
 				municipalities.set(id, municipality)
 			}
 		}
@@ -417,7 +417,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 					const byType = designatorsByType(address)
 					const house = designator(byType, HOUSE_NUMBER_DESIGNATOR)
 
-					if (house === null) {
+					if (!house) {
 						// A void number is a value this run could not read and an absent one is
 						// a number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
@@ -432,7 +432,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 
 					const box = designator(byType, NUMBER_EXTENSION_DESIGNATOR)
 
-					if (box !== null) {
+					if (box) {
 						extensions++
 					}
 
@@ -444,7 +444,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 					for (const href of componentHrefs(address)) {
 						const key = componentJoinKey(href)
 
-						if (key === null) continue
+						if (!key) continue
 
 						street = index.streets.get(key) ?? street
 						postcode = index.postcodes.get(key) ?? postcode
@@ -456,7 +456,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 
 					// A component the index cannot answer is a street, postcode or locality this run could not read.
 					// A row emitted without it would record an absence the publisher never stated.
-					if (street === null || postcode === null || locality === null) {
+					if (!street || !postcode || !locality) {
 						countDropped(tally, Refusal.Unjoined)
 
 						continue
@@ -469,14 +469,14 @@ export function createWallonieAdapter(): CorpusAdapter {
 						locality,
 					}
 
-					if (box !== null) {
+					if (box) {
 						components.unit = box
 					}
 
 					// The `partie de commune` is a dependent locality only where it names
 					// something other than the municipality.
 					// `Braine-l'Alleud` has an area of the same name, and `Beauvechain` has `Hamme-Mille`.
-					if (area !== null && area !== locality) {
+					if (area && area !== locality) {
 						components.dependent_locality = area
 					}
 

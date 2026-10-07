@@ -268,7 +268,7 @@ export function matrikkelenPublicationIsRecorded(
 	memberBytesOnDisk: number,
 	publication: MatrikkelenPublication
 ): boolean {
-	if (publication.lastModified === null) return false
+	if (!publication.lastModified) return false
 
 	return (
 		recorded.last_modified === publication.lastModified &&

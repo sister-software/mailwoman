@@ -19,7 +19,7 @@ function charTokens(spans: readonly (readonly [string, string | null])[]): { tex
 
 	for (const [surface, tag] of spans) {
 		for (const [k, ch] of [...surface].entries()) {
-			const label = (tag === null ? "O" : k === 0 ? `B-${tag}` : `I-${tag}`) as BIOLabel
+			const label = (tag ? (k === 0 ? `B-${tag}` : `I-${tag}`) : "O") as BIOLabel
 			tokens.push({ piece: ch, start: text.length, end: text.length + ch.length, label, confidence: 1 })
 			text += ch
 		}

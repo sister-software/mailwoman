@@ -137,7 +137,7 @@ export async function readDeclaredArtifactFile(
 
 	const files = (parsed as { files?: unknown } | null)?.files
 
-	if (typeof files !== "object" || files === null || Array.isArray(files)) return null
+	if (typeof files !== "object" || !files || Array.isArray(files)) return null
 
 	for (const key of keys) {
 		const file = (files as Record<string, unknown>)[key]
@@ -173,7 +173,7 @@ async function readModelCardObject(
 
 	const parsed = tryParsingJSON(raw)
 
-	if (typeof parsed !== "object" || parsed === null) return null
+	if (typeof parsed !== "object" || !parsed) return null
 
 	return parsed as Record<string, unknown>
 }
@@ -273,7 +273,7 @@ export async function readRequiredChannels(
 
 	if (requires === undefined) return null
 
-	if (typeof requires !== "object" || requires === null || Array.isArray(requires)) {
+	if (typeof requires !== "object" || !requires || Array.isArray(requires)) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires\` field — ` +
 				`expected an object, got ${stringifyJSON(requires)}.`
@@ -296,11 +296,7 @@ export async function readRequiredChannels(
 
 		if (entry === undefined) continue
 
-		if (
-			typeof entry !== "object" ||
-			entry === null ||
-			typeof (entry as { required?: unknown }).required !== "boolean"
-		) {
+		if (typeof entry !== "object" || !entry || typeof (entry as { required?: unknown }).required !== "boolean") {
 			throw new Error(
 				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}\` entry — ` +
 					`expected { required: boolean }, got ${stringifyJSON(entry)}.`
@@ -387,7 +383,7 @@ export async function readCapabilityManifest(
 
 	if (capabilities === undefined) return null
 
-	if (typeof capabilities !== "object" || capabilities === null || Array.isArray(capabilities)) {
+	if (typeof capabilities !== "object" || !capabilities || Array.isArray(capabilities)) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`capabilities\` field — ` +
 				`expected an object, got ${stringifyJSON(capabilities)}.`
@@ -448,7 +444,7 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | null | undef
 
 	const parsed = tryParsingJSON(raw)
 
-	if (typeof parsed !== "object" || parsed === null) return null
+	if (typeof parsed !== "object" || !parsed) return null
 	const obj = parsed as Record<string, unknown>
 	const transitions = obj.transitions
 	const start = obj.start_transitions

@@ -490,7 +490,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	if (
 		resolveOpts.candidatesPerLookup !== undefined ||
-		resolveOpts.defaultCountry !== undefined ||
+		resolveOpts.defaultCountry ||
 		resolveOpts.postcodeCountryCoherence !== undefined ||
 		resolveOpts.postcodeShapeCoherence !== undefined ||
 		resolveOpts.postcodeContainmentCoherence !== undefined

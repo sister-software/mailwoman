@@ -32,7 +32,7 @@ export function capitalPromotionOf(tree: AddressTree): string | null {
 	for (const n of walkNodes(tree.roots)) {
 		const stamp = n.metadata?.["capital_promotion"]
 
-		if (typeof stamp === "string" && stamp.length) return stamp
+		if (typeof stamp === "string" && stamp) return stamp
 
 		if (stamp === true) return "unknown"
 	}
@@ -60,7 +60,7 @@ export function postcodeCountryScopeOf(tree: AddressTree): string | null {
 	for (const n of walkNodes(tree.roots)) {
 		const scope = n.metadata?.["postcode_country_scope"] ?? n.metadata?.["explicit_country_scope"]
 
-		if (typeof scope === "string" && scope.length) return scope
+		if (typeof scope === "string" && scope) return scope
 	}
 
 	return null
@@ -92,7 +92,7 @@ export function recognizeBarePostcode(tree: AddressTree): AddressTree {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "postcode") return tree
 
-		if (n.value.trim().length) {
+		if (n.value.trim()) {
 			valued.push(n)
 		}
 	}

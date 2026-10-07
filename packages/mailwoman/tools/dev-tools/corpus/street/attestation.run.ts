@@ -275,7 +275,7 @@ for (const seed of rows) {
 console.log(`${verdicts.length} rows, Overture release ${release}${gbRegister ? `, GB register ${gbRegister}` : ""}\n`)
 
 for (const verdict of verdicts) {
-	if (verdict.street === null) {
+	if (!verdict.street) {
 		console.log(`  ${verdict.id} (${verdict.country})  expects no street — excluded`)
 
 		continue

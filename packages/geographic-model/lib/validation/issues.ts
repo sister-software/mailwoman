@@ -152,7 +152,7 @@ export function readString(
 		return null
 	}
 
-	if (!value.trim().length) {
+	if (!value.trim()) {
 		add(issues, fieldPath, ValidationIssueCode.EmptyValue, `\`${key}\` must not be blank`)
 
 		return null
@@ -234,7 +234,7 @@ export function readStringArray(
 			continue
 		}
 
-		if (!entry.trim().length) {
+		if (!entry.trim()) {
 			add(issues, entryPath, ValidationIssueCode.EmptyValue, "must not be blank")
 
 			continue
@@ -256,7 +256,7 @@ export function readVocabularyValue<T extends string>(
 ): T | null {
 	const value = readString(issues, path, container, key, true)
 
-	if (value === null) return null
+	if (!value) return null
 
 	const match = allowed.find((candidate) => candidate === value)
 

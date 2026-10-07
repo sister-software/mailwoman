@@ -123,7 +123,7 @@ function unresolved(url: string): MapLinkResolution {
 
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
 	const name = NAME_PATTERN.exec(expandedURL)?.[1]
-	const decodedName = name === undefined ? null : decodeURIComponent(name.replaceAll("+", " "))
+	const decodedName = name ? decodeURIComponent(name.replaceAll("+", " ")) : null
 
 	const pin = PIN_PATTERN.exec(expandedURL)
 

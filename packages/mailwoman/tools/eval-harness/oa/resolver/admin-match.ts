@@ -111,7 +111,7 @@ export function regionMatches(resolvedName: string | null, expected: string | nu
 	if (STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp) return true
 	const gotDe = lookupGermanState(resolvedName)
 
-	if (gotDe !== null && gotDe === lookupGermanState(expected)) return true
+	if (gotDe && gotDe === lookupGermanState(expected)) return true
 	const gotFr = lookupFrenchRegion(resolvedName)
 
 	return gotFr !== null && gotFr === lookupFrenchRegion(expected)

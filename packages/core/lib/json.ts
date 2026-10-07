@@ -121,7 +121,7 @@ export function parseJSONStrict<T = unknown>(input: string): T {
  * @param scope Names the reader in the error, e.g. `coastal client`.
  */
 export function parseJSONArray<T>(raw: string | null | undefined, scope: string): T[] {
-	if (raw == null) return []
+	if (!raw) return []
 
 	const parsed = parseJSONStrict<unknown>(raw)
 

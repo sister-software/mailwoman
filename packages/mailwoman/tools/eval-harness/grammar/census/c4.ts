@@ -232,8 +232,8 @@ export function summarizeC4FeatureVectors(
 			`segment=${boundary.delimiterSegmentEdges.length ? "yes" : "no"}`,
 			`char_class=${boundary.characterClassChange ? `${boundary.characterClassChange.from}>${boundary.characterClassChange.to}` : "no"}`,
 			`known_format=${boundary.knownFormatEdges.length ? "yes" : "no"}`,
-			`street_affix=${boundary.streetAffixEdges === null ? "unavailable" : boundary.streetAffixEdges.length ? "yes" : "no"}`,
-			`registry_fst=${boundary.registryFSTEdges === null ? "unavailable" : boundary.registryFSTEdges.length ? "yes" : "no"}`,
+			`street_affix=${boundary.streetAffixEdges ? (boundary.streetAffixEdges.length ? "yes" : "no") : "unavailable"}`,
+			`registry_fst=${boundary.registryFSTEdges ? (boundary.registryFSTEdges.length ? "yes" : "no") : "unavailable"}`,
 		].join(";")
 
 		const count = counts.get(featureVector) ?? {

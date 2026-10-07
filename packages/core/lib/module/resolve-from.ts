@@ -87,7 +87,7 @@ export async function readPackageJSON<D extends object = MailwomanManifestFields
 	first: PathBuilderLike,
 	packageName?: string
 ): Promise<PackageJSONLike<D>> {
-	const manifestPath = packageName === undefined ? first : resolvePackageJSON(first.toString(), packageName)
+	const manifestPath = packageName ? resolvePackageJSON(first.toString(), packageName) : first
 
 	return readLocalJSONFile<PackageJSONLike<D>>(manifestPath)
 }

@@ -213,11 +213,11 @@ export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 		out.DMS = { lat: set.dms.lat, lng: set.dms.lon }
 	}
 
-	if (set.mgrs != null) {
+	if (set.mgrs) {
 		out.MGRS = set.mgrs
 	}
 
-	if (set.maidenhead != null) {
+	if (set.maidenhead) {
 		out.Maidenhead = set.maidenhead
 	}
 
@@ -225,7 +225,7 @@ export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 		out.Mercator = { x: set.mercator.x, y: set.mercator.y }
 	}
 
-	if (set.geohash != null) {
+	if (set.geohash) {
 		out.geohash = set.geohash
 	}
 
@@ -252,16 +252,16 @@ export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	if (set.currency) {
 		out.currency = { iso_code: set.currency.isoCode }
 
-		if (set.currency.name != null) {
+		if (set.currency.name) {
 			out.currency.name = set.currency.name
 		}
 
-		if (set.currency.symbol != null) {
+		if (set.currency.symbol) {
 			out.currency.symbol = set.currency.symbol
 		}
 	}
 
-	if (set.flag != null) {
+	if (set.flag) {
 		out.flag = set.flag
 	}
 
@@ -272,7 +272,7 @@ export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 			out.timezone.offset_sec = set.timezone.offsetSec
 		}
 
-		if (set.timezone.offsetString != null) {
+		if (set.timezone.offsetString) {
 			out.timezone.offset_string = set.timezone.offsetString
 		}
 	}
@@ -280,28 +280,28 @@ export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	if (set.nuts) {
 		out.NUTS = {}
 
-		if (set.nuts.level1 != null) {
+		if (set.nuts.level1) {
 			out.NUTS.NUTS1 = { code: set.nuts.level1 }
 		}
 
-		if (set.nuts.level2 != null) {
+		if (set.nuts.level2) {
 			out.NUTS.NUTS2 = { code: set.nuts.level2 }
 		}
 
-		if (set.nuts.level3 != null) {
+		if (set.nuts.level3) {
 			out.NUTS.NUTS3 = { code: set.nuts.level3 }
 		}
 	}
 
-	if (set.unLocode != null) {
+	if (set.unLocode) {
 		out.UN_LOCODE = set.unLocode
 	}
 
-	if (set.wikidata != null) {
+	if (set.wikidata) {
 		out.wikidata = set.wikidata
 	}
 
-	if (set.fips != null) {
+	if (set.fips) {
 		out.FIPS = { county: set.fips }
 	}
 

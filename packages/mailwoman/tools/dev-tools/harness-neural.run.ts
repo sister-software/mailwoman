@@ -109,35 +109,35 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["tests"] != null) {
+	if (values["tests"]) {
 		out.testsDir = values["tests"] as string
 	}
 
-	if (values["out-json"] != null) {
+	if (values["out-json"]) {
 		out.outJSON = values["out-json"] as string
 	}
 
-	if (values["model"] != null) {
+	if (values["model"]) {
 		out.modelPath = values["model"] as string
 	}
 
-	if (values["tokenizer"] != null) {
+	if (values["tokenizer"]) {
 		out.tokenizerPath = values["tokenizer"] as string
 	}
 
-	if (values["model-card"] != null) {
+	if (values["model-card"]) {
 		out.modelCardPath = values["model-card"] as string
 	}
 
-	if (values["gazetteer-lexicon"] != null) {
+	if (values["gazetteer-lexicon"]) {
 		out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
 	}
 
-	if (values["anchor-lookup"] != null) {
+	if (values["anchor-lookup"]) {
 		out.anchorLookupPath = values["anchor-lookup"] as string
 	}
 
-	if (values["conventions"] != null) {
+	if (values["conventions"]) {
 		out.conventions = values["conventions"] as string
 	}
 
@@ -145,11 +145,11 @@ function parseArgs(): Args {
 		out.bridgeGaps = true
 	}
 
-	if (values["admin-fst"] != null) {
+	if (values["admin-fst"]) {
 		out.adminFSTPath = values["admin-fst"] as string
 	}
 
-	if (values["morphology-fst"] != null) {
+	if (values["morphology-fst"]) {
 		out.morphologyBinPath = values["morphology-fst"] as string
 	}
 
@@ -157,7 +157,7 @@ function parseArgs(): Args {
 		out.morphologyEnabled = false
 	}
 
-	if (values["falsehoods"] != null) {
+	if (values["falsehoods"]) {
 		out.falsehoodsDir = values["falsehoods"] as string
 	}
 

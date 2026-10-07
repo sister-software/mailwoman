@@ -336,7 +336,7 @@ export function decodeInferOutput(
 		localeLogits,
 		addressSystemLogits,
 		spanScores: maxSpan === null ? null : spanScores,
-		maxSpan: spanScores === null ? null : maxSpan,
+		maxSpan: spanScores ? maxSpan : null,
 	}
 }
 

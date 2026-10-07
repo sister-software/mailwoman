@@ -41,7 +41,7 @@ const SCENARIO_DATE: ISODate = DISTRICT_SCENARIO.asOf
  * The row header of a district: its extent, or the words for the buildings no single extent places.
  */
 function districtRowHeader(extent: string | null, placement: DistrictPlacement): string {
-	if (extent !== null) return extent
+	if (extent) return extent
 
 	return placement === "unplaced"
 		? `Buildings with no ${EXTENT_KIND} membership`

@@ -34,11 +34,11 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values.eval !== undefined) {
+	if (values.eval) {
 		evalPath = values.eval
 	}
 
-	if (values.country !== undefined) {
+	if (values.country) {
 		country = values.country
 	}
 

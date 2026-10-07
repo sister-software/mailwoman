@@ -125,7 +125,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 
 		const counted = isCountedFixture(fixture)
 
-		if (counted && fixture.bugRef !== undefined) {
+		if (counted && fixture.bugRef) {
 			problems.push(
 				`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
 					`"${fixtureStatus(fixture)}" — a counted row that names a defect asserts the defect is repaired.`
@@ -241,8 +241,9 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 	}
 
 	// A `results` expectation sets either `brandWikidata` or `categoryID`.
-	const expectedLabel =
-		expect.brandWikidata !== undefined ? `brandWikidata=${expect.brandWikidata}` : `categoryID=${expect.categoryID}`
+	const expectedLabel = expect.brandWikidata
+		? `brandWikidata=${expect.brandWikidata}`
+		: `categoryID=${expect.categoryID}`
 
 	if (poiOutcome.type !== "intent") {
 		return {
@@ -280,16 +281,15 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 	const topCategoryID = results[0]!.categoryID
 	const topBrandWikidata = results[0]!.brandWikidata
 
-	const topMatches =
-		expect.brandWikidata !== undefined ? topBrandWikidata === expect.brandWikidata : topCategoryID === expect.categoryID
+	const topMatches = expect.brandWikidata
+		? topBrandWikidata === expect.brandWikidata
+		: topCategoryID === expect.categoryID
 
-	const topSummary =
-		expect.brandWikidata !== undefined ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
+	const topSummary = expect.brandWikidata ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
 
-	const mismatchDetail =
-		expect.brandWikidata !== undefined
-			? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
-			: `top category ${topCategoryID} !== expected ${expect.categoryID}`
+	const mismatchDetail = expect.brandWikidata
+		? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
+		: `top category ${topCategoryID} !== expected ${expect.categoryID}`
 
 	const pass = withinRange && topMatches
 
@@ -610,7 +610,7 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 			for (const r of result.poiIntent.results) {
 				resultRowCount++
 
-				if (r.gersID !== null) {
+				if (r.gersID) {
 					gersIDPresent++
 				}
 

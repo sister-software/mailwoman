@@ -112,7 +112,7 @@ export async function nearestInfrastructure(
 	const infrastructureHits: InfrastructureHit[] = []
 
 	for (const hit of hits) {
-		if (hit.categoryID === null) {
+		if (!hit.categoryID) {
 			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids
 			// (see POILookup#searchKRing), so a hit here always includes the category it was found under.
 			// This can't happen without a corrupted poi.db.

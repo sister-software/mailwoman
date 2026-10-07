@@ -234,7 +234,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 		if (excludeSurfaces?.has(tokens.join(" "))) return true
 
-		if (excludeAllTokensOf !== undefined && tokens.every((t) => excludeAllTokensOf.has(t))) return true
+		if (excludeAllTokensOf && tokens.every((t) => excludeAllTokensOf.has(t))) return true
 
 		return false
 	}
@@ -272,7 +272,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
-			if (surfaceCountryCounts !== undefined) {
+			if (surfaceCountryCounts) {
 				const count = surfaceCountryCounts.get(tokens.join(" "))
 				existing.push({ ...entry, crossCountryBranches: Math.min(count ?? 1, 255) })
 			} else {
@@ -354,7 +354,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		sourceDBMD5: source.md5,
 		sourceDBBytes: source.bytes,
 		modelCardVersion: null,
-		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined
+		...(excludeSurfaces || excludeAllTokensOf
 			? { exclusionPolicy: opts.exclusionPolicy ?? "unspecified", excludedInsertions: excludedCount }
 			: { exclusionPolicy: null, excludedInsertions: null }),
 	}

@@ -67,7 +67,7 @@ const TILE_CACHE_LIMIT = 64
 export function readAttribution(metadata: unknown): string {
 	if (
 		typeof metadata !== "object" ||
-		metadata === null ||
+		!metadata ||
 		!("attribution" in metadata) ||
 		typeof (metadata as { attribution: unknown }).attribution !== "string"
 	) {
@@ -166,7 +166,7 @@ export class TileSource implements TileProvider, AsyncDisposable {
 		const key = `${z}/${x}/${y}`
 		const cached = this.cache.get(key)
 
-		if (cached != null) {
+		if (cached) {
 			// Refresh recency by re-inserting at the end of iteration order.
 			this.cache.delete(key)
 			this.cache.set(key, cached)
@@ -176,7 +176,7 @@ export class TileSource implements TileProvider, AsyncDisposable {
 
 		const response = await this.pmtiles.getZxy(z, x, y)
 
-		const tile: DecodedTile | null = response != null ? { layers: decodeMVT(new Uint8Array(response.data)) } : null
+		const tile: DecodedTile | null = response ? { layers: decodeMVT(new Uint8Array(response.data)) } : null
 
 		this.cache.set(key, { tile })
 

@@ -186,7 +186,7 @@ class WOFResolver implements Resolver {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
 				defaultCountry: state.defaultCountry,
-				...(shapeVerdict?.narrowing != null ? { candidateSystems: shapeVerdict.narrowing } : {}),
+				...(shapeVerdict?.narrowing ? { candidateSystems: shapeVerdict.narrowing } : {}),
 				...(opts.postcodeCountryCoherenceThresholdKm != null
 					? { thresholdKm: opts.postcodeCountryCoherenceThresholdKm }
 					: {}),
@@ -309,7 +309,7 @@ class WOFResolver implements Resolver {
 		let resolved: CoordinateOptionalPlace | null = null
 
 		// Skip lookup for shape-excluded postcode spans.
-		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length && !isShapeExcludedPostcode(node)) {
+		if (placetype && state.lookupsRemaining > 0 && node.value.trim() && !isShapeExcludedPostcode(node)) {
 			let picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 
 			// Compound JP municipality handling with scoped fallback control.
@@ -602,8 +602,8 @@ class WOFResolver implements Resolver {
 
 				if (tier !== 0) return tier
 				// Unknown-country candidates get zero posterior mass.
-				const aKey = (a.prominence ?? a.score) + w * (a.country == null ? 0 : (post[a.country] ?? 0))
-				const bKey = (b.prominence ?? b.score) + w * (b.country == null ? 0 : (post[b.country] ?? 0))
+				const aKey = (a.prominence ?? a.score) + w * (a.country ? (post[a.country] ?? 0) : 0)
+				const bKey = (b.prominence ?? b.score) + w * (b.country ? (post[b.country] ?? 0) : 0)
 
 				return bKey - aKey || b.score - a.score
 			})

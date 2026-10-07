@@ -174,7 +174,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					const license = (props.license?.trim() || defaultLicense).trim()
 
-					if (!allowShareAlike && shareAlike.read(license).refusal !== null) {
+					if (!allowShareAlike && shareAlike.read(license).refusal) {
 						shareAlikeBlocked++
 
 						continue

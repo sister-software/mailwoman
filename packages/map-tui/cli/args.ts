@@ -139,7 +139,7 @@ function numericFlag(name: string, raw: string | null | undefined, fallback: num
 
 	const value = Number(raw.trim())
 
-	if (!Number.isFinite(value) || !raw.trim().length) {
+	if (!Number.isFinite(value) || !raw.trim()) {
 		throw new CLIArgsError(`--${name} expects a number, got ${stringifyJSON(raw)}`)
 	}
 
@@ -237,7 +237,7 @@ export function parseCLIArgs(argv: readonly string[], environment: CLIEnvironmen
 
 	const tiles = (values.tiles ?? environment.MAILWOMAN_TILES ?? "").trim()
 
-	if (!tiles.length) {
+	if (!tiles) {
 		throw new CLIArgsError(
 			"No tile archive: pass --tiles <archive.pmtiles> or set MAILWOMAN_TILES.\n" +
 				"Planet and region archives: https://protomaps.com/downloads"

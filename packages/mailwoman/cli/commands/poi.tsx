@@ -205,7 +205,7 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 
 	lines.push("")
 
-	if (results === undefined) {
+	if (!results) {
 		lines.push("(intent only — no --db lookup configured)")
 	} else {
 		lines.push(...formatResultsTable(results))
@@ -263,7 +263,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
-		if (!input || !input.trim().length) {
+		if (!input || !input.trim()) {
 			throw new CommandError(
 				'mailwoman poi requires a positional query (e.g. mailwoman poi "fire hydrant near Springfield")'
 			)

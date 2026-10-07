@@ -463,7 +463,7 @@ export class MapBrowser {
 		const lon = this.centerLon.toFixed(COORDINATE_DIGITS)
 		const status = `${lat},${lon} z${this.zoom}  ←↑↓→ pan  +/- zoom  q quit`
 
-		if (!attribution.length) return status
+		if (!attribution) return status
 
 		const credited = `${status}  © ${attribution}`
 

@@ -404,7 +404,7 @@ export async function readBoardCoverage(
 			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)
 
-				if (row === null) continue
+				if (!row) continue
 
 				const country = String(row.country ?? dir).toUpperCase()
 				const entry = out.get(country) ?? { rows: 0, passed: 0 }

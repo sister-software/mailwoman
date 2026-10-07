@@ -177,7 +177,7 @@ function readSourceJSON(file: GeographicModelSourceFile, issues: SourcedIssue[])
 }
 
 function claim(state: MergeState, table: string, id: string | null, file: string): void {
-	if (id === null) return
+	if (!id) return
 
 	const claims = state.firstClaims.get(table) ?? new Map<string, string>()
 

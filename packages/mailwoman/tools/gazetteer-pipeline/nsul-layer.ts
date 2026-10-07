@@ -610,7 +610,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 			if (!headerSeen) {
 				const drift = nsulHeaderDrift(rawLine)
 
-				if (drift !== null) {
+				if (drift) {
 					throw new Error(
 						`buildNSULLayer: header drift in ${source.label} — expected ${stringifyJSON(NSUL_HEADER)}, found ${stringifyJSON(drift)}`
 					)

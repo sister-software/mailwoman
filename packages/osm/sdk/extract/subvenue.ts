@@ -86,11 +86,11 @@ export function parseOSMHstore(text: string | null): Record<string, string> {
 	while (i < text.length) {
 		const key = readQuoted()
 
-		if (key === null) break
+		if (!key) break
 
 		const value = readQuoted()
 
-		if (value === null) break
+		if (!value) break
 		out[key] = value
 	}
 
@@ -209,8 +209,8 @@ export function toSubVenueSourceRow(
 
 	const rawName = p["name"] ?? tags["name"]
 	const rawRef = p["ref"] ?? tags["ref"]
-	const name = rawName != null && rawName !== "" ? String(rawName) : null
-	const ref = rawRef != null && rawRef !== "" ? String(rawRef) : null
+	const name = rawName && rawName !== "" ? String(rawName) : null
+	const ref = rawRef && rawRef !== "" ? String(rawRef) : null
 	const localizedNames = harvestLocalizedNames(tags)
 
 	if (!name && !ref && !Object.keys(localizedNames).length) return null

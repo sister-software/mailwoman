@@ -227,7 +227,7 @@ export async function readWFSCapabilities(
 		outputFormats,
 		jsonFormat: jsonFormats[0] ?? null,
 		jsonFormats,
-		countDefault: countDefault === undefined ? null : Number(countDefault),
+		countDefault: countDefault ? Number(countDefault) : null,
 		supportsPaging: /ImplementsResultPaging[\s\S]{0,120}?>\s*(?:TRUE|true)\s*</u.test(data),
 		typeNames,
 	}
@@ -415,17 +415,17 @@ export function componentReferences(feature: GeoJSONFeature): readonly string[] 
 export function componentIdentifier(feature: GeoJSONFeature): string | null {
 	const identifier = feature.properties?.["identifier"]
 
-	if (typeof identifier === "object" && identifier !== null) {
+	if (typeof identifier === "object" && identifier) {
 		const value = (identifier as Record<string, unknown>)["value"]
 
-		if (typeof value === "string" && value.length) return value
+		if (typeof value === "string" && value) return value
 	}
 
-	if (typeof identifier === "string" && identifier.length) return identifier
+	if (typeof identifier === "string" && identifier) return identifier
 
 	const gmlID = feature.properties?.["gml_id"] ?? feature.id
 
-	return gmlID === undefined || gmlID === null ? null : String(gmlID)
+	return gmlID ? String(gmlID) : null
 }
 
 /**
@@ -465,7 +465,7 @@ export function resolveComponents(
 	for (const feature of components) {
 		const identifier = componentIdentifier(feature)
 
-		if (identifier !== null) {
+		if (identifier) {
 			identifiers.add(identifier)
 		}
 	}
@@ -479,7 +479,7 @@ export function resolveComponents(
 		for (const href of componentReferences(address)) {
 			const key = componentJoinKey(href)
 
-			if (key === null) {
+			if (!key) {
 				unreadable++
 
 				continue

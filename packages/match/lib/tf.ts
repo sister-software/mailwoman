@@ -57,7 +57,7 @@ export function buildTermFrequencyTable(
 	let total = 0
 
 	for (const value of values) {
-		if (value == null) continue
+		if (!value) continue
 		const key = normalize(value)
 
 		if (!key) continue

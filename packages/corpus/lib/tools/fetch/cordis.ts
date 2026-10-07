@@ -112,7 +112,7 @@ export async function readCORDISArchiveHead(
 
 	return {
 		lastModified: headers?.["last-modified"] ?? null,
-		contentLength: length !== undefined && /^\d+$/u.test(length) ? Number(length) : null,
+		contentLength: length && /^\d+$/u.test(length) ? Number(length) : null,
 	}
 }
 
@@ -129,9 +129,9 @@ export async function isCORDISArchiveCurrent(
 ): Promise<boolean> {
 	if (!recorded) return false
 
-	if (head.lastModified === null && head.contentLength === null) return false
+	if (!head.lastModified && head.contentLength === null) return false
 
-	if (head.lastModified !== null && head.lastModified !== recorded.last_modified) return false
+	if (head.lastModified && head.lastModified !== recorded.last_modified) return false
 
 	if (head.contentLength !== null && head.contentLength !== recorded.bytes) return false
 

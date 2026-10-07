@@ -67,7 +67,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const num = (s: string | null | undefined): number | undefined => (s == null ? undefined : Number(s))
+const num = (s: string | null | undefined): number | undefined => (s ? Number(s) : undefined)
 
 const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
@@ -96,7 +96,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		if (recipe.mode === "generate" && !options.count) throw new CommandError(`recipe "${name}" needs --count <N>`)
 
-		const seed = options.seed != null ? Number(options.seed) : Date.now()
+		const seed = options.seed ? Number(options.seed) : Date.now()
 
 		const opts: RecipeOptions = {
 			output: options.out,

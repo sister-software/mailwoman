@@ -29,14 +29,14 @@ export function decorateNode(
 	resolved: CoordinateOptionalPlace,
 	alternatives: ResolvedPlace[]
 ): void {
-	if (node.source != null || node.sourceID != null) {
+	if (node.source || node.sourceID) {
 		const meta = { ...node.metadata }
 
-		if (node.source != null) {
+		if (node.source) {
 			meta["classifier_source"] = node.source
 		}
 
-		if (node.sourceID != null) {
+		if (node.sourceID) {
 			meta["classifier_source_id"] = node.sourceID
 		}
 

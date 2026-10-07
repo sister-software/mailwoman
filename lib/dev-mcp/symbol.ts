@@ -334,7 +334,7 @@ export interface WriteIntent {
 function readStringField(input: Record<string, unknown>, key: string): string | null {
 	const value = input[key]
 
-	return typeof value === "string" && value.length ? value : null
+	return typeof value === "string" && value ? value : null
 }
 
 /**

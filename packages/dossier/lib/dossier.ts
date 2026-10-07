@@ -408,7 +408,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 	const windows = admitted.windows.filter((window) => window.subject === building.id)
 
 	for (const window of windows) {
-		if (window.end === null) {
+		if (!window.end) {
 			unresolved.push({
 				question: `When does the construction window that opened ${window.start ?? "on an unknown date"} (${window.stage}) close? The record states no end.`,
 				subject: building.id,

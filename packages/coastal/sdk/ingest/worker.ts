@@ -35,8 +35,8 @@ await runIngestChunkScript({
 					? []
 					: [requiredArgument("coastal ingest-chunk", "scenario", values.scenario ?? null)],
 				skipInstability: !values.instability,
-				...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
-				...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
+				...(values["object-id-from"] ? { objectIDFrom: Number(values["object-id-from"]) } : {}),
+				...(values["object-id-to"] ? { objectIDTo: Number(values["object-id-to"]) } : {}),
 				// A range's own count is not knowable up front — `ogrinfo` reports a layer's total
 				// and no narrower count — so the chunk makes no claim about its size.
 				declaredFeatureCount: 0,

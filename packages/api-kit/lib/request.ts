@@ -16,7 +16,7 @@ import type { Context } from "hono"
  * An empty `?q=` is treated as absent, since every drop-in reads it that way.
  */
 export function asString(raw: unknown): string | null {
-	return typeof raw === "string" && raw.length ? raw : null
+	return typeof raw === "string" && raw ? raw : null
 }
 
 /**

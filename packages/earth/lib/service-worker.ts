@@ -155,7 +155,7 @@ async function validatedChunk(response: Response): Promise<ValidatedChunk | null
 	const contentRange = response.headers.get("content-range")
 	const expected = contentRange ? rangeLength(contentRange) : null
 
-	if (expected === null || contentRange === null) return null
+	if (expected === null || !contentRange) return null
 
 	const body = await response.arrayBuffer()
 

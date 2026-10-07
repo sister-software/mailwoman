@@ -216,7 +216,7 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 			// The resolver uses that country as the scope prior for its answer.
 			const answered = (await deps.geocode(input, { defaultCountry: place.country })).locality ?? null
 
-			if (answered === null) {
+			if (!answered) {
 				entry.answeredNothing++
 			} else if (answered === place.locality) {
 				entry.answeredExpected++

@@ -476,7 +476,7 @@ export async function runAblationLayer(
 				})
 			}
 
-			if (built.ladder == null) {
+			if (!built.ladder) {
 				ladderProblems.push({ caseID: c.id, reason: built.reason })
 			}
 

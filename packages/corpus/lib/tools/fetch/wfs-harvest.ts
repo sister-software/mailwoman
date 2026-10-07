@@ -108,7 +108,7 @@ function tagAttribute(root: MarkupRoot, attribute: string): string | null {
 export function rootCount(root: MarkupRoot, attribute: string): number | null {
 	const value = tagAttribute(root, attribute)
 
-	return value !== null && /^\d+$/u.test(value) ? Number(value) : null
+	return value && /^\d+$/u.test(value) ? Number(value) : null
 }
 
 /**
@@ -685,7 +685,7 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 	const recorded = await readManifest<WFSHarvestManifest>(manifestPath)
 	const resumable = recorded !== null && Array.isArray(recorded.pages) && describesSameRequest(recorded, options)
 
-	if (recorded !== null && !resumable) {
+	if (recorded && !resumable) {
 		options.report?.("  The manifest describes a different request — starting the harvest over")
 
 		await removePathIfPresent(dataPath)

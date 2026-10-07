@@ -36,7 +36,7 @@ vi.mock("node:sqlite", async (importOriginal) => {
 			spy.opens.push({ path, readOnly: options?.readOnly })
 
 			// node:sqlite rejects an explicit `undefined` options arg, so forward only when actually passed.
-			if (options === undefined) {
+			if (!options) {
 				super(path)
 			} else {
 				super(path, options)

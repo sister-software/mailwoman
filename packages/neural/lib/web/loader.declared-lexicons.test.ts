@@ -57,7 +57,7 @@ function makeRecordingFetch(card: object | null, requested: string[]): typeof fe
 		requested.push(url)
 
 		if (url.endsWith("model-card.json")) {
-			if (card === null) return new Response(null, { status: 404, statusText: "Not Found" })
+			if (!card) return new Response(null, { status: 404, statusText: "Not Found" })
 
 			return new Response(stringifyJSON(card), { headers: { "content-type": "application/json" } })
 		}

@@ -92,7 +92,7 @@ function archiveBody(payload: string): Buffer {
 function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
 	return {
 		body: archiveBody(payload),
-		headers: lastModified === undefined ? {} : { "last-modified": lastModified },
+		headers: lastModified ? { "last-modified": lastModified } : {},
 	}
 }
 

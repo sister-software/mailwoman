@@ -147,7 +147,7 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 			)
 		}
 
-		if (row.searchedCategories !== undefined) {
+		if (row.searchedCategories) {
 			const sorted = [...new Set(row.searchedCategories)].toSorted(compareByCodePoint)
 
 			if (!row.searchedCategories.length || sorted.join("\u0000") !== row.searchedCategories.join("\u0000")) {

@@ -171,7 +171,7 @@ export function fstStaleReason(fields: FSTStampFields | null, expected: FSTExpec
 		return `source db size ${provenance.sourceDBBytes} → ${expected.source.bytes} at a matching md5 — one of the two is misrecorded`
 	}
 
-	if (expected.exclusionPolicy != null && provenance.exclusionPolicy !== expected.exclusionPolicy) {
+	if (expected.exclusionPolicy && provenance.exclusionPolicy !== expected.exclusionPolicy) {
 		return `exclusion policy ${provenance.exclusionPolicy ?? "(none)"} → ${expected.exclusionPolicy}`
 	}
 
@@ -202,7 +202,7 @@ export async function fstFreshnessWarning({
 		exclusionPolicy: exclusionPolicy ?? null,
 	})
 
-	return reason === null ? null : formatFSTStaleWarning({ fstPath, reason, rebuildCommand })
+	return reason ? formatFSTStaleWarning({ fstPath, reason, rebuildCommand }) : null
 }
 
 /**

@@ -592,12 +592,11 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 			}
 		}
 
-		const standing =
-			o.lidStatus === null
-				? ""
-				: o.lidStatus === "unreachable"
-					? "; license status unreachable"
-					: `; license ${o.lidStatus}`
+		const standing = o.lidStatus
+			? o.lidStatus === "unreachable"
+				? "; license status unreachable"
+				: `; license ${o.lidStatus}`
+			: ""
 
 		return {
 			...base,

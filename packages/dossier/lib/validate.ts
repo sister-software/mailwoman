@@ -98,7 +98,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 			availableAt: source.availableAt,
 			retrievedAt: source.retrievedAt,
 		})) {
-			if (value !== null && !isISODate(value)) {
+			if (value && !isISODate(value)) {
 				issues.push({
 					severity: "error",
 					code: "malformed_date",
@@ -108,7 +108,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 			}
 		}
 
-		if (source.availableAt === null) {
+		if (!source.availableAt) {
 			issues.push({
 				severity: "warning",
 				code: "source_without_available_date",
@@ -154,7 +154,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 	}
 
 	const checkDate = (ref: string, field: string, value: string | null | undefined) => {
-		if (value != null && !isISODate(value)) {
+		if (value && !isISODate(value)) {
 			issues.push({
 				severity: "error",
 				code: "malformed_date",
@@ -223,7 +223,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		event.scope.forEach((entity) => checkEntity(event.id, entity))
 		checkDate(event.id, "date", event.date)
 
-		if (event.date === null) {
+		if (!event.date) {
 			issues.push({
 				severity: "warning",
 				code: "event_without_date",
@@ -264,7 +264,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 	const checkBuilding = (ref: string, what: string, subject: string) => {
 		const kind = entities.get(subject)
 
-		if (kind === undefined) {
+		if (!kind) {
 			checkEntity(ref, subject)
 		} else if (kind !== "building") {
 			issues.push({
@@ -281,7 +281,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 
 		checkSource(ref, reading.evidence.source)
 
-		if (reading.subject !== null) {
+		if (reading.subject) {
 			checkBuilding(ref, "reading", reading.subject)
 		}
 	})

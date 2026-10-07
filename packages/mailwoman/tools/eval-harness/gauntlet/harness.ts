@@ -196,9 +196,7 @@ export function resolverPinDeps(pins?: GauntletResolverPins | null): {
 		...(pins.spanRescoreRequireContextRemainder === undefined
 			? {}
 			: { spanRescoreRequireContextRemainder: pins.spanRescoreRequireContextRemainder }),
-		...(pins.spanRescoreWeakResolution === undefined
-			? {}
-			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),
+		...(pins.spanRescoreWeakResolution ? { spanRescoreWeakResolution: pins.spanRescoreWeakResolution } : {}),
 	}
 }
 

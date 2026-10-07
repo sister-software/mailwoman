@@ -126,7 +126,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	}
 
 	const seatPreference = (r: R): number =>
-		placetypes != null &&
+		placetypes &&
 		typeof r.placetype_id === "number" &&
 		typeof r.population === "number" &&
 		r.population > 0 &&

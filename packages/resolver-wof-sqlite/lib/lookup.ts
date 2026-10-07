@@ -320,7 +320,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 			const result = await strategy(query, convention)
 
-			if (result !== null) {
+			if (result) {
 				outcome = result
 
 				break

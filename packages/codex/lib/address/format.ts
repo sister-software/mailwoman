@@ -47,7 +47,7 @@ export interface FormatAddressOptions {
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
-	if (opts.separator !== undefined) return opts.separator
+	if (opts.separator) return opts.separator
 
 	return opts.singleLine ? lineJoinForCountry(country, script) : "\n"
 }
@@ -66,7 +66,7 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
  * Two separators would ignore the requested value.
  */
 function softSeparatorFor(opts: FormatAddressOptions): string {
-	if (opts.separator !== undefined) return opts.separator
+	if (opts.separator) return opts.separator
 
 	return opts.singleLine ? " " : "\n"
 }

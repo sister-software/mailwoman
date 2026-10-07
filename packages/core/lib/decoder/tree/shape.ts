@@ -48,8 +48,8 @@ export function loneValueNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
 
 	for (const node of walkNodes(tree.roots)) {
-		if (node.value.trim().length) {
-			if (lone !== null) return null
+		if (node.value.trim()) {
+			if (lone) return null
 			lone = node
 		}
 	}

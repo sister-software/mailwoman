@@ -96,7 +96,7 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 				const pnp = text(dir, "pnp")
 				const plp = text(dir, "plp")
 
-				if (!plp && (pnp === null || pnp === "" || pnp === "0")) return null
+				if (!plp && (!pnp || pnp === "" || pnp === "0")) return null
 
 				return `${pnp ?? ""}${plp ?? ""}`
 			})

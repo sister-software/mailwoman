@@ -256,7 +256,7 @@ export async function filingLandscape(
 		const res6Parent = res9ShortCellToRes6Parent(candidateCell)
 		const coverage = await readLayerCoverage(db, res6Parent)
 
-		if (coverage === null) {
+		if (!coverage) {
 			unknownBlockCount++
 		} else {
 			surveyedBlockCount++

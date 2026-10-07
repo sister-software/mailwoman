@@ -104,7 +104,7 @@ function removeSeparatingRuns(text: string, mark: string): string {
 
 		const next = text[end]
 
-		if (next !== undefined && !/\s/u.test(next)) {
+		if (next && !/\s/u.test(next)) {
 			out += text.slice(index, end)
 		}
 
@@ -207,7 +207,7 @@ export function punctuationApplicability(
 	const mark = REMOVED_MARK[transformation]
 
 	if (PUNCTUATION_TRANSFORMATION_BY_NAME[transformation](text) === text) {
-		if (mark !== undefined && text.includes(mark)) {
+		if (mark && text.includes(mark)) {
 			return {
 				applicable: false,
 				rule: "mark-inside-token",
@@ -224,7 +224,7 @@ export function punctuationApplicability(
 
 	const { comparator, echoedSpans } = context
 
-	if (mark !== undefined && comparator && TEXT_ECHOING_COMPARATORS.has(comparator)) {
+	if (mark && comparator && TEXT_ECHOING_COMPARATORS.has(comparator)) {
 		if (TOKEN_TEXT_REMOVALS.has(transformation)) {
 			return {
 				applicable: false,

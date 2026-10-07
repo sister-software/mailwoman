@@ -97,7 +97,7 @@ export interface BuildStreetMorphologyFSTResult {
 function parseLine(line: string): { canonical: string; variants: string[] } | null {
 	const trimmed = line.trim()
 
-	if (!trimmed.length || trimmed.startsWith("#")) return null
+	if (!trimmed || trimmed.startsWith("#")) return null
 
 	const parts = TextSpliterator.from(trimmed, { delimiter: "|" }).toArray()
 

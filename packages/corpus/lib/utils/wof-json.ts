@@ -197,7 +197,7 @@ export async function* walkFeatures(
 
 		const parsed = tryParsingJSON<WOFFeature>(text)
 
-		if (parsed === null) continue
+		if (!parsed) continue
 
 		const rec = recordFromFeature(parsed)
 
@@ -278,7 +278,7 @@ export function buildAncestorNameIndex(
 			const tag = tagOf(parent.placetype)
 
 			for (const wanted of ANCESTOR_NAME_TAGS) {
-				if (tag === wanted && names[wanted] === undefined) {
+				if (tag === wanted && !names[wanted]) {
 					names[wanted] = parent.name
 				}
 			}

@@ -270,7 +270,7 @@ export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroPr
 
 		const fromHref = PROVINCE_FEED_CODE.exec(link.href)?.[1]
 
-		if (fromHref !== undefined && fromHref !== code) {
+		if (fromHref && fromHref !== code) {
 			throw new Error(
 				`${ES_CATASTRO_SERVICE_FEED_URL}: the entry titled ${stringifyJSON(entry.title)} states province ` +
 					`${code} in its title and links ${link.href}, which names province ${fromHref}`
@@ -600,7 +600,7 @@ export async function harvestESCatastro(
 	let municipalitiesListed = 0
 	let provincesHarvested = 0
 	const failedCodes: string[] = [...provinces.unknown]
-	const requested = options.municipalities === undefined ? undefined : new Set(options.municipalities)
+	const requested = options.municipalities ? new Set(options.municipalities) : undefined
 	const found = new Set<string>()
 
 	const writeHarvestManifest = async (): Promise<void> => {

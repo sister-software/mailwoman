@@ -129,7 +129,7 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 	if (opts.includeSrc) {
 		const src = srcAttrValue(node)
 
-		if (src !== null) {
+		if (src) {
 			parts.push(`src="${escapeXml(src)}"`)
 		}
 	}
@@ -141,7 +141,7 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
 
-	if (opts.includePlace && node.placeID !== undefined) {
+	if (opts.includePlace && node.placeID) {
 		parts.push(`place="${escapeXml(node.placeID)}"`)
 	}
 
@@ -153,7 +153,7 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)
 	}
 
-	return !parts.length ? "" : " " + parts.join(" ")
+	return parts.length ? " " + parts.join(" ") : ""
 }
 
 interface AlternativeLike {

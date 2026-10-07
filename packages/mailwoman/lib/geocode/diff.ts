@@ -150,9 +150,9 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 
 		const kind: SpanGeoDelta["kind"] = repointed
 			? "repointed"
-			: left.placeID === null && right.placeID !== null
+			: !left.placeID && right.placeID
 				? "resolved"
-				: left.placeID !== null && right.placeID === null
+				: left.placeID && !right.placeID
 					? "unresolved"
 					: "unchanged"
 

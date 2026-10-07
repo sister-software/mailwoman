@@ -365,7 +365,7 @@ export class WorkerHost implements AsyncDisposable {
 
 			const grace = setTimeout(() => child.kill("SIGKILL"), TERM_GRACE_MS)
 
-			if (child.exitCode === null && child.signalCode === null) {
+			if (child.exitCode === null && !child.signalCode) {
 				await once(child, "exit")
 			}
 

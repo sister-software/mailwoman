@@ -51,7 +51,7 @@ export function foldQueryText(input: string): string {
  * Only legacy bags use it.
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
-	if (altNames === null || altNames === "" || !normalizedQuery) return false
+	if (!altNames || altNames === "" || !normalizedQuery) return false
 
 	if (altNames.includes(ALIAS_SEPARATOR)) {
 		return altNames.split(ALIAS_SEPARATOR).some((alias) => foldQueryText(alias) === normalizedQuery)

@@ -30,7 +30,7 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-healt
 async function readDeclaredLicense(repoRoot: string, file: string): Promise<string | Diagnostic> {
 	const manifest = await readLocalJSONFile<{ license?: unknown }>(resolvePath(repoRoot, file))
 
-	if (typeof manifest.license !== "string" || !manifest.license.length) {
+	if (typeof manifest.license !== "string" || !manifest.license) {
 		return {
 			severity: DiagnosticSeverity.Error,
 			message: `${file} declares no "license" string, so the workspace's source states no terms and a published one reaches npm that way`,

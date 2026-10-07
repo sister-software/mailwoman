@@ -80,7 +80,7 @@ export function groupPhrasesSync(
 ): PhraseProposal[] {
 	const text = input.normalized
 
-	if (!text.length) return []
+	if (!text) return []
 
 	// Postcode rule consumes QueryShape directly (segment-agnostic).
 	const proposals: PhraseProposal[] = [...scorePostcode(shape, text)]

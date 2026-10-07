@@ -150,7 +150,7 @@ export class UPRNLookup implements Disposable {
 				for (const row of rows) {
 					const distanceM = haversineKm(latitude, longitude, row.lat, row.lon) * 1000
 
-					if (distanceM <= radiusM && (best === null || distanceM < best.distanceM)) {
+					if (distanceM <= radiusM && (!best || distanceM < best.distanceM)) {
 						best = { uprn: row.uprn, latitude: row.lat, longitude: row.lon, distanceM }
 					}
 				}

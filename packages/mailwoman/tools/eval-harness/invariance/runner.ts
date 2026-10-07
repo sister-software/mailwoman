@@ -189,7 +189,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			const transform = getTransform(transformID)
 			const transformedText: string | null = transformID === "idempotence" ? row.raw : transform.apply(row.raw)
 
-			if (transformedText == null) {
+			if (!transformedText) {
 				skipped.push({ rowID: row.id, transformID, reason: "transform not applicable to this raw" })
 
 				continue

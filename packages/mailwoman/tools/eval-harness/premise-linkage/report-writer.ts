@@ -103,7 +103,7 @@ function checkString(value: string, path: string, inputs: readonly string[]): vo
 	const haystack = value.toLowerCase()
 
 	for (const input of inputs) {
-		if (input.length && haystack.includes(input.toLowerCase())) {
+		if (input && haystack.includes(input.toLowerCase())) {
 			throw new PremiseLinkageRedactionError(
 				path,
 				PremiseLinkageRedactionReason.InputSubstring,
@@ -142,7 +142,7 @@ function walkPublishable(value: unknown, path: string, inputs: readonly string[]
 		return
 	}
 
-	if (typeof value !== "object" || value === null) return
+	if (typeof value !== "object" || !value) return
 
 	for (const [key, entry] of Object.entries(value)) {
 		const keyPath = `${path}.${key}`

@@ -315,7 +315,7 @@ async function readServiceContainment(
 
 			const code = feature.properties?.ZONE_ORIG
 
-			if (typeof code === "string" && localCode === null) {
+			if (typeof code === "string" && !localCode) {
 				localCode = code
 			}
 		}

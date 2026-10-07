@@ -123,9 +123,9 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			intent,
 
 			results: results.map((hit) => {
-				const canonical = hit.categoryID === null ? undefined : canonicalByLeaf.get(hit.categoryID)
+				const canonical = hit.categoryID ? canonicalByLeaf.get(hit.categoryID) : undefined
 
-				return canonical === undefined ? toResult(hit) : { ...toResult(hit), categoryID: canonical }
+				return canonical ? { ...toResult(hit), categoryID: canonical } : toResult(hit)
 			}),
 		}
 	}
@@ -188,7 +188,7 @@ export function resolvePOIAnchorCountry(intent: POIIntent): string | null {
 
 	const country = stamped?.metadata?.["resolver_country"]
 
-	return typeof country === "string" && country.length ? country.toUpperCase() : null
+	return typeof country === "string" && country ? country.toUpperCase() : null
 }
 
 function deepestGeoNode(roots: AddressNode[]): AddressNode | null {

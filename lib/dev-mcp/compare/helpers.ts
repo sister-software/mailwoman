@@ -135,7 +135,7 @@ export function assertedStratum(by: string): StratumKey {
 export function tierDiffered(a: ExternalAnswer, b: ExternalAnswer): boolean | null {
 	if (a.lat === null || b.lat === null) return null
 
-	if (a.resultType === null || b.resultType === null) return null
+	if (!a.resultType || !b.resultType) return null
 
 	return a.resultType !== b.resultType
 }

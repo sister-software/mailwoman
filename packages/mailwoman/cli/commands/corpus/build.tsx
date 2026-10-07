@@ -118,7 +118,7 @@ export const spec = {
 type AdapterInput = string | AdapterOptions
 
 function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput> {
-	if (typeof input !== "object" || input === null || Array.isArray(input)) return false
+	if (typeof input !== "object" || !input || Array.isArray(input)) return false
 
 	return Object.values(input).every((value) => {
 		if (typeof value === "string") return true

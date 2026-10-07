@@ -131,7 +131,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 	const abbreviateRegion = countryCode !== null && REGION_ABBREVIATION_COUNTRIES.has(countryCode)
 
 	for (const rule of COMPONENT_RULES) {
-		if (components[rule.tag] !== undefined) continue
+		if (components[rule.tag]) continue
 
 		for (const type of rule.types) {
 			const component = index.get(type)

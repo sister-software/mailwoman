@@ -409,14 +409,13 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 			.filter((part) => part !== null)
 			.join(" ")
 
-		const reach =
-			record.reachableIn == null
-				? ""
-				: record.reachableIn.length
-					? `\n    UNREACHABLE, not absent — the key lives in ${record.reachableIn
-							.map((b) => `${b.placetype}×${b.n}`)
-							.join(", ")}. The band was chosen by the parse tag, so this is a mislabel, not missing data.`
-					: "\n    absent — every admin band was probed and none holds this key. COVERAGE, not reachability."
+		const reach = record.reachableIn
+			? record.reachableIn.length
+				? `\n    UNREACHABLE, not absent — the key lives in ${record.reachableIn
+						.map((b) => `${b.placetype}×${b.n}`)
+						.join(", ")}. The band was chosen by the parse tag, so this is a mislabel, not missing data.`
+				: "\n    absent — every admin band was probed and none holds this key. COVERAGE, not reachability."
+			: ""
 
 		const rows = record.candidates.map((c) => {
 			const ranks = Object.entries(c.ranks)

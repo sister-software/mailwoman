@@ -66,7 +66,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 		paymentLinks: Object.fromEntries(
 			SHOP_PLANS.flatMap((plan) => entryOf(plan.code, report.paymentLinks[plan.code].url))
 		),
-		...(report.portal.url === null ? {} : { portalURL: report.portal.url }),
+		...(report.portal.url ? { portalURL: report.portal.url } : {}),
 	})
 
 	if (isIdentical(next, current)) return null

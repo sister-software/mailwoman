@@ -140,7 +140,7 @@ export function App() {
 		return <WrongBody message={(error as Error).message} />
 	}
 
-	if (route === null) return <NotFound pathname={location.pathname} title={config.title} />
+	if (!route) return <NotFound pathname={location.pathname} title={config.title} />
 
 	return (
 		<main data-route={route.kind} data-body={body} data-search={search.status}>

@@ -118,7 +118,7 @@ export async function writeOSMCorpusJSONL(
 			continue
 		}
 
-		if (record.street === null) {
+		if (!record.street) {
 			stats.noStreet++
 		}
 

@@ -230,7 +230,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 		for await (const cells of CSVSpliterator.fromAsync<string[]>(input, {
 			header: false,
 		})) {
-			if (header === null) {
+			if (!header) {
 				header = cells.map((h) => h.toLowerCase())
 				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				const ix = (name: string): number => header!.indexOf(name)
@@ -259,7 +259,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				continue
 			}
 
-			if (cols === null) continue
+			if (!cols) continue
 
 			// Raw CNIG splits the road type from the street name, so the two are joined here.
 			const street =

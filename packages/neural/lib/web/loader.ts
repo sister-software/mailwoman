@@ -291,7 +291,7 @@ function declaredLexiconName(card: Record<string, unknown> | null, channel: stri
 	const requires = card?.requires as Record<string, { lexicon?: unknown }> | undefined
 	const name = requires?.[channel]?.lexicon
 
-	return typeof name === "string" && name.length ? name : null
+	return typeof name === "string" && name ? name : null
 }
 
 /**
@@ -361,7 +361,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	let configPairIndex: PairIndexResolver | null = null
 
-	if (opts.country != null && pairIndexes.length) {
+	if (opts.country && pairIndexes.length) {
 		const pinnedCountry = resolvePairIndexCountry(opts.country)
 		const pinned = pairIndexes.find((index) => index.country === pinnedCountry)
 

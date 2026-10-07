@@ -134,7 +134,7 @@ function inferSourceFromFilename(filename: string): string {
 	// Return "<unknown>" so the caller flags this case.
 	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
 
-	if (m && m[1] !== undefined) return m[1]
+	if (m && m[1]) return m[1]
 
 	return "<unknown>"
 }

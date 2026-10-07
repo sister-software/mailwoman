@@ -383,12 +383,12 @@ export function parseRawBDCFile(raw: RawBDCFile): BDCFile {
 		category: raw.category,
 		subcategory: raw.subcategory,
 		technologyCodes: new Set(
-			raw.technology_code === null
-				? []
-				: raw.technology_code.split(",").map((code) => Number.parseInt(code, 10) as BroadbandTechnologyCode)
+			raw.technology_code
+				? raw.technology_code.split(",").map((code) => Number.parseInt(code, 10) as BroadbandTechnologyCode)
+				: []
 		),
 		stateCode: raw.state_fips ?? "",
-		providerID: (raw.provider_id === null ? 0 : Number.parseInt(raw.provider_id, 10)) as ProviderID,
+		providerID: (raw.provider_id ? Number.parseInt(raw.provider_id, 10) : 0) as ProviderID,
 		providerName: raw.provider_name ?? "",
 		synchronizedAt: null,
 	}

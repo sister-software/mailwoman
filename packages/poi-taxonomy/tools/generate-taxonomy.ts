@@ -72,7 +72,7 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 
 		const [rawCode, rawPath, ...rest] = fields
 
-		if (rawCode === undefined || rawPath === undefined || rest.length) {
+		if (!rawCode || !rawPath || rest.length) {
 			throw new Error(`generate-taxonomy: malformed CSV row ${rowNumber}: ${stringifyJSON(fields.join(";"))}`)
 		}
 

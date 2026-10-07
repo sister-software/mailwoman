@@ -122,7 +122,7 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 		streetTypeLexiconURL: null,
 		localitySurfaceLexiconURL: null,
 		pairIndexURLs,
-		...(country !== undefined ? { country } : {}),
+		...(country ? { country } : {}),
 		runner: { useWebGPU: false },
 		fetchImpl: makeFetch(),
 	}

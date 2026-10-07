@@ -23,7 +23,7 @@ async function outDir(verdict?: unknown, provenance?: string): Promise<PathBuild
 		await writeLocalJSONFile(verdict, dir("verdict.json"))
 	}
 
-	if (provenance !== undefined) {
+	if (provenance) {
 		await writeLocalFile(provenance, dir("provenance.txt"))
 	}
 

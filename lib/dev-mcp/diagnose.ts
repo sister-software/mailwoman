@@ -346,7 +346,7 @@ export function collectParseFacts(
 
 	const knownFormats = trace.queryShape.knownFormats.map((hit): KnownFormatReading => {
 		const expects = (COMPONENT_FOR_KNOWN_FORMAT as Record<string, string | undefined>)[hit.format] ?? null
-		const carried = expects === null ? undefined : components[expects]
+		const carried = expects ? components[expects] : undefined
 		const wanted = foldForSpanMatch(hit.span.body)
 
 		return {

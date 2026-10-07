@@ -624,7 +624,7 @@ function proposeNumericReadings(
  * A confident annotation suppresses the designator and numeric proposals inside it.
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
-	if (!text.length) return []
+	if (!text) return []
 	let groupCounter = 0
 	const nextGroup = (): number => groupCounter++
 

@@ -43,7 +43,7 @@ export const THRESHOLD_STEPS = [
  */
 export function applyThreshold(results: readonly ArmRowResult[], threshold: number): ArmRowResult[] {
 	return results.map((result) => {
-		if (result.error || result.selection === null || result.confidence >= threshold) return result
+		if (result.error || !result.selection || result.confidence >= threshold) return result
 
 		return {
 			...result,

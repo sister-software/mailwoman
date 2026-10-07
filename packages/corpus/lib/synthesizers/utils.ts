@@ -799,7 +799,7 @@ export function composeAdversarialRow(
 	// Shift address spans by venue + separator and prepend one venue span.
 	const { span_starts: addrStarts, span_ends: addrEnds, span_tags: addrTags } = addressAligned.row
 
-	if (addrStarts === undefined || addrEnds === undefined || addrTags === undefined) {
+	if (!addrStarts || !addrEnds || !addrTags) {
 		throw new Error(
 			`composeAdversarialRow: alignRow returned a labeled row without the span triple ` +
 				`(source=${address.source}, source_id=${address.source_id}) — alignment interface violation`

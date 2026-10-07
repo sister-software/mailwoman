@@ -247,7 +247,7 @@ async function main(): Promise<void> {
 		for (const [, [child, parent]] of expected) {
 			const edge = resolver.probe(child, parent)
 
-			if (edge === null) {
+			if (!edge) {
 				misses++
 			} else if (edge.tag !== "locality") {
 				wrongTag++

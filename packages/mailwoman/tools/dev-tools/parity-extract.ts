@@ -64,7 +64,7 @@ function literalToJSON(node: ts.Expression): { ok: true; value: unknown } | { ok
 			const name =
 				ts.isIdentifier(property.name) || ts.isStringLiteralLike(property.name) ? property.name.text : undefined
 
-			if (name === undefined) return { ok: false }
+			if (!name) return { ok: false }
 
 			const value = literalToJSON(property.initializer)
 

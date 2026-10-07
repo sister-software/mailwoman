@@ -128,7 +128,7 @@ export function outcomeFor(
 	const committed = assertion.matches?.[0]
 	const observed = committed?.object_ids?.[expected.scheme]
 
-	if (observed === undefined) {
+	if (!observed) {
 		return {
 			outcome: PremiseLinkageOutcome.Errored,
 			failureCategory: PremiseLinkageFailureCategory.SchemeAbsent,
@@ -433,7 +433,7 @@ export async function runPremiseLinkage(options: PremiseLinkageRunOptions): Prom
 }
 
 function hasRunConfigShape(value: unknown): value is PremiseLinkageRunConfig {
-	if (typeof value !== "object" || value === null) return false
+	if (typeof value !== "object" || !value) return false
 
 	return "adapter" in value && "deps" in value && "authoritativeProvider" in value
 }

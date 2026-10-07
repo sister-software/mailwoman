@@ -39,7 +39,7 @@ export async function readDelimitedHeader(path: PathBuilderLike, columnDelimiter
 			mode: "array",
 			columnScan: "rows",
 			take: 1,
-			...(columnDelimiter === undefined ? {} : { columnDelimiter }),
+			...(columnDelimiter ? { columnDelimiter } : {}),
 		})
 	)
 

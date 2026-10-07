@@ -89,7 +89,7 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 		.then(async (response) => (response.ok ? (await response.text()).trim().split(/\s+/u)[0]! : null))
 		.catch(() => null)
 
-	if (published !== null && published !== md5Hex) {
+	if (published && published !== md5Hex) {
 		await movePath(destPath, `${destPath}.md5-mismatch`)
 
 		throw new Error(

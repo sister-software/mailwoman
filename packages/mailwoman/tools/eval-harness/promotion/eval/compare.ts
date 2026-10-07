@@ -51,7 +51,7 @@ function compareJSON(
 	path: string,
 	differences: PromotionOutputDifference[]
 ): void {
-	if (typeof baseline !== "object" || baseline === null || typeof candidate !== "object" || candidate === null) {
+	if (typeof baseline !== "object" || !baseline || typeof candidate !== "object" || !candidate) {
 		if (baseline !== candidate) {
 			differences.push({ path, baseline: describe(baseline), candidate: describe(candidate) })
 		}
@@ -163,11 +163,11 @@ export async function comparePromotionOutputs(
 		const candidateJSON = parseJSONStrict<JSONValue>(candidate)
 
 		if (name === "verdict.json") {
-			if (typeof baselineJSON === "object" && baselineJSON !== null && !Array.isArray(baselineJSON)) {
+			if (typeof baselineJSON === "object" && baselineJSON && !Array.isArray(baselineJSON)) {
 				delete baselineJSON.generated_at_dir
 			}
 
-			if (typeof candidateJSON === "object" && candidateJSON !== null && !Array.isArray(candidateJSON)) {
+			if (typeof candidateJSON === "object" && candidateJSON && !Array.isArray(candidateJSON)) {
 				delete candidateJSON.generated_at_dir
 			}
 		}

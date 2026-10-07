@@ -91,7 +91,7 @@ function componentsOf(result: { components?: Record<string, string | undefined> 
 	const out: Record<string, string> = {}
 
 	for (const [tag, value] of Object.entries(result.components ?? {})) {
-		if (typeof value === "string" && value.length) {
+		if (typeof value === "string" && value) {
 			out[tag] = value
 		}
 	}

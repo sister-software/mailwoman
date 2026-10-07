@@ -68,7 +68,7 @@ function padL(s: string, w: number): string {
 }
 
 function pyStr(v: unknown): string {
-	return v === undefined || v === null ? "None" : String(v)
+	return v == null ? "None" : String(v)
 }
 
 function pct(num: number, den: number): string {

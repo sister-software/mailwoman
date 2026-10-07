@@ -221,7 +221,7 @@ export function componentsForOSMRow(
 
 	const province = clean(row.province)
 
-	if (province && (split === null || !sameName(province, split.locality))) {
+	if (province && (!split || !sameName(province, split.locality))) {
 		components.region = province
 	}
 

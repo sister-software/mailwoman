@@ -359,7 +359,7 @@ export class BDUKValueError extends Error {
 		value: string
 		expected: string
 	}) {
-		const row = cell.uprn === null ? `line ${cell.line}` : `line ${cell.line}, UPRN ${cell.uprn}`
+		const row = cell.uprn ? `line ${cell.line}, UPRN ${cell.uprn}` : `line ${cell.line}`
 
 		super(`${cell.file} ${row}: "${cell.column}" holds ${stringifyJSON(cell.value)}, which is not ${cell.expected}.`)
 
@@ -552,7 +552,7 @@ export async function readBDUKReleaseDirectory<const C extends BDUKColumn>(
 		const read = await readBDUKReleaseFile(PathBuilder.from(directory)(name), columns, selection)
 		const release = files[0]?.release
 
-		if (release !== undefined && read.source.release !== release) {
+		if (release && read.source.release !== release) {
 			throw new Error(
 				`${directory.toString()} mixes releases: ${name} is ${read.source.release} where the other files are ${release}.`
 			)

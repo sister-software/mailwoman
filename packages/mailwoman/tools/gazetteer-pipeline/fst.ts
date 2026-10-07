@@ -324,7 +324,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 		if (!key || !country) return
 		const seen = first.get(key)
 
-		if (seen === undefined) {
+		if (!seen) {
 			first.set(key, country)
 
 			return
@@ -333,7 +333,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 		if (seen === country) return
 		let set = overflow.get(key)
 
-		if (set === undefined) {
+		if (!set) {
 			set = new Set([seen])
 			overflow.set(key, set)
 		}

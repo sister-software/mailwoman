@@ -227,7 +227,7 @@ function localDelineationAt(
 			nearest = distance
 		}
 
-		if (mukey === null && pointInEncodedRings(candidate.rings, longitude, latitude)) {
+		if (!mukey && pointInEncodedRings(candidate.rings, longitude, latitude)) {
 			mukey = candidate.mukey
 		}
 	}

@@ -43,7 +43,7 @@ export function parseAddressSystemTable(value: unknown, source: string): Address
 	if (
 		typeof table.no_hint !== "number" ||
 		typeof members !== "object" ||
-		members === null ||
+		!members ||
 		!Object.values(members).every((id) => typeof id === "number")
 	) {
 		throw new Error(
@@ -170,15 +170,14 @@ export function resolveSystemVerdict(
 	conventionsOpt: SystemCode | "auto" | null,
 	localeLogits: readonly number[] | null
 ): { detectedSystem: SystemCode | null; systemSource: "off" | "auto" | "pinned" } {
-	const detectedSystem =
-		conventionsOpt == null
-			? null
-			: conventionsOpt === "auto"
-				? (detectAddressSystem(localeLogits)?.system ?? null)
-				: conventionsOpt
+	const detectedSystem = conventionsOpt
+		? conventionsOpt === "auto"
+			? (detectAddressSystem(localeLogits)?.system ?? null)
+			: conventionsOpt
+		: null
 
 	return {
 		detectedSystem,
-		systemSource: conventionsOpt == null ? "off" : conventionsOpt === "auto" ? "auto" : "pinned",
+		systemSource: conventionsOpt ? (conventionsOpt === "auto" ? "auto" : "pinned") : "off",
 	}
 }

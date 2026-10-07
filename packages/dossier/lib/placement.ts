@@ -82,7 +82,7 @@ export type PositionAnswer =
  * An empty list means that neither rule places the reading.
  */
 export function readingBuildings(reading: LayerReading, memberships: readonly ExtentMembership[]): readonly EntityID[] {
-	if (reading.subject !== null) return [reading.subject]
+	if (reading.subject) return [reading.subject]
 
 	const placed = memberships.filter((membership) => membership.extent === reading.extent)
 

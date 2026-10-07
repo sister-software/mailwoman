@@ -84,7 +84,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 		continue
 	}
 
-	if (typeof gold !== "object" || gold === null || Array.isArray(gold)) {
+	if (typeof gold !== "object" || !gold || Array.isArray(gold)) {
 		fixtures.push({ ...fixture, dropped: `non-record gold expectation: ${stringifyJSON(gold).slice(0, 80)}` })
 
 		continue
@@ -97,7 +97,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 	for (const [legacyTag, values] of Object.entries(gold as Record<string, unknown>)) {
 		const componentTag = legacyClassificationToComponentTag(legacyTag as Classification)
 
-		if (componentTag === null) {
+		if (!componentTag) {
 			unmapped.push(legacyTag)
 			droppedTagCounts.set(legacyTag, (droppedTagCounts.get(legacyTag) ?? 0) + 1)
 

@@ -178,7 +178,7 @@ export function errorClasses(sample: readonly Observation[], threshold: number, 
 		const expected = observation.strata["expected"]
 		const predicted = observation.strata["predicted"]
 
-		if (expected === undefined || predicted === undefined) continue
+		if (!expected || !predicted) continue
 
 		const key = `${expected}\0${predicted}`
 		const existing = tally.get(key)

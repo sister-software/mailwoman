@@ -141,7 +141,7 @@ export function compareCases(
 
 		seen.add(candidate.id)
 
-		if (candidate.scenario === null) {
+		if (!candidate.scenario) {
 			rows.push(rowFor(candidate, noBuildCashFlow(prepared)))
 
 			continue

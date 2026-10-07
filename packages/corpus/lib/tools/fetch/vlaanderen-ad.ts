@@ -222,7 +222,7 @@ async function pagesOnDisk(root: PathBuilder, stem: string): Promise<Map<number,
 
 		if (!matched) continue
 
-		const startIndex = matched[1] === undefined ? 0 : Number(matched[1])
+		const startIndex = matched[1] ? Number(matched[1]) : 0
 
 		if (!Number.isInteger(startIndex)) continue
 
@@ -271,7 +271,7 @@ export async function harvestVlaanderenAD(
 		for (let startIndex = 0; startIndex < count; startIndex += componentPageSize) {
 			const held = existing.get(startIndex)
 
-			if (held !== undefined) {
+			if (held) {
 				componentFiles[typeName].push(held.file)
 				read += held.numberReturned
 
@@ -331,7 +331,7 @@ export async function harvestVlaanderenAD(
 
 		const existing = onDisk.get(startIndex)
 
-		if (existing !== undefined) {
+		if (existing) {
 			addressPages.push({ startIndex, file: existing.file, numberReturned: existing.numberReturned })
 
 			continue

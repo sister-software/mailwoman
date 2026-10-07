@@ -225,7 +225,7 @@ export function gipuzkoaPublicationIsRecorded(
 	bytesOnDisk: number,
 	publication: GipuzkoaPublication
 ): boolean {
-	if (publication.lastModified === null) return false
+	if (!publication.lastModified) return false
 
 	return recorded.last_modified === publication.lastModified && recorded.bytes === bytesOnDisk
 }

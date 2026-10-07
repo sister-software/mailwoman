@@ -493,7 +493,7 @@ function splitSentences(text: string): string[] {
 
 		const next = tokens[i + 1]
 
-		if (next === undefined || depth > 0) continue
+		if (!next || depth > 0) continue
 
 		if (!/[.!?][)"'\]`]*$/.test(token) || ABBREVIATIONS.test(token)) continue
 
@@ -944,7 +944,7 @@ export function reflowBlockComment(
 	)
 		return raw
 
-	if (plainPrefix !== null)
+	if (plainPrefix)
 		return [opening, ...formatted.map((line) => (line ? plainPrefix + line : "")), indent + " */"].join(eol)
 
 	return [opening, ...formatted.map((line) => indent + (line ? ` * ${line}` : " *")), indent + " */"].join(eol)

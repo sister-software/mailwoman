@@ -365,7 +365,7 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | null {
 	for (const n of walkNodes(roots)) {
-		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && n.value.trim().length) return n.value.trim()
+		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && n.value.trim()) return n.value.trim()
 	}
 
 	return null

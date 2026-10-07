@@ -116,7 +116,7 @@ export function encodeCharUnits(
  * because a malformed vocabulary encodes every character as UNK.
  */
 export function parseCharVocabulary(parsed: unknown, source: string): CharVocabulary {
-	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+	if (typeof parsed !== "object" || !parsed || Array.isArray(parsed)) {
 		throw new TypeError(`char vocabulary ${source}: expected a { character: id } map`)
 	}
 

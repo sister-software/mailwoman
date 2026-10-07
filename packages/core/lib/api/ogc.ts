@@ -169,7 +169,7 @@ export function readOGCServiceException(body: string): string | null {
 export function assertNoOGCServiceException(body: string, context: string): void {
 	const exception = readOGCServiceException(body)
 
-	if (exception !== null) {
+	if (exception) {
 		throw new OGCServiceError(context, exception)
 	}
 }
@@ -250,7 +250,7 @@ export async function readOGCCollectionBBox(
 
 	if (!bbox || bbox.length < BBOX_ORDINATES) {
 		throw new TypeError(
-			`${options.context}: the OGC collection${options.subject === undefined ? "" : ` ${options.subject}`} carried no spatial extent`
+			`${options.context}: the OGC collection${options.subject ? ` ${options.subject}` : ""} carried no spatial extent`
 		)
 	}
 
@@ -318,9 +318,9 @@ export async function readWFSFeatureCount(
 	options: ReadWFSFeatureCountOptions
 ): Promise<number> {
 	const numberMatched = await readReportedNumberMatched(client, options)
-	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
+	const subject = options.subject ? ` for ${options.subject}` : ""
 
-	if (numberMatched === null) {
+	if (!numberMatched) {
 		throw new Error(`${options.context}: the WFS hits response${subject} carried no numberMatched attribute`)
 	}
 
@@ -392,7 +392,7 @@ export async function readCheckedWFSFeatureCount(
 	const probeSize = options.probeSize ?? COUNT_PROBE_SIZE
 	const numberMatched = await readReportedNumberMatched(client, { ...options, startIndex: 1 })
 
-	if (numberMatched === null) {
+	if (!numberMatched) {
 		return { reported: null, usable: false, because: "the hits response carried no numberMatched attribute" }
 	}
 
@@ -424,7 +424,7 @@ export async function readCheckedWFSFeatureCount(
 	assertNoOGCServiceException(probe, options.context)
 
 	const returned = rootAttribute(probe, "numberReturned", { xml: true })
-	const observed = returned !== null && /^\d+$/u.test(returned) ? Number(returned) : null
+	const observed = returned && /^\d+$/u.test(returned) ? Number(returned) : null
 
 	if (observed !== null && observed > reported) {
 		return {
@@ -461,7 +461,7 @@ export async function readCheckedWFSFeatureCount(
 
 	const beyondReturned = rootAttribute(beyond, "numberReturned", { xml: true })
 
-	if (beyondReturned !== null && /^[1-9]\d*$/u.test(beyondReturned)) {
+	if (beyondReturned && /^[1-9]\d*$/u.test(beyondReturned)) {
 		return {
 			reported,
 			usable: false,
@@ -556,7 +556,7 @@ export async function countWFSFeaturesByPaging(
 
 		const returned = rootAttribute(data, "numberReturned", { xml: true })
 
-		return { returned: returned !== null && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
+		return { returned: returned && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
 	}
 
 	const leading = options.identify ?? ((body: string) => /gml:id="([^"]+)"/u.exec(body)?.[1] ?? null)
@@ -568,7 +568,7 @@ export async function countWFSFeaturesByPaging(
 
 	const second = await read(2, 2)
 
-	if (leading(first.body) !== null && leading(first.body) === leading(second.body)) {
+	if (leading(first.body) && leading(first.body) === leading(second.body)) {
 		throw new Error(
 			`${options.context}: the service answered startIndex 0 and startIndex 2 with the same leading feature, so it is ignoring startIndex and a count measured by paging it would be this service's page cap rather than its feature count`
 		)

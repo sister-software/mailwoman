@@ -160,7 +160,7 @@ export async function decodeReliabilitySample(
 
 			const expected = truth[tag]
 
-			if (expected === undefined && unassertedPolicy === UnassertedPolicy.Exclude) {
+			if (!expected && unassertedPolicy === UnassertedPolicy.Exclude) {
 				unassertedConfidences.push(confidence)
 
 				unassertedByTag[tag] = (unassertedByTag[tag] ?? 0) + 1
