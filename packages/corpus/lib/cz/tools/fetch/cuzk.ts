@@ -24,7 +24,7 @@
  * Four properties of this service decide the harvest's shape, and each was measured rather than
  * assumed:
  *
- * 1. **The service document carries each municipality's file modification time.** An entry's
+ * 1. **The service document states each municipality's file modification time.** An entry's
  *    `<updated>` equals the archive's `Last-Modified` to the second, checked on six municipalities
  *    on 2026-10-02 — `584061` reads `2026-06-04T02:19:33+02:00` against
  *    `Thu, 04 Jun 2026 00:19:33 GMT`, and `531529`, `551481`, `545031`, `587044` and `584282`
@@ -34,8 +34,8 @@
  * 2. **The download URL is composed from a base the feed itself declares.** The service document's
  *    own `rel="next"` links are `https://services.cuzk.gov.cz/gml/inspire/ad/epsg-4258` and
  *    `…/epsg-5514`, and a dataset feed's `alternate` link for the same municipality is that base
- *    plus `/<code>.zip`. Composing from the declared base rather than reading 6,258 dataset feeds
- *    halves the harvest's requests. {@linkcode HarvestCzCuzkOptions.resolveThroughDatasetFeed}
+ *    plus `/<code>.zip`. The harvest composes from the declared base instead of reading 6,258
+ *    dataset feeds. That halves its requests. {@linkcode HarvestCzCuzkOptions.resolveThroughDatasetFeed}
  *    reads the publisher's own href instead, for a run that will not compose a URL.
  * 3. **The `type` attribute describes the data rather than the file.** A dataset feed's link
  *    advertises `application/gml+xml` while the host serves `application/zip`, so the GML is inside
@@ -43,15 +43,14 @@
  *    arrives: the adapter opens it with `adm-zip`, because at least one archive's central directory
  *    records its member's size as the ZIP64 sentinel `0xFFFFFFFF`.
  * 4. **A dataset feed's `length` is accurate here, and is still not used.** `584061.zip` claims
- *    24,846 bytes and the host's `content-length` says 24,846. Denmark's feed understates its file
+ *    24,846 bytes and the host's `content-length` reports 24,846. Denmark's feed understates its file
  *    by 23 times, so every byte count this module records is counted off the delivered body.
  *
  * The archives are small — a systematic sample of 50 of the 6,258 municipalities on 2026-10-02 ran
  * from 5,236 to 1,642,586 bytes with a median of 16,591 — so the harvest is bound by round trips
  * rather than by bandwidth, and it is dispatched serially through one `APIClient`. ČÚZK publishes
  * no rate limit. {@linkcode CZ_CUZK_REQUEST_INTERVAL_MS} holds the harvest to four requests per
- * second against one government host, which is under half of the ten per second the same 50
- * requests measured, and a caller that has asked ČÚZK for more raises it.
+ * second against one government host. A caller that has asked ČÚZK for more raises it.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -77,12 +76,12 @@ import { loadCollectionFiles, writeManifest } from "#tools/fetch/download"
 export const CZ_CUZK_SERVICE_FEED_URL = "https://atom.cuzk.gov.cz/AD/AD.xml"
 
 /**
- * The directory the harvest writes under, which is the adapter's `inputPath`.
+ * The directory the harvest writes under. This is the adapter's `inputPath`.
  */
 const SLUG = CZ_CUZK_ADAPTER_ID
 
 /**
- * The attribution the model card must carry for this source.
+ * The attribution the model card must state for this source.
  */
 export const CZ_CUZK_ATTRIBUTION = "Český úřad zeměměřický a katastrální (ČÚZK), INSPIRE téma Adresy"
 
@@ -136,7 +135,7 @@ const MANIFEST_INTERVAL = 25
  */
 export interface CzMunicipalityDataset {
 	/**
-	 * The municipality code, which is both the `obec` code and the archive's file name stem.
+	 * The municipality code. It is both the `obec` code and the archive's file name stem.
 	 */
 	code: string
 	/**
@@ -144,11 +143,11 @@ export interface CzMunicipalityDataset {
 	 */
 	title: string
 	/**
-	 * The `<updated>` the service document states, which is this archive's modification time.
+	 * The `<updated>` the service document states. This value is the archive's modification time.
 	 */
 	updated: string
 	/**
-	 * The dataset feed for this municipality, which lists the same data in both projections.
+	 * The dataset feed for this municipality. It lists the same data in both projections.
 	 */
 	datasetFeedURL: string
 	/**
@@ -156,7 +155,7 @@ export interface CzMunicipalityDataset {
 	 */
 	downloadURL: string
 	/**
-	 * The file name the archive is written under, which is what the adapter globs.
+	 * The file name the archive is written under. The adapter globs for this name.
 	 */
 	filename: string
 }
@@ -179,7 +178,7 @@ const TITLE_CODE = /\[(\d+)\]\s*$/u
  * and stored under, so a disagreement between the publisher's two statements of it
  * would silently store one municipality's addresses under another's name.
  *
- * @throws When either statement is missing or the two disagree, which reads as a change
+ * @throws When either statement is missing or the two disagree. That reads as a change
  * in the publisher's layout rather than as a municipality without a code.
  */
 export function municipalityCodeOf(entry: { title: string; identifierCode: string | null }): string {
@@ -236,8 +235,8 @@ export function projectionBaseURL(feed: AtomFeed, projection: CzCuzkProjection):
 /**
  * The municipalities the service document lists, with the archive URL for one projection.
  *
- * @throws When the feed lists no entry, when two entries claim one municipality code — which
- * would make one archive overwrite the other — or when an entry carries no dataset feed link.
+ * @throws When the feed lists no entry, when two entries claim one municipality code, or when
+ * an entry states no dataset feed link. A repeated code would make one archive overwrite the other.
  */
 export function readCzCuzkServiceFeed(feed: AtomFeed, projection: CzCuzkProjection): readonly CzMunicipalityDataset[] {
 	if (!feed.entries.length) {
@@ -265,7 +264,7 @@ export function readCzCuzkServiceFeed(feed: AtomFeed, projection: CzCuzkProjecti
 
 		// The entry's `alternate` link is its dataset feed.
 		// The `describedby` link beside it is the ISO 19139 metadata record.
-		// Reading either as the other costs a request that answers XML of the wrong kind.
+		// Either link read as the other costs a request that answers XML of the wrong kind.
 		const datasetFeed = linkWithRel(entry.links, "alternate")
 
 		if (!datasetFeed?.href) {
@@ -321,7 +320,7 @@ export interface CzCuzkArchiveEntry extends SourceManifest {
 	/**
 	 * The `<updated>` the service document stated when this archive was fetched.
 	 *
-	 * A later run that reads the same value for this municipality leaves the file alone.
+	 * A later run that reads the same value for this municipality does not fetch the archive.
 	 * This is the field that makes the harvest resumable without a request per municipality.
 	 */
 	feed_updated: string
@@ -356,7 +355,7 @@ export interface CzCuzkHarvestManifest extends SourceCollectionManifest {
 
 export interface HarvestCzCuzkOptions {
 	/**
-	 * Where the archives and the manifest are written, which is the adapter's `inputPath`.
+	 * Where the archives and the manifest are written. This is the adapter's `inputPath`.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -365,7 +364,7 @@ export interface HarvestCzCuzkOptions {
 	 */
 	projection?: CzCuzkProjection
 	/**
-	 * Harvest only these municipality codes, for a probe or for a repair of named municipalities.
+	 * Harvest only these municipality codes, for a probe or to repair specific municipalities.
 	 *
 	 * A code the service document does not list is reported as a failure rather than ignored.
 	 */
@@ -386,8 +385,8 @@ export interface HarvestCzCuzkOptions {
 	/**
 	 * Re-read the sha256 of every archive already on disk instead of comparing its byte count.
 	 *
-	 * The default compares the recorded byte count against the file's size, which is one `stat`.
-	 * This re-hashes, which reads every archive in the directory.
+	 * The default compares the recorded byte count against the file's size. That check takes one `stat`.
+	 * This option re-hashes and reads every archive in the directory.
 	 */
 	verifyDigests?: boolean
 	signal?: AbortSignal
@@ -413,7 +412,7 @@ async function isCurrent(
 
 	if (!stat || stat.size !== recorded.bytes) return false
 
-	// The digest check reads the whole file rather than its metadata, which is why it is opt-in.
+	// The digest check reads the whole file rather than its metadata. This option is opt-in for that reason.
 	if (!verifyDigests) return true
 
 	return (await sha256File(path)) === recorded.sha256
@@ -467,7 +466,7 @@ export async function harvestCzCuzk(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, CzCuzkArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is carried through,
+	// An entry for a municipality this run does not consider is kept,
 	// so a bounded run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as CzCuzkArchiveEntry)
@@ -544,7 +543,7 @@ export async function harvestCzCuzk(
 }
 
 /**
- * The municipalities this run considers, and the codes a caller named that the feed does not list.
+ * The municipalities this run considers, and the codes a caller supplied that the feed does not list.
  *
  * A code the caller asked for and the service document does not list is returned
  * rather than dropped, because a municipality that is not published is a different
