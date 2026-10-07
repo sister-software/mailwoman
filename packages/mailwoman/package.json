@@ -215,8 +215,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1146.0",
-		"@aws-sdk/lib-storage": "^3.1146.0",
+		"@aws-sdk/client-s3": "^3.1147.0",
+		"@aws-sdk/lib-storage": "^3.1147.0",
 		"@inkjs/ui": "^2.0.0",
 		"@isaacs/cliui": "^9.0.0",
 		"@mailwoman/activity-lexicon": "workspace:*",
@@ -254,7 +254,7 @@
 		"chalk": "^6.0.1",
 		"d3-scale-chromatic": "^3.1.0",
 		"h3-js": "^4.5.0",
-		"ink": "^7.1.1",
+		"ink": "^8.0.0",
 		"kysely": "^0.29.6",
 		"onnxruntime-node": "^1.30.0",
 		"path-ts": "^2.5.0",

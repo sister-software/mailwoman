@@ -32,12 +32,12 @@
 		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"ink": "^7.1.1",
+		"ink": "^8.0.0",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
 		"react": "^19.3.0",
 		"spliterator": "^8.1.0",
-		"wrangler": "^4.147.0",
+		"wrangler": "^4.148.0",
 		"zod": "^4.6.5"
 	},
 	"engines": {
