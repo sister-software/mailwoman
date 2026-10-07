@@ -12,7 +12,8 @@ import type { AddressNode, AddressTree, PipelineOpts, PipelineResult } from "@ma
 import Fastify, { type FastifyInstance } from "fastify"
 import { describe, expect, it } from "vitest"
 
-import mailwomanFastify, { type MailwomanFastifyOptions, type RuntimePipeline } from "#index"
+import { mailwomanFastify } from "#plugin"
+import type { MailwomanFastifyOptions, RuntimePipeline } from "#shared"
 
 /**
  * A minimal resolved locality node — includes a coordinate so `extractGeocodeResult`
@@ -71,14 +72,14 @@ async function buildApp(
 }
 
 describe("@mailwoman/fastify", () => {
-	it("POST /parse returns ordered components + the decoded tree", async () => {
+	it("POST /v1/parse returns ordered components + the decoded tree", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline() })
-		const res = await app.inject({ method: "POST", url: "/parse", payload: { text: "New York" } })
+		const res = await app.inject({ method: "POST", url: "/v1/parse", payload: { address: "New York" } })
 
 		expect(res.statusCode).toBe(200)
 		const body = res.json()
 		expect(body.input).toBe("New York")
-		expect(body.path).toBe("full")
+		expect(body.debug).toBeNull()
 		expect(body.components).toContainEqual({ tag: "locality", value: "New York" })
 		expect(body.tree.roots).toHaveLength(1)
 	})
@@ -89,6 +90,7 @@ describe("@mailwoman/fastify", () => {
 
 		expect(res.statusCode).toBe(200)
 		const body = res.json()
+
 		expect(body.input).toBe("New York")
 		expect(body.lat).toBeCloseTo(40.7128)
 		expect(body.lon).toBeCloseTo(-74.006)
@@ -118,35 +120,59 @@ describe("@mailwoman/fastify", () => {
 		const res = await app.inject({ method: "POST", url: "/poi", payload: { text: "coffee near Union Square" } })
 
 		expect(res.statusCode).toBe(501)
+
 		const body = res.json()
+
 		expect(body.error).toBe("poi search not configured")
 		expect(body.detail).toContain("poiDatabasePath")
 	})
 
 	it("POST /poi returns not_poi_query when the pipeline produced no intent", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline(), poiDatabasePath: "/tmp/poi.db" })
+
 		const res = await app.inject({ method: "POST", url: "/poi", payload: { text: "New York" } })
 
 		expect(res.statusCode).toBe(200)
 		expect(res.json()).toEqual({ type: "not_poi_query" })
 	})
 
-	it("GET /health returns { ok, version }", async () => {
+	it("GET /v1/parse parses the address query parameter", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline() })
+		const res = await app.inject({ method: "GET", url: "/v1/parse?address=New%20York" })
+
+		expect(res.statusCode).toBe(200)
+		expect(res.json().components).toContainEqual({ tag: "locality", value: "New York" })
+	})
+
+	it("GET /health returns the shared health response", async () => {
+		await using app = await buildApp({ pipeline: fakePipeline() })
+
 		const res = await app.inject({ method: "GET", url: "/health" })
 
 		expect(res.statusCode).toBe(200)
 		const body = res.json()
-		expect(body.ok).toBe(true)
+
+		expect(body.status).toBe("ok")
+		expect(typeof body.uptime_s).toBe("number")
 		expect(typeof body.version).toBe("string")
 	})
 
-	it("rejects a blank body with 400 { error }", async () => {
+	it("rejects a blank address with the API error envelope", async () => {
 		await using app = await buildApp({ pipeline: fakePipeline() })
-		const res = await app.inject({ method: "POST", url: "/parse", payload: { text: "   " } })
+
+		const res = await app.inject({ method: "POST", url: "/v1/parse", payload: { address: "   " } })
 
 		expect(res.statusCode).toBe(400)
-		expect(res.json().error).toBe("text is required")
+		expect(res.json()).toEqual({ error: "address is required", detail: null })
+	})
+
+	it("rejects a body that fails the operation schema with the API error envelope", async () => {
+		await using app = await buildApp({ pipeline: fakePipeline() })
+
+		const res = await app.inject({ method: "POST", url: "/v1/parse", payload: { text: "New York" } })
+
+		expect(res.statusCode).toBe(400)
+		expect(res.json().error).toBe("invalid request")
 	})
 
 	it("exposes the fastify.mailwoman decorator with parse/geocode/poi", async () => {
@@ -165,13 +191,13 @@ describe("@mailwoman/fastify", () => {
 		await expect(app.mailwoman.poi("coffee")).rejects.toThrow(/not configured/)
 	})
 
-	it("honors routePrefix (plugin encapsulation)", async () => {
-		await using app = await buildApp({ pipeline: fakePipeline(), routePrefix: "/geo" })
+	it("honors Fastify's register prefix", async () => {
+		await using app = await buildApp({ pipeline: fakePipeline(), prefix: "/geo" })
 
-		const prefixed = await app.inject({ method: "POST", url: "/geo/parse", payload: { text: "New York" } })
+		const prefixed = await app.inject({ method: "POST", url: "/geo/v1/parse", payload: { address: "New York" } })
 		expect(prefixed.statusCode).toBe(200)
 
-		const unprefixed = await app.inject({ method: "POST", url: "/parse", payload: { text: "New York" } })
+		const unprefixed = await app.inject({ method: "POST", url: "/v1/parse", payload: { address: "New York" } })
 		expect(unprefixed.statusCode).toBe(404)
 	})
 })

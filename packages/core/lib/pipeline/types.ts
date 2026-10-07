@@ -7,6 +7,7 @@
  */
 
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import { z } from "zod"
 
 import type { AddressTree } from "#decoder/types"
 import type { MachinePreferences } from "#pipeline/preferences"
@@ -239,7 +240,11 @@ export interface QueryKindResult {
  *
  * When unset, {@link deriveInputMode} derives it from the query kind.
  */
-export type InputMode = "fragmented" | "formatted"
+export const InputModeSchema = z
+	.enum(["fragmented", "formatted"])
+	.meta({ id: "InputMode", description: "The parse register; unset derives it from the input's shape." })
+
+export type InputMode = z.infer<typeof InputModeSchema>
 
 /**
  * Maps complete-address kinds to `formatted` and every other kind to `fragmented`.
@@ -370,7 +375,7 @@ export interface FSTMatcherLike {
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	inputMode?: InputMode
-	fst?: FSTMatcherLike
+	fst?: FSTMatcherLike | null
 	fstBiasScale?: number
 	/**
 	 * The street-morphology matcher for the street-context check.
@@ -446,37 +451,43 @@ export interface RuntimePipelineStages {
 	 *
 	 * The optional posterior contains the full country distribution.
 	 */
-	placeCountry?: (normalizedText: string) => {
-		country: string | null
-		confidence: number
-		posterior?: Record<string, number>
-	}
+	placeCountry?:
+		| null
+		| ((normalizedText: string) => {
+				country: string | null
+				confidence: number
+				posterior?: Record<string, number>
+		  })
 	/**
 	 * The POI handler.
 	 * A `null` result falls through to the full parse.
 	 */
-	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>
+	poiIntent?:
+		| null
+		| ((input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>)
 	/**
 	 * The phrase grouper.
 	 *
 	 * Its proposals appear in the result and feed the grouper audit.
 	 */
-	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>
-	classifier?: AddressClassifier
+	groupPhrases?:
+		| null
+		| ((input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>)
+	classifier?: AddressClassifier | null
 	/**
 	 * The FST matcher that adds gazetteer emission biases.
 	 */
-	fst?: FSTMatcherLike
+	fst?: FSTMatcherLike | null
 	/**
 	 * The street-morphology matcher.
 	 * The street-context check runs only when `fst` is also set.
 	 */
-	streetMorphology?: FSTMatcherLike
-	resolver?: Resolver
+	streetMorphology?: FSTMatcherLike | null
+	resolver?: Resolver | null
 	/**
 	 * The backend for resolver candidate and parent-chain lookups during reconciliation.
 	 */
-	resolverBackend?: ResolverBackend
+	resolverBackend?: ResolverBackend | null
 }
 
 /**

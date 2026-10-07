@@ -239,7 +239,7 @@ export interface ParseOpts {
 	/**
 	 * The FST gazetteer matcher whose matches add emission biases.
 	 */
-	fst?: FSTMatcherLike
+	fst?: FSTMatcherLike | null
 
 	/**
 	 * The bias magnitude for FST gazetteer matches, defaulting to 1.

@@ -76,6 +76,8 @@ export interface POIPhraseMatch {
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
+// TODO: unify with API schema.
+// This is likely the correct home, but the schema should come here
 export type POISpatialRelation = "comma" | "near" | "in" | "at" | "around" | "to"
 
 /**

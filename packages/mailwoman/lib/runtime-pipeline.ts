@@ -83,12 +83,12 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * The classification stage, typically a `NeuralAddressClassifier`.
 	 */
-	classifier?: RuntimePipelineStages["classifier"]
+	classifier?: RuntimePipelineStages["classifier"] | null
 
 	/**
 	 * The resolution stage, typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`.
 	 */
-	resolver?: RuntimePipelineStages["resolver"]
+	resolver?: RuntimePipelineStages["resolver"] | null
 
 	/**
 	 * The FST gazetteer matcher that biases emissions during classification.
@@ -170,7 +170,7 @@ export interface CreateRuntimePipelineOpts {
 	 * `{ poiDatabasePath }` also executes them against a lookup opened on the first call.
 	 * `false` removes the POI stage.
 	 */
-	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike }
+	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike } | null
 
 	/**
 	 * A fallback phrase lookup, consulted only when the category lexicon and the POI name lookup both miss.
@@ -298,11 +298,11 @@ export function createRuntimePipeline(
 
 		classifier: opts.streetEvidence ? wrapWithStreetEvidence(opts.classifier, opts.streetEvidence) : opts.classifier,
 
-		fst: opts.fst === false ? undefined : opts.fst,
-		streetMorphology: opts.streetMorphology === false ? undefined : opts.streetMorphology,
+		fst: opts.fst === false ? null : opts.fst,
+		streetMorphology: opts.streetMorphology === false ? null : opts.streetMorphology,
 		resolver: opts.resolver,
 
-		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
+		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : null,
 
 		detectLocale:
 			opts.detectLocale ??
@@ -335,16 +335,16 @@ export function createRuntimePipeline(
 		})
 	}
 
-	const autoPlaceCountry = opts.placeCountry === undefined
+	const autoPlaceCountry = opts.placeCountry == null
 	let placeCountryResolved = !autoPlaceCountry
 
-	let streetEvidenceResolved = opts.streetEvidence !== undefined
+	let streetEvidenceResolved = opts.streetEvidence != null
 
-	const autoFST = opts.fst === undefined
+	const autoFST = opts.fst == null
 	let fstResolved = !autoFST
-	let morphologyResolved = opts.streetMorphology !== undefined
+	let morphologyResolved = opts.streetMorphology != null
 
-	const poiDatabasePath = typeof opts.poiQueryKind === "object" ? opts.poiQueryKind.poiDatabasePath : undefined
+	const poiDatabasePath = typeof opts.poiQueryKind === "object" ? opts.poiQueryKind?.poiDatabasePath : null
 	let poiLookupResolved = !poiDatabasePath
 
 	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {

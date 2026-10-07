@@ -9,9 +9,9 @@
  *   must not import `mailwoman`; the bin (`lib/cli.ts`) is the wiring layer that resolves the stamp and passes it in.
  */
 
-import { z } from "@hono/zod-openapi"
 import type { EngineStamp } from "@mailwoman/core/license"
 import type { MiddlewareHandler } from "hono"
+import { z } from "zod"
 
 /**
  * The stamp contains no licensee or key id.
@@ -26,7 +26,7 @@ export const EngineStampSchema = z
 		license_url: z.string(),
 		notice: z.string().nullable(),
 	})
-	.openapi("EngineStamp") satisfies z.ZodType<EngineStamp>
+	.meta({ id: "EngineStamp" }) satisfies z.ZodType<EngineStamp>
 
 /**
  * A route's response schema once the route attaches the stamp: the body schema
@@ -46,7 +46,9 @@ export const EngineStampSchema = z
  * Generated client type names then follow the document's names.
  */
 export function stampedResponseSchema<S extends z.ZodTypeAny>(schema: S, name: string) {
-	return z.intersection(schema, z.object({ engine: EngineStampSchema.optional() })).openapi(name)
+	return z
+		.intersection(schema, z.object({ engine: EngineStampSchema.optional() }))
+		.meta({ id: name, description: z.globalRegistry.get(schema)?.description })
 }
 
 /**

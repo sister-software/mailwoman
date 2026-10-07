@@ -20,7 +20,14 @@ export {
 
 export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "#pipeline/span-proposer"
 export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipeline/span-proposer"
-export { deriveInputMode, PipelineFaultStage, QueryIntentCode, WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
+
+export {
+	deriveInputMode,
+	InputModeSchema,
+	PipelineFaultStage,
+	QueryIntentCode,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+} from "#pipeline/types"
 
 export type {
 	AddressClassifier,

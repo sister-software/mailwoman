@@ -93,7 +93,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
-		expect(calls[0]!.fst).toBeUndefined()
+		expect(calls[0]!.fst).toBeNull()
 		expect(calls[0]!.fstStreetMorphology).toBeUndefined()
 	})
 

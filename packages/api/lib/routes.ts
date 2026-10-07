@@ -16,6 +16,7 @@ import {
 	withEngineStamp,
 	APIErrorSchema,
 } from "@mailwoman/api-kit"
+import { toHonoRoute } from "@mailwoman/api-kit/hono-operation"
 import { type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/codex/address/format"
 import { canonicalKey } from "@mailwoman/codex/address/key"
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -23,6 +24,9 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { EngineStamp } from "@mailwoman/core/license"
 
 import type { MailwomanAPIEngine } from "#engine"
+import { ParseAddressOperation } from "#operations/parse-address"
+import { ParseAddressQueryOperation } from "#operations/parse-address-query"
+import { RetrieveHealthOperation } from "#operations/retrieve-health"
 import {
 	BatchRequestSchema,
 	BatchResponseSchema,
@@ -30,9 +34,6 @@ import {
 	FormatResponseSchema,
 	GeocodeOutcomeSchema,
 	GeocodeRequestSchema,
-	HealthResponseSchema,
-	ParseOutcomeSchema,
-	ParseRequestSchema,
 	ResolveRequestSchema,
 	ResolveResponseSchema,
 	type GeocodeOutcome,
@@ -64,24 +65,6 @@ const errorContent = (description: string) => ({
 	description,
 	content: { "application/json": { schema: APIErrorSchema } },
 })
-
-const parseQueryParams = z.object({
-	address: z.string().optional().openapi({ description: "The address to parse." }),
-	debug: z.string().optional().openapi({ description: '`"true"` to include a diagnostic report.' }),
-	input_mode: z
-		.enum(["fragmented", "formatted"])
-		.optional()
-		.openapi({ description: "Input register (Decision A): unset → derived from the input's shape." }),
-})
-
-const parseResponses = {
-	200: {
-		description: "The tokenized input span + ranked solutions.",
-		content: { "application/json": { schema: stampedResponseSchema(ParseOutcomeSchema, "StampedParseOutcome") } },
-	},
-	400: errorContent("`address` is required."),
-	501: errorContent("The backing engine method is not wired for this deployment."),
-}
 
 const geocodeResponses = {
 	200: {
@@ -129,13 +112,6 @@ const formatResponses = {
 	400: errorContent("Invalid request body."),
 }
 
-const healthResponses = {
-	200: {
-		description: "Liveness + engine health block. Answers 200 even when the engine is absent or broken.",
-		content: { "application/json": { schema: HealthResponseSchema } },
-	},
-}
-
 const metricsResponses = {
 	200: {
 		description: "The live in-process timing metrics snapshot (latency percentiles + per-tier counts).",
@@ -143,25 +119,9 @@ const metricsResponses = {
 	},
 }
 
-const parseGetRoute = createRoute({
-	method: "get",
-	path: "/v1/parse",
-	operationId: "parseGet",
-	summary: "Parse an address (query string)",
-	tags: ["parsing"],
-	request: { query: parseQueryParams },
-	responses: parseResponses,
-})
+const parseGetRoute = toHonoRoute(ParseAddressQueryOperation)
 
-const parsePostRoute = createRoute({
-	method: "post",
-	path: "/v1/parse",
-	operationId: "parsePost",
-	summary: "Parse an address (JSON body)",
-	tags: ["parsing"],
-	request: { body: { content: { "application/json": { schema: ParseRequestSchema } }, required: true } },
-	responses: parseResponses,
-})
+const parsePostRoute = toHonoRoute(ParseAddressOperation)
 
 const geocodeRoute = createRoute({
 	method: "post",
@@ -212,14 +172,7 @@ const formatRoute = createRoute({
 	responses: formatResponses,
 })
 
-const healthRoute = createRoute({
-	method: "get",
-	path: "/health",
-	operationId: "health",
-	summary: "Liveness + engine health",
-	tags: ["meta"],
-	responses: healthResponses,
-})
+const healthRoute = toHonoRoute(RetrieveHealthOperation)
 
 const metricsRoute = createRoute({
 	method: "get",

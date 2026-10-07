@@ -455,10 +455,10 @@ async function safeClassify(
 	text: string,
 	queryShape: QueryShapeLite,
 	knobs: {
-		fst?: FSTMatcherLike
+		fst?: FSTMatcherLike | null
 		normalizeCase?: boolean
 		placetypePair?: PlacetypePairPassthrough
-		streetMorphology?: FSTMatcherLike
+		streetMorphology?: FSTMatcherLike | null
 		inputMode?: InputMode
 	} = {}
 ): Promise<AddressTree> {
@@ -499,7 +499,10 @@ export const STREET_CONTEXT_POSITIVE_SCALE = 0
  * Returns the street-context classifier options, or an empty object unless both the FST
  * and the street-morphology matcher are available.
  */
-export function streetContextRequirementFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
+export function streetContextRequirementFor(stages: {
+	fst?: FSTMatcherLike | null
+	streetMorphology?: FSTMatcherLike | null
+}): {
 	fstStreetMorphology?: FSTMatcherLike
 	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
 	fstStreetContextPositiveScale?: number

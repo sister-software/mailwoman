@@ -7,6 +7,9 @@
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import { z } from "zod"
+
+import { isRecordLike } from "#objects"
 
 /**
  * One token with its predicted label, confidence and offsets into the original input.
@@ -109,14 +112,39 @@ export interface Interpretation {
 }
 
 /**
+ * The wire schema of an {@link AddressNode}.
+ *
+ * The node is recursive, so the schema checks only that the value is an object and documents the rest.
+ */
+export const AddressNodeSchema = z.custom<AddressNode>(isRecordLike).meta({
+	id: "AddressNode",
+	type: "object",
+	additionalProperties: true,
+	description: "A decoded address-tree node: a tag, its span, and its children.",
+})
+
+/**
+ * The wire schema of an {@link AddressTree}.
+ */
+export const AddressTreeSchema = z.custom<AddressTree>(isRecordLike).meta({
+	id: "AddressTree",
+	type: "object",
+	properties: { raw: { type: "string" }, roots: { type: "array", items: { type: "object" } } },
+	required: ["raw", "roots"],
+	additionalProperties: true,
+	description: "A decoded address: the raw input and its top-level component nodes.",
+})
+
+/**
  * One parsed component in reading order: a `ComponentTag` and the text it covers.
  *
  * HTTP surfaces put a list of these beside the full {@link AddressTree}.
  */
-export interface ParseComponent {
-	tag: string
-	value: string
-}
+export const ParseComponentSchema = z
+	.object({ tag: z.string(), value: z.string() })
+	.meta({ id: "ParseComponent", description: "One parsed component in reading order." })
+
+export type ParseComponent = z.infer<typeof ParseComponentSchema>
 
 /**
  * A decoded address with its top-level components in source order.

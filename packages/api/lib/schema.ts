@@ -9,48 +9,14 @@
  */
 
 import { z } from "@hono/zod-openapi"
+import type { POIIntentOutcome } from "@mailwoman/core"
+import { AddressNodeSchema, AddressTreeSchema } from "@mailwoman/core/decoder"
+import { InputModeSchema } from "@mailwoman/core/pipeline"
 import type { DerivationProjection, Evidence } from "@mailwoman/evidence"
 
-import { AddressNodeSchema } from "#address-node-schema"
 import { MAX_ADDRESS_LENGTH } from "#input-limits"
 
-export { AddressNodeSchema } from "#address-node-schema"
-
-/**
- * `fragmented` is the map-search register (evidence-bundle channels feed) and `formatted` the
- * validation/record register (channels off); unset lets the engine derive it from the input's shape.
- */
-export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
-
 export { MAX_ADDRESS_LENGTH } from "#input-limits"
-
-/**
- * `post /v1/parse` request body.
- */
-export const ParseRequestSchema = z
-	.object({
-		address: z.string().max(MAX_ADDRESS_LENGTH),
-		debug: z.boolean().optional(),
-		input_mode: InputModeSchema.optional(),
-	})
-	.openapi("ParseRequest")
-
-/**
- * One `ParseOutcome.components` entry — mirrors `ParseComponent` (`@mailwoman/core`).
- */
-export const ParseComponentSchema = z.object({ tag: z.string(), value: z.string() }).openapi("ParseComponent")
-
-/**
- * `post /v1/parse` response, mirroring {@linkcode ParseOutcome} (`engine.ts`) on the wire.
- */
-export const ParseOutcomeSchema = z
-	.object({
-		input: z.string(),
-		components: z.array(ParseComponentSchema),
-		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
-		debug: z.string().nullable(),
-	})
-	.openapi("ParseOutcome")
 
 /**
  * `post /v1/geocode` request body.
@@ -238,6 +204,71 @@ const derivationPin: Mutual<z.infer<typeof DerivationProjectionSchema>, Derivati
 
 void evidencePin
 void derivationPin
+
+const POICategorySubjectSchema = z.object({
+	kind: z.literal("category"),
+	categoryIDs: z.array(z.string()),
+	matched: z.string(),
+	countryBinding: z
+		.object({ anchorCountry: z.string().nullable(), excludedCategoryIDs: z.array(z.string()) })
+		.optional(),
+})
+
+const POIBrandSubjectSchema = z.object({
+	kind: z.literal("brand"),
+	name: z.string(),
+	wikidata: z.string().optional(),
+	matched: z.string(),
+})
+
+const POIAnchorSchema = z.object({
+	text: z.string().optional(),
+	tree: AddressTreeSchema.optional(),
+	biasPoint: z.object({ latitude: z.number(), longitude: z.number() }).optional(),
+	radiusM: z.number().optional(),
+})
+
+// TODO: Unify with kind classifier
+const POIIntentSchema = z.object({
+	subject: z.discriminatedUnion("kind", [
+		POICategorySubjectSchema,
+		POIBrandSubjectSchema,
+		z.object({ kind: z.literal("name"), text: z.string() }),
+	]),
+	relation: z.enum(["comma", "near", "in", "at", "around", "to"]).optional(),
+	anchor: POIAnchorSchema.optional(),
+	limit: z.number().optional(),
+})
+
+const POIResultSchema = z.object({
+	name: z.string().nullable(),
+	categoryID: z.string().nullable(),
+	brandWikidata: z.string().nullable(),
+	latitude: z.number(),
+	longitude: z.number(),
+	country: z.string(),
+	confidence: z.number(),
+	gersID: z.string().nullable(),
+	ancestry: z
+		.array(z.object({ placetype: z.string(), name: z.string(), wofID: z.number() }))
+		.readonly()
+		.optional(),
+	distanceM: z.number().optional(),
+})
+
+/**
+ * The response returned when the pipeline evaluates a point-of-interest query.
+ */
+export const POIIntentOutcomeSchema = z
+	.discriminatedUnion("type", [
+		z.object({ type: z.literal("intent"), intent: POIIntentSchema, results: z.array(POIResultSchema).optional() }),
+		z.object({ type: z.literal("abstain"), reason: z.string() }),
+	])
+	.openapi("POIIntentOutcome")
+
+const poiIntentOutcomePin: Mutual<z.infer<typeof POIIntentOutcomeSchema>, POIIntentOutcome> = true
+
+void poiIntentOutcomePin
 
 /**
  * `post /v1/geocode` response schema, passed through from the engine verbatim
@@ -444,17 +475,3 @@ export const FormatResponseSchema = z
 		canonicalKey: z.string(),
 	})
 	.openapi("FormatResponse")
-
-/**
- * `GET /health` response — `status` and `uptime_s` are stamped by the route itself,
- * so those two are accurate to pin.
- *
- * Everything else is the engine's `HealthData` block and stays loose.
- */
-export const HealthResponseSchema = z
-	.object({
-		status: z.literal("ok"),
-		uptime_s: z.number(),
-	})
-	.loose()
-	.openapi("HealthResponse")
