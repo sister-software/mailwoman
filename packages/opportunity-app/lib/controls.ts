@@ -8,7 +8,7 @@
  *   exactly, and the model validates the value's range, so a value the model refuses reaches the page as the
  *   model's own message.
  *
- *   A changed input that carries an `InputBasis` in the scenario takes {@link CONTROLS_BASIS}, so neither the
+ *   A changed input with an `InputBasis` in the scenario takes {@link CONTROLS_BASIS}, so neither the
  *   inputs table nor the scenario report attributes a new value to the source of the old one. An input left at
  *   the scenario's value keeps the scenario's own record, basis included.
  */

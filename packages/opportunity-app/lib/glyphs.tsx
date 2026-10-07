@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The shapes that stand beside each state's color. Each glyph is decoration for a word the page also writes, so
- *   every glyph is hidden from assistive technology and the word carries the fact.
+ *   every glyph is hidden from assistive technology and the word states the fact.
  *
  *   The two unknown states draw a dashed outline around a question mark, a circle for unknown coverage and a
  *   diamond for an unknown unit count. A selected building's glyph draws a heavier outline and a check mark. A

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Item 5 of #2289: "Keyboard access and more than color identify selection, unknowns, and sources." The test
- *   drives the page with the keyboard alone: Tab, Shift+Tab, Space, Enter and an arrow key. It makes no mouse click,
+ *   drives the page with the keyboard only: Tab, Shift+Tab, Space, Enter and an arrow key. It makes no mouse click,
  *   passes no `force` option and dispatches no scripted event. Every assertion reads a role, an accessible name or
  *   description, or text, and none reads a color. The expected words come from `buildingFeatures`,
  *   `routeFeatures` and `districtFeatures` for the Example District on its scenario date.

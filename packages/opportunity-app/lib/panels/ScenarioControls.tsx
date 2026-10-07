@@ -6,7 +6,7 @@
  *   The scenario controls, grouped by the word of #2289's item 4 that each covers: investment, value, evidence,
  *   dates and assumptions. The form applies every control at once when the reader presses Recalculate or Enter, so
  *   the live region announces one recalculation for one change. A field whose text does not read in its unit keeps
- *   the last applied values and says why beside the field.
+ *   the last applied values and explains why beside the field.
  */
 
 import { UnitStage } from "@mailwoman/dossier"

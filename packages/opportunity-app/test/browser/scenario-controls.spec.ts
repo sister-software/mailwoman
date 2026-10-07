@@ -186,7 +186,7 @@ async function selectBuildings(page: Page, labels: ReadonlyMap<string, string>):
 }
 
 /**
- * The cells after the row header of the inputs table row named `name`.
+ * The cells after the row header of the inputs table row for `name`.
  */
 function inputCells(page: Page, name: string) {
 	return page

@@ -103,7 +103,7 @@ export function selectionEconomics(
 }
 
 /**
- * A named selection of buildings that a portfolio funds as one project.
+ * A selection of buildings that a portfolio funds as one project.
  */
 export interface Project {
 	id: string
