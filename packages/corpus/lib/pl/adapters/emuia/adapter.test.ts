@@ -18,8 +18,8 @@ const scratch = useScratchDir("emuia")
  * Ten `ms:AD.Address` members of a real `GetFeature` page, retrieved 2026-10-02,
  * inside that page's own envelope.
  *
- * Five sit on a named street, including one `16/18` and one `17a`, and five sit
- * on a locality alone with an empty `ms:ulica`.
+ * Five sit on a street with a name, including one `16/18` and one `17a`, and five sit
+ * on a locality only, with an empty `ms:ulica`.
  * Only `numberReturned` was edited, from the page's 60 down to the ten kept,
  * so the document states its own contents.
  */
@@ -75,7 +75,7 @@ describe("emuia adapter against fixture sample.xml", () => {
 		expect(streetless.every((r) => typeof r.components.house_number === "string")).toBe(true)
 		expect(streetless.every((r) => typeof r.components.locality === "string")).toBe(true)
 
-		// `ms:adres` writes these as locality then number, and the rendered line carries the same two.
+		// `ms:adres` writes these as locality then number, and the rendered line holds the same two.
 		expect(streetless.map((r) => r.raw).toSorted()).toEqual([
 			"16A, 26-341 Olimpiów",
 			"19, 26-341 Jawor",

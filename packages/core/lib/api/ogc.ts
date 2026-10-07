@@ -49,7 +49,7 @@ export class OGCServiceError extends Error {
 const EXCEPTION_OPEN = "<ServiceException"
 
 /**
- * The element a WFS 2.0 service carries its message in, with an optional namespace prefix.
+ * The element a WFS 2.0 service states its message in, with an optional namespace prefix.
  *
  * OGC 1.x answers `<ServiceExceptionReport>` holding `<ServiceException>`.
  * WFS 2.0 answers `<ows:ExceptionReport>` holding `<ows:Exception exceptionCode="…">`
@@ -113,8 +113,8 @@ function exceptionText(body: string): string | undefined {
 /**
  * The text of an `ExceptionText` element, with or without a namespace prefix.
  *
- * The prefix is captured so the closing tag matches the one the document opened,
- * which keeps a prefixed element from closing on an unprefixed one.
+ * The prefix is captured so the closing tag matches the one the document opened.
+ * A prefixed element therefore never closes on an unprefixed one.
  */
 function owsExceptionText(body: string): string | undefined {
 	const open = OWS_EXCEPTION_TEXT_OPEN.exec(body)
@@ -304,11 +304,11 @@ async function readReportedNumberMatched(
 /**
  * The feature count a WFS reports for one type.
  *
- * `resultType=hits`, which returns the count without a single geometry.
+ * `resultType=hits` returns the count without a single geometry.
  *
  * This takes the service's word for the count.
  * A caller that cannot check the number against the publisher's own figure reads
- * {@linkcode readCheckedWFSFeatureCount} instead, which asks a second time.
+ * {@linkcode readCheckedWFSFeatureCount} instead. That reader asks a second time.
  *
  * @param options.subject Names the layer in the refusal, where the caller reads more than one.
  */
@@ -339,7 +339,7 @@ export async function readWFSFeatureCount(
 /**
  * How much a service's own feature count is worth.
  *
- * `reported` is the number the service stated, and `usable` says whether a second read agreed with it.
+ * `reported` is the number the service stated, and `usable` records whether a second read agreed with it.
  * A caller records the count only where `usable` is true and records `because` otherwise,
  * so that a service which cannot count is told apart from one that counted a small number.
  */
@@ -360,34 +360,26 @@ const COUNT_PROBE_SIZE = 10
 /**
  * The feature count a WFS reports for one type, checked against a page of that type.
  *
- * Two INSPIRE Addresses services measured on 2026-09-30 answer a bare `resultType=hits`
- * request wrongly, in opposite directions, and the number alone tells a reader neither.
+ * A bare `resultType=hits` request over a capped service answers with the cap, so the
+ * number cannot tell a reader whether it describes the type. This asks past index 0 and
+ * then probes a page.
  *
- * Flanders (`geo.api.vlaanderen.be/ad/wfs`) answers `numberMatched="10000"` without a `startIndex`
- * and `4563062` with one, so the first request meets a per-request cap rather than counting the type.
- * This asks past index 0 for that reason.
+ * Flanders (`geo.api.vlaanderen.be/ad/wfs`) answers `numberMatched="10000"` without a
+ * `startIndex` and its real count with one, so this asks past index 0.
  *
- * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) states three different
- * numbers for one type and none of them is its count, measured 2026-10-01.
- * A bare request answers `numberMatched="1000"`, which is MapServer's default feature cap.
+ * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) reports MapServer's
+ * feature cap for a bare request, `unknown` for a feature page, and another number at
+ * `startIndex=1`. Its type held 8,625,921 features. The tell is that a page of the same
+ * type returns more features than the count admits, so this asks for one page and refuses
+ * a count that page contradicts. Such a service is counted by paging instead:
+ * {@linkcode countWFSFeaturesByPaging}.
  *
- * The same request at `startIndex=1` answers `1`.
- * A feature page answers `numberMatched="unknown"`.
- * Its type holds 8,625,921 features.
+ * A missing `numberMatched` can also be transient. Slovakia's
+ * `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with no such attribute.
  *
- * The tell is that a page of the same type returns more features than the count admits,
- * so this asks for one page and refuses a count that page contradicts.
- * A service answering this way is counted by paging instead: the count is the largest
- * `startIndex` that still returns a feature, which a doubling search followed by a bisection
- * finds in about 2·log2(n) requests, and a page straddling that index confirms the boundary.
- *
- * A missing `numberMatched` can also be transient.
- * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with
- * no such attribute and the other eight with `1704196`.
- *
- * This reports that response as unusable rather than inventing a count,
- * so a caller that needs the number retries, through `APIClient`'s `retry` configuration
- * or by reading the `numberMatched` a feature page carries.
+ * This reports that response as unusable rather than inventing a count, so a caller that
+ * needs the number retries, through `APIClient`'s `retry` configuration or by reading the
+ * `numberMatched` a feature page holds.
  *
  * @param options.subject Names the layer in the reason, where the caller reads more than one.
  */
@@ -441,13 +433,14 @@ export async function readCheckedWFSFeatureCount(
 	}
 
 	// A page no larger than the reported count agrees with it whatever the truth is,
-	// so agreement alone does not establish that the count describes the type.
-	// Asking for one feature at the reported index does: a service holding exactly that many has none there.
+	// so agreement does not establish that the count describes the type.
+	// One request does: asking for one feature at the reported index. A service holding
+	// exactly that many returns none there.
 	//
-	// Poland's address service is why this request exists.
-	// It answers `numberMatched="1000"`, which is MapServer's own feature cap, and its pages cap
-	// at 1,000 too, so a 10-feature probe agreed with 1,000 while the type held 8,626,951 on 2026-10-02.
-	// A caller trusting that would have stored 1,000 features and recorded the type as read whole.
+	// Poland's address service is why this request exists. It answers `numberMatched="1000"`,
+	// MapServer's own feature cap, and its pages cap at 1,000 too. A 10-feature probe therefore
+	// agreed with 1,000 while the type held 8,626,951. A caller trusting that would have stored
+	// 1,000 features and recorded the type as read whole.
 	const { data: beyond } = await client.fetch<string>({
 		method: "GET",
 		url: options.wfsURL,
@@ -487,7 +480,7 @@ export async function readCheckedWFSFeatureCount(
 export interface PagedWFSFeatureCount {
 	count: number
 	/**
-	 * Requests this measurement sent, which is the cost a caller is choosing to pay.
+	 * Requests this measurement sent. This is the cost a caller is choosing to pay.
 	 */
 	requests: number
 	/**
@@ -508,8 +501,8 @@ const PAGING_COUNT_CEILING = 2 ** 34
 /**
  * The feature count a type holds, measured by asking which indices hold a feature.
  *
- * For a service whose own `resultType=hits` cannot be trusted, which
- * {@linkcode readCheckedWFSFeatureCount} reports as `usable: false`.
+ * This serves a service whose own `resultType=hits` cannot be trusted.
+ * {@linkcode readCheckedWFSFeatureCount} reports that condition as `usable: false`.
  * What such a service still answers truthfully is whether a feature exists at a given
  * `startIndex`, so the count is the largest index that returns one, plus one.
  *
@@ -517,7 +510,7 @@ const PAGING_COUNT_CEILING = 2 ** 34
  * It costs about 2·log2(n) requests: 51 for Poland's 8,625,921 features.
  *
  * A page straddling the last index then confirms the boundary.
- * `confirmed` carries that answer to the caller, because a service that caps a
+ * `confirmed` reports that answer to the caller, because a service that caps a
  * page would make the bisection stop early.
  *
  * The measurement means something only where paging works.

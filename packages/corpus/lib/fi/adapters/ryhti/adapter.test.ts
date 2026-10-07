@@ -85,7 +85,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		const rows = await readCanonicalRows(scratch.path, RYHTI_ADAPTER_ID)
 		const numberOf = (street: string) => rows.find((r) => r.components.street === street)?.components.house_number
 
-		// A lettered number, a range, and a range whose second half carries the letter.
+		// A lettered number, a range, and a range whose second half holds the letter.
 		expect(numberOf("Kiviperäntie")).toBe("41a")
 		expect(numberOf("Majvikintie")).toBe("2-26")
 		expect(numberOf("Koppelontie")).toBe("184-183b")
@@ -107,7 +107,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		// because the publisher populated it.
 		[{ number_part_of_address_number: "17", subdivision_letter_of_address_number2: "a" }, "17-a"],
 		[{ number_part_of_address_number: "" }, ""],
-		// A row with no first number part has no number at all, whatever the second pair says.
+		// A row with no first number part has no number at all, whatever the second pair states.
 		[{ number_part_of_address_number: "", number_part_of_address_number2: "26" }, ""],
 	])("composeRyhtiHouseNumber(%o) is %s", (parts, expected) => {
 		expect(composeRyhtiHouseNumber(parts)).toBe(expected)
@@ -140,7 +140,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		const haltiattarentie = rows.filter((r) => r.source_id.startsWith("ryhti-00001099-a046-4735-b16f-f152bbb2b855"))
 
 		// `address_swe` is `1`, a bare number, and `address_name_swe` is empty,
-		// so the record emits the Finnish surface alone.
+		// so the record emits only the Finnish surface.
 		expect(haltiattarentie).toHaveLength(1)
 		expect(haltiattarentie[0]!.locale).toBe("fi-FI")
 	})

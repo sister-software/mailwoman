@@ -7,32 +7,32 @@
  * from its per-municipality zipped GML.
  *
  * The ATOM service at `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml`
- * lists 55 entries, and 52 of them are the Dirección General del Catastro's own provinces. The other
- * three link the foral cadastres of Bizkaia, Gipuzkoa and Navarra, which state their own terms and
- * have an adapter each. Every DGC entry links a province feed listing one zipped GML per
- * municipality, so a caller harvests municipality by municipality and this adapter reads one archive
- * or a directory of them.
+ * lists 55 entries. 52 are the Dirección General del Catastro's own provinces. Three link the foral
+ * cadastres of Bizkaia, Gipuzkoa and Navarra. Those three state their own terms and have an adapter
+ * each. Every DGC entry links a province feed listing one zipped GML per municipality, so a caller
+ * harvests municipality by municipality and this adapter reads one archive or a directory of them.
  *
  * Three properties of the file decide the reader, and each of the three would silently empty a row
  * if it were read the way the other INSPIRE publishers are read.
  *
- * The archive carries two members. `A.ES.SDGC.AD.<code>.gml` is the data and
+ * The archive holds two members. `A.ES.SDGC.AD.<code>.gml` is the data and
  * `A.ES.SDGC.AD.MD.<code>.xml` is its ISO 19139 metadata record. A member selector matching `.xml`
- * therefore selects the metadata record. That record carries no `AD:Address` at all, so
+ * therefore selects the metadata record. That record holds no `AD:Address` at all, so
  * {@linkcode GML_MEMBER} matches the extension that holds the features.
  *
- * The GML declares `<?xml version="1.0" encoding="ISO-8859-1"?>` and is not valid UTF-8: Ceuta's
- * 11,861,975-byte member carries 26 bytes above 0x7F, one of which is the `Ñ` of a street name.
- * `streamMarkupElements` decodes with a UTF-8 `TextDecoder`, which answers those bytes with U+FFFD,
- * so the bytes pass through `decodeByteStream` first. {@linkcode assertLatin1Declaration} reads the
- * declaration rather than trusting this note, because a publisher that re-encodes its output would
- * otherwise have every accented name mojibaked under a reader that still claimed to be right.
+ * The GML declares `<?xml version="1.0" encoding="ISO-8859-1"?>` and is not valid UTF-8. Ceuta's
+ * 11,861,975-byte member holds 26 bytes above 0x7F, one of which is the `Ñ` of a street name.
+ * `streamMarkupElements` decodes with a UTF-8 `TextDecoder`. That decoder answers those bytes with
+ * U+FFFD. The bytes therefore pass through `decodeByteStream` first. {@linkcode assertLatin1Declaration}
+ * reads the declaration rather than trusting this note, because a publisher that re-encodes its
+ * output would otherwise have every accented name mojibaked under a reader that still claimed to be
+ * right.
  *
  * The file binds the INSPIRE namespaces to upper-case prefixes, `AD:Address` and `GN:text`, and
  * states a designator type and an administrative level as element text rather than as a codelist
  * URI. `#inspire/address` matches an element by its local name and accepts either form of a coded
  * value, so the readers there serve this publisher. Only the element names this module passes to the
- * markup stream carry the upper-case prefix.
+ * markup stream hold the upper-case prefix.
  *
  * Each address references exactly three features by local `#` fragment, measured as 8,126 of 8,126
  * addresses in Ceuta carrying one `ES.SDGC.PD`, one `ES.SDGC.TN` and one `ES.SDGC.AU` reference.
@@ -52,10 +52,10 @@
  * | `9744803TE8794S` | `13` | `CL SANTIAGO APOSTOL 13 51002 CEUTA (CEUTA)` |
  * | `9745701TE8794S` | `13D` | `CL SANTIAGO APOSTOL 13(D) 51002 CEUTA (CEUTA)` |
  *
- * So the designator is `pnp` with `plp` appended, and the street is `tv` followed by `nv`, which is
- * the `AD:ThoroughfareName` text verbatim once its leading space is trimmed. The abbreviation stays
- * in the street component because the publisher writes it in its own rendered line. Expanding `CL`
- * to `Calle` would state something the Cadastre did not.
+ * So the designator is `pnp` with `plp` appended, and the street is `tv` followed by `nv`. That
+ * street matches the `AD:ThoroughfareName` text verbatim once its leading space is trimmed. The
+ * abbreviation stays in the street component because the publisher writes it in its own rendered
+ * line. `Calle` would state something the Cadastre did not.
  *
  * `S-N` is *sin número*, the publisher stating that the address has no number, and it is 856 of
  * Ceuta's 8,126 designators. A row carrying it writes no `house_number`, because the string is a
@@ -114,13 +114,12 @@ export const ES_CATASTRO_COUNTRIES: readonly string[] = ["ES"]
  *
  * The register elects the titled instrument, `Licencia de acceso y uso de los servicios y conjuntos
  * de datos INSPIRE de la Dirección General del Catastro` at version 1.0, rather than the older
- * `all rights reserved` template the feed still carries. It names no license instrument a
- * Creative Commons label or an SPDX identifier would cover, so the row records the instrument's
- * own title.
+ * `all rights reserved` template the feed still shows. No Creative Commons label or SPDX identifier
+ * covers that instrument, so the row records the instrument's own title.
  *
- * That decision reads `refused` for `redistribute-data`: clause 1 withholds distribution
- * of the information as supplied, and requires transformation before any public use.
- * Ingest, transformation and training are permitted, which is what this adapter performs.
+ * The register reads `refused` for `redistribute-data`: clause 1 withholds distribution of the
+ * information as supplied, and requires transformation before any public use. Ingest,
+ * transformation and training are permitted, and this adapter performs those.
  */
 export const ES_CATASTRO_LICENSE =
 	"Licencia de acceso y uso de los servicios y conjuntos de datos INSPIRE de la Dirección General del Catastro"
@@ -130,7 +129,7 @@ export const ES_CATASTRO_LICENSE =
  *
  * The archive ships two members and the other is `A.ES.SDGC.AD.MD.<code>.xml`,
  * the ISO 19139 metadata record.
- * A selector matching `.xml` reads that record, which carries no `AD:Address`.
+ * A selector matching `.xml` reads that record. That record holds no `AD:Address`.
  */
 const GML_MEMBER = /\.gml$/iu
 
@@ -169,10 +168,9 @@ const MUNICIPALITY_LEVELS = new Set(["4", "4thOrder"])
 /**
  * The designator type the publisher writes on every address.
  *
- * Measured over Ceuta: 8,126 of 8,126 addresses carry exactly one designator
- * and its `AD:type` is the text `1`.
- * The value is the house number, which `Consulta_DNPRC`'s `pnp` and `plp` fields
- * confirm for the two addresses tabulated in this module's header.
+ * Measured over Ceuta: 8,126 of 8,126 addresses hold exactly one designator, and its
+ * `AD:type` is the text `1`. The value is the house number. `Consulta_DNPRC`'s `pnp`
+ * and `plp` fields confirm that for the two addresses tabulated in this module's header.
  */
 const HOUSE_NUMBER_TYPE = "1"
 
@@ -263,7 +261,7 @@ export function createESCatastroAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or undefined when it carries too little to render.
+ * One address's row, or undefined when it holds too little to render.
  *
  * The reference index is complete before this is called, so a reference resolving to no
  * feature is a value the reader asked for and could not read, and it raises.

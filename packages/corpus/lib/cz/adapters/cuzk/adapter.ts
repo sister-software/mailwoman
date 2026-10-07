@@ -6,24 +6,24 @@
  * `cz-cuzk`: the INSPIRE Addresses theme ČÚZK publishes, read from its per-municipality GML.
  *
  * ČÚZK, the Czech Office for Surveying, Mapping and Cadastre, publishes one zipped GML per
- * municipality through the ATOM service at `https://atom.cuzk.gov.cz/AD/AD.xml`, which lists 6,258
- * dataset feeds. Each feed offers the same data in EPSG:5514 and EPSG:4258. The adapter reads a
- * single archive or a directory of them, so a caller harvests municipality by municipality rather
+ * municipality through the ATOM service at `https://atom.cuzk.gov.cz/AD/AD.xml`. That service lists
+ * 6,258 dataset feeds. Each feed offers the same data in EPSG:5514 and EPSG:4258. The adapter reads
+ * a single archive or a directory of them, so a caller harvests municipality by municipality rather
  * than waiting on a national file.
  *
- * Every address and every feature it references sit in the same archive, which is what makes this
- * publisher cheap to read. The `ad:component` hrefs look external, because ČÚZK writes an absolute
- * WFS stored-query URL on `services.cuzk.cz`, and the `Id=` parameter of each one matches a
- * `gml:id` in the file at hand. Measured over `584282.xml`: 5,460 component references across 1,365
- * addresses, 0 of them reaching outside the archive. Only `ad:parcel` and `ad:building` point at
- * genuinely separate themes, and the adapter reads neither.
+ * Every address and every feature it references sit in the same archive, so this publisher is cheap
+ * to read. The `ad:component` hrefs look external, because ČÚZK writes an absolute WFS stored-query
+ * URL on `services.cuzk.cz`. The `Id=` parameter of each one matches a `gml:id` in the file at hand.
+ * Measured over `584282.xml`: 5,460 component references across 1,365 addresses, 0 of them reaching
+ * outside the archive. Only `ad:parcel` and `ad:building` point at genuinely separate themes, and
+ * the adapter reads neither.
  *
  * ČÚZK states one condition of use and states it uniformly. Every one of the 6,259 `rights` elements
- * in the ATOM service document reads `žádné podmínky neplatí`, which renders INSPIRE's controlled
- * value `no conditions apply to access and use`. The address-source register elects that and names
- * no license instrument, so no SPDX identifier exists to record and the rows carry the controlled
- * value itself. The register also carries a caution this adapter cannot resolve: that value states
- * the absence of a restriction on access and use rather than granting copyright, so what it permits
+ * in the ATOM service document reads `žádné podmínky neplatí`, the INSPIRE controlled value
+ * `no conditions apply to access and use`. The address-source register elects that and records no
+ * license instrument, so no SPDX identifier exists to record and the rows store the controlled value
+ * itself. The register also holds a caution this adapter cannot resolve: that value states the
+ * absence of a restriction on access and use rather than granting copyright, so what it permits
  * beyond access and use rests on Czech law.
  */
 
@@ -70,9 +70,9 @@ export const CZ_CUZK_COUNTRIES: readonly string[] = ["CZ"]
 export const CZ_CUZK_LICENSE = "no conditions apply to access and use"
 
 /**
- * The feature types an address references, which the adapter indexes as they arrive.
+ * The feature types an address references. The adapter indexes them as they arrive.
  *
- * `ad:Address` carries its number inline and is read by the driver rather than listed here.
+ * `ad:Address` holds its number inline and is read by the driver rather than listed here.
  * These four hold the street, the postcode and the two place names, and they are read in the same pass
  * because an archive writes them interleaved with the addresses rather than ahead of them.
  */
@@ -100,7 +100,7 @@ const GML_MEMBER = /\.xml$/iu
  * The series prefix a street name makes unnecessary.
  *
  * Czechia numbers a building in one of two series.
- * A `číslo popisné` is the descriptive number an ordinary building carries, and a
+ * A `číslo popisné` is the descriptive number an ordinary building holds, and a
  * `číslo evidenční` numbers a recreational or temporary building in a separate series,
  * so the same digits can name two buildings in one municipality.
  */
@@ -121,14 +121,14 @@ const DESCRIPTIVE_NUMBER_PREFIX = "č.p."
  * | `č.ev.` | `Komenského č.ev. 502` | `č.ev. 38, 66463 Unkovice` |
  *
  * So the descriptive prefix is dropped only when a street name already places the number.
- * A number standing alone keeps its prefix, because the two series overlap
- * and the digits alone would not say which building is meant.
+ * A number with no street keeps its prefix, because the two series overlap
+ * and the digits by themselves would not say which building is meant.
  *
  * An earlier rule that dropped `č.p.` everywhere disagreed with the publisher on 254 of those 1,669 rows.
  *
  * A prefix other than `č.p.` is kept in every case, including one these two municipalities did
- * not carry, because the observed values come from 2 of 6,258 municipalities and keeping an
- * unrecognized prefix preserves a distinction the publisher drew rather than discarding it.
+ * not show, because the observed values come from 2 of 6,258 municipalities. An unrecognized
+ * prefix stays. That preserves a distinction the publisher drew rather than discarding it.
  */
 function czechHouseNumber(
 	byType: ReadonlyMap<string, readonly string[]>,
@@ -190,10 +190,10 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, `undefined` when it carries too little to render, or `"deferred"`
- * when a reference it names is not indexed yet.
+ * One address's row, `undefined` when it holds too little to render, or `"deferred"`
+ * when a reference it cites is not indexed yet.
  *
- * Deferring rather than dropping matters because an unresolved reference and an absent
+ * The caller defers rather than drops because an unresolved reference and an absent
  * one are different conditions, and only the archive's own ordering tells them apart.
  * With `final` set the whole member has been read, so an unresolved reference is an
  * absence the publisher is responsible for and the row is rendered without it.
@@ -220,7 +220,7 @@ function composeRow(
 
 		if (!feature) {
 			// Only the four themes this adapter reads are expected in the archive.
-			// A parcel or building reference carries no `Id` the loop above accepted.
+			// A parcel or building reference holds no `Id` the loop above accepted.
 			if (/^(?:TF|PD|AU|AA)\./u.test(key)) {
 				unresolved = true
 			}

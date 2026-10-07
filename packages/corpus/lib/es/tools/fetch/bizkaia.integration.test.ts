@@ -70,8 +70,8 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESBizkaia against apli.bizkaia.eus"
 			expect(archive?.sha256).toMatch(/^[0-9a-f]{64}$/u)
 			expect(archive?.feed_updated).not.toBe("")
 
-			// The host states a modification time for the archive, which is the record against
-			// which the feed's single `<updated>` can be read as a per-municipality signal.
+			// The host states a modification time for the archive. That is the record against
+			// which the feed's single `<updated>` reads as a per-municipality signal.
 			expect(archive?.last_modified).not.toBeNull()
 
 			const members = await listZipEntries(scratch.path(archive?.filename ?? ""))
@@ -92,7 +92,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESBizkaia against apli.bizkaia.eus"
 
 			const streets = manifest?.components.find((entry) => entry.type_name === "ad:ThoroughfareName")
 
-			// The streets are the reason the WFS is harvested at all: the archives carry
+			// The streets are the reason the WFS is harvested at all: the archives hold
 			// addresses whose every component reference addresses this service.
 			expect(streets?.feature_count).toBeGreaterThan(0)
 		},
@@ -135,8 +135,8 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESBizkaia against apli.bizkaia.eus"
 			expect(datasets.length).toBeGreaterThan(1)
 			expect(new Set(datasets.map((dataset) => dataset.filename)).size).toBe(datasets.length)
 
-			// Every entry of this service repeats the feed document's own modification time,
-			// which is what makes one request state the freshness of every archive.
+			// Every entry of this service repeats the feed document's own modification time.
+			// That makes one request state the freshness of every archive.
 			expect(new Set(datasets.map((dataset) => dataset.updated)).size).toBe(1)
 			expect(datasets.every((dataset) => dataset.downloadURL.endsWith(dataset.filename))).toBe(true)
 		},
