@@ -23,19 +23,19 @@
  * Each record names its immediate parent by `VKUR_CD` and `VKUR_TIPS`, and the parent names its own
  * the same way, up to the country. The type codes are the register's: `104` city (`pilsēta`), `105`
  * parish (`pagasts`), `106` village (`ciems`), `107` street (`iela`), `113` municipality (`novads`)
- * and `101` Latvia, whose code `100000000` no table holds as a row. Over the 550,652 active records the
+ * and `101` Latvia. No table read lists its code `100000000` as a row. Over the 550,652 active records the
  * chains take seven shapes, written from the parent upward. The rows column counts what the adapter
  * emits after the refusals below:
  *
  * | Chain                         | Records |    Rows | {@linkcode VarisAddressType}  |
  * | ----------------------------- | ------: | ------: | ----------------------------- |
- * | parish, municipality          | 116,225 | 116,225 | `parish-named-house`          |
- * | street, city, municipality    | 113,906 | 113,905 | `town-street`                 |
- * | street, city                  | 111,218 | 111,217 | `state-city-street`           |
- * | village, parish, municipality | 108,164 | 108,164 | `village-named-house`         |
- * | street, village, parish, mun. |  98,192 |  98,179 | `village-street`              |
- * | city, municipality            |   2,814 |   2,814 | `city-named-house`            |
- * | city                          |     133 |     133 | `city-named-house`            |
+ * | parish, municipality          | 116,225 | 116,225 | `ParishNamedHouse`          |
+ * | street, city, municipality    | 113,906 | 113,905 | `TownStreet`                 |
+ * | street, city                  | 111,218 | 111,217 | `StateCityStreet`           |
+ * | village, parish, municipality | 108,164 | 108,164 | `VillageNamedHouse`         |
+ * | street, village, parish, mun. |  98,192 |  98,179 | `VillageStreet`              |
+ * | city, municipality            |   2,814 |   2,814 | `CityNamedHouse`            |
+ * | city                          |     133 |     133 | `CityNamedHouse`            |
  *
  * No active record has an unresolved or inactive ancestor, 0 of 550,652.
  *
@@ -45,11 +45,11 @@
  * `"Riņņi", Vecates pag., Valmieras nov., LV-4211`. Each
  * part is the `NOSAUKUMS` of one object in the chain, in chain order, joined by a comma and a space,
  * with the postcode `ATRIB` last. A building on a street writes the street name and the house number
- * as one part, and a named building writes its name inside ASCII double quotes. The adapter composes
+ * as one part, and a building with its own name writes it inside ASCII double quotes. The adapter composes
  * that string from the chain and compares it with `STD`. Over the 550,637 active records the adapter
  * does not refuse first, the two are equal on 550,637. A record where they differ is refused, so every
  * row's `raw` is `STD` unchanged and every component's position in it is known. The row's surface is
- * `attested`. Aligning the 550,637 rows with `alignRow` at edit distance 0 quarantines none and places
+ * `attested`. `alignRow` aligns the 550,637 rows at edit distance 0, quarantines none, and places
  * every component in the order above.
  *
  * The comparison reads values as stored. 25 building names end in a space, and `STD` keeps it inside the
@@ -68,8 +68,8 @@
  *   block (`korpuss`) 1, one address in the register. Over the 323,316 street addresses, 249,783 are
  *   bare digits and 56,374 digits and a letter. 15 hold no digit, such as `Bauskas iela Ozoli`, where
  *   a house name stands in the number's place. Those are refused, because the name is not a number
- *   and labeling it a venue would place a venue after a street, which no other Latvian row does.
- * - A building's name is `venue`. SCHEMA.mdx defines `venue` as a named place and keeps
+ *   and labeling it a venue would place a venue after a street. No other Latvian row does that.
+ * - A building's name is `venue`. SCHEMA.mdx defines `venue` as a place with a name and keeps
  *   `building_name` for Japan, and the Estonian register adapter labels a farm name `venue` for the same
  *   reason. The quotes are punctuation and lie outside the span. 236 names hold a quote of their own,
  *   such as `Stacija "Biksti"`, which the register writes `"Stacija "Biksti""`.
@@ -81,7 +81,7 @@
  *   village inside a rural municipality the same way.
  * - A municipality is `region`, abbreviation included: `Valmieras nov.`. The register holds no tier
  *   above it: the parent of all 35 active municipalities is Latvia. The 7 active cities whose parent is
- *   Latvia, the state cities such as Rīga and Daugavpils, write no municipality, so their rows carry no
+ *   Latvia, the state cities such as Rīga and Daugavpils, write no municipality, so their rows have no
  *   region.
  * - `ATRIB` is `postcode`, prefix included: `LV-4211`.
  *
@@ -94,7 +94,7 @@
  *
  * ## Personal data, identity and license
  *
- * The register records places and names no owner or occupant, so no row carries a natural person's
+ * The register records places and names no owner or occupant, so no row has a natural person's
  * name. A building name is the name of the property, as on a map.
  *
  * The row id is the register's own object code, `lv-varis-<KODS>`. Five `STD` strings are each written
@@ -104,7 +104,7 @@
  * publisher Valsts zemes dienests, and the column metadata posted beside `aw_dziv.csv` names
  * `https://creativecommons.org/licenses/by/4.0/` as `dc:license`. CC BY 4.0 requires credit, a link to the license and
  * a statement that changes were made, so every row records the license and
- * {@linkcode LV_VARIS_ATTRIBUTION} is the credit the model card carries.
+ * {@linkcode LV_VARIS_ATTRIBUTION} is the credit the model card states.
  *
  * The adapter honors `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `LV`.
  */
@@ -208,11 +208,11 @@ export const VarisRefusal = {
 	 */
 	UnexpectedHierarchy: "row:unexpected-hierarchy",
 	/**
-	 * The record carries no `LV-` postcode.
+	 * The record has no `LV-` postcode.
 	 */
 	PostcodeAbsent: "row:postcode-absent",
 	/**
-	 * A building on a street carries a name with no digit where its number belongs.
+	 * A building on a street has a name with no digit where its number belongs.
 	 */
 	NamedHouseOnStreet: "row:named-house-on-street",
 	/**
@@ -228,7 +228,7 @@ export type VarisRefusal = (typeof VarisRefusal)[keyof typeof VarisRefusal]
  */
 export const VarisAddressType = {
 	/**
-	 * A street address in one of the state cities, which lie under no municipality.
+	 * A street address in one of the state cities. Those cities lie under no municipality.
 	 */
 	StateCityStreet: "state-city-street",
 	/**
@@ -240,15 +240,15 @@ export const VarisAddressType = {
 	 */
 	VillageStreet: "village-street",
 	/**
-	 * A named house in a city, on no street.
+	 * A house with its own name in a city, on no street.
 	 */
 	CityNamedHouse: "city-named-house",
 	/**
-	 * A named house in a village.
+	 * A house with its own name in a village.
 	 */
 	VillageNamedHouse: "village-named-house",
 	/**
-	 * A named house in a parish, in no village.
+	 * A house with its own name in a parish, in no village.
 	 */
 	ParishNamedHouse: "parish-named-house",
 } as const
@@ -419,8 +419,8 @@ export function readVarisBuilding(record: VarisRecord, places: VarisPlaces): Var
 /**
  * Streams one table's records, each value as stored.
  *
- * Trimming is off because `STD` keeps a stored trailing space inside a building
- * name's quotes, and the composition check compares the two.
+ * The reader turns trimming off because `STD` keeps a stored trailing space inside a
+ * building name's quotes. The composition check compares the two.
  */
 export function readVarisTable(path: PathBuilderLike): AsyncIterable<VarisRecord> {
 	return CSVSpliterator.fromAsync(path, { normalizeKeys: false, trim: false }) as AsyncIterable<VarisRecord>

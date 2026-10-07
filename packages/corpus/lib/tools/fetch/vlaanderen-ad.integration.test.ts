@@ -8,7 +8,7 @@
  *   `./vlaanderen-ad.test.ts` proves the harvester's decisions against stubbed bodies, and
  *   `#be/adapters/vlaanderen/adapter`'s suite proves the adapter against a fixture of captured
  *   bytes. Neither proves that a harvest of the real service produces a directory that adapter
- *   reads, which is the one claim that cannot be made from captured bytes alone.
+ *   reads. That is the one claim captured bytes cannot establish.
  *
  *   The test takes one 25-address page and the component types whole. It does not skip when the
  *   service is unreachable: a test that passes on a failed request is indistinguishable from one

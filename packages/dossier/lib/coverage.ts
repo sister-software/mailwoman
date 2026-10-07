@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   A reading of one spatial layer over one extent. Zero records means absence only when the layer's
- *   coverage basis supports an exclusion. A `source_present` layer that found no record says the source
- *   looked, and absence stays unknown. A positive reading beside an empty one is a conflict to show.
+ *   coverage basis supports an exclusion. A `source_present` layer that found no record reports that the
+ *   source looked, and absence stays unknown. A positive reading beside an empty one is a conflict to
+ *   show.
  */
 
 import { type CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
@@ -17,7 +18,7 @@ import type { ISODate } from "#time"
 export interface LayerReading {
 	layer: string
 	/**
-	 * The surveyed extent as the layer states it, such as an H3 cell or a named area.
+	 * The surveyed extent as the layer states it, such as an H3 cell or a specific area.
 	 */
 	extent: string
 	/**

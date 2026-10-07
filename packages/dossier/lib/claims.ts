@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   A claim is one statement about one entity on one axis, with the record that supports it and the
- *   status that says how it was established. The status is the discriminant of the union, so an inferred
+ *   status that records how it was established. The status is the discriminant of the union, so an inferred
  *   claim states its explanation and derivation and can never be assigned where an observed claim is
  *   expected.
  *
@@ -45,7 +45,7 @@ export interface ClaimBase<V> {
 }
 
 /**
- * The claim statuses a supplied record can carry.
+ * The claim statuses a supplied record can have.
  *
  * `unresolved` is a question, represented by {@link Unresolved} in the dossier, and never a claim value.
  */

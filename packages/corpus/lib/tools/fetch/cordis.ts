@@ -57,7 +57,7 @@ export function cordisArchiveURL(programme: string): string {
 }
 
 /**
- * The file name one programme's archive is kept under, which is the URL's own last segment.
+ * The file name one programme's archive is kept under. It is the URL's own last segment.
  */
 export function cordisArchiveFilename(programme: string): string {
 	return `cordis-${programme}projects-csv.zip`
@@ -69,7 +69,7 @@ export function cordisArchiveFilename(programme: string): string {
 export const CORDIS_LEGAL_NOTICE_URL = "https://cordis.europa.eu/about/legal"
 
 /**
- * The directory the archives are written under, which is the adapter's `inputPath`.
+ * The directory the archives are written under. It is the adapter's `inputPath`.
  */
 const SLUG = CORDIS_ADAPTER_ID
 
