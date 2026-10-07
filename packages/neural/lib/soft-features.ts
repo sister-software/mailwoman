@@ -103,7 +103,7 @@ export function buildSoftFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	sources: SoftFeatureSources
 ): SoftFeatures {
-	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup, sources.postcodeAnchorSpanMode, undefined)
+	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup ?? null, sources.postcodeAnchorSpanMode ?? null, null)
 
 	const anchor = sources.postcodeAnchorLookup
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {

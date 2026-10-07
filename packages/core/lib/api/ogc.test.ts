@@ -220,7 +220,7 @@ describe("readOGCServiceException", () => {
 	})
 
 	it("returns nothing for a real answer", () => {
-		expect(readOGCServiceException('<wfs:FeatureCollection numberMatched="3"/>')).toBeUndefined()
+		expect(readOGCServiceException('<wfs:FeatureCollection numberMatched="3"/>')).toBeNull()
 	})
 
 	it("answers in linear time on a report whose exception element is never closed", () => {
@@ -293,7 +293,7 @@ describe("readOGCServiceException", () => {
 			readOGCServiceException(
 				'<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" numberMatched="unknown"/>'
 			)
-		).toBeUndefined()
+		).toBeNull()
 	})
 })
 

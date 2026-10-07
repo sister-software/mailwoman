@@ -28,10 +28,10 @@ const verifyOutput = z.object({
 /**
  * The mount options currently in effect, as reported by the kernel rather than by fstab.
  */
-async function activeOptions(mountPoint: string): Promise<string | undefined> {
+async function activeOptions(mountPoint: string): Promise<string | null> {
 	const probe = await $({ nothrow: true, quiet: true })`findmnt --noheadings --output OPTIONS --target ${mountPoint}`
 
-	return probe.exitCode === 0 ? probe.stdout.trim() : undefined
+	return probe.exitCode === 0 ? probe.stdout.trim() : null
 }
 
 /**

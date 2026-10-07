@@ -126,12 +126,12 @@ const augustaMeTree = (hint: boolean): AddressTree => ({
 	],
 })
 
-function localityOf(tree: AddressTree): AddressNode | undefined {
+function localityOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "locality") return n
 	}
 
-	return undefined
+	return null
 }
 
 describe("resolveTree + country_hint (#833 forward linkage)", () => {

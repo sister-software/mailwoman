@@ -73,12 +73,12 @@ afterEach(() => {
 describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
 		using db = buildFixtureDB()
-		let doneDetail: string | undefined
+		let doneDetail: string | null = null
 
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") {
-					doneDetail = detail
+					doneDetail = detail ?? null
 				}
 			},
 		})

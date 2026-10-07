@@ -82,14 +82,14 @@ const HIERARCHY_TAGS = [
  * An anchor at the deepest resolved entry grades ancestors in its chain.
  * It cannot falsely flag a descendant.
  */
-export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
+export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | null {
 	for (const tag of HIERARCHY_TAGS) {
 		const node = nodes.find((n) => n.tag === tag && n.placeID)
 
 		if (node) return node
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -104,7 +104,7 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
 	streetLocality: string | null,
-	anchor: LineageAnchor | undefined
+	anchor: LineageAnchor | null
 ): HierarchyEntry[] {
 	const hierarchy: HierarchyEntry[] = nodes
 		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
@@ -115,7 +115,7 @@ export function assembleHierarchy(
 			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`,
 			// and this falls back to the raw parsed span when a node resolved without one.
 			// Consumers should display this rather than `value`.
-			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
+			name: (n.metadata?.["resolver_name"] as string | null)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
 		}))
@@ -159,7 +159,7 @@ export interface LineageAnchor {
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],
-	anchor: LineageAnchor | undefined
+	anchor: LineageAnchor | null
 ): void {
 	if (!anchor?.placeID) return
 

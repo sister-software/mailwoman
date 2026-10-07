@@ -209,10 +209,10 @@ export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new M
 export const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de", "es", "it"])
 
 /**
- * The trailing-postcode shape for the index's header country, or `undefined` when no shape is known.
+ * The trailing-postcode shape for the index's header country, or `null` when no shape is known.
  */
-export function segmentParentPostcodeShape(country: string | undefined): RegExp | undefined {
-	return country ? SEGMENT_PARENT_POSTCODE_SHAPES.get(country.toLowerCase()) : undefined
+export function segmentParentPostcodeShape(country: string | null): RegExp | null {
+	return country ? (SEGMENT_PARENT_POSTCODE_SHAPES.get(country.toLowerCase()) ?? null) : null
 }
 
 /**
@@ -221,10 +221,10 @@ export function segmentParentPostcodeShape(country: string | undefined): RegExp 
  * The guards: only a trailing run, the longest suffix of at most
  * {@link MAX_TRAILING_POSTCODE_WORDS} tokens whose bare concatenation full-matches `shape`
  * (longest-first so a two-token GB postcode strips whole), never the entire segment.
- * It strips a run only when `shape` is defined.
+ * It strips a run only when `shape` is non-null.
  */
-export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
-	if (shape === undefined || tokens.length < 2) return 0
+export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | null): number {
+	if (shape === null || tokens.length < 2) return 0
 
 	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
 
@@ -243,8 +243,8 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * Only the probe key changes.
  * The segment and every emitted span stay unchanged.
  */
-export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
-	if (shape === undefined || tokens.length < 2) return 0
+export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | null): number {
+	if (shape === null || tokens.length < 2) return 0
 
 	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
 
@@ -268,8 +268,8 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
 export function buildSegmentWindows(
 	nonEmptyGroups: readonly WordGroup[],
 	groupSegments: readonly number[],
-	parentPostcodeShape: RegExp | undefined,
-	leadingPostcodeShape: RegExp | undefined
+	parentPostcodeShape: RegExp | null,
+	leadingPostcodeShape: RegExp | null
 ): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 

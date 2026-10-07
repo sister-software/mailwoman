@@ -152,16 +152,16 @@ describe("peekFSTStampFields", () => {
 		expect(fields?.provenance).toBeUndefined()
 	})
 
-	it("returns undefined for a non-FST file, a stub, and an absent path", async () => {
+	it("returns null for a non-FST file, a stub, and an absent path", async () => {
 		const notFST = TMP.path("not-an-fst.bin")
 		await writeLocalBuffer(Buffer.alloc(64, 0x7f), notFST)
-		expect(await peekFSTStampFields(notFST)).toBeUndefined()
+		expect(await peekFSTStampFields(notFST)).toBeNull()
 
 		const tooSmall = TMP.path("tiny.bin")
 		await writeLocalBuffer(Buffer.from("FST\0"), tooSmall)
-		expect(await peekFSTStampFields(tooSmall)).toBeUndefined()
+		expect(await peekFSTStampFields(tooSmall)).toBeNull()
 
-		expect(await peekFSTStampFields(TMP.path("nope.bin"))).toBeUndefined()
+		expect(await peekFSTStampFields(TMP.path("nope.bin"))).toBeNull()
 	})
 
 	it("survives a truncated trailer instead of throwing", async () => {
@@ -183,7 +183,7 @@ describe("fstStaleReason", () => {
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
 
-		expect(fstStaleReason(await peekFSTStampFields(path), expected)).toBeUndefined()
+		expect(fstStaleReason(await peekFSTStampFields(path), expected)).toBeNull()
 	})
 
 	it("flags a source md5 that has moved, and names the build date", async () => {
@@ -243,12 +243,12 @@ describe("fstStaleReason", () => {
 
 		const fields = await peekFSTStampFields(path)
 
-		expect(fstStaleReason(fields, expected)).toBeUndefined()
+		expect(fstStaleReason(fields, expected)).toBeNull()
 		expect(fstStaleReason(fields, { ...expected, exclusionPolicy: "v1.1" })).toBe("exclusion policy v1.0 → v1.1")
 	})
 
 	it("reports an unreadable artifact rather than passing it", () => {
-		expect(fstStaleReason(undefined, expected)).toBe("unreadable or not an FST artifact")
+		expect(fstStaleReason(null, expected)).toBe("unreadable or not an FST artifact")
 	})
 
 	it("exposes the stamped-format floor it enforces", () => {
@@ -277,13 +277,13 @@ describe("fstFreshnessWarning", () => {
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
 
-		expect(await fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeUndefined()
+		expect(await fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeNull()
 	})
 
 	it("is silent when either side is absent — a missing file is a different report", async () => {
 		expect(
 			await fstFreshnessWarning({ fstPath: TMP.path("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
-		).toBeUndefined()
+		).toBeNull()
 
 		expect(
 			await fstFreshnessWarning({
@@ -291,6 +291,6 @@ describe("fstFreshnessWarning", () => {
 				sourceDBPath: TMP.path("gone.db"),
 				rebuildCommand: "x",
 			})
-		).toBeUndefined()
+		).toBeNull()
 	})
 })

@@ -40,7 +40,7 @@ test("minZoomForDiameter declutters by size", () => {
 	expect(minZoomForDiameter(24.033133)).toBe(6)
 	expect(minZoomForDiameter(4.6)).toBe(8)
 	expect(minZoomForDiameter(0)).toBe(2)
-	expect(minZoomForDiameter(undefined)).toBe(2)
+	expect(minZoomForDiameter(null)).toBe(2)
 })
 
 test("the Moon fixture builds a nomenclature archive whose tiles carry the five features", async () => {

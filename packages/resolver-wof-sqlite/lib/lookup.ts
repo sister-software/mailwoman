@@ -478,7 +478,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		const extract =
 			forceExtract ??
-			pickExtractForPlacetype(this.#extracts, firstPlacetype, {
+			pickExtractForPlacetype(this.#extracts, firstPlacetype ?? null, {
 				country: query.country,
 				countriesBySchema: this.#extractCountries,
 			})
@@ -645,7 +645,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 				: wofAliases
 
 			const sName = softNameScore(query.text, cand.name, aliases)
-			const sPop = populationScaleTerm(cand.population, this.#weights)
+			const sPop = populationScaleTerm(cand.population ?? null, this.#weights)
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
 		}
 

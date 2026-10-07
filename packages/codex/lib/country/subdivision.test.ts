@@ -42,7 +42,7 @@ describe("matchSubdivision", () => {
 		expect(matchSubdivision("Bavaria")).toBeNull()
 		expect(matchSubdivision("")).toBeNull()
 		expect(matchSubdivision(null)).toBeNull()
-		expect(matchSubdivision(undefined)).toBeNull()
+		expect(matchSubdivision(null)).toBeNull()
 	})
 })
 

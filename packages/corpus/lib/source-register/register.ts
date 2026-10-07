@@ -53,10 +53,10 @@ const ADDRESS_ROLES = new Set<string>(Object.values(AddressRole))
 /**
  * Returns the license label that the exclude filter in `@mailwoman/corpus/utils/license` matches by prefix.
  *
- * The function returns `undefined` until someone has elected terms for the decision.
+ * The function returns `null` until someone has elected terms for the decision.
  */
-export function electedLicenseLabel(decision: LicenseDecision): string | undefined {
-	if (decision.state !== LicenseReviewState.Elected) return undefined
+export function electedLicenseLabel(decision: LicenseDecision): string | null {
+	if (decision.state !== LicenseReviewState.Elected) return null
 
 	return decision.spdx ?? decision.electedTerms
 }

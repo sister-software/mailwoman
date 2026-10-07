@@ -5,7 +5,7 @@
  *
  * The issue vocabulary and the primitive field readers `./validate.ts` is built from.
  *
- * Every reader appends issues to the supplied list and returns `undefined` when it cannot read a field.
+ * Every reader appends issues to the supplied list and returns `null` when it cannot read a field.
  * The pass records each defect and continues.
  * A default would turn an unreadable field into a value and invent data at the validation boundary.
  */
@@ -134,7 +134,7 @@ export function readString(
 	container: Record<string, unknown>,
 	key: string,
 	required: boolean
-): string | undefined {
+): string | null {
 	const value = container[key]
 	const fieldPath = `${path}.${key}`
 
@@ -143,19 +143,19 @@ export function readString(
 			add(issues, fieldPath, ValidationIssueCode.MissingField, `\`${key}\` is required`)
 		}
 
-		return undefined
+		return null
 	}
 
 	if (typeof value !== "string") {
 		add(issues, fieldPath, ValidationIssueCode.WrongType, `\`${key}\` must be a string`)
 
-		return undefined
+		return null
 	}
 
 	if (!value.trim().length) {
 		add(issues, fieldPath, ValidationIssueCode.EmptyValue, `\`${key}\` must not be blank`)
 
-		return undefined
+		return null
 	}
 
 	return value
@@ -166,20 +166,20 @@ export function readBoolean(
 	path: string,
 	container: Record<string, unknown>,
 	key: string
-): boolean | undefined {
+): boolean | null {
 	const value = container[key]
 	const fieldPath = `${path}.${key}`
 
 	if (value === undefined) {
 		add(issues, fieldPath, ValidationIssueCode.MissingField, `\`${key}\` is required`)
 
-		return undefined
+		return null
 	}
 
 	if (typeof value !== "boolean") {
 		add(issues, fieldPath, ValidationIssueCode.WrongType, `\`${key}\` must be a boolean`)
 
-		return undefined
+		return null
 	}
 
 	return value
@@ -191,7 +191,7 @@ export function readArray(
 	container: Record<string, unknown>,
 	key: string,
 	required: boolean
-): unknown[] | undefined {
+): unknown[] | null {
 	const value = container[key]
 	const fieldPath = `${path}.${key}`
 
@@ -200,13 +200,13 @@ export function readArray(
 			add(issues, fieldPath, ValidationIssueCode.MissingField, `\`${key}\` is required`)
 		}
 
-		return undefined
+		return null
 	}
 
 	if (!Array.isArray(value)) {
 		add(issues, fieldPath, ValidationIssueCode.WrongType, `\`${key}\` must be an array`)
 
-		return undefined
+		return null
 	}
 
 	return value
@@ -218,10 +218,10 @@ export function readStringArray(
 	container: Record<string, unknown>,
 	key: string,
 	required: boolean
-): string[] | undefined {
+): string[] | null {
 	const entries = readArray(issues, path, container, key, required)
 
-	if (!entries) return undefined
+	if (!entries) return null
 
 	const values: string[] = []
 
@@ -253,10 +253,10 @@ export function readVocabularyValue<T extends string>(
 	key: string,
 	allowed: readonly T[],
 	code: ValidationIssueCode
-): T | undefined {
+): T | null {
 	const value = readString(issues, path, container, key, true)
 
-	if (value === undefined) return undefined
+	if (value === null) return null
 
 	const match = allowed.find((candidate) => candidate === value)
 
@@ -264,7 +264,7 @@ export function readVocabularyValue<T extends string>(
 		add(issues, `${path}.${key}`, code, `\`${value}\` is not one of ${listVocabulary(allowed)}`)
 	}
 
-	return match
+	return match ?? null
 }
 
 export function readVocabularyArray<T extends string>(
@@ -274,10 +274,10 @@ export function readVocabularyArray<T extends string>(
 	key: string,
 	allowed: readonly T[],
 	code: ValidationIssueCode
-): T[] | undefined {
+): T[] | null {
 	const values = readStringArray(issues, path, container, key, true)
 
-	if (!values) return undefined
+	if (!values) return null
 
 	const matched: T[] = []
 

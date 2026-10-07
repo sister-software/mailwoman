@@ -49,7 +49,7 @@ describe("choosePoint (#1905)", () => {
 	})
 
 	it("no anchor → the label preference, unchanged", () => {
-		const chosen = choosePoint(WASHINGTON_GEOM, WASHINGTON_LBL, undefined)
+		const chosen = choosePoint(WASHINGTON_GEOM, WASHINGTON_LBL, null)
 
 		expect(chosen.choice).toBe("lbl")
 		expect(chosen.latitude).toBe(WASHINGTON_LBL.latitude)
@@ -100,8 +100,8 @@ describe("createGeoNamesAnchorLookup (#1905)", () => {
 	it("an unknown id and a missing country file are both ABSENCE, never a zero point", async () => {
 		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path.toString())
 
-		expect(await lookup("US", 123_456_789)).toBeUndefined()
-		expect(await lookup("FR", 4_140_963)).toBeUndefined()
-		expect(await lookup("", 4_140_963)).toBeUndefined()
+		expect(await lookup("US", 123_456_789)).toBeNull()
+		expect(await lookup("FR", 4_140_963)).toBeNull()
+		expect(await lookup("", 4_140_963)).toBeNull()
 	})
 })

@@ -44,15 +44,15 @@ interface GeoJSONMultiPolygon {
  * A weaker answer provides a coordinate where the alternative provides none.
  * The fallback uses the vertex average.
  *
- * @returns `undefined` for anything that doesn't parse as one of the two geometry
+ * @returns `null` for anything that doesn't parse as one of the two geometry
  * types (including `null` geometry).
  */
-export function geometryCentroid(geometryJSON: string | null): { lat: number; lon: number } | undefined {
-	if (!geometryJSON) return undefined
+export function geometryCentroid(geometryJSON: string | null): { lat: number; lon: number } | null {
+	if (!geometryJSON) return null
 
 	const geometry = tryParsingJSON<GeoJSONPolygon | GeoJSONMultiPolygon>(geometryJSON)
 
-	if (!geometry) return undefined
+	if (!geometry) return null
 
 	const exteriorRings: number[][][] =
 		geometry.type === "Polygon"
@@ -106,7 +106,7 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 		return { lat: weightedLat / totalArea, lon: weightedLon / totalArea }
 	}
 
-	if (count === 0) return undefined
+	if (count === 0) return null
 
 	return { lat: sumLat / count, lon: sumLon / count }
 }
@@ -126,13 +126,13 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
  */
 export async function createTIGERBlockCentroidLookup(
 	tigerDBPath: string
-): Promise<(geoid: string) => { lat: number; lon: number } | undefined> {
+): Promise<(geoid: string) => { lat: number; lon: number } | null> {
 	const db = await openBuiltClient(tigerDBPath)
 	const stmt = db.prepare("SELECT geometry FROM tabblock20 WHERE GEOID = ?")
 
 	return (geoid: string) => {
 		const row = stmt.get(geoid) as { geometry: string | null } | undefined
 
-		return row ? geometryCentroid(row.geometry) : undefined
+		return row ? geometryCentroid(row.geometry) : null
 	}
 }

@@ -188,7 +188,7 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 
 	const resolverName = postcode.metadata?.["resolver_name"]
 
-	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : undefined)
+	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : null)
 		? VENUE_UNIT_ANCHOR_THRESHOLD_M
 		: VENUE_ANCHOR_THRESHOLD_M
 }

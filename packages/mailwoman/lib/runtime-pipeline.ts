@@ -49,16 +49,16 @@ interface ReverseGeocoderLike {
 
 function buildSyncReverseGeocode(
 	geocoder: ReverseGeocoderLike
-): (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined {
+): (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | null {
 	return (latitude, longitude) => {
 		try {
 			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)
 
-			if (!hierarchy.length) return undefined
+			if (!hierarchy.length) return null
 
 			return hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
 		} catch {
-			return undefined
+			return null
 		}
 	}
 }
@@ -194,15 +194,13 @@ function wrapWithStreetEvidence(
 	}
 }
 
-async function autoLoadWeightsFST(
-	classifier: CreateRuntimePipelineOpts["classifier"]
-): Promise<FSTMatcher | undefined> {
+async function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"]): Promise<FSTMatcher | null> {
 	const fstPath =
 		classifier && typeof classifier === "object" && "fstPath" in classifier
 			? (classifier as { fstPath?: PathBuilderLike }).fstPath
 			: undefined
 
-	if (!fstPath) return undefined
+	if (!fstPath) return null
 
 	try {
 		return deserializeFST(await readLocalBuffer(fstPath))
@@ -211,13 +209,13 @@ async function autoLoadWeightsFST(
 			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
 		)
 
-		return undefined
+		return null
 	}
 }
 
 async function autoLoadStreetMorphology(
 	classifier: CreateRuntimePipelineOpts["classifier"]
-): Promise<FSTMatcher | undefined> {
+): Promise<FSTMatcher | null> {
 	const artifactPath =
 		classifier && typeof classifier === "object" && "streetMorphologyPath" in classifier
 			? (classifier as { streetMorphologyPath?: string }).streetMorphologyPath
@@ -233,7 +231,7 @@ async function autoLoadStreetMorphology(
 	} catch (error) {
 		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — check off`)
 
-		return undefined
+		return null
 	}
 }
 
@@ -267,7 +265,7 @@ export function createRuntimePipeline(
 	const machinePreferences =
 		opts.machinePreferences === false ? undefined : (opts.machinePreferences ?? getMachinePreferences())
 
-	let poiNameLookup: POIPhraseLookup | undefined
+	let poiNameLookup: POIPhraseLookup | null = null
 
 	const poiSubjectLookup: POIPhraseLookup = (phrase, locale) => {
 		const lexical = poiTaxonomyLookup(phrase, locale)
@@ -321,9 +319,9 @@ export function createRuntimePipeline(
 		return category ? requiresBuildLocalLayer(category) : false
 	}
 
-	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | undefined = poiQueryKindEffective
-		? createPOIExecutor({ lookup: undefined, requiresBuildLocal, resolveOvertureCategories })
-		: undefined
+	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | null = poiQueryKindEffective
+		? createPOIExecutor({ lookup: null, requiresBuildLocal, resolveOvertureCategories })
+		: null
 
 	if (poiQueryKindEffective) {
 		stages.poiIntent = createPOIIntentStage({
@@ -373,7 +371,7 @@ export function createRuntimePipeline(
 					lookup,
 					requiresBuildLocal,
 					resolveOvertureCategories,
-					reverseGeocode: reverseGeocoder ? buildSyncReverseGeocode(reverseGeocoder) : undefined,
+					...(reverseGeocoder ? { reverseGeocode: buildSyncReverseGeocode(reverseGeocoder) } : {}),
 				})
 			} catch {}
 		}

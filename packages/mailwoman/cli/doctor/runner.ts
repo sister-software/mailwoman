@@ -67,7 +67,7 @@ interface ResolvedWeightsLike {
  */
 export interface DoctorDeps {
 	exists(path: string): Promise<boolean>
-	fileSize(path: string): Promise<number | undefined>
+	fileSize(path: string): Promise<number | null>
 	isWritable(path: string): Promise<boolean>
 	/**
 	 * Resolves a locale's weights package, throwing when unresolvable.
@@ -79,12 +79,12 @@ export interface DoctorDeps {
 	 * The candidate.db the tools would actually use, with no convention-path fallback —
 	 * the same precedence geocode and serve apply.
 	 */
-	envCandidatePath(): Promise<string | undefined>
+	envCandidatePath(): Promise<string | null>
 	/**
 	 * The `<data-root>/db/wof/candidate.db` convention path if it exists on disk,
 	 * used to detect the env-unset trap.
 	 */
-	conventionCandidatePath(): Promise<string | undefined>
+	conventionCandidatePath(): Promise<string | null>
 	wofExtractPaths(): string[]
 	/**
 	 * The default POI layer path, matching `gazetteer build poi`'s own default.
@@ -105,9 +105,9 @@ export interface DoctorDeps {
 	runtimeLicense(): Promise<string>
 	/**
 	 * The configured license key, verified offline against the trusted keys this
-	 * build ships, or `undefined` when none is configured.
+	 * build ships, or `null` when none is configured.
 	 */
-	licenseKey(): Promise<LicenseKeyVerification | undefined>
+	licenseKey(): Promise<LicenseKeyVerification | null>
 	/**
 	 * Asks mailwoman.ai's well-known register whether a key id is still listed,
 	 * answering `unreachable` rather than throwing when there is no route.
@@ -144,12 +144,12 @@ async function readEnginesFloor(): Promise<string> {
 	}
 }
 
-async function defaultConventionCandidatePath(dataRoot: PathBuilderLike): Promise<string | undefined> {
-	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return undefined
+async function defaultConventionCandidatePath(dataRoot: PathBuilderLike): Promise<string | null> {
+	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return null
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return (await pathExists(convention)) ? convention : undefined
+	return (await pathExists(convention)) ? convention : null
 }
 
 async function readLayerIdentity(path: string): Promise<LayerIdentity> {
@@ -181,7 +181,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 			try {
 				return (await statPath(path)).size
 			} catch {
-				return undefined
+				return null
 			}
 		},
 		isWritable,
@@ -189,7 +189,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		weightsPackageName,
 		dataRoot: () => ({ path: dataRoot.toString(), fromEnv: dataRoot.toString() !== DefaultMailwomanPaths.data }),
 		envCandidatePath: async () =>
-			$public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined,
+			$public.MAILWOMAN_CANDIDATE_DB ? ((await resolveCandidateDBPath(undefined, dataRoot)) ?? null) : null,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
 		poiPath: () => layerDatabasePath(dataRoot, "poi"),
@@ -243,7 +243,7 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 		return { conventionCandidate: convention, probed: [convention, ...databases] }
 	}
 
-	let existing: string | undefined
+	let existing: string | null = null
 
 	for (const p of databases) {
 		if (await deps.exists(p)) {
@@ -273,17 +273,14 @@ async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 }
 
 /**
- * The license observation for one layer database, or `undefined` when it is absent,
+ * The license observation for one layer database, or `null` when it is absent,
  * keeping "not installed" distinct from "installed under an unknown license".
  */
-async function gatherLayerLicense(
-	deps: DoctorDeps,
-	layer: LayerDatabaseRef
-): Promise<LayerLicenseObservation | undefined> {
+async function gatherLayerLicense(deps: DoctorDeps, layer: LayerDatabaseRef): Promise<LayerLicenseObservation | null> {
 	if (!(await deps.exists(layer.path))) {
 		const alternates = await deps.layerAlternates(layer.id)
 
-		return alternates.length ? { ...layer, alternates } : undefined
+		return alternates.length ? { ...layer, alternates } : null
 	}
 
 	try {
@@ -316,7 +313,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const nodeCheck = nodeVersionCheck({ nodeVersion: deps.nodeVersion, enginesFloor: deps.enginesFloor })
 
 	let onnxLoadable = false
-	let onnxError: string | undefined
+	let onnxError: string | null = null
 
 	try {
 		await deps.loadONNX()
@@ -341,12 +338,10 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const poi = checkPOI(await gatherPOI(deps))
 
 	const key = await deps.licenseKey()
-	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : undefined
+	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : null
 
 	const lidStatus =
-		key && "payload" in key && isSelfServicePayload(key.payload)
-			? await deps.checkLicenseStatus(key.payload.lid)
-			: undefined
+		key && "payload" in key && isSelfServicePayload(key.payload) ? await deps.checkLicenseStatus(key.payload.lid) : null
 
 	const runtimeLicense = runtimeLicenseCheck({
 		expression: await deps.runtimeLicense(),
@@ -357,7 +352,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 
 	const layerObservations = (
 		await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer)))
-	).filter((o): o is LayerLicenseObservation => o !== undefined)
+	).filter((o): o is LayerLicenseObservation => o !== null)
 
 	const layerLicenses = layerObservations.map(layerLicenseCheck)
 
@@ -380,16 +375,16 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 }
 
 /**
- * The obligation-posture check, or `undefined` when the installation refuses no class.
+ * The obligation-posture check, or `null` when the installation refuses no class.
  */
 async function gatherObligationPosture(
 	deps: DoctorDeps,
 	gazetteer: GazetteerObservation,
 	layers: readonly LayerLicenseObservation[]
-): Promise<DoctorCheck | undefined> {
+): Promise<DoctorCheck | null> {
 	const raw = deps.refusedObligations()
 
-	if (!raw.length) return undefined
+	if (!raw.length) return null
 
 	let refuse: ObligationRefusal[]
 
@@ -440,10 +435,10 @@ async function gatherObligationPosture(
 export interface EnvironmentEntry {
 	key: string
 	/**
-	 * The resolved value, with `undefined` rendered as `(unset)` rather than omitted
+	 * The resolved value, with `null` rendered as `(unset)` rather than omitted
 	 * so an unset variable is distinguishable from an absent row.
 	 */
-	value: string | undefined
+	value: string | null
 	source?: string
 }
 
@@ -460,11 +455,11 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "platform", value: `${process.platform}-${process.arch}` },
 		{ key: "MAILWOMAN_DATA_ROOT", value: $public.MAILWOMAN_DATA_ROOT, source: root.fromEnv ? "env" : "unset" },
 		{ key: "data root (resolved)", value: root.path, source: root.fromEnv ? "env" : "default" },
-		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB, source: "env" },
+		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB ?? null, source: "env" },
 		{ key: "candidate.db (convention)", value: await deps.conventionCandidatePath(), source: "derived" },
-		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB, source: "env" },
+		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB ?? null, source: "env" },
 		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
-		{ key: "MAILWOMAN_REFUSE_OBLIGATIONS", value: $public.MAILWOMAN_REFUSE_OBLIGATIONS, source: "env" },
+		{ key: "MAILWOMAN_REFUSE_OBLIGATIONS", value: $public.MAILWOMAN_REFUSE_OBLIGATIONS ?? null, source: "env" },
 	]
 
 	for (const [index, database] of deps.wofExtractPaths().entries()) {
@@ -485,7 +480,7 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 	} catch (error) {
 		entries.push({
 			key: "weights",
-			value: undefined,
+			value: null,
 			source: `unresolvable: ${error instanceof Error ? error.message : String(error)}`,
 		})
 	}

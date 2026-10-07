@@ -87,7 +87,7 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 }
 
 function anyNode(tree: AddressTree, predicate: (node: AddressNode) => boolean): boolean {
-	return firstNodeWhere(tree.roots, predicate) !== undefined
+	return firstNodeWhere(tree.roots, predicate) !== null
 }
 
 function removeNodes(tree: AddressTree, doomed: ReadonlySet<AddressNode>): void {

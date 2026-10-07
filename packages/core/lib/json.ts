@@ -58,7 +58,7 @@ export function prettyJSON<T = unknown>(input: T, newline = true, space: string 
  * @see {@linkcode prettyJSON} for human-friendly JSON output.
  */
 export function stringifyJSON<T>(input: T, keys?: readonly string[]): StringifiedJSON<T> {
-	return JSON.stringify(input, keys as string[] | undefined) as StringifiedJSON<T>
+	return JSON.stringify(input, keys as string[] | null) as StringifiedJSON<T>
 }
 
 /**
@@ -120,8 +120,8 @@ export function parseJSONStrict<T = unknown>(input: string): T {
  *
  * @param scope Names the reader in the error, e.g. `coastal client`.
  */
-export function parseJSONArray<T>(raw: string | undefined, scope: string): T[] {
-	if (raw === undefined) return []
+export function parseJSONArray<T>(raw: string | null | undefined, scope: string): T[] {
+	if (raw == null) return []
 
 	const parsed = parseJSONStrict<unknown>(raw)
 

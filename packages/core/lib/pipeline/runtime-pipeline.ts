@@ -96,16 +96,16 @@ export function hardCountryFor(
 	placedCountry: string,
 	placedConfidence: number,
 	existing: { hardCountry?: string; defaultCountry?: string },
-	hardPlaceCountry: boolean | undefined,
+	hardPlaceCountry: boolean | null,
 	safelist: ReadonlySet<string> | undefined
-): string | undefined {
-	if (!hardPlaceCountry) return undefined
+): string | null {
+	if (!hardPlaceCountry) return null
 
-	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return undefined
+	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return null
 
-	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return undefined
+	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return null
 
-	if (existing.hardCountry || existing.defaultCountry) return undefined
+	if (existing.hardCountry || existing.defaultCountry) return null
 
 	return placedCountry
 }
@@ -268,7 +268,7 @@ export async function runPipeline(
 				placed.country,
 				placed.confidence,
 				opts?.resolveOpts ?? {},
-				opts?.hardPlaceCountry,
+				opts?.hardPlaceCountry ?? null,
 				opts?.hardCountrySafelist ?? stages.resolver?.artifactCoverage?.hardCountrySafelist
 			)
 

@@ -647,7 +647,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	const RELATION = new Map<number, CoincidentLocality[]>([[910, [berlinLocality]]])
 
 	const localityRole = (roots: AddressNode[]): Interpretation | undefined =>
-		(roots.find((r) => r.tag === "region")?.interpretations as Interpretation[] | undefined)?.find(
+		(roots.find((r) => r.tag === "region")?.interpretations as Interpretation[] | null)?.find(
 			(i) => i.tag === "locality"
 		)
 
@@ -966,7 +966,7 @@ describe("ResolveTree — interpolation tier", () => {
 	})
 
 	test("Reassembles the full street (prefix+name+suffix) for the lookup query ( coverage fix)", async () => {
-		let queried: string | undefined
+		let queried: string | null = null
 
 		const recorder: InterpolationLookup = {
 			find: ({ street }) => {
@@ -991,7 +991,7 @@ describe("ResolveTree — interpolation tier", () => {
 	})
 
 	test("Folds a directional quadrant mis-tagged `unit` into the street key ( admin-tail)", async () => {
-		let queried: string | undefined
+		let queried: string | null = null
 
 		const recorder: InterpolationLookup = {
 			find: ({ street }) => {
@@ -1014,7 +1014,7 @@ describe("ResolveTree — interpolation tier", () => {
 	})
 
 	test("a non-directional `unit` is NOT folded into the street key (byte-stable)", async () => {
-		let queried: string | undefined
+		let queried: string | null = null
 
 		const recorder: InterpolationLookup = {
 			find: ({ street }) => {
@@ -1125,12 +1125,12 @@ function fakeStreetCentroids(
 
 const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (country === "fr" ? lookup : undefined)
 
-function streetTier(t: AddressTree): AddressNode | undefined {
+function streetTier(t: AddressTree): AddressNode | null {
 	for (const n of walkNodes(t.roots)) {
 		if (n.tag === "street" && n.metadata?.["resolution_tier"] === "street") return n
 	}
 
-	return undefined
+	return null
 }
 
 describe("ResolveTree — street-centroid tier", () => {
@@ -1316,7 +1316,7 @@ describe("ResolveTree — street-centroid tier", () => {
 
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
 		expect(called).toBe(false)
-		expect(streetTier(out)).toBeUndefined()
+		expect(streetTier(out)).toBeNull()
 	})
 
 	test("No matching country → the lookup is never consulted (byte-stable)", async () => {
@@ -1335,6 +1335,6 @@ describe("ResolveTree — street-centroid tier", () => {
 
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["us"] })
 		expect(called).toBe(false)
-		expect(streetTier(out)).toBeUndefined()
+		expect(streetTier(out)).toBeNull()
 	})
 })

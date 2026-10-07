@@ -32,7 +32,7 @@ export interface OGRLayerIdentity {
 	/**
 	 * The layer's own declared extent, `[minLon, minLat, maxLon, maxLat]`, where the source declares one.
 	 */
-	extent?: readonly [number, number, number, number]
+	extent: readonly [number, number, number, number] | null
 }
 
 export interface ReadOGRLayerIdentityOptions {
@@ -170,7 +170,7 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		throw new TypeError(`${options.context}: ${subject} reports no feature count`)
 	}
 
-	let extent: readonly [number, number, number, number] | undefined
+	let extent: readonly [number, number, number, number] | null = null
 
 	if (geometry?.extent && geometry.extent.length >= EXTENT_ORDINATES) {
 		extent = [geometry.extent[0]!, geometry.extent[1]!, geometry.extent[2]!, geometry.extent[3]!]
@@ -202,6 +202,6 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		featureCount: described.featureCount,
 		layer: described.name,
 		fields,
-		...(extent === undefined ? {} : { extent }),
+		extent,
 	}
 }

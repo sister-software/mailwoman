@@ -236,7 +236,7 @@ async function pagesOnDisk(root: PathBuilder, stem: string): Promise<Map<number,
 				xml: true,
 			})
 
-			if (returned === undefined || !/^\d+$/u.test(returned)) continue
+			if (!returned || !/^\d+$/u.test(returned)) continue
 
 			pages.set(startIndex, { file: name, numberReturned: Number(returned) })
 		} finally {

@@ -215,8 +215,8 @@ describe("regionMatches", () => {
 	})
 
 	it("misses when either side is absent", () => {
-		expect(regionMatches(undefined, "CA")).toBe(false)
-		expect(regionMatches("California", undefined)).toBe(false)
+		expect(regionMatches(null, "CA")).toBe(false)
+		expect(regionMatches("California", null)).toBe(false)
 	})
 })
 
@@ -245,9 +245,9 @@ describe("street-level preconditions", () => {
 		const street = node("street", "   ", { children: [node("house_number", "12")] })
 
 		expect(findInterpolationSpans(tree(street))).toEqual({
-			street: undefined,
+			street: null,
 			houseNumber: "12",
-			postcode: undefined,
+			postcode: null,
 		})
 	})
 })

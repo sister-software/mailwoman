@@ -62,15 +62,15 @@ export interface PhotonFeatureCollection {
 export interface PhotonSearchParams {
 	q: string
 	limit: number
-	lang?: string
+	lang?: string | null
 	/**
 	 * Location bias.
 	 */
-	lat?: number
-	lon?: number
-	bbox?: [number, number, number, number]
-	osmTag?: string[]
-	layer?: string[]
+	lat?: number | null
+	lon?: number | null
+	bbox?: [number, number, number, number] | null
+	osmTag?: string[] | null
+	layer?: string[] | null
 }
 
 /**
@@ -80,8 +80,8 @@ export interface PhotonReverseParams {
 	lat: number
 	lon: number
 	limit: number
-	lang?: string
-	radius?: number
+	lang?: string | null
+	radius?: number | null
 }
 
 /**

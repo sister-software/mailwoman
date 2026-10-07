@@ -114,8 +114,8 @@ describe("ingestRows", () => {
 		expect(a!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
 
 		expect(b!.name).toEqual({ given: "Maria", family: "Garcia" })
-		expect(b!.organization).toBeUndefined()
-		expect(b!.phone).toBeUndefined()
+		expect(b!.organization).toBeNull()
+		expect(b!.phone).toBeNull()
 	})
 
 	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
@@ -133,7 +133,7 @@ describe("ingestRows", () => {
 
 	it("leaves the address unresolved when no geocoder is injected", async () => {
 		const [first] = await ingestRows(streamRows(csvPath), mapping)
-		expect(first!.address).toBeUndefined()
+		expect(first!.address).toBeNull()
 	})
 })
 

@@ -243,8 +243,8 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
  *
  * Field-level merging across the cluster is the application's job (it knows which source to trust).
  */
-export function representative<R extends object>(group: readonly R[]): R | undefined {
-	let best: R | undefined
+export function representative<R extends object>(group: readonly R[]): R | null {
+	let best: R | null = null
 	let bestFilled = -1
 
 	for (const record of group) {

@@ -110,10 +110,10 @@ export interface NeuralRunner {
 function treeWithLocaleCountry(
 	text: string,
 	tokens: DecoderToken[],
-	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | undefined,
+	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | null,
 	localeCountry: { country: string; confidence: number } | null
 ): AddressTree {
-	return Object.assign(buildAddressTree(text, tokens, calibrate), localeCountry ? { localeCountry } : {})
+	return Object.assign(buildAddressTree(text, tokens, calibrate ?? undefined), localeCountry ? { localeCountry } : {})
 }
 
 /**
@@ -164,36 +164,36 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * The semi-Markov segment-transition grammar from `semi-crf-transitions.json`,
-	 * `undefined` when the bundle has no span grammar.
+	 * `null` when the bundle has no span grammar.
 	 */
-	get spanGrammar(): SemiCRFTransitions | undefined {
-		return this.cfg.semiCRFGrammar
+	get spanGrammar(): SemiCRFTransitions | null {
+		return this.cfg.semiCRFGrammar ?? null
 	}
 
 	/**
-	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) or `undefined` when the
+	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) or `null` when the
 	 * weights package has none, loaded by the runtime pipeline as the default `opts.fst`.
 	 */
-	get fstPath(): PathBuilderLike | undefined {
-		return this.cfg.fstPath
+	get fstPath(): PathBuilderLike | null {
+		return this.cfg.fstPath ?? null
 	}
 
 	/**
-	 * The path to the street-morphology FST (`fst-street-morphology.bin`), or `undefined`
+	 * The path to the street-morphology FST (`fst-street-morphology.bin`), or `null`
 	 * when the weights package and its base have none.
 	 */
-	get streetMorphologyPath(): string | undefined {
-		return this.cfg.streetMorphologyPath
+	get streetMorphologyPath(): string | null {
+		return this.cfg.streetMorphologyPath ?? null
 	}
 
 	/**
-	 * The loaded `model.onnx` path and the weights source that supplied it, `undefined`
+	 * The loaded `model.onnx` path and the weights source that supplied it, `null`
 	 * when the instance was constructed directly instead of through {@link loadFromWeights}.
 	 */
-	get resolvedWeights(): { modelPath: string; source: string } | undefined {
+	get resolvedWeights(): { modelPath: string; source: string } | null {
 		return this.cfg.modelPath && this.cfg.weightsSource
 			? { modelPath: this.cfg.modelPath, source: this.cfg.weightsSource }
-			: undefined
+			: null
 	}
 
 	/**
@@ -242,7 +242,7 @@ export class NeuralAddressClassifier {
 		return treeWithLocaleCountry(
 			modelText,
 			tokens,
-			opts?.calibrate ? { calibrate: opts.calibrate } : undefined,
+			opts?.calibrate ? { calibrate: opts.calibrate } : null,
 			localeCountry
 		)
 	}
@@ -263,7 +263,7 @@ export class NeuralAddressClassifier {
 			tree: treeWithLocaleCountry(
 				modelText,
 				tokens,
-				opts?.calibrate ? { calibrate: opts.calibrate } : undefined,
+				opts?.calibrate ? { calibrate: opts.calibrate } : null,
 				localeCountry
 			),
 			logits,
@@ -289,8 +289,8 @@ export class NeuralAddressClassifier {
 				logits: [],
 				detectedSystem: null,
 				systemSource: resolveSystemVerdict(
-					opts?.addressSystemConventions ?? this.cfg.addressSystemConventions,
-					undefined
+					opts?.addressSystemConventions ?? this.cfg.addressSystemConventions ?? null,
+					null
 				).systemSource,
 				priors: TRACE_PRIOR_KINDS.map((kind) => ({ kind, applied: false })),
 				emissions: [],
@@ -396,7 +396,7 @@ export class NeuralAddressClassifier {
 								...(soft.streetType ? { streetType: soft.streetType } : {}),
 								...(soft.localitySurface ? { localitySurface: soft.localitySurface } : {}),
 								...(this.cfg.addressSystems
-									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint, text) }
+									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint ?? null, text) }
 									: {}),
 							}
 						: undefined
@@ -441,8 +441,8 @@ export class NeuralAddressClassifier {
 		const matrixHasBias = (m: readonly (readonly number[])[]): boolean => m.some((row) => row.some((v) => v !== 0))
 
 		// A null system applies no conventions.
-		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
-		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits)
+		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions ?? null
+		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits ?? null)
 		const conventions = conventionsForSystem(detectedSystem)
 
 		const queryShapePrior = opts?.queryShape
@@ -711,7 +711,7 @@ export class NeuralAddressClassifier {
 			tokens,
 			logits,
 			pieces,
-			localeCountry: confidentLocaleCountry(localeLogits),
+			localeCountry: confidentLocaleCountry(localeLogits ?? null),
 			...(trace
 				? {
 						trace: {

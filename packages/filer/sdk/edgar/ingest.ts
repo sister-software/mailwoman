@@ -145,7 +145,7 @@ async function resolveCorroboratedCIK(
 
 	for (const candidate of candidates) {
 		const payload = await client.get<SubmissionsPayload>(submissionsURL(candidate.cik))
-		const sic = typeof payload?.sic === "string" ? payload.sic : undefined
+		const sic = typeof payload?.sic === "string" ? payload.sic : null
 		const verdict = corroborateCIK(candidate.cik, sic, options)
 
 		if (!verdict.corroborated) continue

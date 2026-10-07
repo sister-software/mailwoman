@@ -117,7 +117,7 @@ function stableID(seed: string): number {
  * `addressdetails` selects the `address` block, matching Nominatim.
  * The caller attaches the `annotations` block.
  */
-export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
+export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean | null } = {}): NominatimResult {
 	const displayName =
 		r.displayName ??
 		Object.values(r.address)

@@ -494,7 +494,7 @@ describe("explainCheck: membership at the source's key", () => {
 		const result = checkResult(recordsWith({ readings: [fiberReading({ subject: ANNEX, records: 3 })] }))
 
 		expect(result.status).toBe("records")
-		expect(result.exception).toBeUndefined()
+		expect(result.exception).toBeNull()
 
 		expect(result.answer).toEqual([
 			fact("The fiber reading over cell-9 as of 2022-03-15 holds 3 records.", ["survey-2022"]),
@@ -510,7 +510,7 @@ describe("explainCheck: membership at the source's key", () => {
 		const result = checkResult(recordsWith({ readings: [fiberReading({ records: 2 })], availability: [] }))
 
 		expect(result.status).toBe("records")
-		expect(result.exception).toBeUndefined()
+		expect(result.exception).toBeNull()
 	})
 
 	test("a reading of the building at another extent does not answer the check", () => {
@@ -530,7 +530,7 @@ describe("explainCheck: membership at the source's key", () => {
 		])
 
 		expect(result.exception).toMatchObject({ checkedAt: "2022-06-30", class: "unknown" })
-		expect(result.exception!.vintage).toBeUndefined()
+		expect(result.exception!.vintage).toBeNull()
 	})
 })
 

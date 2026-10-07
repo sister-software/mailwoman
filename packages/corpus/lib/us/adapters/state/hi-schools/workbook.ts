@@ -35,6 +35,6 @@ export interface HiSchoolRow {
 /**
  * Convert a typed workbook cell or legacy CSV field to the trimmed text used by the corpus row.
  */
-export function schoolCellText(value: XLSXCellValue | undefined): string {
+export function schoolCellText(value: XLSXCellValue | null | undefined): string {
 	return value === null || value === undefined ? "" : String(value).trim()
 }

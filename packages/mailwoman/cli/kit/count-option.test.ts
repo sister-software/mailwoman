@@ -20,8 +20,8 @@ describe("countOption", () => {
 	})
 
 	it("falls back only when the flag is absent", () => {
-		expect(countOption(undefined, 1)).toBe(1)
-		expect(countOption(undefined, 24)).toBe(24)
+		expect(countOption(null, 1)).toBe(1)
+		expect(countOption(null, 24)).toBe(24)
 	})
 
 	it("REFUSES a value that is not a non-negative integer rather than falling back", () => {

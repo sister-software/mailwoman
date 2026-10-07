@@ -123,7 +123,7 @@ describe("classifyAxiosFailure", () => {
 
 describe("resolveRetryPolicy / retryDelayMs", () => {
 	it("resolves an absent option to exactly one attempt — retry is opt-in", () => {
-		expect(resolveRetryPolicy(undefined).maxAttempts).toBe(1)
+		expect(resolveRetryPolicy(null).maxAttempts).toBe(1)
 		expect(resolveRetryPolicy(false).maxAttempts).toBe(1)
 	})
 

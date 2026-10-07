@@ -38,7 +38,7 @@ export {
  *
  * The parser scans quoted strings because OSM values such as names often contain commas.
  */
-export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
+export function parseOSMHstore(text: string | null): Record<string, string> {
 	const out: Record<string, string> = {}
 
 	if (!text) return out
@@ -203,7 +203,7 @@ export function toSubVenueSourceRow(
 
 	if (!rule) return null
 
-	const pt = representativePoint(feature.geometry)
+	const pt = representativePoint(feature.geometry ?? null)
 
 	if (!pt) return null
 

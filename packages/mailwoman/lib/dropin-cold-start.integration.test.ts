@@ -255,7 +255,7 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 
 			const { resolveWeights } = await import("@mailwoman/neural/weights")
 
-			let seed: { modelPath: string; tokenizerPath: string; modelCardPath?: string | undefined }
+			let seed: { modelPath: string; tokenizerPath: string; modelCardPath?: string | null }
 
 			try {
 				seed = await resolveWeights({ locale: "en-us" })

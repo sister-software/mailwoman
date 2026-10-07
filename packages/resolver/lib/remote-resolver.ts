@@ -19,8 +19,8 @@ export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "inter
 /**
  * Strip the live lookup handles from `ResolveOpts` so the rest can be JSON-serialized over http.
  */
-export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | undefined {
-	if (!opts) return undefined
+export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | null {
+	if (!opts) return null
 	const { addressPoints: _ap, interpolation: _ip, ...rest } = opts
 
 	return rest
@@ -69,7 +69,7 @@ export interface RemoteResolverOpts {
  */
 export interface ResolveTreeRequest {
 	tree: AddressTree
-	opts?: SerializableResolveOpts
+	opts?: SerializableResolveOpts | null
 }
 
 /**

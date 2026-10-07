@@ -202,7 +202,7 @@ function edgePolicy(row: BundleRow): Plugin {
 					return { path: args.path, external: true }
 				}
 
-				return undefined
+				return null
 			})
 		},
 	}

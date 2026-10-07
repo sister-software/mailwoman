@@ -153,8 +153,8 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		}
 	}
 
-	const checkDate = (ref: string, field: string, value: string | undefined) => {
-		if (value !== undefined && !isISODate(value)) {
+	const checkDate = (ref: string, field: string, value: string | null | undefined) => {
+		if (value != null && !isISODate(value)) {
 			issues.push({
 				severity: "error",
 				code: "malformed_date",
@@ -339,8 +339,8 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		}
 	}
 
-	const checkDuration = (ref: string, field: string, value: number | undefined) => {
-		if (value !== undefined && !(value >= 0)) {
+	const checkDuration = (ref: string, field: string, value: number | null | undefined) => {
+		if (value != null && !(value >= 0)) {
 			issues.push({
 				severity: "error",
 				code: "negative_duration",

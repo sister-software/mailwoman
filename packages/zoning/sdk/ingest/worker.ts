@@ -25,7 +25,7 @@ await runIngestChunkScript({
 	run: async (database: DatabaseClient<ZoningDatabase>, values, chunk) =>
 		ingestZoningChunk(database, {
 			source: await createExportFeatureSource({
-				exportPath: requiredArgument("zoning ingest-chunk", "export", values.export),
+				exportPath: requiredArgument("zoning ingest-chunk", "export", values.export ?? null),
 				...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
 				...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
 				// A range's count is not knowable up front: the source reports only the layer total,

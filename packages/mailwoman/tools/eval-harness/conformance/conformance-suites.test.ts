@@ -56,7 +56,7 @@ describe("the conformance suite register", () => {
 		}
 	})
 
-	it("answers undefined for a law nobody registered, rather than another law's audit", () => {
+	it("answers null for a law nobody registered, rather than another law's audit", () => {
 		const unregistered: ConformanceFixture = {
 			id: "unregistered",
 			law: "no-such-law",
@@ -66,7 +66,7 @@ describe("the conformance suite register", () => {
 			expect: "equivalent",
 		}
 
-		expect(suiteForLaw(unregistered.law)).toBeUndefined()
+		expect(suiteForLaw(unregistered.law)).toBeNull()
 		expect(describeLaw(unregistered)).toBe("")
 	})
 

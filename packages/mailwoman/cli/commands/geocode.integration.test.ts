@@ -62,7 +62,7 @@ describe("geocode argument validation", () => {
 
 		let threw = false
 		let output = ""
-		let status: number | undefined
+		let status: number | null = null
 
 		try {
 			await withCLISpawnLockAsync(() =>
@@ -78,7 +78,7 @@ describe("geocode argument validation", () => {
 			const execErr = error as { stdout?: string; stderr?: string; code?: number }
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 			// The promisified spawn stores the exit code in `.code`.
-			status = execErr.code
+			status = execErr.code ?? null
 		}
 
 		expect(threw).toBe(true)

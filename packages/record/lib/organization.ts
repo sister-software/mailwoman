@@ -218,7 +218,7 @@ function canonicalizeFragment(
  * between jurisdiction and domain rules.
  */
 export function canonicalizeOrganizationName(
-	input: string | null | undefined,
+	input: string | null,
 	options?: CanonicalizeOptions
 ): OrganizationName | null {
 	if (typeof input !== "string" || !input.trim()) return null

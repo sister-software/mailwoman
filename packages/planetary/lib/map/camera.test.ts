@@ -18,7 +18,7 @@ test.each([
 	[29.9, 9],
 	[1.2, 9],
 	[0, 9],
-	[undefined, 9],
+	[null, 9],
 ])("a %s km feature is framed at zoom %d", (diameterKm, zoom) => {
 	expect(framingZoom(diameterKm)).toBe(zoom)
 })
@@ -34,7 +34,7 @@ test.each([
 	[85.29, 6, 7], // the same feature on a deeper archive keeps its earned zoom
 	[1.2, 5, 6], // a small crater cannot ask for 9
 	[1.2, 6, 7],
-	[undefined, 5, 6], // an unknown diameter is clamped like any other
+	[null, 5, 6], // an unknown diameter is clamped like any other
 	[1250, 5, 3], // a clamp never pushes a wide feature IN
 	[1250, 6, 3],
 ])("a %s km feature against a zoom-%d archive frames at %d", (diameterKm, maxTerrainZoom, expected) => {

@@ -28,11 +28,11 @@ const DEFAULT_LIMIT = 15
 
 const EMPTY: PhotonFeatureCollection = { type: "FeatureCollection", features: [] }
 
-function asStringArray(raw: unknown): string[] | undefined {
+function asStringArray(raw: unknown): string[] | null {
 	if (Array.isArray(raw)) return raw.filter((v): v is string => typeof v === "string")
 	const s = asString(raw)
 
-	return s ? [s] : undefined
+	return s ? [s] : null
 }
 
 /**

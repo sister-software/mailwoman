@@ -85,7 +85,7 @@ function mockPairIndex(
 
 			const spec = entries[`${child}|${parent}`]
 
-			if (spec === undefined) return undefined
+			if (spec === undefined) return null
 
 			const [tag, parentTag = "locality"] = spec.split(">")
 
@@ -95,9 +95,9 @@ function mockPairIndex(
 }
 
 describe("buildPlacetypePairPriors — absence cases", () => {
-	it("returns a zero matrix when opts is undefined (no configured index — default OFF)", () => {
+	it("returns a zero matrix when opts is null (no configured index — default OFF)", () => {
 		const pieces = makePieces("shoreditch london")
-		const { matrix } = buildPlacetypePairPriors(undefined, pieces, LABELS)
+		const { matrix } = buildPlacetypePairPriors(null, pieces, LABELS)
 
 		expect(matrix).toHaveLength(2)
 

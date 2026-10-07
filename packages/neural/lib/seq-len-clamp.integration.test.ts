@@ -33,7 +33,7 @@ const TAIL = "1600 Amphitheatre Parkway, Mountain View, California, 94043, Unite
  */
 const PREFIX = "Attention Accounts Payable Department Global Logistics Division "
 
-let loadedClassifier: Promise<NeuralAddressClassifier> | undefined
+let loadedClassifier: Promise<NeuralAddressClassifier> | null = null
 
 /**
  * The en-US classifier, loaded by the first test that asks for it.

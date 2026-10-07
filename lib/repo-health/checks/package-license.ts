@@ -45,11 +45,11 @@ async function readDeclaredLicense(repoRoot: string, file: string): Promise<stri
  * The admissibility failure for one expression, or `undefined` when every identifier is
  * one the obligations table knows or a `LicenseRef-` this repository defines.
  */
-function admissibilityDiagnostic(expression: string, file: string): Diagnostic | undefined {
+function admissibilityDiagnostic(expression: string, file: string): Diagnostic | null {
 	try {
 		assertAdmissibleLicenseExpression(expression, file)
 
-		return undefined
+		return null
 	} catch (error) {
 		return {
 			severity: DiagnosticSeverity.Error,

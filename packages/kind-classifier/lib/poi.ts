@@ -168,17 +168,13 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  *
  * The winning candidate's hits are listed per {@link reachedMatches}.
  */
-export function matchPOISubject(
-	text: string,
-	locale: string | undefined,
-	lookup: POIPhraseLookup
-): POISubjectMatch | null {
+export function matchPOISubject(text: string, locale: string | null, lookup: POIPhraseLookup): POISubjectMatch | null {
 	const trimmed = text.trim()
 	const inputStart = text.indexOf(trimmed)
 
 	if (!trimmed) return null
 
-	const whole = lookup(trimmed, locale)
+	const whole = lookup(trimmed, locale ?? undefined)
 
 	if (whole.length) {
 		const matches = reachedMatches(whole)
@@ -201,7 +197,7 @@ export function matchPOISubject(
 		// Whitespace-only split rather than `wordsOf`, because a comma inside a subject is real content.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
-		const hits = lookup(subject, locale)
+		const hits = lookup(subject, locale ?? undefined)
 
 		if (!hits.length) continue
 
@@ -255,7 +251,7 @@ export function createScorePOIQuery(
 	locale?: string
 ): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
 	return (input, shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
 
 		if (!matched) return 0
 
@@ -297,7 +293,7 @@ export function createScorePOICategory(
 	locale?: string
 ): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
 	return (input, _shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
 
 		if (!matched || matched.remainder !== "") return 0
 
@@ -312,11 +308,7 @@ export function createScorePOICategory(
  * `null` when the input is not a bare category, under the same conditions as
  * {@link createScorePOICategory} so the two cannot disagree.
  */
-export function matchPOICategory(
-	text: string,
-	locale: string | undefined,
-	lookup: POIPhraseLookup
-): POIPhraseMatch | null {
+export function matchPOICategory(text: string, locale: string | null, lookup: POIPhraseLookup): POIPhraseMatch | null {
 	const matched = matchPOISubject(text, locale, lookup)
 
 	if (!matched || matched.remainder !== "") return null

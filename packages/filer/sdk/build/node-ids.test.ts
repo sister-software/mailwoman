@@ -88,6 +88,6 @@ describe("temporal-column guards", () => {
 	})
 
 	it("refuses to guess a date when validFrom was omitted", () => {
-		expect(() => assertProviderValidFrom(undefined)).toThrow(/options.validFrom is required/)
+		expect(() => assertProviderValidFrom(null)).toThrow(/options.validFrom is required/)
 	})
 })

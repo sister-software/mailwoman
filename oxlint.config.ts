@@ -138,9 +138,9 @@ const NODE_BUILTIN_PATTERN = "node:*"
  */
 export default {
 	...config,
-	jsPlugins: [...((config.jsPlugins as string[] | undefined) ?? []), "./oxlint.plugin.ts"],
+	jsPlugins: [...((config.jsPlugins as string[] | null) ?? []), "./oxlint.plugin.ts"],
 	overrides: [
-		...((config.overrides as unknown[] | undefined) ?? []),
+		...((config.overrides as unknown[] | null) ?? []),
 		{
 			files: BROWSER_REACHABLE_NEURAL_FILES,
 			excludeFiles: NODE_TIER_NEURAL_FILES,

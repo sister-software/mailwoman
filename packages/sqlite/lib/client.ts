@@ -51,7 +51,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 		config?: Partial<KyselyConfig>
 	) {
 		let database: DatabaseSync
-		let kyselyConfig: Partial<KyselyConfig> | undefined
+		let kyselyConfig: Partial<KyselyConfig> | null
 
 		if (typeof source === "string" || source instanceof PathBuilder) {
 			const location = source.toString()
@@ -60,7 +60,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 			const openArgs: [string, DatabaseSyncOptions?] = options ? [location, options] : [location]
 
 			database = new DatabaseSync(...openArgs)
-			kyselyConfig = config
+			kyselyConfig = config ?? null
 		} else {
 			const dialectConfig = "database" in source ? source : { database: source }
 
@@ -72,7 +72,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 			}
 
 			database = dialectConfig.database
-			kyselyConfig = optionsOrConfig as Partial<KyselyConfig> | undefined
+			kyselyConfig = (optionsOrConfig as Partial<KyselyConfig> | undefined) ?? null
 		}
 
 		super({

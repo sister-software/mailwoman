@@ -177,13 +177,13 @@ export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
  * The function also returns the interpolation tier's precondition triple and diagnostic text for a miss.
  */
 export function findInterpolationSpans(tree: AddressTree): {
-	street?: string
-	houseNumber?: string
-	postcode?: string
+	street: string | null
+	houseNumber: string | null
+	postcode: string | null
 } {
-	let s: string | undefined
-	let hn: string | undefined
-	let pc: string | undefined
+	let s: string | null = null
+	let hn: string | null = null
+	let pc: string | null = null
 
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "street" && !s && n.value.trim()) {

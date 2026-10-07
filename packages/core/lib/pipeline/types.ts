@@ -23,7 +23,7 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
 /**
  * A placetype-pair prior that core passes to the classifier without inspecting it.
  */
-export type PlacetypePairPassthrough = object | false
+export type PlacetypePairPassthrough = object | false | null
 
 /**
  * Per-call options for the runtime pipeline.

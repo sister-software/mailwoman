@@ -72,7 +72,7 @@ interface CensusDatabase {
 	destroy(): void | Promise<void>
 }
 
-type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
+type OpenCensusArtifact = (path: string | null) => { db: CensusDatabase } | { unavailable: string }
 
 interface CheckReading {
 	checks: string

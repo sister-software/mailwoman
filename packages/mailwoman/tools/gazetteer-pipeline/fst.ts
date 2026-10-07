@@ -172,7 +172,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 		rows.push({
 			artifact: relative,
 			present: true,
-			...(staleReason === undefined ? {} : { staleReason }),
+			...(staleReason === null ? {} : { staleReason }),
 			...(fields?.provenance?.builtAt ? { builtAt: fields.provenance.builtAt } : {}),
 			rebuildCommand,
 		})

@@ -97,7 +97,7 @@ export async function buildBody(
 	options: { maxZoom: number; out?: string },
 	report: (line: string) => void
 ): Promise<BuildReport> {
-	const directory = buildDirectory(body, options.out)
+	const directory = buildDirectory(body, options.out ?? null)
 	const names = buildOutputs(body)
 
 	await makeDirectories(directory)

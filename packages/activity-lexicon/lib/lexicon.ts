@@ -55,7 +55,7 @@ export function resolveActivityPhraseLocale(
 	entry: ActivityPhraseEntry,
 	locale: string | undefined
 ): ActivityPhraseLocaleMatch | null {
-	return resolveLocaleScope(entry.locales, locale)
+	return resolveLocaleScope(entry.locales ?? null, locale)
 }
 
 /**
@@ -194,7 +194,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 	}
 }
 
-let committed: ActivityPhraseLexicon | undefined
+let committed: ActivityPhraseLexicon | null = null
 
 /**
  * Read the lexicon, refusing one the audit rejects.

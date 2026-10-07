@@ -218,7 +218,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 		const route = createAuthorityDesignationRoute({ databasePath })
 
 		try {
-			expect(route.observe(undefined, undefined)).toEqual({ fired: false, refusal: "no_coordinate" })
+			expect(route.observe(null, null)).toEqual({ fired: false, refusal: "no_coordinate" })
 		} finally {
 			route[Symbol.dispose]()
 		}

@@ -213,7 +213,7 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
  * correctly-sealed artifact and succeed on one that was not.
  */
 export async function openSealedArtifact<DB>(
-	path: string | undefined
+	path: string | null
 ): Promise<{ db: DatabaseClient<DB> } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }
 
@@ -230,7 +230,7 @@ export async function openSealedArtifact<DB>(
  * Load an FST artifact, reporting a missing file as unavailable rather than as a source with no entry.
  */
 export async function loadFSTArtifact(
-	path: PathBuilderLike | undefined,
+	path: PathBuilderLike | null,
 	deserialize: (buffer: Buffer) => FSTLike
 ): Promise<{ fst: FSTLike } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }

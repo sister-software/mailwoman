@@ -81,7 +81,7 @@ export interface CoastalErosionRoute extends Disposable {
 	/**
 	 * Read the layer for one coordinate, or return a reasoned refusal for missing coordinates.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
+	observe: (latitude: number | null, longitude: number | null) => CoastalDecision
 }
 
 export interface CoastalErosionRouteOptions {
@@ -167,7 +167,7 @@ export function coastalErosionAssignmentClause(observation: CoastalErosionObserv
 export function describeCoastalErosion(observation: CoastalErosionObservation): string {
 	return (
 		`Environment Agency NCERM ${coastalErosionAssignmentClause(observation)} under scenario ${observation.scenario.key} (${observation.scenario.label}) ` +
-		`at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} (${observation.containment}); ${describeCoverage(observation.coverage)}; ` +
+		`at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} (${observation.containment}); ${describeCoverage(observation.coverage ?? null)}; ` +
 		`${describeLayerProvenance(observation.layer)}`
 	)
 }

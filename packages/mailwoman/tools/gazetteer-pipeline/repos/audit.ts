@@ -102,16 +102,16 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 }
 
 /**
- * `head` for a checkout, or `undefined` when the directory is not one.
+ * `head` for a checkout, or `null` when the directory is not one.
  *
  * A clone without git metadata can be a directory extracted from an archive.
  * The audit reports its vintage as absent and continues checking the root.
  */
-function headOf(dir: PathBuilder): string | undefined {
+function headOf(dir: PathBuilder): string | null {
 	try {
 		return runFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: dir, encoding: "utf8", stdio: "pipe" }).trim()
 	} catch {
-		return undefined
+		return null
 	}
 }
 

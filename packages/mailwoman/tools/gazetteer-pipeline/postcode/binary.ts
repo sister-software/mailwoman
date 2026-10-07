@@ -72,8 +72,8 @@ export const POSTCODE_BINARY_SOURCES: readonly PostcodeBinarySource[] = [
 /**
  * Returns browser granularity for a country, if configured.
  */
-export function browserGranularityFor(country: string): GBGranularity | undefined {
-	return POSTCODE_BINARY_SOURCES.find((source) => source.country === country.toUpperCase())?.browserGranularity
+export function browserGranularityFor(country: string): GBGranularity | null {
+	return POSTCODE_BINARY_SOURCES.find((source) => source.country === country.toUpperCase())?.browserGranularity ?? null
 }
 
 /**

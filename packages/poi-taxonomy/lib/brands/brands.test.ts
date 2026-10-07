@@ -41,15 +41,15 @@ describe("resolveBrandName", () => {
 		expect(resolveBrandName("Chevron")?.wikidata).toBe("Q319642")
 	})
 
-	it("returns undefined for an unknown name", () => {
-		expect(resolveBrandName("flux capacitor depot")).toBeUndefined()
+	it("returns null for an unknown name", () => {
+		expect(resolveBrandName("flux capacitor depot")).toBeNull()
 	})
 })
 
 describe("getBrand / getAllBrands", () => {
 	it("fetches a brand by its wikidata QID", () => {
 		expect(getBrand("Q319642")?.name).toBe("Chevron")
-		expect(getBrand("Q999999999")).toBeUndefined()
+		expect(getBrand("Q999999999")).toBeNull()
 	})
 
 	it("enumerates every committed brand", () => {

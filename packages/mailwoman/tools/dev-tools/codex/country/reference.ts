@@ -62,23 +62,23 @@ export interface GenerateCountryReferenceSummary {
  * A single suffix completes the code, so GB's `+4` and `4` give 44.
  * NANP members share root `+1` and list area codes as suffixes, so they map to 1.
  */
-function callingCode(country: MledozeCountry): number | undefined {
+function callingCode(country: MledozeCountry): number | null {
 	const root = (country.idd?.root ?? "").replace("+", "")
 	const suffixes = country.idd?.suffixes ?? []
 
-	if (!root) return undefined
+	if (!root) return null
 
 	if (root === "1") return 1
 
 	if (suffixes.length === 1) {
 		const n = Number(root + suffixes[0])
 
-		return Number.isFinite(n) ? n : undefined
+		return Number.isFinite(n) ? n : null
 	}
 
 	const n = Number(root)
 
-	return Number.isFinite(n) ? n : undefined
+	return Number.isFinite(n) ? n : null
 }
 
 const serialize = (o: CountryReferenceEntry): string =>

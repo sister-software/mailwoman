@@ -83,7 +83,7 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		for (const absent of [null, undefined, "", "   "]) {
+		for (const absent of [null, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({
 				corroborated: false,
 				basis: CIKCorroborationBasis.NoSIC,

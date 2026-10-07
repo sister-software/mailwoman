@@ -148,11 +148,11 @@ function buildFixtureDB(
 const open = (places: readonly FixturePlace[], withEncyclopedic: boolean): WOFSQLitePlaceLookup =>
 	new WOFSQLitePlaceLookup({ database: buildFixtureDB(places, { withEncyclopedic }), buildFTS: true })
 
-let lookup: WOFSQLitePlaceLookup | undefined
+let lookup: WOFSQLitePlaceLookup | null = null
 
 afterEach(() => {
 	lookup?.[Symbol.dispose]()
-	lookup = undefined
+	lookup = null
 })
 
 describe("Saint-Denis — ranking is referential", () => {

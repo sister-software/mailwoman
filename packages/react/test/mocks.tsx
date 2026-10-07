@@ -44,7 +44,7 @@ export function makePOIRuntime(): POIRuntime {
  */
 export function makeBrandPOIRuntime(): POIRuntime {
 	const lookup = {
-		getPOICategory: () => undefined,
+		getPOICategory: () => null,
 		requiresBuildLocalLayer: () => false,
 		resolveOvertureCategories: (id: string) => [id],
 		lookupPOICategory: () => [],

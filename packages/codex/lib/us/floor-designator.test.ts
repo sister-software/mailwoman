@@ -96,7 +96,7 @@ describe("lookupFloorDesignator", () => {
 		expect(lookupFloorDesignator("apt")).toBeNull()
 		expect(lookupFloorDesignator("nope")).toBeNull()
 		expect(lookupFloorDesignator(null)).toBeNull()
-		expect(lookupFloorDesignator(undefined)).toBeNull()
+		expect(lookupFloorDesignator(null)).toBeNull()
 		expect(lookupFloorDesignator("")).toBeNull()
 	})
 })

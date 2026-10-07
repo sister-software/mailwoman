@@ -18,7 +18,7 @@ import type { ClassificationProposal } from "#types"
 
 const GLOBAL_LOCALE_KEY = "*"
 
-function policyKey(component: ComponentTag, locale: string | undefined): string {
+function policyKey(component: ComponentTag, locale: string | null | undefined): string {
 	return `${component}::${locale ?? GLOBAL_LOCALE_KEY}`
 }
 
@@ -76,7 +76,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 			if (localized) return localized
 		}
 
-		const global = this.#entries.get(policyKey(component, undefined))
+		const global = this.#entries.get(policyKey(component, null))
 
 		if (global) return global
 

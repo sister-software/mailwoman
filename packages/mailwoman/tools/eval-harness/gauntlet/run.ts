@@ -152,12 +152,12 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * Describes a run's resolver options, or returns undefined when no option is pinned.
+ * Describes a run's resolver options, or returns null when no option is pinned.
  *
  * The function is pure and exported because tests can cheaply check the pin-to-layer mapping.
  * Otherwise a dropped pin could be discovered only from two identical pin logs.
  */
-export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
+export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | null {
 	const pins: GauntletResolverPins = {
 		...(options.postcodeCountryCoherence === undefined
 			? {}
@@ -172,9 +172,9 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 			: { spanRescoreWeakResolution: options.spanRescoreWeakResolution }),
 	}
 
-	// Absent rather than empty: `undefined` is what `describeResolverPins` prints as
-	// "production defaults", and an empty object would read as "pinned to no option".
-	return Object.keys(pins).length ? pins : undefined
+	// Absent rather than empty: `null` is what `describeResolverPins` prints as "production defaults".
+	// An empty object would read as "pinned to no option".
+	return Object.keys(pins).length ? pins : null
 }
 
 /**

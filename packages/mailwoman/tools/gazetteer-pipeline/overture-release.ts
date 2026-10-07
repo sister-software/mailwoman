@@ -53,10 +53,10 @@ export async function listOvertureReleases(client?: OvertureListingClient): Prom
 		})
 
 	const releases: string[] = []
-	let continuationToken: string | undefined
+	let continuationToken: string | null = null
 
 	for (let page = 0; page < LISTING_PAGE_LIMIT; page++) {
-		const response = await api.fetch<string>({
+		const response: { data: unknown } = await api.fetch<string>({
 			url: "/",
 			params: {
 				"list-type": 2,
@@ -84,7 +84,7 @@ export async function listOvertureReleases(client?: OvertureListingClient): Prom
 			return releases.toSorted()
 		}
 
-		continuationToken = elementText(body, "NextContinuationToken", { xml: true })?.trim()
+		continuationToken = elementText(body, "NextContinuationToken", { xml: true })?.trim() ?? null
 
 		if (!continuationToken) {
 			throw new Error(

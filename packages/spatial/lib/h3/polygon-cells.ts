@@ -51,11 +51,11 @@ function boxExtentMetres(box: LatLonBounds): { heightM: number; widthM: number }
 }
 
 /**
- * The single cell containing this whole bounding box, or `undefined` when it spans
+ * The single cell containing this whole bounding box, or `null` when it spans
  * more than one — exact because an H3 cell is convex.
  */
-function enclosingCell(box: LatLonBounds, resolution: number): string | undefined {
-	if (!Number.isFinite(box.minLat)) return undefined
+function enclosingCell(box: LatLonBounds, resolution: number): string | null {
+	if (!Number.isFinite(box.minLat)) return null
 
 	const first = latLngToCell(box.minLat, box.minLon, resolution)
 
@@ -64,7 +64,7 @@ function enclosingCell(box: LatLonBounds, resolution: number): string | undefine
 		[box.maxLat, box.minLon],
 		[box.maxLat, box.maxLon],
 	] as Array<[number, number]>) {
-		if (latLngToCell(lat, lon, resolution) !== first) return undefined
+		if (latLngToCell(lat, lon, resolution) !== first) return null
 	}
 
 	return first

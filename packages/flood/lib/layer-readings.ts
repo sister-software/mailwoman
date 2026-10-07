@@ -82,7 +82,7 @@ export function floodLayerReading(lookup: FloodZoneLookup, query: FloodLayerRead
 
 	const zoneCode = answer.zoneCode ?? answer.definition?.code
 
-	if (zoneCode === undefined) {
+	if (zoneCode == null) {
 		throw new Error(
 			`floodLayerReading: the ${answer.kind} answer at ${query.latitude}, ${query.longitude} has no zone code`
 		)
@@ -115,7 +115,7 @@ export function floodLayerReading(lookup: FloodZoneLookup, query: FloodLayerRead
  * The basis a coverage row stores.
  */
 function storedBasis(coverage: NonNullable<FloodZoneReading["coverage"]>): LayerReading["basis"] {
-	if (coverage.basis === undefined) {
+	if (coverage.basis == null) {
 		throw new Error(`floodLayerReading: the coverage row for ${coverage.h3CellIndex} has no basis`)
 	}
 

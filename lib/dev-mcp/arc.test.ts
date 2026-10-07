@@ -67,7 +67,7 @@ describe("decideArc", () => {
 	})
 
 	it("says a missing control is a MISSING CONTROL, not a passing one", () => {
-		const arc = decideArc(undefined, undefined, leg("candidate", 12, 4), PROTECTIONS)
+		const arc = decideArc(null, null, leg("candidate", 12, 4), PROTECTIONS)
 
 		expect(arc.attributableNet).toBeUndefined()
 		expect(arc.reasons.some((r) => r.includes("No self-control leg ran"))).toBe(true)
@@ -127,7 +127,7 @@ describe("decideArc", () => {
 		// A missing null and an inapplicable null are different facts.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
-			undefined,
+			null,
 			leg("candidate", 20, 4),
 			PROTECTIONS,
 			"from-scratch"
@@ -142,7 +142,7 @@ describe("decideArc", () => {
 	it("does not contradict its own reasons in the one-line summary", () => {
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
-			undefined,
+			null,
 			leg("candidate", 3, 1),
 			PROTECTIONS,
 			"from-scratch"
@@ -155,7 +155,7 @@ describe("decideArc", () => {
 	it("renders BOTH halves of the trade, not only the regressions", () => {
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
-			undefined,
+			null,
 			leg("candidate", 1, 1, {
 				improvedInputs: ["12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India"],
 				regressedInputs: ["Unter den Linden"],

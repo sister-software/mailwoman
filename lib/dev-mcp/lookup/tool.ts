@@ -246,7 +246,7 @@ export async function runLookup(
  *
  * An explicit path that does not resolve is returned as given, so opening it reports why it is unavailable.
  */
-async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
+async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | null> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
@@ -256,7 +256,7 @@ async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLik
 
 async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
-	path: string | undefined,
+	path: string | null,
 	build: (db: DatabaseClient<WOFDatabase>, path: string) => T | Promise<T>
 ): Promise<T | LookupResult> {
 	const opened = await openSealedArtifact<WOFDatabase>(path)
@@ -454,7 +454,7 @@ async function probeLocaleFST(
 	const path =
 		args.source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
 
-	const loaded = await loadFSTArtifact(path, deserializeFST)
+	const loaded = await loadFSTArtifact(path ?? null, deserializeFST)
 
 	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
 

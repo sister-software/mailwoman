@@ -149,7 +149,7 @@ describe("prominence-floor ruler (#2264)", () => {
 
 		// An absent count and a zero count reach no band.
 		// The smallest band starts at 1.
-		expect(bandFor(bands, undefined)).toBeNull()
+		expect(bandFor(bands, null)).toBeNull()
 		expect(bandFor(bands, 0)).toBeNull()
 	})
 

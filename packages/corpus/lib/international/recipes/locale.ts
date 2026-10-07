@@ -272,7 +272,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			if (!street) continue
 
 			let locality: string | null
-			let dependent_locality: string | undefined
+			let dependent_locality: string | null = null
 
 			if (part.districtAsLocality) {
 				const rawDistrict = get(cells, cols.district)
@@ -289,7 +289,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 					dependent_locality =
 						cleanedCity && cleanedCity.localeCompare(locality, undefined, { sensitivity: "base" }) !== 0
 							? cleanedCity
-							: undefined
+							: null
 				} else {
 					locality = cleanCityNoise(rawCity)
 				}
@@ -368,15 +368,15 @@ export function applyCountryAppend(
  * Applies the per-run `districtAsLocality` override to a part.
  * An unset override returns the part unchanged.
  */
-export function applyDistrictAsLocalityOverride(part: LocalePart, override: boolean | undefined): LocalePart {
-	return override === undefined ? part : { ...part, districtAsLocality: override }
+export function applyDistrictAsLocalityOverride(part: LocalePart, override: boolean | null): LocalePart {
+	return override === null ? part : { ...part, districtAsLocality: override }
 }
 
 /**
  * Returns the country's `pedaniaParts` when the override is true and that property exists.
  * Returns the default parts in all other cases.
  */
-export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | undefined): LocalePart[] {
+export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | null): LocalePart[] {
 	return override === true && countrySource.pedaniaParts ? countrySource.pedaniaParts : countrySource.parts
 }
 
@@ -432,7 +432,7 @@ export const localeRecipe: CorpusRecipe = {
 		const count = opts.count ?? 4000
 		// When unset, each part keeps its own setting.
 		// True also selects the ES pedanía parts.
-		const districtAsLocalityOverride = opts.districtAsLocality
+		const districtAsLocalityOverride = opts.districtAsLocality ?? null
 		const parts = resolveLocaleParts(countrySource, districtAsLocalityOverride)
 
 		const pool: LocaleBaseTuple[] = []

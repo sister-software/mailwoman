@@ -370,7 +370,7 @@ test("Repeated lat on /reverse answers the legacy 400 (Number(array) is NaN)", a
 })
 
 test("Repeated osm_tag and layer reach the engine as arrays (contractual repeatable params)", async () => {
-	let seen: PhotonSearchParams | undefined
+	let seen = null as PhotonSearchParams | null
 
 	const app = createPhotonApp({
 		search: async (params) => {
@@ -405,7 +405,7 @@ test("Limit falls back to 15 on absent, non-numeric, and zero values (legacy Num
 })
 
 test("Non-numeric bias lat/lon on /api is tolerated (soft bias — NaN reaches the engine without 400)", async () => {
-	let seen: PhotonSearchParams | undefined
+	let seen = null as PhotonSearchParams | null
 
 	const app = createPhotonApp({
 		search: async (params) => {

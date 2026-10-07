@@ -53,7 +53,7 @@ export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
  */
 export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Promise<RepoOrigin> {
 	let state: ForkState
-	let probeFailure: string | undefined
+	let probeFailure: string | null = null
 
 	try {
 		state = await probe(FORK_ORG, repo)

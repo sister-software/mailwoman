@@ -115,7 +115,7 @@ async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const nodes = [...walkNodes(resolved.roots)] as AdminCoherenceSourceNode[]
 	const winner = nodes.find((n) => n.tag === "locality")!
 
-	return { winner, fragment: adminCoherenceField(nodes, winner, undefined) }
+	return { winner, fragment: adminCoherenceField(nodes, winner, null) }
 }
 
 describe("admin coherence over the candidate backend's ancestors sidecar", () => {

@@ -162,12 +162,11 @@ export function packCharFeed(
 }
 
 /**
- * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors,
- * zero-padded to `fixedSeqLen`; an `undefined` channel packs the confidence=0
- * identity the model treats as channel-off.
+ * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors, zero-padded
+ * to `fixedSeqLen`; a `null` channel packs the confidence=0 identity the model treats as channel-off.
  */
 function packChannelFeed(
-	channel: InferChannel | undefined,
+	channel: InferChannel | null,
 	fixedSeqLen: number,
 	seqLen: number,
 	dim: number
@@ -232,7 +231,7 @@ export function packSoftChannelFeeds(
 		if (!inputNames.includes(`${prefix}_features`)) continue
 
 		const dim = channel ? (channel.features[0]?.length ?? suppliedEmptyDim) : absentDim
-		const packed = packChannelFeed(channel, fixedSeqLen, seqLen, dim)
+		const packed = packChannelFeed(channel ?? null, fixedSeqLen, seqLen, dim)
 
 		entries.push([`${prefix}_features`, packed.features], [`${prefix}_confidence`, packed.confidence])
 	}
@@ -301,8 +300,8 @@ export function decodeInferOutput(
 	const addressSystemLogits = output.addressSystemLogits ? Array.from(output.addressSystemLogits.data) : undefined
 
 	const spanTensor = output.spanScores
-	let spanScores: number[][][] | undefined
-	let maxSpan: number | undefined
+	let spanScores: number[][][] | null = null
+	let maxSpan: number | null = null
 
 	if (spanTensor) {
 		const spanData = spanTensor.data
@@ -335,7 +334,7 @@ export function decodeInferOutput(
 		numLabels,
 		...(localeLogits ? { localeLogits } : {}),
 		...(addressSystemLogits ? { addressSystemLogits } : {}),
-		...(spanScores ? { spanScores, maxSpan } : {}),
+		...(spanScores && maxSpan !== null ? { spanScores, maxSpan } : {}),
 	}
 }
 

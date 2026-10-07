@@ -46,14 +46,15 @@ export function reportError(error: unknown): void {
  *
  * @returns a direct or Promise-wrapped exit code
  */
-export type CommandCallback = () => number | undefined | Promise<number | undefined>
+export type CommandCallback = () => number | null | undefined | Promise<number | null | undefined>
 
 /**
  * Run a CLI command with one consistent stderr and exit-code boundary.
  */
-export function runCLICommand(command: CommandCallback): Promise<number | undefined> {
+export function runCLICommand(command: CommandCallback): Promise<number | null> {
 	return Promise.resolve()
 		.then(command)
+		.then((exitCode) => exitCode ?? null)
 		.catch((error: unknown) => {
 			reportError(error)
 

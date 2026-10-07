@@ -115,8 +115,8 @@ describe("streamMarkupElements", () => {
 		// The publisher wrote `<ad:alternativeIdentifier />`, so the value is present and blank.
 		expect(textAtPath(second!, "ad:alternativeIdentifier")).toBe("")
 		// It wrote no locator at all.
-		expect(textAtPath(second!, "ad:locator")).toBeUndefined()
-		expect(elementAtPath(second!, "ad:locator", "ad:AddressLocator")).toBeUndefined()
+		expect(textAtPath(second!, "ad:locator")).toBeNull()
+		expect(elementAtPath(second!, "ad:locator", "ad:AddressLocator")).toBeNull()
 	})
 
 	it("keeps a child's text out of its parent's text", async () => {
@@ -216,7 +216,7 @@ describe("childElements and elementAtPath", () => {
 	it("returns undefined at the first absent step rather than throwing", async () => {
 		const [first] = await collect(once(GML))
 
-		expect(elementAtPath(first!, "ad:locator", "ad:Missing", "ad:designator")).toBeUndefined()
-		expect(textAtPath(first!, "ad:nowhere")).toBeUndefined()
+		expect(elementAtPath(first!, "ad:locator", "ad:Missing", "ad:designator")).toBeNull()
+		expect(textAtPath(first!, "ad:nowhere")).toBeNull()
 	})
 })

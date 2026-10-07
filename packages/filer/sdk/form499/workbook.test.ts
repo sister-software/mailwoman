@@ -97,7 +97,14 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 
 		// A workbook row with blank notes has an empty lifecycle.
 		// Only TSV rows leave it undefined.
-		expect(otelco?.lifecycle).toEqual({ notes: [], reasons: [], unrecognized: 0 })
+		expect(otelco?.lifecycle).toEqual({
+			notes: [],
+			reasons: [],
+			unrecognized: 0,
+			ceasedAt: null,
+			replacedByForm499ID: null,
+		})
+
 		expect(otelco?.lifecycle).toBeDefined()
 	})
 

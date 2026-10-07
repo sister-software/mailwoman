@@ -111,7 +111,7 @@ export interface SoilCapabilityRoute extends Disposable {
 	 * Reads the layer at one coordinate.
 	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => SoilDesignationDecision
+	observe: (latitude: number | null, longitude: number | null) => SoilDesignationDecision
 }
 
 /**
@@ -197,6 +197,6 @@ export function describeSoilCapability(observation: SoilCapabilityObservation): 
 
 	return (
 		`The soil survey ${soilCapabilityAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude}; ` +
-		`${vintage}; ${describeCoverage(observation.coverage, { completeness: true })}; weighting ${observation.distribution.weighting}; ${describeLayerProvenance(observation.layer)}`
+		`${vintage}; ${describeCoverage(observation.coverage ?? null, { completeness: true })}; weighting ${observation.distribution.weighting}; ${describeLayerProvenance(observation.layer)}`
 	)
 }

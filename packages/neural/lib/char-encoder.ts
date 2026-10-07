@@ -159,10 +159,7 @@ export type EncoderDescriptor =
  * vocabulary sibling or the `(S, W, ctx)` interface rather than defaulting a value
  * that would encode every row differently from training.
  */
-export function encoderDescriptorFromCard(
-	card: Record<string, unknown> | undefined,
-	source: string
-): EncoderDescriptor {
+export function encoderDescriptorFromCard(card: Record<string, unknown> | null, source: string): EncoderDescriptor {
 	const encoder = card?.encoder
 
 	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
@@ -203,6 +200,6 @@ export function encoderDescriptorFromCard(
  * the CJK char-path base for Japanese, Chinese and Korean — delegating to
  * `#weights/families` so the language set has one home.
  */
-export function scriptFamilyBase(locale: string): string | undefined {
+export function scriptFamilyBase(locale: string): string | null {
 	return familyFallbackFor(locale)
 }

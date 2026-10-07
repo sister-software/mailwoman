@@ -132,8 +132,8 @@ function paneTitle(label: string, pane: DebugPane, focused: DebugPane | null): s
 
 type Tag = AddressNode["tag"]
 
-function tagOwnership(tree: AddressTree): (Tag | undefined)[] {
-	const owners: (Tag | undefined)[] = new Array(tree.raw.length).fill(undefined)
+function tagOwnership(tree: AddressTree): (Tag | null)[] {
+	const owners: (Tag | null)[] = new Array(tree.raw.length).fill(null)
 
 	const visit = (node: AddressNode): void => {
 		const lo = Math.max(0, node.start)
@@ -157,11 +157,11 @@ function tagOwnership(tree: AddressTree): (Tag | undefined)[] {
 
 /**
  * One tile of the span ribbon: a run of `value` colored by `tag`, or an `unknown`
- * (uncovered) run when `tag` is `undefined`.
+ * (uncovered) run when `tag` is `null`.
  */
 export interface RibbonSegment {
 	value: string
-	tag: Tag | undefined
+	tag: Tag | null
 }
 
 /**
@@ -174,7 +174,7 @@ export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 
 	for (const run of losslessSegments(tree)) {
 		if (run.kind === "unknown") {
-			segments.push({ value: run.value, tag: undefined })
+			segments.push({ value: run.value, tag: null })
 
 			continue
 		}
@@ -182,7 +182,7 @@ export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 		let cursor = run.start
 
 		while (cursor < run.end) {
-			const tag = owners[cursor]
+			const tag = owners[cursor] ?? null
 			let next = cursor + 1
 
 			while (next < run.end && owners[next] === tag) {
@@ -244,7 +244,7 @@ const InputBar = memo(function InputBar(props: {
 		return { segments: parsed, legendTags: tags }
 	}, [props.tree])
 
-	const { trace } = props
+	const trace = props.trace ?? null
 
 	return (
 		<Box

@@ -45,7 +45,7 @@ const FIXED_WIRELESS_CODES = BroadbandTechnologyCategoryToCodeSet[BroadbandTechn
  */
 export interface PlausibilityClaim {
 	address?: string
-	point?: PointLiteral
+	point?: PointLiteral | null
 	geoid?: string
 	technologyCode: number
 	claimedDownloadMbps: number
@@ -156,8 +156,8 @@ export interface PlausibilityPOIDeps {
  * A missing layer produces an abstention.
  */
 export interface PlausibilityDeps {
-	bdcDB?: DatabaseClient<BDCDatabase>
-	poi?: PlausibilityPOIDeps
+	bdcDB?: DatabaseClient<BDCDatabase> | null
+	poi?: PlausibilityPOIDeps | null
 	geocode?: (address: string) => Promise<GeocodeLike>
 	/**
 	 * Resolves a claim's GEOID to its res-9 short cell when the block has no filing rows of
@@ -167,7 +167,7 @@ export interface PlausibilityDeps {
 	 *
 	 * Without it, a zero-row GEOID keeps the documented safe result: unknown.
 	 */
-	bdcGeoidCell?: (geoid: string) => number | undefined
+	bdcGeoidCell?: (geoid: string) => number | null
 }
 
 /**
@@ -276,7 +276,7 @@ async function assertLayerSpineResolution(
  * The result has no "implausible" verdict, because missing evidence does not disprove a claim.
  */
 export async function plausibilityCheck(claim: PlausibilityClaim, deps: PlausibilityDeps): Promise<PlausibilityBundle> {
-	let point: PointLiteral | undefined = claim.point
+	let point: PointLiteral | null = claim.point ?? null
 
 	if (!point && claim.address) {
 		if (!deps.geocode) {

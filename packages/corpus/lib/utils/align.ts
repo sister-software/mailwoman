@@ -221,17 +221,17 @@ function locateSpan(args: {
 	raw: string
 	claimed: Array<[number, number]>
 	maxEditDistance: number
-}): { start: number; end: number } | undefined {
+}): { start: number; end: number } | null {
 	const { haystack, needle, claimed, maxEditDistance } = args
 
-	if (!needle.length) return undefined
+	if (!needle.length) return null
 
 	// Pass 1: verbatim substring.
 	// Word-boundary-aligned matches are preferred over intra-word ones, so a short
 	// value cannot claim the inside of an earlier word.
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence).
-	let intraWord: { start: number; end: number } | undefined
+	let intraWord: { start: number; end: number } | null = null
 	let from = 0
 
 	while (true) {
@@ -250,7 +250,7 @@ function locateSpan(args: {
 
 	if (intraWord) return intraWord
 
-	if (maxEditDistance <= 0) return undefined
+	if (maxEditDistance <= 0) return null
 
 	// Pass 2: fuzzy sliding-window.
 	const len = needle.length
@@ -265,7 +265,7 @@ function locateSpan(args: {
 		if (d <= maxEditDistance) return { start: i, end: i + len }
 	}
 
-	return undefined
+	return null
 }
 
 const WORD_CHAR = /[\p{L}\p{N}]/u

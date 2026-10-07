@@ -83,9 +83,9 @@ export function placeIDProvenance(id: number): PlaceIDProvenance {
 /**
  * Returns a note with the count of synthetic IDs per source.
  *
- * @returns `undefined` when every ID is a real WOF ID.
+ * @returns `null` when every ID is a real WOF ID.
  */
-export function syntheticIDNote(ids: readonly number[]): string | undefined {
+export function syntheticIDNote(ids: readonly number[]): string | null {
 	const counts = new Map<PlaceIDSource, number>()
 
 	for (const id of ids) {
@@ -95,7 +95,7 @@ export function syntheticIDNote(ids: readonly number[]): string | undefined {
 
 	const synthetic = [...counts].filter(([source]) => source !== PlaceIDSource.WOF)
 
-	if (!synthetic.length) return undefined
+	if (!synthetic.length) return null
 
 	const parts = synthetic.map(([source, n]) => `${n} ${source}`).join(", ")
 

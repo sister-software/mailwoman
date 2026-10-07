@@ -27,11 +27,13 @@ await runIngestChunkScript({
 	run: async (database: DatabaseClient<CoastalDatabase>, values, chunk) =>
 		ingestCoastalChunk(database, {
 			source: await createGeodatabaseFeatureSource({
-				geodatabasePath: requiredArgument("coastal ingest-chunk", "gdb", values.gdb),
+				geodatabasePath: requiredArgument("coastal ingest-chunk", "gdb", values.gdb ?? null),
 				// A chunk reads one layer family: either one scenario's erosion zones
 				// or the two ground-instability layers, because mixing them would make the
 				// range bound mean two different things at once.
-				scenarioKeys: values.instability ? [] : [requiredArgument("coastal ingest-chunk", "scenario", values.scenario)],
+				scenarioKeys: values.instability
+					? []
+					: [requiredArgument("coastal ingest-chunk", "scenario", values.scenario ?? null)],
 				skipInstability: !values.instability,
 				...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
 				...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),

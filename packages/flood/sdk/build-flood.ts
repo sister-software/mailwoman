@@ -197,7 +197,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			)
 		},
 		ingest: async (kdb) => {
-			if (!source) return undefined
+			if (!source) return null
 
 			return aggregateChunks([
 				await ingestFloodChunk(kdb, {

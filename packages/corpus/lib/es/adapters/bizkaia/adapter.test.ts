@@ -147,8 +147,8 @@ describe("es-bizkaia adapter against the fixture archive and WFS pages", () => {
 
 		expect(bizkaiaHouseNumber(new Map([["buildingIdentifier", ["48.001.00026.003"]]]))).toBe("3")
 		expect(bizkaiaHouseNumber(new Map([["buildingIdentifier", ["48.001.00024.033005"]]]))).toBe("33005")
-		expect(bizkaiaHouseNumber(new Map([["buildingIdentifier", ["48.001.00026"]]]))).toBeUndefined()
-		expect(bizkaiaHouseNumber(new Map())).toBeUndefined()
+		expect(bizkaiaHouseNumber(new Map([["buildingIdentifier", ["48.001.00026"]]]))).toBeNull()
+		expect(bizkaiaHouseNumber(new Map())).toBeNull()
 	})
 
 	it("strips the cadastral decoration off a thoroughfare name and keeps the type abbreviation", async () => {

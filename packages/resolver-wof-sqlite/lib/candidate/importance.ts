@@ -140,7 +140,7 @@ export class ImportanceIndex {
 
 		if (!group) return null
 
-		let best: ScoredPlace | undefined
+		let best: ScoredPlace | null = null
 		let bestKm = Infinity
 
 		for (const place of group) {

@@ -155,10 +155,10 @@ const NO_POSTCODE_TITLE = "0"
  * What one address's references state, read from their titles.
  */
 interface ReferencedTitles {
-	street?: string
-	postcode?: string
-	locality?: string
-	settlement?: string
+	street: string | null
+	postcode: string | null
+	locality: string | null
+	settlement: string | null
 }
 
 /**
@@ -168,7 +168,7 @@ interface ReferencedTitles {
  * order in the three partitions measured and that order is the publisher's rather than the schema's.
  */
 export function navarraReferencedTitles(address: MarkupElement): ReferencedTitles {
-	const titles: ReferencedTitles = {}
+	const titles: ReferencedTitles = { street: null, postcode: null, locality: null, settlement: null }
 
 	for (const { href, title } of componentLinks(address)) {
 		if (!title) continue
@@ -178,7 +178,7 @@ export function navarraReferencedTitles(address: MarkupElement): ReferencedTitle
 		if (lowered === THOROUGHFARE_HREF) {
 			titles.street = title
 		} else if (lowered === POSTAL_DESCRIPTOR_HREF) {
-			titles.postcode = title === NO_POSTCODE_TITLE ? undefined : title
+			titles.postcode = title === NO_POSTCODE_TITLE ? null : title
 		} else if (codelistValue(href) === SETTLEMENT_LEVEL) {
 			titles.settlement = title
 		} else if (componentJoinKey(href)?.startsWith(MUNICIPALITY_ID_PREFIX)) {
@@ -235,10 +235,10 @@ export function createESNavarraAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or undefined when it holds too little to render.
+ * One address's row, or null when it holds too little to render.
  */
-function composeRow(address: MarkupElement): CanonicalRow | undefined {
-	const addressID = address.attributes["gml:id"]?.trim()
+function composeRow(address: MarkupElement): CanonicalRow | null {
+	const addressID = address.attributes["gml:id"]?.trim() ?? null
 
 	if (voidDesignatorTypes(address).has(HOUSE_NUMBER_TYPE)) {
 		throw new VoidDesignatorError(ES_NAVARRA_ADAPTER_ID, addressID, HOUSE_NUMBER_TYPE)

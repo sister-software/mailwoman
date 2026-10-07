@@ -23,5 +23,5 @@ test("the origin takes the positive letters", () => {
 test("a diameter prints in kilometers with a thousands separator, and absence is null", () => {
 	expect(formatDiameter(85.29)).toBe("85.29 km")
 	expect(formatDiameter(1250)).toBe("1,250 km")
-	expect(formatDiameter(undefined)).toBeNull()
+	expect(formatDiameter(null)).toBeNull()
 })

@@ -107,7 +107,7 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 		throw new Error(`${context}: the coverage layer holds no cells — there is no resolution to recover`)
 	}
 
-	let recovered: number | undefined
+	let recovered: number | null = null
 
 	for (const cell of cells) {
 		const short = BigInt(cell).toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort
@@ -130,7 +130,7 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 
 		const resolution = valid[0]!
 
-		if (recovered === undefined) {
+		if (recovered === null) {
 			recovered = resolution
 
 			continue

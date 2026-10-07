@@ -79,8 +79,8 @@ async function makeBackend(
 }
 
 describe("partitionByContainment — the shared ordering function", () => {
-	const row = (id: number, contained: boolean | undefined, exact: boolean) => ({ id, contained, exact })
-	const isContained = (r: { contained: boolean | undefined }) => r.contained === true
+	const row = (id: number, contained: boolean | null, exact: boolean) => ({ id, contained, exact })
+	const isContained = (r: { contained: boolean | null }) => r.contained === true
 	const isExact = (r: { exact: boolean }) => r.exact
 
 	it("moves contained rows ahead within a tier, preserving each group's order", () => {
@@ -98,7 +98,7 @@ describe("partitionByContainment — the shared ordering function", () => {
 	})
 
 	it("is the identity when nothing is stamped — positive evidence only", () => {
-		const rows = [row(1, undefined, true), row(2, undefined, true), row(3, undefined, false)]
+		const rows = [row(1, null, true), row(2, null, true), row(3, null, false)]
 
 		expect(partitionByContainment(rows, isContained, isExact).map((r) => r.id)).toEqual([1, 2, 3])
 	})

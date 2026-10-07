@@ -221,8 +221,8 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
  * Run the census: one traced parse per input, aggregated.
  */
 export async function runCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
-	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
-	const config = (args["config"] as Record<string, unknown> | undefined) ?? {}
+	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
+	const config = (args["config"] as Record<string, unknown> | null) ?? {}
 	// The census uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
 	const engine = await registry.acquire({ ...config, trace: true })

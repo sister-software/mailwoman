@@ -64,7 +64,7 @@ export interface BDCLayerReadingQuery {
 	 * Places a block that has no rows of its own, as `geoidCellResolver` builds one.
 	 * Without it, such a block is unknown.
 	 */
-	resolveGeoidCell?: (geoid: string) => number | undefined
+	resolveGeoidCell?: (geoid: string) => number | null
 }
 
 /**

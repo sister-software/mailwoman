@@ -120,7 +120,7 @@ export function splitCityValue(value: string): { locality: string; head: string 
 
 const PLACEHOLDERS = new Set(["n/a", "na", "none", "-", "nil"])
 
-function clean(value: string | undefined): string | null {
+function clean(value: string | null | undefined): string | null {
 	const trimmed = value?.trim() ?? ""
 
 	return trimmed && !PLACEHOLDERS.has(trimmed.toLowerCase()) ? trimmed : null
@@ -206,7 +206,7 @@ export function componentsForOSMRow(
 	// `district` never becomes `region`, because Vietnam's country template
 	// renders it only when no city is present.
 	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
-		.map((value) => clean(value ?? undefined))
+		.map((value) => clean(value))
 		.find(
 			(value) =>
 				value !== null &&

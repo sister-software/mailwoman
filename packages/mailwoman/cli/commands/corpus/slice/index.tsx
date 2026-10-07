@@ -67,7 +67,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
+const num = (s: string | null | undefined): number | undefined => (s == null ? undefined : Number(s))
 
 const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {

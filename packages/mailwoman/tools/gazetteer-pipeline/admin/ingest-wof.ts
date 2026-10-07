@@ -94,15 +94,14 @@ async function parseFeature(
 
 	let lat = hasLbl ? props["lbl:latitude"]! : hasGeom ? props["geom:latitude"]! : 0
 	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
-	let pointChoice: PointChoice | undefined
+	let pointChoice: PointChoice | null = null
 
 	// Only localities use GeoNames adjudication.
 	// GeoNames anchors for regions and counties are centroids.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
-		const anchor =
-			gnID !== undefined && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : undefined
+		const anchor = gnID !== undefined && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : null
 
 		const chosen = choosePoint(
 			{ latitude: props["geom:latitude"]!, longitude: props["geom:longitude"]! },

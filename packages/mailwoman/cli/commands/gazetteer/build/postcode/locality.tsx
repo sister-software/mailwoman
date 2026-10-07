@@ -45,7 +45,7 @@ export const spec = {
 
 const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const need = (name: string, v: string | undefined): string => {
+		const need = (name: string, v: string | null | undefined): string => {
 			if (!v) throw new CommandError(`--${name} is required for --recipe ${options.recipe}`)
 
 			return v

@@ -92,7 +92,7 @@ export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freez
  *
  * @returns Null when the FIPS code isn't recognized.
  */
-export function lookupFipsState(statefp: string | null | undefined): USStateInfo | null {
+export function lookupFipsState(statefp: string | null): USStateInfo | null {
 	if (!statefp) return null
 
 	return US_FIPS_STATE[statefp] ?? null
@@ -115,7 +115,7 @@ export const US_STATE_BY_ABBREVIATION: Readonly<Record<string, USStateInfo>> = O
  * Case-folded.
  * Null for any value outside the 50 states + DC + the five primary territories.
  */
-export function lookupStateAbbreviation(abbreviation: string | null | undefined): USStateInfo | null {
+export function lookupStateAbbreviation(abbreviation: string | null): USStateInfo | null {
 	if (!abbreviation) return null
 
 	return US_STATE_BY_ABBREVIATION[abbreviation.toUpperCase()] ?? null

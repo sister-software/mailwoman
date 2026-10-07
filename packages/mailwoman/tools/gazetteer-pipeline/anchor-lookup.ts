@@ -22,7 +22,7 @@ const ZCTA_SOURCE = "census-zcta-2024"
 
 type Centroid = [number, number, string | null]
 
-function fiveDigit(name: string | null | undefined): string | null {
+function fiveDigit(name: string | null): string | null {
 	const n = (name || "").trim().toUpperCase()
 
 	return /^[0-9]{5}$/.test(n) ? n : null
@@ -162,11 +162,11 @@ async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 
 	for (const row of readUnquotedTSVText(await readLocalTextFile(path))) {
 		const fields = row
-		const pc = fields.length ? fiveDigit(fields[0]) : null
+		const pc = fields.length ? fiveDigit(fields[0] ?? null) : null
 
 		if (!pc || fields.length < GAZETTEER_ROW_COLUMNS) continue
-		const lat = pyFloat(fields[5])
-		const lon = pyFloat(fields[6])
+		const lat = pyFloat(fields[5] ?? null)
+		const lon = pyFloat(fields[6] ?? null)
 
 		if (lat === null || lon === null) continue
 

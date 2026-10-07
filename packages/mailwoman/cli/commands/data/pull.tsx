@@ -285,7 +285,7 @@ async function pullBundles(
 			checks.push({ ok: true, check: `${name}: terms`, detail: line })
 		}
 
-		const artifacts = filterArtifacts(resolveBundleArtifacts(bundle, manifest), opts.only)
+		const artifacts = filterArtifacts(resolveBundleArtifacts(bundle, manifest), opts.only ?? null)
 
 		if (!artifacts.length) {
 			ok = false

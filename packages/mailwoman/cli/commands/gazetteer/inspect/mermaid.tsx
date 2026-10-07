@@ -62,8 +62,8 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-async function resolveInterpolator(raw: string | undefined): Promise<InterpolateColorCallback | undefined> {
-	if (!raw) return undefined
+async function resolveInterpolator(raw: string | null | undefined): Promise<InterpolateColorCallback | null> {
+	if (!raw) return null
 
 	const interpolators = await loadD3Interpolators()
 	const fn = interpolators[raw.toLowerCase()]
@@ -93,8 +93,8 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 			throw new CommandError("Missing required positional argument: <placetype>")
 		}
 
-		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
-		const interpolator: InterpolateColorCallback | undefined = await resolveInterpolator(options.interpolator)
+		const roles: PlacetypeRole[] | null = parseRoles(options.roles)
+		const interpolator: InterpolateColorCallback | null = await resolveInterpolator(options.interpolator)
 
 		await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
 
@@ -106,7 +106,10 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 			)
 		}
 
-		const chart = generateMermaidMarkup(placetype, { roles, edgeInterpolator: interpolator })
+		const chart = generateMermaidMarkup(placetype, {
+			roles: roles ?? undefined,
+			edgeInterpolator: interpolator ?? undefined,
+		})
 
 		if (options.out) {
 			await writeLocalFile(chart + "\n", options.out)

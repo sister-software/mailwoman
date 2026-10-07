@@ -66,6 +66,6 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 /**
  * Look an operation up by id, or `undefined`.
  */
-export function findOperation(id: string): ReleaseOperation<unknown, unknown> | undefined {
+export function findOperation(id: string): ReleaseOperation<unknown, unknown> | null {
 	return findRegisteredOperation(operations, "release", id)
 }

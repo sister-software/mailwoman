@@ -71,7 +71,7 @@ describe("readEncoderFromModelCard", () => {
 			ctxChars: 2,
 		})
 
-		expect(await readEncoderFromModelCard(undefined)).toEqual({ kind: "sentencepiece" })
+		expect(await readEncoderFromModelCard(null)).toEqual({ kind: "sentencepiece" })
 	})
 
 	it("refuses a char card missing part of the interface rather than guessing a window", async () => {
@@ -267,7 +267,7 @@ describe("script-family fallback", () => {
 	})
 
 	it("has no family base for a Latin locale", () => {
-		expect(scriptFamilyBase("en-US")).toBeUndefined()
+		expect(scriptFamilyBase("en-US")).toBeNull()
 		expect(scriptFamilyBase("zh-CN")).toBe("cjk")
 	})
 })

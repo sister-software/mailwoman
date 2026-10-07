@@ -159,9 +159,9 @@ describe("brussels adapter against the fixture member", () => {
 	})
 
 	it("reads no place name from an absent or code-only value, rather than inventing one", () => {
-		expect(placeNameWithoutNISCode(undefined)).toBeUndefined()
-		expect(placeNameWithoutNISCode("  ")).toBeUndefined()
-		expect(placeNameWithoutNISCode("21004 ()")).toBeUndefined()
+		expect(placeNameWithoutNISCode(null)).toBeNull()
+		expect(placeNameWithoutNISCode("  ")).toBeNull()
+		expect(placeNameWithoutNISCode("21004 ()")).toBeNull()
 	})
 
 	it("takes the locality from the municipality-level unit, not the district, province or country", async () => {
@@ -192,7 +192,7 @@ describe("brussels adapter against the fixture member", () => {
 		expect(validFrom?.attributes["xsi:nil"]).toBe("true")
 		expect(validFrom?.attributes.nilReason).toBeUndefined()
 		expect(isVoid(validFrom)).toBe(true)
-		expect(voidReason(validFrom)).toBeUndefined()
+		expect(voidReason(validFrom)).toBeNull()
 
 		// An element the publisher populated is not void, so `isVoid` is not simply answering true.
 		expect(isVoid(childElement(address!, "ad:beginLifespanVersion"))).toBe(false)

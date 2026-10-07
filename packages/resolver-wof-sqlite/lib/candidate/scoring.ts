@@ -56,7 +56,7 @@ export function candidateFromSearchRow(
 
 	// Proximity boost applies only when the query includes `near` and the candidate has real coordinates.
 	// The decay is tunable via proximityBoost + proximityScaleKm.
-	let distanceKm: number | undefined
+	let distanceKm: number | null = null
 	// The best decayed-distance term over `near` and every `bias` point wins, each scaled by its weight.
 	let proximityTerm = 0
 
@@ -108,7 +108,7 @@ export function candidateFromSearchRow(
 		score,
 	}
 
-	if (distanceKm !== undefined) {
+	if (distanceKm !== null) {
 		candidate.distanceKm = distanceKm
 	}
 

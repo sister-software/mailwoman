@@ -712,7 +712,7 @@ function ledgerRecord(text: string, ids: readonly SourceRecordID[]): ReportLine 
  * A missing date prints as the word `undated`.
  */
 function sourceText(source: SourceRecord): string {
-	const dated = (date: ISODate | undefined) => date ?? "undated"
+	const dated = (date: ISODate | null | undefined) => date ?? "undated"
 	const url = source.url ? `, ${source.url}` : ""
 
 	return `- ${source.id}: ${source.publisher}, "${source.title}"${url} (observed ${dated(source.observedAt)}, available ${dated(source.availableAt)}, retrieved ${dated(source.retrievedAt)})`

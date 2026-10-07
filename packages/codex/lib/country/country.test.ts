@@ -52,7 +52,7 @@ test("matchCountry: returns the canonical name + the matched surface; null when 
 	expect(matchCountry("Narnia")).toBeNull()
 	expect(matchCountry("")).toBeNull()
 	expect(matchCountry(null)).toBeNull()
-	expect(matchCountry(undefined)).toBeNull()
+	expect(matchCountry(null)).toBeNull()
 })
 
 test("countrySurfaceForms: curated forms round-trip back through matchCountry", () => {

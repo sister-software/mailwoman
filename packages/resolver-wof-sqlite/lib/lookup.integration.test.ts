@@ -478,7 +478,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		}
 		await changeMode(dbPath, 0o444)
 
-		let ro: WOFSQLitePlaceLookup | undefined
+		let ro: WOFSQLitePlaceLookup | null = null
 
 		try {
 			// The default `buildFTS` setting opens the 0444 file read-only.

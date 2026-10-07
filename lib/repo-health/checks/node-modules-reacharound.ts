@@ -143,7 +143,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 	const hits: Array<{ line: number; text: string }> = []
 	const reported: Array<{ start: number; end: number }> = []
 
-	const argumentText = (node: ts.Node): string | undefined => {
+	const argumentText = (node: ts.Node): string | null => {
 		// `isStringLiteralLike` already covers a no-substitution template.
 		if (ts.isStringLiteralLike(node)) return node.text
 
@@ -155,11 +155,11 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 			return node.head.text + node.templateSpans.map((span) => `\0${span.literal.text}`).join("")
 		}
 
-		return undefined
+		return null
 	}
 
-	const isInstallPath = (text: string | undefined): boolean =>
-		text !== undefined && /(^|[/\\])node_modules([/\\]|$)/u.test(text) && !/^!?\*\*/u.test(text)
+	const isInstallPath = (text: string | null): boolean =>
+		text !== null && /(^|[/\\])node_modules([/\\]|$)/u.test(text) && !/^!?\*\*/u.test(text)
 
 	const report = (node: ts.Node): void => {
 		const start = node.getStart(sourceFile)

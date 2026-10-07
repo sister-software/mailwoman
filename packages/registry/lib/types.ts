@@ -45,7 +45,7 @@ export interface SourceRecord {
 	 * Used as extra comparisons + corroborators when the model is built with matching `discriminators`.
 	 * Keyed by a stable field name the model references.
 	 */
-	attributes?: Record<string, string>
+	attributes?: Record<string, string> | null
 	/**
 	 * The original row, verbatim, for audit.
 	 */

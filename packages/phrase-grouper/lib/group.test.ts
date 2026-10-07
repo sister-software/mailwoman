@@ -35,8 +35,8 @@ function kinds(proposals: PhraseProposal[]): string[] {
 	return proposals.map((p) => p.kindHypothesis)
 }
 
-function findKind(proposals: PhraseProposal[], kind: string, body?: string): PhraseProposal | undefined {
-	return proposals.find((p) => p.kindHypothesis === kind && (body === undefined || p.span.body === body))
+function findKind(proposals: PhraseProposal[], kind: string, body?: string): PhraseProposal | null {
+	return proposals.find((p) => p.kindHypothesis === kind && (body === undefined || p.span.body === body)) ?? null
 }
 
 describe("phrase-grouper — interface", () => {

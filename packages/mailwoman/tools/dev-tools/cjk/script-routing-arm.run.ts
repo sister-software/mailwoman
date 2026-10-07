@@ -48,7 +48,7 @@ function carriesFamilyScript(shape: QueryShape): boolean {
  *
  * The grader uses `decodeAsJSON` because the board's `expectComponents` is written against that projection.
  */
-function agreement(tree: AddressTree, want: Record<string, string> | undefined): [number, number] {
+function agreement(tree: AddressTree, want: Record<string, string> | null): [number, number] {
 	if (!want) return [0, 0]
 	const got = decodeAsJSON(tree) as Record<string, string>
 	const keys = Object.keys(want)
@@ -98,8 +98,8 @@ for (const board of await loadRegressionCases()) {
 		routedToday,
 		underPresence: true,
 		underSegment: carriesFamilySegment(shape),
-		latin: agreement(await primary.parse(board.input), want),
-		character: agreement(await family.parse(board.input), want),
+		latin: agreement(await primary.parse(board.input), want ?? null),
+		character: agreement(await family.parse(board.input), want ?? null),
 	})
 }
 

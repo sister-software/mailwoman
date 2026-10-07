@@ -168,7 +168,7 @@ export async function resolveLocalityDatabases(
 }
 
 /**
- * Resolve the conventional score source, or `undefined` when this machine has none.
+ * Resolve the conventional score source, or `null` when this machine has none.
  *
  * A deployment without the file must build a candidate DB with an empty
  * `importance` column rather than fail.
@@ -176,10 +176,10 @@ export async function resolveLocalityDatabases(
 export async function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
 	dataRoot: PathBuilderLike = dataRootPath()
-): Promise<string | undefined> {
+): Promise<string | null> {
 	const path = wofDatabaseRoot(dataRoot)(filename)
 
-	return (await pathExists(path)) ? path.toString() : undefined
+	return (await pathExists(path)) ? path.toString() : null
 }
 
 export interface FoldOptions {

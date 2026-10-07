@@ -519,7 +519,7 @@ export function bundleArtifactPath(dataRoot: PathBuilderLike, artifact: BundleAr
  * Filters artifacts to those whose remote or local path contains `only` or whose state
  * slug equals it, case-insensitively, returning all artifacts when `only` is absent.
  */
-export function filterArtifacts(artifacts: readonly BundleArtifact[], only: string | undefined): BundleArtifact[] {
+export function filterArtifacts(artifacts: readonly BundleArtifact[], only: string | null): BundleArtifact[] {
 	if (!only) return [...artifacts]
 
 	const needle = only.toLowerCase()

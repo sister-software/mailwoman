@@ -198,10 +198,10 @@ export const POSTAL_REGIMES: readonly PostalRegime[] = [
 const REGIME_BY_ID = new Map(POSTAL_REGIMES.map((regime) => [regime.regimeID, regime]))
 
 /**
- * Returns the regime with this ID, or `undefined`.
+ * Returns the regime with this ID, or `null`.
  */
-export function postalRegimeByID(regimeID: string): PostalRegime | undefined {
-	return REGIME_BY_ID.get(regimeID)
+export function postalRegimeByID(regimeID: string): PostalRegime | null {
+	return REGIME_BY_ID.get(regimeID) ?? null
 }
 
 /**

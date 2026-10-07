@@ -72,7 +72,7 @@ export function extractRecords(html: string, url: string): SearchRecord[] {
 
 	const drafts: Draft[] = []
 	let anchor = ""
-	let section: Draft | undefined
+	let section: Draft | null = null
 
 	const elements = findAll(
 		(element) => HEADING.test(element.name) || element.name === "tr" || element.name === "p" || element.name === "li",

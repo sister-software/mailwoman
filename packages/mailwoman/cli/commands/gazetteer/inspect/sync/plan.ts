@@ -54,7 +54,7 @@ export function assertDestinationNotARepoName(destination: string): void {
 /**
  * Maps comma-separated ISO 3166-1 alpha-2 codes to their admin and postalcode repository names.
  */
-export function countryRepoNames(raw: string | undefined): string[] {
+export function countryRepoNames(raw: string | null): string[] {
 	return extractDelimited(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
 }
 

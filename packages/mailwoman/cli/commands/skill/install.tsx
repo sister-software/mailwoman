@@ -48,7 +48,7 @@ interface InstallOutcome {
 	checks: Check[]
 }
 
-async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
+async function installSkill(dest: string | null): Promise<InstallOutcome> {
 	const checks: Check[] = []
 
 	try {
@@ -75,7 +75,7 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 
 const SkillInstall: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
-		async () => installSkill(options.dest),
+		async () => installSkill(options.dest ?? null),
 		(result) => (result.ok ? 0 : 1)
 	)
 

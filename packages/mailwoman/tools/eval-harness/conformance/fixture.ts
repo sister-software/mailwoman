@@ -170,8 +170,8 @@ function requireNonEmptyString(record: Record<string, unknown>, key: string, lab
 	return value
 }
 
-function readContext(raw: unknown, label: string): ConformanceContext | undefined {
-	if (raw === undefined) return undefined
+function readContext(raw: unknown, label: string): ConformanceContext | null {
+	if (raw === undefined) return null
 
 	if (!isPlainObject(raw)) {
 		throw new Error(`${label}: "context" must be an object (got ${stringifyJSON(raw)})`)

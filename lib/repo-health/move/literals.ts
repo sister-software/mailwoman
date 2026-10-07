@@ -97,14 +97,14 @@ const SOURCE_EXTENSION = /\.tsx?$/u
  * `lib/` and `src/` emit to `out/`.
  * A root beside `lib/` (`sdk/`, `tools/`, `cli/`) emits to `out/<root>/`.
  */
-function emittedStem(path: string): string | undefined {
-	if (!SOURCE_EXTENSION.test(path)) return undefined
+function emittedStem(path: string): string | null {
+	if (!SOURCE_EXTENSION.test(path)) return null
 
 	if (EXTRA_SOURCE_ROOT.test(path)) return path.replace(EXTRA_SOURCE_ROOT, "$1/out/$2/").replace(SOURCE_EXTENSION, "")
 
 	if (SOURCE_ROOT.test(path)) return path.replace(SOURCE_ROOT, "/out/").replace(SOURCE_EXTENSION, "")
 
-	return undefined
+	return null
 }
 
 /**

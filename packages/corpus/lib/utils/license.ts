@@ -129,7 +129,7 @@ export function compileLicenseExcludes(spec: string): RegExp[] {
 /**
  * True when `license` matches any of the operator's exclude `patterns`; empty patterns never exclude.
  */
-export function licenseExcluded(license: string | undefined, patterns: readonly RegExp[]): boolean {
+export function licenseExcluded(license: string | null, patterns: readonly RegExp[]): boolean {
 	const l = license ?? ""
 
 	return patterns.some((p) => p.test(l))
@@ -143,7 +143,7 @@ export function licenseExcluded(license: string | undefined, patterns: readonly 
  * so a row loop calls {@linkcode createLicenseVerdictCache} instead.
  */
 export function licenseVerdict(
-	license: string | undefined,
+	license: string | null,
 	policy: LicensePolicy,
 	excluded: readonly RegExp[] = []
 ): LicenseVerdict {
@@ -217,7 +217,7 @@ export interface LicenseVerdictCache {
 	/**
 	 * The verdict for this value under the policy this cache was built with.
 	 */
-	read(license: string | undefined): LicenseVerdict
+	read(license: string | null): LicenseVerdict
 	/**
 	 * Every distinct value refused so far, with the class it was refused under,
 	 * so a build that dropped rows reports which values caused each drop.

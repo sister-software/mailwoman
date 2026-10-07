@@ -171,10 +171,10 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 }
 
 /**
- * Parses and validates comma-separated placetype roles, returning `undefined` for empty input.
+ * Parses and validates comma-separated placetype roles, returning `null` for empty input.
  */
-export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
-	if (!raw) return undefined
+export function parseRoles(raw: string | null | undefined): PlacetypeRole[] | null {
+	if (!raw) return null
 
 	const valid = new Set<string>(PlacetypeRoles)
 
@@ -261,14 +261,14 @@ export function phaseReporter(prefix = "  "): (phase: string, detail?: string) =
 /**
  * Parses comma-separated ISO 3166-1 alpha-2 country codes.
  */
-export function splitCountryCodes(raw: string | undefined): CountryISO2[] {
+export function splitCountryCodes(raw: string | null): CountryISO2[] {
 	return extractDelimited(raw).map(formatAsCountryISO2)
 }
 
 /**
  * Parses comma-separated USPS state and territory abbreviations and drops unrecognized values.
  */
-export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[] {
+export function splitUSStateCodes(raw: string | null): USStateAbbreviation[] {
 	return extractDelimited(raw).flatMap((value) => {
 		const code = formatAsUSStateAbbreviation(value)
 
@@ -279,7 +279,7 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 /**
  * Parses a non-negative integer option, returning `fallback` when absent and throwing for an invalid value.
  */
-export function countOption(raw: string | undefined, fallback: number): number {
+export function countOption(raw: string | null, fallback: number): number {
 	if (raw == null) return fallback
 
 	// `Number("")` is 0, so blank input needs an explicit rejection.
@@ -295,7 +295,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 /**
  * Parses comma-separated numbers.
  */
-export function splitNumberList(raw: string | undefined): number[] {
+export function splitNumberList(raw: string | null): number[] {
 	return extractDelimited(raw).map(Number)
 }
 
@@ -367,7 +367,7 @@ export async function loadClassifierTolerant(
 		tokenizerPath?: string
 		onDegrade: (message: string) => void
 	}
-): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
+): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | null> {
 	try {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 
@@ -390,7 +390,7 @@ export async function loadClassifierTolerant(
 				: `⚠ neural weights failed to load — running a degraded structural parse. Encoder error: ${message}`
 		)
 
-		return undefined
+		return null
 	}
 }
 

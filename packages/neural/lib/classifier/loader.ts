@@ -90,12 +90,12 @@ export async function loadClassifierFromWeights(
 	const resolved: ResolvedWeights = await resolveWeights(opts)
 
 	const labels =
-		(await readLabelsFromModelCard(resolved.modelCardPath)) ??
-		(await readLabelsFromModelCard(resolved.baseModelCardPath))
+		(await readLabelsFromModelCard(resolved.modelCardPath ?? null)) ??
+		(await readLabelsFromModelCard(resolved.baseModelCardPath ?? null))
 
-	const crf = await readCRFTransitions(resolved.crfTransitionsPath)
+	const crf = await readCRFTransitions(resolved.crfTransitionsPath ?? null)
 
-	let semiCRFGrammar: SemiCRFTransitions | undefined
+	let semiCRFGrammar: SemiCRFTransitions | null = null
 
 	if (resolved.semiCRFTransitionsPath) {
 		try {
@@ -129,7 +129,7 @@ export async function loadClassifierFromWeights(
 		}),
 	])
 
-	const declared = await readRequiredChannels(resolved.modelCardPath)
+	const declared = await readRequiredChannels(resolved.modelCardPath ?? null)
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
@@ -145,8 +145,8 @@ export async function loadClassifierFromWeights(
 
 	const anchorDetail =
 		declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)
-			? await unfedAnchorDetail(resolved.packageDir)
-			: undefined
+			? await unfedAnchorDetail(resolved.packageDir ?? null)
+			: null
 
 	if (anchorDetail) {
 		warnUnfedChannel("anchor", anchorDetail)
@@ -198,7 +198,7 @@ export async function loadClassifierFromWeights(
 	const streetTypeLexicon = lexicons.street_type
 	const localitySurfaceLexicon = lexicons.locality_surface
 
-	let placetypePair: PlacetypePairPriorOpts | undefined
+	let placetypePair: PlacetypePairPriorOpts | null = null
 
 	if (resolved.pairIndexPath) {
 		try {
@@ -238,14 +238,14 @@ export async function loadClassifierFromWeights(
 	const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
 	const addressSystems =
-		(await readAddressSystemsFromModelCard(resolved.modelCardPath)) ??
-		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath))
+		(await readAddressSystemsFromModelCard(resolved.modelCardPath ?? null)) ??
+		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath ?? null))
 
 	return new NeuralAddressClassifier({
 		...(tokenizer ? { tokenizer } : {}),
 		...(charEncoder ? { charEncoder } : {}),
 		runner,
-		labels,
+		...(labels ? { labels } : {}),
 		...(addressSystems ? { addressSystems } : {}),
 		transitions: crf?.transitions,
 		startTransitions: crf?.startTransitions,

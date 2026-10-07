@@ -118,7 +118,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 
 	const placerFR = () => ({ country: "FR", confidence: 0.97 })
 
-	function guardResolver(dominant: { country: string; exactMatch?: boolean } | undefined): {
+	function guardResolver(dominant: { country: string; exactMatch?: boolean } | null): {
 		resolver: Resolver
 		seen: ResolveOpts[]
 	} {
@@ -182,7 +182,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 	})
 
 	test("an unknown locality is not disagreement — hardens as before", async () => {
-		const { resolver, seen } = guardResolver(undefined)
+		const { resolver, seen } = guardResolver(null)
 
 		await geocodeAddress("1001 Rue X, Zzyzzx", {
 			classifier: fakeClassifier(treeWithLocality("Zzyzzx")),

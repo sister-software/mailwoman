@@ -164,7 +164,7 @@ describe("fulfillment", () => {
 			reason: expect.stringContaining("price_other"),
 		})
 
-		expect(await findToken(deps.ledger, "in_2")).toBeUndefined()
+		expect(await findToken(deps.ledger, "in_2")).toBeNull()
 	})
 
 	it("refuses to mint when issuance is disabled and when the invoice is not paid", async () => {
@@ -258,7 +258,7 @@ describe("fulfillment", () => {
 		const bare = await fixture("7n", { agreementVersion: null })
 
 		await expect(fulfilInvoice(bare.env, bare.deps, "in_7n")).rejects.toThrow(/agreement_version/u)
-		expect(await findToken(bare.deps.ledger, "in_7n")).toBeUndefined()
+		expect(await findToken(bare.deps.ledger, "in_7n")).toBeNull()
 	})
 
 	it("two mints racing for one invoice leave one token and both answer; two checkouts racing for one subscription leave one row", async () => {

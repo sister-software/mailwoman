@@ -18,7 +18,7 @@ import { fetchBytes } from "#web/onnx-runner"
  * A full locale ("en-gb") yields its subtag ("gb") and a bare code ("gb") passes through unchanged.
  * An omitted country defaults to "en-us" and therefore to "us".
  */
-export function resolvePairIndexCountry(country: string | undefined): string {
+export function resolvePairIndexCountry(country: string | null): string {
 	const normalized = (country ?? "en-us").toLowerCase()
 
 	return normalized.split("-")[1] ?? normalized
@@ -77,16 +77,16 @@ export function detectPairIndexCountry(text: string): string {
  * The country subtag comes from an explicit `opts.country` override when given,
  * else from {@link detectPairIndexCountry} over `text`, and the loaded index whose
  * header country matches is returned as a `placetypePair` option.
- * No matching index returns `undefined`, which produces a byte-stable no-prior decode.
+ * No matching index returns `null`, which produces a byte-stable no-prior decode.
  */
 export function resolvePairIndexForText(
 	pairIndexes: readonly LoadedPairIndex[],
 	text: string,
 	opts?: { country?: string }
-): PlacetypePairPriorOpts | undefined {
-	if (!pairIndexes.length) return undefined
+): PlacetypePairPriorOpts | null {
+	if (!pairIndexes.length) return null
 	const country = opts?.country != null ? resolvePairIndexCountry(opts.country) : detectPairIndexCountry(text)
 	const match = pairIndexes.find((index) => index.country === country)
 
-	return match ? { index: match.resolver } : undefined
+	return match ? { index: match.resolver } : null
 }

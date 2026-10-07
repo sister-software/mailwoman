@@ -66,7 +66,7 @@ describe("buildingFeatures: the five states", () => {
 			sources: [INSPECTION, LISTING],
 		})
 
-		expect(feature(BUILDING_A).properties.service.available[0]).not.toHaveProperty("extent")
+		expect(feature(BUILDING_A).properties.service.available[0]).toHaveProperty("extent", null)
 	})
 
 	test("partial availability over an extent: the reason and the service evidence keep the record's extent", () => {
@@ -119,7 +119,7 @@ describe("buildingFeatures: the five states", () => {
 		)
 
 		expect(properties.service.available).toEqual([
-			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", sources: [LISTING] },
+			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", extent: null, sources: [LISTING] },
 			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", extent: "example-cell:a", sources: [SURVEY] },
 		])
 

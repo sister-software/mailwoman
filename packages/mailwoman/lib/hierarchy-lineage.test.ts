@@ -62,7 +62,7 @@ describe("annotateHierarchyLineage (#1731)", () => {
 		const a = entry("wof:1")
 		const b = entry("wof:2")
 
-		annotateHierarchyLineage([a, b], undefined)
+		annotateHierarchyLineage([a, b], null)
 		annotateHierarchyLineage([a, b], { metadata: { ancestors: [{ id: 1 }] } })
 
 		expect(a.in_winner_lineage).toBeUndefined()
@@ -128,7 +128,7 @@ describe("assembleHierarchy — the JP tiers", () => {
 			{ tag: "house_number", value: "1867-2" },
 		]
 
-		const hierarchy = assembleHierarchy(nodes, null, undefined)
+		const hierarchy = assembleHierarchy(nodes, null, null)
 
 		expect(hierarchy.map((h) => [h.tag, h.name])).toEqual([
 			["municipality", "Miyakonojō"],

@@ -519,7 +519,7 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 
 		identities.set(layer, identity)
 
-		declared += limitedFeatureCount(identity.featureCount, options.limit)
+		declared += limitedFeatureCount(identity.featureCount, options.limit ?? null)
 		epsg = identity.epsg
 	}
 

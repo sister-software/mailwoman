@@ -25,12 +25,9 @@ export function assertDeepSerialized(
 /**
  * Given two iterables, zip them together into a single iterable which yields pairs of elements.
  *
- * If one iterable is longer than the other, the shorter iterable will be padded with `undefined`.
+ * If one iterable is longer than the other, the shorter iterable will be padded with `null`.
  */
-export function* zip<T, U>(
-	a: Iterable<T>,
-	b: Iterable<U>
-): Generator<[a: T | undefined, b: U | undefined, idx: number]> {
+export function* zip<T, U>(a: Iterable<T>, b: Iterable<U>): Generator<[a: T | null, b: U | null, idx: number]> {
 	const aIterator = a[Symbol.iterator]()
 	const bIterator = b[Symbol.iterator]()
 
@@ -44,7 +41,7 @@ export function* zip<T, U>(
 			break
 		}
 
-		yield [aValue, bValue, index]
+		yield [aDone ? null : aValue, bDone ? null : bValue, index]
 
 		index++
 	}
@@ -61,11 +58,11 @@ export function assertCongruent<Item>(
 	const mergedIterators = zip(actualItemIterators, expectedItemIterators)
 
 	for (const [actualItemIterator, expectedItemIterator, iteratorsIndex] of mergedIterators) {
-		if (expectedItemIterator === undefined) {
+		if (expectedItemIterator === null) {
 			throw new TypeError(`Expected items at index ${iteratorsIndex} not found`)
 		}
 
-		if (actualItemIterator === undefined) {
+		if (actualItemIterator === null) {
 			throw new TypeError(`Actual items at index ${iteratorsIndex} not found`)
 		}
 

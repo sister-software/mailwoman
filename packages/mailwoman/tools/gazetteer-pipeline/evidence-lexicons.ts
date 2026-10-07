@@ -186,7 +186,7 @@ export async function loadPersonNameSurfaces(): Promise<Set<string>> {
  *
  * It never needs invalidating because the inputs are static files.
  */
-let personNameSurfacesMemo: Set<string> | undefined
+let personNameSurfacesMemo: Set<string> | null = null
 
 async function scanPersonNameSurfaces(): Promise<Set<string>> {
 	const dictionariesDir = resourceDictionaryPathBuilder("libpostal")

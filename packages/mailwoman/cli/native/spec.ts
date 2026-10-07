@@ -487,12 +487,12 @@ export const positiveIntegerOption = (description: string, defaultValue?: number
 	}) as const
 
 /**
- * Typed string read over {@link ParsedCommand.values} — `undefined` for anything but a string.
+ * Typed string read over {@link ParsedCommand.values} — `null` for anything but a string.
  */
-export function stringValue(values: Record<string, unknown>, name: string): string | undefined {
+export function stringValue(values: Record<string, unknown>, name: string): string | null {
 	const value = values[name]
 
-	return typeof value === "string" ? value : undefined
+	return typeof value === "string" ? value : null
 }
 
 /**
@@ -503,24 +503,23 @@ export function booleanValue(values: Record<string, unknown>, name: string): boo
 }
 
 /**
- * A boolean flag with no schema default: unstated stays `undefined`
- * so the library default applies downstream.
+ * A boolean flag with no schema default: unstated stays `null` so the library default applies downstream.
  *
  * Only a stated `--flag` / `--no-flag` reaches the consumer as an explicit value.
  */
-export function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {
+export function triStateValue(values: Record<string, unknown>, name: string): boolean | null {
 	const value = values[name]
 
-	return typeof value === "boolean" ? value : undefined
+	return typeof value === "boolean" ? value : null
 }
 
 /**
- * Typed number read over {@link ParsedCommand.values} — `undefined` for anything but a number.
+ * Typed number read over {@link ParsedCommand.values} — `null` for anything but a number.
  */
-export function numberValue(values: Record<string, unknown>, name: string): number | undefined {
+export function numberValue(values: Record<string, unknown>, name: string): number | null {
 	const value = values[name]
 
-	return typeof value === "number" ? value : undefined
+	return typeof value === "number" ? value : null
 }
 
 /**

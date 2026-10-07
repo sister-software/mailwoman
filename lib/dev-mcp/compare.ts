@@ -161,9 +161,9 @@ export async function runCompare(
 		armB: args["arm_b"],
 		declared: args["variable"] as string[],
 		...(args["stratify_by"] === undefined ? {} : { stratifyBy: assertedStratum(args["stratify_by"] as string) }),
-		grade: (args["grade"] as GradeRequest | undefined) ?? "auto",
-		gradeThresholdKm: (args["grade_threshold_km"] as number | undefined) ?? DEFAULT_GRADE_THRESHOLD_KM,
-		executionPath: (args["execution_path"] as CompareOptions["executionPath"] | undefined) ?? "single-config",
+		grade: (args["grade"] as GradeRequest | null) ?? "auto",
+		gradeThresholdKm: (args["grade_threshold_km"] as number | null) ?? DEFAULT_GRADE_THRESHOLD_KM,
+		executionPath: (args["execution_path"] as CompareOptions["executionPath"] | null) ?? "single-config",
 	}
 
 	const armA = normalizeArmSpec(options.armA, "a")
@@ -237,7 +237,7 @@ async function compareMailwomanArms(
 			continue
 		}
 
-		const { grade, issuesA, issuesB } = gradeRow(item.seed, a, b, checkCase)
+		const { grade, issuesA, issuesB } = gradeRow(item.seed ?? null, a, b, checkCase)
 
 		recorded.a.push({ id: item.id, input: item.input, ...answerFromGauntletResult(a) })
 		recorded.b.push({ id: item.id, input: item.input, ...answerFromGauntletResult(b) })
@@ -645,6 +645,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		const hasTruth = typeof truthLat === "number" && typeof truthLon === "number"
 		const distanceA = hasTruth ? distanceKm(a, truthLat, truthLon) : null
 		const distanceB = hasTruth ? distanceKm(b, truthLat, truthLon) : null
+		const tierDelta = tierDiffered(a, b)
 
 		rows.push({
 			id: item.id,
@@ -655,7 +656,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
 			// Optional identity and tier deltas are tracked separately from coordinate diffs.
 			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
-			...(tierDiffered(a, b) === undefined ? {} : { tier_differed: tierDiffered(a, b) }),
+			...(tierDelta === null ? {} : { tier_differed: tierDelta }),
 			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,

@@ -117,8 +117,8 @@ export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowInd
  * Requires and ISO-validates {@link BuildFilerOptions.validFrom} up front when a
  * provider-list source is supplied, failing fast before any file or database I/O.
  */
-export function assertProviderValidFrom(validFrom: string | undefined): string {
-	if (validFrom === undefined) {
+export function assertProviderValidFrom(validFrom: string | null | undefined): string {
+	if (validFrom == null) {
 		throw new Error(
 			"buildFilerDatabase: options.validFrom is required when a provider-list source (providerRows/" +
 				"providerListPath) is supplied — provider-list edges need an ISO YYYY-MM-DD valid_from that is " +

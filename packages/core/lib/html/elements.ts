@@ -129,9 +129,9 @@ export async function* streamMarkupElements(
 	 * With several requested names, the close that ends a capture is the one matching
 	 * the tag capture began on, rather than any requested name.
 	 */
-	let capturing: string | undefined
+	let capturing: string | null = null
 	let depth = 0
-	let failure: Error | undefined
+	let failure: Error | null = null
 
 	const parser = new Parser(
 		{
@@ -177,7 +177,7 @@ export async function* streamMarkupElements(
 					}
 
 					completed.push(open.pop()!)
-					capturing = undefined
+					capturing = null
 
 					return
 				}
@@ -263,10 +263,10 @@ export async function* streamMarkupElements(
 }
 
 /**
- * The first child of `element` with the tag `name`, or undefined.
+ * The first child of `element` with the tag `name`, or null.
  */
-export function childElement(element: MarkupElement, name: string): MarkupElement | undefined {
-	return element.children.find((child) => child.name === name)
+export function childElement(element: MarkupElement, name: string): MarkupElement | null {
+	return element.children.find((child) => child.name === name) ?? null
 }
 
 /**
@@ -282,11 +282,11 @@ export function childElements(element: MarkupElement, name: string): readonly Ma
  * An INSPIRE value sits five or six elements down, so the path form reads better than
  * a chain of `childElement` calls and reports the same absence.
  */
-export function elementAtPath(element: MarkupElement, ...path: readonly string[]): MarkupElement | undefined {
-	let current: MarkupElement | undefined = element
+export function elementAtPath(element: MarkupElement, ...path: readonly string[]): MarkupElement | null {
+	let current: MarkupElement | null = element
 
 	for (const step of path) {
-		if (!current) return undefined
+		if (!current) return null
 
 		current = childElement(current, step)
 	}
@@ -301,6 +301,6 @@ export function elementAtPath(element: MarkupElement, ...path: readonly string[]
  * A caller distinguishes that from undefined: the publisher wrote the element
  * and left it blank, rather than omitting it.
  */
-export function textAtPath(element: MarkupElement, ...path: readonly string[]): string | undefined {
-	return elementAtPath(element, ...path)?.text
+export function textAtPath(element: MarkupElement, ...path: readonly string[]): string | null {
+	return elementAtPath(element, ...path)?.text ?? null
 }

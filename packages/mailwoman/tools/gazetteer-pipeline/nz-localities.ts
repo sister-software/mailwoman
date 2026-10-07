@@ -96,7 +96,7 @@ export interface BuildNZLocalitiesOptions {
  * The database stores the display form verbatim and lets `normalizeLocalityForKey`
  * (at candidate-build time) own the key.
  */
-function cleanName(raw: string | undefined): string {
+function cleanName(raw: string | null): string {
 	return normalizeWhitespace(raw ?? "")
 }
 
@@ -146,7 +146,7 @@ export async function buildNZLocalitiesDatabase(
 
 	// Pass 1: aggregate (city, district) to coordinate lists. ~2.1M rows.
 	const groups = new Map<string, { city: string; district: string; lats: number[]; lons: number[] }>()
-	let header: string[] | undefined
+	let header: string[] | null = null
 
 	for await (const cols of CSVSpliterator.fromAsync(csvPath, { header: false })) {
 		if (!header) {
@@ -161,8 +161,8 @@ export async function buildNZLocalitiesDatabase(
 
 		const lon = Number(cols[0])
 		const lat = Number(cols[1])
-		const city = cleanName(cols[5])
-		const district = cleanName(cols[6])
+		const city = cleanName(cols[5] ?? null)
+		const district = cleanName(cols[6] ?? null)
 
 		if (!city || !Number.isFinite(lat) || !Number.isFinite(lon)) continue
 

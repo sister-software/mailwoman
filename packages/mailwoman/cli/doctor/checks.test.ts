@@ -29,7 +29,7 @@ describe("version parsing + floor comparison", () => {
 
 	it("parses a bare runtime version", () => {
 		expect(parseVersion("24.18.2")).toEqual({ major: 24, minor: 18, patch: 2 })
-		expect(parseVersion("v24")).toBeUndefined()
+		expect(parseVersion("v24")).toBeNull()
 	})
 
 	it("Compares major → minor → patch", () => {

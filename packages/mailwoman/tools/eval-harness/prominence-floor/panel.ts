@@ -97,7 +97,7 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 			// Through `bandFor` rather than a comparison written here, so the unbounded ceiling
 			// and the refusal of a row with no recorded population are decided in one
 			// place for the builder and the scorer alike.
-			extra: (city) => bandFor([band], city.population) !== null,
+			extra: (city) => bandFor([band], city.population ?? null) !== null,
 		})
 
 	const goldFor = (city: GeoNamesCity): number[] | null => goldSets.get(city.geonameid) ?? null

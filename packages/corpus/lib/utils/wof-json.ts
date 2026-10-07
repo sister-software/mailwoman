@@ -96,7 +96,7 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 	return out
 }
 
-function firstNonBlankString(value: unknown): string | undefined {
+function firstNonBlankString(value: unknown): string | null {
 	for (const candidate of Array.isArray(value) ? value : [value]) {
 		if (typeof candidate !== "string") continue
 
@@ -105,7 +105,7 @@ function firstNonBlankString(value: unknown): string | undefined {
 		if (normalized) return normalized
 	}
 
-	return undefined
+	return null
 }
 
 /**

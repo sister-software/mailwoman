@@ -82,7 +82,7 @@ interface PointRow {
  * Disposable, so callers can `using lookup = new NSULLookup(...)`.
  */
 export class NSULLookup extends SQLiteLookup<NSULDatabase> {
-	readonly #postcodeProbe: (uprn: number) => PostcodeRow | undefined
+	readonly #postcodeProbe: (uprn: number) => PostcodeRow | null
 	readonly #pointsProbe: (pcdsCompact: string) => PointRow[]
 
 	constructor(opts: NSULLookupOpts) {

@@ -477,7 +477,7 @@ export interface HarvestESCatastroOptions {
  * as long as the feed stayed silent.
  */
 async function isCurrent(
-	recorded: ESCatastroArchiveEntry | undefined,
+	recorded: ESCatastroArchiveEntry | null,
 	dataset: ESCatastroMunicipalityDataset,
 	path: PathBuilderLike,
 	verifyDigests: boolean
@@ -652,7 +652,7 @@ export async function harvestESCatastro(
 
 			const dest = destDir(dataset.filename)
 
-			if (await isCurrent(files.get(dataset.filename), dataset, dest, options.verifyDigests ?? false)) {
+			if (await isCurrent(files.get(dataset.filename) ?? null, dataset, dest, options.verifyDigests ?? false)) {
 				skipped++
 
 				continue

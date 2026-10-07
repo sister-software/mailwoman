@@ -130,9 +130,9 @@ const ARTIFACT_TABLES = [
 ] as const
 
 /**
- * Returns the reason `value` is not a compiled artifact, or `undefined` when it is one.
+ * Returns the reason `value` is not a compiled artifact, or `null` when it is one.
  */
-function artifactProblem(value: unknown): string | undefined {
+function artifactProblem(value: unknown): string | null {
 	if (!isPlainObject(value)) return "a compiled geographic model must be an object"
 
 	if (value.schemaVersion !== ARTIFACT_SCHEMA_VERSION) {
@@ -145,7 +145,7 @@ function artifactProblem(value: unknown): string | undefined {
 
 	const missing = ARTIFACT_TABLES.filter((table) => !Array.isArray(value[table]))
 
-	if (!missing.length) return undefined
+	if (!missing.length) return null
 
 	return `the artifact is missing ${missing.map((table) => `\`${table}\``).join(", ")}`
 }

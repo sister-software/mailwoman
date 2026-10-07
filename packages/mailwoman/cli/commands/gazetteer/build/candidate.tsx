@@ -137,7 +137,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			adminDB,
 			out,
 			postcodeDatabases: databases,
-			importanceDB,
+			importanceDB: importanceDB ?? undefined,
 			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})

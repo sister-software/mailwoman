@@ -69,7 +69,7 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
  *
  * An absent row means no constraints are known (parse unconstrained).
  */
-export function conventionsForSystem(system: SystemCode | null | undefined): AddressSystemConventions | null {
+export function conventionsForSystem(system: SystemCode | null): AddressSystemConventions | null {
 	if (!system) return null
 
 	return ADDRESS_SYSTEM_CONVENTIONS[system] ?? null

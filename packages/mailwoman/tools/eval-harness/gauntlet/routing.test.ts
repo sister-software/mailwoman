@@ -17,7 +17,7 @@ describe("board overlay routing", () => {
 	})
 
 	it("leaves a row without either routing signal unset", () => {
-		expect(routeCountry({})).toBeUndefined()
+		expect(routeCountry({})).toBeNull()
 	})
 
 	it("maps every declared overlay and otherwise selects the base locale", () => {
@@ -26,7 +26,7 @@ describe("board overlay routing", () => {
 		}
 
 		expect(overlayLocale("FR")).toBe("en-US")
-		expect(overlayLocale(undefined)).toBe("en-US")
+		expect(overlayLocale(null)).toBe("en-US")
 	})
 })
 
@@ -45,7 +45,7 @@ describe("gradedBaseOnly (#2223)", () => {
 		// A base-only result would withhold a promote suggestion the run is entitled to make.
 		// This predicate serves the opposite purpose.
 		expect(gradedBaseOnly("FR", new Set(["en-GB", "es-ES"]))).toBe(false)
-		expect(gradedBaseOnly(undefined, new Set(["en-GB"]))).toBe(false)
+		expect(gradedBaseOnly(null, new Set(["en-GB"]))).toBe(false)
 	})
 
 	it("reports EVERY country routing to a failed overlay, not only the first one graded", () => {

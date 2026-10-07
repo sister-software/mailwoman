@@ -144,7 +144,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 		if (!sessionID || state.phase !== "polling") return undefined
 
 		const controller = new AbortController()
-		let timer: ReturnType<typeof setTimeout> | undefined
+		let timer: ReturnType<typeof setTimeout> | null = null
 
 		const poll = async () => {
 			const event = await fetchClaim(sessionID, controller.signal)
@@ -160,7 +160,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 		return () => {
 			controller.abort()
 
-			if (timer !== undefined) {
+			if (timer !== null) {
 				clearTimeout(timer)
 			}
 		}

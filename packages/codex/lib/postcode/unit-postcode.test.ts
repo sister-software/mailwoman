@@ -42,7 +42,7 @@ describe("CA urban LDU", () => {
 		// The resolver returned the area class.
 		// The epoch convention forbids a narrower classification here.
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j")).toBe(false)
-		expect(isUnitGradePostcodeHit("M1J 1A8", undefined)).toBe(false)
+		expect(isUnitGradePostcodeHit("M1J 1A8", null)).toBe(false)
 	})
 
 	it("does not collide with the systems already in the tier", () => {

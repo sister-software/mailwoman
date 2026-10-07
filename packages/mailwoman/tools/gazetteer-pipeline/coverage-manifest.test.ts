@@ -157,12 +157,12 @@ describe("emit → read round-trip through a real candidate build", () => {
 		)
 	})
 
-	test("a legacy candidate DB (no manifest tables) reads undefined — the constant-fallback signal", async () => {
+	test("a legacy candidate DB (no manifest tables) reads null — the constant-fallback signal", async () => {
 		const candidateDB = await buildFixtureCandidate()
 
 		using db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
-		expect(readGazetteerCoverageManifest(db)).toBeUndefined()
+		expect(readGazetteerCoverageManifest(db)).toBeNull()
 
 		using lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 

@@ -76,14 +76,14 @@ interface NADRecord {
  */
 const US_STATES_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
-function nonEmpty(...values: Array<string | null | undefined>): string | undefined {
+function nonEmpty(...values: Array<string | null | undefined>): string | null {
 	for (const v of values) {
 		const trimmed = (v ?? "").toString().trim()
 
 		if (trimmed) return trimmed
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -94,17 +94,17 @@ function nonEmpty(...values: Array<string | null | undefined>): string | undefin
  * The shared `composeHouseNumber` in `#adapters/street-line` joins exactly two columns with
  * one separator, so it fits a publisher that splits the number in two rather than in four.
  */
-function nadHouseNumber(r: NADRecord): string | undefined {
+function nadHouseNumber(r: NADRecord): string | null {
 	const full = (r.AddNo_Full ?? "").toString().trim()
 
 	if (full) return full
 	const num = r.Add_Number == null ? "" : String(r.Add_Number).trim()
 
-	if (!num) return undefined
+	if (!num) return null
 	const pre = (r.AddNum_Pre ?? "").toString().trim()
 	const suf = (r.AddNum_Suf ?? "").toString().trim()
 
-	return [pre, num, suf].filter(isPresent).join(" ").trim() || undefined
+	return [pre, num, suf].filter(isPresent).join(" ").trim() || null
 }
 
 interface DecomposedNADStreet {
@@ -116,7 +116,7 @@ interface DecomposedNADStreet {
 
 // Structured street fields take precedence.
 // If they are empty, `StNam_Full` supplies the whole street.
-function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
+function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
 	const name = (r.St_Name ?? "").toString().trim()
 
 	if (name) {
@@ -136,18 +136,18 @@ function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 
 	if (full) return { full, street: full }
 
-	return undefined
+	return null
 }
 
 // The postal city comes first because it is the name that people write on mail.
-function composeLocality(r: NADRecord): string | undefined {
+function composeLocality(r: NADRecord): string | null {
 	return nonEmpty(r.Post_City, r.Inc_Muni, r.Census_Plc, r.Uninc_Comm)
 }
 
-function composePostcode(r: NADRecord): string | undefined {
+function composePostcode(r: NADRecord): string | null {
 	const zip = (r.Zip_Code ?? "").toString().trim()
 
-	if (!zip) return undefined
+	if (!zip) return null
 	const plus4 = (r.Plus_4 ?? "").toString().trim()
 
 	return plus4 ? `${zip}-${plus4}` : zip

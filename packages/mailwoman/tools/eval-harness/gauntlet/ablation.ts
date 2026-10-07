@@ -88,8 +88,8 @@ const SUBSTITUTION_PRINT_LIMIT = 60
 
 const WORD_CHAR = /[\p{L}\p{N}]/u
 
-function isWordChar(c: string | undefined): boolean {
-	return c !== undefined && WORD_CHAR.test(c)
+function isWordChar(c: string | null): boolean {
+	return c !== null && WORD_CHAR.test(c)
 }
 
 /**
@@ -114,9 +114,9 @@ export function boundedOccurrences(input: string, value: string): number[] {
 
 		from = at + 1
 
-		if (isWordChar(input[at - 1])) continue
+		if (isWordChar(input[at - 1] ?? null)) continue
 
-		if (isWordChar(input[at + needle.length])) continue
+		if (isWordChar(input[at + needle.length] ?? null)) continue
 
 		hits.push(at)
 	}

@@ -74,7 +74,7 @@ export const symbolTool = (_deps: DevToolDeps): DevTool => ({
 	handler: async (args) => {
 		const query = args["query"] as string | undefined
 		const describes = args["describes"] as string | undefined
-		const limit = (args["limit"] as number | undefined) ?? 25
+		const limit = (args["limit"] as number | null) ?? 25
 		const repoRoot = repoRootPathBuilder()
 
 		if (!query && !describes) {

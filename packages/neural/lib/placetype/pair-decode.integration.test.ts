@@ -61,7 +61,7 @@ function fixedPairIndex(
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
 		// No `parentDelta`: a parent write would move the spans these child-side decode-order
 		// tests assert on for reasons unrelated to what they measure.
-		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : undefined),
+		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : null),
 	}
 }
 

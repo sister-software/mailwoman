@@ -233,7 +233,7 @@ describe("createPOIIntentStage", () => {
 	})
 })
 
-const resolvedAnchor = (raw: string, country: string | undefined): PipelineResult => ({
+const resolvedAnchor = (raw: string, country: string | null): PipelineResult => ({
 	...anchorResult(raw),
 	tree: {
 		raw,
@@ -314,7 +314,7 @@ describe("The place binding of a country-scoped claim", () => {
 	it("admits no scoped claim when the anchor resolved to no country, or when there is no anchor", async () => {
 		const countryless = createPOIIntentStage({
 			lookup: prescriptionLookup,
-			parseAnchor: async (text) => resolvedAnchor(text, undefined),
+			parseAnchor: async (text) => resolvedAnchor(text, null),
 		})
 
 		const bare = createPOIIntentStage({

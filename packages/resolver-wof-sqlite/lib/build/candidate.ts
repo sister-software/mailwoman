@@ -257,7 +257,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		return id
 	}
 
-	let importance: ReturnType<typeof loadImportanceIndex> | undefined
+	let importance: ReturnType<typeof loadImportanceIndex> | null = null
 
 	if (opts.importance) {
 		progress("importance", `loading place_importance from ${opts.importance}`)

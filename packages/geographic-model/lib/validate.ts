@@ -85,47 +85,47 @@ const COUNTRY_PATTERN = /^[A-Z]{2}$/
 
 export interface AssertionView {
 	path: string
-	id?: string
-	relation?: string
-	target?: string
+	id: string | null
+	relation: string | null
+	target: string | null
 }
 
 export interface ConceptView {
 	path: string
-	id?: string
-	kind?: ConceptKind
-	isA?: string[]
+	id: string | null
+	kind: ConceptKind | null
+	isA: string[] | null
 	assertions: AssertionView[]
 }
 
 export interface RelationView {
 	path: string
-	id?: string
-	domainKinds?: ConceptKind[]
-	rangeKinds?: ConceptKind[]
-	transitive?: boolean
-	symmetric?: boolean
-	inverse?: string
+	id: string | null
+	domainKinds: ConceptKind[] | null
+	rangeKinds: ConceptKind[] | null
+	transitive: boolean | null
+	symmetric: boolean | null
+	inverse: string | null
 }
 
 export interface MappingView {
 	path: string
-	id?: string
-	concept?: string
+	id: string | null
+	concept: string | null
 }
 
 export interface TripleView {
 	path: string
-	id?: string
-	subject?: string
-	relation?: string
-	object?: string
+	id: string | null
+	subject: string | null
+	relation: string | null
+	object: string | null
 }
 
 export interface DerivationInputView {
 	path: string
-	kind?: DerivationInputKind
-	id?: string
+	kind: DerivationInputKind | null
+	id: string | null
 }
 
 export interface DerivedFactView extends TripleView {

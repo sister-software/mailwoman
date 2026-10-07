@@ -42,10 +42,7 @@ export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
  * Both abbreviations ("MI") and full names ("New York") are accepted.
  * A null result disables the per-state address-point and interpolation tiers for the query.
  */
-export function regionToStateSlug(
-	regionValue: string | null | undefined,
-	resolverName: string | null | undefined
-): string | null {
+export function regionToStateSlug(regionValue: string | null, resolverName: string | null | undefined): string | null {
 	for (const candidate of [regionValue, resolverName]) {
 		if (!candidate) continue
 		const trimmed = candidate.trim()
@@ -72,11 +69,11 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	for (const node of walkNodes(tree.roots)) {
 		if (node.tag === "region" && !regionValue) {
 			regionValue = node.value.trim() || null
-			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
+			regionResolverName = (node.metadata?.["resolver_name"] as string | null) ?? null
 		}
 
 		if (!resolvedCountry) {
-			const stamped = (node.metadata?.["resolver_country"] as string | undefined)?.trim()
+			const stamped = (node.metadata?.["resolver_country"] as string | null)?.trim()
 
 			if (stamped) {
 				resolvedCountry = stamped.toUpperCase()

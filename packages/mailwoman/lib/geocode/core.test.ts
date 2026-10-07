@@ -55,7 +55,7 @@ describe("CountryFromPostcodeFormat", () => {
 	})
 
 	it("is null on empty / missing input", () => {
-		expect(countryFromPostcodeFormat(undefined)).toBeNull()
+		expect(countryFromPostcodeFormat(null)).toBeNull()
 		expect(countryFromPostcodeFormat("")).toBeNull()
 		expect(countryFromPostcodeFormat("   ")).toBeNull()
 	})

@@ -107,7 +107,7 @@ export interface ZoningDesignationRoute extends Disposable {
 	 * Reads the layer at one coordinate.
 	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
+	observe: (latitude: number | null, longitude: number | null) => ZoningDecision
 }
 
 /**
@@ -187,6 +187,6 @@ export function zoningAssignmentClause(observation: ZoningDesignationObservation
 export function describeZoningDesignation(observation: ZoningDesignationObservation): string {
 	return (
 		`${zoningAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} ` +
-		`(${observation.containment}); ${describeCoverage(observation.coverage)}; ${describeLayerProvenance(observation.layer, { tier: true })}`
+		`(${observation.containment}); ${describeCoverage(observation.coverage ?? null)}; ${describeLayerProvenance(observation.layer, { tier: true })}`
 	)
 }

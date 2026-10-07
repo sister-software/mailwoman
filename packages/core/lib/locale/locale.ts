@@ -44,6 +44,6 @@ export interface LocaleProfile {
 
 export interface LocaleRegistry {
 	register(profile: LocaleProfile): void
-	get(locale: string): LocaleProfile | undefined
+	get(locale: string): LocaleProfile | null
 	list(): LocaleProfile[]
 }

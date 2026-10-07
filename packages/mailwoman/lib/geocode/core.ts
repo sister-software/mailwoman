@@ -129,7 +129,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Country constraint passed to the resolver.
 	 */
-	defaultCountry?: string
+	defaultCountry?: string | null
 	/**
 	 * Locale country as a soft ranking prior when no hard country scope is set.
 	 */
@@ -276,7 +276,7 @@ export function geocodeParseInputs(
 	// An explicit register wins.
 	// Otherwise the mode derives from the kind.
 	let inputMode = deps.inputMode
-	let kind: QueryKindResult | undefined
+	let kind: QueryKindResult | null = null
 
 	if (!inputMode) {
 		kind = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)
@@ -469,7 +469,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		!opts.anchorPosterior &&
 		!isBareLocalityTree(tree)
 	) {
-		const pcCountry = countryFromPostcodeFormat(decodeAsJSON(tree).postcode as string | undefined)
+		const pcCountry = countryFromPostcodeFormat(decodeAsJSON(tree).postcode as string | null)
 
 		if (pcCountry) {
 			placedCountry = pcCountry
@@ -537,15 +537,15 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	// Non-US rooftop selection: national DB first, then OSM fallback.
-	const rooftopFor = (country: string | undefined): AddressPointLookup | undefined => {
-		if (!country || country.toLowerCase() === "us") return undefined
+	const rooftopFor = (country: string | null): AddressPointLookup | null => {
+		if (!country || country.toLowerCase() === "us") return null
 		const slug = country.toLowerCase()
 
-		return deps.nationalDatabases?.(slug)?.addressPoints ?? deps.osmDatabases?.(slug)?.addressPoints
+		return deps.nationalDatabases?.(slug)?.addressPoints ?? deps.osmDatabases?.(slug)?.addressPoints ?? null
 	}
 
 	// Pre-resolve country: explicit default first, then placer.
-	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase() ?? null
 
 	// Country-specific placetype map.
 	opts.placetypeMap = placetypeMapForCountry(preResolveCountry)

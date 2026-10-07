@@ -602,16 +602,14 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const presetLines: string[] = []
 
 	try {
-		await profile.time("presets", undefined, () =>
-			presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line))
-		)
+		await profile.time("presets", null, () => presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line)))
 	} catch (error) {
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}
 
 	await writeLocalTextFile(presetLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/presets.md`)
 
-	await profile.time("demo-cascade", undefined, () =>
+	await profile.time("demo-cascade", null, () =>
 		runDemoCascadeLeg({
 			outDir: OUT_DIR,
 			shipModel,
@@ -628,7 +626,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		let arenaFailed = false
 
 		try {
-			await profile.time("arena", undefined, () =>
+			await profile.time("arena", null, () =>
 				externalArenas(
 					{
 						model: shipModel,
@@ -666,7 +664,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		let barePassed: boolean
 
 		try {
-			const bare = await profile.time("fr-bare-street", undefined, () =>
+			const bare = await profile.time("fr-bare-street", null, () =>
 				frParseRecall(
 					{
 						model: shipModel,
@@ -710,7 +708,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const maskLines: string[] = []
 
 		try {
-			const mask = await profile.time("mask-regression", undefined, () =>
+			const mask = await profile.time("mask-regression", null, () =>
 				maskRegressionCheck(
 					{
 						model: shipModel,

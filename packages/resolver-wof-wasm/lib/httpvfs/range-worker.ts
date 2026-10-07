@@ -45,8 +45,8 @@ interface RemoteFile {
 	bytes: number
 }
 
-let remote: RemoteFile | undefined
-let database: Database | undefined
+let remote: RemoteFile | null = null
+let database: Database | null = null
 const statements = new Map<string, PreparedStatement>()
 
 function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {

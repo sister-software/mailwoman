@@ -105,8 +105,8 @@ describe("pickExtractForPlacetype", () => {
 		"/tmp/whosonfirst-data-postalcode-us-latest.db",
 	])
 
-	test("undefined placetype → main", () => {
-		expect(pickExtractForPlacetype(extracts, undefined).schemaName).toBe("main")
+	test("null placetype → main", () => {
+		expect(pickExtractForPlacetype(extracts, null).schemaName).toBe("main")
 	})
 
 	test("postalcode → postalcode_us (substring match on schema name)", () => {

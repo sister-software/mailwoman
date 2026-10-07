@@ -22,20 +22,20 @@ import type { TimezoneDatabase } from "#schema"
  *
  * @returns `undefined` if the runtime can't resolve the zone.
  */
-export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | undefined {
+export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | null {
 	try {
 		const parts = new Intl.DateTimeFormat("en-US", { timeZone: tzid, timeZoneName: "longOffset" }).formatToParts(date)
 		const name = parts.find((p) => p.type === "timeZoneName")?.value ?? ""
 		const match = name.match(/GMT([+-])(\d{2}):?(\d{2})?/)
 
-		if (!match) return name === "GMT" ? 0 : undefined
+		if (!match) return name === "GMT" ? 0 : null
 		const sign = match[1] === "-" ? -1 : 1
 		const hours = Number(match[2])
 		const minutes = Number(match[3] ?? "0")
 
 		return sign * (hours * 3600 + minutes * 60)
 	} catch {
-		return undefined
+		return null
 	}
 }
 

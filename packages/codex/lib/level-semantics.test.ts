@@ -89,7 +89,7 @@ describe("levelToOrdinal — headline semantics", () => {
 	})
 
 	it("France: RDC (ground) is always ordinal 0, number ignored", () => {
-		expect(levelToOrdinal("RDC", undefined, "fr-FR")).toBe(0)
+		expect(levelToOrdinal("RDC", null, "fr-FR")).toBe(0)
 	})
 
 	it("Germany: OG (Obergeschoss) follows the continental convention (1 → ordinal 1)", () => {
@@ -97,7 +97,7 @@ describe("levelToOrdinal — headline semantics", () => {
 	})
 
 	it("Germany: EG (Erdgeschoss, ground) is always ordinal 0", () => {
-		expect(levelToOrdinal("EG", undefined, "de-DE")).toBe(0)
+		expect(levelToOrdinal("EG", null, "de-DE")).toBe(0)
 	})
 
 	it("basement designators negate the number — B1/UG1-style basements are ordinal -1", () => {
@@ -108,26 +108,26 @@ describe("levelToOrdinal — headline semantics", () => {
 	})
 
 	it("a bare basement designator with no number defaults to the first basement level (-1)", () => {
-		expect(levelToOrdinal("BASEMENT", undefined, "en-US")).toBe(-1)
+		expect(levelToOrdinal("BASEMENT", null, "en-US")).toBe(-1)
 	})
 
 	it("Spain: PLANTA BAJA (ground) is always ordinal 0", () => {
-		expect(levelToOrdinal("PLANTA BAJA", undefined, "es-ES")).toBe(0)
-		expect(levelToOrdinal("bajo", undefined, "es-ES")).toBe(0)
+		expect(levelToOrdinal("PLANTA BAJA", null, "es-ES")).toBe(0)
+		expect(levelToOrdinal("bajo", null, "es-ES")).toBe(0)
 	})
 
 	it("Spain: PRINCIPAL is a fixed ordinal-1 floor, independent of any number passed", () => {
-		expect(levelToOrdinal("PRINCIPAL", undefined, "es-ES")).toBe(1)
+		expect(levelToOrdinal("PRINCIPAL", null, "es-ES")).toBe(1)
 		expect(levelToOrdinal("PRINCIPAL", 7, "es-ES")).toBe(1)
 	})
 
 	it("Spain: ENTRESUELO (a genuinely fractional 0.5) floors to ordinal 0, grouped with ground", () => {
-		expect(levelToOrdinal("ENTRESUELO", undefined, "es-ES")).toBe(0)
+		expect(levelToOrdinal("ENTRESUELO", null, "es-ES")).toBe(0)
 	})
 
 	it("UK: LOWER GROUND floors to -1; UPPER GROUND floors to 0", () => {
-		expect(levelToOrdinal("LG", undefined, "en-GB")).toBe(-1)
-		expect(levelToOrdinal("UG", undefined, "en-GB")).toBe(0)
+		expect(levelToOrdinal("LG", null, "en-GB")).toBe(-1)
+		expect(levelToOrdinal("UG", null, "en-GB")).toBe(0)
 	})
 
 	it("Japan: 1F IS ground (ordinal 0); higher F numbers follow the US/JP convention", () => {
@@ -141,55 +141,55 @@ describe("levelToOrdinal — headline semantics", () => {
 	})
 
 	it("Italy: PIANO TERRA (ground) is ordinal 0; SEMINTERRATO floors to -1", () => {
-		expect(levelToOrdinal("PIANO TERRA", undefined, "it-IT")).toBe(0)
-		expect(levelToOrdinal("SEMINTERRATO", undefined, "it-IT")).toBe(0 - 1)
+		expect(levelToOrdinal("PIANO TERRA", null, "it-IT")).toBe(0)
+		expect(levelToOrdinal("SEMINTERRATO", null, "it-IT")).toBe(0 - 1)
 	})
 
 	it("Portugal: RC (ground) is ordinal 0", () => {
-		expect(levelToOrdinal("RC", undefined, "pt-PT")).toBe(0)
+		expect(levelToOrdinal("RC", null, "pt-PT")).toBe(0)
 	})
 
 	it("Netherlands: BG (begane grond) is ordinal 0", () => {
-		expect(levelToOrdinal("BG", undefined, "nl-NL")).toBe(0)
+		expect(levelToOrdinal("BG", null, "nl-NL")).toBe(0)
 	})
 
 	it("Nordics: the shared continental convention applies to Swedish, Norwegian, and Danish", () => {
-		expect(levelToOrdinal("BV", undefined, "sv-SE")).toBe(0)
+		expect(levelToOrdinal("BV", null, "sv-SE")).toBe(0)
 		expect(levelToOrdinal("VÅNING", 1, "sv-SE")).toBe(1)
-		expect(levelToOrdinal("GATEPLAN", undefined, "nb-NO")).toBe(0)
+		expect(levelToOrdinal("GATEPLAN", null, "nb-NO")).toBe(0)
 		expect(levelToOrdinal("ETASJE", 1, "nb-NO")).toBe(1)
-		expect(levelToOrdinal("STUEN", undefined, "da-DK")).toBe(0)
+		expect(levelToOrdinal("STUEN", null, "da-DK")).toBe(0)
 		expect(levelToOrdinal("ETAGE", 1, "da-DK")).toBe(1)
 	})
 
 	it("special (building-relative) designators have no locale-independent ordinal", () => {
-		expect(levelToOrdinal("PH", undefined, "en-US")).toBeUndefined()
-		expect(levelToOrdinal("ROOF", undefined, "en-GB")).toBeUndefined()
-		expect(levelToOrdinal("DG", undefined, "de-DE")).toBeUndefined()
-		expect(levelToOrdinal("ÁTICO", undefined, "es-ES")).toBeUndefined()
-		expect(levelToOrdinal("ATTICO", undefined, "it-IT")).toBeUndefined()
+		expect(levelToOrdinal("PH", null, "en-US")).toBeNull()
+		expect(levelToOrdinal("ROOF", null, "en-GB")).toBeNull()
+		expect(levelToOrdinal("DG", null, "de-DE")).toBeNull()
+		expect(levelToOrdinal("ÁTICO", null, "es-ES")).toBeNull()
+		expect(levelToOrdinal("ATTICO", null, "it-IT")).toBeNull()
 	})
 
 	it("a bare 'en' locale (no country) cannot resolve a numbered ordinal — US and UK disagree", () => {
-		expect(levelToOrdinal("FL", 1, "en")).toBeUndefined()
+		expect(levelToOrdinal("FL", 1, "en")).toBeNull()
 	})
 
 	it("a bare 'en' locale CAN still resolve ground/basement/special kinds — they don't need the convention", () => {
-		expect(levelToOrdinal("GROUND", undefined, "en")).toBe(0)
+		expect(levelToOrdinal("GROUND", null, "en")).toBe(0)
 		expect(levelToOrdinal("B", 1, "en")).toBe(-1)
 	})
 
-	it("a numbered designator with no number returns undefined rather than guessing", () => {
-		expect(levelToOrdinal("FL", undefined, "en-US")).toBeUndefined()
+	it("a numbered designator with no number returns null rather than guessing", () => {
+		expect(levelToOrdinal("FL", null, "en-US")).toBeNull()
 	})
 
-	it("returns undefined for an unrecognized designator", () => {
-		expect(levelToOrdinal("XYZZY", 1, "en-US")).toBeUndefined()
+	it("returns null for an unrecognized designator", () => {
+		expect(levelToOrdinal("XYZZY", 1, "en-US")).toBeNull()
 	})
 
-	it("returns undefined for a locale this module has no lexicon for", () => {
-		expect(levelToOrdinal("FL", 1, "xx-XX")).toBeUndefined()
-		expect(levelToOrdinal("FL", 1, "zh-CN")).toBeUndefined()
+	it("returns null for a locale this module has no lexicon for", () => {
+		expect(levelToOrdinal("FL", 1, "xx-XX")).toBeNull()
+		expect(levelToOrdinal("FL", 1, "zh-CN")).toBeNull()
 	})
 })
 
@@ -201,9 +201,9 @@ describe("lookupLevelDesignator / isLevelDesignatorToken", () => {
 		expect(lookupLevelDesignator("etage", "fr-FR")?.code).toBe("ÉTAGE")
 	})
 
-	it("returns undefined for an unrecognized token or an unknown locale family", () => {
-		expect(lookupLevelDesignator("nonsense", "en-US")).toBeUndefined()
-		expect(lookupLevelDesignator("FL", "xx-XX")).toBeUndefined()
+	it("returns null for an unrecognized token or an unknown locale family", () => {
+		expect(lookupLevelDesignator("nonsense", "en-US")).toBeNull()
+		expect(lookupLevelDesignator("FL", "xx-XX")).toBeNull()
 	})
 
 	it("isLevelDesignatorToken mirrors lookupLevelDesignator's recognition", () => {

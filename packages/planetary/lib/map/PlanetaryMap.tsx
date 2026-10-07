@@ -146,7 +146,7 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 					target={{
 						kind: "center",
 						center: [selected.centerLon, selected.centerLat],
-						zoom: framingZoom(selected.diameterKm, maxTerrainZoom),
+						zoom: framingZoom(selected.diameterKm ?? null, maxTerrainZoom),
 					}}
 					animate={!prefersReducedMotion()}
 				/>

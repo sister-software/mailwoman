@@ -254,7 +254,7 @@ describe("rankByCountryPrior", () => {
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1 }),
 		]
 
-		expect(rankByCountryPrior(rows, undefined)).toEqual(rows)
+		expect(rankByCountryPrior(rows, null)).toEqual(rows)
 	})
 
 	it("falls back to `score` when the backend reports no prominence", () => {

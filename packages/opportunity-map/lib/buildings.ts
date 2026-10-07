@@ -76,7 +76,7 @@ export interface ServiceEvidence {
 	 * An entry with one rests on records whose source states availability over that extent, such as
 	 * `census-block:<GEOID>`, and those records do not say which premises in the extent are served.
 	 */
-	available: readonly { provider: string; product: string; extent?: string; sources: readonly SourceRecordID[] }[]
+	available: readonly { provider: string; product: string; extent: string | null; sources: readonly SourceRecordID[] }[]
 	/**
 	 * Each of the building's availability checks, with the class of its latest readings.
 	 */
@@ -85,7 +85,7 @@ export interface ServiceEvidence {
 		layer: string
 		extent: string
 		status: LayerReadingClass
-		vintage?: ISODate
+		vintage: ISODate | null
 		sources: readonly SourceRecordID[]
 	}[]
 }
@@ -176,18 +176,18 @@ function availableEvidence(section: BuildingSection, asOf: ISODate): ServiceEvid
 	return section.availability
 		.filter((entry) => entry.answer.status === "available")
 		.flatMap((entry) => {
-			const byExtent = new Map<string | undefined, SourceRecordID[]>()
+			const byExtent = new Map<string | null, SourceRecordID[]>()
 
 			for (const record of entry.answer.records) {
 				if (availabilityAt([record], record.provider, record.subject, asOf).status !== "available") continue
 
-				byExtent.set(record.extent, [...(byExtent.get(record.extent) ?? []), record.evidence.source])
+				byExtent.set(record.extent ?? null, [...(byExtent.get(record.extent ?? null) ?? []), record.evidence.source])
 			}
 
 			return [...byExtent].map(([extent, sources]) => ({
 				provider: entry.provider,
 				product: entry.product,
-				...(extent === undefined ? {} : { extent }),
+				extent,
 				sources: distinctSources(sources),
 			}))
 		})

@@ -453,7 +453,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					? namesakes[0]
 					: namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
 
-			let hit: { d: number; place: AdminPlace } | undefined
+			let hit: { d: number; place: AdminPlace } | null = null
 			let extras: Array<{ d: number; place: AdminPlace }> = []
 
 			if (polygon) {
@@ -476,7 +476,8 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				// concordance, because some TW concordances point at the wrong district.
 				hit =
 					inside.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place)) ??
-					inside.find((c) => DISTRICT_TIER.has(c.place.placetype))
+					inside.find((c) => DISTRICT_TIER.has(c.place.placetype)) ??
+					null
 
 				if (hit) {
 					tierCounts.polygon++
@@ -489,7 +490,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 								a.d - b.d
 						)
 
-					hit = concordant[0]
+					hit = concordant[0] ?? null
 
 					if (hit) {
 						tierCounts.wikidata++
@@ -498,7 +499,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 				if (!hit) {
 					// The English stem lets rows without Chinese names match here.
-					hit = inside.find((c) => nameMatches(c.place))
+					hit = inside.find((c) => nameMatches(c.place)) ?? null
 
 					if (hit) {
 						tierCounts.name_in_polygon++

@@ -98,8 +98,8 @@ function subpathKeyFor(key: string, target: string, packageRelative: string): st
 	return `${key.slice(0, keyStar)}${packageRelative.slice(head.length, packageRelative.length - tail.length)}${key.slice(keyStar + 1)}`
 }
 
-function packageRelativeTarget(manifest: PackageManifest, file: string): string | undefined {
-	if (!file.startsWith(`${manifest.dir}/`)) return undefined
+function packageRelativeTarget(manifest: PackageManifest, file: string): string | null {
+	if (!file.startsWith(`${manifest.dir}/`)) return null
 
 	return `./${file.slice(manifest.dir.length + 1)}`
 }

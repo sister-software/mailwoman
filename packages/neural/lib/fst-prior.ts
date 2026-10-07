@@ -320,7 +320,7 @@ export function buildFSTEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	const streetContext = opts.streetContext
+	const streetContext = opts.streetContext ?? null
 
 	const streetTypeFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => g.fstToken !== "" && isStreetAffix(streetContext.fst, g.fstToken))
@@ -473,7 +473,7 @@ function streetContextScale(
 	groups: WordGroup[],
 	startIdx: number,
 	endIdx: number,
-	streetContext: StreetContextRequirementOpts | undefined,
+	streetContext: StreetContextRequirementOpts | null,
 	streetTypeFlags: boolean[] | null,
 	houseNumberFlags: boolean[] | null
 ): number {

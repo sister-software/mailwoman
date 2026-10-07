@@ -73,7 +73,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	ccID: (code: string | null) => number
 	ptID: (pt: string | null) => number
 	regionOf: Map<number, number>
-	importance: ReturnType<typeof loadImportanceIndex> | undefined
+	importance: ReturnType<typeof loadImportanceIndex> | null
 	stageRow: StageRow
 	progress: (phase: string, message: string) => void
 

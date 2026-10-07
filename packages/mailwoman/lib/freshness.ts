@@ -182,7 +182,7 @@ export async function readFreshness(artifacts: readonly FreshnessArtifact[]): Pr
 		read.push(await readArtifact(artifact))
 	}
 
-	let dataUpdated: string | undefined
+	let dataUpdated: string | null = null
 	let newest = Number.NEGATIVE_INFINITY
 
 	for (const artifact of read) {

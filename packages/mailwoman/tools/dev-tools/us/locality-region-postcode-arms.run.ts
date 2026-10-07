@@ -76,14 +76,14 @@ const { values } = parseArguments({
  * A house number before the street makes the address shape unambiguous.
  * The number-free arm measures the case that already works.
  */
-function streetWithoutNumber(input: string): string | undefined {
+function streetWithoutNumber(input: string): string | null {
 	const head = input.split(",")[0]?.trim()
 
-	if (!head) return undefined
+	if (!head) return null
 
 	const rest = head.replace(/^\d+[A-Za-z]?\s+/, "").trim()
 
-	return rest && rest !== head ? rest : undefined
+	return rest && rest !== head ? rest : null
 }
 
 const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {

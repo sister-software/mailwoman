@@ -195,12 +195,12 @@ describe("buildPlaceSearchFTS", () => {
 
 	test("onProgress receives a detail string for the done phase", () => {
 		using db = buildBaseSchema()
-		let doneDetail: string | undefined
+		let doneDetail: string | null = null
 
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") {
-					doneDetail = detail
+					doneDetail = detail ?? null
 				}
 			},
 		})

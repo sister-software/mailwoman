@@ -100,7 +100,7 @@ describe("serialize round-trip", () => {
 		expect(builder.seal()).toEqual(builder.seal())
 	})
 
-	it("round-trips metadata, and reads undefined when none was sealed", () => {
+	it("round-trips metadata, and reads null when none was sealed", () => {
 		const builder = new AncestrieBuilder()
 		builder.add(FIXTURE[0]!)
 
@@ -108,7 +108,7 @@ describe("serialize round-trip", () => {
 		expect(stamped.metadata()).toEqual({ source: "fixture", count: 1 })
 
 		const bare = Ancestrie.from(builder.seal())
-		expect(bare.metadata()).toBeUndefined()
+		expect(bare.metadata()).toBeNull()
 	})
 })
 
@@ -120,7 +120,7 @@ describe("edge cases", () => {
 		expect(trie.entryCount).toBe(0)
 		expect(trie.walk([])).toMatchObject({ stateID: 0, accepted: false, depth: 0 })
 		expect(trie.continuations(0)).toEqual([])
-		expect(trie.getEntry(1)).toBeUndefined()
+		expect(trie.getEntry(1)).toBeNull()
 	})
 
 	it("a single entry seals and answers every read", () => {

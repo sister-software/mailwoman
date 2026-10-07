@@ -177,7 +177,7 @@ function importDrift(imports: Readonly<Record<string, ExportValue>>, roots: read
 async function readRootDirectory(repoRoot: string, workspace: string, tracked: ReadonlySet<string>) {
 	const configFile = `${workspace}/tsconfig.json`
 
-	if (!tracked.has(configFile)) return undefined
+	if (!tracked.has(configFile)) return null
 
 	const path = resolvePath(repoRoot, configFile)
 	const { config } = ts.parseConfigFileTextToJson(path.toString(), await readLocalTextFile(path))

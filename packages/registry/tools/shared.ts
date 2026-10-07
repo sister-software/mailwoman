@@ -49,9 +49,9 @@ export interface SourceSpec {
 }
 
 /**
- * Trim, treating `undefined` as empty — the shape every probe's raw CSV columns arrive in.
+ * Trim, treating `null` or `undefined` as empty — the shape every probe's raw CSV columns arrive in.
  */
-export const norm = (s: string | undefined): string => (s ?? "").trim()
+export const norm = (s: string | null | undefined): string => (s ?? "").trim()
 
 /**
  * Corporate-form suffixes and function words that add no identity — dropped from an organization name

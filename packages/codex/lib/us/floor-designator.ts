@@ -120,7 +120,7 @@ export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignat
  *
  * @returns Null if the token isn't a recognized floor-class designator.
  */
-export function lookupFloorDesignator(input: string | null | undefined): {
+export function lookupFloorDesignator(input: string | null): {
 	designator: USFloorDesignatorName
 	abbreviation: string
 } | null {

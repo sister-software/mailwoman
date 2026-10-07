@@ -83,7 +83,7 @@ export interface CIKCorroborationOptions {
  */
 export function corroborateCIK(
 	cik: CIK,
-	sic: string | null | undefined,
+	sic: string | null,
 	options: CIKCorroborationOptions = {}
 ): CIKCorroborationVerdict {
 	if (options.pinnedCIKs?.has(cik)) {

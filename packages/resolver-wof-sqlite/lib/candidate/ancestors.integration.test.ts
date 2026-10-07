@@ -106,7 +106,7 @@ afterAll(async () => {
 	await scratch[Symbol.asyncDispose]()
 })
 
-function intervalOf(db: DatabaseClient<WOFDatabase>, id: number): IntervalLabel | undefined {
+function intervalOf(db: DatabaseClient<WOFDatabase>, id: number): IntervalLabel | null {
 	return getRow<IntervalLabel>(db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`), id)
 }
 
@@ -320,8 +320,8 @@ describe("the candidate ancestors sidecar", () => {
 
 		using built = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		expect(intervalOf(built, 1)).toBeUndefined()
-		expect(intervalOf(built, 2)).toBeUndefined()
+		expect(intervalOf(built, 1)).toBeNull()
+		expect(intervalOf(built, 2)).toBeNull()
 		expect(intervalContains(intervalOf(built, 11)!, intervalOf(built, 10)!)).toBe(true)
 	})
 })

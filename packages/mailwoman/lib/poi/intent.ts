@@ -65,7 +65,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 		const tail = words.at(-1)
 
 		if (tail) {
-			let singular: string | undefined
+			let singular: string | null = null
 
 			if (/[^aeiou]ies$/i.test(tail)) {
 				singular = tail.slice(0, -3) + "y"

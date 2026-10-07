@@ -58,7 +58,7 @@ describe("convention engine — merge + resolve", () => {
 	it("SeedConventionSource returns rows by id and undefined for misses", () => {
 		const src = new SeedConventionSource({ 42: { candidateStrategies: ["x"] } })
 		expect(src.get(42)).toEqual({ candidateStrategies: ["x"] })
-		expect(src.get(99)).toBeUndefined()
+		expect(src.get(99)).toBeNull()
 	})
 })
 

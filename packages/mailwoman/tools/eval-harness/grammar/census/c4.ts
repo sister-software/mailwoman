@@ -69,7 +69,7 @@ export interface C4BoundaryReceipt {
 }
 
 function fstEdgesAtBoundary(
-	matches: ReadonlyArray<FSTAcceptedMatch> | undefined,
+	matches: ReadonlyArray<FSTAcceptedMatch> | null,
 	boundary: number
 ): FSTEdgeReceipt[] | null {
 	if (!matches) return null
@@ -184,8 +184,8 @@ export function observeC4Boundaries(
 			delimiterSegmentEdges,
 			characterClassChange,
 			knownFormatEdges,
-			streetAffixEdges: fstEdgesAtBoundary(streetAffixMatches, boundaryPiece),
-			registryFSTEdges: fstEdgesAtBoundary(registryMatches, boundaryPiece),
+			streetAffixEdges: fstEdgesAtBoundary(streetAffixMatches ?? null, boundaryPiece),
+			registryFSTEdges: fstEdgesAtBoundary(registryMatches ?? null, boundaryPiece),
 		})
 	}
 

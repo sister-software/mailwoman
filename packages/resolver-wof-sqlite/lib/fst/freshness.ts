@@ -66,14 +66,14 @@ export interface FSTExpectation {
 /**
  * Read an artifact's stamp without deserializing it.
  */
-export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStampFields | undefined> {
-	if (!(await pathExists(path))) return undefined
+export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStampFields | null> {
+	if (!(await pathExists(path))) return null
 	const size = (await statPath(path)).size
 
-	if (size < HEADER_SIZE) return undefined
+	if (size < HEADER_SIZE) return null
 	const header = await readFileRange(path, 0, HEADER_SIZE)
 
-	if (header.readUInt32LE(0) !== MAGIC) return undefined
+	if (header.readUInt32LE(0) !== MAGIC) return null
 	const formatVersion = header.readUInt16LE(4)
 
 	if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: undefined }
@@ -106,7 +106,7 @@ export async function readWOFSourceIdentity(
 
 	if (hit) return hit
 	const sidecarPath = `${path}.md5`
-	let md5: string | undefined
+	let md5: string | null = null
 
 	if (await pathExists(sidecarPath)) {
 		const sidecarStats = await statPath(sidecarPath)
@@ -143,7 +143,7 @@ const sourceIdentityMemo = new Map<string, FSTSourceIdentity>()
 /**
  * Why an FST artifact is stale against `expected`, or `undefined` when it still matches.
  */
-export function fstStaleReason(fields: FSTStampFields | undefined, expected: FSTExpectation): string | undefined {
+export function fstStaleReason(fields: FSTStampFields | null, expected: FSTExpectation): string | null {
 	if (!fields) return "unreadable or not an FST artifact"
 	const requiredFormat = expected.formatVersion ?? FST_FORMAT_VERSION
 
@@ -175,7 +175,7 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 		return `exclusion policy ${provenance.exclusionPolicy ?? "(none)"} → ${expected.exclusionPolicy}`
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -193,8 +193,8 @@ export async function fstFreshnessWarning({
 	formatVersion?: number
 	exclusionPolicy?: string
 	rebuildCommand: string
-}): Promise<string | undefined> {
-	if (!(await pathExists(fstPath)) || !(await pathExists(sourceDBPath))) return undefined
+}): Promise<string | null> {
+	if (!(await pathExists(fstPath)) || !(await pathExists(sourceDBPath))) return null
 
 	const reason = fstStaleReason(await peekFSTStampFields(fstPath), {
 		source: await readWOFSourceIdentity(sourceDBPath),
@@ -202,7 +202,7 @@ export async function fstFreshnessWarning({
 		...(exclusionPolicy === undefined ? {} : { exclusionPolicy }),
 	})
 
-	return reason === undefined ? undefined : formatFSTStaleWarning({ fstPath, reason, rebuildCommand })
+	return reason === null ? null : formatFSTStaleWarning({ fstPath, reason, rebuildCommand })
 }
 
 /**

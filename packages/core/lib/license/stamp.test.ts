@@ -113,6 +113,6 @@ describe("licenseNoticeLines", () => {
 	it("is absent for a valid key", () => {
 		const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: valid })
 
-		expect(licenseNoticeLines(stamp, valid)).toBeUndefined()
+		expect(licenseNoticeLines(stamp, valid)).toBeNull()
 	})
 })

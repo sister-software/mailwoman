@@ -167,14 +167,14 @@ interface ReferencedValue {
 	readonly type: string
 
 	/**
-	 * The street name or place name the feature states, absent when the feature states none.
+	 * The street name or place name the feature states, null when the feature states none.
 	 */
-	readonly name?: string
+	readonly name: string | null
 
 	/**
 	 * The administrative level an `ad:AdminUnitName` states, such as `1stOrder`.
 	 */
-	readonly level?: string
+	readonly level: string | null
 }
 
 /**
@@ -182,14 +182,14 @@ interface ReferencedValue {
  */
 function referencedValue(feature: MarkupElement): ReferencedValue {
 	if (feature.name === "ad:ThoroughfareName") {
-		return { type: feature.name, name: thoroughfareName(feature) }
+		return { type: feature.name, name: thoroughfareName(feature), level: null }
 	}
 
 	if (feature.name === "ad:AdminUnitName") {
 		return { type: feature.name, name: placeName(feature), level: adminUnitLevel(feature) }
 	}
 
-	return { type: feature.name, name: placeName(feature) }
+	return { type: feature.name, name: placeName(feature), level: null }
 }
 
 /**
@@ -199,12 +199,12 @@ function referencedValue(feature: MarkupElement): ReferencedValue {
  * The table in this module's header reads that off three records matched against
  * the Locatieserver by their `nummeraanduiding` id.
  *
- * @returns The joined number, or undefined when the publisher states no `addressNumber`.
+ * @returns The joined number, or null when the publisher states no `addressNumber`.
  */
-export function dutchHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | undefined {
+export function dutchHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | null {
 	const number = designator(byType, "addressNumber")
 
-	if (!number) return undefined
+	if (!number) return null
 
 	const letter = designator(byType, "addressNumberExtension") ?? ""
 	const addition = designator(byType, "addressNumber2ndExtension") ?? ""
@@ -257,7 +257,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, `undefined` when it holds too little to render, or `"deferred"`
+ * One address's row, `null` when it holds too little to render, or `"deferred"`
  * when a reference it states is not indexed yet.
  *
  * With `final` set the document has ended, so an unresolved reference is a value the reader
@@ -267,16 +267,16 @@ function composeRow(
 	address: MarkupElement,
 	referenced: ReadonlyMap<string, ReferencedValue>,
 	options: { final?: boolean } = {}
-): CanonicalRow | undefined | "deferred" {
-	const addressID = address.attributes["gml:id"]?.trim()
+): CanonicalRow | null | "deferred" {
+	const addressID = address.attributes["gml:id"]?.trim() ?? null
 	const voided = voidDesignatorTypes(address)
 
 	for (const type of ["addressNumber", "postalDeliveryIdentifier"]) {
 		if (voided.has(type)) throw new VoidDesignatorError(NL_KADASTER_ADAPTER_ID, addressID, type)
 	}
 
-	let street: string | undefined
-	let locality: string | undefined
+	let street: string | null = null
+	let locality: string | null = null
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
@@ -299,13 +299,13 @@ function composeRow(
 		// reads `1stOrder` while the reference's position states no level at all.
 	}
 
-	if (!locality) return undefined
+	if (!locality) return null
 
 	const byType = designatorsByType(address)
 	const house = dutchHouseNumber(byType)
 	const postcode = designator(byType, "postalDeliveryIdentifier")
 
-	if (!street && !postcode) return undefined
+	if (!street && !postcode) return null
 
 	const components: CanonicalRow["components"] = {}
 
@@ -325,7 +325,7 @@ function composeRow(
 
 	const rendered = formatAddressRow(components, "NL", { singleLine: true })
 
-	if (!rendered) return undefined
+	if (!rendered) return null
 
 	const { raw, components: aligned } = rendered
 

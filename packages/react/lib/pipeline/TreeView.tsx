@@ -47,7 +47,7 @@ function renderNode(node: TreeNode, path: string): ReactNode {
 }
 
 export function TreeView({ tree }: TreeViewProps): ReactNode {
-	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots
+	const roots = (tree as { roots?: unknown[] } | null)?.roots
 
 	if (!Array.isArray(roots) || !roots.length) return null
 

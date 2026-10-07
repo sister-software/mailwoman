@@ -130,7 +130,6 @@ test("geometryToSQL: returns a thunk emitting a GeomFromEWKB literal for a real 
 	expect(thunk()).toBe(`GeomFromEWKB('${geometryToEWKH(POINT)}')`)
 })
 
-test("geometryToSQL: null/undefined geometry yields a thunk that emits the SQL literal NULL", () => {
+test("geometryToSQL: null geometry yields a thunk that emits the SQL literal NULL", () => {
 	expect(geometryToSQL(null)()).toBe("NULL")
-	expect(geometryToSQL(undefined)()).toBe("NULL")
 })

@@ -268,7 +268,7 @@ describe("nearestInfrastructure", () => {
 		})
 
 		expect(hits.length).toBeGreaterThan(0)
-		expect(hits.every((h) => h.coverage === undefined)).toBe(true)
+		expect(hits.every((h) => h.coverage === null)).toBe(true)
 	})
 
 	it("pairs each hit with the coverage cell it actually falls in, once the layer has surveyed it", async () => {
@@ -298,7 +298,7 @@ describe("nearestInfrastructure", () => {
 		expect(coveredHits).toHaveLength(uncoveredHits.length)
 
 		for (const hit of coveredHits) {
-			expect(hit.coverage).toBeDefined()
+			expect(hit.coverage).not.toBeNull()
 
 			expect(hit.coverage).toEqual({
 				h3Cell: res9ShortCellToRes6Parent(hit.h3Cell),

@@ -88,7 +88,7 @@ export interface BaselineVerdict {
 	checked: number
 }
 
-let cachedFile: BaselineFile | undefined
+let cachedFile: BaselineFile | null = null
 
 /**
  * Anchored at the package root because tsc does not emit `baselines.json` into `out/`,
@@ -113,8 +113,8 @@ export async function listBaselines(): Promise<RegisteredBaseline[]> {
 	return (await loadBaselineFile()).baselines
 }
 
-export async function findBaseline(id: string): Promise<RegisteredBaseline | undefined> {
-	return (await loadBaselineFile()).baselines.find((b) => b.id === id)
+export async function findBaseline(id: string): Promise<RegisteredBaseline | null> {
+	return (await loadBaselineFile()).baselines.find((b) => b.id === id) ?? null
 }
 
 export async function listProfiles(): Promise<string[]> {

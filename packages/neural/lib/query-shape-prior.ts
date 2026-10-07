@@ -60,12 +60,12 @@ const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_b
 
 /**
  * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
- * or `undefined` when the format names no label.
+ * or `null` when the format names no label.
  *
  * An uncovered format contributes zero bias and raises no error.
  */
-function formatLabel(format: string): string | undefined {
-	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)
+function formatLabel(format: string): string | null {
+	return isPostcodeFormat(format) ? "B-postcode" : (FORMAT_TO_LABEL.get(format) ?? null)
 }
 
 export interface BuildPriorsOpts {

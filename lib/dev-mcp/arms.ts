@@ -293,7 +293,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 			)
 		}
 
-		return { kind: "worktree", ref: ref.trim(), config: (record["config"] as EngineConfig | undefined) ?? {} }
+		return { kind: "worktree", ref: ref.trim(), config: (record["config"] as EngineConfig | null) ?? {} }
 	}
 
 	throw new Error(

@@ -107,8 +107,8 @@ async function main(): Promise<number> {
 	})
 
 	const src: string | null = positionals[0] ?? null
-	const labelArg: string | null = (values.label as string | undefined) ?? null
-	const jsonOut: string | null = (values.json as string | undefined) ?? null
+	const labelArg: string | null = (values.label as string | null) ?? null
+	const jsonOut: string | null = (values.json as string | null) ?? null
 
 	if (!src) {
 		console.error("usage: pip-containment.ts <resolved.json> [--label NAME] [--json OUT]")

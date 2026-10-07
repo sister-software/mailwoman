@@ -36,7 +36,7 @@ export interface ScratchDir {
  * or a platform holding a handle open must not turn a passing assertion into a failing suite.
  */
 export function useScratchDir(slug: string): ScratchDir {
-	let owned: TemporaryDirectory | undefined
+	let owned: TemporaryDirectory | null = null
 
 	beforeEach(async () => {
 		owned = await temporaryDirectory(`mailwoman-${slug}-`)
@@ -49,7 +49,7 @@ export function useScratchDir(slug: string): ScratchDir {
 			await owned?.[Symbol.asyncDispose]()
 		} catch {}
 
-		owned = undefined
+		owned = null
 	})
 
 	return {

@@ -92,7 +92,7 @@ export interface ResolvedInput {
 	/**
 	 * The country overlay used for runtime routing.
 	 */
-	routeCountry?: string
+	routeCountry?: string | null
 	/**
 	 * The locale region that scopes the fuzzy resolver tier on board rows.
 	 */
@@ -162,7 +162,7 @@ export interface ResolvedInputSet {
 	notes: string[]
 }
 
-function countStrata(cases: SeedCase[], pick: (c: SeedCase) => string | undefined): Map<string, number> {
+function countStrata(cases: SeedCase[], pick: (c: SeedCase) => string | null): Map<string, number> {
 	const counts = new Map<string, number>()
 
 	for (const row of cases) {

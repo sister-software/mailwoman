@@ -76,16 +76,14 @@ export function poiObservationKind(verdict: QueryKindResult): QueryKind | null {
 }
 
 function designationMarkers<Observation>(
-	route:
-		| {
-				observe: (
-					latitude: number | null | undefined,
-					longitude: number | null | undefined
-				) => { fired: true; observation: Observation } | { fired: false; refusal: string }
-		  }
-		| undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: {
+		observe: (
+			latitude: number | null,
+			longitude: number | null
+		) => { fired: true; observation: Observation } | { fired: false; refusal: string }
+	} | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult,
 	toMarker: (observation: Observation, verdict: QueryKindResult) => QueryIntentMarker
 ): QueryIntentMarker[] {
@@ -177,9 +175,9 @@ export function absenceObservationMarker(
  * map assigns rather than whether a location will flood.
  */
 export function authorityDesignationMarkers(
-	route: AuthorityDesignationRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: AuthorityDesignationRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, authorityDesignationMarker)
@@ -221,9 +219,9 @@ export function authorityDesignationMarker(
  * the cell it covers and stating what the survey assigns rather than whether the land can be farmed.
  */
 export function soilCapabilityMarkers(
-	route: SoilCapabilityRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: SoilCapabilityRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, soilCapabilityMarker)
@@ -265,9 +263,9 @@ export function soilCapabilityMarker(
  * and label so a projection cannot be read as a present-day designation.
  */
 export function coastalErosionMarkers(
-	route: CoastalErosionRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: CoastalErosionRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, coastalErosionMarker)
@@ -309,9 +307,9 @@ export function coastalErosionMarker(
  * and stating what a plan assigns rather than what may be built there.
  */
 export function zoningDesignationMarkers(
-	route: ZoningDesignationRoute | undefined,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	route: ZoningDesignationRoute | null,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return designationMarkers(route, latitude, longitude, verdict, zoningDesignationMarker)
@@ -375,14 +373,14 @@ export interface LayerDesignationRoutes {
  */
 export function layerDesignationMarkers(
 	routes: LayerDesignationRoutes,
-	latitude: number | null | undefined,
-	longitude: number | null | undefined,
+	latitude: number | null,
+	longitude: number | null,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
 	return [
-		...authorityDesignationMarkers(routes.authorityDesignationRoute, latitude, longitude, verdict),
-		...soilCapabilityMarkers(routes.soilCapabilityRoute, latitude, longitude, verdict),
-		...coastalErosionMarkers(routes.coastalErosionRoute, latitude, longitude, verdict),
-		...zoningDesignationMarkers(routes.zoningDesignationRoute, latitude, longitude, verdict),
+		...authorityDesignationMarkers(routes.authorityDesignationRoute ?? null, latitude, longitude, verdict),
+		...soilCapabilityMarkers(routes.soilCapabilityRoute ?? null, latitude, longitude, verdict),
+		...coastalErosionMarkers(routes.coastalErosionRoute ?? null, latitude, longitude, verdict),
+		...zoningDesignationMarkers(routes.zoningDesignationRoute ?? null, latitude, longitude, verdict),
 	]
 }

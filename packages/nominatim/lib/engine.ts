@@ -60,20 +60,20 @@ export interface NominatimResult {
  * Parsed `/search` parameters (free-text or structured. Never both).
  */
 export interface NominatimSearchParams {
-	q?: string
-	street?: string
-	city?: string
-	county?: string
-	state?: string
-	country?: string
-	postalcode?: string
-	countrycodes?: string[]
+	q?: string | null
+	street?: string | null
+	city?: string | null
+	county?: string | null
+	state?: string | null
+	country?: string | null
+	postalcode?: string | null
+	countrycodes?: string[] | null
 	limit: number
-	viewbox?: [number, number, number, number]
-	bounded?: boolean
-	addressdetails?: boolean
+	viewbox?: [number, number, number, number] | null
+	bounded?: boolean | null
+	addressdetails?: boolean | null
 	format: NominatimFormat
-	acceptLanguage?: string
+	acceptLanguage?: string | null
 }
 
 /**
@@ -82,10 +82,10 @@ export interface NominatimSearchParams {
 export interface NominatimReverseParams {
 	lat: number
 	lon: number
-	zoom?: number
-	addressdetails?: boolean
+	zoom?: number | null
+	addressdetails?: boolean | null
 	format: NominatimFormat
-	acceptLanguage?: string
+	acceptLanguage?: string | null
 }
 
 /**

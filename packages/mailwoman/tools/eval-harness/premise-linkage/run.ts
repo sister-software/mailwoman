@@ -94,7 +94,7 @@ export interface PremiseLinkageGrade {
  * The only place an outcome is decided.
  */
 export function outcomeFor(
-	assertion: AuthoritativeAssertion | undefined,
+	assertion: AuthoritativeAssertion | null,
 	expected: PremiseLinkageObjectID
 ): PremiseLinkageGrade {
 	if (!assertion) {
@@ -149,15 +149,15 @@ export function outcomeFor(
  */
 function gradedCoordinate(
 	result: GeocodeResult,
-	assertion: AuthoritativeAssertion | undefined
-): { lat: number; lon: number } | undefined {
+	assertion: AuthoritativeAssertion | null
+): { lat: number; lon: number } | null {
 	const committed = assertion?.status === "matched" ? assertion.matches?.[0] : undefined
 
 	if (committed?.lat !== undefined && committed.lon !== undefined) {
 		return { lat: committed.lat, lon: committed.lon }
 	}
 
-	if (result.lat === null || result.lon === null) return undefined
+	if (result.lat === null || result.lon === null) return null
 
 	return { lat: result.lat, lon: result.lon }
 }
@@ -165,17 +165,17 @@ function gradedCoordinate(
 function coordinateErrorFor(
 	row: PremiseLinkageInputRow,
 	result: GeocodeResult,
-	assertion: AuthoritativeAssertion | undefined
-): number | undefined {
+	assertion: AuthoritativeAssertion | null
+): number | null {
 	// Three independent conditions exclude a row from the coordinate table: terms forbid
 	// publication, the row lacks a truth coordinate, or the arm produced no coordinate.
 	// The aggregate does not count these cases as zero.
-	if (!row.coordinatePublishable) return undefined
+	if (!row.coordinatePublishable) return null
 
-	if (row.expectedLat === undefined || row.expectedLon === undefined) return undefined
+	if (row.expectedLat === undefined || row.expectedLon === undefined) return null
 	const answered = gradedCoordinate(result, assertion)
 
-	if (!answered) return undefined
+	if (!answered) return null
 
 	return haversineKm(row.expectedLat, row.expectedLon, answered.lat, answered.lon) * METERS_PER_KM
 }
@@ -187,8 +187,8 @@ function gradeRow(
 	mailwomanVersion: string
 ): PremiseLinkageResultRow {
 	const assertion = result.authoritative
-	const grade = outcomeFor(assertion, row.expectedObjectID)
-	const coordinateErrorM = coordinateErrorFor(row, result, assertion)
+	const grade = outcomeFor(assertion ?? null, row.expectedObjectID)
+	const coordinateErrorM = coordinateErrorFor(row, result, assertion ?? null)
 
 	return {
 		caseID,
@@ -200,7 +200,7 @@ function gradeRow(
 		hasHistoricalAlias: row.hasHistoricalAlias,
 		outcome: grade.outcome,
 		coordinatePublishable: row.coordinatePublishable,
-		...(coordinateErrorM === undefined ? {} : { coordinateErrorM }),
+		...(coordinateErrorM === null ? {} : { coordinateErrorM }),
 		providerName: assertion?.provider ?? OPEN_PROVIDER_NAME,
 		...(assertion?.dataset_version === undefined ? {} : { providerDatasetVersion: assertion.dataset_version }),
 		mailwomanVersion,

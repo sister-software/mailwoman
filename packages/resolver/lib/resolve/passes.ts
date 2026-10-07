@@ -38,7 +38,7 @@ const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
  * The list derives from `PLACETYPE_SPECIFICITY`, so a new placetype in that range is probed automatically.
  */
 export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPECIFICITY)
-	.filter(([, rank]) => rank !== undefined && rank <= FINEST_DIAGNOSTIC_BAND && rank >= COARSEST_DIAGNOSTIC_BAND)
+	.filter(([, rank]) => rank != null && rank <= FINEST_DIAGNOSTIC_BAND && rank >= COARSEST_DIAGNOSTIC_BAND)
 	.toSorted((a, b) => (a[1] as number) - (b[1] as number))
 	.map(([placetype]) => placetype)
 
@@ -54,8 +54,8 @@ export interface NodeTraceRecorder {
 		query: {
 			country?: string
 			parentID?: string | number
-			postcode?: string
-			regionQualifier?: string
+			postcode?: string | null
+			regionQualifier?: string | null
 			limit?: number
 		},
 		defaultLimit: number
@@ -133,11 +133,11 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				country: c.country,
 				placetype: c.placetype,
 				score: c.score,
-				...(c.prominence !== undefined ? { prominence: c.prominence } : {}),
-				...(c.importance !== undefined ? { importance: c.importance } : {}),
-				...(c.population !== undefined ? { population: c.population } : {}),
-				...(c.exactMatch !== undefined ? { exactMatch: c.exactMatch } : {}),
-				...(c.containedByQualifier !== undefined ? { containedByQualifier: c.containedByQualifier } : {}),
+				...(c.prominence != null ? { prominence: c.prominence } : {}),
+				...(c.importance != null ? { importance: c.importance } : {}),
+				...(c.population != null ? { population: c.population } : {}),
+				...(c.exactMatch != null ? { exactMatch: c.exactMatch } : {}),
+				...(c.containedByQualifier != null ? { containedByQualifier: c.containedByQualifier } : {}),
 				ranks: rankMap.get(c) ?? {},
 			}))
 
@@ -147,7 +147,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				placetype: ctx.placetype,
 				query: {
 					...(ctx.query.country ? { country: ctx.query.country } : {}),
-					...(ctx.query.parentID !== undefined ? { parentID: ctx.query.parentID } : {}),
+					...(ctx.query.parentID != null ? { parentID: ctx.query.parentID } : {}),
 					...(ctx.query.postcode ? { postcode: ctx.query.postcode } : {}),
 					...(ctx.query.regionQualifier ? { regionQualifier: ctx.query.regionQualifier } : {}),
 					limit: ctx.query.limit ?? ctx.defaultLimit,
@@ -202,7 +202,7 @@ export interface ResolutionState {
 	 * Locality lookups send it to the backend.
 	 * The backend can then favor nearby candidates.
 	 */
-	postcode?: string
+	postcode?: string | null
 
 	/**
 	 * Whether locality lookups ask the backend to re-rank candidates by distance to the postcode centroid.
@@ -313,7 +313,7 @@ export interface ResolutionState {
 	 * It applies only with {@link ResolutionState.adminContainmentRerank}
 	 * and no caller-supplied default country.
 	 */
-	regionQualifier?: string
+	regionQualifier?: string | null
 
 	/**
 	 * Whether any node maps to the `locality` placetype.
@@ -362,12 +362,12 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
  * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes.
  * a locality lookup uses it because the postcode node is usually a sibling.
  */
-export function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
+export function firstPostcodeValue(roots: readonly AddressNode[]): string | null {
 	for (const n of walkNodes(roots)) {
 		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && n.value.trim().length) return n.value.trim()
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -401,7 +401,7 @@ export async function applySpanRescore(
 
 	if (!hit && opts.postalCompoundRecovery !== false) {
 		try {
-			await recoverPostcodeNode(roots, backend, opts.defaultCountry, opts.traceSink)
+			await recoverPostcodeNode(roots, backend, opts.defaultCountry ?? null, opts.traceSink)
 		} catch {}
 	}
 
@@ -436,7 +436,7 @@ export async function applySpanRescore(
 async function recoverPostcodeNode(
 	roots: AddressNode[],
 	backend: ResolverBackend,
-	country: string | undefined,
+	country: string | null,
 	traceSink?: (record: ResolveNodeTrace) => void
 ): Promise<void> {
 	for (const n of walkNodes(roots)) {
@@ -444,7 +444,14 @@ async function recoverPostcodeNode(
 			const code = postcodeCodeSubset(n.value)
 
 			if (!code || code === n.value.trim()) continue
-			const hits = await backend.findPlace({ text: code, placetype: "postalcode", country, limit: 1 })
+
+			const hits = await backend.findPlace({
+				text: code,
+				placetype: "postalcode",
+				...(country ? { country } : {}),
+				limit: 1,
+			})
+
 			const top = hits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 			if (top) {
@@ -501,7 +508,7 @@ export function applyPostcodeConsistency(
 
 		if (gapKm <= thresholdKm) continue
 
-		const alts = (node.alternatives as ResolvedPlace[] | undefined) ?? []
+		const alts = (node.alternatives as ResolvedPlace[] | null) ?? []
 
 		const reconciling = alts
 			.filter((a) => a.lat !== 0 || a.lon !== 0)

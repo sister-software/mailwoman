@@ -157,7 +157,7 @@ function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_R
 	return best
 }
 
-const norm = (s: string | undefined): string =>
+const norm = (s: string | null): string =>
 	stripCombiningMarks(s ?? "")
 		.toLowerCase()
 		.trim()
@@ -270,7 +270,7 @@ async function main() {
 
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
-			enforceWordConsistency: parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY),
+			enforceWordConsistency: parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null),
 			...(normalizeCasePin !== undefined ? { normalizeCase: normalizeCasePin } : {}),
 		})
 

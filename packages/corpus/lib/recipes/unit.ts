@@ -133,13 +133,13 @@ const tail = (random: () => number, loc: string, reg: string, pc: string): strin
 }
 
 /**
- * The identifier inside a rendered unit, or `undefined` when a standalone designator
+ * The identifier inside a rendered unit, or `null` when a standalone designator
  * or a letter-only id has none.
  */
-function unitIdentifier(unit: string): string | undefined {
+function unitIdentifier(unit: string): string | null {
 	const last = unit.replace(/^#\s*/, "").split(/\s+/).at(-1)
 
-	return last && /\d/.test(last) ? last : undefined
+	return last && /\d/.test(last) ? last : null
 }
 
 // `full-comma-bare` writes the identifier with no designator at all, the one unit surface carrying no

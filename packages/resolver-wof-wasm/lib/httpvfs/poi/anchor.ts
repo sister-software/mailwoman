@@ -61,12 +61,12 @@ export async function resolveAnchorCenter(
 
 	const { localityText, regionText } = splitAnchor(trimmed)
 
-	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
+	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null = null
 
 	if (regionText) {
 		const regionHits = await lookup.findPlace({ text: regionText, placetype: "region", limit: 1 })
 
-		bbox = regionHits[0]?.bbox
+		bbox = regionHits[0]?.bbox ?? null
 	}
 
 	if (!localityText) return null

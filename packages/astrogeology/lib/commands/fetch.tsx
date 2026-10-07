@@ -35,8 +35,8 @@ interface Options {
 
 const KINDS: readonly PlanetarySourceKind[] = ["nomenclature", "dem"]
 
-function parseKinds(value: string | undefined): readonly PlanetarySourceKind[] {
-	if (value === undefined) return KINDS
+function parseKinds(value: string | null): readonly PlanetarySourceKind[] {
+	if (value === null) return KINDS
 
 	if (KINDS.includes(value as PlanetarySourceKind)) return [value as PlanetarySourceKind]
 
@@ -47,7 +47,7 @@ async function fetchSources(options: Options, report: (line: string) => void): P
 	const body = parseBody(options.body)
 	const lines: string[] = []
 
-	for (const kind of parseKinds(options.kind)) {
+	for (const kind of parseKinds(options.kind ?? null)) {
 		const source = sourceFor(body, kind)
 		const fetched = await downloadPinned(source, { onProgress: (message) => report(`${source.id}: ${message}`) })
 

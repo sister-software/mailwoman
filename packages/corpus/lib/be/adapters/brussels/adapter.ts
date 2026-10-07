@@ -246,21 +246,21 @@ const NIS_CODED_NAME = /^(\d+)\s*\((.*)\)$/u
  * a prefix the publisher writes rather than parsing a name: a changed shape must reach a
  * reader as the publisher's own value instead of as a guess at what the name inside might be.
  *
- * A value of that shape whose parentheses hold an empty string answers `undefined`,
+ * A value of that shape whose parentheses hold an empty string answers `null`,
  * so the caller refuses the row rather than writing a NIS code into a locality.
  *
- * @returns The name, or `undefined` for an absent value and for a code with an empty name.
+ * @returns The name, or `null` for an absent value and for a code with an empty name.
  */
-export function placeNameWithoutNISCode(value: string | undefined): string | undefined {
+export function placeNameWithoutNISCode(value: string | null): string | null {
 	const trimmed = value?.trim()
 
-	if (!trimmed) return undefined
+	if (!trimmed) return null
 
 	const coded = NIS_CODED_NAME.exec(trimmed)
 
 	if (!coded) return trimmed
 
-	return coded[2]!.trim() || undefined
+	return coded[2]!.trim() || null
 }
 
 /**
@@ -337,19 +337,19 @@ export async function readBrusselsComponents(
 		if (feature.name === "ad:ThoroughfareName") {
 			const street = thoroughfareName(feature)
 
-			if (street !== undefined) {
+			if (street !== null) {
 				streets.set(id, street)
 			}
 		} else if (feature.name === "ad:PostalDescriptor") {
 			const postcode = postalDescriptorCode(feature)
 
-			if (postcode !== undefined) {
+			if (postcode !== null) {
 				postcodes.set(id, postcode)
 			}
 		} else if (adminUnitLevel(feature) === MUNICIPALITY_LEVEL) {
 			const municipality = placeNameWithoutNISCode(placeName(feature))
 
-			if (municipality !== undefined) {
+			if (municipality !== null) {
 				municipalities.set(id, municipality)
 			}
 		}
@@ -451,10 +451,10 @@ export function createBrusselsAdapter(): CorpusAdapter {
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					// `designatorsByType` leaves out a designator the publisher marked void, so a void number
-					// and an absent one both read as undefined and `voidDesignatorTypes` separates them below.
+					// and an absent one both read as null and `voidDesignatorTypes` separates them below.
 					const house = designator(designatorsByType(address), HOUSE_NUMBER_DESIGNATOR)
 
-					if (house === undefined) {
+					if (house === null) {
 						// A void number is a value this run could not read and an absent one is
 						// a number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
@@ -472,14 +472,14 @@ export function createBrusselsAdapter(): CorpusAdapter {
 					// exactly the nine addresses whose postal zone is empty.
 					const slots = componentHrefs(address)
 
-					let street: string | undefined
-					let postcode: string | undefined
-					let locality: string | undefined
+					let street: string | null = null
+					let postcode: string | null = null
+					let locality: string | null = null
 
 					for (const href of slots) {
 						const key = componentJoinKey(href)
 
-						if (key === undefined) continue
+						if (key === null) continue
 
 						street = index.streets.get(key) ?? street
 						postcode = index.postcodes.get(key) ?? postcode
@@ -488,7 +488,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 						locality = index.municipalities.get(key) ?? locality
 					}
 
-					if (postcode === undefined && slots.length < COMPONENTS_PER_ADDRESS) {
+					if (postcode === null && slots.length < COMPONENTS_PER_ADDRESS) {
 						// The publisher wrote the postal-zone reference empty.
 						// The row is refused and reported rather than yielded with the postcode missing,
 						// because an unstated value is not an address without a postcode.
@@ -499,7 +499,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 
 					// A component the index cannot answer is a street, postcode or locality this run could not read.
 					// A row emitted without it would record an absence the publisher never stated.
-					if (street === undefined || postcode === undefined || locality === undefined) {
+					if (street === null || postcode === null || locality === null) {
 						refused.unjoined++
 
 						continue

@@ -152,7 +152,7 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 	}
 
 	const majorOption = stringValue(parsed.values, "major")
-	const major = majorOption === undefined ? await thisMajorVersion() : Number.parseInt(majorOption, 10)
+	const major = majorOption === null ? await thisMajorVersion() : Number.parseInt(majorOption, 10)
 
 	if (!Number.isFinite(major)) throw new CLIUsageError(`--major must be an integer, got ${stringifyJSON(majorOption)}.`)
 
@@ -238,12 +238,12 @@ async function issue(parsed: ParsedCommand): Promise<number> {
  * Why a token may not be written: this build cannot verify it, so writing it would
  * configure a key the runtime reads as unknown on every invocation.
  *
- * `undefined` for a token that verifies.
+ * `null` for a token that verifies.
  */
-function refusalFor(verification: LicenseKeyVerification): string | undefined {
+function refusalFor(verification: LicenseKeyVerification): string | null {
 	switch (verification.status) {
 		case "valid":
-			return undefined
+			return null
 		case "expired":
 			return `this token expired on ${verification.payload.expires}; refresh it or purchase again.`
 		case "unknown_key":
@@ -260,10 +260,10 @@ function refusalFor(verification: LicenseKeyVerification): string | undefined {
  * the license's public status is the one thing worth asking about such a token,
  * since it identifies whether the action is an upgrade or a purchase.
  */
-function licenseIDOf(verification: LicenseKeyVerification, token: string): string | undefined {
+function licenseIDOf(verification: LicenseKeyVerification, token: string): string | null {
 	const payload = "payload" in verification ? verification.payload : decodeLicenseKeyPayload(token)
 
-	return payload && isSelfServicePayload(payload) ? payload.lid : undefined
+	return payload && isSelfServicePayload(payload) ? payload.lid : null
 }
 
 async function adopt(parsed: ParsedCommand): Promise<number> {

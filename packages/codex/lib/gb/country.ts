@@ -76,7 +76,7 @@ const COUNTRY_NAME_TO_CODE: ReadonlyMap<string, UkCountryCode> = (() => {
  *
  * Accepts `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
  */
-export function lookupUkCountry(input: string | null | undefined): UkCountryCode | null {
+export function lookupUkCountry(input: string | null): UkCountryCode | null {
 	if (!input || typeof input !== "string") return null
 	const upper = input.trim().toUpperCase()
 

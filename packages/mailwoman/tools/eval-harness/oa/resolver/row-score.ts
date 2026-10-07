@@ -49,8 +49,8 @@ export function scoreResolvedRow(row: OARow, resolved: Resolved[], localityMatch
 	const regResolved = resolved.find((r) => r.placetype === "region")
 
 	return {
-		locMatch: localityMatches(row.expected.locality, locNode),
-		regMatch: regionMatches(regResolved?.name, row.expected.region),
+		locMatch: localityMatches(row.expected.locality ?? null, locNode ?? null),
+		regMatch: regionMatches(regResolved?.name ?? null, row.expected.region ?? null),
 		resolved: !!best,
 		err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
 		resolvedLoc: locRaw,

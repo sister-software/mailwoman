@@ -28,19 +28,19 @@ import {
 } from "#weights/families"
 
 /**
- * Returns the family that claims a comma segment of the input, or `undefined`.
+ * Returns the family that claims a comma segment of the input, or `null`.
  *
  * The `weights-family` repository check rejects a script claimed by two families,
  * so declaration order does not affect the result.
  */
-function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): string | undefined {
+function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): string | null {
 	for (const entry of FAMILIES) {
 		if (!entry.routingScripts) continue
 
 		if (carriesFamilySegmentFor(shape, entry.routingScripts)) return entry.family
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -48,7 +48,7 @@ function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">):
  * script that a declared family routes.
  */
 export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): boolean {
-	return familyForSegment(shape) !== undefined
+	return familyForSegment(shape) !== null
 }
 
 /**
@@ -69,7 +69,7 @@ export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
 		if (!family.routingScripts) continue
 
 		if (leadsWithFamilyScriptFor(shape, family.routingScripts)) {
-			return { family: family.family, source: RouteSource.Script, confidence: 1 }
+			return { family: family.family, source: RouteSource.Script, confidence: 1, abstainedBecause: null }
 		}
 	}
 
@@ -101,7 +101,7 @@ export function routeFamilyWithPostcode(text: string): RoutingDecision {
 	// A family without routing scripts is reachable only through the caller's locale.
 	if (!family?.routingScripts) return shipped
 
-	return { family: family.family, source: RouteSource.Locale, confidence: candidate.confidence }
+	return { family: family.family, source: RouteSource.Locale, confidence: candidate.confidence, abstainedBecause: null }
 }
 
 /**
@@ -124,16 +124,16 @@ const POSTCODE_ROUTE_CONFIDENCE = 0.9
 export function routeFamilyForText(text: string): RoutingDecision {
 	const shape = computeQueryShape(text)
 	const candidate = scoreByScript(shape)
-	const hinted = candidate ? scriptFamilyBase(candidate.locale) : undefined
+	const hinted = candidate ? scriptFamilyBase(candidate.locale) : null
 
-	if (hinted) return { family: hinted, source: RouteSource.Script, confidence: 1 }
+	if (hinted) return { family: hinted, source: RouteSource.Script, confidence: 1, abstainedBecause: null }
 
 	const segment = familyForSegment(shape)
 
-	if (segment) return { family: segment, source: RouteSource.ScriptSegment, confidence: 1 }
+	if (segment) return { family: segment, source: RouteSource.ScriptSegment, confidence: 1, abstainedBecause: null }
 
 	return {
-		family: undefined,
+		family: null,
 		source: RouteSource.Caller,
 		confidence: 1,
 		abstainedBecause: "no declared family names a script this input is written in",
@@ -141,11 +141,11 @@ export function routeFamilyForText(text: string): RoutingDecision {
 }
 
 /**
- * Returns the weights family this text routes to, or undefined when no family applies.
+ * Returns the weights family this text routes to, or null when no family applies.
  *
  * {@linkcode routeFamilyForText} also returns the rule that selected the family.
  */
-export function scriptFamilyForText(text: string): string | undefined {
+export function scriptFamilyForText(text: string): string | null {
 	return routeFamilyForText(text).family
 }
 

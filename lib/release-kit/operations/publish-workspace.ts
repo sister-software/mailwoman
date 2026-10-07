@@ -52,7 +52,7 @@ export const publishWorkspaceOperation = defineOperation({
 			throw new Error("publish-workspace: --workspace ./<path> or RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE is required")
 		}
 
-		let planDigest: string | undefined
+		let planDigest: string | null = null
 
 		if (input.plan) {
 			planDigest = (await assertPlanHolds(context.repoRoot, input.plan)).planDigest

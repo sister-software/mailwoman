@@ -135,7 +135,7 @@ interface RecordOrigin {
 	 * Identifiers are unique within a table.
 	 */
 	table: string
-	id?: string
+	id: string | null
 }
 
 interface MergeState {
@@ -147,7 +147,7 @@ interface MergeState {
 	 * The validator reports only the second use.
 	 */
 	firstClaims: Map<string, Map<string, string>>
-	version?: string
+	version: string | null
 }
 
 function sourced(file: string, issues: readonly ValidationIssue[]): SourcedIssue[] {
@@ -175,8 +175,8 @@ function readSourceJSON(file: GeographicModelSourceFile, issues: SourcedIssue[])
 	}
 }
 
-function claim(state: MergeState, table: string, id: string | undefined, file: string): void {
-	if (id === undefined) return
+function claim(state: MergeState, table: string, id: string | null, file: string): void {
+	if (id === null) return
 
 	const claims = state.firstClaims.get(table) ?? new Map<string, string>()
 
@@ -187,10 +187,10 @@ function claim(state: MergeState, table: string, id: string | undefined, file: s
 	}
 }
 
-function recordID(entry: unknown): string | undefined {
-	if (!isPlainObject(entry)) return undefined
+function recordID(entry: unknown): string | null {
+	if (!isPlainObject(entry)) return null
 
-	return typeof entry.id === "string" ? entry.id : undefined
+	return typeof entry.id === "string" ? entry.id : null
 }
 
 function readManifestFile(state: MergeState, file: GeographicModelSourceFile, value: unknown): void {
@@ -303,6 +303,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 		tables: { relations: [], concepts: [], mappings: [], observations: [], derivedFacts: [] },
 		origins: new Map(),
 		firstClaims: new Map(),
+		version: null,
 	}
 
 	const ordered = files.toSorted((left, right) => compareIdentifiers(left.path, right.path))

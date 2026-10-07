@@ -295,7 +295,7 @@ export class SoilCapabilityLookup implements Disposable {
 		this.#database.destroy()
 	}
 
-	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
+	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | null {
 		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
@@ -306,7 +306,7 @@ export class SoilCapabilityLookup implements Disposable {
 	 * This affects only the `surveyArea` label.
 	 * A spatial index would be needed to avoid the linear scan for thousands of areas.
 	 */
-	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
+	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | null {
 		for (const [index, bounds] of this.#bounds.entries()) {
 			if (
 				longitude >= bounds.minLon &&
@@ -314,11 +314,11 @@ export class SoilCapabilityLookup implements Disposable {
 				latitude >= bounds.minLat &&
 				latitude <= bounds.maxLat
 			) {
-				return this.#surveyAreaByBounds[index]
+				return this.#surveyAreaByBounds[index] ?? null
 			}
 		}
 
-		return undefined
+		return null
 	}
 }
 

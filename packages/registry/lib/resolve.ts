@@ -292,10 +292,10 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
  */
 export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	return [
-		geoCellKey((r) => r.address?.geocode?.coordinate),
-		exactKey((r) => r.address?.canonicalKey),
-		exactKey((r) => r.phone),
-		exactKey((r) => r.email),
+		geoCellKey((r) => r.address?.geocode?.coordinate ?? null),
+		exactKey((r) => r.address?.canonicalKey ?? null),
+		exactKey((r) => r.phone ?? null),
+		exactKey((r) => r.email ?? null),
 	]
 }
 

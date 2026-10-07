@@ -68,11 +68,7 @@ interface PlaceRow {
  * That analogue stores the nearest ancestor's name for each tag.
  * This function receives one `PlaceRow` per level and reads the chain directly.
  */
-function chainOf(
-	byID: Map<number, PlaceRow>,
-	resolve: (id: number) => PlaceRow | undefined,
-	startID: number
-): PlaceRow[] {
+function chainOf(byID: Map<number, PlaceRow>, resolve: (id: number) => PlaceRow | null, startID: number): PlaceRow[] {
 	const out: PlaceRow[] = []
 	let id = startID
 
@@ -177,7 +173,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 
 			const outsideStmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 
-			const resolveOutside = (id: number): PlaceRow | undefined => {
+			const resolveOutside = (id: number): PlaceRow | null => {
 				const row = getRow<PlaceRow>(outsideStmt, id)
 
 				if (row) {

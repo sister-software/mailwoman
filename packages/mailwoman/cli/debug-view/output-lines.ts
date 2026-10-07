@@ -43,7 +43,7 @@ export interface OutputLine {
  *
  * The formatter trims trailing zeroes so a four-decimal centroid still prints as four.
  */
-function formatCoordinate(lat: number | null | undefined, lon: number | null | undefined): string {
+function formatCoordinate(lat: number | null, lon: number | null): string {
 	if (lat == null || lon == null) return "unresolved"
 
 	return `${Number(lat.toFixed(6))}, ${Number(lon.toFixed(6))}`

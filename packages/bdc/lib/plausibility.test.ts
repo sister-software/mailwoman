@@ -66,8 +66,8 @@ const PROVIDER_DSL = 130_002
 
 const SPRINGFIELD_CENTROID = { lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude }
 
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : undefined
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : null
 }
 
 function fixtureRows(): BDCAvailabilityRow[] {

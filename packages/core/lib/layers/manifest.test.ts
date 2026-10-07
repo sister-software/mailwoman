@@ -125,7 +125,7 @@ describe("layer coverage IO", () => {
 		})
 
 		// An unsurveyed cell reads as `undefined`, which means unknown coverage.
-		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
+		expect(await readLayerCoverage(db, 9999)).toBeNull()
 	})
 
 	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
@@ -178,7 +178,7 @@ describe("layer coverage IO", () => {
 			observedRows: lastCell,
 		})
 
-		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
+		expect(await readLayerCoverage(db, cellCount + 1000)).toBeNull()
 	})
 })
 
@@ -248,7 +248,7 @@ describe("coverage cell invariants", () => {
 			])
 		).rejects.toThrow(/completeness/)
 
-		expect(await readLayerCoverage(db, 1)).toBeUndefined()
+		expect(await readLayerCoverage(db, 1)).toBeNull()
 	})
 
 	it("refuses a corrupted row at READ time too", async () => {

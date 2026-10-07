@@ -68,8 +68,8 @@ export class HTTPVFSAddressPointLookup {
 	async find(query: {
 		street: string
 		number: string
-		postcode?: string
-		locality?: string
+		postcode?: string | null
+		locality?: string | null
 	}): Promise<StreetPointHit | null> {
 		if (!(await this.#hasTable())) return null
 		const streetNorm = normalizeStreetForKeyLocale(query.street, this.#locale)
@@ -134,7 +134,7 @@ export class HTTPVFSInterpolator {
 		this.#hasTable = memoizeResettable(() => tableExists(database, "street_segment"))
 	}
 
-	async find(query: { street: string; number: string; postcode?: string }): Promise<StreetInterpHit | null> {
+	async find(query: { street: string; number: string; postcode?: string | null }): Promise<StreetInterpHit | null> {
 		if (!(await this.#hasTable())) return null
 		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
@@ -213,8 +213,8 @@ interface SitusLike {
 	find(q: {
 		street: string
 		number: string
-		postcode?: string
-		locality?: string
+		postcode?: string | null
+		locality?: string | null
 	}): Promise<{ lat: number; lon: number } | null>
 }
 
@@ -222,7 +222,7 @@ interface InterpLike {
 	find(q: {
 		street: string
 		number: string
-		postcode?: string
+		postcode?: string | null
 	}): Promise<{ lat: number; lon: number; uncertaintyM: number } | null>
 }
 
@@ -237,12 +237,12 @@ interface InterpLike {
  * the conservative national default where under-coverage is the harmful error.
  */
 export async function resolveStreet(
-	street: string | undefined,
-	houseNumber: string | undefined,
-	postcode: string | undefined,
-	locality: string | undefined,
-	situs: SitusLike | undefined,
-	interp: InterpLike | undefined,
+	street: string | null,
+	houseNumber: string | null,
+	postcode: string | null,
+	locality: string | null,
+	situs: SitusLike | null,
+	interp: InterpLike | null,
 	interpRadiusCalibration = 1.95
 ): Promise<StreetResolution | null> {
 	const st = (street ?? "").trim()

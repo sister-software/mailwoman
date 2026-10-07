@@ -335,23 +335,23 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
  * Reads the provenance trailer from an FST binary, or returns `undefined`
  * when the file has none or it cannot be parsed.
  */
-export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
-	if (buf.length < HEADER_SIZE) return undefined
+export function readFSTProvenance(buf: Buffer): FSTProvenance | null {
+	if (buf.length < HEADER_SIZE) return null
 
-	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
+	if (!buf.subarray(0, 4).equals(MAGIC)) return null
 	const version = buf.readUInt16LE(4)
 
-	if (version < VERSION_WITH_METADATA) return undefined
+	if (version < VERSION_WITH_METADATA) return null
 	const provenanceOffset = buf.readUInt32LE(28)
 
-	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return undefined
+	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return null
 
 	try {
 		const jsonLen = buf.readUInt32LE(provenanceOffset)
 		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
 
-		return tryParsingJSON<FSTProvenance>(jsonStr) ?? undefined
+		return tryParsingJSON<FSTProvenance>(jsonStr) ?? null
 	} catch {
-		return undefined
+		return null
 	}
 }

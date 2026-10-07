@@ -363,9 +363,9 @@ describe("the support-0-is-absence rendering rule", () => {
 	const meta = { boardID: "board", measuredAt: "2026-08-05T00:00:00.000Z" }
 
 	it("renders a missing cell as absence, never as a zero", () => {
-		expect(formatAblationCell(undefined)).toBe(ABLATION_ABSENT)
-		expect(formatAblationCell(undefined)).not.toBe("0")
-		expect(formatAblationCell(undefined)).not.toContain("0")
+		expect(formatAblationCell(null)).toBe(ABLATION_ABSENT)
+		expect(formatAblationCell(null)).not.toBe("0")
+		expect(formatAblationCell(null)).not.toContain("0")
 	})
 
 	it("renders an explicitly zero-support cell the same way", () => {
@@ -379,8 +379,8 @@ describe("the support-0-is-absence rendering rule", () => {
 
 		// 0 of 2 broken is a measurement.
 		// It must not read like the unmeasured cell above.
-		expect(formatAblationCell(cell)).toBe("0/2")
-		expect(formatAblationCell(cell)).not.toBe(ABLATION_ABSENT)
+		expect(formatAblationCell(cell ?? null)).toBe("0/2")
+		expect(formatAblationCell(cell ?? null)).not.toBe(ABLATION_ABSENT)
 	})
 
 	it("puts the absence marker in the matrix and says what it means", () => {

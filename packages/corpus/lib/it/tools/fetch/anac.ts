@@ -184,7 +184,7 @@ export function itANACInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuild
  * letting {@linkcode downloadITANAC} reach the host to find out which branch it took.
  */
 export async function isANACEditionCurrent(
-	recorded: ANACEditionManifest | undefined,
+	recorded: ANACEditionManifest | null,
 	head: ANACEditionHead,
 	path: PathBuilderLike,
 	verifyDigest: boolean
@@ -256,7 +256,7 @@ export async function downloadITANAC(
 
 		const current =
 			!options.force &&
-			(await isANACEditionCurrent(recorded.get(filename), head, editionPath, options.verifyDigest ?? false))
+			(await isANACEditionCurrent(recorded.get(filename) ?? null, head, editionPath, options.verifyDigest ?? false))
 
 		if (current) {
 			report?.(`  ✓ ${edition} already current — no download.`)

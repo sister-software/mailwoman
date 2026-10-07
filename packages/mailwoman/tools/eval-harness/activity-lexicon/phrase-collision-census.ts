@@ -308,7 +308,7 @@ export function classifyVenueName(name: string, probe: string): VenueNameVerdict
 export function candidateSubjects(input: string): string[] {
 	const asked: string[] = []
 
-	matchPOISubject(input, undefined, (phrase) => {
+	matchPOISubject(input, null, (phrase) => {
 		asked.push(phrase)
 
 		return []
@@ -432,7 +432,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 
 		const probeTokens = tokenize(probe)
 		const seen = new Set<string>()
-		let claimed: boolean | undefined
+		let claimed: boolean | null = null
 
 		for (const { venue, tokens } of tokenized) {
 			if (!venue.name || seen.has(venue.name)) continue

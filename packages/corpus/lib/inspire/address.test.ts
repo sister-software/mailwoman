@@ -116,8 +116,8 @@ describe("codelistValue", () => {
 	})
 
 	it("answers undefined for an absent or empty URI", () => {
-		expect(codelistValue(undefined)).toBeUndefined()
-		expect(codelistValue("")).toBeUndefined()
+		expect(codelistValue(null)).toBeNull()
+		expect(codelistValue("")).toBeNull()
 	})
 })
 
@@ -141,7 +141,7 @@ describe("designatorsByType", () => {
 		// The publisher wrote `<ad:designator/>`, which means "no extension" rather than void.
 		expect(byType.get("addressNumberExtension")).toEqual([""])
 		// `designator` skips it, because an empty string is not a house-number part.
-		expect(designator(byType, "addressNumberExtension")).toBeUndefined()
+		expect(designator(byType, "addressNumberExtension")).toBeNull()
 		expect(designator(byType, "addressNumber")).toBe("3")
 		expect(designator(byType, "postalDeliveryIdentifier")).toBe("9901AA")
 	})
@@ -151,7 +151,7 @@ describe("designatorsByType", () => {
 		const byType = designatorsByType(address!)
 
 		expect(designator(byType, "addressNumberExtension", "addressNumber")).toBe("3")
-		expect(designator(byType, "buildingIdentifier")).toBeUndefined()
+		expect(designator(byType, "buildingIdentifier")).toBeNull()
 	})
 
 	it("answers an empty map for an address with no locator", async () => {
@@ -273,10 +273,10 @@ describe("componentJoinKey", () => {
 	})
 
 	it("answers undefined for an href that is neither a fragment nor a URL", () => {
-		expect(componentJoinKey("not a url")).toBeUndefined()
-		expect(componentJoinKey("")).toBeUndefined()
-		expect(componentJoinKey("   ")).toBeUndefined()
-		expect(componentJoinKey("#")).toBeUndefined()
+		expect(componentJoinKey("not a url")).toBeNull()
+		expect(componentJoinKey("")).toBeNull()
+		expect(componentJoinKey("   ")).toBeNull()
+		expect(componentJoinKey("#")).toBeNull()
 	})
 })
 
@@ -298,7 +298,7 @@ describe("the name and code readers", () => {
 	it("answers undefined for a void name rather than an empty string", async () => {
 		const [, country] = await features(CZ, "ad:AdminUnitName")
 
-		expect(placeName(country!)).toBeUndefined()
+		expect(placeName(country!)).toBeNull()
 	})
 
 	it("returns a postcode as the publisher wrote it, including a stripped leading zero", async () => {
@@ -329,14 +329,14 @@ describe("isVoid and voidReason", () => {
 		const element = childElement(address!, "ad:validFrom")
 
 		expect(isVoid(element)).toBe(true)
-		expect(voidReason(element)).toBeUndefined()
+		expect(voidReason(element)).toBeNull()
 	})
 
 	it("treats an absent element as not void, which a caller distinguishes from void", async () => {
 		const [address] = await features(NL, "ad:Address")
 
 		expect(isVoid(childElement(address!, "ad:nowhere"))).toBe(false)
-		expect(voidReason(childElement(address!, "ad:nowhere"))).toBeUndefined()
+		expect(voidReason(childElement(address!, "ad:nowhere"))).toBeNull()
 		expect(voidReason(childElement(address!, "ad:alternativeIdentifier"))).toBe("Unpopulated")
 	})
 })
@@ -449,7 +449,10 @@ describe("componentLinks", () => {
 	it("returns a reference carrying no title without one", async () => {
 		const [address] = await features(ES, "AD:Address")
 
-		expect(componentLinks(address!)).toEqual([{ href: "#ES.SDGC.PD.55.101.51002" }, { href: "#ES.SDGC.TN.55.101.1" }])
+		expect(componentLinks(address!)).toEqual([
+			{ href: "#ES.SDGC.PD.55.101.51002", title: null },
+			{ href: "#ES.SDGC.TN.55.101.1", title: null },
+		])
 	})
 })
 

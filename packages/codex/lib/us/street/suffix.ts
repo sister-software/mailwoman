@@ -127,9 +127,9 @@ export interface StreetSuffixMatch<S extends StreetSuffix = StreetSuffix> {
  * and its preferred abbreviation.
  */
 export function lookupStreetSuffix<S extends StreetSuffix>(suffix: S): StreetSuffixMatch<S>
-export function lookupStreetSuffix(input: string | null | undefined): StreetSuffixMatch | null
+export function lookupStreetSuffix(input: string | null): StreetSuffixMatch | null
 
-export function lookupStreetSuffix(input: string | null | undefined): StreetSuffixMatch | null {
+export function lookupStreetSuffix(input: string | null): StreetSuffixMatch | null {
 	if (!input || typeof input !== "string") return null
 	const suffix = US_STREET_SUFFIX_LOOKUP.get(input.trim().toLowerCase())
 

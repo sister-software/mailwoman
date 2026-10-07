@@ -84,8 +84,8 @@ describe("postalRegimesForCountry", () => {
 })
 
 describe("postalRegimeByID", () => {
-	it("finds a regime and answers undefined for an unknown id", () => {
+	it("finds a regime and answers null for an unknown id", () => {
 		expect(postalRegimeByID("us-military-mail")?.kind).toBe(RegimeKind.Routing)
-		expect(postalRegimeByID("no-such-regime")).toBeUndefined()
+		expect(postalRegimeByID("no-such-regime")).toBeNull()
 	})
 })

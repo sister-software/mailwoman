@@ -103,7 +103,7 @@ async function readCompileScope(repoRoot: string, workspace: string): Promise<Co
 	return scope
 }
 
-function* targetStrings(value: ExportValue | undefined): Generator<string> {
+function* targetStrings(value: ExportValue | null): Generator<string> {
 	if (typeof value === "string") {
 		yield value
 	} else if (Array.isArray(value)) {

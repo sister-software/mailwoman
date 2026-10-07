@@ -14,6 +14,6 @@ import type { MapPlaceRenderSpec, ResolvedMapPlace } from "#map/place-render"
 /**
  * Memoize the render spec for a resolved place; `null` in → `null` out (no geometry to draw).
  */
-export function useMapPlaceRender(place: ResolvedMapPlace | null | undefined): MapPlaceRenderSpec | null {
+export function useMapPlaceRender(place: ResolvedMapPlace | null): MapPlaceRenderSpec | null {
 	return useMemo(() => (place ? computeMapPlaceRenderSpec(place) : null), [place])
 }

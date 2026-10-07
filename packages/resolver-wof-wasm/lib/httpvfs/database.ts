@@ -226,14 +226,14 @@ export async function tableExists(database: RangeDatabase, name: string): Promis
  * A rejection clears the memo so a transient failure can retry.
  */
 export function memoizeResettable<T>(fn: () => Promise<T>): () => Promise<T> {
-	let memo: Promise<T> | undefined
+	let memo: Promise<T> | null = null
 
 	return () => {
 		if (!memo) {
 			memo = fn()
 
 			memo.catch(() => {
-				memo = undefined
+				memo = null
 			})
 		}
 

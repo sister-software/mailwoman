@@ -134,8 +134,8 @@ export function localityValuesInDocumentOrder(roots: readonly AddressNode[]): st
 /**
  * Returns the first value of {@link localityValuesInDocumentOrder}.
  */
-export function firstLocalityValue(roots: readonly AddressNode[]): string | undefined {
-	return localityValuesInDocumentOrder(roots)[0]
+export function firstLocalityValue(roots: readonly AddressNode[]): string | null {
+	return localityValuesInDocumentOrder(roots)[0] ?? null
 }
 
 function collectInDocumentOrder(nodes: readonly AddressNode[], tag: string, out: string[], seen: Set<string>): void {
@@ -323,7 +323,7 @@ export async function findPostcodeCountryScope(
 		const ownPostcode = pcHolders.get(country)
 
 		const contradicted =
-			ownPostcode !== undefined &&
+			ownPostcode != null &&
 			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > thresholdKm
 
 		if (country !== defaultCountry && !contradicted && !verdicts.has(country)) {
@@ -370,7 +370,7 @@ export function stampPostcodeCountryScope(roots: readonly AddressNode[], scope: 
 
 			postcode_country_scope_evidence: scope.evidence,
 
-			...(scope.distanceKm !== undefined ? { postcode_country_scope_km: scope.distanceKm } : {}),
+			...(scope.distanceKm != null ? { postcode_country_scope_km: scope.distanceKm } : {}),
 		}
 	}
 }

@@ -161,7 +161,7 @@ export interface CoverageReport {
 	/**
 	 * Holds the corpus version that the training config references.
 	 */
-	configuredCorpusVersion?: string
+	configuredCorpusVersion: string | null
 	/**
 	 * Explains the mismatch when the counted corpus differs from the configured corpus.
 	 */
@@ -317,10 +317,10 @@ export function sameCorpusVersion(a: string, b: string): boolean {
 /**
  * Reads the corpus version from a training config's `corpus_dir`.
  *
- * Returns `undefined` when the config is missing or has no `corpus_dir`.
+ * Returns `null` when the config is missing or has no `corpus_dir`.
  */
-export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | undefined> {
-	if (!(await pathExists(configPath))) return undefined
+export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | null> {
+	if (!(await pathExists(configPath))) return null
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a training config is a few hundred lines, read sync
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
@@ -334,10 +334,10 @@ export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): 
 
 		if (versioned !== -1 && segments[versioned + 1]) return segments[versioned + 1]!.replace(/^v/, "")
 
-		return segments.at(-1)?.replace(/^corpus-v?/, "")
+		return segments.at(-1)?.replace(/^corpus-v?/, "") ?? null
 	}
 
-	return undefined
+	return null
 }
 
 /**

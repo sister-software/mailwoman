@@ -29,12 +29,14 @@ await runIngestChunkScript({
 	run: async (database: DatabaseClient<FloodDatabase>, values, chunk) =>
 		ingestFloodChunk(database, {
 			source: await createGeodatabaseFeatureSource({
-				geodatabasePath: requiredArgument("flood ingest-chunk", "gdb", values.gdb),
+				geodatabasePath: requiredArgument("flood ingest-chunk", "gdb", values.gdb ?? null),
 				...(values.layer ? { layer: values.layer } : {}),
-				objectIDFrom: Number(requiredArgument("flood ingest-chunk", "object-id-from", values["object-id-from"])),
-				objectIDTo: Number(requiredArgument("flood ingest-chunk", "object-id-to", values["object-id-to"])),
+				objectIDFrom: Number(
+					requiredArgument("flood ingest-chunk", "object-id-from", values["object-id-from"] ?? null)
+				),
+				objectIDTo: Number(requiredArgument("flood ingest-chunk", "object-id-to", values["object-id-to"] ?? null)),
 				declaredFeatureCount: Number(
-					requiredArgument("flood ingest-chunk", "declared-feature-count", values["declared-feature-count"])
+					requiredArgument("flood ingest-chunk", "declared-feature-count", values["declared-feature-count"] ?? null)
 				),
 			}),
 			indexResolution: chunk.indexResolution,

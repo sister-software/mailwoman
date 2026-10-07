@@ -298,14 +298,14 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 	void logits
 	void emissions
 
-	const channel = (c: { confidence?: unknown } | undefined): unknown =>
+	const channel = (c: { confidence?: unknown } | null): unknown =>
 		c && typeof c === "object" ? { confidence: c.confidence } : c
 
 	return {
 		...rest,
-		anchor: channel(anchor),
-		gazetteer: channel(gazetteer),
-		country: channel(country),
+		anchor: channel(anchor ?? null),
+		gazetteer: channel(gazetteer ?? null),
+		country: channel(country ?? null),
 		matrices_omitted:
 			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
 			"full_parse_trace: true for the raw numbers.",

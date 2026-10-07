@@ -122,7 +122,7 @@ export async function readCORDISArchiveHead(
  * The `HEAD` decides first, then the file's own length, then, when asked, its digest.
  */
 export async function isCORDISArchiveCurrent(
-	recorded: CORDISArchiveManifest | undefined,
+	recorded: CORDISArchiveManifest | null,
 	head: CORDISArchiveHead,
 	path: PathBuilderLike,
 	verifyDigest: boolean
@@ -227,7 +227,7 @@ export async function downloadCORDIS(
 
 		const current =
 			!options.force &&
-			(await isCORDISArchiveCurrent(recorded.get(filename), head, archivePath, options.verifyDigest ?? false))
+			(await isCORDISArchiveCurrent(recorded.get(filename) ?? null, head, archivePath, options.verifyDigest ?? false))
 
 		if (current) {
 			report?.(`  ✓ ${programme} already current — no download.`)

@@ -121,12 +121,12 @@ function planRecord<T>(build: (plan: ShopPlan) => T): Record<ShopPlan["code"], T
 	return Object.fromEntries(SHOP_PLANS.map((plan) => [plan.code, build(plan)])) as Record<ShopPlan["code"], T>
 }
 
-async function findListed<T>(list: AsyncIterable<T>, matches: (item: T) => boolean): Promise<T | undefined> {
+async function findListed<T>(list: AsyncIterable<T>, matches: (item: T) => boolean): Promise<T | null> {
 	for await (const item of list) {
 		if (matches(item)) return item
 	}
 
-	return undefined
+	return null
 }
 
 function withDrift<T extends ProvisionedObject>(object: T, drift: string[]): T {

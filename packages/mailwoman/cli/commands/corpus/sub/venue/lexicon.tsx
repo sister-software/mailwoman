@@ -46,7 +46,7 @@ export const spec = {
  *
  * A bare path keeps region `""`.
  */
-function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
+function parseExtracts(extractSpec: string | null | undefined): Array<{ path: string; region: string }> {
 	if (!extractSpec) return []
 
 	return extractDelimited(extractSpec).map((entry) => {

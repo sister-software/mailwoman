@@ -9,20 +9,20 @@
 
 import type Stripe from "stripe"
 
-export function idOf(value: string | { id: string } | null | undefined): string | undefined {
-	return typeof value === "string" ? value : value?.id
+export function idOf(value: string | { id: string } | null | undefined): string | null {
+	return typeof value === "string" ? value : (value?.id ?? null)
 }
 
 /**
  * The subscription an invoice bills.
  */
-export function invoiceSubscriptionID(invoice: Stripe.Invoice): string | undefined {
+export function invoiceSubscriptionID(invoice: Stripe.Invoice): string | null {
 	return idOf(invoice.parent?.subscription_details?.subscription)
 }
 
 /**
  * The Price a line bills.
  */
-export function linePriceID(line: Stripe.InvoiceLineItem): string | undefined {
+export function linePriceID(line: Stripe.InvoiceLineItem): string | null {
 	return idOf(line.pricing?.price_details?.price)
 }

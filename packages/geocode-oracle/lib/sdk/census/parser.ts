@@ -39,13 +39,13 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  */
 const HOUSE_NUMBER_PREFIX = /^(\d+)\s+\S/
 
-function joinParts(...parts: Array<string | undefined>): string | undefined {
+function joinParts(...parts: Array<string | undefined>): string | null {
 	const joined = parts
 		.map((part) => part?.trim())
 		.filter((part): part is string => Boolean(part))
 		.join(" ")
 
-	return joined || undefined
+	return joined || null
 }
 
 /**
@@ -150,7 +150,7 @@ export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match:
 		addressID: createPostalAddressID({
 			coordinate,
 			address: match.matchedAddress,
-			state: regionPrefix(components.region),
+			state: regionPrefix(components.region) ?? undefined,
 		}),
 		// The Census geocoder has no partial-match signal: a match is either present in `addressMatches`
 		// or absent, so a caller wanting its quality reads `raw.tigerLine` and the address range instead.

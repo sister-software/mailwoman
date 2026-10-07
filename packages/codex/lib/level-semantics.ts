@@ -462,13 +462,13 @@ function splitLocaleTag(locale: string): { language: string; region: string | un
 }
 
 /**
- * Returns the language family for a locale, or `undefined` when no lexicon exists for it.
+ * Returns the language family for a locale, or `null` when no lexicon exists for it.
  */
-function localeFamily(locale: string): LevelLocaleFamily | undefined {
+function localeFamily(locale: string): LevelLocaleFamily | null {
 	const { language } = splitLocaleTag(locale)
 	const family = NORWEGIAN_LANGUAGE_TAGS.has(language) ? "no" : language
 
-	return LEVEL_LOCALE_FAMILIES.has(family as LevelLocaleFamily) ? (family as LevelLocaleFamily) : undefined
+	return LEVEL_LOCALE_FAMILIES.has(family as LevelLocaleFamily) ? (family as LevelLocaleFamily) : null
 }
 
 /**
@@ -520,45 +520,45 @@ const FAMILY_DEFAULT_ORDINAL_CONVENTION: Partial<Record<LevelLocaleFamily, Level
 /**
  * Returns the locale's own convention, then the family default, then `undefined`.
  */
-function resolveOrdinalConvention(locale: string): LevelOrdinalConvention | undefined {
+function resolveOrdinalConvention(locale: string): LevelOrdinalConvention | null {
 	const { language, region } = splitLocaleTag(locale)
 	const normalized = region ? `${language}-${region}` : language
 
 	if (LEVEL_ORDINAL_CONVENTIONS[normalized]) {
-		return LEVEL_ORDINAL_CONVENTIONS[normalized]
+		return LEVEL_ORDINAL_CONVENTIONS[normalized] ?? null
 	}
 
 	const family = localeFamily(locale)
 
-	return family ? FAMILY_DEFAULT_ORDINAL_CONVENTION[family] : undefined
+	return family ? (FAMILY_DEFAULT_ORDINAL_CONVENTION[family] ?? null) : null
 }
 
 /**
  * Finds a designator row by any variant in the locale's language family, ignoring case.
  *
- * Returns `undefined` when the family or the token is unknown.
+ * Returns `null` when the family or the token is unknown.
  */
-export function lookupLevelDesignator(designator: string, locale: string): LevelDesignatorRow | undefined {
-	if (!designator || typeof designator !== "string") return undefined
+export function lookupLevelDesignator(designator: string, locale: string): LevelDesignatorRow | null {
+	if (!designator || typeof designator !== "string") return null
 	const family = localeFamily(locale)
 
-	if (!family) return undefined
+	if (!family) return null
 
-	return LEVEL_DESIGNATOR_LOOKUP_BY_FAMILY.get(family)?.get(designator.trim().toLowerCase())
+	return LEVEL_DESIGNATOR_LOOKUP_BY_FAMILY.get(family)?.get(designator.trim().toLowerCase()) ?? null
 }
 
 /**
  * Returns whether `input` is a designator in the locale's language family, ignoring case.
  */
 export function isLevelDesignatorToken(input: unknown, locale: string): boolean {
-	return typeof input === "string" && lookupLevelDesignator(input, locale) !== undefined
+	return typeof input === "string" && lookupLevelDesignator(input, locale) !== null
 }
 
 /**
  * Maps a designator and number to a signed floor ordinal in `locale`, with ground at 0.
  *
- * Returns `undefined` when the family or designator is unknown, when the designator is
- * `"special"`, or when a `"numbered"` designator lacks a number or a resolvable convention.
+ * Returns `null` when the family or designator is unknown, when the designator is `"special"`,
+ * or when a `"numbered"` designator lacks a number or a resolvable convention.
  * A bare "en" locale has no convention.
  *
  * @example
@@ -569,10 +569,10 @@ export function isLevelDesignatorToken(input: unknown, locale: string): boolean 
  * 	levelToOrdinal("F", 1, "ja-JP") // → 0 (JP: 1F is ground)
  * 	levelToOrdinal("B", 1, "ja-JP") // → -1 (JP: B1F)
  */
-export function levelToOrdinal(designator: string, number: number | undefined, locale: string): number | undefined {
+export function levelToOrdinal(designator: string, number: number | null, locale: string): number | null {
 	const row = lookupLevelDesignator(designator, locale)
 
-	if (!row) return undefined
+	if (!row) return null
 
 	switch (row.kind) {
 		case "ground":
@@ -582,20 +582,20 @@ export function levelToOrdinal(designator: string, number: number | undefined, l
 		case "fractionalBelowGround":
 			return -1
 		case "special":
-			return undefined
+			return null
 		case "fixedOrdinal":
-			return row.fixedOrdinal
+			return row.fixedOrdinal ?? null
 		case "basement":
 			return -Math.abs(number ?? 1)
 		case "numbered": {
-			if (number === undefined) return undefined
+			if (number == null) return null
 			const convention = resolveOrdinalConvention(locale)
 
-			if (!convention) return undefined
+			if (!convention) return null
 
 			return convention.firstNumberedIsGround ? number - 1 : number
 		}
 		default:
-			return undefined
+			return null
 	}
 }

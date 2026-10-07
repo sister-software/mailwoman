@@ -171,9 +171,9 @@ describe("full Overture snapshot + curated overlay", () => {
 
 		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`)
 		// are not emitted as standalone categories, or their id-phrase would shadow the curated synonym.
-		expect(getPOICategory("coffee_shop")).toBeUndefined()
-		expect(getPOICategory("grocery_store")).toBeUndefined()
-		expect(getPOICategory("hiking_trail")).toBeUndefined()
+		expect(getPOICategory("coffee_shop")).toBeNull()
+		expect(getPOICategory("grocery_store")).toBeNull()
+		expect(getPOICategory("hiking_trail")).toBeNull()
 
 		expect(lookupPOICategory("coffee shop").map((m) => m.category.id)).toEqual(["cafe"])
 		expect(lookupPOICategory("hiking trail").map((m) => m.category.id)).toEqual(["trail"])

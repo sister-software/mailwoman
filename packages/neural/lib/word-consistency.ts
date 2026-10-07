@@ -55,7 +55,7 @@ const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
  * with an optional confidence floor.
  * Any other value disables it.
  */
-export function parseWordConsistencyEnv(value: string | undefined): boolean | WordConsistencyOpts {
+export function parseWordConsistencyEnv(value: string | null): boolean | WordConsistencyOpts {
 	if (value === "1") return true
 
 	if (value?.startsWith("conditional")) {

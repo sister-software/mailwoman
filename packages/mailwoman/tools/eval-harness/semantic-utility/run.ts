@@ -159,14 +159,14 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 
 	for (const target of definition.targetRows) {
 		rows.push(await gradeRow(pipeline, definition, target, "target"))
-		semanticObservations.push(...drainObservations(route, target.id))
+		semanticObservations.push(...drainObservations(route ?? null, target.id))
 	}
 
 	for (const control of controls) {
 		const outcome = await gradeRow(pipeline, definition, control, "control")
 
 		rows.push({ ...outcome, group: groupByID.get(control.id) })
-		semanticObservations.push(...drainObservations(route, control.id))
+		semanticObservations.push(...drainObservations(route ?? null, control.id))
 	}
 
 	const counts = computeProbeCounts(definition, rows)
@@ -191,7 +191,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
  * Take everything the route recorded while one row ran, addressed to that row. empty
  * when no route was injected.
  */
-function drainObservations(route: SemanticObservationRoute | undefined, rowID: string): ProbeRowObservation[] {
+function drainObservations(route: SemanticObservationRoute | null, rowID: string): ProbeRowObservation[] {
 	if (!route) return []
 
 	return route.takeObservations().map((observation) => ({ rowID, ...observation }))

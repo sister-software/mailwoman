@@ -45,13 +45,13 @@ const BOARD = workspacePath("mailwoman", "tools", "eval-harness", "fixtures", "v
 
 const rows: ConfoundRow[] = await JSONSpliterator.fromAsync<ConfoundRow>(BOARD).toArray()
 
-let classifier: NeuralAddressClassifier | undefined
+let classifier: NeuralAddressClassifier | null = null
 
 try {
 	classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 } catch {
 	// A lean checkout with no materialized weights skips the suite rather than failing it.
-	classifier = undefined
+	classifier = null
 }
 
 describe.skipIf(!classifier)("venue-structure confound board", () => {
@@ -60,24 +60,24 @@ describe.skipIf(!classifier)("venue-structure confound board", () => {
 		expect(new Set(rows.map((r) => r.class)).size).toBeGreaterThanOrEqual(5)
 	})
 
-	async function emitted(row: ConfoundRow): Promise<string | undefined> {
+	async function emitted(row: ConfoundRow): Promise<string | null> {
 		const tree = await classifier!.parse(row.raw, {
 			// The shipped configuration, by construction.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 
-		return (decodeAsJSON(tree) as Record<string, string | undefined>)[row.must_not]
+		return (decodeAsJSON(tree) as Record<string, string | undefined>)[row.must_not] ?? null
 	}
 
 	for (const row of rows.filter((r) => !r.xfail)) {
 		test(`[${row.class}] emits no ${row.must_not}: ${row.raw}`, async () => {
-			expect(await emitted(row)).toBeUndefined()
+			expect(await emitted(row)).toBeNull()
 		})
 	}
 
 	for (const row of rows.filter((r) => r.xfail)) {
 		test.fails(`[${row.class}] XFAIL (${row.xfail}): ${row.raw}`, async () => {
-			expect(await emitted(row)).toBeUndefined()
+			expect(await emitted(row)).toBeNull()
 		})
 	}
 })

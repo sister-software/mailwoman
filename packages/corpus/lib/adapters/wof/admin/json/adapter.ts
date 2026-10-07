@@ -59,7 +59,7 @@ import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecor
  * Per-adapter deliberately (the postalcode adapter has its own): each table is a record
  * filter for its adapter's emission set rather than a shared vocabulary.
  */
-function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
+function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | null {
 	switch (placetype) {
 		case "country":
 		case "nation":
@@ -79,7 +79,7 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 		case "microhood":
 			return "dependent_locality"
 		default:
-			return undefined
+			return null
 	}
 }
 

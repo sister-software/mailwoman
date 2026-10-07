@@ -312,7 +312,7 @@ export interface EncodedArea {
 export function interiorPointOfEncodedRings(
 	area: EncodedArea,
 	gridSteps = 7
-): { latitude: number; longitude: number } | undefined {
+): { latitude: number; longitude: number } | null {
 	const centreLat = (area.min_lat + area.max_lat) / 2
 	const centreLon = (area.min_lon + area.max_lon) / 2
 
@@ -329,7 +329,7 @@ export function interiorPointOfEncodedRings(
 		}
 	}
 
-	return undefined
+	return null
 }
 
 /**

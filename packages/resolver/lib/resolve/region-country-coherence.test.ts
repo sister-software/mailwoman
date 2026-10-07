@@ -174,20 +174,20 @@ const regionLocalityTree = (city: string, region: string): AddressTree => ({
 	],
 })
 
-function localityOf(tree: AddressTree): AddressNode | undefined {
+function localityOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "locality") return n
 	}
 
-	return undefined
+	return null
 }
 
-function regionOf(tree: AddressTree): AddressNode | undefined {
+function regionOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "region") return n
 	}
 
-	return undefined
+	return null
 }
 
 const CA_POOL = [QUEBEC, ONTARIO, ILLINOIS, MAINE, MONTREAL_CA, MONTREAL_WI, LONDON_CA, LONDON_KY]

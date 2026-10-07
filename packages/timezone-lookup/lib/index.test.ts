@@ -48,7 +48,7 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	// New York: EST (-5h) in January, EDT (-4h) in July.
 	expect(offsetSecForTimezone("America/New_York", new Date("2026-01-15T12:00:00Z"))).toBe(-18_000)
 	expect(offsetSecForTimezone("America/New_York", new Date("2026-07-15T12:00:00Z"))).toBe(-14_400)
-	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
+	expect(offsetSecForTimezone("Not/AZone")).toBeNull()
 })
 
 async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {

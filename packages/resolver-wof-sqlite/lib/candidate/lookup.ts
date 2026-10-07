@@ -184,7 +184,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			}
 		}
 
-		this.artifactCoverage = readGazetteerCoverageManifest(this.database)
+		this.artifactCoverage = readGazetteerCoverageManifest(this.database) ?? undefined
 	}
 
 	#ancestorLineage(id: number | string): Ancestor[] {
@@ -227,7 +227,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		return label
 	}
 
-	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
+	#qualifierRegionIDs(qualifier: string, country: string | null): Set<number> {
 		const ids = new Set<number>()
 
 		if (!this.#qualifierProbe) return ids
@@ -264,7 +264,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
 		qualifier: string,
-		country: string | undefined,
+		country: string | null,
 		opts: {
 			nameKey: NameKey
 			strippedKey: NameKey
@@ -482,13 +482,13 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		filterParams.push(...shapeParams)
 
 		// Region scope is optional (`region_id = parentID`); the fallback stays unscoped.
-		const regionParentID = query.parentID || undefined
+		const regionParentID = query.parentID || null
 
-		const probe = (nk: string, regionID: number | undefined, countryID?: number): Array<RankedRow<CandidateRow>> => {
+		const probe = (nk: string, regionID: number | null, countryID?: number): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]
 			const params: Array<string | number> = [nk, ...filterParams]
 
-			if (regionID !== undefined) {
+			if (regionID !== null) {
 				conds.push("region_id = ?")
 				params.push(regionID)
 			}
@@ -508,7 +508,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
 
-		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
+		const cascade = (regionID: number | null): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
 			if (!rows.length) {
@@ -567,8 +567,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		let regionScopeMiss = false
 
-		if (!rows.length && regionParentID !== undefined) {
-			rows = cascade(undefined)
+		if (!rows.length && regionParentID !== null) {
+			rows = cascade(null)
 			regionScopeMiss = rows.length > 0
 		}
 
@@ -604,7 +604,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		// Admin-containment re-rank runs last.
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
-			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country, {
+			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country ?? null, {
 				nameKey,
 				strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
 				shapeFilters,

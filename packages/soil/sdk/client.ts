@@ -109,12 +109,12 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	 * Returns the map unit key the service's own geometry assigns at a point, or `undefined`,
 	 * as a cross-check against the authority through a channel this package never processed.
 	 */
-	public async mukeyAtPoint(latitude: number, longitude: number): Promise<string | undefined> {
+	public async mukeyAtPoint(latitude: number, longitude: number): Promise<string | null> {
 		const rows = await this.query(
 			`SELECT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('point(${longitude} ${latitude})')`
 		)
 
-		return rows[0]?.[0] || undefined
+		return rows[0]?.[0] || null
 	}
 }
 

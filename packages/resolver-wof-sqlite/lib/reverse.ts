@@ -160,7 +160,7 @@ interface CandidateRow {
 	lon: number
 }
 
-function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidate {
+function toPlaceCandidate(row: CandidateRow, distanceKm: number | null = null): PlaceCandidate {
 	const c: PlaceCandidate = {
 		id: row.id,
 		name: row.name,
@@ -172,7 +172,7 @@ function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidat
 		score: 0,
 	}
 
-	if (distanceKm !== undefined) {
+	if (distanceKm !== null) {
 		c.distanceKm = distanceKm
 	}
 
@@ -310,7 +310,7 @@ export class WOFReverseGeocoder implements Disposable {
 		// Approximate descent into finer tiers than the winner.
 		let current = winner
 		let currentConfirmed = winnerConfirmed
-		let currentDistanceKm = currentConfirmed ? undefined : haversineKm(lat, lon, current.lat, current.lon)
+		let currentDistanceKm = currentConfirmed ? null : haversineKm(lat, lon, current.lat, current.lon)
 
 		for (const tier of DESCENT_TIERS) {
 			if (placetypeDepth(tier) <= placetypeDepth(current.placetype)) continue
@@ -319,7 +319,7 @@ export class WOFReverseGeocoder implements Disposable {
 			const kids = this.#descendants(current.id, tier, lat, lon, maxApproximateKm)
 			let next: CandidateRow | null = null
 			let nextConfirmed = false
-			let nextKm: number | undefined
+			let nextKm: number | null = null
 			let bestKm = Infinity
 
 			for (const k of kids) {
@@ -328,7 +328,7 @@ export class WOFReverseGeocoder implements Disposable {
 				if (contains === true) {
 					next = k
 					nextConfirmed = true
-					nextKm = undefined
+					nextKm = null
 
 					break
 				}

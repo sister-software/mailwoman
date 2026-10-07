@@ -81,13 +81,13 @@ const OWS_EXCEPTION_CODE = /exceptionCode\s*=\s*"([^"]*)"/u
  * The entire report would become the message if the parser matched that tag.
  * An unclosed element reads as unreadable rather than as empty.
  */
-function exceptionText(body: string): string | undefined {
+function exceptionText(body: string): string | null {
 	let cursor = 0
 
 	for (;;) {
 		const start = body.indexOf(EXCEPTION_OPEN, cursor)
 
-		if (start === -1) return undefined
+		if (start === -1) return null
 
 		const after = start + EXCEPTION_OPEN.length
 
@@ -100,11 +100,11 @@ function exceptionText(body: string): string | undefined {
 
 		const contentStart = body.indexOf(">", after)
 
-		if (contentStart === -1) return undefined
+		if (contentStart === -1) return null
 
 		const end = body.indexOf("</ServiceException>", contentStart)
 
-		if (end === -1) return undefined
+		if (end === -1) return null
 
 		return body.slice(contentStart + 1, end)
 	}
@@ -116,23 +116,23 @@ function exceptionText(body: string): string | undefined {
  * The prefix is captured so the closing tag matches the one the document opened.
  * A prefixed element therefore never closes on an unprefixed one.
  */
-function owsExceptionText(body: string): string | undefined {
+function owsExceptionText(body: string): string | null {
 	const open = OWS_EXCEPTION_TEXT_OPEN.exec(body)
 
-	if (!open) return undefined
+	if (!open) return null
 
 	const prefix = open[1]
 	const contentStart = open.index + open[0].length
 	const end = body.indexOf(prefix ? `</${prefix}:ExceptionText>` : "</ExceptionText>", contentStart)
 
 	// An unclosed element reads as unreadable rather than as empty, as the 1.x path does.
-	if (end === -1) return undefined
+	if (end === -1) return null
 
 	return body.slice(contentStart, end)
 }
 
 /**
- * The exception message inside an OGC or OWS exception report, or `undefined` for a body that is neither.
+ * The exception message inside an OGC or OWS exception report, or `null` for a body that is neither.
  *
  * Both dialects are read, because a report shares the HTTP status a real answer arrives on
  * and a caller that recognizes one spelling parses the other as data.
@@ -144,8 +144,8 @@ function owsExceptionText(body: string): string | undefined {
  *
  * Split from the request so the detection is testable against captured bodies.
  */
-export function readOGCServiceException(body: string): string | undefined {
-	if (!body.includes("ExceptionReport")) return undefined
+export function readOGCServiceException(body: string): string | null {
+	if (!body.includes("ExceptionReport")) return null
 
 	if (body.includes("ServiceExceptionReport")) {
 		// A body remains an exception report when its exception element cannot be read.
@@ -169,7 +169,7 @@ export function readOGCServiceException(body: string): string | undefined {
 export function assertNoOGCServiceException(body: string, context: string): void {
 	const exception = readOGCServiceException(body)
 
-	if (exception !== undefined) {
+	if (exception !== null) {
 		throw new OGCServiceError(context, exception)
 	}
 }
@@ -281,7 +281,7 @@ export interface ReadWFSFeatureCountOptions {
 async function readReportedNumberMatched(
 	client: Pick<APIClient, "fetch">,
 	options: ReadWFSFeatureCountOptions & { startIndex?: number }
-): Promise<string | undefined> {
+): Promise<string | null> {
 	const { data } = await client.fetch<string>({
 		method: "GET",
 		url: options.wfsURL,
@@ -320,7 +320,7 @@ export async function readWFSFeatureCount(
 	const numberMatched = await readReportedNumberMatched(client, options)
 	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
 
-	if (numberMatched === undefined) {
+	if (numberMatched === null) {
 		throw new Error(`${options.context}: the WFS hits response${subject} carried no numberMatched attribute`)
 	}
 
@@ -392,7 +392,7 @@ export async function readCheckedWFSFeatureCount(
 	const probeSize = options.probeSize ?? COUNT_PROBE_SIZE
 	const numberMatched = await readReportedNumberMatched(client, { ...options, startIndex: 1 })
 
-	if (numberMatched === undefined) {
+	if (numberMatched === null) {
 		return { reported: null, usable: false, because: "the hits response carried no numberMatched attribute" }
 	}
 
@@ -424,7 +424,7 @@ export async function readCheckedWFSFeatureCount(
 	assertNoOGCServiceException(probe, options.context)
 
 	const returned = rootAttribute(probe, "numberReturned", { xml: true })
-	const observed = returned !== undefined && /^\d+$/u.test(returned) ? Number(returned) : null
+	const observed = returned !== null && /^\d+$/u.test(returned) ? Number(returned) : null
 
 	if (observed !== null && observed > reported) {
 		return {
@@ -461,7 +461,7 @@ export async function readCheckedWFSFeatureCount(
 
 	const beyondReturned = rootAttribute(beyond, "numberReturned", { xml: true })
 
-	if (beyondReturned !== undefined && /^[1-9]\d*$/u.test(beyondReturned)) {
+	if (beyondReturned !== null && /^[1-9]\d*$/u.test(beyondReturned)) {
 		return {
 			reported,
 			usable: false,
@@ -556,7 +556,7 @@ export async function countWFSFeaturesByPaging(
 
 		const returned = rootAttribute(data, "numberReturned", { xml: true })
 
-		return { returned: returned !== undefined && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
+		return { returned: returned !== null && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
 	}
 
 	const leading = options.identify ?? ((body: string) => /gml:id="([^"]+)"/u.exec(body)?.[1] ?? null)

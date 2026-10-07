@@ -173,7 +173,7 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
  * The coordinate-first locality path consumes this fraction directly. {@link populationBoostTerm} scales it.
  */
 export function populationScaleTerm(
-	population: number | null | undefined,
+	population: number | null,
 	weights: Pick<RankingWeights, "populationScaleLog10">
 ): number {
 	if (population == null || population <= 0 || weights.populationScaleLog10 <= 0) return 0
@@ -189,7 +189,7 @@ export function populationScaleTerm(
  * The one formula behind the Node weighted sum and the wasm re-rank, so the two backends cannot drift.
  */
 export function populationBoostTerm(
-	population: number | null | undefined,
+	population: number | null,
 	weights: Pick<RankingWeights, "populationBoost" | "populationScaleLog10">
 ): number {
 	return weights.populationBoost * populationScaleTerm(population, weights)

@@ -50,7 +50,7 @@ export class LegProfile implements AsyncDisposable {
 	 * A leg that throws is still recorded, because the time it spent
 	 * before failing is the number a reader wants.
 	 */
-	async time<T>(leg: string, tag: string | undefined, work: () => Promise<T>): Promise<T> {
+	async time<T>(leg: string, tag: string | null, work: () => Promise<T>): Promise<T> {
 		const startedAt = performance.now()
 
 		try {

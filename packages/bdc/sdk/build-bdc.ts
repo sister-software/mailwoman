@@ -103,7 +103,7 @@ export interface BuildBDCOptions {
 	 * It returns `undefined` for an unknown GEOID.
 	 * The build then skips the row and counts it in `unknownGeoids`.
 	 */
-	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
+	blockCentroids: (geoid: string) => { lat: number; lon: number } | null
 	onProgress?: (message: string) => void
 
 	/**
@@ -263,13 +263,13 @@ async function groupProviderListRows(
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>,
-	filerDB: DatabaseClient<FilerDatabase> | undefined,
+	filerDB: DatabaseClient<FilerDatabase> | null,
 	asOf: string
 ): Promise<number> {
 	const byProviderID = await groupProviderListRows(providers)
 	const insertRows: Insertable<BDCProviderTable>[] = []
 
-	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | undefined
+	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | null = null
 
 	for (const [providerID, rows] of byProviderID) {
 		const distinctFRNs = [...new Set(rows.map((row) => row.frn))]
@@ -525,7 +525,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			providersPopulated = await populateBDCProviderTable(
 				db,
 				options.providers,
-				options.filerDB,
+				options.filerDB ?? null,
 				options.primaryFRNAsOf ?? options.asOfDate
 			)
 

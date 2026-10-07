@@ -38,7 +38,7 @@ export const blessPackage = defineOperation({
 		.strict(),
 	outputSchema: z.object({ blessed: z.array(blessedPackage), planDigest: z.string().optional() }),
 	async run(input, context) {
-		let planDigest: string | undefined
+		let planDigest: string | null = null
 
 		if (input.plan) {
 			planDigest = (await assertPlanHolds(context.repoRoot, input.plan)).planDigest

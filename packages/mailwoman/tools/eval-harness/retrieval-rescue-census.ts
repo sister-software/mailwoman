@@ -107,7 +107,7 @@ export function classifyRescueRow(row: RescueRowInput): {
 		row.unconditionalEntityHit !== undefined &&
 		within(row.unconditionalEntityHit.lat, row.unconditionalEntityHit.lon, row)
 
-	let rescueRank: number | undefined
+	let rescueRank: number | null = null
 
 	for (const [index, candidate] of row.alternateCandidates.entries()) {
 		if (within(candidate.lat, candidate.lon, row)) {
@@ -129,11 +129,11 @@ export function classifyRescueRow(row: RescueRowInput): {
 	}
 
 	const classification: RescueClass =
-		entityHitCorrect && rescueRank !== undefined
+		entityHitCorrect && rescueRank !== null
 			? "rescue_available_both"
 			: entityHitCorrect
 				? "rescue_available_entity"
-				: rescueRank !== undefined
+				: rescueRank !== null
 					? "rescue_available_rank"
 					: "no_rescue_on_hand"
 
@@ -141,7 +141,7 @@ export function classifyRescueRow(row: RescueRowInput): {
 		classification,
 		checkProtects: false,
 		...(deliveredKm === undefined ? {} : { deliveredKm }),
-		...(rescueRank === undefined ? {} : { rescueRank }),
+		...(rescueRank === null ? {} : { rescueRank }),
 	}
 }
 

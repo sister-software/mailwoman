@@ -411,7 +411,7 @@ export interface HarvestCzCuzkOptions {
  * the file is still there, and it is still the length that was recorded for it.
  */
 async function isCurrent(
-	recorded: CzCuzkArchiveEntry | undefined,
+	recorded: CzCuzkArchiveEntry | null,
 	dataset: CzMunicipalityDataset,
 	path: PathBuilderLike,
 	verifyDigests: boolean
@@ -513,7 +513,7 @@ export async function harvestCzCuzk(
 
 		const dest = destDir(dataset.filename)
 
-		if (await isCurrent(files.get(dataset.filename), dataset, dest, options.verifyDigests ?? false)) {
+		if (await isCurrent(files.get(dataset.filename) ?? null, dataset, dest, options.verifyDigests ?? false)) {
 			skipped++
 
 			continue

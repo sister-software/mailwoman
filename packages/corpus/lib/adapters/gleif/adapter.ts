@@ -411,7 +411,7 @@ const TRAILING_NUMBER_PERIOD = /(\d[\dA-Za-z/-]*)\.$/u
 /**
  * A published value with whitespace collapsed, or an empty string for an absent or placeholder value.
  */
-function fieldValue(value: string | undefined): string {
+function fieldValue(value: string | null | undefined): string {
 	const trimmed = (value ?? "").replaceAll(/\s+/gu, " ").trim()
 
 	return isPlaceholderValue(trimmed) ? "" : trimmed
@@ -548,7 +548,7 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 		components.venue = name
 	}
 
-	const script = scriptOfComponents({ street: line, locality: city })
+	const script = scriptOfComponents({ street: line, locality: city }) ?? undefined
 
 	if (PO_BOX_LINE.test(line)) {
 		components.po_box = line

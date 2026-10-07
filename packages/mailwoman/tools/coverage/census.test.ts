@@ -330,8 +330,8 @@ describe("readConfiguredCorpusVersion", () => {
 				// "Cannot check" is not "they match", so a plausible default would manufacture agreement.
 				await using scratch = await config("data:\n  max_length: 128\n")
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeUndefined()
-		expect(await readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeUndefined()
+		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeNull()
+		expect(await readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeNull()
 	})
 
 	it("falls back to the trailing directory when the path is not /versioned/-shaped", async () => {

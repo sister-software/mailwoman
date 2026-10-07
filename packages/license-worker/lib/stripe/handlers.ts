@@ -25,10 +25,10 @@ import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
  * The link runs through the PaymentIntent.
  * The invoice-payments list is the query that answers it.
  */
-async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promise<string | undefined> {
+async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promise<string | null> {
 	const paymentIntent = idOf(charge.payment_intent)
 
-	if (!paymentIntent) return undefined
+	if (!paymentIntent) return null
 
 	const payments = await stripe.invoicePayments.list({
 		payment: { type: "payment_intent", payment_intent: paymentIntent },

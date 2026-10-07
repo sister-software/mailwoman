@@ -69,8 +69,8 @@ export function inspireNameIs(name: string, wanted: string): boolean {
  * That
  * function compares the name exactly, as a general markup reader must.
  */
-export function inspireChild(element: MarkupElement, name: string): MarkupElement | undefined {
-	return element.children.find((child) => inspireNameIs(child.name, name))
+export function inspireChild(element: MarkupElement, name: string): MarkupElement | null {
+	return element.children.find((child) => inspireNameIs(child.name, name)) ?? null
 }
 
 /**
@@ -90,11 +90,11 @@ export function inspireChildren(element: MarkupElement, name: string): readonly 
  * An INSPIRE value sits five or six elements down, so the path form reads better than
  * a chain of {@linkcode inspireChild} calls and reports the same absence.
  */
-export function inspireElementAt(element: MarkupElement, ...path: readonly string[]): MarkupElement | undefined {
-	let current: MarkupElement | undefined = element
+export function inspireElementAt(element: MarkupElement, ...path: readonly string[]): MarkupElement | null {
+	let current: MarkupElement | null = element
 
 	for (const step of path) {
-		if (!current) return undefined
+		if (!current) return null
 
 		current = inspireChild(current, step)
 	}
@@ -111,13 +111,13 @@ export function inspireElementAt(element: MarkupElement, ...path: readonly strin
  * A `#` fragment is dropped first, because Flanders appends one to a `vocab.belgif.be`
  * reference and Czechia folds it into `base:localId`.
  */
-export function codelistValue(uri: string | undefined): string | undefined {
-	if (!uri) return undefined
+export function codelistValue(uri: string | null | undefined): string | null {
+	if (!uri) return null
 
 	const withoutFragment = uri.split("#")[0]!
 	const segment = withoutFragment.split("/").pop()
 
-	return segment || undefined
+	return segment || null
 }
 
 /**
@@ -131,21 +131,21 @@ export function codelistValue(uri: string | undefined): string | undefined {
  *
  * An absent element answers false, so a caller distinguishes a void value from a missing one.
  */
-export function isVoid(element: MarkupElement | undefined): boolean {
+export function isVoid(element: MarkupElement | null): boolean {
 	return element?.attributes["xsi:nil"] === "true"
 }
 
 /**
  * The reason a publisher gave for a void element, as a codelist value such as `Unpopulated`.
  *
- * Returns undefined when the element is void and states no reason.
+ * Returns null when the element is void and states no reason.
  * The schema permits that form, and Brussels uses it throughout.
  *
  * A caller that needs to separate a void with a reason from a void with none
  * reads this together with {@linkcode isVoid}.
  */
-export function voidReason(element: MarkupElement | undefined): string | undefined {
-	if (!isVoid(element)) return undefined
+export function voidReason(element: MarkupElement | null): string | null {
+	if (!isVoid(element)) return null
 
 	return codelistValue(element?.attributes.nilReason)
 }
@@ -241,7 +241,7 @@ export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string>
 		if (!value || !isVoid(value)) continue
 
 		const type = inspireChild(locatorDesignator, "ad:type")
-		const name = type && !isVoid(type) ? (codelistValue(type.attributes["xlink:href"]) ?? type.text) : undefined
+		const name = type && !isVoid(type) ? (codelistValue(type.attributes["xlink:href"]) ?? type.text) : null
 
 		// A void value whose own type is void or absent cannot be placed,
 		// so it is reported under the empty name.
@@ -252,10 +252,7 @@ export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string>
 	return voided
 }
 
-export function designator(
-	byType: ReadonlyMap<string, readonly string[]>,
-	...types: readonly string[]
-): string | undefined {
+export function designator(byType: ReadonlyMap<string, readonly string[]>, ...types: readonly string[]): string | null {
 	for (const type of types) {
 		for (const value of byType.get(type) ?? []) {
 			const trimmed = value.trim()
@@ -264,7 +261,7 @@ export function designator(
 		}
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -292,9 +289,9 @@ export interface ComponentLink {
 	readonly href: string
 
 	/**
-	 * The `xlink:title`, or undefined where the reference has no title.
+	 * The `xlink:title`, or null where the reference has no title.
 	 */
-	readonly title?: string
+	readonly title: string | null
 }
 
 /**
@@ -322,7 +319,7 @@ export function componentLinks(address: MarkupElement): readonly ComponentLink[]
 
 		const title = component.attributes["xlink:title"]?.trim()
 
-		links.push(title ? { href, title } : { href })
+		links.push({ href, title: title || null })
 	}
 
 	return links
@@ -362,21 +359,21 @@ const REFERENCE_ID_PARAMETERS = new Set(["id", "featureid", "resourceid"])
  * A check based on the URL's shape once reported 15 of Flanders' 20 references as belonging
  * to another register, when every one of them addressed a feature of the same service.
  *
- * @returns The key, or undefined when the href is neither a fragment nor a URL.
+ * @returns The key, or null when the href is neither a fragment nor a URL.
  */
-export function componentJoinKey(href: string): string | undefined {
+export function componentJoinKey(href: string): string | null {
 	const trimmed = href.trim()
 
-	if (!trimmed) return undefined
+	if (!trimmed) return null
 
-	if (trimmed.startsWith("#")) return trimmed.slice(1) || undefined
+	if (trimmed.startsWith("#")) return trimmed.slice(1) || null
 
 	let url: URL
 
 	try {
 		url = new URL(trimmed)
 	} catch {
-		return undefined
+		return null
 	}
 
 	for (const [parameter, value] of url.searchParams) {
@@ -401,9 +398,9 @@ export function componentJoinKey(href: string): string | undefined {
  * while an `ad:AdminUnitName` and an `ad:AddressAreaName` add only `ad:name`.
  * The caller gives the prefix.
  *
- * @returns The text, or undefined when any step is absent or the name is void.
+ * @returns The text, or null when any step is absent or the name is void.
  */
-export function geographicalNameText(feature: MarkupElement, ...prefix: readonly string[]): string | undefined {
+export function geographicalNameText(feature: MarkupElement, ...prefix: readonly string[]): string | null {
 	const name = inspireElementAt(
 		feature,
 		...prefix,
@@ -413,24 +410,24 @@ export function geographicalNameText(feature: MarkupElement, ...prefix: readonly
 		"gn:text"
 	)
 
-	if (!name || isVoid(name)) return undefined
+	if (!name || isVoid(name)) return null
 
 	const text = name.text.trim()
 
-	return text || undefined
+	return text || null
 }
 
 /**
  * The street name an `ad:ThoroughfareName` feature states.
  */
-export function thoroughfareName(feature: MarkupElement): string | undefined {
+export function thoroughfareName(feature: MarkupElement): string | null {
 	return geographicalNameText(feature, "ad:name", "ad:ThoroughfareNameValue", "ad:name")
 }
 
 /**
  * The place name an `ad:AdminUnitName` or `ad:AddressAreaName` feature states.
  */
-export function placeName(feature: MarkupElement): string | undefined {
+export function placeName(feature: MarkupElement): string | null {
 	return geographicalNameText(feature, "ad:name")
 }
 
@@ -441,14 +438,14 @@ export function placeName(feature: MarkupElement): string | undefined {
  * Left-padding belongs to the caller that knows the jurisdiction's width,
  * because this reader returns what the publisher wrote.
  */
-export function postalDescriptorCode(feature: MarkupElement): string | undefined {
+export function postalDescriptorCode(feature: MarkupElement): string | null {
 	const code = inspireChild(feature, "ad:postCode")
 
-	if (!code || isVoid(code)) return undefined
+	if (!code || isVoid(code)) return null
 
 	const text = code.text.trim()
 
-	return text || undefined
+	return text || null
 }
 
 /**
@@ -459,10 +456,10 @@ export function postalDescriptorCode(feature: MarkupElement): string | undefined
  * publishes exactly one `ad:AdminUnitName` feature, the country.
  * A caller picks the finest level it wants by this value rather than by the order the references appear.
  */
-export function adminUnitLevel(feature: MarkupElement): string | undefined {
+export function adminUnitLevel(feature: MarkupElement): string | null {
 	const level = inspireChild(feature, "ad:level")
 
-	if (!level || isVoid(level)) return undefined
+	if (!level || isVoid(level)) return null
 
-	return codelistValue(level.attributes["xlink:href"]) ?? (level.text.trim() || undefined)
+	return codelistValue(level.attributes["xlink:href"]) ?? (level.text.trim() || null)
 }

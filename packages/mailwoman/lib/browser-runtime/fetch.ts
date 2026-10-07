@@ -88,7 +88,7 @@ async function drainWithProgress(response: Response, onBytes: BytesReceived): Pr
 	return bytes
 }
 
-function pause(ms: number, signal: AbortSignal | null | undefined): Promise<void> {
+function pause(ms: number, signal: AbortSignal | null): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const timer = setTimeout(() => {
 			signal?.removeEventListener("abort", onAbort)
@@ -123,7 +123,7 @@ export async function fetchWithRetry(
 		} catch (error) {
 			if (attempt >= ATTEMPTS || !isNetworkFailure(error) || init?.signal?.aborted) throw error
 
-			await pause(FIRST_RETRY_DELAY_MS * 2 ** (attempt - 1), init?.signal)
+			await pause(FIRST_RETRY_DELAY_MS * 2 ** (attempt - 1), init?.signal ?? null)
 
 			attempt++
 		}

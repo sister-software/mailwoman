@@ -166,10 +166,10 @@ export interface IngestOptions {
 }
 
 /**
- * Join the selected columns of a row into a single trimmed string, or undefined if empty.
+ * Join the selected columns of a row into a single trimmed string, or null if empty.
  */
-export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
-	if (!columns) return undefined
+export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | null {
+	if (!columns) return null
 	const list = Array.isArray(columns) ? columns : [columns]
 
 	const value = list
@@ -178,7 +178,7 @@ export function pick(row: Record<string, string>, columns?: string | string[], s
 		.join(separator)
 		.trim()
 
-	return value || undefined
+	return value || null
 }
 
 /**
@@ -197,7 +197,7 @@ export async function ingestRow(
 	const orgValue = pick(row, mapping.organization)
 	const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
 
-	let attributes: Record<string, string> | undefined
+	let attributes: Record<string, string> | null = null
 
 	if (mapping.attributes) {
 		for (const [key, columns] of Object.entries(mapping.attributes)) {
@@ -212,11 +212,11 @@ export async function ingestRow(
 	return {
 		id,
 		source: mapping.source,
-		name: nameValue ? parsePersonName(nameValue) : undefined,
-		organization: orgValue ? canonicalizeOrganizationName(orgValue) : undefined,
-		phone: (mapping.phone && row[mapping.phone]) || undefined,
-		email: (mapping.email && row[mapping.email]?.toLowerCase()) || undefined,
-		address: addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
+		name: nameValue ? parsePersonName(nameValue) : null,
+		organization: orgValue ? canonicalizeOrganizationName(orgValue) : null,
+		phone: (mapping.phone && row[mapping.phone]) || null,
+		email: (mapping.email && row[mapping.email]?.toLowerCase()) || null,
+		address: addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? null) : null,
 		attributes,
 		raw: row,
 	}

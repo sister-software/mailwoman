@@ -46,7 +46,7 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 	let bestTier = -1
 
 	const visit = (node: AddressNode): void => {
-		if (node.lat !== undefined && node.lon !== undefined) {
+		if (node.lat != null && node.lon != null) {
 			const tier = RESOLUTION_TIER[node.tag] ?? 4
 
 			if (tier > bestTier) {

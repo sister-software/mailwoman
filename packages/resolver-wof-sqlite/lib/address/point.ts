@@ -154,7 +154,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		// `streetKeyVariants` yields the literal key first.
 		// Each variant runs the full number fallback sequence.
 		// The first variant with a match wins.
-		let row: AddressPointRow | undefined
+		let row: AddressPointRow | null = null
 
 		for (const streetNorm of streetKeyVariants(query.street, streetLocaleForSurface(query.street, this.#locale))) {
 			row = this.#findForKey(streetNorm, number, scoped)
@@ -243,20 +243,20 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			localityTail?: NameKey
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}
-	): AddressPointRow | undefined {
-		let row: AddressPointRow | undefined
+	): AddressPointRow | null {
+		let row: AddressPointRow | null = null
 
 		if (query.postcode) {
 			const postcode = query.postcode.trim()
-			const localityKey = query.locality ? this.#localityKey(query.locality) : undefined
+			const localityKey = query.locality ? this.#localityKey(query.locality) : null
 
 			// One postcode can cover several places with the same street and number,
 			// so a row whose locality agrees with the query is tried first.
 			// The postcode-only row answers only if `#scopeContradicts` accepts it.
-			const agreeing = localityKey ? this.#byPostcodeLocality!(postcode, localityKey, streetNorm, number) : undefined
+			const agreeing = localityKey ? this.#byPostcodeLocality!(postcode, localityKey, streetNorm, number) : null
 			const candidate = agreeing ?? this.#byPostcode!(postcode, streetNorm, number)
 
-			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
+			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : null
 		}
 
 		if (!row && query.locality) {
@@ -274,7 +274,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			const candidate = this.#byBbox!(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon)
 
 			// A row with its own scope that the scoped probes missed is a different address in the same box.
-			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
+			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : null
 		}
 
 		return row

@@ -317,12 +317,12 @@ const addressTree = (postcode: string | null, locality: string | null, street = 
 	return { raw: [street, postcode, locality].filter((part) => part != null && part.length).join(" "), roots }
 }
 
-function nodeByTag(tree: AddressTree, tag: string): AddressNode | undefined {
+function nodeByTag(tree: AddressTree, tag: string): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === tag) return n
 	}
 
-	return undefined
+	return null
 }
 
 const RIVOLI_POOL = [PC_75001_FR, PC_75001_US, PC_75001_DE, PARIS_FR, PARIS_TX, PARIS_TN, ADDISON_TX]
@@ -967,7 +967,7 @@ describe("firstLocalityValue", () => {
 	})
 
 	it("ignores blank values", () => {
-		expect(firstLocalityValue([node({ tag: "locality", value: "   " })])).toBeUndefined()
+		expect(firstLocalityValue([node({ tag: "locality", value: "   " })])).toBeNull()
 	})
 })
 

@@ -158,7 +158,7 @@ export function usePOISearch({
 		runtime.classify(input, shape).then((kindResult) => {
 			if (cancelled) return
 
-			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, undefined, runtime.lexicon) : null
+			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, null, runtime.lexicon) : null
 
 			if (!matched) {
 				setStoredResult({ query: trimmed, value: { kindResult } })

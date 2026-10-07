@@ -338,7 +338,7 @@ export async function clusterInferredLinks(
 
 	const { entities } = resolveEntities(records, {
 		// Filer records have no geographic or contact fields, so blocking uses the canonical name.
-		blockingKeys: [exactKey((record: SourceRecord) => record.organization?.canonical)],
+		blockingKeys: [exactKey((record: SourceRecord) => record.organization?.canonical ?? null)],
 		exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
 		// The bundled learned scorer was trained on NPPES data.
 		learnedScorer: false,

@@ -90,7 +90,7 @@ describe("licenseVerdict under LicensePolicy.ResolvedOnly", () => {
 		)
 
 		expect(licenseVerdict("", LicensePolicy.ResolvedOnly).refusal).toBe(LicenseRefusalKind.Unresolved)
-		expect(licenseVerdict(undefined, LicensePolicy.ResolvedOnly).refusal).toBe(LicenseRefusalKind.Unresolved)
+		expect(licenseVerdict(null, LicensePolicy.ResolvedOnly).refusal).toBe(LicenseRefusalKind.Unresolved)
 	})
 
 	it("reports the share-alike classes ahead of the unresolved one, so a refusal states its evidence", () => {
@@ -141,6 +141,6 @@ describe("createLicenseVerdictCache", () => {
 	it("reads an absent value under the same key as the empty string", () => {
 		const cache = createLicenseVerdictCache(LicensePolicy.ResolvedOnly)
 
-		expect(cache.read(undefined)).toBe(cache.read(""))
+		expect(cache.read(null)).toBe(cache.read(""))
 	})
 })

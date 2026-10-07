@@ -53,7 +53,7 @@ export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
 /**
  * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in.
  *
- * `coverage: undefined` means `schemadb`'s layer has never surveyed that area
+ * `coverage: null` means `schemadb`'s layer has never surveyed that area
  * (the meaning-of-zero rule. See `@mailwoman/core/layers`), never conflate it with a covered-but-empty cell.
  */
 export interface InfrastructureHit {
@@ -65,7 +65,7 @@ export interface InfrastructureHit {
 	 * See `coverage.h3Cell` for that.
 	 */
 	h3Cell: number
-	coverage: CoverageCell | undefined
+	coverage: CoverageCell | null
 }
 
 export interface NearestInfrastructureOptions {

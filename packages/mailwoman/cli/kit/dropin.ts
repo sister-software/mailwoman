@@ -88,7 +88,7 @@ export interface GazetteerPaths {
 	/**
 	 * The candidate gazetteer (worldwide resolution), when one was found.
 	 */
-	candidateDB: string | undefined
+	candidateDB: string | null
 	/**
 	 * The WOF admin FTS databases that exist on disk.
 	 */
@@ -104,7 +104,7 @@ export interface GazetteerPaths {
 /**
  * Find gazetteer databases, or exit with a clear error if they are unavailable.
  */
-export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
+export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}

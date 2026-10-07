@@ -107,7 +107,7 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 				lines.push("(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)")
 			} else {
 				for (const place of result.hierarchy) {
-					const distance = place.distanceKm === undefined ? "" : ` (~${place.distanceKm.toFixed(1)} km from centroid)`
+					const distance = place.distanceKm == null ? "" : ` (~${place.distanceKm.toFixed(1)} km from centroid)`
 
 					lines.push(`  ${place.placetype.padEnd(16)} ${place.name} [wof:${place.id}]${distance}`)
 				}
@@ -127,7 +127,7 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 						country: place.country,
 						lat: place.lat,
 						lon: place.lon,
-						...(place.distanceKm === undefined ? {} : { distanceKm: place.distanceKm }),
+						...(place.distanceKm == null ? {} : { distanceKm: place.distanceKm }),
 					})),
 					engine: stamp,
 				})

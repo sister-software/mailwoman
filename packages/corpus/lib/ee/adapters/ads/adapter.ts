@@ -119,7 +119,7 @@ interface ADSFeature {
  * The sentinel is compared case-insensitively because it renders an INSPIRE codelist term
  * rather than a value the publisher authored.
  */
-function slotValue(value: string | undefined): string {
+function slotValue(value: string | null | undefined): string {
 	const trimmed = (value ?? "").trim()
 
 	return trimmed.toLowerCase() === UNPOPULATED ? "" : trimmed

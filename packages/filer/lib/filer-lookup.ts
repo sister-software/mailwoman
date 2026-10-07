@@ -22,10 +22,10 @@ import {
  * Exactly one identifier must be provided.
  */
 export interface FilerLookupQuery {
-	frn?: FRN
-	form499ID?: string
-	bdcProviderID?: number
-	asOf?: string
+	frn?: FRN | null
+	form499ID?: string | null
+	bdcProviderID?: number | null
+	asOf?: string | null
 }
 
 /**
@@ -197,19 +197,17 @@ interface QueriedIdentifier {
  */
 function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
 	const suppliedCount =
-		(query.frn !== undefined ? 1 : 0) +
-		(query.form499ID !== undefined ? 1 : 0) +
-		(query.bdcProviderID !== undefined ? 1 : 0)
+		(query.frn != null ? 1 : 0) + (query.form499ID != null ? 1 : 0) + (query.bdcProviderID != null ? 1 : 0)
 
 	if (suppliedCount !== 1) {
 		throw new Error("filerLookup: exactly one of `frn`, `form499ID`, `bdcProviderID` is required")
 	}
 
-	if (query.frn !== undefined) {
+	if (query.frn != null) {
 		return { nodeID: `${FilerIdentifierType.FRN}:${query.frn}`, type: FilerIdentifierType.FRN, value: query.frn }
 	}
 
-	if (query.form499ID !== undefined) {
+	if (query.form499ID != null) {
 		return {
 			nodeID: `${FilerIdentifierType.Form499ID}:${query.form499ID}`,
 			type: FilerIdentifierType.Form499ID,

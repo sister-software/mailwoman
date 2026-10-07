@@ -180,11 +180,11 @@ export async function writeGazetteerCoverageManifest(
  *
  * The reads are synchronous because the candidate lookup calls this from its constructor.
  */
-export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | undefined {
+export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | null {
 	const hasCoverage = hasTable(db, COUNTRY_COVERAGE_TABLE)
 	const hasBBox = hasTable(db, COUNTRY_BBOX_TABLE)
 
-	if (!hasCoverage && !hasBBox) return undefined
+	if (!hasCoverage && !hasBBox) return null
 
 	const countryCoverage = new Map<string, CountryCoverageFact>()
 

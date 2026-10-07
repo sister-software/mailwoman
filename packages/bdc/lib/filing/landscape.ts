@@ -44,7 +44,7 @@ export interface FilingLandscapeQuery {
 	 * Consulted only in `geoids` mode.
 	 * Without it, a GEOID with zero rows reports as unknown rather than surveyed-empty.
 	 */
-	resolveGeoidCell?: (geoid: string) => number | undefined
+	resolveGeoidCell?: (geoid: string) => number | null
 }
 
 /**
@@ -171,12 +171,12 @@ export function blockCentroidCells(centroid: { lat: number; lon: number }): { h3
  * A block the lookup cannot place stays unresolved, and the landscape counts it as unknown.
  */
 export function geoidCellResolver(
-	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
-): (geoid: string) => number | undefined {
+	blockCentroids: (geoid: string) => { lat: number; lon: number } | null
+): (geoid: string) => number | null {
 	return (geoid) => {
 		const centroid = blockCentroids(geoid)
 
-		return centroid ? blockCentroidCells(centroid).h3Cell : undefined
+		return centroid ? blockCentroidCells(centroid).h3Cell : null
 	}
 }
 
@@ -228,7 +228,7 @@ export async function filingLandscape(
 
 				const resolvedCell = query.resolveGeoidCell(geoid)
 
-				if (resolvedCell !== undefined) {
+				if (resolvedCell !== null) {
 					candidateCellByUnit.set(geoid, resolvedCell)
 				}
 			}
@@ -256,7 +256,7 @@ export async function filingLandscape(
 		const res6Parent = res9ShortCellToRes6Parent(candidateCell)
 		const coverage = await readLayerCoverage(db, res6Parent)
 
-		if (coverage === undefined) {
+		if (coverage === null) {
 			unknownBlockCount++
 		} else {
 			surveyedBlockCount++

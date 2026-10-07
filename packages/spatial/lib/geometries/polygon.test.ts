@@ -110,5 +110,4 @@ test("GeometryContains: Polygon / MultiPolygon test; non-areal and null geometry
 
 	expect(geometryContains({ type: "Point", coordinates: [0.5, 0.5] }, 0.5, 0.5)).toBeNull()
 	expect(geometryContains(null, 0.5, 0.5)).toBeNull()
-	expect(geometryContains(undefined, 0.5, 0.5)).toBeNull()
 })

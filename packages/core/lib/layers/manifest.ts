@@ -140,14 +140,14 @@ export interface CoverageRow {
 /**
  * Convert a stored row to a coverage cell.
  *
- * Legacy NULL bases map to `SourcePresent`; missing rows remain undefined.
+ * Legacy NULL bases map to `SourcePresent`; missing rows map to null.
  */
 export function toCoverageCell(
-	row: CoverageRow | undefined,
+	row: CoverageRow | null,
 	h3CellIndex: string,
 	resolution: number
-): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
-	if (!row) return undefined
+): (CoverageCell & { h3CellIndex: string; resolution: number }) | null {
+	if (!row) return null
 
 	return {
 		h3Cell: row.h3_cell,
@@ -409,12 +409,12 @@ export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageC
 }
 
 /**
- * Read coverage for one H3 cell, or return `undefined` when no row exists.
+ * Read coverage for one H3 cell, or return `null` when no row exists.
  */
-export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): Promise<CoverageCell | undefined> {
+export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): Promise<CoverageCell | null> {
 	const row = await db.selectFrom("layer_coverage").selectAll().where("h3_cell", "=", h3Cell).executeTakeFirst()
 
-	if (!row) return undefined
+	if (!row) return null
 
 	const cell: CoverageCell = {
 		h3Cell: row.h3_cell,

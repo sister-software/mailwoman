@@ -217,7 +217,7 @@ const countChar = (s: string, c: string): number => s.split(c).length - 1
  * @returns `null` for empty input.
  * Best-effort and non-throwing — ambiguous input degrades gracefully rather than erroring.
  */
-export function parsePersonName(input: string | null | undefined): PersonName | null {
+export function parsePersonName(input: string | null): PersonName | null {
 	if (!isPresent(input)) return null
 
 	const result: PersonName = {}
@@ -371,7 +371,7 @@ export type PersonNameStyle = "full" | "short"
  * The parser stores it separately so the matcher can compare `Vega` independently of `de la`;
  * printing them apart would produce a form absent from the input name.
  */
-export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {
+export function formatPersonName(name: PersonName | null, style: PersonNameStyle = "full"): string {
 	if (!name) return ""
 
 	const order = style === "short" ? SHORT_NAME_ORDER : NAME_ORDER

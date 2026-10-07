@@ -76,7 +76,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 	return idsPath
 }
 
-function entryOf(code: string, value: string | undefined): [string, string][] {
+function entryOf(code: string, value: string | null | undefined): [string, string][] {
 	return value ? [[code, value]] : []
 }
 

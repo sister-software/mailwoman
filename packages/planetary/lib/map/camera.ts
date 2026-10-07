@@ -40,7 +40,7 @@ const OVERZOOM_ALLOWANCE = 1
  * A constant would drift when either is rebuilt.
  * Omit it and the framing is unclamped.
  */
-export function framingZoom(diameterKm: number | undefined, maxTerrainZoom?: number): number {
+export function framingZoom(diameterKm: number | null, maxTerrainZoom?: number): number {
 	const unclamped = framingZoomForDiameter(diameterKm)
 
 	if (maxTerrainZoom === undefined) return unclamped
@@ -48,8 +48,8 @@ export function framingZoom(diameterKm: number | undefined, maxTerrainZoom?: num
 	return Math.min(unclamped, maxTerrainZoom + OVERZOOM_ALLOWANCE)
 }
 
-function framingZoomForDiameter(diameterKm: number | undefined): number {
-	if (diameterKm === undefined) return SMALL_FEATURE_ZOOM
+function framingZoomForDiameter(diameterKm: number | null): number {
+	if (diameterKm === null) return SMALL_FEATURE_ZOOM
 
 	for (const [minDiameterKm, zoom] of SELECTION_ZOOM_STEPS) {
 		if (diameterKm >= minDiameterKm) return zoom

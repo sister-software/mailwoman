@@ -35,7 +35,6 @@ describe("referentialFromPopulation", () => {
 	})
 
 	it("treats absent and zero population as no evidence, never as a penalty", () => {
-		expect(referentialFromPopulation(undefined)).toBe(0)
 		expect(referentialFromPopulation(null)).toBe(0)
 		expect(referentialFromPopulation(0)).toBe(0)
 		expect(referentialFromPopulation(-5)).toBe(0)
@@ -158,7 +157,7 @@ describe("splitLegacyImportance", () => {
 	})
 
 	it("never invents an encyclopedic score for a place absent from the legacy table", () => {
-		expect(splitLegacyImportance(undefined, 96_128)).toEqual({ referential: referentialFromPopulation(96_128) })
+		expect(splitLegacyImportance(null, 96_128)).toEqual({ referential: referentialFromPopulation(96_128) })
 	})
 })
 

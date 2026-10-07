@@ -184,8 +184,8 @@ function judgeCoverage(
 	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },
 	neighbours: readonly LiveRecord[]
 ): { verdict: CoverageVerdict; coveredBy?: CoveredBy } {
-	let containment: { record: LiveRecord; distanceKm: number } | undefined
-	let crossBand: { record: LiveRecord; distanceKm: number } | undefined
+	let containment: { record: LiveRecord; distanceKm: number } | null = null
+	let crossBand: { record: LiveRecord; distanceKm: number } | null = null
 
 	for (const live of neighbours) {
 		const distanceKm = haversineKm(dead.lat, dead.lon, live.lat, live.lon)

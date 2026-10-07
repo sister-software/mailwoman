@@ -62,23 +62,21 @@ describe("readDeclaredArtifactFile", () => {
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-gb.bin (deliberate)" },
 		})
 
-		expect(await readDeclaredArtifactFile(await dir)).toBeUndefined()
+		expect(await readDeclaredArtifactFile(await dir)).toBeNull()
 	})
 
-	it("Returns undefined for a card with neither files block nor card without dir, and a corrupt card", async () => {
-		expect(
-			await readDeclaredArtifactFile(await packageDir({ requires: { anchor: { required: true } } }))
-		).toBeUndefined()
+	it("Returns null for a card with neither files block nor card without dir, and a corrupt card", async () => {
+		expect(await readDeclaredArtifactFile(await packageDir({ requires: { anchor: { required: true } } }))).toBeNull()
 
-		expect(await readDeclaredArtifactFile(await packageDir())).toBeUndefined()
-		expect(await readDeclaredArtifactFile(undefined)).toBeUndefined()
-		expect(await readDeclaredArtifactFile(await packageDir("{not json"))).toBeUndefined()
+		expect(await readDeclaredArtifactFile(await packageDir())).toBeNull()
+		expect(await readDeclaredArtifactFile(null)).toBeNull()
+		expect(await readDeclaredArtifactFile(await packageDir("{not json"))).toBeNull()
 	})
 
 	it("ignores a files entry that is not a filename", async () => {
-		expect(await readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: "" } }))).toBeUndefined()
-		expect(await readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: 3 } }))).toBeUndefined()
-		expect(await readDeclaredArtifactFile(await packageDir({ files: ["postcode-us.bin"] }))).toBeUndefined()
+		expect(await readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: "" } }))).toBeNull()
+		expect(await readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: 3 } }))).toBeNull()
+		expect(await readDeclaredArtifactFile(await packageDir({ files: ["postcode-us.bin"] }))).toBeNull()
 	})
 
 	it("reads the SHIPPED cards: en-us/fr-fr/en-gb declare their binaries, en-nz declares none", async () => {
@@ -94,7 +92,7 @@ describe("readDeclaredArtifactFile", () => {
 			file: "postcode-gb.bin",
 		})
 
-		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-nz"))).toBeUndefined()
+		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-nz"))).toBeNull()
 	})
 })
 
@@ -119,7 +117,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 			files: { $comment_postcode_anchor: "NONE — deliberate" },
 		})
 
-		expect(await unfedAnchorDetail(await dir)).toBeUndefined()
-		expect(await unfedAnchorDetail(undefined)).toBeUndefined()
+		expect(await unfedAnchorDetail(await dir)).toBeNull()
+		expect(await unfedAnchorDetail(null)).toBeNull()
 	})
 })

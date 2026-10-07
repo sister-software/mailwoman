@@ -205,8 +205,8 @@ function whereClause(options: ZoningIngestOptions): string[] {
 /**
  * Returns the value, or null when it is undefined or empty.
  */
-function blankToNull(value: string | undefined): string | null {
-	if (value === undefined) return null
+function blankToNull(value: string | null | undefined): string | null {
+	if (value == null) return null
 
 	return value.length ? value : null
 }

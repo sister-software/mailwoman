@@ -77,7 +77,7 @@ type Options = OptionsOf<typeof spec>
  * A stderr note explains what's missing.
  * Caller owns closing the returned handle's backend lookup.
  */
-async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
+async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | null> {
 	const { resolvePOIResolverPaths } = await import("#resolver-backend")
 
 	const { candidateDB, wofPaths } = await resolvePOIResolverPaths({
@@ -93,7 +93,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 				"`mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
 		)
 
-		return undefined
+		return null
 	}
 
 	try {
@@ -109,7 +109,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 				"coordinates. Run `npm install @mailwoman/resolver-wof-sqlite` to enable anchor resolution."
 		)
 
-		return undefined
+		return null
 	}
 }
 
@@ -233,7 +233,13 @@ async function runPOI(input: string, options: Options): Promise<string> {
 
 	try {
 		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : true
-		const pipeline = createRuntimePipeline({ classifier, resolver: resolverHandle?.resolver, poiQueryKind })
+
+		const pipeline = createRuntimePipeline({
+			classifier: classifier ?? undefined,
+			resolver: resolverHandle?.resolver,
+			poiQueryKind,
+		})
+
 		const result = await pipeline(input, { locale: options.locale })
 
 		if (options.json) {

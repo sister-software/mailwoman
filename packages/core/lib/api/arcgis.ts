@@ -37,20 +37,20 @@ export class ArcGISServiceError extends Error {
 }
 
 /**
- * Returns the error envelope in an ArcGIS JSON body, or `undefined` when the body is a normal response.
+ * Returns the error envelope in an ArcGIS JSON body, or `null` when the body is a normal response.
  *
  * The body counts as an error only when its `error` object has a string `message`.
  */
-export function readArcGISError(payload: unknown): ArcGISErrorEnvelope | undefined {
-	if (typeof payload !== "object" || payload === null) return undefined
+export function readArcGISError(payload: unknown): ArcGISErrorEnvelope | null {
+	if (typeof payload !== "object" || payload === null) return null
 
 	const error = (payload as { error?: unknown }).error
 
-	if (typeof error !== "object" || error === null) return undefined
+	if (typeof error !== "object" || error === null) return null
 
 	const { code, message, details } = error as { code?: unknown; message?: unknown; details?: unknown }
 
-	if (typeof message !== "string") return undefined
+	if (typeof message !== "string") return null
 
 	return {
 		...(typeof code === "number" ? { code } : {}),

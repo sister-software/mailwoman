@@ -95,7 +95,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	placetypes?: ReadonlyMap<number, string>,
 	exemptVariantAliases = false
 ): Array<RankedRow<R>> {
-	let topPrimary: R | undefined
+	let topPrimary: R | null = null
 
 	for (const r of rows) {
 		if (r.is_primary === 1 && (topPrimary == null || r.neg_rank < topPrimary.neg_rank)) {

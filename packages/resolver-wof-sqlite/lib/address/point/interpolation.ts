@@ -168,8 +168,8 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 
 	// Nearest known number below and above the query.
 	// The rows never contain n itself.
-	let below: NumberAnchor | undefined
-	let above: NumberAnchor | undefined
+	let below: NumberAnchor | null = null
+	let above: NumberAnchor | null = null
 
 	for (const anchor of anchors) {
 		if (anchor.n < n) {

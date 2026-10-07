@@ -47,7 +47,7 @@ export async function search(db: SearchDatabase, text: string, limit = DEFAULT_L
 	if (!tokens.length) return { query: text, hits: [] }
 
 	let rows = await lexicalRows(db, tokens)
-	let corrected: string | undefined
+	let corrected: string | null = null
 
 	if (!rows.length) {
 		const replacement = await correctTokens(db, tokens)
@@ -69,7 +69,7 @@ export async function search(db: SearchDatabase, text: string, limit = DEFAULT_L
 		})),
 	}
 
-	if (corrected !== undefined && response.hits.length) {
+	if (corrected !== null && response.hits.length) {
 		response.corrected = corrected
 	}
 

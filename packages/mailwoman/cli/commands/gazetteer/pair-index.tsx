@@ -102,7 +102,7 @@ const SOURCE_PARENT_TAGS = {
 /**
  * The secondary sources stay separate files so the header records an MD5 for each one.
  */
-function splitPathList(value: string | undefined): string[] {
+function splitPathList(value: string | null | undefined): string[] {
 	return extractDelimited(value)
 }
 

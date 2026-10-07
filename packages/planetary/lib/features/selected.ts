@@ -47,8 +47,8 @@ export function formatCoordinates(centerLon: number, centerLat: number): string 
 /**
  * A diameter as the panel prints it, or null when the source gives none.
  */
-export function formatDiameter(diameterKm: number | undefined): string | null {
-	if (diameterKm === undefined) return null
+export function formatDiameter(diameterKm: number | null): string | null {
+	if (diameterKm === null) return null
 
 	return `${diameterKm.toLocaleString("en-US", { maximumFractionDigits: 2 })} km`
 }

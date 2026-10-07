@@ -161,8 +161,8 @@ export function isVoided(value: unknown): value is VoidedValue {
  * This collapses both to `null`, so a caller that needs the two apart reads the
  * property's presence on `properties` itself.
  */
-export function readVoidable<T>(value: T | VoidedValue | undefined): T | null {
-	if (value === undefined || isVoided(value)) return null
+export function readVoidable<T>(value: T | VoidedValue | null): T | null {
+	if (value === null || isVoided(value)) return null
 
 	return value as T
 }
@@ -479,7 +479,7 @@ export function resolveComponents(
 		for (const href of componentReferences(address)) {
 			const key = componentJoinKey(href)
 
-			if (key === undefined) {
+			if (key === null) {
 				unreadable++
 
 				continue

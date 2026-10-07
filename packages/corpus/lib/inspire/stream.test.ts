@@ -62,11 +62,11 @@ function composeResolvingAll(
 	address: MarkupElement,
 	referenced: ReadonlyMap<string, string>,
 	final: boolean
-): CanonicalRow | undefined | "deferred" {
+): CanonicalRow | null | "deferred" {
 	const hrefs = address.children.filter((c) => c.name === "ad:component").map((c) => c.attributes["xlink:href"] ?? "")
 
 	for (const href of hrefs) {
-		if (!referenced.has(href.replace("#", ""))) return final ? undefined : "deferred"
+		if (!referenced.has(href.replace("#", ""))) return final ? null : "deferred"
 	}
 
 	return row(address.attributes["gml:id"]!)

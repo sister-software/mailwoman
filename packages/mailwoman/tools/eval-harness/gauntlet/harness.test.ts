@@ -128,7 +128,7 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 	it("grades both arms through ONE mapper, so neither arm can hold a private definition of `exact`", () => {
 		const expected = { scheme: "uprn", id: "000000000001" }
 
-		expect(outcomeFor(undefined, expected)).toEqual({
+		expect(outcomeFor(null, expected)).toEqual({
 			outcome: PremiseLinkageOutcome.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ArmAssertsNoIdentifier,
 		})

@@ -28,22 +28,22 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPa
  * Resolves the candidate gazetteer path from an explicit option, then
  * `$MAILWOMAN_CANDIDATE_DB`, then the default path.
  *
- * An explicit or environment path that does not exist yields `undefined` without trying the default path.
+ * An explicit or environment path that does not exist yields `null` without trying the default path.
  * The value `none` selects the FTS backend.
  */
 export async function resolveCandidateDBPath(
-	explicit?: string,
+	explicit?: string | null,
 	dataRoot: PathBuilderLike = dataRootPath()
-): Promise<string | undefined> {
+): Promise<string | null> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
-	if (pinned === "none") return undefined
+	if (pinned === "none") return null
 
-	if (pinned) return (await pathExists(pinned)) ? pinned : undefined
+	if (pinned) return (await pathExists(pinned)) ? pinned : null
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return (await pathExists(convention)) ? convention : undefined
+	return (await pathExists(convention)) ? convention : null
 }
 
 /**
@@ -67,13 +67,13 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
  * Resolves the postal-city alias database path from an explicit option,
  * then `$MAILWOMAN_POSTAL_CITY_ALIAS_DB`.
  *
- * It returns `undefined` when neither is set or the file is missing.
+ * It returns `null` when neither is set or the file is missing.
  * Only the FTS backend uses this database, because the candidate backend folds aliases in at build time.
  */
-export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | undefined> {
+export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | null> {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
 
-	return p && (await pathExists(p)) ? p : undefined
+	return p && (await pathExists(p)) ? p : null
 }
 
 /**
@@ -116,7 +116,7 @@ interface ResolverLookupModule {
 export async function createResolverBackend(
 	mod: ResolverLookupModule,
 	opts: {
-		candidateDB?: string
+		candidateDB?: string | null
 		dataRoot?: PathBuilderLike
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
@@ -160,14 +160,14 @@ export function conventionCapitalsPath(): PathBuilder {
  * Loads the capital-status reference into a {@link CapitalIndex}.
  *
  * The candidate gazetteer's `capital` table takes precedence over the repository file.
- * When neither exists, `missing: "degrade"` returns `undefined` and the default mode throws.
+ * When neither exists, `missing: "degrade"` returns `null` and the default mode throws.
  * A malformed repository file throws in both modes.
  */
 export async function loadCapitalIndex(opts: {
-	candidateDB?: PathBuilderLike
+	candidateDB?: PathBuilderLike | null
 	path?: PathBuilderLike
 	missing?: "throw" | "degrade"
-}): Promise<CapitalIndex | undefined> {
+}): Promise<CapitalIndex | null> {
 	if (opts.candidateDB && (await pathExists(opts.candidateDB))) {
 		using db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
@@ -188,7 +188,7 @@ export async function loadCapitalIndex(opts: {
 				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
 			)
 
-			return undefined
+			return null
 		}
 
 		throw new Error(
@@ -235,7 +235,7 @@ export async function existingWOFDatabasePaths(explicit?: readonly string[]): Pr
 export async function resolvePOIResolverPaths(options: {
 	candidateDB?: string
 	resolveDB?: string
-}): Promise<{ candidateDB: string | undefined; wofPaths: string[] }> {
+}): Promise<{ candidateDB: string | null; wofPaths: string[] }> {
 	const candidateDB = await resolveCandidateDBPath(options.candidateDB)
 
 	if (candidateDB) return { candidateDB, wofPaths: [] }

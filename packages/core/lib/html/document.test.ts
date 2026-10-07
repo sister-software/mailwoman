@@ -59,10 +59,10 @@ describe("rootAttribute", () => {
 	it("does not let a nested member answer for the collection", () => {
 		const xml = '<FeatureCollection><member numberMatched="7"/></FeatureCollection>'
 
-		expect(rootAttribute(xml, "numberMatched", { xml: true })).toBeUndefined()
+		expect(rootAttribute(xml, "numberMatched", { xml: true })).toBeNull()
 	})
 
 	it("answers undefined when the root carries no such attribute", () => {
-		expect(rootAttribute('<FeatureCollection timeStamp="2026-09-02"/>', "numberMatched", { xml: true })).toBeUndefined()
+		expect(rootAttribute('<FeatureCollection timeStamp="2026-09-02"/>', "numberMatched", { xml: true })).toBeNull()
 	})
 })

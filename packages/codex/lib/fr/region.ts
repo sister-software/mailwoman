@@ -92,7 +92,7 @@ export const FR_REGION_NAME_TO_CODE: ReadonlyMap<string, FrenchRegionCode> = (()
  * Resolve a French region surface form (ISO code or name, accents optional) to its ISO code.
  * Null if unknown.
  */
-export function lookupFrenchRegion(input: string | null | undefined): FrenchRegionCode | null {
+export function lookupFrenchRegion(input: string | null): FrenchRegionCode | null {
 	if (!input || typeof input !== "string") return null
 	const upper = input.trim().toUpperCase()
 

@@ -58,7 +58,7 @@ export async function runInvarianceCommand(options: InvarianceCommandOptions): P
 
 	const parse = await buildParseFn(options)
 
-	let baselineParse: Awaited<ReturnType<typeof buildParseFn>> | undefined
+	let baselineParse: Awaited<ReturnType<typeof buildParseFn>> | null = null
 
 	if (options.baselineWeightsCache || options.baseline) {
 		console.error(`[invariance] loading baseline model (regression mode)…`)

@@ -519,7 +519,7 @@ describe("resolveTree + spanRescore", () => {
 		expect(injected?.placeID).toBe("wof:10")
 
 		expect(injected?.lat).toBe(37.19)
-		expect((injected?.alternatives as ResolvedPlace[] | undefined)?.map((a) => a.id)).toEqual([11, 12, 13])
+		expect((injected?.alternatives as ResolvedPlace[] | null)?.map((a) => a.id)).toEqual([11, 12, 13])
 	})
 
 	it(": `alternatives` stays ABSENT (not empty) for a lone namesake — the walk path's interface", async () => {
@@ -546,7 +546,7 @@ describe("resolveTree + spanRescore", () => {
 		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
 		expect(injected?.placeID).toBe("wof:30")
 		expect(injected?.lat).toBe(55.75)
-		expect((injected?.alternatives as ResolvedPlace[] | undefined)?.map((a) => a.id)).toEqual([31, 32])
+		expect((injected?.alternatives as ResolvedPlace[] | null)?.map((a) => a.id)).toEqual([31, 32])
 	})
 
 	it("Does not fire when the tree already resolved (the brake)", async () => {

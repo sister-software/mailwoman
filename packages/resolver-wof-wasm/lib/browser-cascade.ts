@@ -138,12 +138,12 @@ export class CandidateResolverBackend implements ResolverBackend {
 	/**
 	 * The memoized bbox/country/placetype of a previously returned candidate.
 	 */
-	metaFor(id: number): CandidateMeta | undefined {
-		return this.#meta.get(id)
+	metaFor(id: number): CandidateMeta | null {
+		return this.#meta.get(id) ?? null
 	}
 
 	async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
-		let bbox: BBox | undefined
+		let bbox: BBox | null = null
 		let country = query.country
 
 		if (query.parentID !== undefined) {
@@ -168,7 +168,7 @@ export class CandidateResolverBackend implements ResolverBackend {
 			text: query.text,
 			placetype: query.placetype,
 			country,
-			bbox,
+			bbox: bbox ?? undefined,
 			postcode: query.postcode,
 			limit: query.limit,
 			bias: query.bias,
@@ -238,11 +238,11 @@ export async function runCascade(
 				const postcodeLeads =
 					placetype === "postalcode" &&
 					(isUnitGradePostcodeHit(String(node.value ?? ""), String(node.metadata?.["resolver_name"] ?? "")) ||
-						areaPostcodeLeadsLocality(hit.country))
+						areaPostcodeLeadsLocality(hit.country ?? null))
 
 				collected.push({ rank: postcodeLeads ? PIN_RANK_POSTCODE_FIRST : (PIN_RANK[placetype] ?? 0), hit })
 
-				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
+				const alts = (node.alternatives as Array<Record<string, unknown>> | null) ?? []
 
 				alternativesOf.set(
 					id,

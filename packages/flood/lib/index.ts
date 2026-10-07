@@ -229,7 +229,7 @@ export class FloodZoneLookup implements Disposable {
 	/**
 	 * The coverage row for the index cell's parent at the coverage resolution.
 	 */
-	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
+	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | null {
 		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 

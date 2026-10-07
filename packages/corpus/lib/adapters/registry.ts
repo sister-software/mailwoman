@@ -26,9 +26,9 @@ export interface AdapterRegistry {
 	register(adapter: CorpusAdapter): void
 
 	/**
-	 * Return the adapter for `id`, or `undefined`.
+	 * Return the adapter for `id`, or `null`.
 	 */
-	get(id: string): CorpusAdapter | undefined
+	get(id: string): CorpusAdapter | null
 
 	/**
 	 * All registered adapters, in insertion order.
@@ -58,8 +58,8 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 		this.#byID.set(adapter.id, adapter)
 	}
 
-	get(id: string): CorpusAdapter | undefined {
-		return this.#byID.get(id)
+	get(id: string): CorpusAdapter | null {
+		return this.#byID.get(id) ?? null
 	}
 
 	list(): readonly CorpusAdapter[] {

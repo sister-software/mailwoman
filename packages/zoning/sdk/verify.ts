@@ -70,7 +70,7 @@ export interface AgreementRow {
 	 * is what this layer is for: two paths that agree on containment and disagree
 	 * on the code would be a silent vocabulary defect.
 	 */
-	serviceLocalCode?: string
+	serviceLocalCode: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
@@ -82,7 +82,7 @@ export interface AgreementRow {
 	 * A receipt without it forces a re-run.
 	 * `undefined` means the service returned no polygon at all near the point.
 	 */
-	nearestEdgeMetres?: number
+	nearestEdgeMetres: number | null
 }
 
 /**
@@ -218,7 +218,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 			const local = lookup.lookup(point.latitude, point.longitude)
 			const service = await readServiceContainment(options.readServiceFeatures, point.latitude, point.longitude)
 			const localInside = local.kind === ZoningReadingKind.Designated
-			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = service.nearestEdgeMetres !== null && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			agreement.push({
 				label: point.label,
@@ -226,9 +226,9 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 				longitude: point.longitude,
 				local,
 				serviceInside: service.inside,
-				...(service.localCode === undefined ? {} : { serviceLocalCode: service.localCode }),
+				serviceLocalCode: service.localCode,
 				outcome: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
+				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
@@ -258,7 +258,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 				(row) =>
 					row.outcome === "agree" &&
 					row.serviceInside &&
-					row.serviceLocalCode !== undefined &&
+					row.serviceLocalCode !== null &&
 					!row.local.designations.some((designation) => designation.localCode === row.serviceLocalCode)
 			).length,
 			outside,
@@ -278,12 +278,12 @@ async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,
 	latitude: number,
 	longitude: number
-): Promise<{ inside: boolean; localCode?: string; nearestEdgeMetres?: number }> {
+): Promise<{ inside: boolean; localCode: string | null; nearestEdgeMetres: number | null }> {
 	const features = await readServiceFeatures(latitude, longitude)
 
 	let nearest = Infinity
 	let inside = false
-	let localCode: string | undefined
+	let localCode: string | null = null
 
 	for (const feature of features) {
 		const geometry = feature.geometry
@@ -315,7 +315,7 @@ async function readServiceContainment(
 
 			const code = feature.properties?.ZONE_ORIG
 
-			if (typeof code === "string" && localCode === undefined) {
+			if (typeof code === "string" && localCode === null) {
 				localCode = code
 			}
 		}
@@ -323,8 +323,8 @@ async function readServiceContainment(
 
 	return {
 		inside,
-		...(localCode === undefined ? {} : { localCode }),
-		...(Number.isFinite(nearest) ? { nearestEdgeMetres: nearest } : {}),
+		localCode,
+		nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null,
 	}
 }
 

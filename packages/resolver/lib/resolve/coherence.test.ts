@@ -84,20 +84,20 @@ const portlandMeTree = (): AddressTree => ({
 	],
 })
 
-function localityOf(tree: AddressTree): AddressNode | undefined {
+function localityOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "locality") return n
 	}
 
-	return undefined
+	return null
 }
 
-function regionOf(tree: AddressTree): AddressNode | undefined {
+function regionOf(tree: AddressTree): AddressNode | null {
 	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "region") return n
 	}
 
-	return undefined
+	return null
 }
 
 describe("ResolveTree + adminCoherence", () => {
@@ -378,12 +378,12 @@ describe("resolveTree + applyParentFallbackContradiction", () => {
 
 	const opts = { includeAncestors: true, placetypeMap: { region: "region", subregion: "locality" } }
 
-	function subregionOf(tree: AddressTree): AddressNode | undefined {
+	function subregionOf(tree: AddressTree): AddressNode | null {
 		for (const n of walkNodes(tree.roots)) {
 			if (n.tag === "subregion") return n
 		}
 
-		return undefined
+		return null
 	}
 
 	it("un-resolves a parent-fallback pick whose lineage names another region, so the ladder answers the parent", async () => {

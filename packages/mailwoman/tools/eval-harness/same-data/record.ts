@@ -203,7 +203,7 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 		const lookups = new Map<string, SameDataLookup>()
 		// Not `error`: the catch binding below takes that name, so an outer variable with the
 		// same name would be shadowed and the receipt would report a clean run over a failed one.
-		let recordingError: string | undefined
+		let recordingError: string | null = null
 
 		let removedGold = 0
 		const withheld = withholdPredicate(row, inputs.withholdEveryDenotingRow === true)

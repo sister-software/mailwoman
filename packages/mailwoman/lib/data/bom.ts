@@ -115,8 +115,8 @@ export interface DataBOMOptions {
 	inventory?: InventoryReport
 }
 
-function property(name: string, value: string | number | undefined): BOMProperty[] {
-	if (value === undefined || value === "") return []
+function property(name: string, value: string | number | null | undefined): BOMProperty[] {
+	if (value == null || value === "") return []
 
 	return [{ name, value: String(value) }]
 }

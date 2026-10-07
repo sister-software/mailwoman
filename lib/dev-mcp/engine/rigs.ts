@@ -258,18 +258,18 @@ export function normalizeRigResults(engine: EngineRigName, body: unknown): RigRe
 
 		const sourceID =
 			engine === "pelias"
-				? ((properties["gid"] as string | undefined) ?? null)
+				? ((properties["gid"] as string | null) ?? null)
 				: properties["osm_type"] && properties["osm_id"]
 					? `osm:${String(properties["osm_type"])}:${String(properties["osm_id"])}`
 					: null
 
 		const kind =
 			engine === "pelias"
-				? ((properties["layer"] as string | undefined) ?? null)
-				: ((properties["osm_value"] as string | undefined) ?? (properties["type"] as string | undefined) ?? null)
+				? ((properties["layer"] as string | null) ?? null)
+				: ((properties["osm_value"] as string | null) ?? (properties["type"] as string | null) ?? null)
 
 		return {
-			name: (properties["name"] as string | undefined) ?? null,
+			name: (properties["name"] as string | null) ?? null,
 			kind,
 			sourceID,
 			lat: typeof lat === "number" ? lat : null,

@@ -109,7 +109,7 @@ export function isLatinScriptText(value: string): boolean {
 // This takes a dict and answers which of a country's two orders it is written for.
 // This package cannot import it because it has no runtime dependencies.
 // The core package adds 11 MB of shipped data.
-export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
+export function scriptOfComponents(components: ComponentDict): AddressScript | null {
 	for (const tag of SCRIPT_WITNESSES) {
 		const value = components[tag]?.trim()
 
@@ -118,7 +118,7 @@ export function scriptOfComponents(components: ComponentDict): AddressScript | u
 		return carriesNonLatinLetter(value) ? "local" : "latin"
 	}
 
-	return undefined
+	return null
 }
 
 /**

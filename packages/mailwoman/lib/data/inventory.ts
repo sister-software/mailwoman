@@ -147,7 +147,7 @@ export interface InventoryReport {
  * and a reader that opened one read-write would fail on exactly the artifacts it most needs to describe.
  */
 export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest; error?: string } {
-	let db: DatabaseClient<layerschemadatabase> | undefined
+	let db: DatabaseClient<layerschemadatabase> | null = null
 
 	try {
 		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })

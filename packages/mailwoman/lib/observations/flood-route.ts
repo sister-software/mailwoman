@@ -112,7 +112,7 @@ export interface AuthorityDesignationRoute extends Disposable {
 	 * Reads the layer at one coordinate.
 	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision
+	observe: (latitude: number | null, longitude: number | null) => DesignationDecision
 }
 
 /**
@@ -195,6 +195,6 @@ export function floodZoneAssignmentClause(observation: AuthorityDesignationObser
 export function describeAuthorityDesignation(observation: AuthorityDesignationObservation): string {
 	return (
 		`${observation.extent.authority}'s map ${floodZoneAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} ` +
-		`(${observation.containment}); ${describeCoverage(observation.coverage, { completeness: true })}; ${describeLayerProvenance(observation.layer)}`
+		`(${observation.containment}); ${describeCoverage(observation.coverage ?? null, { completeness: true })}; ${describeLayerProvenance(observation.layer)}`
 	)
 }

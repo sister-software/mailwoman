@@ -561,9 +561,9 @@ export interface NSULIngestCounts {
 interface IngestNSULSourcesOptions {
 	sources: NSULRegionSource[]
 	/**
-	 * `uprn.db`'s point for a uprn, or `undefined` when it holds none.
+	 * `uprn.db`'s point for a uprn, or `null` when it holds none.
 	 */
-	coordinateOf: (uprn: number) => NSULCoordinateRow | undefined
+	coordinateOf: (uprn: number) => NSULCoordinateRow | null
 	/**
 	 * Write one row; `false` when the uprn was already written (the `insert or ignore` duplicate path).
 	 */
@@ -831,7 +831,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	try {
 		counts = await ingestNSULSources({
 			sources,
-			coordinateOf: (uprn) => coordinateProbe.get(uprn) as NSULCoordinateRow | undefined,
+			coordinateOf: (uprn) => (coordinateProbe.get(uprn) as NSULCoordinateRow | undefined) ?? null,
 			write: (line, point) =>
 				Number(
 					insert.run(line.uprn, line.pcds, compactPostcode(line.pcds), point.lat, point.lon, point.h3_cell).changes

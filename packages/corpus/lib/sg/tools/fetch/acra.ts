@@ -60,7 +60,7 @@ async function readJSON<T>(url: string): Promise<T> {
  *
  * The function returns `undefined` when polling runs out of attempts.
  */
-async function signedURLFor(datasetID: string): Promise<string | undefined> {
+async function signedURLFor(datasetID: string): Promise<string | null> {
 	await readJSON(`${DOWNLOAD_API}/${datasetID}/initiate-download`)
 
 	for (let attempt = 0; attempt < POLL_ATTEMPTS; attempt++) {
@@ -70,7 +70,7 @@ async function signedURLFor(datasetID: string): Promise<string | undefined> {
 		if (poll.data?.status === "DOWNLOAD_SUCCESS" && poll.data.url) return poll.data.url
 	}
 
-	return undefined
+	return null
 }
 
 function filenameFor(name: string, datasetID: string): string {

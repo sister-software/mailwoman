@@ -92,8 +92,8 @@ export const DEFAULT_MAPPING: ColumnMapping = {
  * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
  */
 export async function loadMapping(
-	option: string | undefined,
-	source: string | undefined,
+	option: string | null,
+	source: string | null,
 	base: ColumnMapping = DEFAULT_MAPPING
 ): Promise<ColumnMapping> {
 	let provided: Partial<ColumnMapping> = {}
@@ -468,7 +468,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
-	const mapping = await loadMapping(options.mapping, options.source, base)
+	const mapping = await loadMapping(options.mapping ?? null, options.source ?? null, base)
 	using geocoder = await buildGeocoder(options)
 	const { geocodeAddress: geocodeForIngest } = geocoder
 

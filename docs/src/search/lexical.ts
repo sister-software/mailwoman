@@ -50,8 +50,8 @@ export function queryTokens(text: string): string[] {
 	return text.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token))
 }
 
-export function matchExpression(tokens: readonly string[]): string | undefined {
-	if (!tokens.length) return undefined
+export function matchExpression(tokens: readonly string[]): string | null {
+	if (!tokens.length) return null
 
 	return tokens
 		.map((token, index) => (index === tokens.length - 1 ? `${quoteTerm(token)}*` : quoteTerm(token)))

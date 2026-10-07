@@ -329,17 +329,17 @@ export function splitStreetName(value: string): SplitStreetName {
 }
 
 /**
- * The house number an address states inline, or `undefined` when it states none this adapter can use.
+ * The house number an address states inline, or `null` when it states none this adapter can use.
  *
  * `designatorsByType` skips a designator the publisher marked void, so a void number
- * and an absent one both answer `undefined` here.
+ * and an absent one both answer `null` here.
  * Both are refusals rather than addresses with no number, and the caller counts
  * them together for that reason.
  *
  * `ad:designator` was present and populated on 1,000 of 1,000 addresses sampled,
  * so neither condition has been seen on this service.
  */
-export function houseNumberOf(address: MarkupElement): string | undefined {
+export function houseNumberOf(address: MarkupElement): string | null {
 	return designator(designatorsByType(address), HOUSE_NUMBER_DESIGNATOR)
 }
 
@@ -350,7 +350,7 @@ async function readComponentFiles<T>(
 	root: PathBuilder,
 	files: readonly string[],
 	typeName: string,
-	read: (feature: MarkupElement) => T | undefined,
+	read: (feature: MarkupElement) => T | null,
 	signal?: AbortSignal
 ): Promise<Map<string, T>> {
 	const index = new Map<string, T>()
@@ -371,7 +371,7 @@ async function readComponentFiles<T>(
 
 			const value = read(feature)
 
-			if (value !== undefined) {
+			if (value !== null) {
 				index.set(id, value)
 			}
 		}
@@ -412,7 +412,7 @@ async function readComponentIndex(
 		root,
 		harvest.components.AdminUnitName,
 		"ad:AdminUnitName",
-		(feature) => (adminUnitLevel(feature) === MUNICIPALITY_LEVEL ? placeName(feature) : undefined),
+		(feature) => (adminUnitLevel(feature) === MUNICIPALITY_LEVEL ? placeName(feature) : null),
 		signal
 	)
 
@@ -536,15 +536,15 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 
 						const house = houseNumberOf(address)
 
-						if (house === undefined) {
+						if (house === null) {
 							refused.noHouseNumber++
 
 							continue
 						}
 
-						let street: string | undefined
-						let postcode: string | undefined
-						let locality: string | undefined
+						let street: string | null = null
+						let postcode: string | null = null
+						let locality: string | null = null
 						let unreadable = false
 
 						for (const href of componentHrefs(address)) {
@@ -580,7 +580,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 						// A reference the harvest cannot answer is a street, postcode
 						// or locality this run could not read.
 						// A row emitted without it would record an absence the publisher never stated.
-						if (unreadable || street === undefined || postcode === undefined || locality === undefined) {
+						if (unreadable || street === null || postcode === null || locality === null) {
 							refused.unjoined++
 
 							continue

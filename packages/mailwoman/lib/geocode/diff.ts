@@ -97,7 +97,7 @@ export interface GeocodeDiff {
 		| "coordinate-appeared-or-vanished"
 }
 
-function resolutions(tree: AddressTree | null | undefined): Map<string, SpanResolution> {
+function resolutions(tree: AddressTree | null): Map<string, SpanResolution> {
 	const out = new Map<string, SpanResolution>()
 
 	for (const node of flattenTreeNodes(tree)) {
@@ -129,13 +129,13 @@ export interface GeocodeArm {
  * Report which of the three explanations the evidence supports.
  */
 export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm): GeocodeDiff {
-	const parse = diffParse(input, before.tree, after.tree, {
+	const parse = diffParse(input, before.tree ?? null, after.tree ?? null, {
 		...(before.localeCountry ? { before: before.localeCountry } : {}),
 		...(after.localeCountry ? { after: after.localeCountry } : {}),
 	})
 
-	const ra = resolutions(before.tree)
-	const rb = resolutions(after.tree)
+	const ra = resolutions(before.tree ?? null)
+	const rb = resolutions(after.tree ?? null)
 	const spanGeo: SpanGeoDelta[] = []
 
 	for (const [key, left] of ra) {

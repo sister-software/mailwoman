@@ -123,10 +123,10 @@ export interface SemverTriple {
  * Parses the minimum version from an `engines.node` range.
  * A missing minor or patch defaults to zero.
  */
-export function parseVersionFloor(engines: string): SemverTriple | undefined {
+export function parseVersionFloor(engines: string): SemverTriple | null {
 	const match = engines.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/u)
 
-	if (!match) return undefined
+	if (!match) return null
 
 	return { major: Number(match[1]), minor: Number(match[2] ?? 0), patch: Number(match[3] ?? 0) }
 }
@@ -134,10 +134,10 @@ export function parseVersionFloor(engines: string): SemverTriple | undefined {
 /**
  * Parses a runtime version in `major.minor.patch` form.
  */
-export function parseVersion(version: string): SemverTriple | undefined {
+export function parseVersion(version: string): SemverTriple | null {
 	const match = version.match(/^(\d+)\.(\d+)\.(\d+)/u)
 
-	if (!match) return undefined
+	if (!match) return null
 
 	return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]) }
 }
@@ -172,11 +172,11 @@ export interface WeightsObservation {
 	/**
 	 * Holds the model file size in bytes.
 	 */
-	modelSize?: number
+	modelSize?: number | null
 	/**
 	 * Holds the tokenizer file size in bytes.
 	 */
-	tokenizerSize?: number
+	tokenizerSize?: number | null
 	/**
 	 * Holds the resolution error.
 	 */
@@ -312,7 +312,7 @@ export interface GazetteerObservation {
 	/**
 	 * Holds the candidate database selected explicitly or through the environment.
 	 */
-	envCandidate?: { path: string; sizeBytes?: number }
+	envCandidate?: { path: string; sizeBytes?: number | null }
 	/**
 	 * Holds the candidate database found at the default path.
 	 */
@@ -320,7 +320,7 @@ export interface GazetteerObservation {
 	/**
 	 * Holds the WOF admin database used when no candidate database exists.
 	 */
-	wofDatabase?: { path: string; sizeBytes?: number }
+	wofDatabase?: { path: string; sizeBytes?: number | null }
 	/**
 	 * Lists the paths probed, for the report when no database is found.
 	 */
@@ -453,7 +453,7 @@ export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
  */
 export interface ONNXRuntimeObservation {
 	loadable: boolean
-	error?: string
+	error?: string | null
 }
 
 /**

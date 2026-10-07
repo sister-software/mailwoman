@@ -136,7 +136,7 @@ describe("isCORDISArchiveCurrent", () => {
 		expect(await isCORDISArchiveCurrent(recorded, { lastModified: null, contentLength: null }, path, false)).toBe(false)
 
 		expect(
-			await isCORDISArchiveCurrent(undefined, { lastModified: recorded.last_modified, contentLength: 10 }, path, false)
+			await isCORDISArchiveCurrent(null, { lastModified: recorded.last_modified, contentLength: 10 }, path, false)
 		).toBe(false)
 	})
 

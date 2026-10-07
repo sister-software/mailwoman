@@ -232,7 +232,7 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 		addressID: createPostalAddressID({
 			coordinate,
 			address: result.formatted_address,
-			state: regionPrefix(components.region),
+			state: regionPrefix(components.region) ?? undefined,
 		}),
 		// Absent means exact — Google only sets this field when it had to loosen the query.
 		partialMatch: result.partial_match === true,

@@ -107,7 +107,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 				return errorResponse(c, 400, "invalid request body", summarizeValidationError(result.error))
 			}
 
-			return undefined
+			return null
 		},
 	})
 

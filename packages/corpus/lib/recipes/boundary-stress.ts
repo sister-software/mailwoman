@@ -73,7 +73,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 		let skipped = 0
 
 		for (let i = 0; i < count; i++) {
-			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
+			const row = synthesizeBoundaryStressRow(null, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
 			// One resolution for both, because `source_id` includes the source as its prefix
 			// and a pair that disagreed would name a source no row of this output declares.

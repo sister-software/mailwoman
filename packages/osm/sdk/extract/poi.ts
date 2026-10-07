@@ -272,7 +272,7 @@ function toPOISourceRow(
 
 	if (!categoryID) return null
 
-	const pt = representativePoint(feature.geometry)
+	const pt = representativePoint(feature.geometry ?? null)
 
 	if (!pt) return null
 

@@ -192,7 +192,7 @@ export interface MatrikkelenFileManifest extends SourceManifest {
 }
 
 /**
- * The recorded entry for one area, or `undefined` where the manifest holds none that can decide a skip.
+ * The recorded entry for one area, or `null` where the manifest holds none that can decide a skip.
  *
  * `loadCollectionFiles` reads the shared collection shape.
  * That shape states the fields common to every source's manifest and omits this source's area fields.
@@ -201,10 +201,10 @@ export interface MatrikkelenFileManifest extends SourceManifest {
  * cannot answer whether the archive on disk is current, and this reports that as
  * no recorded entry rather than as an entry that disagrees.
  */
-export function recordedMatrikkelenArea(entry: SourceManifest | undefined): MatrikkelenFileManifest | undefined {
-	const candidate = entry as (Partial<MatrikkelenFileManifest> & SourceManifest) | undefined
+export function recordedMatrikkelenArea(entry: SourceManifest | null): MatrikkelenFileManifest | null {
+	const candidate = entry as (Partial<MatrikkelenFileManifest> & SourceManifest) | null
 
-	if (!candidate) return undefined
+	if (!candidate) return null
 
 	const complete =
 		typeof candidate.area_code === "string" &&
@@ -213,7 +213,7 @@ export function recordedMatrikkelenArea(entry: SourceManifest | undefined): Matr
 		typeof candidate.member_bytes === "number" &&
 		typeof candidate.member_sha256 === "string"
 
-	return complete ? (candidate as MatrikkelenFileManifest) : undefined
+	return complete ? (candidate as MatrikkelenFileManifest) : null
 }
 
 /**
@@ -283,7 +283,7 @@ export function matrikkelenPublicationIsRecorded(
  * @throws When the area list holds no matching area, the error states the unmatched codes.
  * A typed code then reports itself rather than reading as a fetch of no areas.
  */
-export function matrikkelenAreasFor(codes: readonly string[] | undefined): readonly MatrikkelenArea[] {
+export function matrikkelenAreasFor(codes: readonly string[] | null): readonly MatrikkelenArea[] {
 	if (!codes?.length) return MATRIKKELEN_AREAS
 
 	const wanted = codes.map((code) => code.trim()).filter((code) => code.length > 0)
@@ -328,7 +328,7 @@ export async function downloadMatrikkelenArea(
 	area: MatrikkelenArea,
 	options: {
 		outputDir: PathBuilderLike
-		recorded?: MatrikkelenFileManifest
+		recorded?: MatrikkelenFileManifest | null
 		force?: boolean
 		retries?: number
 		retryDelayMs?: number
@@ -440,7 +440,7 @@ export async function downloadMatrikkelen(
 		try {
 			const { entry, downloaded } = await downloadMatrikkelenArea(client, area, {
 				outputDir: destDir,
-				recorded: recordedMatrikkelenArea(entries.get(matrikkelenArchiveFilename(area))),
+				recorded: recordedMatrikkelenArea(entries.get(matrikkelenArchiveFilename(area)) ?? null),
 				force: options.force,
 				retries: options.retries,
 				retryDelayMs: options.retryDelayMs,
@@ -513,7 +513,7 @@ export async function fetchMatrikkelen(
 	options: FetchMatrikkelenOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const areas = matrikkelenAreasFor(options.areas)
+	const areas = matrikkelenAreasFor(options.areas ?? null)
 
 	await using client = new APIClient({ displayName: SLUG, retry: true })
 

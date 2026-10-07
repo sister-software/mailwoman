@@ -73,9 +73,9 @@ export interface CloneState {
 	exists: boolean
 	isRepository: boolean
 	/**
-	 * `origin`'s fetch URL, or `undefined` when the remote is absent.
+	 * `origin`'s fetch URL, or `null` when the remote is absent.
 	 */
-	originURL?: string
+	originURL?: string | null
 	dirty?: boolean
 	/**
 	 * Commits on head that the tracked upstream lacks.
@@ -85,11 +85,11 @@ export interface CloneState {
 	ahead?: number
 	behind?: number
 	shallow?: boolean
-	head?: string
+	head?: string | null
 	/**
 	 * Committer date of head, ISO-8601 — the vintage a build step cannot otherwise see.
 	 */
-	headDate?: string
+	headDate?: string | null
 }
 
 export interface RepoSyncPlan {
@@ -111,7 +111,7 @@ export interface RepoSyncPlan {
  * and `https://github.com/org/repo`, with or without a `.git` suffix.
  * A string comparison would report a spurious re-point for a clone that is already correct.
  */
-export function sameRemote(a: string | undefined, b: string | undefined): boolean {
+export function sameRemote(a: string | null, b: string | null): boolean {
 	if (!a || !b) return false
 
 	const normalize = (url: string): string =>
@@ -159,7 +159,7 @@ export function planRepoSync(origin: RepoOrigin, directory: string, state: Clone
 		)
 	}
 
-	if (!sameRemote(state.originURL, origin.url)) {
+	if (!sameRemote(state.originURL ?? null, origin.url)) {
 		return plan(
 			SyncAction.RepointRequired,
 			`origin is ${state.originURL ?? "absent"} but ${origin.source} is ${origin.url} — ${origin.reason}`
@@ -190,11 +190,11 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 		return { exists: true, isRepository: false }
 	}
 
-	const read = (args: string[]): string | undefined => {
+	const read = (args: string[]): string | null => {
 		try {
 			return git(directory, args)
 		} catch {
-			return undefined
+			return null
 		}
 	}
 
@@ -205,9 +205,7 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
-		(branch && branch !== "HEAD"
-			? read(["rev-list", "--left-right", "--count", `HEAD...origin/${branch}`])
-			: undefined) ??
+		(branch && branch !== "HEAD" ? read(["rev-list", "--left-right", "--count", `HEAD...origin/${branch}`]) : null) ??
 		read(["rev-list", "--left-right", "--count", "HEAD...origin/HEAD"]) ??
 		read(["rev-list", "--left-right", "--count", "HEAD...@{u}"])
 

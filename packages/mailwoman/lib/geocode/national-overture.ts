@@ -132,8 +132,8 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
  * A caller that needs an expression to record uses {@link licenseForOvertureCountry},
  * which refuses one that is unsettled.
  */
-export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | undefined {
-	return COUNTRY_LICENSES.get(countryCode.toLowerCase())
+export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | null {
+	return COUNTRY_LICENSES.get(countryCode.toLowerCase()) ?? null
 }
 
 /**

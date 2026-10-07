@@ -95,8 +95,8 @@ export function findOperation<TOperation extends Operation>(
 	registry: ReadonlyArray<TOperation>,
 	family: string,
 	name: string
-): TOperation | undefined {
+): TOperation | null {
 	const id = name.includes(".") ? name : `${family}.${name}`
 
-	return registry.find((operation) => operation.id === id)
+	return registry.find((operation) => operation.id === id) ?? null
 }

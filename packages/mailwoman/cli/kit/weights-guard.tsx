@@ -58,7 +58,7 @@ export async function probeWeights(
  * Pure — unit-tested; `spec` defaults to `latest`.
  */
 export function buildWeightsInstallArgs(
-	locale: string | undefined,
+	locale: string | null | undefined,
 	cacheRoot: PathBuilderLike,
 	spec = "latest"
 ): string[] {
@@ -70,7 +70,7 @@ export function buildWeightsInstallArgs(
 		"--no-fund",
 		"--loglevel",
 		"error",
-		`${weightsPackageName(locale)}@${spec}`,
+		`${weightsPackageName(locale ?? undefined)}@${spec}`,
 	]
 }
 

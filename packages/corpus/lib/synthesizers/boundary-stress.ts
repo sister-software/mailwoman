@@ -328,7 +328,7 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
  * When `base` is absent, the function samples a built-in US or French tuple that suits the template.
  */
 export function synthesizeBoundaryStressRow(
-	base: BoundaryStressBaseTuple | undefined,
+	base: BoundaryStressBaseTuple | null,
 	opts: BoundaryStressSynthesisOpts = {}
 ): SynthesizedBoundaryStressRow {
 	const random = opts.random ?? Math.random

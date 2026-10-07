@@ -58,7 +58,7 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * Overlays load lazily on the first row of their country, so ask after grading that row.
 	 */
-	gradedBaseOnly(caseCountry?: string): boolean
+	gradedBaseOnly(caseCountry: string | null): boolean
 }
 
 /**
@@ -178,7 +178,7 @@ export interface GauntletResolverPins {
  *
  * Pure and exported so the pin-reaches-the-pipeline interface is testable without the full database set.
  */
-export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
+export function resolverPinDeps(pins?: GauntletResolverPins | null): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 	poiVenueTier?: boolean
@@ -208,7 +208,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
  * It prints on the unpinned run too, so two gauntlet logs can be told apart,
  * because an off/on pair whose logs are indistinguishable is not evidence about the pin.
  */
-export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
+export function describeResolverPins(pins?: GauntletResolverPins | null): string {
 	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
 	// so this list includes every pin rather than only the boolean ones.
 	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
@@ -311,10 +311,10 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 	const missing: string[] = []
 
 	for (const locale of locales) {
-		let packageDir: PathBuilder | undefined
+		let packageDir: PathBuilder | null
 
 		try {
-			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir
+			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir ?? null
 		} catch {
 			continue
 		}
@@ -511,13 +511,13 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		opts.pins?.capitalTier === false
 			? undefined
 			: await loadCapitalIndex({
-					candidateDB: await resolveCandidateDBPath(opts.candidateDB),
+					candidateDB: (await resolveCandidateDBPath(opts.candidateDB)) ?? undefined,
 					missing: opts.pins?.capitalTier === true ? "throw" : "degrade",
 				})
 
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
-				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
+				capitalIndex.levelOfPlace(place.name, place.country ?? null, place.lat, place.lon)
 		: undefined
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
@@ -622,7 +622,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	 */
 	const runGeocode = async (
 		input: string,
-		geoOpts: GauntletGeocodeOpts | undefined,
+		geoOpts: GauntletGeocodeOpts | null,
 		extra: Pick<GeocodeDeps, "resolveTraceSink">
 	): Promise<GeocodeResult> => {
 		const { caseCountry, ...forwarded } = geoOpts ?? {}
@@ -659,12 +659,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},
-		gradedBaseOnly: (caseCountry?: string) => gradedBaseOnly(caseCountry, baseOnlyLocales),
-		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts, {}),
+		gradedBaseOnly: (caseCountry: string | null) => gradedBaseOnly(caseCountry, baseOnlyLocales),
+		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts ?? null, {}),
 		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const resolverTrace: ResolveNodeTrace[] = []
 
-			const result = await runGeocode(input, geoOpts, {
+			const result = await runGeocode(input, geoOpts ?? null, {
 				resolveTraceSink: (record) => resolverTrace.push(record),
 			})
 

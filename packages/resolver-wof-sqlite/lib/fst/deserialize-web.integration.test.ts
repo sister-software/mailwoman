@@ -368,7 +368,7 @@ const PROVENANCE = {
 test("readFSTProvenanceWeb: returns undefined for versions below 3 (no trailer support)", () => {
 	// A v2 buffer never includes provenance the reader will read — version check is `< 3`.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 2, provenance: PROVENANCE })
-	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeNull()
 })
 
 test("readFSTProvenanceWeb: parses the JSON trailer for a v3 buffer", () => {
@@ -379,11 +379,11 @@ test("readFSTProvenanceWeb: parses the JSON trailer for a v3 buffer", () => {
 test("readFSTProvenanceWeb: a v3 buffer with no trailer (offset 0) returns undefined", () => {
 	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 3 })
 	// offset field at byte 28 is 0 when no provenance was written.
-	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeNull()
 })
 
 test("readFSTProvenanceWeb: a buffer shorter than the header returns undefined", () => {
-	expect(readFSTProvenanceWeb(new Uint8Array(HEADER_SIZE - 1))).toBeUndefined()
+	expect(readFSTProvenanceWeb(new Uint8Array(HEADER_SIZE - 1))).toBeNull()
 })
 
 test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefined", () => {
@@ -392,7 +392,7 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 	const offset = view.getUint32(28, true)
 	// Overwrite the first JSON byte with a non-"{" so JSON.parse throws.
 	bytes[offset + 4] = 0x21 // "!"
-	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeNull()
 })
 
 // #endregion

@@ -57,7 +57,7 @@ describe("the anchor-artifact presence assertion", () => {
 				return caught as Error
 			}
 
-			return undefined
+			return null
 		})()
 
 		expect(error?.message).toMatch(/scripts\/link-dev-weights\.ts/)

@@ -375,7 +375,7 @@ export function collectParseFacts(
 	}
 }
 
-export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> | undefined): RetrievalFacts {
+export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> | null): RetrievalFacts {
 	if (!records) return { lookups: null, checks_fired: [] }
 
 	const lookups = records.map((record): LookupFact => {
@@ -719,7 +719,7 @@ export function assembleAccount(
 	const trace = run.trace
 	const parse = trace ? collectParseFacts(trace, run.result.components) : null
 	const evidence = trace ? evidenceCensus(trace.parse) : null
-	const retrieval = collectRetrievalFacts(trace?.resolver)
+	const retrieval = collectRetrievalFacts(trace?.resolver ?? null)
 	const outcome = collectOutcomeFacts(run.result)
 	const shapes = matchShapes({ parse, evidence, retrieval, outcome })
 
@@ -757,8 +757,8 @@ export function assembleAccount(
  * Then run the counterfactual sweep and aggregate by shape.
  */
 export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
-	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
-	const config = (args["config"] as EngineConfig | undefined) ?? {}
+	const ref = (args["inputs"] as InputSetRef | null) ?? { kind: "board" }
+	const config = (args["config"] as EngineConfig | null) ?? {}
 	const limit = args["limit"] as number | undefined
 	const rowsCap = args["rows_cap"] as number | undefined
 	const wantCounterfactuals = args["counterfactuals"] !== false

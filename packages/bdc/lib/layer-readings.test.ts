@@ -44,8 +44,8 @@ const CENTROIDS: Record<string, { lat: number; lon: number }> = {
 /**
  * The centroid source both builds and the resolver read, as a TIGER lookup would serve them.
  */
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return CENTROIDS[geoid]
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return CENTROIDS[geoid] ?? null
 }
 
 const resolveGeoidCell = geoidCellResolver(blockCentroids)
@@ -234,7 +234,7 @@ describe("bdcLayerReadings", () => {
 	it("reads a block whose res-6 cell has no coverage row as unknown", async () => {
 		using db = openBuild(j22)
 
-		expect(await readLayerCoverage(db, blockCentroidCells(CENTROIDS[GEOID_FAR]!).coverageCell)).toBeUndefined()
+		expect(await readLayerCoverage(db, blockCentroidCells(CENTROIDS[GEOID_FAR]!).coverageCell)).toBeNull()
 
 		const readings = await bdcLayerReadings(db, {
 			subject: BUILDING,

@@ -184,7 +184,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// The eval runs its own recompile-before-eval guard, stricter than this one
 				// and surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
-				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
+				const outDir = (args["out_dir"] as string | null) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
 				// The promotion battery is `mailwoman eval promote --check <spec>`; a wrong
 				// subcommand can exit 0 with no verdict, so the job "succeeds" silently.
 				const argv = ["packages/mailwoman/out/cli/main.js", "eval", "promote", "--check", check, "--out-dir", outDir]
@@ -246,7 +246,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					registry.repoRoot
 				)
 
-				const timeoutMs = ((args["timeout_s"] as number | undefined) ?? 120) * 1000
+				const timeoutMs = ((args["timeout_s"] as number | null) ?? 120) * 1000
 				const startedAt = Date.now()
 
 				while (jobs.get(job.jobID)!.state === "running" && Date.now() - startedAt < timeoutMs) {

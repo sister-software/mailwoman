@@ -344,9 +344,11 @@ export interface ParseOpts {
 	 * Per-parse override of the config's `placetypePair`.
 	 *
 	 * Set it to `false` to disable the prior.
+	 * A `null` value falls back to the config default.
+	 *
 	 * The prior biases a place name toward the tag the pair index recorded beside another input name.
 	 */
-	placetypePair?: PlacetypePairPriorOpts | false
+	placetypePair?: PlacetypePairPriorOpts | false | null
 
 	/**
 	 * Per-parse override of the config's `placetypeCensus`.

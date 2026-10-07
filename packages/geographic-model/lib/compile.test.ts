@@ -205,8 +205,8 @@ function permuted(document: GeographicModelDocument): unknown {
 	})
 }
 
-function ancestorsIn(model: CompiledGeographicModel, concept: string): readonly ConceptID[] | undefined {
-	return model.inheritanceClosure.find((entry) => entry.concept === concept)?.ancestors
+function ancestorsIn(model: CompiledGeographicModel, concept: string): readonly ConceptID[] | null {
+	return model.inheritanceClosure.find((entry) => entry.concept === concept)?.ancestors ?? null
 }
 
 function factsAbout(model: CompiledGeographicModel, concept: string): DerivedFactRecord[] {

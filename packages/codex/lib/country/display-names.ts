@@ -73,7 +73,7 @@ const ASCII_Z = 90
 /**
  * Returns true when ICU echoes the code, indicating that it has no display name for the region.
  */
-function isEcho(code: string, rendered: string | undefined): boolean {
+function isEcho(code: string, rendered: string | null): boolean {
 	return !rendered || rendered === code
 }
 
@@ -91,7 +91,7 @@ export function* enumerateCountryDisplayNames(
 				return { locale, formatter: new Intl.DisplayNames([locale], { type: "region", style }) }
 			} catch {
 				// The runtime does not support this locale.
-				return undefined
+				return null
 			}
 		}).filter((f) => f !== null && f !== undefined)
 	)
@@ -102,10 +102,10 @@ export function* enumerateCountryDisplayNames(
 			const seen = new Set<string>()
 
 			for (const { locale, formatter } of formatters) {
-				let rendered: string | undefined
+				let rendered: string | null
 
 				try {
-					rendered = formatter.of(iso2)
+					rendered = formatter.of(iso2) ?? null
 				} catch {
 					continue
 				}

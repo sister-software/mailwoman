@@ -31,7 +31,7 @@ interface Options {
 }
 
 const Verify: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(async () => (await verifyBody(parseBody(options.body), options.out)).join("\n"))
+	const state = useCommandTask(async () => (await verifyBody(parseBody(options.body), options.out ?? null)).join("\n"))
 
 	return <CommandTaskResult state={state} running={<Spinner label={`verifying ${options.body}…`} />} />
 }

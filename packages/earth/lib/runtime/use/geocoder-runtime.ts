@@ -256,7 +256,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
-			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+			const stateSlug = regionToStateSlug((stateNode?.value as string | undefined) ?? null)
 
 			const streetSlug =
 				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
@@ -273,10 +273,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 						streetResolution = await resolveStreet(
 							streetValue,
 							String(houseNumberNode.value),
-							postcodeNode?.value ? String(postcodeNode.value) : undefined,
-							localityNode?.value ? String(localityNode.value) : undefined,
+							postcodeNode?.value ? String(postcodeNode.value) : null,
+							localityNode?.value ? String(localityNode.value) : null,
 							street.situs,
-							street.interp,
+							street.interp ?? null,
 							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
 						)
 					}

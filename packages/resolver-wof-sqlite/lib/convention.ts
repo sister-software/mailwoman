@@ -79,10 +79,10 @@ export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) =
 
 /**
  * Looks up a convention by WOF polygon id.
- * `get` returns `undefined` when the polygon has no override.
+ * `get` returns `null` when the polygon has no override.
  */
 export interface ConventionSource {
-	get(wofID: number): Convention | undefined
+	get(wofID: number): Convention | null
 }
 
 /**
@@ -95,8 +95,8 @@ export class SeedConventionSource implements ConventionSource {
 		this.#rows = new Map(Object.entries(rows).map(([k, v]) => [Number(k), v]))
 	}
 
-	get(wofID: number): Convention | undefined {
-		return this.#rows.get(wofID)
+	get(wofID: number): Convention | null {
+		return this.#rows.get(wofID) ?? null
 	}
 }
 
@@ -106,7 +106,7 @@ export class SeedConventionSource implements ConventionSource {
  * A layer's `candidateStrategies` replaces the whole list.
  * `scoringWeights` merges key by key, so a layer can change one weight without restating the others.
  */
-export function mergeConventions(base: Convention, ...overrides: Array<Convention | undefined>): Convention {
+export function mergeConventions(base: Convention, ...overrides: Array<Convention | null | undefined>): Convention {
 	const out: Convention = {
 		candidateStrategies: base.candidateStrategies ? [...base.candidateStrategies] : undefined,
 		scoringWeights: base.scoringWeights ? { ...base.scoringWeights } : undefined,

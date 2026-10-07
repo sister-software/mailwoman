@@ -178,9 +178,9 @@ export function relabelGoldenStreetRow(
 	const flags: GoldenRelabelFlag[] = []
 	let rowClass: GoldenRelabelClass
 	let name = street
-	let suffix: string | undefined
+	let suffix: string | null = null
 	let suffixGap = ""
-	let canonical: USStreetSuffix | undefined
+	let canonical: USStreetSuffix | null = null
 
 	const split = splitLastWord(street)
 
@@ -215,7 +215,7 @@ export function relabelGoldenStreetRow(
 		}
 	}
 
-	let prefix: string | undefined
+	let prefix: string | null = null
 	let prefixGap = ""
 
 	if (splitPrefix && !row.components.street_prefix) {

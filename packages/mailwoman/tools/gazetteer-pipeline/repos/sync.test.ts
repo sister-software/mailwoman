@@ -56,7 +56,7 @@ describe("sameRemote", () => {
 		]
 
 		for (const form of forms) {
-			expect(sameRemote(form, forms[0]), form).toBe(true)
+			expect(sameRemote(form, forms[0] ?? null), form).toBe(true)
 		}
 	})
 
@@ -64,9 +64,9 @@ describe("sameRemote", () => {
 		expect(sameRemote(repoURL(FORK_ORG, REPO), repoURL(UPSTREAM_ORG, REPO))).toBe(false)
 	})
 
-	it("treats an absent remote as not-matching rather than as a match against undefined", () => {
-		expect(sameRemote(undefined, repoURL(FORK_ORG, REPO))).toBe(false)
-		expect(sameRemote(undefined, undefined)).toBe(false)
+	it("treats an absent remote as not-matching rather than as a match against null", () => {
+		expect(sameRemote(null, repoURL(FORK_ORG, REPO))).toBe(false)
+		expect(sameRemote(null, null)).toBe(false)
 	})
 })
 

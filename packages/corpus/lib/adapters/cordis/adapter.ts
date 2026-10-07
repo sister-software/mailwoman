@@ -589,7 +589,10 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 	// That keeps a country's local order whenever its Latin order has fewer slots:
 	// `Weixing Road` and `Changchun` would otherwise print run together in China's
 	// Han-script line, with no separator between them.
-	const rendered = formatAddressRow(components, country, { singleLine: true, script: scriptOfComponents(components) })
+	const rendered = formatAddressRow(components, country, {
+		singleLine: true,
+		script: scriptOfComponents(components) ?? undefined,
+	})
 
 	if (!rendered) return { refused: CORDISRefusal.Unrenderable, country }
 

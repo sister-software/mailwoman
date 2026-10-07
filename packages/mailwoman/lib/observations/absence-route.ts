@@ -158,7 +158,7 @@ export interface AbsenceObservationRoute extends Disposable {
 	/**
 	 * Decides one answered query without changing the outcome.
 	 */
-	observe: (outcome: POIIntentOutcome | undefined) => Promise<AbsenceDecision>
+	observe: (outcome: POIIntentOutcome | null) => Promise<AbsenceDecision>
 }
 
 /**
@@ -296,7 +296,7 @@ interface DecisionContext {
 	identity: AbsenceRouteIdentity
 }
 
-async function decide(outcome: POIIntentOutcome | undefined, context: DecisionContext): Promise<AbsenceDecision> {
+async function decide(outcome: POIIntentOutcome | null, context: DecisionContext): Promise<AbsenceDecision> {
 	if (!outcome || outcome.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
 
 	const { intent, results } = outcome
@@ -323,7 +323,7 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 	const resolution = context.identity.coverageResolution
 	const cellIndex = latLngToCell(searchCenter.latitude, searchCenter.longitude, resolution) as H3Cell
 	const h3Cell = Number(BigInt(`0x${cellIndex.slice(2)}`))
-	const cell: CoverageCell | undefined = await readLayerCoverage(context.db, h3Cell)
+	const cell: CoverageCell | null = await readLayerCoverage(context.db, h3Cell)
 
 	if (!cell) return { fired: false, refusal: "cell_unsurveyed" }
 

@@ -32,7 +32,7 @@ export interface EvidenceCensus {
 	silent: boolean
 }
 
-function readChannel(channel: SoftFeatureChannel | undefined): ChannelReading {
+function readChannel(channel: SoftFeatureChannel | null): ChannelReading {
 	if (!channel) return { state: "absent" }
 
 	const of = channel.features.length
@@ -45,9 +45,9 @@ function readChannel(channel: SoftFeatureChannel | undefined): ChannelReading {
  * Read the three evidence channels off one parse trace.
  */
 export function evidenceCensus(parse: NeuralParseTrace): EvidenceCensus {
-	const anchor = readChannel(parse.anchor)
-	const gazetteer = readChannel(parse.gazetteer)
-	const country = readChannel(parse.country)
+	const anchor = readChannel(parse.anchor ?? null)
+	const gazetteer = readChannel(parse.gazetteer ?? null)
+	const country = readChannel(parse.country ?? null)
 	const present = [anchor, gazetteer, country].filter((reading) => reading.state !== "absent")
 
 	return {

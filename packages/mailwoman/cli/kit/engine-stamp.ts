@@ -23,10 +23,10 @@ export interface ResolvedEngineStamp {
 	/**
 	 * The offline verification the stamp was built from, so the notice can name an expiry date.
 	 */
-	key?: LicenseKeyVerification
+	key: LicenseKeyVerification | null
 }
 
-let resolved: Promise<ResolvedEngineStamp> | undefined
+let resolved: Promise<ResolvedEngineStamp> | null = null
 
 /**
  * Memoized for the process, because the manifest and configured key do not change
@@ -35,7 +35,7 @@ let resolved: Promise<ResolvedEngineStamp> | undefined
 export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 	resolved ??= (async () => {
 		const [manifest, key] = await Promise.all([readMailwomanManifest(), verifyConfiguredLicenseKey()])
-		const stamp = buildEngineStamp({ version: manifest.version, expression: manifest.license, key })
+		const stamp = buildEngineStamp({ version: manifest.version, expression: manifest.license, key: key ?? undefined })
 
 		return { stamp, key }
 	})()
@@ -48,7 +48,7 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
  * No notice is written when the commercial branch applies.
  */
 export function printLicenseNotice(resolvedStamp: ResolvedEngineStamp): void {
-	const lines = licenseNoticeLines(resolvedStamp.stamp, resolvedStamp.key)
+	const lines = licenseNoticeLines(resolvedStamp.stamp, resolvedStamp.key ?? undefined)
 
 	if (!lines) return
 

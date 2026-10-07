@@ -83,13 +83,13 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 
 /**
  * The placetype-pair country pin for one input, returning a preset's `country`
- * when `input` still exactly equals that preset's text and `undefined` otherwise
+ * when `input` still exactly equals that preset's text and `null` otherwise
  * so the caller lets structural detection decide.
  */
-export function pairCountryForInput(input: string): string | undefined {
+export function pairCountryForInput(input: string): string | null {
 	const trimmed = input.trim()
 
-	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
+	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country ?? null
 }
 
 /**
@@ -213,7 +213,7 @@ export async function runClassifyStage(
 		},
 		// The demo search box is a human typing fragments, so the input mode is the fragmented
 		// register and the evidence-bundle channels feed once a bundle model ships.
-		{ inputMode: "fragmented", ...(placetypePair !== undefined ? { placetypePair } : {}) }
+		{ inputMode: "fragmented", ...(placetypePair ? { placetypePair } : {}) }
 	)
 
 	const tClassify = performance.now()
@@ -229,20 +229,21 @@ export async function runClassifyStage(
 /**
  * Dual-role resolution shared by both parse paths.
  *
- * It reports whether the resolved pin doubles as another admin tier and returns `undefined` for a
- * placeless pin (`id === 0`), a lookup with no `coincidentRolesFor`, an empty relation or a failed query.
+ * It reports whether the resolved pin doubles as another admin tier.
+ * It returns `null` for a placeless pin (`id === 0`), a lookup with no `coincidentRolesFor`,
+ * an empty relation or a failed query.
  */
 export async function resolveDualRoles(
 	lookup: MailwomanLookupLike,
-	primaryHit: { id: number } | undefined
-): Promise<DualRole[] | undefined> {
-	if (!primaryHit || !primaryHit.id || !lookup.coincidentRolesFor) return undefined
+	primaryHit: { id: number } | null | undefined
+): Promise<DualRole[] | null> {
+	if (!primaryHit || !primaryHit.id || !lookup.coincidentRolesFor) return null
 
 	try {
 		const roles = await lookup.coincidentRolesFor(primaryHit.id)
 
-		return roles.length ? roles : undefined
+		return roles.length ? roles : null
 	} catch {
-		return undefined
+		return null
 	}
 }

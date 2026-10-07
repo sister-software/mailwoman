@@ -78,7 +78,7 @@ const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 /**
  * Read a string delimiter from a literal or expression-free template.
  */
-function literalDelimiter(argument: AstNode | undefined): string | null {
+function literalDelimiter(argument: AstNode | null | undefined): string | null {
 	if (!argument) return null
 
 	if ((argument.type === "Literal" || argument.type === "StringLiteral") && typeof argument.value === "string") {
@@ -143,7 +143,7 @@ const DATABASE_BOUNDARY_METHODS = new Set([
 /**
  * Check whether an expression contains a `never` cast.
  */
-function containsNeverCast(node: AstNode | undefined): boolean {
+function containsNeverCast(node: AstNode | null | undefined): boolean {
 	if (!node) return false
 
 	if (node.type === "TSAsExpression" || node.type === "TSTypeAssertion") {
@@ -508,7 +508,7 @@ const noImportMetaDirnameWalkRule: Rule = {
  */
 function methodChain(node: AstNode): string[] {
 	const names: string[] = []
-	let current: AstNode | undefined = node
+	let current: AstNode | null | undefined = node
 
 	while (current?.type === "CallExpression") {
 		const method = calledMethod(current)
@@ -530,7 +530,7 @@ function numericLiteralValue(node: AstNode): number | null {
 /**
  * Get the base identifier of computed index access, such as `rows` in `rows[i]`.
  */
-function indexedBaseName(node: AstNode | undefined): string | null {
+function indexedBaseName(node: AstNode | null | undefined): string | null {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return null
 
 	return typeof node.object?.name === "string" ? node.object.name : null
@@ -539,7 +539,7 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 /**
  * Check whether a computed index uses a variable rather than a constant.
  */
-function isVariableIndex(node: AstNode | undefined): boolean {
+function isVariableIndex(node: AstNode | null | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
 
 	return node.property?.type === "Identifier"
@@ -824,7 +824,7 @@ function typeReferenceName(node: AstNode): string | null {
 /**
  * Whether `node` resolves to a {@link SYNC_DISPOSABLE_TYPES} member, past `Promise` and a union.
  */
-function namesSyncDisposable(node: AstNode | undefined): boolean {
+function namesSyncDisposable(node: AstNode | null | undefined): boolean {
 	if (!node) return false
 
 	if (node.type === "TSUnionType") return ((node as ESTreeNode).types ?? []).some(namesSyncDisposable)

@@ -358,7 +358,7 @@ export async function createSemanticObservationRoute(
 
 		if (!candidate) return []
 
-		const country = localeToCountry(locale)
+		const country = localeToCountry(locale ?? null)
 
 		// The locale check runs inside the loop, so a longer phrase that the locale
 		// rejects cannot hide a shorter phrase that it admits.

@@ -389,7 +389,7 @@ export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {
 	const address: SchemaOrgPostalAddress = { "@type": "PostalAddress" }
 	let hasField = false
 
-	const assign = (key: Exclude<keyof SchemaOrgPostalAddress, "@type">, value: string | undefined): void => {
+	const assign = (key: Exclude<keyof SchemaOrgPostalAddress, "@type">, value: string | null): void => {
 		const trimmed = value?.trim()
 
 		if (trimmed) {
@@ -398,12 +398,12 @@ export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {
 		}
 	}
 
-	assign("streetAddress", input.streetAddress)
-	assign("postOfficeBoxNumber", input.poBox)
-	assign("addressLocality", input.locality)
-	assign("addressRegion", input.region)
-	assign("postalCode", input.postalCode)
-	assign("addressCountry", input.countryCode?.toUpperCase())
+	assign("streetAddress", input.streetAddress ?? null)
+	assign("postOfficeBoxNumber", input.poBox ?? null)
+	assign("addressLocality", input.locality ?? null)
+	assign("addressRegion", input.region ?? null)
+	assign("postalCode", input.postalCode ?? null)
+	assign("addressCountry", input.countryCode?.toUpperCase() ?? null)
 
 	if (hasField) {
 		place.address = address

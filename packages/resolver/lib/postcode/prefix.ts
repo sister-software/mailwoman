@@ -95,7 +95,7 @@ export function postcodePrefixResolvedPlace(
 		placetype: "postalcode",
 
 		country: index.country?.toUpperCase() ?? "",
-		...(node.lat !== undefined && node.lon !== undefined ? { lat: node.lat, lon: node.lon } : {}),
+		...(node.lat != null && node.lon != null ? { lat: node.lat, lon: node.lon } : {}),
 		score: 0,
 		exactMatch: false,
 	}

@@ -43,7 +43,7 @@ const MIN_QUALIFIER_LENGTH = 3
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
 
-const normName = (s: string | undefined): string => {
+const normName = (s: string | null): string => {
 	if (!s) return ""
 
 	const x = s
@@ -101,7 +101,7 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  * German and French region names also do not overlap.
  * The matcher can try each lookup regardless of the row's country.
  */
-export function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
+export function regionMatches(resolvedName: string | null, expected: string | null): boolean {
 	if (!resolvedName || !expected) return false
 	const exp = normalizeComponent(expected)
 	const got = normalizeComponent(resolvedName)
@@ -120,7 +120,7 @@ export function regionMatches(resolvedName: string | undefined, expected: string
 /**
  * Grades one resolved locality node against the row's expected locality name.
  */
-export type LocalityMatcher = (expected: string | undefined, locNode: Resolved | undefined) => boolean
+export type LocalityMatcher = (expected: string | null, locNode: Resolved | null) => boolean
 
 /**
  * The locality-credit predicate: does the resolved place count as OA's expected locality?
@@ -214,7 +214,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 		return set
 	}
 
-	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
+	const localityMatches = (expected: string | null, locNode: Resolved | null): boolean => {
 		if (!expected || !locNode) return false
 		const e = normName(expected)
 

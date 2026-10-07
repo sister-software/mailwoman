@@ -335,7 +335,7 @@ interface RangeSpec {
  * Multi-range is deliberately unimplemented because the range reader never asks for one
  * and half-answering a shape we do not serve would corrupt the measurement.
  */
-function parseRange(header: string | undefined, size: number): RangeSpec | null {
+function parseRange(header: string | null, size: number): RangeSpec | null {
 	if (!header) return null
 	const match = /^bytes=(\d*)-(\d*)$/u.exec(header.trim())
 
@@ -411,7 +411,7 @@ async function createAssetServer(
 			return
 		}
 
-		const range = parseRange(req.headers.range, size)
+		const range = parseRange(req.headers.range ?? null, size)
 
 		if (!range) {
 			// The VFS requests ranges from a multi-gigabyte gazetteer.

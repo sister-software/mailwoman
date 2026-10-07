@@ -147,7 +147,7 @@ export function reduceCells(
 	let unsampled = 0
 	let candidatePairs = 0
 
-	let currentCell: number | undefined
+	let currentCell: number | null = null
 	let currentResolution = indexResolution
 	let candidates: CellCandidate[] = []
 
@@ -160,7 +160,7 @@ export function reduceCells(
 	const batch = beginBatched(database, { rowsPerCommit: REDUCE_PROGRESS_STRIDE })
 
 	const flush = (): void => {
-		if (currentCell === undefined || !candidates.length) return
+		if (currentCell === null || !candidates.length) return
 
 		const cell = expandShortCellInt(currentCell, currentResolution)
 

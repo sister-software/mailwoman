@@ -113,7 +113,7 @@ export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() =
  *
  * @returns Null when unrecognized.
  */
-export function lookupGermanState(input: string | null | undefined): GermanStateCode | null {
+export function lookupGermanState(input: string | null): GermanStateCode | null {
 	if (!input || typeof input !== "string") return null
 	const key = input.trim().toLowerCase()
 

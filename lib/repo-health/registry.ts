@@ -90,6 +90,6 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	typecheckTestsCheck,
 ]
 
-export function findCheck(id: string): RepoCheck | undefined {
-	return checks.find((check) => check.id === id)
+export function findCheck(id: string): RepoCheck | null {
+	return checks.find((check) => check.id === id) ?? null
 }

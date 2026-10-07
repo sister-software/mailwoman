@@ -45,7 +45,7 @@ export function lookupPOICategoryTypo(text: string, locale?: string) {
 /**
  * Fetch a category by id.
  */
-export function getPOICategory(id: string): CategoryRecord | undefined {
+export function getPOICategory(id: string): CategoryRecord | null {
 	return CORE.getPOICategory(id)
 }
 

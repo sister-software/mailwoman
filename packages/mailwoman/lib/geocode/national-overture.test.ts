@@ -78,7 +78,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(taiwan?.register).toBe("OpenAddresses/<bureau> Civil Affairs")
 
 		expect(overtureCountryLicense("es")?.expression).toBe("CC-BY-4.0")
-		expect(overtureCountryLicense("kr")).toBeUndefined()
+		expect(overtureCountryLicense("kr")).toBeNull()
 	})
 
 	it("answers {} for a registered country whose database is not on disk, and for an unregistered one", async () => {

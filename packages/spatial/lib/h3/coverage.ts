@@ -24,8 +24,8 @@ export interface CoverageRowProbe {
 }
 
 /**
- * The coverage row for `indexCell`'s parent at the coverage resolution,
- * or `undefined` when the cell was never surveyed.
+ * The coverage row for `indexCell`'s parent at the coverage resolution.
+ * It is `null` when the cell was never surveyed.
  *
  * A caller must treat it as an unknown value, separate from `{completeness: 0}`.
  *
@@ -38,11 +38,11 @@ export function readCoverageAt(
 	select: CoverageRowProbe,
 	indexCell: H3Cell,
 	coverageResolution: number
-): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
+): (CoverageCell & { h3CellIndex: string; resolution: number }) | null {
 	const coverageCell = cellToParent(indexCell, coverageResolution) as H3Cell
 
 	return toCoverageCell(
-		select.get(shortCellToInt(coverageCell)) as CoverageRow | undefined,
+		(select.get(shortCellToInt(coverageCell)) as CoverageRow | undefined) ?? null,
 		coverageCell,
 		coverageResolution
 	)

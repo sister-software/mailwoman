@@ -378,7 +378,7 @@ export async function perLocaleF1(
 		`Street convention: ${splitCountries.length ? `SPLIT for ${splitCountries.join(", ")} (unfolded scoring)` : "folded (no answer-key declaration)"}`
 	)
 
-	const foldStreetFor = (country: string | undefined): boolean => {
+	const foldStreetFor = (country: string | null): boolean => {
 		const mode = streetConvention[(country ?? "").toUpperCase()] ?? streetConvention["*"] ?? "folded"
 
 		return mode !== "split"
@@ -482,7 +482,7 @@ export async function perLocaleF1(
 		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
-			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
+			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null)
 
 			// Production parses feed the query-shape prior + `postcodeRepair` on every path,
 			// so this battery must too or it scores a config production does not run.
@@ -501,7 +501,7 @@ export async function perLocaleF1(
 				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
 
-			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country))
+			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country ?? null))
 			preds.push(pred)
 
 			if (dumpTag) {

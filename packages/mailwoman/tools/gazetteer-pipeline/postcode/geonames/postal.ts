@@ -37,8 +37,8 @@ export interface GeonamesPostalRow {
 export async function* geonamesPostalRows(source: string): AsyncGenerator<GeonamesPostalRow> {
 	for await (const f of readUnquotedTSV(source)) {
 		if (f.length > 10 && f[1]) {
-			const latitude = pyFloat(f[9])
-			const longitude = pyFloat(f[10])
+			const latitude = pyFloat(f[9] ?? null)
+			const longitude = pyFloat(f[10] ?? null)
 
 			if (latitude === null || longitude === null) continue
 

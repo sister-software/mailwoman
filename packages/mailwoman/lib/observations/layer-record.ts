@@ -91,7 +91,7 @@ export function observationCoverageRecord(
  * term only where the layer's basis makes a completeness magnitude meaningful.
  */
 export function describeCoverage(
-	coverage: ObservationCoverageRecord | undefined,
+	coverage: ObservationCoverageRecord | null,
 	options: { completeness?: boolean } = {}
 ): string {
 	if (!coverage) return "no coverage row"
@@ -142,10 +142,7 @@ export function createDesignationRoute<Identity, Reading, Observation, Refusal e
 	options: CreateDesignationRouteOptions<Reading, Observation, Refusal>
 ): {
 	identity: Identity
-	observe: (
-		latitude: number | null | undefined,
-		longitude: number | null | undefined
-	) => LayerDesignationDecision<Observation, Refusal>
+	observe: (latitude: number | null, longitude: number | null) => LayerDesignationDecision<Observation, Refusal>
 } & Disposable {
 	return {
 		identity: lookup.identity,

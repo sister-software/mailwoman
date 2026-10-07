@@ -19,11 +19,11 @@ export interface DiscardSupport {
 	/**
 	 * The `scsi_disk` provisioning mode, present on USB and SCSI devices and absent on NVMe devices.
 	 */
-	provisioningMode?: string
+	provisioningMode: string | null
 	/**
 	 * Where that mode is written, when it can be corrected.
 	 */
-	provisioningModePath?: string
+	provisioningModePath: string | null
 }
 
 function deviceName(device: string): string {
@@ -49,13 +49,13 @@ export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 		quiet: true,
 	})`sh -c ${`ls /sys/block/${name}/device/scsi_disk/*/provisioning_mode 2>/dev/null | head -1`}`
 
-	const provisioningModePath = modePath.exitCode === 0 ? modePath.stdout.trim() || undefined : undefined
+	const provisioningModePath = modePath.exitCode === 0 ? modePath.stdout.trim() || null : null
 
-	let provisioningMode: string | undefined
+	let provisioningMode: string | null = null
 
 	if (provisioningModePath) {
 		const mode = await $({ nothrow: true, quiet: true })`cat ${provisioningModePath}`
-		provisioningMode = mode.exitCode === 0 ? mode.stdout.trim() : undefined
+		provisioningMode = mode.exitCode === 0 ? mode.stdout.trim() : null
 	}
 
 	return { maxBytes, unmapSupported, provisioningMode, provisioningModePath }

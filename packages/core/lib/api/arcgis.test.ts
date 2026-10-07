@@ -26,10 +26,10 @@ describe("readArcGISError", () => {
 	})
 
 	it("returns nothing for an answer, including one whose data happens to carry an error attribute", () => {
-		expect(readArcGISError({ count: 795 })).toBeUndefined()
-		expect(readArcGISError({ features: [{ attributes: { error: 3 } }] })).toBeUndefined()
-		expect(readArcGISError({ error: "not an envelope" })).toBeUndefined()
-		expect(readArcGISError(null)).toBeUndefined()
+		expect(readArcGISError({ count: 795 })).toBeNull()
+		expect(readArcGISError({ features: [{ attributes: { error: 3 } }] })).toBeNull()
+		expect(readArcGISError({ error: "not an envelope" })).toBeNull()
+		expect(readArcGISError(null)).toBeNull()
 	})
 })
 

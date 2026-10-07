@@ -96,7 +96,7 @@ export function deriveIntentMarkers(
 	}
 
 	if (fired.has("poi_category") && ctx.poiLexicon) {
-		const match = matchPOICategory(ctx.input.normalized, ctx.locale ?? ctx.input.appliedLocale, ctx.poiLexicon)
+		const match = matchPOICategory(ctx.input.normalized, ctx.locale ?? ctx.input.appliedLocale ?? null, ctx.poiLexicon)
 
 		if (match) {
 			markers.push({

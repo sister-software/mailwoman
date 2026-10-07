@@ -418,14 +418,14 @@ export function fail(input: ScenarioInput, path: string, message: string): never
  * A schedule validated here starts at month 0, so every month in the horizon has a step.
  */
 export function stepAt<T extends { fromMonth: number }>(steps: readonly T[], month: number): T {
-	let found: T | undefined
+	let found: T | null = null
 
 	for (const step of steps)
 		if (step.fromMonth <= month) {
 			found = step
 		}
 
-	if (found === undefined) throw new RangeError(`stepAt: no step covers month ${month}`)
+	if (found === null) throw new RangeError(`stepAt: no step covers month ${month}`)
 
 	return found
 }

@@ -45,16 +45,16 @@ describe("correctTokens", () => {
 		)
 
 		expect(proposed.map((row) => row.term)).toContain("tier")
-		expect(await correctTokens(db, ["tiexx"])).toBeUndefined()
+		expect(await correctTokens(db, ["tiexx"])).toBeNull()
 		expect(await correctTokens(db, ["tierr"])).toEqual(["tier"])
 		expect(await correctTokens(db, ["tierxx"])).toEqual(["tier"])
 	})
 
-	test("returns undefined when no token has a close term", async () => {
-		expect(await correctTokens(db, ["zzzzzzz"])).toBeUndefined()
+	test("returns null when no token has a close term", async () => {
+		expect(await correctTokens(db, ["zzzzzzz"])).toBeNull()
 	})
 
 	test("leaves a token under three characters as typed", async () => {
-		expect(await correctTokens(db, ["ab"])).toBeUndefined()
+		expect(await correctTokens(db, ["ab"])).toBeNull()
 	})
 })

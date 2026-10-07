@@ -62,7 +62,7 @@ describe("SqliteConventionSource", () => {
 	it("reads + parses a convention by WOF id, and returns undefined for a miss", () => {
 		const src = new SqliteConventionSource(db, "main")
 		expect(src.get(90)).toEqual({ scoringWeights: { pc: 0.9 } })
-		expect(src.get(12_345)).toBeUndefined()
+		expect(src.get(12_345)).toBeNull()
 	})
 
 	it("memoizes (a second get for the same id does not re-query)", () => {

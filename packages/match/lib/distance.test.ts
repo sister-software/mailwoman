@@ -54,7 +54,7 @@ describe("distanceComparison", () => {
 
 describe("spatialComparison (collapsed key + distance, A1)", () => {
 	interface R {
-		key?: string
+		key: string | null
 		coord?: GeoCoordinate
 	}
 
@@ -65,7 +65,7 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 		levels: DEFAULT_SPATIAL_LEVELS,
 	})
 
-	const rec = (key: string | undefined, latitude: number, longitude = 0): R => ({ key, coord: { latitude, longitude } })
+	const rec = (key: string | null, latitude: number, longitude = 0): R => ({ key, coord: { latitude, longitude } })
 
 	it("scores an exact canonical-key match as the top tier regardless of coordinate", () => {
 		// Same key but the geocoder put them a hair apart — key equality is the evidence rather than distance.

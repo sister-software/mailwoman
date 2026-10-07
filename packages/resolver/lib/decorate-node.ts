@@ -29,14 +29,14 @@ export function decorateNode(
 	resolved: CoordinateOptionalPlace,
 	alternatives: ResolvedPlace[]
 ): void {
-	if (node.source !== undefined || node.sourceID !== undefined) {
+	if (node.source != null || node.sourceID != null) {
 		const meta = { ...node.metadata }
 
-		if (node.source !== undefined) {
+		if (node.source != null) {
 			meta["classifier_source"] = node.source
 		}
 
-		if (node.sourceID !== undefined) {
+		if (node.sourceID != null) {
 			meta["classifier_source_id"] = node.sourceID
 		}
 
@@ -48,7 +48,7 @@ export function decorateNode(
 
 	// `0,0` is the gazetteer's unlocated sentinel, so an unlocated place gets both coordinates
 	// cleared rather than a coordinate that satisfies every `lat != null` guard downstream.
-	const located = resolved.lat !== undefined && resolved.lon !== undefined && (resolved.lat !== 0 || resolved.lon !== 0)
+	const located = resolved.lat != null && resolved.lon != null && (resolved.lat !== 0 || resolved.lon !== 0)
 
 	if (located) {
 		node.lat = resolved.lat
@@ -63,7 +63,7 @@ export function decorateNode(
 
 	// Additive metadata only.
 	// No part of the resolve reads it back.
-	if (resolved.prominence !== undefined) {
+	if (resolved.prominence != null) {
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
 
@@ -73,15 +73,15 @@ export function decorateNode(
 
 	// Written only when the backend supplies a value, because `resolver_*: 0`
 	// would assert an unmeasured value.
-	if (resolved.referential !== undefined) {
+	if (resolved.referential != null) {
 		node.metadata["resolver_referential"] = resolved.referential
 	}
 
-	if (resolved.encyclopedic !== undefined) {
+	if (resolved.encyclopedic != null) {
 		node.metadata["resolver_encyclopedic"] = resolved.encyclopedic
 	}
 
-	if (resolved.importance !== undefined) {
+	if (resolved.importance != null) {
 		node.metadata["resolver_importance"] = resolved.importance
 	}
 

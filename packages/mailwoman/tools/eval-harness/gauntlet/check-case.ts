@@ -160,8 +160,8 @@ function missingRenderings(got: string, required: readonly string[]): string[] {
  * would be wrong because it echoes the parsed query span, while `hierarchy[].name` is the
  * gazetteer's canonical `resolver_name`, the only field that can disagree with the input.
  */
-function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] | undefined {
-	return r.hierarchy[0]
+function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] | null {
+	return r.hierarchy[0] ?? null
 }
 
 /**

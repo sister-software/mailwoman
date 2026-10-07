@@ -76,8 +76,8 @@ export function buildEngineStamp(input: {
  * An expired key states its date because that tells the operator what to do,
  * while every other failed reading leaves the reason to `mailwoman doctor`.
  */
-export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | undefined {
-	if (!stamp.notice) return undefined
+export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | null {
+	if (!stamp.notice) return null
 
 	const expiredOn = key?.status === "expired" ? key.payload.expires : undefined
 

@@ -117,8 +117,8 @@ export function pyRound(x: number, nd = 0): number {
 /**
  * Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip).
  */
-export function pyFloat(s: string | undefined): number | null {
-	if (s === undefined) return null
+export function pyFloat(s: string | null | undefined): number | null {
+	if (s == null) return null
 	const t = s.trim()
 
 	if (t === "") return null

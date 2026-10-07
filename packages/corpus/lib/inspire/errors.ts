@@ -27,7 +27,7 @@
  * unresolved reference and an absent one are the same observation.
  */
 export class UnresolvedComponentReferenceError extends Error {
-	constructor(adapterID: string, addressID: string | undefined, href: string) {
+	constructor(adapterID: string, addressID: string | null, href: string) {
 		super(
 			`${adapterID} adapter: address ${addressID ?? "(no gml:id)"} carries ad:component xlink:href="${href}", which resolves to no feature`
 		)
@@ -44,7 +44,7 @@ export class UnresolvedComponentReferenceError extends Error {
  * `voidDesignatorTypes` separates them, and this error reports the first case.
  */
 export class VoidDesignatorError extends Error {
-	constructor(adapterID: string, addressID: string | undefined, type: string) {
+	constructor(adapterID: string, addressID: string | null, type: string) {
 		super(`${adapterID} adapter: address ${addressID ?? "(no gml:id)"} marks its ${type} designator void`)
 
 		this.name = "VoidDesignatorError"

@@ -173,9 +173,9 @@ export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
  * unobservable from the ONNX graph.
  */
 export function shapedKeyerObligationViolation(
-	lookup: AnchorLookup | undefined,
-	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: PathBuilderLike | undefined
+	lookup: AnchorLookup | null,
+	spanMode: AnchorSpanMode | null,
+	anchorSourcePath: PathBuilderLike | null
 ): string | null {
 	if (!lookup || spanMode === "shaped") return null
 	const shapedOnly = countShapedOnlyKeys(lookup)
@@ -206,9 +206,9 @@ let warnedShapedObligation = false
  * so it covers every construction path rather than only a loader-side one.
  */
 export function warnShapedKeyerObligationOnce(
-	lookup: AnchorLookup | undefined,
-	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: PathBuilderLike | undefined
+	lookup: AnchorLookup | null,
+	spanMode: AnchorSpanMode | null,
+	anchorSourcePath: PathBuilderLike | null
 ): void {
 	if (warnedShapedObligation) return
 	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)

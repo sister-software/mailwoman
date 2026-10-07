@@ -120,7 +120,7 @@ interface ReleaseManifest {
 	defaultVersion?: string
 }
 
-async function stageBinaryList(spec: string | undefined, label: string): Promise<string[]> {
+async function stageBinaryList(spec: string | null, label: string): Promise<string[]> {
 	const paths = extractDelimited(spec)
 
 	for (const localPath of paths) {
@@ -132,7 +132,7 @@ async function stageBinaryList(spec: string | undefined, label: string): Promise
 	return paths
 }
 
-async function stageOptionalBinary(spec: string | undefined, label: string): Promise<string | null> {
+async function stageOptionalBinary(spec: string | null, label: string): Promise<string | null> {
 	const localPath = spec || null
 
 	if (localPath && (!(await pathExists(localPath)) || !(await statPath(localPath)).size)) {
@@ -246,7 +246,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		.join("-")
 
 	const fstRemoteName = `fst-${bcp47}.bin`
-	const fstPath = await stageOptionalBinary(args.fst, "FST gazetteer")
+	const fstPath = await stageOptionalBinary(args.fst ?? null, "FST gazetteer")
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
@@ -254,22 +254,26 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	await verifyTrainingProvenance(args.modelCard!)
 
-	const postcodeBins = await stageBinaryList(args.postcodes, "postcode binary")
+	const postcodeBins = await stageBinaryList(args.postcodes ?? null, "postcode binary")
 
-	const pairIndexBins = await stageBinaryList(args.pairIndexes, "pair-index binary")
+	const pairIndexBins = await stageBinaryList(args.pairIndexes ?? null, "pair-index binary")
 
-	const fstBins = await stageBinaryList(args.fsts, "FST binary")
+	const fstBins = await stageBinaryList(args.fsts ?? null, "FST binary")
 
-	const gazetteerLexicon = await stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
+	const gazetteerLexicon = await stageOptionalBinary(args.gazetteerLexicon ?? null, "gazetteer lexicon")
 
-	const countryLexicon = await stageOptionalBinary(args.countryLexicon, "country lexicon")
+	const countryLexicon = await stageOptionalBinary(args.countryLexicon ?? null, "country lexicon")
 
-	const streetTypeLexicon = await stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
-	const localitySurfaceLexicon = await stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
+	const streetTypeLexicon = await stageOptionalBinary(args.streetTypeLexicon ?? null, "street-type lexicon")
 
-	const polygonsDB = await stageOptionalBinary(args.polygons, "polygon DB")
+	const localitySurfaceLexicon = await stageOptionalBinary(
+		args.localitySurfaceLexicon ?? null,
+		"locality-surface lexicon"
+	)
 
-	const fisherArtifacts = await stageBinaryList(args.fisher, "Fisher artifact")
+	const polygonsDB = await stageOptionalBinary(args.polygons ?? null, "polygon DB")
+
+	const fisherArtifacts = await stageBinaryList(args.fisher ?? null, "Fisher artifact")
 
 	const remoteBase = `${args.locale}/${args.version}`
 

@@ -70,7 +70,7 @@ async function writeLock(lock: SourcesLock): Promise<void> {
  *
  * Product-pinned sources keep the original filename from the URL.
  */
-function sourceCachePath(source: PlanetarySource, snapshot: string | undefined) {
+function sourceCachePath(source: PlanetarySource, snapshot: string | null) {
 	const fileName = snapshot ? `${source.id}-${snapshot}${extname(source.url)}` : basename(source.url)
 
 	return dataRootPath("astrogeology", source.body, "source", fileName)
@@ -85,7 +85,7 @@ export async function downloadPinned(
 ): Promise<FetchedSource> {
 	const lock = await readLock()
 	const locked: LockedSource | undefined = lock[source.id]
-	const snapshot = source.pinned === "snapshot" ? (options.snapshotDate ?? locked?.snapshot ?? isoDate()) : undefined
+	const snapshot = source.pinned === "snapshot" ? (options.snapshotDate ?? locked?.snapshot ?? isoDate()) : null
 	const path = sourceCachePath(source, snapshot)
 
 	const onDisk = await pathExists(path)
