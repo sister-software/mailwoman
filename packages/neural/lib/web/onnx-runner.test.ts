@@ -7,6 +7,8 @@ import { WebONNXRunner } from "#web/onnx-runner"
 import { resolveWeights } from "#weights"
 import { readLabelsFromModelCard } from "#weights/channels"
 
+import { installORTWasmBinary } from "../../test/ort-wasm-binary.ts"
+
 async function resolvePresentWeights(): Promise<{
 	modelPath: string
 	tokenizerPath: string
@@ -26,10 +28,12 @@ async function resolvePresentWeights(): Promise<{
 const weights = await resolvePresentWeights()
 const haveWeights = weights !== null
 
+await installORTWasmBinary()
+
 describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
 		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
-		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(modelBytes)
 		const tokenIDs = [1, 2, 3, 4, 5]
 		const result = await runner.infer(tokenIDs)
 
@@ -49,7 +53,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),
-			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
+			WebONNXRunner.fromBytes(modelBytes),
 		])
 
 		const labels = await readLabelsFromModelCard(weights!.modelCardPath ?? null)

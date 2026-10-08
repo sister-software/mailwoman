@@ -18,7 +18,6 @@ interface StoryRelease extends ReleaseBase {
 
 interface StoryAssets {
 	loadedVersion: string
-	forcedWASM: boolean
 }
 
 const MANIFEST: ReleaseManifest<StoryRelease> = {
@@ -43,8 +42,8 @@ function makeLoaders(delayMs: number, fail: boolean) {
 
 		await sleep(delayMs)
 
-		if (ctx.signal.aborted) return { loadedVersion: release.version, forcedWASM: ctx.forceWASM }
-		ctx.setBackend(ctx.forceWASM ? "wasm (28 MB int8)" : "webgpu (28 MB int8)")
+		if (ctx.signal.aborted) return { loadedVersion: release.version }
+		ctx.setBackend("wasm (28 MB int8)")
 		ctx.setStepIndex(0)
 
 		await sleep(delayMs)
@@ -55,7 +54,7 @@ function makeLoaders(delayMs: number, fail: boolean) {
 		if (fail) throw new Error("Failed to open WOF database (simulated)")
 		ctx.setStepIndex(2)
 
-		return { loadedVersion: release.version, forcedWASM: ctx.forceWASM }
+		return { loadedVersion: release.version }
 	}
 
 	return { loadManifest, loadAssets }
@@ -82,10 +81,6 @@ function ReleaseRuntimeInspector({ delayMs = 0, fail = false }: { delayMs?: numb
 						))}
 					</select>
 				</label>
-				<label>
-					<input type="checkbox" checked={rt.forceWASM} onChange={(e) => rt.setForceWASM(e.target.checked)} /> Force
-					WASM
-				</label>
 			</div>
 
 			<table style={{ borderCollapse: "collapse", width: "100%" }}>
@@ -95,7 +90,6 @@ function ReleaseRuntimeInspector({ delayMs = 0, fail = false }: { delayMs?: numb
 							["ready", String(rt.ready)],
 							["selectedVersion", rt.selectedVersion ?? "—"],
 							["loadedVersion", rt.assets?.loadedVersion ?? "—"],
-							["forcedWASM", rt.assets ? String(rt.assets.forcedWASM) : "—"],
 							["activeBackend", rt.activeBackend || "—"],
 							["loadingProgress", rt.loadingProgress || "—"],
 							["step", `${rt.loadingStepIndex} — ${rt.loadingStepLabels[rt.loadingStepIndex] ?? "—"}`],

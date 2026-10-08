@@ -33,7 +33,6 @@ export * from "#runtime"
  */
 export type {
 	GeocoderRuntime,
-	InferenceBackend,
 	LngLatTuple,
 	MapBias,
 	MapCanvasExtraProps,

@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { BackendControl } from "@mailwoman/react/map/BackendControl"
 import { CompareToggle } from "@mailwoman/react/map/CompareToggle"
 import { PlaceAutocomplete } from "@mailwoman/react/map/PlaceAutocomplete"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
@@ -74,18 +73,6 @@ test("CompareToggle reveals the compare select (primary excluded) when turned on
 	expect(values).not.toContain("v7.2.0")
 	expect(values).toContain("v7.1.0")
 	expect(values).toContain("v6.4.0")
-})
-
-test("BackendControl shows the backend and toggles forceWASM", async () => {
-	const onForceWASMChange = vi.fn()
-
-	const { container } = renderComponent(
-		<BackendControl activeBackend="webgpu (28 MB int8)" forceWASM={false} onForceWASMChange={onForceWASMChange} />
-	)
-
-	expect(container.textContent).toContain("webgpu (28 MB int8)")
-	await userEvent.click(container.querySelector('input[type="checkbox"]') as HTMLInputElement)
-	expect(onForceWASMChange).toHaveBeenCalledWith(true)
 })
 
 test("ResultPanel renders components + resolved place, and switches candidate", async () => {

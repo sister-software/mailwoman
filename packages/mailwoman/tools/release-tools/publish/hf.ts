@@ -47,6 +47,11 @@ function requiredFilesFor(args: PublishHFOptions): RequiredFile[] {
 	return args.charVocab ? REQUIRED_CHAR_FILES : REQUIRED_FILES
 }
 
+/**
+ * The files `split-embeddings` writes, each uploaded under its own name.
+ */
+export const SPLIT_EMBEDDING_FILES = ["encoder.onnx", "embeddings-hot.bin", "embeddings.rows"] as const
+
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 
 async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
@@ -86,6 +91,16 @@ export interface PublishHFOptions {
 	localitySurfaceLexicon?: string
 	polygons?: string
 	fisher?: string
+
+	/**
+	 * The `split-embeddings` output directory for this model.
+	 *
+	 * Its {@linkcode SPLIT_EMBEDDING_FILES} are uploaded beside `model.onnx`.
+	 * The release entry then records `splitEmbeddings: true`.
+	 *
+	 * A runtime that reads the split loads the encoder and row files.
+	 */
+	splitEmbeddings?: string
 	setDefault?: boolean
 
 	/**
@@ -190,6 +205,21 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 }
 
 /**
+ * Reads the tokenizer vocabulary size the model card records at `architecture.vocab_size`.
+ * A card without a positive integer there fails the publish.
+ */
+export async function readTokenizerVocab(cardPath: PathBuilderLike): Promise<number> {
+	const card = await readLocalJSONFile<{ architecture?: { vocab_size?: unknown } }>(cardPath)
+	const size = card.architecture?.vocab_size
+
+	if (typeof size !== "number" || !Number.isInteger(size) || size <= 0) {
+		fail(`${cardPath} records no positive integer at architecture.vocab_size (read: ${String(size)})`)
+	}
+
+	return size
+}
+
+/**
  * Fails when the model card has no training attribution.
  * Warns about each source without a license.
  *
@@ -275,6 +305,16 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	const fisherArtifacts = await stageBinaryList(args.fisher ?? null, "Fisher artifact")
 
+	const splitEmbeddingFiles = args.splitEmbeddings
+		? await Promise.all(
+				SPLIT_EMBEDDING_FILES.map(async (name) => {
+					const path = await stageOptionalBinary(`${args.splitEmbeddings}/${name}`, `split embedding ${name}`)
+
+					return path ?? fail(`--split-embeddings ${args.splitEmbeddings} holds no ${name}`)
+				})
+			)
+		: []
+
 	const remoteBase = `${args.locale}/${args.version}`
 
 	for (const f of requiredFilesFor(args)) {
@@ -341,6 +381,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	uploadFlatByBasename(fisherArtifacts, remoteBase)
 
+	uploadFlatByBasename(splitEmbeddingFiles, remoteBase)
+
 	const required = requiredFilesFor(args)
 
 	console.error(`Verifying ${required.length} artifacts via HTTPS...`)
@@ -371,6 +413,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	await verifyFlatByBasename(fisherArtifacts, remoteBase)
 
+	await verifyFlatByBasename(splitEmbeddingFiles, remoteBase)
+
 	if (args.charVocab) {
 		console.error(`\n✓ ${args.version} (${args.locale}) staged as a character-path family — no releases.json entry.`)
 
@@ -391,13 +435,14 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		label: args.label,
 		description: args.description,
 		modelSize: args.modelSize ?? ByteFormatter.formatIEC((await statPath(args.model!)).size),
-		tokenizerVocab: 48_000,
+		tokenizerVocab: await readTokenizerVocab(args.modelCard!),
 		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
 		hasWOFDB: true,
 
 		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
+		splitEmbeddings: splitEmbeddingFiles.length > 0,
 	}
 
 	for (const flag of ["hasAnchor", "hasPolygons"]) {

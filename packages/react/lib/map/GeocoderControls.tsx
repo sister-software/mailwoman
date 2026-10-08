@@ -17,7 +17,6 @@ import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
-import { BackendControl } from "./BackendControl.tsx"
 import { CompareToggle } from "./CompareToggle.tsx"
 import { DebugInfo } from "./DebugInfo.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
@@ -56,7 +55,6 @@ export interface GeocoderControlsProps {
 	 */
 	onSubmitQuery?: (query: string) => void
 	onSelectVersion: (version: string) => void
-	onForceWASMChange: (forceWASM: boolean) => void
 	/**
 	 * Whether the developer panel starts open.
 	 *
@@ -100,7 +98,6 @@ export function GeocoderControls({
 	initialQuery = null,
 	onSubmitQuery,
 	onSelectVersion,
-	onForceWASMChange,
 	developer = false,
 }: GeocoderControlsProps): ReactNode {
 	const versions = runtime.availableVersions ?? []
@@ -609,18 +606,9 @@ export function GeocoderControls({
 					</div>
 
 					<div className="mw-map-sheet__row">
-						<BackendControl
-							activeBackend={runtime.activeBackend}
-							forceWASM={runtime.forceWASM ?? false}
-							onForceWASMChange={onForceWASMChange}
-						/>
-					</div>
-
-					<div className="mw-map-sheet__row">
 						<span className="mw-map-sheet__label">Debug info</span>
 						<DebugInfo
 							activeBackend={runtime.activeBackend}
-							forceWASM={runtime.forceWASM}
 							selectedVersion={runtime.selectedVersion}
 							ready={runtime.ready}
 						/>

@@ -95,7 +95,6 @@ interface CandidateExtras {
 export interface GeocoderRuntimeHandle {
 	runtime: GeocoderRuntime
 	releases: ReleaseInfo[]
-	forceWASM: boolean
 	geoBias: GeoBiasControl
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
@@ -568,8 +567,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			selectedVersion: rt.selectedVersion ?? undefined,
 			selectVersion: rt.selectVersion,
 			activeBackend: rt.activeBackend,
-			forceWASM: rt.forceWASM,
-			setForceWASM: rt.setForceWASM,
 		}
 	}, [
 		mapStyle,
@@ -581,9 +578,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		rt.errorMessage,
 		rt.selectedVersion,
 		rt.activeBackend,
-		rt.forceWASM,
 		rt.selectVersion,
-		rt.setForceWASM,
 		initialCenter,
 		runParse,
 		runParseWithBias,
@@ -598,7 +593,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	return {
 		runtime,
 		releases: rt.manifest?.releases ?? [],
-		forceWASM: rt.forceWASM,
 		geoBias: { active: geoBias.active, error: geoBias.error, toggle: geoBias.toggle },
 		calibrator,
 		traceParse,

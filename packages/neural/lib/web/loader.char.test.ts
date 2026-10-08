@@ -14,7 +14,7 @@ const { sessionCreateMock, classifierConfigs } = vi.hoisted(() => ({
 	classifierConfigs: [] as Array<Record<string, unknown>>,
 }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array

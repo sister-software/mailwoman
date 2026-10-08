@@ -23,22 +23,14 @@ const PRESETS = [
 ]
 
 /**
- * A stateful wrapper so the version picker + wasm toggle actually drive (a plain fixture can't hold state).
+ * A stateful wrapper so the version picker actually drives (a plain fixture can't hold state).
  */
 function StatefulGeocoder({ panels }: { panels?: GeocoderPanels }) {
 	const [selectedVersion, setSelectedVersion] = useState("v7.2.0")
-	const [forceWASM, setForceWASM] = useState(false)
 
 	const runtime = useMemo(
-		() =>
-			makeFakeGeocoderRuntime({
-				selectedVersion,
-				selectVersion: setSelectedVersion,
-				forceWASM,
-				setForceWASM,
-				activeBackend: forceWASM ? "wasm (28 MB int8)" : "webgpu (28 MB int8)",
-			}),
-		[selectedVersion, forceWASM]
+		() => makeFakeGeocoderRuntime({ selectedVersion, selectVersion: setSelectedVersion }),
+		[selectedVersion]
 	)
 
 	return (

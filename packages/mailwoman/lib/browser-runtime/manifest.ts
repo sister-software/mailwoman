@@ -24,6 +24,15 @@ export interface ReleaseInfo {
 	hasAnchor?: boolean
 	hasPolygons?: boolean
 	/**
+	 * Whether the release directory also holds the split model.
+	 *
+	 * `encoder.onnx` reads `inputs_embeds`.
+	 * `embeddings-hot.bin` and `embeddings.rows` hold the embedding rows.
+	 *
+	 * The directory keeps `model.onnx`, so a runtime that predates the split still loads it.
+	 */
+	splitEmbeddings?: boolean
+	/**
 	 * Runtime capabilities the release's model needs, such as `locale_hint` for a graph with that input.
 	 * A runtime lacking one cannot load the release.
 	 */

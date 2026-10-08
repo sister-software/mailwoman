@@ -8,6 +8,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import ort from "onnxruntime-node"
 import type { PathBuilderLike } from "path-ts"
 
+import { INPUTS_EMBEDS, type EmbeddingTable } from "#embedding/rows"
 import {
 	decodeInferOutput,
 	packCharFeed,
@@ -70,6 +71,12 @@ export interface ONNXRunnerOpts {
 	 * This oversubscribes the machine when several processes run at once.
 	 */
 	intraOpNumThreads?: number
+
+	/**
+	 * The token-embedding table of a split release, whose `encoder.onnx` declares `inputs_embeds`.
+	 * An unsplit `model.onnx` reads `input_ids` and needs none.
+	 */
+	embeddings?: EmbeddingTable
 }
 
 /**
@@ -104,10 +111,12 @@ export class ONNXRunner {
 	private readonly intraOpNumThreads: number | undefined
 	private readonly modelPath: PathBuilderLike
 	private readonly modelBytes: Uint8Array | null
+	private readonly embeddings: EmbeddingTable | null
 
 	private constructor(modelPath: PathBuilderLike, modelBytes: Uint8Array | null, opts: ONNXRunnerOpts) {
 		this.modelPath = modelPath
 		this.modelBytes = modelBytes
+		this.embeddings = opts.embeddings ?? null
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 		const requested = opts.executionProviders ?? ["cpu"]
 
@@ -196,8 +205,19 @@ export class ONNXRunner {
 		const { inputIDs, attentionMask, seqLen } = packTokenFeed(tokenIDs, this.fixedSeqLen)
 
 		const feeds: Record<string, ort.Tensor> = {
-			input_ids: new ort.Tensor("int64", inputIDs.data, inputIDs.dims),
 			attention_mask: new ort.Tensor("int64", attentionMask.data, attentionMask.dims),
+		}
+
+		if (session.inputNames.includes(INPUTS_EMBEDS)) {
+			if (!this.embeddings) {
+				throw new Error(`this graph declares ${INPUTS_EMBEDS}; pass the release's embedding table as \`embeddings\``)
+			}
+
+			const embeds = await this.embeddings.embed(tokenIDs, this.fixedSeqLen)
+
+			feeds[INPUTS_EMBEDS] = new ort.Tensor("float32", embeds.data, embeds.dims)
+		} else {
+			feeds["input_ids"] = new ort.Tensor("int64", inputIDs.data, inputIDs.dims)
 		}
 
 		const packed = packSoftChannelFeeds(

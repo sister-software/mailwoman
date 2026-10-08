@@ -153,7 +153,7 @@ export async function loadReleaseAssets(
 	} = (await loadNeuralClassifierFromURLs({
 		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
 			hasAnchor: release.hasAnchor,
-			forceWASM: progress.forceWASM,
+			splitEmbeddings: release.splitEmbeddings,
 		}),
 		fetchImpl: modelFetch,
 		// Every published pair index is loaded.

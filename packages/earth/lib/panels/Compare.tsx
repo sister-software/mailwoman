@@ -41,23 +41,12 @@ export interface CompareProps {
 	 * The selectable releases (for the compare release's `hasAnchor`).
 	 */
 	releases: ReleaseInfo[]
-	/**
-	 * Whether the CPU/wasm backend is forced.
-	 */
-	forceWASM: boolean
 }
 
 /**
  * Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`.
  */
-export const Compare: React.FC<CompareProps> = ({
-	primary,
-	compareMode,
-	compareVersion,
-	primaryVersion,
-	releases,
-	forceWASM,
-}) => {
+export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareVersion, primaryVersion, releases }) => {
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
 	const [backend, setBackend] = useState<string>("")
 	const [loading, setLoading] = useState(false)
@@ -92,7 +81,10 @@ export const Compare: React.FC<CompareProps> = ({
 				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
 
 				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs({
-					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM }),
+					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, {
+						hasAnchor: release?.hasAnchor,
+						splitEmbeddings: release?.splitEmbeddings,
+					}),
 					fetchImpl: fetchWithRetry,
 				})
 
@@ -118,7 +110,7 @@ export const Compare: React.FC<CompareProps> = ({
 		return () => {
 			cancelled = true
 		}
-	}, [compareMode, compareVersion, releases, forceWASM])
+	}, [compareMode, compareVersion, releases])
 
 	// Re-parse the current input through the compare classifier whenever the primary result changes.
 	const primaryInput = primary?.input ?? null

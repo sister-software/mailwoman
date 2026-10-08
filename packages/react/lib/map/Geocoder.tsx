@@ -164,8 +164,6 @@ function GeocoderInner({
 		[runtime, compare]
 	)
 
-	const onForceWASMChange = useCallback((forceWASM: boolean) => runtime.setForceWASM?.(forceWASM), [runtime])
-
 	return (
 		<div className="mw-geocoder-demo">
 			<div className="mw-geocoder-demo__map">
@@ -201,7 +199,6 @@ function GeocoderInner({
 				map={map}
 				onSubmitQuery={onSubmitQuery}
 				onSelectVersion={onSelectVersion}
-				onForceWASMChange={onForceWASMChange}
 				developer={developer}
 			/>
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}

@@ -28,8 +28,8 @@ export function About({ collapsible = true }: AboutProps = {}): ReactNode {
 				<p>
 					A ~29M-parameter BERT-style encoder classifies each token into one of 33 BIO labels covering 16 address
 					components (street, house number, unit, locality, region, postcode, venue, country, intersection, etc.). It
-					runs entirely in your browser via <strong>onnxruntime-web</strong> (WebGPU with WASM SIMD fallback). The model
-					ships as a 37.6 MB int8-quantized ONNX bundle; fp32 weights are also available for higher accuracy.
+					runs entirely in your browser via <strong>onnxruntime-web</strong> on its WASM SIMD backend. The model ships
+					as a 37.6 MB int8-quantized ONNX bundle; fp32 weights are also available for higher accuracy.
 				</p>
 			</section>
 

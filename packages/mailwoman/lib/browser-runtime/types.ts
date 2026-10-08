@@ -97,10 +97,6 @@ export interface AssetLoadProgress {
 	 * The loader stops handing back a lookup once it fires.
 	 */
 	signal: AbortSignal
-	/**
-	 * Force the CPU/wasm backend instead of WebGPU for this load.
-	 */
-	forceWASM: boolean
 	setProgress: (progress: string) => void
 	setStepLabels: (labels: string[]) => void
 	setStepIndex: (index: number) => void

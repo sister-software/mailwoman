@@ -38,7 +38,6 @@ export type {
 	CompareContext,
 	GeocoderPanels,
 	GeocoderRuntime,
-	InferenceBackend,
 	LngLatTuple,
 	MapBias,
 	OverlaySpec,
@@ -67,8 +66,6 @@ export { ResultOverlay } from "./map/ResultOverlay.tsx"
 export type { ResultOverlayProps } from "./map/ResultOverlay.tsx"
 
 // ── Geocoder controls + the composed geocoder ────────────────────────────────
-export { BackendControl } from "./map/BackendControl.tsx"
-export type { BackendControlProps } from "./map/BackendControl.tsx"
 export { CompareToggle } from "./map/CompareToggle.tsx"
 export type { CompareToggleProps } from "./map/CompareToggle.tsx"
 export { Geocoder } from "./map/Geocoder.tsx"
