@@ -37,13 +37,13 @@ export interface BuildNLPC6Options {
 	/**
 	 * CBS PC6 centroid CSV (see the ogr2ogr extraction in the module docstring).
 	 *
-	 * Default `<data-root>/cbs/pc6-centroids.csv`.
+	 * @defaultValue `<data-root>/cbs/pc6-centroids.csv`
 	 */
 	csvPath?: PathBuilderLike
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/db/wof/postalcode-nl-pc6.db`.
+	 * @defaultValue `<data-root>/db/wof/postalcode-nl-pc6.db`
 	 */
 	out?: PathBuilderLike
 }

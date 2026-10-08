@@ -112,7 +112,7 @@ export interface StubTransportOptions {
 	/**
 	 * The body served when a result names none.
 	 *
-	 * Defaults to `{ ok: true }`; pass the envelope the client under test expects
+	 * @defaultValue `{ ok: true }`; pass the envelope the client under test expects
 	 * when it validates one (BDC's `{ data: [] }`, say).
 	 */
 	defaultBody?: unknown

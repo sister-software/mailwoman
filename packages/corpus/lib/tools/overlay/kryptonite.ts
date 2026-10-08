@@ -34,11 +34,11 @@ export interface KryptoniteOverlayOptions {
 	baseManifest: string
 	outDir: PathBuilderLike
 	/**
-	 * Default `"0.4.0"`.
+	 * @defaultValue `"0.4.0"`
 	 */
 	corpusVersion?: string
 	/**
-	 * Default `"deepseek-kryptonite"`.
+	 * @defaultValue `"deepseek-kryptonite"`
 	 */
 	source?: string
 }

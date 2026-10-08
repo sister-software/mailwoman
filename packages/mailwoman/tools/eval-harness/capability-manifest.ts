@@ -59,31 +59,31 @@ export interface CapabilityManifestOptions {
 	/**
 	 * ONNX artifact.
 	 *
-	 * Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	model?: string
 	/**
 	 * SentencePiece tokenizer.
 	 *
-	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
 	 * Model card JSON.
 	 *
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	modelCard?: string
 	/**
 	 * Anchor lookup JSON.
 	 *
-	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	anchorLookup?: string
 	/**
 	 * Gazetteer lexicon JSON.
 	 *
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**

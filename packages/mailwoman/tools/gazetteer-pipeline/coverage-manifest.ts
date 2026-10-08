@@ -183,11 +183,15 @@ export interface EmitCoverageManifestOptions {
 	 */
 	dbPath: PathBuilderLike
 	/**
-	 * Coverage rows to bake (default {@link MEASURED_COUNTRY_COVERAGE}).
+	 * Coverage rows to bake.
+	 *
+	 * @defaultValue {@linkcode MEASURED_COUNTRY_COVERAGE}
 	 */
 	coverage?: readonly CountryCoverageFact[]
 	/**
-	 * Guard-B bbox rows to bake (default {@link MEASURED_COUNTRY_BBOXES}).
+	 * Guard-B bbox rows to bake.
+	 *
+	 * @defaultValue {@linkcode MEASURED_COUNTRY_BBOXES}
 	 */
 	bboxes?: readonly CountryBBoxFact[]
 }

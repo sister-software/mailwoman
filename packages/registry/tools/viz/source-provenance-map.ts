@@ -24,37 +24,37 @@ export interface SourceProvenanceMapOptions {
 	/**
 	 * State (lowercase postal).
 	 *
-	 * Default ny.
+	 * @defaultValue `"ny"`
 	 */
 	state?: string
 	/**
 	 * Address-point DB path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<state>.db`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<state>.db`
 	 */
 	db?: string
 	/**
 	 * Output html path.
 	 *
-	 * Default `/tmp/source-provenance.html`.
+	 * @defaultValue `/tmp/source-provenance.html`
 	 */
 	outHTML?: string
 	/**
 	 * Keep ~1/N of NAD points.
 	 *
-	 * Default 700.
+	 * @defaultValue `700`
 	 */
 	nadMod?: number
 	/**
 	 * Keep ~1/N of OpenAddresses points.
 	 *
-	 * Default 120.
+	 * @defaultValue `120`
 	 */
 	oaMod?: number
 	/**
 	 * Per-source marker cap.
 	 *
-	 * Default 7000.
+	 * @defaultValue `7000`
 	 */
 	cap?: number
 }

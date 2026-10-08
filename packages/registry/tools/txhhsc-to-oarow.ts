@@ -30,13 +30,13 @@ export interface TXHHSCConvertOptions {
 	/**
 	 * The TX hhsc nursing-facilities TSV.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`
 	 */
 	src?: PathBuilderLike
 	/**
 	 * Output OaRow jsonl path.
 	 *
-	 * Default `/tmp/txhhsc-oarow.jsonl`.
+	 * @defaultValue `/tmp/txhhsc-oarow.jsonl`
 	 */
 	out?: string
 }

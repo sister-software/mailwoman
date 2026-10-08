@@ -52,19 +52,19 @@ export interface LedgerAppendOptions {
 	/**
 	 * Model card JSON (run-metadata defaults).
 	 *
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	card?: string
 	/**
 	 * The ledger file.
 	 *
-	 * Default `evals/scores-by-version.json`.
+	 * @defaultValue `evals/scores-by-version.json`
 	 */
 	ledger?: string
 	/**
 	 * ISO date the model trained.
 	 *
-	 * Default: today.
+	 * @defaultValue today.
 	 */
 	trainedAt?: string
 	/**

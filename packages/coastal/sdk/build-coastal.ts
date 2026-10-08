@@ -92,12 +92,14 @@ export type BuildCoastalInput =
 				geodatabasePath: string
 				/**
 				 * Scenarios to build.
-				 * Defaults to all of them.
+				 *
+				 * @defaultValue all of them.
 				 */
 				scenarioKeys?: ReadonlyArray<string>
 				/**
 				 * Feature IDs per chunk.
-				 * Defaults to {@link DEFAULT_CHUNK_SIZE}.
+				 *
+				 * @defaultValue {@linkcode DEFAULT_CHUNK_SIZE}
 				 */
 				chunkSize?: number
 				/**

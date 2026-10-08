@@ -48,7 +48,8 @@ export interface APIClientConfig {
 
 	/**
 	 * This option transfers cache storage ownership to the client.
-	 * The default is false.
+	 *
+	 * @defaultValue `false`
 	 */
 	disposeCacheStorage?: boolean
 
@@ -90,7 +91,7 @@ export interface APIClientConfig {
 	/**
 	 * Time source for the pacer, cooldown timer and retry backoff.
 	 *
-	 * Defaults to {@linkcode systemClock}.
+	 * @defaultValue {@linkcode systemClock}
 	 * Tests inject a fake clock to make timing deterministic and instant.
 	 */
 	clock?: ClockLike

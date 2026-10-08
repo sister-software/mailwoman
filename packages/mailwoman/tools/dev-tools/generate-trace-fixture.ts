@@ -38,13 +38,13 @@ export interface GenerateTraceFixtureOptions {
 	/**
 	 * Address to trace.
 	 *
-	 * Default: the White House.
+	 * @defaultValue the White House.
 	 */
 	text?: string
 	/**
 	 * Output path override.
 	 *
-	 * Default: the committed ModelVisualizer fixture.
+	 * @defaultValue the committed ModelVisualizer fixture.
 	 */
 	out?: string
 }

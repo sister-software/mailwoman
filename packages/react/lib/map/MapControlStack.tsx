@@ -74,7 +74,9 @@ export interface MapControlStackProps {
 	 */
 	children: ReactNode
 	/**
-	 * Which edge the column sits against. @default "right"
+	 * Which edge the column sits against.
+	 *
+	 * @defaultValue `"right"`
 	 */
 	side?: "left" | "right"
 	className?: string

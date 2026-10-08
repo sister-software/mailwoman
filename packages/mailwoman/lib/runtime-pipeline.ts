@@ -144,16 +144,18 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * The default for each call's `caseNormalization`.
 	 *
-	 * It defaults to `"title-case"`.
 	 * A per-call value overrides it.
+	 *
+	 * @defaultValue `"title-case"`
 	 */
 	caseNormalization?: CaseNormalization
 
 	/**
 	 * The default for each call's `placerCountryUse`.
 	 *
-	 * It defaults to `"filter"`.
 	 * A per-call value overrides it.
+	 *
+	 * @defaultValue `"filter"`
 	 */
 	placerCountryUse?: PlacerCountryUse
 
@@ -175,7 +177,8 @@ export interface CreateRuntimePipelineOpts {
 
 	/**
 	 * Controls POI-query detection and intent extraction.
-	 * It defaults to `"extract"`.
+	 *
+	 * @defaultValue `"extract"`
 	 */
 	poiQueryKind?: POIQueryKindSetting
 

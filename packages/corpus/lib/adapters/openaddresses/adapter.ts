@@ -91,7 +91,7 @@ export interface OpenaddressesAdapterOptions {
 	/**
 	 * Per-row license used when a Feature lacks an explicit `LICENSE` property.
 	 *
-	 * Defaults to `CC-BY-4.0` — the most common license across the OpenAddresses collection.
+	 * @defaultValue `CC-BY-4.0` — the most common license across the OpenAddresses collection.
 	 * Override per dump via the runner's adapter-options passthrough.
 	 */
 	defaultLicense?: string
@@ -99,13 +99,14 @@ export interface OpenaddressesAdapterOptions {
 	/**
 	 * Whether this adapter emits a row whose per-file license requires share-alike.
 	 *
-	 * The default is `true`.
 	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
 	 * express a refusal at build level.
 	 *
 	 * The policy reads the obligations of every adapter's rows under one policy and records what it refused.
 	 *
 	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must use one license.
+	 *
+	 * @defaultValue `true`
 	 */
 	allowShareAlike?: boolean
 }

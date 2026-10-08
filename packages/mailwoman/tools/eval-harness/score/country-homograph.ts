@@ -37,7 +37,7 @@ export interface ScoreCountryHomographOptions {
 	/**
 	 * Eval jsonl.
 	 *
-	 * Default `data/eval/external/country-homograph-real.jsonl`.
+	 * @defaultValue `data/eval/external/country-homograph-real.jsonl`
 	 */
 	file?: string
 	/**
@@ -56,12 +56,14 @@ export interface ScoreCountryHomographOptions {
 	json?: string
 	/**
 	 * `auto` or `<system>` enables the address-system conventions mask.
-	 * It defaults to `"off"`.
+	 *
+	 * @defaultValue `"off"`
 	 */
 	conventions?: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
-	 * It defaults to {@linkcode DEFAULT_TOGGLE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	bridgePunctuationGaps?: Toggle
 	/**
@@ -69,7 +71,8 @@ export interface ScoreCountryHomographOptions {
 	 *
 	 * The check always passes this for the country probe, because zero-filled clues
 	 * near a postcode depress country recall.
-	 * It defaults to {@linkcode DEFAULT_TOGGLE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	suppressGazetteerNearPostcode?: Toggle
 	/**

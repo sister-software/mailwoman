@@ -40,7 +40,7 @@ export interface LintMDXAnglesOptions {
 	/**
 	 * Files to check.
 	 *
-	 * Default: staged `docs/**` markdown (the pre-commit mode).
+	 * @defaultValue staged `docs/**` markdown (the pre-commit mode).
 	 */
 	files?: string[]
 }

@@ -41,31 +41,31 @@ export interface BuildPostcodeDatabaseOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * Default `<data-root>/src/wof-repos`.
+	 * @defaultValue `<data-root>/src/wof-repos`
 	 */
 	reposDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
+	 * @defaultValue `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: PathBuilderLike
 	/**
 	 * Census zcta Gazetteer file (US pass 1).
 	 *
-	 * Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
+	 * @defaultValue `<data-root>/census/2024_Gaz_zcta_national.txt`
 	 */
 	zctaPath?: PathBuilderLike
 	/**
 	 * GeoNames postal dump dir.
 	 *
-	 * Default `<data-root>/geonames-postal`.
+	 * @defaultValue `<data-root>/geonames-postal`
 	 */
 	geonamesPostalDir?: PathBuilderLike
 	/**
 	 * Admin gazetteer for the parent/ancestor borrows.
 	 *
-	 * Default the live `admin-global-priority.db`.
+	 * @defaultValue the live `admin-global-priority.db`.
 	 */
 	adminPath?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void

@@ -68,9 +68,10 @@ export interface SoftFeatureSources {
 
 	/**
 	 * The substrings the anchor channel looks up.
-	 * The default is `alnum-run`.
 	 *
 	 * It must match the model card's `requires.anchor.span_mode`.
+	 *
+	 * @defaultValue `alnum-run`
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 

@@ -25,7 +25,7 @@ export const BatchRequestSchema = z
 		/**
 		 * The register for every row.
 		 *
-		 * It defaults to `"formatted"`, because batch rows are the record register by nature.
+		 * @defaultValue `"formatted"`, because batch rows are the record register by nature.
 		 */
 		input_mode: InputModeSelectionSchema.default("formatted"),
 	})

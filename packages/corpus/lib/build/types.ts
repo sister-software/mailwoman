@@ -67,7 +67,7 @@ export interface BuildCorpusOptions {
 	/**
 	 * Adapters to drive, in order.
 	 *
-	 * The default is `defaultAdapterRegistry.list()`, and an explicit list filters the run.
+	 * @defaultValue `defaultAdapterRegistry.list()`, and an explicit list filters the run.
 	 */
 	adapters?: readonly CorpusAdapter[]
 
@@ -81,13 +81,14 @@ export interface BuildCorpusOptions {
 	/**
 	 * Enable the synthesis pass.
 	 *
-	 * The default is `true`, and a fixture-driven smoke test passes `false`.
+	 * @defaultValue `true`, and a fixture-driven smoke test passes `false`.
 	 */
 	synthesize?: boolean
 
 	/**
 	 * Max rows per `.parquet` file, forwarded to `writeParquetSplits`.
-	 * The default is 1_000_000.
+	 *
+	 * @defaultValue `1_000_000`
 	 */
 	rowsPerFile?: number
 
@@ -100,7 +101,7 @@ export interface BuildCorpusOptions {
 	 * An unshuffled row group therefore holds rows from one to eleven countries in its source.
 	 * A bounded epoch draw reads only those countries.
 	 *
-	 * The default is `DEFAULT_SHUFFLE_WINDOW`, where `0` or `1` writes arrival
+	 * @defaultValue `DEFAULT_SHUFFLE_WINDOW`, where `0` or `1` writes arrival
 	 * order unchanged and consumes no random draw.
 	 */
 	shuffleWindow?: number
@@ -129,7 +130,7 @@ export interface BuildCorpusOptions {
 	/**
 	 * Which rows this build admits on the evidence of their license obligations.
 	 *
-	 * Defaults to `LicensePolicy.All`, admitting every row an adapter yields.
+	 * @defaultValue `LicensePolicy.All`, admitting every row an adapter yields.
 	 *
 	 * A weights build that must have no share-alike obligation passes `LicensePolicy.ShareAlikeFree`.
 	 */
@@ -137,7 +138,8 @@ export interface BuildCorpusOptions {
 
 	/**
 	 * What this corpus is being built for.
-	 * The default is {@linkcode BuildProfile.Exploratory}.
+	 *
+	 * @defaultValue {@linkcode BuildProfile.Exploratory}
 	 */
 	profile?: BuildProfile
 }

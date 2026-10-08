@@ -337,10 +337,11 @@ export interface HarvestESBizkaiaOptions {
 	limit?: number
 	/**
 	 * Save the WFS component documents as well as the archives.
-	 * Defaults to true.
 	 *
 	 * An adapter run needs them: an archive references its street, its postcode
 	 * and its municipality and has none of the three.
+	 *
+	 * @defaultValue `true`
 	 */
 	components?: boolean
 	/**
@@ -715,7 +716,7 @@ export interface FetchESBizkaiaOptions
 	/**
 	 * The minimum spacing between two requests, in milliseconds.
 	 *
-	 * Defaults to {@linkcode ES_BIZKAIA_REQUEST_INTERVAL_MS}.
+	 * @defaultValue {@linkcode ES_BIZKAIA_REQUEST_INTERVAL_MS}
 	 */
 	minRequestIntervalMs?: number
 }

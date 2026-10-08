@@ -140,8 +140,9 @@ export interface RelabelStreetRowOptions {
 	/**
 	 * Whether to also move a leading directional into `street_prefix`.
 	 *
-	 * Defaults to `true`; without it `N Desmet Avenue` grades as `street: "N Desmet"`
-	 * against a model that emits a prefix.
+	 * Without it `N Desmet Avenue` grades as `street: "N Desmet"` against a model that emits a prefix.
+	 *
+	 * @defaultValue `true`
 	 */
 	splitPrefix?: boolean
 }

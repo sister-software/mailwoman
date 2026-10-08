@@ -54,13 +54,13 @@ export interface LoadStreetMorphologyFSTOpts {
 	/**
 	 * Dictionaries dir for the build fallback.
 	 *
-	 * Defaults to core's bundled libpostal dictionaries.
+	 * @defaultValue core's bundled libpostal dictionaries.
 	 */
 	dictionariesDir?: PathBuilderLike
 	/**
 	 * Unreadable-artifact diagnostics.
 	 *
-	 * Defaults to silent (the caller owns its warn channel).
+	 * @defaultValue silent (the caller owns its warn channel).
 	 */
 	onWarn?: (message: string) => void
 }

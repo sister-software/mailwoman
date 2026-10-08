@@ -23,7 +23,8 @@ import type { TokenLike } from "#query-shape-prior"
 export interface StreetMorphologyPriorOpts {
 	/**
 	 * Multiplier on the base bias before {@linkcode maxBias} is applied.
-	 * Default 1.0.
+	 *
+	 * @defaultValue `1.0`
 	 */
 	biasScale?: number
 	/**

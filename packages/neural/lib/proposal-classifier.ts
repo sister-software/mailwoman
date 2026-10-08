@@ -28,10 +28,10 @@ export interface NeuralProposalClassifierConfig {
 	/**
 	 * Component tags this classifier may emit.
 	 *
-	 * Defaults to the Stage 2 tag set.
-	 *
 	 * A v0.2.0 Stage 1 model never decodes to a fine tag, so the broader default
 	 * creates no backward-compatibility risk.
+	 *
+	 * @defaultValue the Stage 2 tag set.
 	 */
 	emits?: readonly ComponentTag[]
 	/**

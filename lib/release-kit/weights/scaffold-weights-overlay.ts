@@ -31,7 +31,7 @@ export interface ScaffoldWeightsOverlayOptions {
 	/**
 	 * The one artifact the overlay adds.
 	 *
-	 * Defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
+	 * @defaultValue `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
 	/**

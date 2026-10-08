@@ -135,7 +135,7 @@ export interface DownloadANACOptions {
 	outputDir: PathBuilderLike
 	/**
 	 * Which editions to fetch: a year, `undated`, or `full`.
-	 * Defaults to {@linkcode IT_ANAC_DEFAULT_EDITIONS}.
+	 * @defaultValue {@linkcode IT_ANAC_DEFAULT_EDITIONS}
 	 */
 	editions?: readonly string[]
 	/**

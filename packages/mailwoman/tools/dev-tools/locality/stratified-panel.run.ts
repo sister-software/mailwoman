@@ -52,7 +52,7 @@ const { values } = parseArguments({
 		/**
 		 * The GeoNames postal export to draw from.
 		 *
-		 * Defaults to the standard fetch out-root for the country.
+		 * @defaultValue the standard fetch out-root for the country.
 		 */
 		source: { type: "string" },
 		quota: { type: "string", default: String(DEFAULT_LOCALITY_QUOTA) },

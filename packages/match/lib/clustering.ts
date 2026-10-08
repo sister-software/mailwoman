@@ -54,7 +54,7 @@ export interface ClusterOptions {
 	/**
 	 * Components larger than this skip the O(k³) average-linkage refine and keep single-linkage.
 	 *
-	 * Default 64.
+	 * @defaultValue `64`
 	 */
 	maxAverageLinkageComponent?: number
 }

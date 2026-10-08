@@ -47,7 +47,8 @@ const SEPARATOR_MINIMUM = 10_000
 export interface GenerateCountryPopulationOptions {
 	/**
 	 * Overrides the output path.
-	 * The default is the committed `codex/country/population.ts`.
+	 *
+	 * @defaultValue the committed `codex/country/population.ts`.
 	 */
 	out?: string
 }

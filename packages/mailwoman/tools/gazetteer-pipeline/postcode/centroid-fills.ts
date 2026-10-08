@@ -38,8 +38,9 @@ export interface CentroidFillOptions {
 	 * The combined `allCountries-postal.txt`, consulted when {@link geonamesDir}
 	 * has no `<CC>.txt` for a country.
 	 *
-	 * Default `<data-root>/geonames/allCountries-postal.txt`.
 	 * The only place the US dump exists.
+	 *
+	 * @defaultValue `<data-root>/geonames/allCountries-postal.txt`
 	 */
 	geonamesCombined?: PathBuilderLike
 	/**

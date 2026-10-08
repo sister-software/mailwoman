@@ -600,7 +600,8 @@ export interface CensusCoverageOptions {
 	casesRoot: PathBuilderLike
 	/**
 	 * Sets the serving gazetteer.
-	 * The default is the data root's `wof/candidate.db`.
+	 *
+	 * @defaultValue the data root's `wof/candidate.db`.
 	 */
 	gazetteerPath?: string
 	/**

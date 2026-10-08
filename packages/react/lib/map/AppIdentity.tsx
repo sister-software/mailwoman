@@ -30,11 +30,15 @@ export interface AppIdentityProps {
 	 */
 	docsURL?: string
 	/**
-	 * The documentation link's text. @default "Developer Documentation"
+	 * The documentation link's text.
+	 *
+	 * @defaultValue `"Developer Documentation"`
 	 */
 	docsLabel?: string
 	/**
-	 * The URL of the build record. @default "/build.json"
+	 * The URL of the build record.
+	 *
+	 * @defaultValue `"/build.json"`
 	 */
 	buildInfoURL?: string
 	/**

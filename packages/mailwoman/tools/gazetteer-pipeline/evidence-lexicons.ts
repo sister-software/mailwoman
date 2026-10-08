@@ -244,23 +244,26 @@ export function clearsProminenceFloor(
 export interface BuildLocalitySurfaceLexiconOpts {
 	/**
 	 * The countries whose locality names become evidence.
-	 * Defaults to US and FR.
+	 *
+	 * @defaultValue US and FR.
 	 */
 	countries?: string[]
 	/**
 	 * The placetypes to read.
-	 * Defaults to `locality`, `localadmin`, and `neighbourhood`.
+	 *
+	 * @defaultValue `locality`, `localadmin`, and `neighbourhood`.
 	 */
 	placetypes?: string[]
 	/**
 	 * The WOF admin database.
-	 * Defaults to `admin-global-priority.db` under the data root.
+	 *
+	 * @defaultValue `admin-global-priority.db` under the data root.
 	 */
 	dbPath?: PathBuilderLike
 	/**
 	 * The output path.
 	 *
-	 * Defaults to `gazetteer/locality-surface-lexicon-v6.json` under the data root.
+	 * @defaultValue `gazetteer/locality-surface-lexicon-v6.json` under the data root.
 	 */
 	output?: PathBuilderLike
 	onProgress?: (line: string) => void
@@ -499,7 +502,7 @@ export interface BuildStreetTypeLexiconOpts {
 	/**
 	 * The output path.
 	 *
-	 * Defaults to the committed `data/gazetteer/street-type-lexicon-v3.json`.
+	 * @defaultValue the committed `data/gazetteer/street-type-lexicon-v3.json`.
 	 */
 	output?: PathBuilderLike
 }

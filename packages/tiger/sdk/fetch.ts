@@ -49,28 +49,31 @@ export interface FetchTIGEROptions {
 
 	/**
 	 * The TIGER level to fetch.
-	 * The default is `tabblock20`.
+	 *
+	 * @defaultValue `tabblock20`
 	 */
 	level?: TIGERFetchLevel
 
 	/**
 	 * The TIGER vintage year.
 	 *
-	 * The default is 2020 for blocks to match redistricting data.
 	 * Other levels default to 2024.
+	 *
+	 * @defaultValue `2020` for blocks to match redistricting data.
 	 */
 	vintage?: number
 
 	/**
 	 * The output SQLite path.
 	 *
-	 * The default is `<dataRoot>/tiger/tiger.db`, which the corpus `tiger` adapter reads.
+	 * @defaultValue `<dataRoot>/tiger/tiger.db`, which the corpus `tiger` adapter reads.
 	 */
 	outPath?: string
 
 	/**
 	 * The root of the download cache and the default output.
-	 * The default is the Mailwoman data root.
+	 *
+	 * @defaultValue the Mailwoman data root.
 	 */
 	dataRoot?: string
 
@@ -81,7 +84,8 @@ export interface FetchTIGEROptions {
 
 	/**
 	 * The number of rows per insert batch.
-	 * The default is 1000.
+	 *
+	 * @defaultValue `1000`
 	 */
 	batchSize?: number
 }

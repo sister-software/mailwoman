@@ -134,24 +134,27 @@ export interface PairIndexOverlay {
 
 	/**
 	 * The source files whose MD5s the build records, in the order that `gazetteer pair-index` records them.
-	 * The default is the WOF admin database.
 	 *
 	 * The freshness check compares each MD5 with the header.
 	 * An empty list makes the check compare the magnitudes only.
+	 *
+	 * @defaultValue the WOF admin database.
 	 */
 	sources?: PathBuilder[]
 
 	/**
 	 * Files that must exist before a build runs.
 	 *
-	 * The default is `sources`.
 	 * A missing file prints a warning and skips the build.
+	 *
+	 * @defaultValue `sources`
 	 */
 	inputs?: PathBuilder[]
 
 	/**
 	 * Extra CLI arguments that pass the build's sources.
-	 * The default is `--borough-db <admin db>`.
+	 *
+	 * @defaultValue `--borough-db <admin db>`
 	 */
 	extraArgs?: PathBuilderLike[]
 

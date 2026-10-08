@@ -152,7 +152,7 @@ export interface DownloadCORDISOptions {
 	outputDir: PathBuilderLike
 	/**
 	 * Which programmes to fetch.
-	 * Defaults to {@linkcode CORDIS_PROGRAMMES}.
+	 * @defaultValue {@linkcode CORDIS_PROGRAMMES}
 	 */
 	programmes?: readonly string[]
 	/**

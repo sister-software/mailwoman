@@ -30,11 +30,15 @@ export interface PlaceMarkerProps {
 	 */
 	latitude: number
 	/**
-	 * Pin color. @default the house pink.
+	 * Pin color.
+	 *
+	 * @defaultValue the house pink.
 	 */
 	color?: string
 	/**
-	 * Which part of the marker sits on the coordinate. @default "center" (a symmetric dot).
+	 * Which part of the marker sits on the coordinate.
+	 *
+	 * @defaultValue `"center"` (a symmetric dot).
 	 */
 	anchor?: "center" | "top" | "bottom" | "left" | "right"
 }

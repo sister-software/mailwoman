@@ -38,7 +38,7 @@ export interface CopyWeightsOptions {
 	/**
 	 * The directory that receives the weights workspaces, such as a preflight staging tree.
 	 *
-	 * It defaults to `repoRoot` and changes only the destinations.
+	 * @defaultValue `repoRoot`. The option changes only the destinations.
 	 */
 	destRoot?: string
 	log: (line: string) => void

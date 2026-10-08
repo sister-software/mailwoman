@@ -43,19 +43,19 @@ export interface EmOptions {
 	/**
 	 * Hard iteration cap.
 	 *
-	 * Default 100.
+	 * @defaultValue `100`
 	 */
 	maxIterations?: number
 	/**
 	 * Convergence tolerance on the largest parameter change between iterations.
 	 *
-	 * Default 1e-6.
+	 * @defaultValue `1e-6`
 	 */
 	tolerance?: number
 	/**
 	 * Prior match rate used to initialize the model.
 	 *
-	 * Defaults to the model's `lambda`.
+	 * @defaultValue the model's `lambda`.
 	 */
 	initialLambda?: number
 }

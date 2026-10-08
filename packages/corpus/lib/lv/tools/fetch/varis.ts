@@ -89,7 +89,8 @@ export interface DownloadVarisOptions {
 	outputDir: PathBuilderLike
 	/**
 	 * The tables to download.
-	 * Defaults to every table the adapter reads.
+	 *
+	 * @defaultValue every table the adapter reads.
 	 */
 	tables?: readonly VarisTable[]
 	force?: boolean

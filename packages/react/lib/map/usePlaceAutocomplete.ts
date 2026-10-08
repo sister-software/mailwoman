@@ -32,12 +32,12 @@ export interface UsePlaceAutocompleteOptions {
 	autocomplete?: (query: string) => Promise<Suggestion[]>
 
 	/**
-	 * @default 2
+	 * @defaultValue `2`
 	 */
 	minChars?: number
 
 	/**
-	 * @default 150
+	 * @defaultValue `150`
 	 */
 	debounceMs?: number
 }

@@ -51,7 +51,8 @@ export interface EngineConfig {
 	admin_containment_rerank?: SwitchPin
 	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
-	 * Defaults to `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
 	 */
 	poi_venue_tier?: SwitchPin
 	/**

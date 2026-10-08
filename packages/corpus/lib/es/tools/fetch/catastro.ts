@@ -730,7 +730,7 @@ export interface FetchESCatastroOptions
 	/**
 	 * The minimum spacing between two requests, in milliseconds.
 	 *
-	 * Defaults to {@linkcode ES_CATASTRO_REQUEST_INTERVAL_MS}.
+	 * @defaultValue {@linkcode ES_CATASTRO_REQUEST_INTERVAL_MS}
 	 */
 	minRequestIntervalMs?: number
 }

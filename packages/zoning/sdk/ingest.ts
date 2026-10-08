@@ -86,7 +86,8 @@ export interface ZoningIngestOptions {
 	expectEPSG?: number
 	/**
 	 * The extent that every reprojected vertex must fall inside.
-	 * The default is the Department's declared extent.
+	 *
+	 * @defaultValue the Department's declared extent.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**

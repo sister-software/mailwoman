@@ -82,7 +82,8 @@ export interface RunInvarianceOptions {
 	baselineParse?: ParseFn
 	/**
 	 * Largest number of new `DEGRADED` pairs that still passes.
-	 * It defaults to 0.
+	 *
+	 * @defaultValue `0`
 	 */
 	maxDegraded?: number
 	report?: (line: string) => void

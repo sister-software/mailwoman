@@ -217,14 +217,15 @@ export interface DownloadRyhtiOptions {
 	force?: boolean
 	/**
 	 * Attempts after the first for the one transfer.
-	 * Defaults to three.
 	 *
 	 * The host ignores `Range`, so each attempt starts the 351 MB again.
+	 *
+	 * @defaultValue three.
 	 */
 	retries?: number
 	/**
 	 * Pause between attempts, in milliseconds.
-	 * Defaults to `DEFAULT_RETRY_DELAY_MS`.
+	 * @defaultValue {@linkcode DEFAULT_RETRY_DELAY_MS}
 	 */
 	retryDelayMs?: number
 	signal?: AbortSignal

@@ -80,7 +80,8 @@ export interface PostcodeAnchor {
 export interface ExtractPostcodeAnchorsOpts {
 	/**
 	 * Whether to retry an unmatched span with its {@link editDistance1Variants} at reduced confidence.
-	 * It defaults to false.
+	 *
+	 * @defaultValue `false`
 	 */
 	fuzzy?: boolean
 }

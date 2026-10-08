@@ -52,19 +52,19 @@ export interface BuildOutlierOAOptions {
 	/**
 	 * Extracted OpenAddresses root.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`
 	 */
 	oaDir?: PathBuilderLike
 	/**
 	 * Row cap per off-map country.
 	 *
-	 * Default 6000.
+	 * @defaultValue `6000`
 	 */
 	perCountry?: number
 	/**
 	 * Dataset dir the `other` rows append to.
 	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

@@ -25,13 +25,13 @@ export interface FoldGeonamesOptions {
 	/**
 	 * GeoNames per-country dump dir (download.geonames.org/export/dump).
 	 *
-	 * Default `<data-root>/geonames`.
+	 * @defaultValue `<data-root>/geonames`
 	 */
 	geonamesDir?: PathBuilderLike
 	/**
 	 * AlternateNamesV2 dir (…/export/dump/alternatenames).
 	 *
-	 * Default `<data-root>/geonames-alternate`.
+	 * @defaultValue `<data-root>/geonames-alternate`
 	 */
 	alternateDir?: PathBuilderLike
 	/**

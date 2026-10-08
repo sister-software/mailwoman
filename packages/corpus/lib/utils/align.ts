@@ -46,7 +46,7 @@ export interface AlignOptions {
 	/**
 	 * Tokenizer to use.
 	 *
-	 * Defaults to `whitespaceTokenizer()`.
+	 * @defaultValue `whitespaceTokenizer()`
 	 */
 	tokenizer?: Tokenizer
 
@@ -54,19 +54,21 @@ export interface AlignOptions {
 	 * Max Levenshtein edit distance to accept when a verbatim substring match fails.
 	 *
 	 * Set `0` to require verbatim matches only.
-	 * Default `2`.
 	 *
 	 * Distance is computed against same-length windows in `raw`, so the threshold
 	 * scales naturally with the component value length.
+	 *
+	 * @defaultValue `2`
 	 */
 	maxEditDistance?: number
 
 	/**
 	 * Case-insensitive comparison for substring search.
 	 *
-	 * Default `true`.
 	 * The retained span in `raw` is the original case.
 	 * Only matching is case-insensitive.
+	 *
+	 * @defaultValue `true`
 	 */
 	caseInsensitive?: boolean
 }

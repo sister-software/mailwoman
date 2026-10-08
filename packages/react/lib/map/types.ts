@@ -42,7 +42,7 @@ export interface OverlaySpec {
 	source: SourceSpecification
 	layers: LayerSpecification[]
 	/**
-	 * @default true
+	 * @defaultValue `true`
 	 */
 	visible?: boolean
 	label?: string

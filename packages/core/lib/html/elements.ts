@@ -70,7 +70,8 @@ export interface StreamMarkupOptions {
 	 * It preserves tag case and requires every element to close.
 	 *
 	 * GML and every other INSPIRE payload needs this.
-	 * It defaults to false, matching `./document.ts`.
+	 *
+	 * @defaultValue `false`, matching `./document.ts`
 	 */
 	xml?: boolean
 

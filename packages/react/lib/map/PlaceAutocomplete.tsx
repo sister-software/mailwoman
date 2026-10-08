@@ -31,7 +31,9 @@ export interface PlaceAutocompleteProps {
 	 */
 	optionID: (index: number) => string
 	/**
-	 * The label before the suggestions. @default "Did you mean:"
+	 * The label before the suggestions.
+	 *
+	 * @defaultValue `"Did you mean:"`
 	 */
 	caption?: string
 }

@@ -72,7 +72,8 @@ export interface CoverageCell {
 	completeness: number
 	/**
 	 * Evidence basis for completeness.
-	 * Defaults to `SourcePresent`.
+	 *
+	 * @defaultValue `SourcePresent`
 	 */
 	basis?: CoverageBasis
 	observedRows: number
@@ -284,7 +285,7 @@ export function polygonLayerManifest(
 		 */
 		cellColumn: string
 		/**
-		 * Defaults to `Shipped`.
+		 * @defaultValue `Shipped`
 		 */
 		tier?: LayerTier
 	}

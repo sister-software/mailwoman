@@ -25,7 +25,8 @@ import {
 export interface WebONNXRunnerOpts {
 	/**
 	 * The fixed input sequence length of the model.
-	 * The default is {@link DEFAULT_FIXED_SEQ_LEN}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_FIXED_SEQ_LEN}
 	 */
 	fixedSeqLen?: number
 

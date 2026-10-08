@@ -462,7 +462,7 @@ export interface FetchESNavarraOptions
 	/**
 	 * The minimum spacing between two requests, in milliseconds.
 	 *
-	 * Defaults to {@linkcode ES_NAVARRA_REQUEST_INTERVAL_MS}.
+	 * @defaultValue {@linkcode ES_NAVARRA_REQUEST_INTERVAL_MS}
 	 */
 	minRequestIntervalMs?: number
 }

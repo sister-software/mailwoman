@@ -26,13 +26,13 @@ export interface CrossDatasetMapOptions {
 	/**
 	 * The `cross-dataset-links` GeoJSON.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/2026-06-16-cross-dataset-links.geojson`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/2026-06-16-cross-dataset-links.geojson`
 	 */
 	in?: string
 	/**
 	 * Output html path.
 	 *
-	 * Default `/tmp/cross-dataset-map.html`.
+	 * @defaultValue `/tmp/cross-dataset-map.html`
 	 */
 	outHTML?: string
 	/**

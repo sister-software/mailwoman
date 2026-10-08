@@ -98,7 +98,8 @@ export interface BuildCandidateOptions {
 
 		/**
 		 * The deprecated placetypes eligible for restoration.
-		 * The default is `locality`.
+		 *
+		 * @defaultValue `locality`
 		 */
 		deadPlacetypes?: readonly string[]
 	}
@@ -110,9 +111,10 @@ export interface BuildCandidateOptions {
 
 	/**
 	 * The key-count threshold for the gloss anomaly detector.
-	 * The default is {@link GLOSS_KEY_THRESHOLD}.
 	 *
 	 * Tests override it with a value sized for fixtures.
+	 *
+	 * @defaultValue {@linkcode GLOSS_KEY_THRESHOLD}
 	 */
 	glossKeyThreshold?: number
 }

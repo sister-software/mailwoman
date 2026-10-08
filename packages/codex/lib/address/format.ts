@@ -19,7 +19,7 @@ export interface FormatAddressOptions {
 	/**
 	 * Replace the layout's line breaks with this separator.
 	 *
-	 * Default `"\n"`: the envelope form.
+	 * @defaultValue `"\n"`: the envelope form.
 	 */
 	separator?: string
 

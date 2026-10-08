@@ -174,7 +174,7 @@ export interface CreateMapLinkResolverOptions {
 	/**
 	 * Milliseconds between dispatches.
 	 *
-	 * Defaults to {@linkcode MAP_LINK_MIN_INTERVAL_MS}.
+	 * @defaultValue {@linkcode MAP_LINK_MIN_INTERVAL_MS}
 	 */
 	minRequestIntervalMs?: number
 	/**

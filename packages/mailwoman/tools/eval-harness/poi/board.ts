@@ -40,7 +40,8 @@ export interface POIBoardFixture {
 	expect: POIBoardExpect
 	/**
 	 * Row status.
-	 * Defaults to `pass`.
+	 *
+	 * @defaultValue `pass`
 	 */
 	status?: POIBoardStatus
 	/**

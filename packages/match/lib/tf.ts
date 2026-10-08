@@ -95,19 +95,19 @@ export function withTermFrequency<R>(
 		/**
 		 * Level indices to adjust.
 		 *
-		 * Default `[0]` (the exact level).
+		 * @defaultValue `[0]` (the exact level).
 		 */
 		levels?: Iterable<number>
 		/**
 		 * Scale in [0, 1].
 		 *
-		 * Default 1.
+		 * @defaultValue `1`
 		 */
 		weight?: number
 		/**
 		 * Frequency floor bounding the boost on ultra-rare values.
 		 *
-		 * Default 1e-4.
+		 * @defaultValue `1e-4`
 		 */
 		minimumFrequency?: number
 	}

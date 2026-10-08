@@ -75,31 +75,32 @@ const HTTP_FORBIDDEN = 403
 export interface CreateBDCClientOptions {
 	/**
 	 * FCC Broadband Map username.
-	 * Defaults to `$private.FCC_MAP_USERNAME`.
+	 * @defaultValue {@linkcode $private.FCC_MAP_USERNAME}
 	 */
 	username?: string
 	/**
 	 * FCC Broadband Map API key, sent as the `hash_value` header.
-	 * Defaults to `$private.FCC_MAP_API_KEY`.
+	 * @defaultValue {@linkcode $private.FCC_MAP_API_KEY}
 	 */
 	apiKey?: string
 	/**
 	 * Requests per minute.
 	 *
-	 * Defaults to {@linkcode BDC_DEFAULT_REQUESTS_PER_MINUTE}, and values below 1 become 1.
+	 * @defaultValue {@linkcode BDC_DEFAULT_REQUESTS_PER_MINUTE}, and values below 1 become 1.
 	 */
 	requestsPerMinute?: number
 	/**
 	 * Time source for the throttle, the cooldown timer and the retry backoff.
-	 * Defaults to the system clock.
 	 *
 	 * Tests pass a fake clock so that they never sleep in real time.
+	 *
+	 * @defaultValue the system clock.
 	 */
 	clock?: ClockLike
 	/**
 	 * On-disk cache root.
 	 *
-	 * Defaults to `dataRootPath("bdc", "cache", "http")`, resolved at construction.
+	 * @defaultValue `dataRootPath("bdc", "cache", "http")`, resolved at construction.
 	 */
 	cacheDir?: PathBuilderLike
 	/**

@@ -48,13 +48,13 @@ export interface BuildAdminOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * Default `<data-root>/src/wof-repos`.
+	 * @defaultValue `<data-root>/src/wof-repos`
 	 */
 	dataDir?: PathBuilderLike
 	/**
 	 * Output artifact path.
 	 *
-	 * Default `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
+	 * @defaultValue `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: PathBuilderLike
 	overtureCountries?: readonly string[]
@@ -72,7 +72,7 @@ export interface BuildAdminOptions {
 	/**
 	 * Build-log path.
 	 *
-	 * Default `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
+	 * @defaultValue `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
 	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void

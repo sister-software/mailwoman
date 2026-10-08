@@ -33,13 +33,13 @@ export interface QuantizeCoarsePlacerOptions {
 	/**
 	 * Fp32 artifact dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/coarse-placer/model`
 	 */
 	in?: PathBuilderLike
 	/**
 	 * Int8 output dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`
 	 */
 	out?: PathBuilderLike
 }

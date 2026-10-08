@@ -17,7 +17,7 @@ export type LoadingMode = "pulse" | "spinner" | "staged"
 
 export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
 	/**
-	 * @default "spinner"
+	 * @defaultValue `"spinner"`
 	 */
 	mode?: LoadingMode
 	/**
@@ -26,11 +26,15 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 	 */
 	label?: string
 	/**
-	 * Number of skeleton bars (pulse mode). @default 3
+	 * Number of skeleton bars (pulse mode).
+	 *
+	 * @defaultValue `3`
 	 */
 	barCount?: number
 	/**
-	 * Spinner ring size. @default "medium"
+	 * Spinner ring size.
+	 *
+	 * @defaultValue `"medium"`
 	 */
 	size?: "small" | "medium" | "large"
 	/**
@@ -39,7 +43,9 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 	steps?: string[]
 	/**
 	 * 0-based index of the active step.
-	 * Earlier steps are complete, later ones pending. @default -1
+	 * Earlier steps are complete, later ones pending.
+	 *
+	 * @defaultValue `-1`
 	 */
 	activeStep?: number
 }

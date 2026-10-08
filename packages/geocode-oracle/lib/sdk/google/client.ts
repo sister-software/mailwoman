@@ -117,12 +117,12 @@ const GOOGLE_PLACE_ID_MIN_LENGTH = 20
 export interface CreateGoogleGeocoderClientOptions {
 	/**
 	 * The Google Maps API key.
-	 * Defaults to `$private.GOOGLE_MAPS_API_KEY`.
+	 * @defaultValue {@linkcode $private.GOOGLE_MAPS_API_KEY}
 	 */
 	apiKey?: string
 	/**
 	 * Maximum requests per minute.
-	 * Defaults to {@linkcode GOOGLE_DEFAULT_REQUESTS_PER_MINUTE}.
+	 * @defaultValue {@linkcode GOOGLE_DEFAULT_REQUESTS_PER_MINUTE}
 	 */
 	requestsPerMinute?: number
 	/**
@@ -133,13 +133,13 @@ export interface CreateGoogleGeocoderClientOptions {
 	/**
 	 * Cache directory.
 	 *
-	 * Defaults to `dataRootPath("geocode-oracle", "google")`, which the factory resolves
+	 * @defaultValue `dataRootPath("geocode-oracle", "google")`, which the factory resolves
 	 * at construction, so `$MAILWOMAN_DATA_ROOT` must be set first.
 	 */
 	cacheDir?: PathBuilderLike
 	/**
 	 * Cache lifetime in milliseconds.
-	 * Defaults to 30 days.
+	 * @defaultValue `30` days.
 	 */
 	cacheTTLMs?: number
 	/**

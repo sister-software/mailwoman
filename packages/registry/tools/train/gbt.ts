@@ -57,31 +57,31 @@ export interface TrainDedupGBTOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * State filter.
 	 *
-	 * Default TX.
+	 * @defaultValue TX.
 	 */
 	state?: string
 	/**
 	 * NPIs sampled.
 	 *
-	 * Default 3000.
+	 * @defaultValue `3000`
 	 */
 	npis?: number
 	/**
 	 * Output TS module path.
 	 *
-	 * Default `registry/models/dedup-gbt-en-us.ts`.
+	 * @defaultValue `registry/models/dedup-gbt-en-us.ts`
 	 */
 	out?: string
 	/**
 	 * Locale recorded in the model meta (the command's factory loads the matching weights).
 	 *
-	 * Default en-US.
+	 * @defaultValue `"en-US"`
 	 */
 	locale?: string
 	/**
@@ -97,7 +97,7 @@ export interface TrainDedupGBTOptions {
 	/**
 	 * The training date stored in the metadata (overridable for reproducible commits).
 	 *
-	 * Default today.
+	 * @defaultValue today.
 	 */
 	date?: string
 }

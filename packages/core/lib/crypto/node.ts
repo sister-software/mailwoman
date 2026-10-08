@@ -55,8 +55,7 @@ export function normalizeSHASeeds(input: SHA3Input): string[] {
  * Each normalized seed is fed into the hash sequentially.
  *
  * @param seeds - Values to hash.
- * @param outputLength - Length of the digest in **bytes**.
- * Defaults to `32` (256-bit output).
+ * @param outputLength - [32] Length of the digest in **bytes** (256-bit output).
  *
  * @returns Uppercase hexadecimal digest.
  */

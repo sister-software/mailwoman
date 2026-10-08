@@ -151,15 +151,16 @@ export interface NeuralAddressClassifierConfig {
 	 * needing both `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a
 	 * model trained with the matching `data.gazetteer_choreography`.
 	 *
-	 * It defaults to `"off"`; loaders resolve it with {@link gazetteerSuppressionFor}.
+	 * @defaultValue `"off"`; loaders resolve it with {@link gazetteerSuppressionFor}.
 	 */
 	suppressGazetteerNearPostcode?: Toggle
 
 	/**
 	 * The default address-system conventions mode.
 	 *
-	 * It defaults to `"off"`.
 	 * See {@link AddressSystemConventions}.
+	 *
+	 * @defaultValue `"off"`
 	 */
 	addressSystemConventions?: AddressSystemConventions
 
@@ -174,7 +175,8 @@ export interface NeuralAddressClassifierConfig {
 	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
 	 *
 	 * The model splits these spans because the corpus label format cannot mark punctuation inside a span.
-	 * It defaults to `"off"`; loaders resolve it with {@link punctuationBridgingFor}.
+	 *
+	 * @defaultValue `"off"`; loaders resolve it with {@link punctuationBridgingFor}.
 	 */
 	bridgePunctuationGaps?: Toggle
 

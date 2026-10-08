@@ -44,36 +44,37 @@ export interface TrainOrgCrossSourceGBTOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: PathBuilderLike
 	/**
 	 * Care Compare facilities sampled.
 	 *
-	 * Default 6000.
+	 * @defaultValue `6000`
 	 */
 	cap?: number
 	/**
 	 * Output TS module path.
 	 *
-	 * Default `registry/models/org-crosssource-gbt-en-us.ts`.
+	 * @defaultValue `registry/models/org-crosssource-gbt-en-us.ts`
 	 */
 	out?: string
 	/**
 	 * Locale recorded in the model meta.
 	 *
-	 * Default en-US.
+	 * @defaultValue `"en-US"`
 	 */
 	locale?: string
 	/**
 	 * Max cross-source recall subject to this held-out pairwise precision.
-	 * Default 0.95.
+	 *
+	 * @defaultValue `0.95`
 	 */
 	precisionBar?: number
 	/**
 	 * The training date stored in the metadata.
 	 *
-	 * Default today.
+	 * @defaultValue today.
 	 */
 	date?: string
 }

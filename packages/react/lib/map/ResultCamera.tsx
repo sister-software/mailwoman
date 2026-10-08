@@ -28,7 +28,9 @@ export interface ResultCameraProps {
 	 */
 	target: MapCameraTarget | null
 	/**
-	 * Whether to animate the move. @default true
+	 * Whether to animate the move.
+	 *
+	 * @defaultValue `true`
 	 */
 	animate?: boolean
 }

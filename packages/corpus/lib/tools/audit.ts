@@ -44,11 +44,12 @@ export interface AuditOpts {
 	/**
 	 * Sample at most N parquet files per split when counting sources.
 	 *
-	 * Default 100 for speed.
 	 * Bump to read the full set on a slow run.
 	 *
 	 * The first row of each file determines its source — corpus-v0.2.0+ files are 100%
 	 * source-segregated, so a one-row read is authoritative.
+	 *
+	 * @defaultValue `100` for speed
 	 */
 	sampleFileCount?: number
 }

@@ -47,7 +47,7 @@ export interface DownloadBDUKRegionOptions {
 	/**
 	 * The directory that holds one directory per release.
 	 *
-	 * @default `$MAILWOMAN_DATA_ROOT/bduk`
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/bduk`
 	 */
 	root?: PathBuilderLike
 	onProgress?: (message: string) => void

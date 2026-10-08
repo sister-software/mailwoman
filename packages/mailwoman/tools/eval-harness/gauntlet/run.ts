@@ -81,44 +81,46 @@ export interface GauntletRunOptions {
 	/**
 	 * Held-out fresh-draw sample size.
 	 *
-	 * Default 300.
+	 * @defaultValue `300`
 	 */
 	n?: number
 	/**
 	 * Pin `postcodeCountryCoherence` for every layer.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 */
 	postcodeCountryCoherence?: SwitchPin
 	/**
 	 * Pin the gazetteer FST prior for every layer.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 */
 	gazetteerPrior?: SwitchPin
 	/**
 	 * Pin the admin-containment re-rank for every layer.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 */
 	adminContainmentRerank?: SwitchPin
 	/**
 	 * Pin the span-rescore requirement that a sub-span keep every word of the name.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 */
 	spanRescoreRequireContextRemainder?: SwitchPin
 	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and have no off spelling.
-	 * Defaults to `"production"`, which takes a `placeID` at face value.
+	 * @defaultValue `"production"` which takes a `placeID` at face value.
 	 */
 	spanRescoreWeakResolution?: "production" | WeakResolutionReading
 	/**
 	 * Ablation: where the map artifacts land.
 	 *
-	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
+	 * @defaultValue `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	out?: string
 	/**
-	 * Ablation: restrict which components get deleted (default: all of `ABLATABLE_COMPONENTS`).
+	 * Ablation: restrict which components get deleted.
+	 *
+	 * @defaultValue all of `ABLATABLE_COMPONENTS`
 	 */
 	components?: readonly string[]
 	/**

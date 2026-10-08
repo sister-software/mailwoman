@@ -248,7 +248,8 @@ export interface StreetContextRequirementOpts {
 
 	/**
 	 * The multiplier on the positive bias when the check fires.
-	 * The default is 0.25.
+	 *
+	 * @defaultValue `0.25`
 	 */
 	positiveScale?: number
 }
@@ -261,16 +262,18 @@ export interface FSTPriorOpts {
 
 	/**
 	 * The maximum bias magnitude in logits.
-	 * The default is 3.
 	 *
 	 * The cap keeps a high-population place from overriding the model.
+	 *
+	 * @defaultValue `3`
 	 */
 	maxBias?: number
 	suppressionScale?: number
 
 	/**
 	 * How match length scales the bias.
-	 * The default is `suppression`.
+	 *
+	 * @defaultValue `suppression`
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 

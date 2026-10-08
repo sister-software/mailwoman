@@ -731,7 +731,8 @@ export interface ComposeAdversarialOptions {
 
 	/**
 	 * Separator between venue and address raw.
-	 * Default `", "`.
+	 *
+	 * @defaultValue `", "`
 	 */
 	separator?: string
 

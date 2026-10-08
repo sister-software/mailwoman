@@ -43,9 +43,11 @@ export const PACKAGE_SOURCE_PATH = /^(?:packages\/[^/]+\/(?:lib|sdk|tools|cli)|l
 
 export interface TrackedSourceOptions {
 	/**
-	 * Pathspecs in `git ls-files` form (default: every `.ts` / `.tsx`).
+	 * Pathspecs in `git ls-files` form.
 	 *
 	 * See {@link pathspecPattern} for the matching rule.
+	 *
+	 * @defaultValue every `.ts` / `.tsx`
 	 */
 	globs?: readonly string[]
 	/**

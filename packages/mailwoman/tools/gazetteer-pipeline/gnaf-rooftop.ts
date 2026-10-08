@@ -76,19 +76,19 @@ export interface GNAFRooftopOptions {
 	/**
 	 * The extracted `Standard/` PSV directory.
 	 *
-	 * Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
+	 * @defaultValue `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`
 	 */
 	standardDir?: string
 	/**
 	 * Output database path.
 	 *
-	 * Default: `<data-root>/db/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
+	 * @defaultValue `<data-root>/db/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**
 	 * Restrict to these state prefixes (e.g. `["ACT"]`) — the smoke rung.
 	 *
-	 * Default: every state present.
+	 * @defaultValue every state present.
 	 */
 	states?: string[]
 	/**

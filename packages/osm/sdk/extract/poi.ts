@@ -313,12 +313,13 @@ async function* runPOILayer(
 }
 
 /**
- * Stream every telecom-infrastructure feature matching `rules` (default {@link TELECOM_TAG_RULES})
- * from a PBF extract's `points` + `multipolygons` layers, geometry reduced to a
- * representative coordinate (centroid for polygons).
+ * Stream every telecom-infrastructure feature matching `rules` from a PBF extract's `points` +
+ * `multipolygons` layers, geometry reduced to a representative coordinate (centroid for polygons).
  *
  * `confidence` is fixed at `1` and `gersID`/`brandWikidata` are always `null` — OSM rows have neither.
  * See the module docstring for the `country` caveat.
+ *
+ * @param rules [{@linkcode TELECOM_TAG_RULES}] The tag rules a feature must satisfy.
  */
 export async function* extractOSMPOIs(
 	pbfPath: string,

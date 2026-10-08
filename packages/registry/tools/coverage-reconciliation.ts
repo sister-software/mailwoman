@@ -50,19 +50,19 @@ export interface CoverageReconciliationOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * Rows kept per source.
 	 *
-	 * Default 2000.
+	 * @defaultValue `2000`
 	 */
 	cap?: number
 	/**
 	 * State filter.
 	 *
-	 * Default TX.
+	 * @defaultValue TX.
 	 */
 	state?: string
 	/**

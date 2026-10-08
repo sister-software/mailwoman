@@ -59,7 +59,7 @@ export interface ExternalArenasOptions {
 	/**
 	 * Where the staged arenas and their result JSON land.
 	 *
-	 * Default `/tmp/external-arenas`.
+	 * @defaultValue `/tmp/external-arenas`
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -80,12 +80,14 @@ export interface ExternalArenasOptions {
 	anchorLookup?: PathBuilderLike
 	/**
 	 * Conventions mask: `auto` for v4.3.0+ ship config.
-	 * It defaults to `"off"`.
+	 *
+	 * @defaultValue `"off"`
 	 */
 	conventions?: AddressSystemConventions
 	/**
 	 * Span bridge (v4.4.0 corrective).
-	 * It defaults to {@linkcode DEFAULT_TOGGLE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	bridgePunctuationGaps?: Toggle
 }

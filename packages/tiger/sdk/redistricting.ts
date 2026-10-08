@@ -129,13 +129,13 @@ export interface FetchRedistrictingOptions {
 	/**
 	 * Decennial vintage.
 	 *
-	 * Default 2020 (the only P.L. 94-171 release this parses).
+	 * @defaultValue `2020` (the only P.L. 94-171 release this parses)
 	 */
 	vintage?: number
 	/**
 	 * Output SQLite path.
 	 *
-	 * Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
+	 * @defaultValue `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
 	 */
 	outPath?: string
 	/**
@@ -149,7 +149,7 @@ export interface FetchRedistrictingOptions {
 	/**
 	 * Rows per insert.
 	 *
-	 * Default 2000.
+	 * @defaultValue `2000`
 	 */
 	batchSize?: number
 }

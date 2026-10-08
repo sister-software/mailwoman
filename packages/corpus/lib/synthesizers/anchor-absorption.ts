@@ -52,7 +52,8 @@ export interface AnchorAbsorptionSynthesisOpts {
 	 * Real US ZIP codes from the postcode-anchor lookup.
 	 *
 	 * The templates place them where the anchor fires on a token that is really a house number.
-	 * The default is the postcodes of the built-in US tuples.
+	 *
+	 * @defaultValue the postcodes of the built-in US tuples.
 	 */
 	realZips?: ReadonlyArray<string>
 }

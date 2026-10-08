@@ -78,13 +78,13 @@ export interface PromoteGoldenOptions {
 	/**
 	 * Previous version to forward-copy + dedup against.
 	 *
-	 * Default `v0.1.0`.
+	 * @defaultValue `v0.1.0`
 	 */
 	prior?: string
 	/**
 	 * Golden dir root.
 	 *
-	 * Default `data/eval/golden`.
+	 * @defaultValue `data/eval/golden`
 	 */
 	goldenRoot?: PathBuilderLike
 	/**

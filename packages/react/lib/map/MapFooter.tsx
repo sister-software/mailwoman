@@ -22,7 +22,9 @@ export interface MapFooterProps {
 	 */
 	attribution?: ReactNode[]
 	/**
-	 * What the attribution button reads. @default "Sources"
+	 * What the attribution button reads.
+	 *
+	 * @defaultValue `"Sources"`
 	 */
 	attributionLabel?: string
 	className?: string

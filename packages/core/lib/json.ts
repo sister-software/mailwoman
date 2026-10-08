@@ -26,10 +26,8 @@ export type StringifiedJSON<T = unknown> = Tagged<string, "JSON", T>
  * It also allows for optional newline and indentation settings.
  *
  * @param input The object to be pretty-printed.
- * @param newline Whether to append a newline character at the end of the output.
- * Defaults to `true`.
- * @param space The indent: a string to repeat, or a count of spaces.
- * Defaults to a tab character (`"\t"`).
+ * @param newline [true] Whether to append a newline character at the end of the output.
+ * @param space ["\t"] The indent: a string to repeat, or a count of spaces.
  * The builtin accepts a string or number for indentation.
  * This parameter handles the conversion from `2` to `" "` for callers that need it.
  *

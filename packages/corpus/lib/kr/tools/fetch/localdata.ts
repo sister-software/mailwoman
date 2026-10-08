@@ -46,7 +46,7 @@ export interface FetchLocaldataKROptions extends BaseFetchOptions {
 	/**
 	 * Category slugs to fetch (the path segment of `/file/<slug>/info`).
 	 *
-	 * Defaults to every category the portal lists.
+	 * @defaultValue every category the portal lists.
 	 */
 	categories?: string[]
 }

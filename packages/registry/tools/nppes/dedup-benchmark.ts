@@ -70,7 +70,8 @@ export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * Reproduce the pre-flip ingest (space-joined address columns with case normalization off),
 	 * so that with the same data and GBT only the flip is toggled.
-	 * Default off.
+	 *
+	 * @defaultValue `false`
 	 */
 	legacyJoin?: boolean
 	/**

@@ -35,13 +35,13 @@ export interface HoldoutLayerOptions {
 	/**
 	 * Fresh-draw sample size.
 	 *
-	 * Default 300.
+	 * @defaultValue `300`
 	 */
 	n?: number
 	/**
 	 * Truth source: `fr` (BAN) or `us` (fdic).
 	 *
-	 * Default `fr`.
+	 * @defaultValue `fr`
 	 */
 	source?: string
 	/**

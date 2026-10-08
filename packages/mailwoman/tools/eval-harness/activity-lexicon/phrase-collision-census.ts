@@ -250,7 +250,8 @@ export interface PhraseCollisionCensusOptions {
 	lexicon?: ActivityPhraseLexicon
 	/**
 	 * Checkout that holds the committed inputs.
-	 * It defaults to the current repository root.
+	 *
+	 * @defaultValue the current repository root.
 	 */
 	repositoryRoot?: PathBuilderLike
 }

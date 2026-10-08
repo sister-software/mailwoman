@@ -85,7 +85,9 @@ function toDocumentConfig(info: OpenAPIDocInfo) {
 }
 
 /**
- * Mount the OpenAPI 3.1 document endpoint on `app` (default `/openapi.json`).
+ * Mount the OpenAPI 3.1 document endpoint on `app`.
+ *
+ * @param path ["/openapi.json"] The route the document is served at.
  */
 export function attachOpenAPIDocs(app: OpenAPIHono, info: OpenAPIDocInfo, path = "/openapi.json"): void {
 	const config: Parameters<OpenAPIHono["doc31"]>[1] = { openapi: "3.1.0", ...toDocumentConfig(info) }

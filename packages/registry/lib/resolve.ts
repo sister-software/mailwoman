@@ -306,19 +306,19 @@ export interface ResolveConfig {
 	/**
 	 * The model used to score candidate pairs.
 	 *
-	 * Default {@link buildDefaultModel}.
+	 * @defaultValue {@link buildDefaultModel}
 	 */
 	model?: FellegiSunterModel<SourceRecord>
 	/**
 	 * The blocking keys whose union forms the candidate set.
 	 *
-	 * Default {@link defaultBlockingKeys}.
+	 * @defaultValue {@link defaultBlockingKeys}
 	 */
 	blockingKeys?: BlockingKey<SourceRecord>[]
 	/**
 	 * Link two records into the same entity at or above this match weight (bits).
 	 *
-	 * Default 0.
+	 * @defaultValue `0`
 	 */
 	threshold?: number
 	/**
@@ -328,7 +328,7 @@ export interface ResolveConfig {
 	/**
 	 * Fit the model's `m`/`u` to the candidate pairs with EM before scoring (label-free).
 	 *
-	 * Default false.
+	 * @defaultValue `false`
 	 */
 	trainEM?: boolean
 	/**
@@ -354,7 +354,8 @@ export interface ResolveConfig {
 	 * a link, so a shared address cannot merge two records without that corroboration.
 	 *
 	 * Suppresses the spatial-only links that fuse distinct co-located providers.
-	 * Default false.
+	 *
+	 * @defaultValue `false`
 	 */
 	requireCorroboration?: boolean
 	/**

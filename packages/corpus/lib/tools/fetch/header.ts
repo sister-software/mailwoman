@@ -27,8 +27,7 @@ import { CSVSpliterator } from "spliterator"
  * The default `"auto"` decodes the whole file even for one row.
  *
  * @param path The written file.
- * @param columnDelimiter The publisher's delimiter.
- * Defaults to a comma.
+ * @param columnDelimiter [","] The publisher's delimiter.
  * @throws When the file holds no row at all, so an empty or truncated file reports itself
  * rather than reading as a file with no columns.
  */

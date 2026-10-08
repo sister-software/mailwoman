@@ -95,7 +95,7 @@ export interface PostcodeCountryScopeOpts {
 	/**
 	 * The consistency radius in kilometers.
 	 *
-	 * It defaults to {@link POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}.
+	 * @defaultValue {@linkcode POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}
 	 */
 	thresholdKm?: number
 

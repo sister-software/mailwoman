@@ -105,18 +105,20 @@ export interface WordConsistencyOpts {
 	 * Leaves any word containing a byte-fallback piece (`<0xNN>`) unchanged.
 	 *
 	 * Its surviving pieces are not trustworthy voters.
-	 * The default is `false`.
+	 *
+	 * @defaultValue `false`
 	 */
 	skipByteFallbackWords?: boolean
 
 	/**
 	 * Treats a punctuation-only piece as a word separator, like whitespace.
-	 * The default is `false`.
 	 *
 	 * Otherwise a continuation piece such as the `,` in `Ave,` joins the word.
 	 * Its `O` label can outvote a real span.
 	 *
 	 * The halves of a slash compound such as `12/345` can also vote independently.
+	 *
+	 * @defaultValue `false`
 	 */
 	splitOnPunctuation?: boolean
 }
@@ -149,7 +151,8 @@ export interface PipelineOpts {
 	resolveOpts?: ResolveOpts
 	/**
 	 * How the classifier treats letter case.
-	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_CASE_NORMALIZATION}
 	 */
 	caseNormalization?: CaseNormalization
 	/**
@@ -160,7 +163,8 @@ export interface PipelineOpts {
 	placetypePair?: PlacetypePairSelection
 	/**
 	 * How the coarse placer's country guess constrains resolution.
-	 * The default is {@link DEFAULT_PLACER_COUNTRY_USE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_PLACER_COUNTRY_USE}
 	 */
 	placerCountryUse?: PlacerCountryUse
 	/**
@@ -557,7 +561,8 @@ export interface ClassifierOpts {
 	postcodeRepair?: boolean
 	/**
 	 * How the classifier treats letter case.
-	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_CASE_NORMALIZATION}
 	 */
 	caseNormalization?: CaseNormalization
 	/**

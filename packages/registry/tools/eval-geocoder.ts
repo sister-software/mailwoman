@@ -52,8 +52,9 @@ export interface EvalGeocoderInit {
 	/**
 	 * All-caps case normalization.
 	 *
-	 * Default `"title-case"`.
 	 * `nppes-benchmark --legacy-join` passes `"preserve"` for the A/B.
+	 *
+	 * @defaultValue `"title-case"`
 	 */
 	caseNormalization?: CaseNormalization
 }

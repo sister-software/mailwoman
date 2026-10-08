@@ -46,7 +46,7 @@ export interface BaseFetchOptions {
 	/**
 	 * Pause between transfer retries, in milliseconds.
 	 *
-	 * Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
+	 * @defaultValue {@linkcode DEFAULT_RETRY_DELAY_MS}
 	 *
 	 * A test that exercises the failure path pays this delay once per retry in real time.
 	 * Measured at 20.1 s for the two failing-transfer cases in `geonames-postal.test.ts`,
@@ -115,19 +115,19 @@ export interface DownloadOptions {
 	/**
 	 * Per-attempt timeout.
 	 *
-	 * Default 10 minutes — these are multi-GB government dumps.
+	 * @defaultValue `10` minutes — these are multi-GB government dumps
 	 */
 	timeoutMs?: number
 	/**
 	 * Extra attempts after the first, taken only on transient statuses or network errors.
 	 *
-	 * Default 0.
+	 * @defaultValue `0`
 	 */
 	retries?: number
 	/**
 	 * Delay between attempts.
 	 *
-	 * Default 5s.
+	 * @defaultValue `5s`
 	 */
 	retryDelayMs?: number
 	headers?: Record<string, string>

@@ -40,8 +40,10 @@ export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<Candida
 	/**
 	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference penalty.
 	 *
-	 * No-ops without the role column.
-	 * Defaults to `"applied"`; `"not_applied"` penalizes variant aliases like any other.
+	 * - No-ops without the role column.
+	 * - `"not_applied"` penalizes variant aliases like any other.
+	 *
+	 * @defaultValue `"applied"`.
 	 */
 	variantAliasExemption?: VariantAliasExemption
 }

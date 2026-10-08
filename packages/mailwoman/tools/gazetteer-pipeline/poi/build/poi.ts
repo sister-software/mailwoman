@@ -174,15 +174,17 @@ export interface BuildPOIOptions {
 
 	/**
 	 * The manifest's `version`.
-	 * Defaults to `release`.
+	 *
+	 * @defaultValue `release`
 	 */
 	version?: string
 
 	/**
 	 * The ISO-8601 manifest timestamp.
 	 *
-	 * Defaults to the current time.
 	 * Pass it for reproducible builds.
+	 *
+	 * @defaultValue the current time.
 	 */
 	createdAt?: string
 
@@ -190,16 +192,16 @@ export interface BuildPOIOptions {
 	 * The manifest source.
 	 *
 	 * It selects the license and attribution.
-	 * Defaults to `"overture-places"`.
+	 * @defaultValue `"overture-places"`
 	 */
 	source?: "overture-places" | "osm"
 
 	/**
 	 * The manifest distribution tier.
 	 *
-	 * Defaults to {@link LayerTier.BuildLocal} for OSM and {@link LayerTier.Shipped} otherwise.
-	 *
 	 * An OSM build cannot be {@link LayerTier.Shipped} because ODbL is share-alike.
+	 *
+	 * @defaultValue {@link LayerTier.BuildLocal} for OSM and {@link LayerTier.Shipped} otherwise.
 	 */
 	tier?: LayerTier
 

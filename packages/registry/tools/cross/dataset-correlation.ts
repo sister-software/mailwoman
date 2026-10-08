@@ -35,28 +35,31 @@ export interface CrossDatasetCorrelationOptions {
 	/**
 	 * The record-matcher sources directory.
 	 *
-	 * It defaults to `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 
 	/**
 	 * The number of in-state rows sampled per source for geocoding.
-	 * It defaults to 300.
+	 *
+	 * @defaultValue `300`
 	 */
 	cap?: number
 
 	/**
 	 * The state filter.
-	 * It defaults to `TX`.
+	 *
+	 * @defaultValue {@linkcode TX}
 	 */
 	state?: string
 
 	/**
 	 * Whether to scan every in-state row to build a corpus-wide address-frequency table.
-	 * It defaults to true.
 	 *
 	 * The scan reads the full source files, including the multi-gigabyte NPPES file.
 	 * When it is false, `resolveEntities` computes frequencies from the sample only.
+	 *
+	 * @defaultValue `true`
 	 */
 	corpusFrequency?: boolean
 

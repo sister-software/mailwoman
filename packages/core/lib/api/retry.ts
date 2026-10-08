@@ -180,7 +180,8 @@ export interface RetryOptions {
 	 * Total attempts, including the first, before giving up.
 	 *
 	 * A stated ceiling rather than "until it works".
-	 * Default {@linkcode DEFAULT_MAX_ATTEMPTS}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_MAX_ATTEMPTS}
 	 */
 	maxAttempts?: number
 	/**
@@ -188,7 +189,8 @@ export interface RetryOptions {
 	 *
 	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response includes a `Retry-After` header.
 	 * The client honors that delay instead.
-	 * Default {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}
 	 */
 	baseDelayMs?: number
 }

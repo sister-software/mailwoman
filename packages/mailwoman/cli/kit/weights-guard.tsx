@@ -143,7 +143,9 @@ export function downloadWeights(
 
 export interface WeightsGuardProps {
 	/**
-	 * Locale whose weights package guards this command (defaults to en-US resolution rules).
+	 * Locale whose weights package guards this command.
+	 *
+	 * @defaultValue en-US resolution rules
 	 */
 	locale?: string
 	/**

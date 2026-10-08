@@ -94,8 +94,9 @@ export interface CoastalIngestOptions {
 	/**
 	 * The WGS84 extent that every reprojected vertex must fall inside.
 	 *
-	 * The default is the erosion collections' declared box.
 	 * It contains both ground-instability boxes.
+	 *
+	 * @defaultValue the erosion collections' declared box.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
@@ -443,7 +444,8 @@ export interface CoastalFeatureSource {
 export interface GeodatabaseSourceOptions extends CoastalIngestOptions {
 	/**
 	 * The scenario keys to read.
-	 * The default is all twelve scenarios.
+	 *
+	 * @defaultValue all twelve scenarios.
 	 */
 	scenarioKeys?: ReadonlyArray<string>
 	/**

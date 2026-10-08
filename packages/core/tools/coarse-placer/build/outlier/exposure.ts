@@ -32,18 +32,20 @@ const OFFMAP_DOMINANCE = 0.6
 export interface BuildOutlierExposureOptions {
 	/**
 	 * The number of names sampled per language.
-	 * The default is 2,500.
+	 *
+	 * @defaultValue `2,500`
 	 */
 	perLang?: number
 	/**
 	 * The WOF admin SQLite path.
 	 *
-	 * The default is `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`
 	 */
 	wof?: PathBuilderLike
 	/**
 	 * The dataset directory whose split files receive the rows.
-	 * The default is `<repo>/data/coarse-placer`.
+	 *
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

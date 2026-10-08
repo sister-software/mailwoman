@@ -84,7 +84,7 @@ export interface ErrorAnalysisOptions {
 	/**
 	 * Strict ship-config feed: fail closed if a model-card-declared channel can't be fed.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	strict?: boolean
 }

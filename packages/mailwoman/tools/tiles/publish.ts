@@ -25,13 +25,14 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 /**
  * A transport that puts one local file at `bucket/key`.
  *
- * The default is rclone over the `RCLONE_S3_*` credentials.
  * A caller with another credential can inject its own transport.
  *
  * The planetary pipeline uploads through wrangler.
  * It uses the account's API token.
  *
  * All transports use the same key layout, size report and served-at line.
+ *
+ * @defaultValue rclone over the `RCLONE_S3_*` credentials.
  */
 export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
 
@@ -50,7 +51,9 @@ export interface UploadToBucketOptions {
 	 */
 	dryRun: boolean
 	/**
-	 * How the bytes travel. @default rclone
+	 * How the bytes travel.
+	 *
+	 * @defaultValue `"rclone"`
 	 */
 	upload?: UploadTransport
 }

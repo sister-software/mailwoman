@@ -53,13 +53,11 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Optional locale filter — only ingest these locale subfolders.
 	 *
-	 * Defaults to all that have a `street_types.txt`.
+	 * @defaultValue all that have a `street_types.txt`.
 	 */
 	locales?: string[]
 	/**
 	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie.
-	 *
-	 * Defaults to 3.
 	 *
 	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
 	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time,
@@ -70,6 +68,8 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * abbreviations as `street_suffix`.
 	 *
 	 * A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
+	 *
+	 * @defaultValue `3`
 	 */
 	minVariantLength?: number
 	/**

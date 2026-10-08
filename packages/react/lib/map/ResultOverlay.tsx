@@ -20,19 +20,27 @@ export interface ResultOverlayProps {
 	 */
 	outline: PlaceGeometry | null
 	/**
-	 * Source/layer id prefix — override to render more than one outline on a map. @default "mw-result"
+	 * Source/layer id prefix — override to render more than one outline on a map.
+	 *
+	 * @defaultValue `"mw-result"`
 	 */
 	id?: string
 	/**
-	 * Fill color. @default the house pink.
+	 * Fill color.
+	 *
+	 * @defaultValue the house pink.
 	 */
 	color?: string
 	/**
-	 * Fill opacity. @default 0.12
+	 * Fill opacity.
+	 *
+	 * @defaultValue `0.12`
 	 */
 	fillOpacity?: number
 	/**
-	 * Outline stroke width (px). @default 2
+	 * Outline stroke width (px).
+	 *
+	 * @defaultValue `2`
 	 */
 	lineWidth?: number
 }

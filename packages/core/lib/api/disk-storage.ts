@@ -55,7 +55,7 @@ export interface DiskStorageOptions {
 	/**
 	 * Where rejected writes and unreadable entries are reported.
 	 *
-	 * Defaults to a `disk-storage`-prefixed console logger.
+	 * @defaultValue a `disk-storage`-prefixed console logger.
 	 */
 	logger?: IRuntimeLogger
 }

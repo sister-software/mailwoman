@@ -141,7 +141,8 @@ export interface SynthesizedPoBoxRow {
 export interface PoBoxSynthesisOpts {
 	/**
 	 * The random source.
-	 * It defaults to `Math.random`.
+	 *
+	 * @defaultValue `Math.random`
 	 */
 	random?: () => number
 	/**
@@ -152,7 +153,8 @@ export interface PoBoxSynthesisOpts {
 	pickNumber?: (random: () => number) => string
 	/**
 	 * The probability of a private-mailbox row when the locale and tuple allow one.
-	 * The default is 0.
+	 *
+	 * @defaultValue `0`
 	 */
 	pmbRatio?: number
 }

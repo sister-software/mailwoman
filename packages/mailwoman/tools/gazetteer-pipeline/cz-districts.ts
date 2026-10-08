@@ -40,13 +40,13 @@ export interface BuildCZDistrictsOptions {
 	/**
 	 * The GeoNames CZ places file.
 	 *
-	 * Default `<data-root>/geonames/CZ.txt`.
+	 * @defaultValue `<data-root>/geonames/CZ.txt`
 	 */
 	sourcePath?: string
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/db/wof/localities-cz-districts.db`.
+	 * @defaultValue `<data-root>/db/wof/localities-cz-districts.db`
 	 */
 	out?: string
 }

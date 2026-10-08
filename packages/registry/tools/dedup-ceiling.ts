@@ -37,25 +37,25 @@ export interface DedupCeilingOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * Providers sampled from the registry.
 	 *
-	 * Default 50000.
+	 * @defaultValue `50000`
 	 */
 	cap?: number
 	/**
 	 * State filter.
 	 *
-	 * Default TX.
+	 * @defaultValue TX.
 	 */
 	state?: string
 	/**
 	 * Org-name Jaccard collision threshold.
 	 *
-	 * Default 0.7.
+	 * @defaultValue `0.7`
 	 */
 	tau?: number
 	/**

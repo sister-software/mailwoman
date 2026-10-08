@@ -81,7 +81,7 @@ export interface NearestInfrastructureOptions {
 	/**
 	 * Ring budget.
 	 *
-	 * Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32), not `POILookup`'s
+	 * @defaultValue {@linkcode NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32), not `POILookup`'s
 	 * own internal default (16); see this module's docstring.
 	 */
 	maxRings?: number

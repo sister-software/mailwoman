@@ -13,7 +13,7 @@ export interface TileJSON {
 	/**
 	 * The version of the TileJSON spec that is implemented by this JSON object.
 	 *
-	 * @default "3.0.0"
+	 * @defaultValue `"3.0.0"`
 	 */
 	tilejson: string
 	scheme: "xyz"

@@ -50,18 +50,23 @@ export interface GeocodeStreamOptions {
 	 * Worker pool size.
 	 *
 	 * Keep it small because throughput peaks at about 2 workers and degrades past that.
-	 * Each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
+	 * Each worker loads the model and opens the DB.
+	 *
+	 * @defaultValue Math.min(4, availableParallelism())
 	 */
 	concurrency?: number
 	/**
-	 * Records per dispatched batch. @default 32
+	 * Records per dispatched batch.
+	 *
+	 * @defaultValue `32`
 	 */
 	batchSize?: number
 	/**
 	 * Override the worker module.
 	 *
 	 * Tests inject a fake.
-	 * Defaults to the real geocode worker.
+	 *
+	 * @defaultValue the real geocode worker.
 	 */
 	worker?: string | URL
 }

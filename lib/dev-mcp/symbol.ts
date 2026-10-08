@@ -74,8 +74,9 @@ export interface FindDeclarationsOptions {
 	/**
 	 * The paths to search.
 	 *
-	 * Defaults to the whole tree.
 	 * Ripgrep filters that search by `.gitignore`.
+	 *
+	 * @defaultValue the whole tree.
 	 */
 	searchPaths?: readonly string[]
 }

@@ -29,13 +29,13 @@ export interface SQLiteStreetNameLookupOpts {
 	/**
 	 * ISO-2 (upper-case) countries this index answers for.
 	 *
-	 * Default `["FR"]` (the BAN street-centroids instance).
+	 * @defaultValue `["FR"]` (the BAN street-centroids instance).
 	 */
 	countries?: Iterable<string>
 	/**
 	 * Table name.
 	 *
-	 * Default `street_centroid`.
+	 * @defaultValue `street_centroid`
 	 */
 	table?: string
 }

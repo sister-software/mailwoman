@@ -49,11 +49,15 @@ const ANCHOR_TAGS: ReadonlySet<string> = new Set(["country", "region"])
 
 export interface StreetRerankOpts {
 	/**
-	 * K-best decode depth. @default 5
+	 * K-best decode depth.
+	 *
+	 * @defaultValue `5`
 	 */
 	k?: number
 	/**
-	 * G2 margin cap forwarded to {@link pickByStreetEvidence}. @default 2.5
+	 * G2 margin cap forwarded to {@link pickByStreetEvidence}.
+	 *
+	 * @defaultValue `2.5`
 	 */
 	marginCap?: number
 	/**

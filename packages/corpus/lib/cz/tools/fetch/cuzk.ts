@@ -368,7 +368,8 @@ export interface HarvestCzCuzkOptions {
 	outputDir: PathBuilderLike
 	/**
 	 * Which projection to harvest.
-	 * Defaults to `epsg-4258`.
+	 *
+	 * @defaultValue `epsg-4258`
 	 */
 	projection?: CzCuzkProjection
 	/**
@@ -670,7 +671,7 @@ export interface FetchCzCuzkOptions
 	/**
 	 * The minimum spacing between two requests, in milliseconds.
 	 *
-	 * Defaults to {@linkcode CZ_CUZK_REQUEST_INTERVAL_MS}.
+	 * @defaultValue {@linkcode CZ_CUZK_REQUEST_INTERVAL_MS}
 	 */
 	minRequestIntervalMs?: number
 }

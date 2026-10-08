@@ -55,7 +55,7 @@ export interface JSONLToParquetOptions {
 	/**
 	 * Parquet row-group size.
 	 *
-	 * Default 50000.
+	 * @defaultValue `50000`
 	 */
 	rowGroupSize?: number
 }

@@ -75,13 +75,13 @@ export interface DemoCascadeSmokeOptions {
 	card?: string
 	fst?: string
 	/**
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**
 	 * Smoke rows jsonl.
 	 *
-	 * Default `data/eval/external/demo-cascade-smoke.jsonl`.
+	 * @defaultValue `data/eval/external/demo-cascade-smoke.jsonl`
 	 */
 	file?: string
 	/**

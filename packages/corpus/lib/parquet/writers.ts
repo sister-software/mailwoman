@@ -201,7 +201,7 @@ export interface WriteParquetSplitsOptions {
 	/**
 	 * Max rows per `.parquet` file.
 	 *
-	 * Default 1,000,000.
+	 * @defaultValue `1,000,000`
 	 */
 	rowsPerFile?: number
 

@@ -16,13 +16,13 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 	/**
 	 * Alternate suite fixture path.
 	 *
-	 * Default the shipped `suite.jsonl`.
+	 * @defaultValue the shipped `suite.jsonl`.
 	 */
 	suite?: string
 	/**
 	 * Fail the check if the new-violation degraded count exceeds this.
 	 *
-	 * Default 0.
+	 * @defaultValue `0`
 	 */
 	maxDegraded?: number
 	/**

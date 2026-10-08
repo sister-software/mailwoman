@@ -80,7 +80,8 @@ export function browserGranularityFor(country: string): GBGranularity | null {
 export interface BuildPostcodeBinaryOptions {
 	/**
 	 * GB key granularity.
-	 * The default is `unit`, and non-GB builds ignore it.
+	 *
+	 * @defaultValue `unit`, and non-GB builds ignore it.
 	 */
 	gbGranularity?: GBGranularity
 }

@@ -30,13 +30,13 @@ export interface OAResolverEvalOptions {
 	addressPoints?: string
 	/**
 	 * Pins `adminCoherence`.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 */
 	adminCoherence?: SwitchPin
 	/**
 	 * Minimum anchor confidence to trust the anchor coordinate.
 	 *
-	 * Default 0.5.
+	 * @defaultValue `0.5`
 	 */
 	anchorMinConf?: number
 	/**
@@ -71,13 +71,13 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Database root for `cascade`.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT`
 	 */
 	dataRoot?: string
 	/**
 	 * Hard country filter for admin lookups (`none` disables).
 	 *
-	 * Default `US`.
+	 * @defaultValue `US`
 	 */
 	defaultCountry?: string
 	/**
@@ -87,7 +87,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Eval jsonl.
 	 *
-	 * Default `data/eval/external/openaddresses-us-sample.jsonl`.
+	 * @defaultValue `data/eval/external/openaddresses-us-sample.jsonl`
 	 */
 	eval?: string
 	/**
@@ -116,7 +116,7 @@ export interface OAResolverEvalOptions {
 	modelCard?: string
 	/**
 	 * Pins `postcodeConsistency`.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 *
 	 * Paired with {@link postcodeConsistencyMaxMoveKm}, `"off"` prices the cap without a sweep,
 	 * because the rows whose answer differs from the shipped arm are exactly the ones the
@@ -149,7 +149,7 @@ export interface OAResolverEvalOptions {
 	caseNormalization?: CaseNormalization
 	/**
 	 * Pins `postcodeCountryCoherence`.
-	 * Defaults to `"production"`.
+	 * @defaultValue `"production"`
 	 *
 	 * `"off"` is the leg that measures whether a coherent (postcode, locality) pair
 	 * overriding `defaultCountry` is byte-flat on a US panel.
@@ -219,7 +219,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * WOF database list (comma-separated).
 	 *
-	 * Default admin + postcode-locality-intl.
+	 * @defaultValue admin + postcode-locality-intl.
 	 */
 	wof?: string
 }

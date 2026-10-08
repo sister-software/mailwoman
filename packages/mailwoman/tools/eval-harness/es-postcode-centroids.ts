@@ -20,7 +20,8 @@ import { PathBuilder } from "path-ts"
 export interface ESPostcodeCentroidsOptions {
 	/**
 	 * ISO country code that selects the input parquet and the output name.
-	 * It defaults to `ES`.
+	 *
+	 * @defaultValue {@linkcode ES}
 	 */
 	country?: string
 	/**
@@ -29,24 +30,25 @@ export interface ESPostcodeCentroidsOptions {
 	 *
 	 * The value `0` keeps the raw Overture form.
 	 * Non-numeric formats need that form.
-	 * It defaults to 5.
+	 *
+	 * @defaultValue `5`
 	 */
 	pcLen?: number
 	/**
 	 * Input parquet path.
 	 *
-	 * It defaults to the pinned `OVERTURE_ADDRESSES_RELEASE` under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the pinned `OVERTURE_ADDRESSES_RELEASE` under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	parquet?: string
 	/**
 	 * Output database path.
 	 *
-	 * It defaults to `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-<cc>-overture.db`.
-	 *
 	 * The filename must start with `postalcode-`.
 	 * `deriveSchemaName` turns the filename into the attached schema name.
 	 *
 	 * `pickExtractsForPlacetype` routes queries by matching that name against the `postalcode` placetype.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-<cc>-overture.db`
 	 */
 	out?: string
 }

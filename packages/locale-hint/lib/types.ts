@@ -24,7 +24,7 @@ export interface DetectLocaleOpts {
 	/**
 	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives.
 	 *
-	 * Default 0.7.
+	 * @defaultValue `0.7`
 	 */
 	confidenceFloor?: number
 }

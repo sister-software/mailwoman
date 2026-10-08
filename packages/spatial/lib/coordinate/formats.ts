@@ -78,7 +78,9 @@ export function qiblaBearing(lat: number, lon: number): number {
 const GEOHASH_BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
 /**
- * Encode a coordinate as a geohash of the given precision (default 9 ≈ 4.8 m).
+ * Encode a coordinate as a geohash of the given precision.
+ *
+ * @param precision [9] Geohash length. 9 characters is about 4.8 m.
  */
 export function toGeohash(lat: number, lon: number, precision = 9): string {
 	let latMin = -90
@@ -128,7 +130,9 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 const A_CODE = "A".charCodeAt(0)
 
 /**
- * Maidenhead grid locator (default 6-char: field uppercase, square digits, subsquare lowercase).
+ * Maidenhead grid locator: field uppercase, square digits, subsquare lowercase.
+ *
+ * @param pairs [3] Character pairs in the locator. 3 pairs is the 6-character form.
  */
 export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	const lonAdj = lon + 180

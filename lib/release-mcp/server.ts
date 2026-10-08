@@ -17,8 +17,9 @@ export interface ReleaseMCPServerOptions extends ReleaseToolTableOptions {
 	/**
 	 * The registry to serve.
 	 *
-	 * Defaults to `release-kit`'s.
 	 * A test hands in its own.
+	 *
+	 * @defaultValue `release-kit`'s.
 	 */
 	registry?: ReadonlyArray<ReleaseOperation<unknown, unknown>>
 }

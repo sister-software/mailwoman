@@ -81,9 +81,11 @@ export interface POISearchQuery {
 	 */
 	center?: { latitude: number; longitude: number }
 	/**
-	 * Ring budget: how many res-9 k-rings to expand before giving up (default 16 ≈ ~5.4 km).
+	 * Ring budget: how many res-9 k-rings to expand before giving up.
 	 *
 	 * Counts ring 0, so k reaches `maxRings - 1`.
+	 *
+	 * @defaultValue `16` ≈ ~5.4 km
 	 */
 	maxRings?: number
 	limit?: number

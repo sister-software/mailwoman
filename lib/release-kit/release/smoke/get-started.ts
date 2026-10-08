@@ -96,7 +96,7 @@ export interface SmokeGetStartedOptions {
 	/**
 	 * A persistent data root for the heavy leg, so the ~2.88 GB pull is not repeated.
 	 *
-	 * Default: a scratch directory.
+	 * @defaultValue a scratch directory.
 	 */
 	dataRoot?: string
 }

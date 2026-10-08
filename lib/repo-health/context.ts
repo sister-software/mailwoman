@@ -19,11 +19,13 @@ import ts from "typescript"
 import type { RepoContext } from "#repo-health/check"
 
 /**
- * A `RepoContext` for the checkout at `repoRoot` (default: the repository this module sits in).
+ * A `RepoContext` for the checkout at `repoRoot`.
  *
  * The file listing is `trackedFiles` from `@mailwoman/core/git` directly.
  * A wrapper here that returned that call unchanged would be a second public name for one function.
  * `export-name-affix` reports it.
+ *
+ * @param repoRoot [the repository this module sits in] The checkout to describe.
  */
 export async function collectRepoContext(repoRoot: PathBuilderLike = repoRootPath()): Promise<RepoContext> {
 	return { repoRoot: repoRoot.toString(), trackedFiles: await trackedFiles(repoRoot) }
@@ -36,11 +38,13 @@ export async function collectRepoContext(repoRoot: PathBuilderLike = repoRootPat
  */
 export interface ContextParseOptions {
 	/**
-	 * Set each node's `parent` while parsing (default false).
+	 * Set each node's `parent` while parsing.
+	 *
+	 * @defaultValue `false`
 	 */
 	setParentNodes?: boolean
 	/**
-	 * Default: TSX for a `.tsx` path, TS for every other path.
+	 * @defaultValue TSX for a `.tsx` path, TS for every other path.
 	 */
 	scriptKind?: ts.ScriptKind
 }

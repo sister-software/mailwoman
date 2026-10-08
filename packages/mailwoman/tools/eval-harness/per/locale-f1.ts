@@ -82,7 +82,8 @@ export interface PerLocaleF1Options {
 	goldenDir?: string
 	/**
 	 * Per-locale files inside {@linkcode PerLocaleF1Options.goldenDir}.
-	 * Default `["us.jsonl", "fr.jsonl", "adversarial.jsonl"]`.
+	 *
+	 * @defaultValue `["us.jsonl", "fr.jsonl", "adversarial.jsonl"]`
 	 */
 	files?: string[]
 	weightsCache?: string
@@ -93,30 +94,32 @@ export interface PerLocaleF1Options {
 	gazetteerLexiconPath?: string
 	noAnchor?: boolean
 	/**
-	 * Defaults to {@linkcode DEFAULT_TOGGLE}.
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	suppressGazetteerNearPostcode?: Toggle
 	/**
 	 * `auto` | `<system>` enables the address-system conventions mask.
-	 * Defaults to `"off"`.
+	 * @defaultValue `"off"`
 	 */
 	conventions?: AddressSystemConventions
 	/**
-	 * Defaults to {@linkcode DEFAULT_TOGGLE}.
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	bridgePunctuationGaps?: Toggle
 	outJSON?: string
 	/**
 	 * The all-caps case handling; `"preserve"` disables the title-case shim for the all-caps read.
-	 * Defaults to the library default, `"title-case"`.
+	 *
+	 * @defaultValue the library default, `"title-case"`.
 	 */
 	caseNormalization?: CaseNormalization
 	/**
 	 * Parse each row with the register returned by `deriveGeocodeRegister`.
 	 * The geocode path uses the same register.
 	 *
-	 * Default false parses every row with no `inputMode`, which the classifier reads
+	 * @defaultValue `false`, which parses every row with no `inputMode`, which the classifier reads
 	 * as `fragmented` and so feeds both evidence lexicons to every row, including the
+	 *
 	 * 1,896 of 2,660 `us.jsonl` rows production withholds them from.
 	 */
 	productionRegister?: boolean

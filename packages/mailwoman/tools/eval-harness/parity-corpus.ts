@@ -102,7 +102,7 @@ export interface ParityEvalOptions {
 	streetMorphology?: boolean
 	/**
 	 * Pins the gazetteer FST emission prior.
-	 * Defaults to `"production"`, the geocode session's default.
+	 * @defaultValue `"production"` the geocode session's default.
 	 */
 	gazetteerPrior?: SwitchPin
 	/**

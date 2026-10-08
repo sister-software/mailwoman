@@ -30,7 +30,7 @@ export interface POIExplorerProps {
 	/**
 	 * The example chips.
 	 *
-	 * @default POI_PRESETS
+	 * @defaultValue POI_PRESETS
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**

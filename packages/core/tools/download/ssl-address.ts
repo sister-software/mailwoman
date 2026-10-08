@@ -59,13 +59,13 @@ export interface DownloadSSLAddressOptions {
 	/**
 	 * Destination directory.
 	 *
-	 * Default: the checked-in `core/data/chromium-i18n/ssl-address`.
+	 * @defaultValue the checked-in `core/data/chromium-i18n/ssl-address`.
 	 */
 	outDir?: PathBuilderLike
 	/**
 	 * Parallel per-country fetches.
 	 *
-	 * Default 8.
+	 * @defaultValue `8`
 	 */
 	concurrency?: number
 }

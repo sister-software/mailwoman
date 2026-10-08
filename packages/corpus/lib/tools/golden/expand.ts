@@ -113,43 +113,43 @@ export interface ExpandGoldenOptions {
 	/**
 	 * Corpus test-split parquet path(s), comma-separated.
 	 *
-	 * Default: the v0.2.0 test parquet file under the data root.
+	 * @defaultValue the v0.2.0 test parquet file under the data root.
 	 */
 	corpus?: string
 	/**
 	 * Total seeds to process.
 	 *
-	 * Default `100` (pilot).
+	 * @defaultValue `100` (pilot).
 	 */
 	count?: number
 	/**
 	 * Variants requested per seed.
 	 *
-	 * Default `5`.
+	 * @defaultValue `5`
 	 */
 	variants?: number
 	/**
 	 * Jsonl output path.
 	 *
-	 * Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 * @defaultValue `data/eval/golden/candidates/expand-<ts>.jsonl`
 	 */
 	output?: string
 	/**
 	 * LLM provider.
 	 *
-	 * Default `deepseek`.
+	 * @defaultValue `deepseek`
 	 */
 	provider?: "deepseek" | "anthropic"
 	/**
 	 * Model id.
 	 *
-	 * Default depends on provider.
+	 * @defaultValue depends on provider.
 	 */
 	model?: string
 	/**
 	 * Parallel LLM calls.
 	 *
-	 * Default `4`.
+	 * @defaultValue `4`
 	 */
 	concurrency?: number
 	/**

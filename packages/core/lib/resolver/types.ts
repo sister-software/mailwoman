@@ -312,7 +312,8 @@ export interface ResolveOpts {
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * Retry without parent constraint on scoped miss.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	parentFallback?: boolean
 	/**
@@ -353,7 +354,7 @@ export interface ResolveOpts {
 	addressPoints?: AddressPointLookup
 	/**
 	 * Enables locality-bbox fallback in address-point lookup.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	addressPointBboxFallback?: boolean
 	/**
@@ -374,7 +375,8 @@ export interface ResolveOpts {
 	streetCountryHints?: readonly string[]
 	/**
 	 * Enables span-rescore recovery tier.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	spanRescore?: boolean
 	/**
@@ -383,7 +385,8 @@ export interface ResolveOpts {
 	spanRescoreThresholdKm?: number
 	/**
 	 * Require contextual remainder for span-rescore sub-spans.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
@@ -392,12 +395,14 @@ export interface ResolveOpts {
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * Enables postal-compound recovery in span-rescore tier.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postalCompoundRecovery?: boolean
 	/**
 	 * Enables postcode-based locality disambiguation.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeConsistency?: boolean
 	/**
@@ -410,7 +415,8 @@ export interface ResolveOpts {
 	postcodeConsistencyMaxMoveKm?: number
 	/**
 	 * Enables postcode-country coherence pass.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -419,17 +425,20 @@ export interface ResolveOpts {
 	postcodeCountryCoherenceThresholdKm?: number
 	/**
 	 * Enables postcode-shape coherence pass.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeShapeCoherence?: boolean
 	/**
 	 * Enables postcode-containment coherence pass.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**
 	 * Enables postcode-prefix prior tier.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodePrefixPrior?: boolean
 	/**
@@ -442,24 +451,28 @@ export interface ResolveOpts {
 	postcodePrefixIndex?: PostcodePrefixIndexLike
 	/**
 	 * Enables admin descendant-consistency correction.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	adminCoherence?: boolean
 	/**
 	 * Enables dual-role hierarchy completion.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	hierarchyCompletion?: boolean
 	/**
 	 * Attach ancestor lineage to resolved nodes.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	includeAncestors?: boolean
 	/**
 	 * Reranks locality candidates by containment in a parsed region qualifier.
 	 *
 	 * It stands down under a caller-supplied `defaultCountry`.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	adminContainmentRerank?: boolean
 	/**
@@ -468,7 +481,8 @@ export interface ResolveOpts {
 	traceSink?: (record: ResolveNodeTrace) => void
 	/**
 	 * Diagnose unresolved value reachability across placetypes.
-	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	diagnoseUnreachable?: boolean
 }

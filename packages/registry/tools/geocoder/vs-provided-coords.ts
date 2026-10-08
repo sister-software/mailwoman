@@ -50,13 +50,13 @@ export interface GeocoderVsProvidedCoordsOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * Facilities geocoded.
 	 *
-	 * Default 2000.
+	 * @defaultValue `2000`
 	 */
 	max?: number
 	/**

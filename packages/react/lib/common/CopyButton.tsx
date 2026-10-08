@@ -19,11 +19,15 @@ export interface CopyButtonProps {
 	 */
 	value: string | (() => string)
 	/**
-	 * Label in the idle state. @default "Copy"
+	 * Label in the idle state.
+	 *
+	 * @defaultValue `"Copy"`
 	 */
 	label?: ReactNode
 	/**
-	 * Label shown briefly after a successful copy. @default "✓ Copied"
+	 * Label shown briefly after a successful copy.
+	 *
+	 * @defaultValue `"✓ Copied"`
 	 */
 	copiedLabel?: ReactNode
 	className?: string

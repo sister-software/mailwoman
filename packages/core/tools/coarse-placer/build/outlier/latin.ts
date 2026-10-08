@@ -46,19 +46,19 @@ export interface BuildOutlierLatinOptions {
 	/**
 	 * Rows sampled per off-map country.
 	 *
-	 * Default 6000.
+	 * @defaultValue `6000`
 	 */
 	perCountry?: number
 	/**
 	 * Overture release dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`
 	 */
 	overture?: PathBuilderLike
 	/**
 	 * Dataset dir the `other` rows append to.
 	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

@@ -83,7 +83,7 @@ export interface SplitSliceOptions {
 	 */
 	outputDir: PathBuilderLike
 	/**
-	 * Defaults to `defaultHoldouts()`, which is the policy the base build applies.
+	 * @defaultValue `defaultHoldouts()`, which is the policy the base build applies.
 	 */
 	holdouts?: Record<string, CountryHoldout>
 }

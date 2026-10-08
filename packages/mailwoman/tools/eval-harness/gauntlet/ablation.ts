@@ -218,14 +218,17 @@ export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
 	 * Where the artifacts land.
 	 *
-	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 * The promotion eval uses the same convention.
 	 *
 	 * The directory is deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
+	 *
+	 * @defaultValue `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Restrict the deleted components (default: all of {@linkcode ABLATABLE_COMPONENTS}).
+	 * Restrict the deleted components.
+	 *
+	 * @defaultValue all of {@linkcode ABLATABLE_COMPONENTS}
 	 */
 	components?: readonly string[]
 	/**

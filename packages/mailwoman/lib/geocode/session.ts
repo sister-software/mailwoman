@@ -95,7 +95,8 @@ export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>)
 export interface GeocodeSessionOptions {
 	/**
 	 * Whether to feed the gazetteer FST prior to the parse.
-	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
 	 */
 	gazetteerPrior?: boolean
 	locale: string
@@ -127,14 +128,15 @@ export interface GeocodeSessionOptions {
 	/**
 	 * The national-capital promotion among same-name candidates for a bare place name.
 	 *
-	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}; see {@link CapitalTier}.
+	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}; see {@link CapitalTier}.
 	 */
 	capitalTier?: CapitalTier
 
 	/**
 	 * Whether own-name `variant` aliases skip the cross-country primary-name penalty,
 	 * affecting only the candidate backend and requiring the `name_role` column.
-	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
 	 */
 	variantAliasExemption?: VariantAliasExemption
 	postcodeShapeCoherence: boolean
@@ -142,7 +144,8 @@ export interface GeocodeSessionOptions {
 
 	/**
 	 * Whether a parsed region re-ranks locality candidates by admin containment.
-	 * Defaults to {@link GEOCODE_SWITCH_DEFAULTS}.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
 	 */
 	adminContainmentRerank?: boolean
 

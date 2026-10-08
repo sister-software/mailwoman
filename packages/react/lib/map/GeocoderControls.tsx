@@ -58,7 +58,7 @@ export interface GeocoderControlsProps {
 	/**
 	 * Whether the developer panel starts open.
 	 *
-	 * @default false
+	 * @defaultValue `false`
 	 */
 	developer?: boolean
 }

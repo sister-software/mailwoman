@@ -52,7 +52,8 @@ export type InterpolateColorCallback = (t: number) => string
 export interface GenerateMermaidMarkupOptions {
 	/**
 	 * Restrict descendants to the given roles.
-	 * Defaults to all roles.
+	 *
+	 * @defaultValue all roles.
 	 */
 	roles?: Iterable<PlacetypeRole>
 	/**

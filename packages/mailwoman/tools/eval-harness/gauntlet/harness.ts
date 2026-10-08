@@ -106,7 +106,8 @@ export interface GauntletDepsOptions {
 	forceQueryKind?: QueryKind
 	/**
 	 * Resolver-side pins applied to every geocode this deps object performs.
-	 * Defaults to {@link PRODUCTION_RESOLVER_PINS}.
+	 *
+	 * @defaultValue {@linkcode PRODUCTION_RESOLVER_PINS}
 	 */
 	pins?: GauntletResolverPins
 }

@@ -66,13 +66,13 @@ export interface RelabelGoldenOptions {
 	/**
 	 * Review-deck jsonl path.
 	 *
-	 * Default `<output>/review-deck.jsonl`.
+	 * @defaultValue `<output>/review-deck.jsonl`
 	 */
 	deck?: string
 	/**
 	 * Parent version label recorded in the manifest.
 	 *
-	 * Default: the input dir's basename.
+	 * @defaultValue the input dir's basename.
 	 */
 	parentLabel?: string
 	/**
@@ -82,7 +82,7 @@ export interface RelabelGoldenOptions {
 	/**
 	 * Passed through to {@linkcode relabelGoldenStreetRow}.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	splitPrefix?: boolean
 }

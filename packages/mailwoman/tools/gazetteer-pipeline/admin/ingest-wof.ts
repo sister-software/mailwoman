@@ -184,17 +184,20 @@ export interface IngestWOFOptions {
 	dataDir: PathBuilderLike
 	/**
 	 * The placetypes to ingest.
-	 * Defaults to {@link ADMIN_PLACETYPES}.
+	 *
+	 * @defaultValue {@linkcode ADMIN_PLACETYPES}
 	 */
 	placetypes?: ReadonlySet<string>
 	/**
 	 * The number of parallel file reads.
-	 * Defaults to 64.
+	 *
+	 * @defaultValue `64`
 	 */
 	concurrency?: number
 	/**
 	 * The number of ingested records per write transaction.
-	 * Defaults to 500.
+	 *
+	 * @defaultValue `500`
 	 */
 	batchCommitSize?: number
 	/**

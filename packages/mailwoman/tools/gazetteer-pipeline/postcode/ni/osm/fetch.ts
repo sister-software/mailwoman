@@ -127,23 +127,26 @@ export interface AcquireNIPostcodesOptions {
 
 	/**
 	 * Whether to reuse an existing `response.json` instead of querying.
-	 * Defaults to true.
 	 *
 	 * The saved response is what makes a build reproducible.
 	 * Set this to `false` only when taking a new extract into a new directory.
+	 *
+	 * @defaultValue `true`
 	 */
 	reuseExisting?: boolean
 	client?: APIClient
 
 	/**
 	 * The Overpass instance to query.
-	 * Defaults to {@link OVERPASS_ENDPOINT}.
+	 *
+	 * @defaultValue {@linkcode OVERPASS_ENDPOINT}
 	 */
 	endpoint?: string
 
 	/**
 	 * The retrieval time written to `acquisition.json`.
-	 * Defaults to the current time.
+	 *
+	 * @defaultValue the current time.
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void

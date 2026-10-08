@@ -75,7 +75,7 @@ const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db"
 /**
  * The backend the recording drives.
  *
- * Defaults to the promoted candidate table used by the shipped geocoder.
+ * @defaultValue the promoted candidate table used by the shipped geocoder.
  */
 const BACKEND = values.backend || wofDatabasePath("candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()

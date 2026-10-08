@@ -47,17 +47,20 @@ export interface RankingWeights {
 	 * At `proximityScaleKm` it is half magnitude.
 	 * It decays further as distance increases.
 	 *
-	 * Default tuned so proximity can overcome a typical FTS rank tie but not dominate a strong text match.
+	 * Its default is tuned so proximity can overcome a typical FTS rank tie
+	 * but not dominate a strong text match.
 	 */
 	proximityBoost: number
 	/**
 	 * Magnitude of the bias-hint term inside the exact-tier prominence sort (the `bias`/viewport path).
 	 *
-	 * Deliberately population-scale (default = populationBoost), so a candidate near
-	 * the map view or the user beats a distant-but-bigger namesake.
+	 * Deliberately population-scale, so a candidate near the map view
+	 * or the user beats a distant-but-bigger namesake.
 	 * "The map view wins" is the feature.
 	 *
 	 * Same-region ties, where all candidates are far from every hint, still fall to population.
+	 *
+	 * @defaultValue the same value as `populationBoost`
 	 */
 	biasBoost: number
 	/**
@@ -74,22 +77,21 @@ export interface RankingWeights {
 	 * WOF records population for about 15% of localities (mostly larger ones),
 	 * and places without it get +0, never a penalty.
 	 *
-	 * Default tuned so the famous Springfield, IL (pop ~112k) gets about a 0.42 boost,
+	 * Its default is tuned so the famous Springfield, IL (pop ~112k) gets about a 0.42 boost,
 	 * enough to nudge past tiny same-name peers.
 	 */
 	populationBoost: number
 	/**
 	 * Population (in log10) at which the boost reaches its full magnitude.
 	 *
-	 * Default 6, so a population of 1,000,000 gives `populationBoost` exactly.
 	 * Larger populations cap at the same value (no compounding effect for megacities).
+	 *
+	 * @defaultValue `6`, so a population of 1,000,000 gives `populationBoost` exactly
 	 */
 	populationScaleLog10: number
 	/**
 	 * Tier candidates with an exact name/alias match above candidates that only match
 	 * partially, before the weighted-sum score is consulted.
-	 *
-	 * Default true.
 	 *
 	 * The weighted sum adds population as a large additive boost, so famous places
 	 * surface for unambiguous full-name queries.
@@ -103,6 +105,8 @@ export interface RankingWeights {
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`),
 	 * so a pathological exact match outside that window is not rescued.
+	 *
+	 * @defaultValue `true`
 	 */
 	exactMatchTiering: boolean
 	/**
@@ -116,10 +120,11 @@ export interface RankingWeights {
 	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally called Åbo.
 	 * Population still orders within the sub-tier, so Paris → Paris FR is untouched.
 	 *
-	 * Default true.
 	 * It requires a gazetteer carrying the `official` ingest bit.
 	 *
 	 * On older DBs without that column, the probe fails soft and behavior matches the flag being off.
+	 *
+	 * @defaultValue `true`
 	 */
 	officialNameExact: boolean
 	/**

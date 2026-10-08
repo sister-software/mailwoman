@@ -76,13 +76,14 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale the extract was built with.
 	 * A mismatch makes every key miss.
-	 * It defaults to `"us"`.
 	 * @param opts.localityKeys Whether the extract's `locality_norm` holds full place names.
 	 * With `"abbreviated"`, a row's locality can select a row but never rejects one.
 	 * The US situs extract uses NAD city fields.
 	 * Some counties abbreviate them (`addi` for Addison).
 	 * Other counties replace them with the parent town.
-	 * It defaults to `"abbreviated"` for `"us"` and `"full"` for every other locale.
+	 *
+	 * @defaultValue `"us"`
+	 * @defaultValue `"abbreviated"` for `"us"` and `"full"` for every other locale.
 	 */
 	constructor(
 		dbPath: PathBuilderLike,

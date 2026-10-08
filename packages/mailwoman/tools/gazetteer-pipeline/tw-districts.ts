@@ -184,25 +184,25 @@ export interface BuildTWDistrictsOptions {
 	/**
 	 * The Overture release directory under `<data-root>/overture/`.
 	 *
-	 * Default {@link OVERTURE_ADDRESSES_RELEASE}.
+	 * @defaultValue {@linkcode OVERTURE_ADDRESSES_RELEASE}
 	 */
 	release?: string
 	/**
 	 * The Taiwan addresses parquet.
 	 *
-	 * Default `<data-root>/overture/<release>/addresses-tw.parquet`.
+	 * @defaultValue `<data-root>/overture/<release>/addresses-tw.parquet`
 	 */
 	parquetPath?: string
 	/**
 	 * The admin WOF database the 縣市 names are matched against.
 	 *
-	 * Default `<data-root>/db/wof/admin-global-priority.db`.
+	 * @defaultValue `<data-root>/db/wof/admin-global-priority.db`
 	 */
 	adminPath?: string
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/db/wof/localities-tw-districts.db`.
+	 * @defaultValue `<data-root>/db/wof/localities-tw-districts.db`
 	 */
 	out?: string
 	/**

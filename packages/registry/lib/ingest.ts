@@ -159,8 +159,10 @@ export interface IngestOptions {
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
-	 * Separator for joining a multi-column address mapping, comma-join giving the parser delimited
-	 * input rather than a concatenated run (name/org always join with a space). @default ", "
+	 * Separator for joining a multi-column address mapping, comma-join giving the parser
+	 * delimited input rather than a concatenated run (name/org always join with a space).
+	 *
+	 * @defaultValue `", "`
 	 */
 	addressSeparator?: string
 }

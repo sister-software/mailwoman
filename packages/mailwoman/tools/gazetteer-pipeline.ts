@@ -196,11 +196,15 @@ export interface FoldOptions {
 	 */
 	adminOut: PathBuilderLike
 	/**
-	 * ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold (default {@link DEFAULT_FOLD_COUNTRIES}).
+	 * ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_FOLD_COUNTRIES}
 	 */
 	countries?: readonly string[]
 	/**
-	 * Dir holding `<CC>.txt` GeoNames dumps (default {@link geonamesDir}).
+	 * Dir holding `<CC>.txt` GeoNames dumps.
+	 *
+	 * @defaultValue {@link geonamesDir}
 	 */
 	geonamesDir?: PathBuilderLike
 	/**
@@ -211,8 +215,11 @@ export interface FoldOptions {
 	 */
 	adminForCountries?: ReadonlySet<string>
 	/**
-	 * Dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}),
-	 * tagging alias rows with language / privateuse / `official`; countries without a file fold untagged.
+	 * Dir holding `<CC>.txt` alternateNamesV2 dumps, tagging alias rows with
+	 * language / privateuse / `official`.
+	 * Countries without a file fold untagged.
+	 *
+	 * @defaultValue {@link geonamesAlternateDir}
 	 */
 	alternateDir?: PathBuilderLike
 	/**
@@ -330,7 +337,9 @@ export interface BuildOptions {
 	 */
 	out: PathBuilderLike
 	/**
-	 * Absolute postcode-database paths to fold in (default {@link resolvePostcodeDatabases}).
+	 * Absolute postcode-database paths to fold in.
+	 *
+	 * @defaultValue {@link resolvePostcodeDatabases}
 	 */
 	postcodeDatabases?: readonly string[]
 	/**
@@ -341,9 +350,11 @@ export interface BuildOptions {
 	 */
 	localityDatabases?: readonly string[]
 	/**
-	 * Score source for the `importance` column (default {@link resolveImportanceDB}).
+	 * Score source for the `importance` column.
 	 *
 	 * Pass `false` to build the column empty on purpose.
+	 *
+	 * @defaultValue {@link resolveImportanceDB}
 	 */
 	importanceDB?: string | false
 	/**

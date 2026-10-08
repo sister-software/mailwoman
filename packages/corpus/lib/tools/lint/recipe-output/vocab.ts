@@ -167,27 +167,32 @@ export interface LintRecipeVocabOptions {
 	recipeOutputPath: string
 	/**
 	 * Base corpus version.
-	 * Default `v0.5.0`.
+	 *
+	 * @defaultValue `v0.5.0`
 	 */
 	baseVersion?: string
 	/**
 	 * Base corpus root.
-	 * Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/versioned`
 	 */
 	baseRoot?: string
 	/**
 	 * Base-majority confidence floor for a contradiction.
-	 * Default 0.7.
+	 *
+	 * @defaultValue `0.7`
 	 */
 	threshold?: number
 	/**
 	 * Minimum base support to judge a token.
-	 * Default 50.
+	 *
+	 * @defaultValue `50`
 	 */
 	minCount?: number
 	/**
 	 * Fraction of base parts to scan, a proportional per-source sample below 1.0.
-	 * Default 1.0.
+	 *
+	 * @defaultValue `1.0`
 	 */
 	fraction?: number
 }

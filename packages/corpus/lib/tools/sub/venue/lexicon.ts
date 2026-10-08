@@ -110,9 +110,10 @@ export interface BuildSubVenueLexiconInput {
 	 */
 	sources: readonly SubVenueLexiconSource[]
 	/**
-	 * Defaults to {@link SUBVENUE_PROMOTIONS}.
 	 *
 	 * An empty array builds the uncurated table.
+	 *
+	 * @defaultValue {@linkcode SUBVENUE_PROMOTIONS}
 	 */
 	promotions?: readonly SubVenuePromotion[]
 }

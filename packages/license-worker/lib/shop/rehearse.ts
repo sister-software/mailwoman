@@ -47,7 +47,7 @@ export interface StartRehearsalInput {
 	 * Returns the current time in milliseconds.
 	 *
 	 * The test clock freezes at that time.
-	 * Defaults to `Date.now`.
+	 * @defaultValue `Date.now`
 	 */
 	now?: () => number
 }

@@ -84,14 +84,15 @@ export interface BuildPostcodeNIOSMOptions {
 	/**
 	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`.
 	 *
-	 * Default `<data-root>/osm-ni-postcodes/<yyyy-MM-DD>` — a new dated directory per acquisition.
+	 * @defaultValue `<data-root>/osm-ni-postcodes/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/db/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
 	 * A separate step copies it to the canonical `postalcode-ni-osm.db`.
+	 *
+	 * @defaultValue `<data-root>/db/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
 	 */
 	out?: PathBuilderLike
 	/**

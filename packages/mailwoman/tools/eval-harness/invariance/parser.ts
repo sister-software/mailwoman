@@ -46,8 +46,9 @@ export interface ModelSelectOptions {
 	/**
 	 * Locale used to resolve the weights package.
 	 *
-	 * It defaults to `en-US`.
 	 * Each row's parse locale still comes from its country.
+	 *
+	 * @defaultValue `en-US`
 	 */
 	locale?: string
 }

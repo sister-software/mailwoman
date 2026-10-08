@@ -89,7 +89,8 @@ export interface PlacetypePairPriorOpts {
 	biasScale?: number
 	/**
 	 * Candidate-building strategy.
-	 * Default: `"auto"`.
+	 *
+	 * @defaultValue `"auto"`
 	 */
 	probeMode?: PlacetypePairProbeMode
 	/**

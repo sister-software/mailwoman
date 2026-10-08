@@ -49,31 +49,31 @@ export interface TrainCoarsePlacerOptions {
 	/**
 	 * SGD epochs.
 	 *
-	 * Default 12.
+	 * @defaultValue `12`
 	 */
 	epochs?: number
 	/**
 	 * Initial learning rate (decays per epoch).
 	 *
-	 * Default 0.1.
+	 * @defaultValue `0.1`
 	 */
 	lr?: number
 	/**
 	 * L2 regularization.
 	 *
-	 * Default 1e-6.
+	 * @defaultValue `1e-6`
 	 */
 	l2?: number
 	/**
 	 * Artifact output dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/coarse-placer/model`
 	 */
 	out?: PathBuilderLike
 	/**
 	 * Dataset dir (`{train,val}.jsonl`).
 	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

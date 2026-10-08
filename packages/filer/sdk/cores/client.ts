@@ -75,7 +75,8 @@ export interface CreateCORESClientOptions {
 	clock?: ClockLike
 	/**
 	 * Disk cache directory.
-	 * The default is `fcc/cores/cache` under the data root.
+	 *
+	 * @defaultValue `fcc/cores/cache` under the data root.
 	 */
 	cacheDir?: string
 	cacheTTLMs?: number

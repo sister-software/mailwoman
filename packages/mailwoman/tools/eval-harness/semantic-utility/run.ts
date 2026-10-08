@@ -113,7 +113,7 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	/**
 	 * Commit sha recorded in the receipt.
 	 *
-	 * Defaults to the checkout's own short head.
+	 * @defaultValue the checkout's own short head.
 	 */
 	gitCommit?: string
 	/**

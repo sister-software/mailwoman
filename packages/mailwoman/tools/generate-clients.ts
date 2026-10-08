@@ -79,7 +79,7 @@ export interface GenerateClientsOptions {
 	/**
 	 * The output root.
 	 *
-	 * The default is the gitignored `clients-build/` at the repo root.
+	 * @defaultValue the gitignored `clients-build/` at the repo root.
 	 */
 	outDir?: PathBuilderLike
 

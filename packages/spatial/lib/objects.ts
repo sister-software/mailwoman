@@ -77,7 +77,7 @@ export interface GeoObjectLiteral {
 			/**
 			 * The name of the coordinate reference system.
 			 *
-			 * @default "epsg:4326"
+			 * @defaultValue `"epsg:4326"`
 			 */
 			name: string
 		}

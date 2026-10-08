@@ -49,20 +49,21 @@ export interface TranslitOverlayOptions {
 	baseManifest: string
 	outDir: PathBuilderLike
 	/**
-	 * Default `"0.4.0"`.
+	 * @defaultValue `"0.4.0"`
 	 */
 	corpusVersion?: string
 	/**
-	 * Default `"/data/"`.
+	 * @defaultValue `"/data/"`
 	 */
 	canonicalPathPrefix?: string
 	/**
 	 * Prefix currently used in the base manifest's file paths, to be rewritten
 	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
 	 *
-	 * Defaults to `dataRootPath()` with a trailing slash — the root that wrote those paths.
 	 * Pass it explicitly when translating a manifest generated under a different
 	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
+	 *
+	 * @defaultValue `dataRootPath()` with a trailing slash — the root that wrote those paths.
 	 */
 	legacyPathPrefix?: string
 }

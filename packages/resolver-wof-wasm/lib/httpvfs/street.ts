@@ -57,7 +57,8 @@ export class HTTPVFSAddressPointLookup {
 
 	/**
 	 * `streetLocale` must match the extract's build locale (the node class's interface).
-	 * Default "us".
+	 *
+	 * @defaultValue `"us"`
 	 */
 	constructor(database: RangeDatabase, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#database = database

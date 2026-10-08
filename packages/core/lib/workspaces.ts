@@ -27,7 +27,7 @@ export interface ReadWorkspaceDirectoriesOptions {
 	 * Skip a literal entry whose directory has no manifest instead of failing,
 	 * for reading a checkout at an older ref that predates a workspace the field names.
 	 *
-	 * @default false
+	 * @defaultValue `false`
 	 */
 	tolerateMissing?: boolean
 }

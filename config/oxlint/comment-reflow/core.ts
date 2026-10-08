@@ -16,29 +16,34 @@ export interface ReflowOptions {
 	 * Hard ceiling.
 	 *
 	 * No produced line exceeds it except an unbreakable token.
-	 * Default: 120.
+	 *
+	 * @defaultValue `120`
 	 */
 	printWidth?: number
 	/**
 	 * The width prose aims for.
 	 *
 	 * Everything between it and `printWidth` is the balance zone.
-	 * Default: 90.
+	 *
+	 * @defaultValue `90`
 	 */
 	targetWidth?: number
 	/**
 	 * Columns a tab advances.
-	 * Default: 2, matching oxfmt.
+	 *
+	 * @defaultValue `2`, matching oxfmt
 	 */
 	tabWidth?: number
 	/**
 	 * Sentences a paragraph may hold after the lead.
-	 * Default: 2.
+	 *
+	 * @defaultValue `2`
 	 */
 	paragraphSentences?: number
 	/**
 	 * Placement of eligible trailing comments.
-	 * Default: "overflow".
+	 *
+	 * @defaultValue `"overflow"`
 	 */
 	trailingComments?: "ignore" | "always" | "overflow"
 }

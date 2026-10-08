@@ -34,20 +34,21 @@ export interface MailwomanAPIOptions {
 	/**
 	 * Whether to send `Access-Control-Allow-Origin: *` and answer CORS preflights.
 	 *
-	 * Defaults to `true` because browser clients such as the demo need it.
 	 * Set it to `false` when a reverse proxy sets the CORS headers.
+	 * @defaultValue `true` because browser clients such as the demo need it.
 	 */
 	cors?: boolean
 
 	/**
 	 * Maximum request body size in bytes for every `/v1/*` route.
-	 * Defaults to 2 MiB.
+	 *
+	 * @defaultValue `2 MiB`
 	 */
 	bodyLimitBytes?: number
 
 	/**
 	 * Maximum number of `addresses` rows that `POST /v1/batch` accepts.
-	 * Defaults to `DEFAULT_BATCH_MAX`.
+	 * @defaultValue `DEFAULT_BATCH_MAX`
 	 */
 	batchMax?: number
 

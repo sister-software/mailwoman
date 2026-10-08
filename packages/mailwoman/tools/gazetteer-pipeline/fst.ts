@@ -368,17 +368,23 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 
 export interface BuildLocaleFSTsOpts {
 	/**
-	 * Locales to build (default: every FST_LOCALES key).
+	 * Locales to build.
+	 *
+	 * @defaultValue every {@linkcode FST_LOCALES} key
 	 */
 	locales?: string[]
 	/**
-	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`).
+	 * WOF admin DB.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated`).
+	 * Output dir.
 	 *
 	 * Never the shipped dir.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated`
 	 */
 	outputDir?: PathBuilderLike
 	/**

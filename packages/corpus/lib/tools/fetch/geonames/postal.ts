@@ -42,13 +42,13 @@ export interface FetchGeonamesPostalOptions extends BaseFetchOptions {
 	/**
 	 * ISO alpha-2 codes in any casing.
 	 *
-	 * Defaults to `{@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}`.
+	 * @defaultValue {@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}
 	 */
 	countries?: readonly string[]
 	/**
 	 * Export directory to read from.
 	 *
-	 * Defaults to GeoNames' own, so the 404-is-coverage behavior can be exercised against a local server.
+	 * @defaultValue GeoNames' own, so the 404-is-coverage behavior can be exercised against a local server.
 	 */
 	baseURL?: string
 }

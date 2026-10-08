@@ -22,8 +22,9 @@ export interface SerializeTuplesOpts {
 	/**
 	 * Interleave `["unknown", value]` tuples for the all-O spans the model left unclassified, in source order.
 	 *
-	 * Default false keeps the tag-only shape.
 	 * The caller can request the gaps.
+	 *
+	 * @defaultValue `false`, which keeps the tag-only shape.
 	 */
 	includeUnknown?: boolean
 }

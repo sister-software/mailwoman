@@ -89,8 +89,9 @@ export interface CompatibilityAppOptions {
 	/**
 	 * Whether to send permissive CORS headers and answer preflight `OPTIONS` requests.
 	 *
-	 * It defaults to `true` because browser clients call these APIs from other origins.
 	 * Set it to `false` when a reverse proxy already sets the CORS headers.
+	 *
+	 * @defaultValue `true` because browser clients call these APIs from other origins.
 	 */
 	cors?: boolean
 

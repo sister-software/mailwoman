@@ -412,21 +412,22 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * Acquisition directory holding the archive, its `.md5` sidecar and `item.json`.
 	 *
-	 * Default: the newest vintage directory under `<data-root>/db/nsul/` that holds
+	 * @defaultValue the newest vintage directory under `<data-root>/db/nsul/` that holds
 	 * an archive ({@link resolveLatestNSULSourceDir}).
 	 */
 	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/db/nsul/nsul.db`.
 	 * Built to a staging path and atomically swapped into place.
+	 *
+	 * @defaultValue `<data-root>/db/nsul/nsul.db`
 	 */
 	out?: PathBuilderLike
 	/**
 	 * The `uprn.db` whose coordinates are joined in.
 	 *
-	 * Default `<data-root>/db/uprn/uprn.db`.
+	 * @defaultValue `<data-root>/db/uprn/uprn.db`
 	 */
 	uprnDatabasePath?: PathBuilderLike
 	/**
@@ -439,7 +440,8 @@ export interface BuildNSULLayerOptions {
 	 * ISO-8601 `layer_manifest.created_at`.
 	 *
 	 * Caller-supplied per the layer interface.
-	 * Defaults to `now`.
+	 *
+	 * @defaultValue `now`
 	 */
 	createdAt?: string
 	/**
@@ -450,7 +452,7 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * Truncation-guard floor.
 	 *
-	 * Default {@link NSUL_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
+	 * @defaultValue {@linkcode NSUL_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
 	 */
 	minimumPlausibleRows?: number
 	/**

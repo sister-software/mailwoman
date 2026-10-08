@@ -36,7 +36,9 @@ export interface FetchedSource {
 
 export interface DownloadPinnedOptions {
 	/**
-	 * The day a nightly archive is taken as, `yyyy-MM-DD`. @default today
+	 * The day a nightly archive is taken as, `yyyy-MM-DD`.
+	 *
+	 * @defaultValue today
 	 */
 	snapshotDate?: string
 	onProgress?: (message: string) => void

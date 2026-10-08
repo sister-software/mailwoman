@@ -26,7 +26,8 @@ export interface POIBoardOptions {
 	fixturesPath?: string
 	/**
 	 * Sealed `poi.db` to query.
-	 * Defaults to the data-root POI layer path.
+	 *
+	 * @defaultValue the data-root POI layer path.
 	 */
 	db?: PathBuilderLike
 	/**
@@ -57,7 +58,7 @@ export interface POIBoardOptions {
 	 * Whether to build the semantic observation route and use it as {@linkcode poiSemanticLookup},
 	 * ignored when `poiSemanticLookup` is set.
 	 *
-	 * It defaults to off and the registered floors assume that, because the shipped pipeline omits the route.
+	 * @defaultValue `false`. The registered floors assume it, because the shipped pipeline omits the route.
 	 */
 	semanticObservation?: boolean
 }

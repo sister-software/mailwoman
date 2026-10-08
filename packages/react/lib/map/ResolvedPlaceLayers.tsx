@@ -18,20 +18,28 @@ export interface ResolvedPlaceLayersProps {
 	 */
 	spec: MapPlaceRenderSpec | null
 	/**
-	 * Apply the computed camera target via {@link ResultCamera}; set false when the consumer drives the camera
-	 * itself (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}). @default true
+	 * Apply the computed camera target via {@link ResultCamera}; set false when the consumer drives the
+	 * camera itself (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
+	 *
+	 * @defaultValue `true`
 	 */
 	applyCamera?: boolean
 	/**
-	 * Animate the camera move, forwarded to {@link ResultCamera}. @default true
+	 * Animate the camera move, forwarded to {@link ResultCamera}.
+	 *
+	 * @defaultValue `true`
 	 */
 	animateCamera?: boolean
 	/**
-	 * Source/layer id prefix for the outline. @default "mw-result"
+	 * Source/layer id prefix for the outline.
+	 *
+	 * @defaultValue `"mw-result"`
 	 */
 	outlineID?: string
 	/**
-	 * Marker color. @default the house pink.
+	 * Marker color.
+	 *
+	 * @defaultValue the house pink.
 	 */
 	markerColor?: string
 }

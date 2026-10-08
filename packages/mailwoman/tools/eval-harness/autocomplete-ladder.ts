@@ -252,7 +252,7 @@ export interface AutocompleteLadderOptions extends GauntletDepsOptions {
 	/**
 	 * Directory of per-locale FST binaries (`fst-<locale>.bin`).
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale`
 	 */
 	fstDir?: string
 	/**

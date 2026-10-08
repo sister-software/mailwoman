@@ -69,14 +69,16 @@ export interface SoilIngestOptions {
 	/**
 	 * The layer inside the shapefile.
 	 *
-	 * The default is the file's base name.
 	 * The ESRI driver reports that name.
+	 *
+	 * @defaultValue the file's base name.
 	 */
 	layer?: string
 
 	/**
 	 * The EPSG code that the source must declare.
-	 * The default is the SSURGO source projection.
+	 *
+	 * @defaultValue the SSURGO source projection.
 	 */
 	expectEPSG?: number
 

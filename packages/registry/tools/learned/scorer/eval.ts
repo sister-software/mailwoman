@@ -37,33 +37,37 @@ export interface ScorerPairwiseEvalOptions {
 	/**
 	 * The record-matcher sources directory.
 	 *
-	 * It defaults to `record-matcher/sources` under the data root.
+	 * @defaultValue `record-matcher/sources` under the data root.
 	 */
 	sources?: string
 
 	/**
 	 * The state to sample providers from.
-	 * It defaults to `TX`.
+	 *
+	 * @defaultValue {@linkcode TX}
 	 */
 	state?: string
 
 	/**
 	 * The number of NPIs to sample.
-	 * It defaults to 1500.
+	 *
+	 * @defaultValue `1500`
 	 */
 	npis?: number
 
 	/**
 	 * The base PRNG seed.
 	 *
-	 * It defaults to 1.
 	 * Each split adds its index to that value.
+	 *
+	 * @defaultValue `1`
 	 */
 	seed?: number
 
 	/**
 	 * The number of train/test splits to average over.
-	 * It defaults to 8.
+	 *
+	 * @defaultValue `8`
 	 */
 	seeds?: number
 

@@ -164,7 +164,8 @@ export interface AddressTree {
 	roots: AddressNode[]
 	/**
 	 * The addressing system that selects the containment hierarchy.
-	 * The default is the Western hierarchy.
+	 *
+	 * @defaultValue the Western hierarchy.
 	 */
 	system?: AddressSystem
 	/**

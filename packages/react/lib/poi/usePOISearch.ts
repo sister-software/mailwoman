@@ -32,7 +32,8 @@ export interface UsePOISearchOptions {
 
 	/**
 	 * The loader that the hook calls once on mount.
-	 * It defaults to `loadPOIRuntime`.
+	 *
+	 * @defaultValue `loadPOIRuntime`
 	 */
 	loadRuntime?: LoadPOIRuntime
 
@@ -51,7 +52,8 @@ export interface UsePOISearchOptions {
 
 	/**
 	 * The delay in milliseconds before the text is classified.
-	 * Defaults to 250.
+	 *
+	 * @defaultValue `250`
 	 */
 	debounceMs?: number
 }

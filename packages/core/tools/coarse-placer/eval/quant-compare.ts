@@ -30,25 +30,25 @@ export interface EvalQuantCompareOptions {
 	/**
 	 * Fp32 artifact dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/coarse-placer/model`
 	 */
 	fp32?: PathBuilderLike
 	/**
 	 * Int8 artifact dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`
 	 */
 	int8?: PathBuilderLike
 	/**
 	 * Abstention threshold.
 	 *
-	 * Default 0.5.
+	 * @defaultValue `0.5`
 	 */
 	abstain?: number
 	/**
 	 * Dataset dir (`test.jsonl`).
 	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

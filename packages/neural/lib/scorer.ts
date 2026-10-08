@@ -211,7 +211,7 @@ export interface CreateScorerOpts {
 	/**
 	 * The postcode anchor lookup, read as a PCB1 binary when the path ends in `.bin` and as JSON otherwise.
 	 *
-	 * It defaults to {@link DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup,
+	 * @defaultValue {@linkcode DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup,
 	 * except that a card declaring `span_mode: "shaped"` tries the weights package first.
 	 */
 	anchorLookupPath?: PathBuilderLike
@@ -219,28 +219,29 @@ export interface CreateScorerOpts {
 	/**
 	 * The gazetteer lexicon.
 	 *
-	 * The default is {@link DEFAULT_GAZETTEER_LEXICON} when present, followed by the weights package's copy.
+	 * @defaultValue {@linkcode DEFAULT_GAZETTEER_LEXICON} when present, followed by the weights package's copy.
 	 */
 	gazetteerLexiconPath?: PathBuilderLike
 
 	/**
 	 * The street-type evidence lexicon.
 	 *
-	 * The default is the file listed on the card under `data/gazetteer/`,
+	 * @defaultValue the file listed on the card under `data/gazetteer/`,
 	 * followed by the weights package's copy.
 	 */
 	streetTypeLexiconPath?: string
 
 	/**
 	 * The locality-surface evidence lexicon.
-	 * The default is the weights package's copy.
+	 *
+	 * @defaultValue the weights package's copy.
 	 */
 	localitySurfaceLexiconPath?: string
 
 	/**
 	 * The country-surface lexicon.
 	 *
-	 * The default is {@link DEFAULT_COUNTRY_LEXICON} when present, followed by the weights package's copy.
+	 * @defaultValue {@linkcode DEFAULT_COUNTRY_LEXICON} when present, followed by the weights package's copy.
 	 */
 	countryLexiconPath?: string
 

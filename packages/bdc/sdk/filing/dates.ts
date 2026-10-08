@@ -31,7 +31,7 @@ export interface RetrieveFilingDatesParams {
 	filingType: BDCFilingDataType
 	/**
 	 * Bypass the response cache.
-	 * Defaults to `false`.
+	 * @defaultValue `false`
 	 */
 	skipCache?: boolean
 }

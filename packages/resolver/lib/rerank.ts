@@ -69,8 +69,11 @@ export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
 	/**
-	 * Resolve at most this many candidates (default 5); each costs a resolver round-trip,
-	 * so this is the latency knob.
+	 * Resolve at most this many candidates.
+	 *
+	 * Each costs a resolver round-trip, so this is the latency knob.
+	 *
+	 * @defaultValue `5`
 	 */
 	maxResolve?: number
 	/**

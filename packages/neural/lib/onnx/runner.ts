@@ -42,25 +42,28 @@ export type { InferResult } from "#ort-feeds"
 export interface ONNXRunnerOpts {
 	/**
 	 * Whether `create()` loads the session immediately instead of on first inference.
-	 * It defaults to `false`.
+	 *
+	 * @defaultValue `false`
 	 */
 	warmup?: boolean
 
 	/**
 	 * The fixed input sequence length of the model.
-	 * The default is {@link DEFAULT_FIXED_SEQ_LEN}.
 	 *
 	 * Shorter inputs are padded with id 0 and masked out.
 	 * Longer inputs are truncated.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_FIXED_SEQ_LEN}
 	 */
 	fixedSeqLen?: number
 
 	/**
 	 * ONNX Runtime execution providers in priority order, such as `["cuda", "cpu"]`.
-	 * It defaults to `["cpu"]`.
 	 *
 	 * The runner appends `cpu` when it is missing.
 	 * GPU providers throw when they fail to initialize, so the runner then retries using only the CPU.
+	 *
+	 * @defaultValue `["cpu"]`
 	 */
 	executionProviders?: string[]
 

@@ -33,19 +33,20 @@ export interface SpanRescoreOptions {
 	 * A backend without postcode coverage receives no penalty.
 	 *
 	 * A value of 0 disables the check.
-	 * Default 50.
+	 *
+	 * @defaultValue `50`
 	 */
 	thresholdKm?: number
 	/**
 	 * Max contiguous raw tokens to treat as one locality span.
 	 *
-	 * Default 4.
+	 * @defaultValue `4`
 	 */
 	maxSpanTokens?: number
 	/**
 	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent.
 	 *
-	 * Default 0.7.
+	 * @defaultValue `0.7`
 	 */
 	confidentThreshold?: number
 	/**
@@ -53,26 +54,29 @@ export interface SpanRescoreOptions {
 	 * postcode node blocks only those code tokens, leaving the residual name tokens as span material.
 	 *
 	 * Street/affix blocking is untouched.
-	 * Default false.
+	 *
+	 * @defaultValue `false`
 	 */
 	postalCompoundRecovery?: boolean
 	/**
 	 * When the span covers the whole unqualified input, treat {@link country} as an additive prior
 	 * instead of a hard gazetteer filter; `false` restores the hard filter byte-for-byte.
-	 * Default true.
+	 *
+	 * @defaultValue `true`
 	 */
 	bareToponymSoftCountry?: boolean
 	/**
 	 * Weight of that prior, in log10-population units.
 	 *
-	 * Default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT} (2), and 0 removes the locale's say entirely.
+	 * @defaultValue {@linkcode DEFAULT_COUNTRY_PRIOR_WEIGHT} (2), and 0 removes the locale's say entirely.
 	 */
 	bareToponymCountryWeight?: number
 	/**
 	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code or a number.
 	 *
 	 * See `remainderIsContext` for the rule.
-	 * Default false.
+	 *
+	 * @defaultValue `false`
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 }

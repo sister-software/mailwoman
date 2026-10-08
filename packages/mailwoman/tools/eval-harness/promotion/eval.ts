@@ -84,18 +84,19 @@ export interface PromotionEvalOptions {
 	/**
 	 * Tokenizer path.
 	 *
-	 * Defaults to the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
 	 * Model-card JSON.
-	 * Defaults to `neural-weights-en-us/model-card.json`.
+	 *
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	card?: string
 	/**
 	 * Gazetteer lexicon JSON.
 	 *
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**
@@ -114,7 +115,7 @@ export interface PromotionEvalOptions {
 	/**
 	 * Battery output dir.
 	 *
-	 * Defaults to `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
+	 * @defaultValue `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**

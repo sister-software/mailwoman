@@ -32,19 +32,27 @@ import { dirname, resolvePath } from "path-ts"
 
 export interface BuildStreetMorphologyArtifactOpts {
 	/**
-	 * Libpostal dictionaries root (default: core's bundled `data/libpostal/dictionaries`).
+	 * Libpostal dictionaries root.
+	 *
+	 * @defaultValue core's bundled `data/libpostal/dictionaries`
 	 */
 	dictionariesDir?: string
 	/**
-	 * Locale-subfolder filter (default: every locale shipping a `street_types.txt`).
+	 * Locale-subfolder filter.
+	 *
+	 * @defaultValue every locale shipping a `street_types.txt`
 	 */
 	locales?: string[]
 	/**
-	 * Minimum post-normalization variant length (default: the builder's 3, the state-abbreviation collision guard).
+	 * Minimum post-normalization variant length.
+	 *
+	 * @defaultValue the builder's 3, the state-abbreviation collision guard
 	 */
 	minVariantLength?: number
 	/**
-	 * Output path (default: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`).
+	 * Output path.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`
 	 */
 	output?: string
 	onProgress?: (line: string) => void

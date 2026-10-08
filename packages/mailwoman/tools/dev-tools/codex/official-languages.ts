@@ -33,7 +33,7 @@ export interface GenerateOfficialLanguagesOptions {
 	/**
 	 * Overrides the output path.
 	 *
-	 * The default is the committed `codex/country/official-languages.ts`.
+	 * @defaultValue the committed `codex/country/official-languages.ts`.
 	 */
 	out?: string
 }

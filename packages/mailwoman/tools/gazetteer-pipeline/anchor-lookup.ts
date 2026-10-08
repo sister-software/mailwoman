@@ -273,7 +273,7 @@ export interface AnchorLookupOptions {
 
 	/**
 	 * The country codes to include, in centroid-priority order.
-	 * Defaults to {@linkcode ANCHOR_PILOT_COUNTRIES}.
+	 * @defaultValue {@linkcode ANCHOR_PILOT_COUNTRIES}
 	 *
 	 * Every code must have a loader.
 	 * All of {@linkcode ANCHOR_V2_COUNTRIES} have one.
@@ -282,7 +282,7 @@ export interface AnchorLookupOptions {
 
 	/**
 	 * Whether to add GB outward-district keys beside the unit keys.
-	 * Defaults to `true` and applies only when GB is included.
+	 * @defaultValue `true` and applies only when GB is included.
 	 */
 	gbOutward?: boolean
 }

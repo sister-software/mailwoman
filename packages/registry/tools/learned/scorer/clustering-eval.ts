@@ -60,37 +60,37 @@ export interface ScorerClusteringEvalOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * State filter.
 	 *
-	 * Default TX.
+	 * @defaultValue TX.
 	 */
 	state?: string
 	/**
 	 * NPIs sampled.
 	 *
-	 * Default 2000.
+	 * @defaultValue `2000`
 	 */
 	npis?: number
 	/**
 	 * Train fraction of the NPI split.
 	 *
-	 * Default 0.67.
+	 * @defaultValue `0.67`
 	 */
 	split?: number
 	/**
 	 * Base prng seed.
 	 *
-	 * Default 1.
+	 * @defaultValue `1`
 	 */
 	seed?: number
 	/**
 	 * Held-out-NPI splits averaged.
 	 *
-	 * Default 4.
+	 * @defaultValue `4`
 	 */
 	seeds?: number
 	/**

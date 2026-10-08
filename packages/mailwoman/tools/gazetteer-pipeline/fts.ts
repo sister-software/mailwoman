@@ -15,7 +15,7 @@ export interface BuildFTSOptions {
 	/**
 	 * Drop + rebuild existing FTS/bbox tables (a staging DB from a prior partial run).
 	 *
-	 * Default false.
+	 * @defaultValue `false`
 	 */
 	drop?: boolean
 	onProgress?: (phase: string, detail?: string) => void

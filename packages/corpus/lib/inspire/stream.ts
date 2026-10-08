@@ -83,9 +83,10 @@ export interface StreamInspireRowsOptions<Indexed> {
 	/**
 	 * What to index a referenced feature under.
 	 *
-	 * The default is its `gml:id`, which is what a local `#` fragment
-	 * and a stored-query `Id` parameter both name.
 	 * A feature carrying no key is skipped, because an address cannot reference it.
+	 *
+	 * @defaultValue its `gml:id`, which is what a local `#` fragment
+	 * and a stored-query `Id` parameter both name.
 	 */
 	key?: (feature: MarkupElement) => string | null
 

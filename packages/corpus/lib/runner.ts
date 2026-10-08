@@ -97,7 +97,7 @@ export interface RunAdapterOptions {
 	/**
 	 * Base-2 logarithm of the fingerprint table's slot count.
 	 *
-	 * Defaults to {@linkcode DEFAULT_DEDUP_SLOTS_LOG2}.
+	 * @defaultValue {@linkcode DEFAULT_DEDUP_SLOTS_LOG2}
 	 * A test sets it low to keep the allocation small.
 	 */
 	dedupSlotsLog2?: number
@@ -131,8 +131,9 @@ export interface RunAdapterOptions {
 	/**
 	 * Yielded-row interval at which `onProgress` fires.
 	 *
-	 * Defaults to 1000 rows per callback.
 	 * The runner always emits a terminal update.
+	 *
+	 * @defaultValue `1000` rows per callback.
 	 */
 	progressEvery?: number
 }

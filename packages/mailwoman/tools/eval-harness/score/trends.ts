@@ -169,13 +169,13 @@ export interface ScoreTrendsOptions {
 	/**
 	 * The eval ledger.
 	 *
-	 * Default `evals/scores-by-version.json`.
+	 * @defaultValue `evals/scores-by-version.json`
 	 */
 	ledger?: string
 	/**
 	 * Destination markdown.
 	 *
-	 * Default `docs/records/evals/score-trends.md`.
+	 * @defaultValue `docs/records/evals/score-trends.md`
 	 */
 	out?: string
 }

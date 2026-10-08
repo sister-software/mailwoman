@@ -63,14 +63,14 @@ export interface NormalizeOpts {
 	/**
 	 * Apply locale-aware lowercasing.
 	 *
-	 * Default: false (preserve case for downstream consumers).
+	 * @defaultValue `false` (preserve case for downstream consumers)
 	 */
 	caseFold?: boolean
 
 	/**
 	 * Expand known abbreviations (`St` → `Street`, `NW` → `Northwest`, etc.).
 	 *
-	 * Default: false.
+	 * @defaultValue `false`
 	 */
 	expandAbbreviations?: boolean
 

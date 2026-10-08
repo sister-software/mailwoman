@@ -84,11 +84,12 @@ export interface BuildBDCOptions {
 
 	/**
 	 * Whether to populate `bdc_availability.location_id`.
-	 * Defaults to false.
 	 *
 	 * The column is an opaque join key.
 	 * When it is off, rows with the same block and service collapse into one,
 	 * so `BuildBDCResult.rows` counts those tuples instead of locations.
+	 *
+	 * @defaultValue `false`
 	 */
 	includeLocationIDs?: boolean
 
@@ -115,7 +116,8 @@ export interface BuildBDCOptions {
 
 	/**
 	 * The date for the primary-FRN filing query.
-	 * Defaults to `asOfDate`.
+	 *
+	 * @defaultValue `asOfDate`
 	 */
 	primaryFRNAsOf?: string
 }

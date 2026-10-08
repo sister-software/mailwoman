@@ -53,7 +53,9 @@ export interface OracleKOptions {
 	 */
 	goldenDir?: string
 	/**
-	 * Hypotheses kept per input (default 10).
+	 * Hypotheses kept per input.
+	 *
+	 * @defaultValue `10`
 	 */
 	k?: number
 	/**

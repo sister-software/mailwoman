@@ -37,19 +37,19 @@ export interface EvalLatinOffmapOptions {
 	/**
 	 * Model artifact dir.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/coarse-placer/model`
 	 */
 	model?: PathBuilderLike
 	/**
 	 * Abstention threshold.
 	 *
-	 * Default 0.5.
+	 * @defaultValue `0.5`
 	 */
 	abstain?: number
 	/**
 	 * Dataset dir holding the Latin off-map test sets.
 	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

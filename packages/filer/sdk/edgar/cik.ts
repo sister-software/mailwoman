@@ -219,7 +219,7 @@ export interface ResolveCIKOptions {
 	/**
 	 * Minimum score a candidate must clear to be reported at all.
 	 *
-	 * Defaults to {@linkcode DEFAULT_MIN_SCORE}.
+	 * @defaultValue {@linkcode DEFAULT_MIN_SCORE}
 	 * `nameSimilarity`'s own Jaro-Winkler boost threshold, below which two names
 	 * have no meaningful similarity at all.
 	 */
@@ -227,7 +227,7 @@ export interface ResolveCIKOptions {
 	/**
 	 * Cap on the number of candidates returned, highest score first.
 	 *
-	 * Defaults to {@linkcode DEFAULT_CANDIDATE_LIMIT}.
+	 * @defaultValue {@linkcode DEFAULT_CANDIDATE_LIMIT}
 	 * `company_tickers.json` contains more than 10,000 rows.
 	 * A report of every candidate below a real match adds noise.
 	 *

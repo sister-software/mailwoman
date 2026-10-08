@@ -37,7 +37,7 @@ export interface ScoreAffixOptions {
 	/**
 	 * Eval jsonl.
 	 *
-	 * Default `data/eval/external/street-affix-real.jsonl`.
+	 * @defaultValue `data/eval/external/street-affix-real.jsonl`
 	 */
 	file?: string
 	/**
@@ -54,18 +54,21 @@ export interface ScoreAffixOptions {
 	json?: string
 	/**
 	 * `auto` or `<system>` enables the address-system conventions mask.
-	 * It defaults to `"off"`.
+	 *
+	 * @defaultValue `"off"`
 	 */
 	conventions?: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
-	 * It defaults to {@linkcode DEFAULT_TOGGLE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	bridgePunctuationGaps?: Toggle
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode
 	 * (paired with {@linkcode ScoreAffixOptions.gazetteerLexicon}).
-	 * It defaults to {@linkcode DEFAULT_TOGGLE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
 	suppressGazetteerNearPostcode?: Toggle
 	/**

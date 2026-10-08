@@ -73,7 +73,7 @@ export interface LintRecipeOutputOptions {
 	/**
 	 * Anti-pattern rules JSON.
 	 *
-	 * Default: the `lint-rules.json` beside this module.
+	 * @defaultValue the `lint-rules.json` beside this module.
 	 */
 	rulesPath?: string
 	/**

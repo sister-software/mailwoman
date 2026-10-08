@@ -243,14 +243,14 @@ export interface CreateSECClientOptions {
 	/**
 	 * SEC edgar fair-access User-Agent, e.g. `"Nirrius, LLC support@nirri.us"`.
 	 *
-	 * Defaults to `$private.SEC_EDGAR_USER_AGENT` when omitted.
+	 * @defaultValue {@linkcode $private.SEC_EDGAR_USER_AGENT} when omitted.
 	 */
 	userAgent?: string
 	/**
 	 * Desired requests/second.
 	 *
 	 * Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` regardless of what's passed.
-	 * Defaults to {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below
+	 * @defaultValue {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below
 	 * the policy ceiling on purpose.
 	 * See that constant for the measurement behind it.
 	 */
@@ -258,15 +258,16 @@ export interface CreateSECClientOptions {
 	/**
 	 * Time source powering the pacer and the retry backoff.
 	 *
-	 * Defaults to the system clock.
 	 * Tests inject a fake clock so rate-limit and retry behavior are deterministic
 	 * and fast — no wall-clock sleeps in the suite.
+	 *
+	 * @defaultValue the system clock.
 	 */
 	clock?: ClockLike
 	/**
 	 * On-disk cache root.
 	 *
-	 * Defaults to `dataRootPath("sec", "cache")`, resolved once at construction (the standalone client
+	 * @defaultValue `dataRootPath("sec", "cache")`, resolved once at construction (the standalone client
 	 * re-resolved it per request. Construct the client after setting `$MAILWOMAN_DATA_ROOT` instead).
 	 */
 	cacheDir?: PathBuilderLike

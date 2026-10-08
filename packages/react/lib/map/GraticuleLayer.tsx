@@ -22,7 +22,9 @@ export interface GraticuleLayerProps {
 	 */
 	beforeID?: string
 	/**
-	 * Hides the grid. @default false
+	 * Hides the grid.
+	 *
+	 * @defaultValue `false`
 	 */
 	hidden?: boolean
 }

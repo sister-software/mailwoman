@@ -92,10 +92,11 @@ export interface OverlayFile {
 	source: string
 	/**
 	 * The split that the file's rows belong to.
-	 * The default is `train`.
 	 *
 	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
 	 * so that the holdout policy chooses held-out rows.
+	 *
+	 * @defaultValue `train`
 	 */
 	split?: SplitName
 }

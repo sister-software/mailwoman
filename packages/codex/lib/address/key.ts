@@ -47,7 +47,7 @@ export interface CanonicalKeyOptions {
 	/**
 	 * Field separator in the emitted key.
 	 *
-	 * Default `"|"` — preserves field boundaries for blocking.
+	 * @defaultValue `"|"` — preserves field boundaries for blocking.
 	 */
 	separator?: string
 }

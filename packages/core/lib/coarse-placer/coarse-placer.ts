@@ -129,13 +129,14 @@ export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 export interface CoarsePlacerOpts {
 	/**
 	 * The minimum confidence for a prediction.
-	 * The default is `0.5`.
+	 *
+	 * @defaultValue `0.5`
 	 */
 	abstainBelow?: number
 	/**
 	 * Abstains on the total probability of in-map classes and otherwise returns the top in-map class.
 	 *
-	 * The default is `false`, which abstains on the top-class probability.
+	 * @defaultValue `false`, which abstains on the top-class probability.
 	 */
 	openSet?: boolean
 }

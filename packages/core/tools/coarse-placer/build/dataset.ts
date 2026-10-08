@@ -28,12 +28,14 @@ interface DatasetRow {
 export interface BuildDatasetOptions {
 	/**
 	 * The number of rows sampled per country.
-	 * The default is 50,000.
+	 *
+	 * @defaultValue `50,000`
 	 */
 	perCountry?: number
 	/**
 	 * The output directory.
-	 * The default is `<repo>/data/coarse-placer`.
+	 *
+	 * @defaultValue `<repo>/data/coarse-placer`
 	 */
 	data?: PathBuilderLike
 }

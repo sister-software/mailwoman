@@ -33,37 +33,37 @@ export interface SerializeXMLOpts {
 	/**
 	 * Pretty-print with line breaks and indentation.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	pretty?: boolean
 	/**
 	 * Include `conf` attribute on every component.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	includeConf?: boolean
 	/**
 	 * Include `start` + `end` char-offset attributes.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	includeOffsets?: boolean
 	/**
 	 * Include `src` provenance attribute when the node has source info.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	includeSrc?: boolean
 	/**
 	 * Include `lat` + `lon` resolver-supplied centroid attrs when set on the node.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	includeGeo?: boolean
 	/**
 	 * Include `place` resolver-supplied normalized place URI when set.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	includePlace?: boolean
 	/**
@@ -71,17 +71,18 @@ export interface SerializeXMLOpts {
 	 *
 	 * When set and `node.alternatives` is populated, each runner-up is emitted as a
 	 * self-closing element with `place`, `name`, `lat`, `lon`, `score` attributes.
-	 * Default false keeps the output libpostal-compatible unless the caller asks.
+	 *
+	 * @defaultValue `false`, which keeps the output libpostal-compatible unless the caller asks.
 	 */
 	includeAlternatives?: boolean
 	/**
 	 * Emit `<unknown start end>…</unknown>` elements for all-O runs that no node covers.
 	 * Those runs contain input the model left unclassified.
 	 *
-	 * Interleaved with the root components in source order, so the `<address>`
-	 * children tile the raw input exactly.
-	 * Default false keeps the output libpostal-compatible unless the caller asks.
-	 * {@link includeAlternatives} uses the same default.
+	 * Interleaved with the root components in source order, so the `<address>` children
+	 * tile the raw input exactly. {@link includeAlternatives} uses the same default.
+	 *
+	 * @defaultValue `false`, which keeps the output libpostal-compatible unless the caller asks.
 	 */
 	includeUnknown?: boolean
 }

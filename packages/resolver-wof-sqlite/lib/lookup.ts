@@ -65,13 +65,15 @@ export interface WOFSQLitePlaceLookupOpts {
 	/**
 	 * When true, build the FTS5 `place_search` virtual table on construction if
 	 * it is missing, on the main extract only.
-	 * Default false.
+	 *
+	 * @defaultValue `false`
 	 */
 	buildFTS?: boolean
 	/**
 	 * Geographic Rule Engine convention source, either a ready `ConventionSource`
 	 * or a `{ wofID: Convention }` seed map.
-	 * Default empty resolves every query to `WORLD_DEFAULT`.
+	 *
+	 * @defaultValue `[]`. An empty list resolves every query to `WORLD_DEFAULT`.
 	 */
 	conventions?: ConventionSource | Record<number, Convention>
 	/**

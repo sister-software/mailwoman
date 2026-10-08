@@ -26,13 +26,13 @@ export interface ServeRangeOptions {
 	/**
 	 * Directory to serve.
 	 *
-	 * Default `/tmp`.
+	 * @defaultValue `/tmp`
 	 */
 	dir?: string
 	/**
 	 * Port to listen on.
 	 *
-	 * Default 8899.
+	 * @defaultValue `8899`
 	 */
 	port?: number
 }

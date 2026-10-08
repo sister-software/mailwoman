@@ -33,31 +33,31 @@ export interface GoldSetSampleOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * Providers sampled from the registry.
 	 *
-	 * Default 200000.
+	 * @defaultValue `200000`
 	 */
 	cap?: number
 	/**
 	 * State filter.
 	 *
-	 * Default TX.
+	 * @defaultValue TX.
 	 */
 	state?: string
 	/**
 	 * Org-name Jaccard collision threshold.
 	 *
-	 * Default 0.7.
+	 * @defaultValue `0.7`
 	 */
 	tau?: number
 	/**
 	 * Adjudication sample size.
 	 *
-	 * Default 300.
+	 * @defaultValue `300`
 	 */
 	n?: number
 	/**

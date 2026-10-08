@@ -55,7 +55,9 @@ export const BODY_RADII_KM = {
 export interface GreatCircleOptions {
 	unit?: EarthRadiusUnit
 	/**
-	 * Which body's mean radius scales the arc. @default "earth"
+	 * Which body's mean radius scales the arc.
+	 *
+	 * @defaultValue `"earth"`
 	 */
 	body?: PlanetaryBodyID
 }

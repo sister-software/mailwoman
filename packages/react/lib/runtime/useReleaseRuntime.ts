@@ -104,7 +104,8 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 
 	/**
 	 * The progress line shown before the manifest arrives.
-	 * Defaults to `Loading releases…`.
+	 *
+	 * @defaultValue `"Loading releases…"`
 	 */
 	initialProgress?: string
 }

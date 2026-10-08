@@ -56,18 +56,21 @@ export interface PoBoxAdapterOptions {
 	/**
 	 * Probability (0..1) of emitting a PMB-with-street variant when the input has
 	 * a street and the locale supports PMB.
-	 * The default is 0.15.
+	 *
+	 * @defaultValue `0.15`
 	 */
 	pmbRatio?: number
 	/**
 	 * Deterministic seed for reproducible synthesis.
-	 * The default is `Date.now()`.
+	 *
+	 * @defaultValue `Date.now()`
 	 */
 	seed?: number
 	/**
 	 * Probability (0..1) per input tuple of additionally emitting one self-contained US
 	 * military/diplomatic PO-box row, so military volume scales with the input stream.
-	 * The default is 0.
+	 *
+	 * @defaultValue `0`
 	 */
 	militaryRatio?: number
 }

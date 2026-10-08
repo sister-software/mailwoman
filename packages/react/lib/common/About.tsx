@@ -15,7 +15,7 @@ export interface AboutProps {
 	 * Set false where the host is already the disclosure, because a summary repeating
 	 * an About button's words is one control too many.
 	 *
-	 * @default true
+	 * @defaultValue `true`
 	 */
 	collapsible?: boolean
 }

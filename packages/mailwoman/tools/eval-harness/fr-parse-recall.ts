@@ -78,7 +78,7 @@ export interface FRParseRecallOptions {
 	/**
 	 * Model card that supplies the candidate's labels.
 	 *
-	 * It defaults to `packages/neural-weights-en-us/model-card.json`.
+	 * @defaultValue `packages/neural-weights-en-us/model-card.json`
 	 */
 	modelCard?: string
 
@@ -90,7 +90,8 @@ export interface FRParseRecallOptions {
 
 	/**
 	 * JSONL fixture of French bare-street rows.
-	 * It defaults to the bundled `fr-bare-street-40.jsonl`.
+	 *
+	 * @defaultValue the bundled `fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string
 

@@ -51,14 +51,15 @@ export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	/**
 	 * Dump directory to read from.
 	 *
-	 * Defaults to GeoNames' own.
 	 * Exists so the 404 and coverage behavior can be exercised against a local server.
+	 *
+	 * @defaultValue GeoNames' own.
 	 */
 	baseURL?: string
 	/**
 	 * Refetch a dump whose `<CC>.txt` already exists.
 	 *
-	 * Default false — the tool fills gaps.
+	 * @defaultValue `false` — the tool fills gaps
 	 */
 	force?: boolean
 }

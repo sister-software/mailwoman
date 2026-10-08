@@ -242,7 +242,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	fuzzyCountryScope?: string
 	/**
 	 * How the classifier treats letter case.
-	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_CASE_NORMALIZATION}
 	 */
 	caseNormalization?: CaseNormalization
 	/**
@@ -264,7 +265,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * How a confident placer or postcode-format country constrains resolution.
-	 * The default is {@link DEFAULT_PLACER_COUNTRY_USE}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_PLACER_COUNTRY_USE}
 	 */
 	placerCountryUse?: PlacerCountryUse
 	/**

@@ -89,7 +89,9 @@ export const DEFAULT_MAPPING: ColumnMapping = {
 }
 
 /**
- * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
+ * Resolve --mapping (a file path or inline JSON) and merge it over `base`.
+ *
+ * @param base [{@linkcode DEFAULT_MAPPING}] The mapping the provided one overrides.
  */
 export async function loadMapping(
 	option: string | null,
@@ -190,19 +192,19 @@ export interface EvalGeocoderFlags {
 	/**
 	 * WOF admin SQLite path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`
 	 */
 	wof?: string
 	/**
 	 * Per-state database root.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT`
 	 */
 	dataRoot?: string
 	/**
 	 * Weights locale.
 	 *
-	 * Default en-US.
+	 * @defaultValue `"en-US"`
 	 */
 	locale?: string
 	/**

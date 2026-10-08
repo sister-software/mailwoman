@@ -87,7 +87,8 @@ export interface PostalAddress {
 export interface ToPostalAddressOptions {
 	/**
 	 * Supplies the country for formatting as an ISO-2 code or a name.
-	 * It defaults to the `country` component.
+	 *
+	 * @defaultValue the `country` component.
 	 */
 	country?: string | null
 
@@ -98,7 +99,8 @@ export interface ToPostalAddressOptions {
 
 	/**
 	 * Indicates whether to compute the `formatted` string.
-	 * It defaults to `true`.
+	 *
+	 * @defaultValue `true`
 	 */
 	format?: boolean
 

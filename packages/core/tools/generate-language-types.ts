@@ -36,7 +36,7 @@ export interface GenerateLanguageTypesOptions {
 	/**
 	 * Output path override.
 	 *
-	 * Default: `core/resources/languages/types.gen.ts` (the committed types).
+	 * @defaultValue `core/resources/languages/types.gen.ts` (the committed types).
 	 */
 	out?: string
 }

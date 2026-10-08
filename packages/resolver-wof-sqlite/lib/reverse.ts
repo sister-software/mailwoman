@@ -103,19 +103,21 @@ export interface ReverseGeocodeOpts {
 	/**
 	 * Restrict the hierarchy to these placetypes (both the bbox candidates and the descent tiers).
 	 *
-	 * Default: every admin placetype in the gazetteer.
 	 * E.g.
 	 *
 	 * `["region", "county", "locality"]` to skip the neighborhood grain.
+	 *
+	 * @defaultValue every admin placetype in the gazetteer.
 	 */
 	placetypes?: WOFPlacetype[]
 	/**
 	 * Cap on the bbox candidate fetch.
 	 *
-	 * The default is 128.
 	 * Current measurements show that this covers a dense metro.
 	 *
 	 * The most bbox-overlapping point we have measured is a few dozen neighborhoods plus the admin chain.
+	 *
+	 * @defaultValue `128`
 	 */
 	maxCandidates?: number
 	/**
@@ -124,7 +126,8 @@ export interface ReverseGeocodeOpts {
 	 * This keeps a sparse gazetteer from "refining" to a far-away sibling.
 	 *
 	 * Polygon-confirmed steps ignore it (containment is exact regardless of centroid distance).
-	 * Default 25 km.
+	 *
+	 * @defaultValue `25 km`
 	 */
 	maxApproximateKm?: number
 }

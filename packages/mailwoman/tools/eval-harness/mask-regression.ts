@@ -66,31 +66,31 @@ export interface MaskRegressionOptions {
 	/**
 	 * ONNX artifact.
 	 *
-	 * Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	model?: string
 	/**
 	 * SentencePiece tokenizer.
 	 *
-	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: PathBuilderLike
 	/**
 	 * Model card JSON.
 	 *
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	modelCard?: string
 	/**
 	 * Anchor lookup JSON.
 	 *
-	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	anchorLookup?: PathBuilderLike
 	/**
 	 * Gazetteer lexicon JSON.
 	 *
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**
@@ -99,7 +99,7 @@ export interface MaskRegressionOptions {
 	 * 2pp, a finer net than the load-time delta check's 5pp, so subtler interaction harms surface at release.
 	 * A tag whose mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
 	 *
-	 * Default 0.02.
+	 * @defaultValue `0.02`
 	 */
 	threshold?: number
 	/**

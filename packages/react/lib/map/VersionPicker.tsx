@@ -22,7 +22,7 @@ export interface VersionPickerProps {
 	 */
 	disabled?: boolean
 	/**
-	 * @default "Model version"
+	 * @defaultValue `"Model version"`
 	 */
 	label?: string
 }

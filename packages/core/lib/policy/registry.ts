@@ -32,9 +32,11 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
 	/**
-	 * Build a registry pre-loaded with `mode` for every component (default `neural_only`).
+	 * Build a registry pre-loaded with `mode` for every component.
 	 *
 	 * The input-shape router passes a shape-derived default so the whole table starts from the routed prior.
+	 *
+	 * @param mode ["neural_only"] The policy every component starts with.
 	 */
 	static withDefaults(mode: PolicyMode = "neural_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()

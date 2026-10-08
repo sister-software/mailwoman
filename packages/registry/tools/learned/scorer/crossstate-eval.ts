@@ -58,25 +58,25 @@ export interface ScorerCrossStateEvalOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * State the GBT/LR train on.
 	 *
-	 * Default TX.
+	 * @defaultValue TX.
 	 */
 	trainState?: string
 	/**
 	 * Held-out state clustered.
 	 *
-	 * Default CA.
+	 * @defaultValue CA.
 	 */
 	evalState?: string
 	/**
 	 * NPIs sampled per state.
 	 *
-	 * Default 2000.
+	 * @defaultValue `2000`
 	 */
 	npis?: number
 	/**

@@ -311,7 +311,7 @@ export interface ParseForm499WorkbookOptions {
 	/**
 	 * Sheet to read, as a 1-based number or a name.
 	 *
-	 * Defaults to the first.
+	 * @defaultValue the first.
 	 */
 	sheet?: number | string
 }

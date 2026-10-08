@@ -43,7 +43,8 @@ export interface SourceSpec {
 	inState: (row: Record<string, string>) => boolean
 	/**
 	 * Optional: a row carrying ≥1 addressable entity yields each as its own row.
-	 * Default identity.
+	 *
+	 * @defaultValue identity.
 	 */
 	explode?: (row: Record<string, string>) => Record<string, string>[]
 }

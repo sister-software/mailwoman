@@ -36,7 +36,7 @@ export interface MailwomanFastifyOptions {
 	resolveDatabasePath?: string
 	/**
 	 * Locale for model weights and default per-call options.
-	 * Defaults to `"en-US"`.
+	 * @defaultValue `"en-US"`
 	 */
 	locale?: Intl.UnicodeBCP47LocaleIdentifier
 	/**

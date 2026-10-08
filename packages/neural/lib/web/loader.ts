@@ -238,7 +238,8 @@ export interface LoadFromURLsOptions {
 
 	/**
 	 * The fetch implementation.
-	 * The default is `globalThis.fetch`.
+	 *
+	 * @defaultValue `globalThis.fetch`
 	 */
 	fetchImpl?: typeof fetch
 }

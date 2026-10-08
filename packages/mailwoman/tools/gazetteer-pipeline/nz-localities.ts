@@ -79,13 +79,13 @@ export interface BuildNZLocalitiesOptions {
 	/**
 	 * The linz-derived OpenAddresses NZ countrywide CSV.
 	 *
-	 * Default `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
+	 * @defaultValue `<data-root>/openaddresses/extracted/nz/countrywide.csv`
 	 */
 	csvPath?: PathBuilderLike
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/db/wof/localities-nz-linz.db`.
+	 * @defaultValue `<data-root>/db/wof/localities-nz-linz.db`
 	 */
 	out?: PathBuilderLike
 }

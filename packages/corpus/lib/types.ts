@@ -195,7 +195,7 @@ export interface SourceProvenance {
 	/**
 	 * The license label or SPDX id for this row.
 	 *
-	 * It defaults to the adapter's `defaultLicense`, and sources with per-record terms override it.
+	 * @defaultValue the adapter's `defaultLicense`, and sources with per-record terms override it.
 	 */
 	license: string
 }

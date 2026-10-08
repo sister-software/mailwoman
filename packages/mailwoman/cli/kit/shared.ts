@@ -206,7 +206,8 @@ export interface CommandTaskResultProps<T> {
 	running?: React.ReactNode
 	/**
 	 * Content shown after success.
-	 * Defaults to `String(result)`.
+	 *
+	 * @defaultValue `String(result)`
 	 */
 	done?: (result: T) => React.ReactNode
 }

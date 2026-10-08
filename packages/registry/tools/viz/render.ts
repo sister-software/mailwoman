@@ -32,13 +32,13 @@ export interface RenderPlotlyOptions {
 	/**
 	 * Viewport width.
 	 *
-	 * Default 1160.
+	 * @defaultValue `1160`
 	 */
 	width?: number
 	/**
 	 * Viewport height.
 	 *
-	 * Default 1000.
+	 * @defaultValue `1000`
 	 */
 	height?: number
 }

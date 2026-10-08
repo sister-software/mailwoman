@@ -43,7 +43,7 @@ export interface GenerateCountryReferenceOptions {
 	/**
 	 * Overrides the output path.
 	 *
-	 * The default is the committed `codex/country/reference-data.ts`.
+	 * @defaultValue the committed `codex/country/reference-data.ts`.
 	 */
 	out?: string
 }

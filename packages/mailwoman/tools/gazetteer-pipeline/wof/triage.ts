@@ -143,7 +143,8 @@ export interface TriageOptions {
 
 	/**
 	 * The ISO 3166-1 alpha-2 countries to triage.
-	 * Defaults to every country in the database.
+	 *
+	 * @defaultValue every country in the database.
 	 */
 	countries?: readonly string[]
 

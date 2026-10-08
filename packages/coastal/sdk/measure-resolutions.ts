@@ -26,7 +26,7 @@ export interface MeasureResolutionsOptions extends CoastalIngestOptions, Resolut
 	/**
 	 * Which scenarios to measure.
 	 *
-	 * Defaults to all twelve.
+	 * @defaultValue all twelve.
 	 */
 	scenarioKeys?: ReadonlyArray<string>
 }

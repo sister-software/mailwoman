@@ -72,7 +72,8 @@ export interface CIKCorroborationOptions {
 	pinnedCIKs?: ReadonlySet<string>
 	/**
 	 * Accepted SIC codes.
-	 * The default is {@linkcode TELECOM_SIC_CODES}.
+	 *
+	 * @defaultValue {@linkcode TELECOM_SIC_CODES}
 	 */
 	acceptedSICCodes?: ReadonlySet<string>
 }
