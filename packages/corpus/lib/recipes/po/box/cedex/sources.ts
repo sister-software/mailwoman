@@ -5,7 +5,7 @@
 import { isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { isNZPostcode } from "@mailwoman/codex/nz"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator, TSVSpliterator } from "spliterator"

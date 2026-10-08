@@ -16,7 +16,7 @@
  *   CLI.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { dirtyTrackedFiles } from "@mailwoman/core/git"
 import { resolvePath } from "path-ts"
 import { $ } from "zx"

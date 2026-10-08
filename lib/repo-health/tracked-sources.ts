@@ -13,7 +13,7 @@
  *   and `.yarn`.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { isPresent } from "@mailwoman/core/objects"
 import { resolvePath } from "path-ts"
 

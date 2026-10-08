@@ -10,7 +10,7 @@
  *   only `notcom` or access-denied polygons reach, get no coverage row.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import {
 	areaAgreementFrom,
 	createLayerCoverageTable,

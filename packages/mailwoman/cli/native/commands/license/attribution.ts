@@ -8,7 +8,8 @@
  *   Upstream attribution and share-alike conditions still apply.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import type { PathBuilder } from "path-ts"
 

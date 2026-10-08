@@ -19,7 +19,7 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { basename, type PathBuilderLike } from "path-ts"
 

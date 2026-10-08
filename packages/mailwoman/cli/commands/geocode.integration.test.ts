@@ -6,7 +6,7 @@
  *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus DB-conditional integration tests that run only when live database files are present.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"

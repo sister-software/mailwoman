@@ -8,7 +8,8 @@
  *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed on this file's `import.meta.url`, and no code touches `import.meta.resolve`, because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter. Only a docs build can verify a change to that.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 import { syncArtifact } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"

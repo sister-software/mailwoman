@@ -7,6 +7,7 @@
  */
 
 export * from "#api/APIClient"
+export { type IRuntimeLogger } from "#logging/shared"
 export * from "#api/arcgis"
 export * from "#api/ckan"
 export * from "#api/clock"

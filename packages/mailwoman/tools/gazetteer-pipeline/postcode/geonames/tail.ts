@@ -9,7 +9,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
@@ -35,8 +35,6 @@ import {
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer/defaults"
 import type { BuildFTSResult } from "#gazetteer/fts"
 import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer/stamp-manifest"
-
-export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer/defaults"
 
 /**
  * The terms the artifact's `layer_manifest` records for a given country list,

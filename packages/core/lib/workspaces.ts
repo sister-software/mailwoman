@@ -12,7 +12,7 @@
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { tryStat } from "#fs/readers"
+import { tryStat } from "#fs/readers/stat"
 import { stringifyJSON } from "#json"
 import { readPackageJSON } from "#module/resolve-from"
 

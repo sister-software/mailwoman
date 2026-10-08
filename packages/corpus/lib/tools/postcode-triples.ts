@@ -11,7 +11,7 @@
 import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex/country"
 import { foldName } from "@mailwoman/codex/normalize"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { assertPathExists } from "@mailwoman/core/fs/readers"
+import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

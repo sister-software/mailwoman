@@ -5,19 +5,16 @@
  */
 
 import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { scriptFamilyBase } from "#char-encoder"
+import type { EncoderDescriptor } from "#char-encoder"
 import { PlacetypeCensusResolver } from "#placetype/census"
-import {
-	type EncoderDescriptor,
-	packageHasBinaries,
-	readEncoderFromModelCard,
-	resolveCharVocab,
-} from "#weights/channels"
+import { packageHasBinaries, readEncoderFromModelCard, resolveCharVocab } from "#weights/channels"
 import { resolveEvidenceLexicon } from "#weights/lexicon"
 
 /**

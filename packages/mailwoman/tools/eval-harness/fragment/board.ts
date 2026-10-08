@@ -38,8 +38,6 @@ import {
 	type SpanBoardResult,
 } from "#tools/eval-harness/span-board"
 
-export { wilson } from "#tools/eval-harness/span-board"
-
 /**
  * Fixture set backing the fragment board, with bare-street and partial-address probes.
  */

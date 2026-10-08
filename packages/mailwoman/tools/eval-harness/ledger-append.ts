@@ -24,7 +24,8 @@
  *       [--card neural-weights-en-us/model-card.json] [--notes "..."] [--replace]
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isoDate } from "@mailwoman/core/utils"
 

@@ -8,8 +8,9 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "#build/candidate"
-import { rankByPrimaryPreference, WOFCandidateTableLookup } from "#candidate/lookup"
+import { WOFCandidateTableLookup } from "#candidate/lookup"
 import { ALIAS_SEPARATOR } from "#fts"
+import { rankByPrimaryPreference } from "#primary-preference"
 import type { WOFDatabase } from "#schema"
 import type { FindPlaceQuery } from "#types"
 

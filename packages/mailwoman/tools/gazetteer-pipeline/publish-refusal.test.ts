@@ -7,7 +7,7 @@
  *   tier refuses and an absent manifest refuses. Each refusal explains what would lift it.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { LayerTier } from "@mailwoman/core/layers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

@@ -14,8 +14,6 @@ import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar/filings"
 import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "#sdk/edgar/ingest"
 import { createSECClient } from "#sdk/sec-client"
 
-export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
-
 /**
  * Options for {@link filerEdgarIngest}.
  */

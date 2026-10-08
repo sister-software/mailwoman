@@ -30,7 +30,8 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 
 import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { gzipSync } from "@mailwoman/core/fs/compression"
-import { statPath, realPath, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createRequire } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"

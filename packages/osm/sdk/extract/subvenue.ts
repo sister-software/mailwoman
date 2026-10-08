@@ -21,18 +21,6 @@ import { representativePoint } from "#sdk/representative-point"
 import { tagAlias } from "#sdk/tag-columns"
 
 /**
- * This module re-exports the sub-venue tag rules and SQL helpers for callers that customize rules.
- */
-export {
-	buildSubVenueSQL,
-	distinctSubVenueTagKeys,
-	matchSubVenueTagRule,
-	type SubVenueTagRule,
-	SubVenueTier,
-	SUBVENUE_TAG_RULES,
-} from "#sdk/extract/subvenue/rules"
-
-/**
  * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object.
  * The parser returns an empty object for missing input.
  *

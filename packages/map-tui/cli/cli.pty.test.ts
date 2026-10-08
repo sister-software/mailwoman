@@ -11,7 +11,7 @@
  * controlling-terminal-less pty reports 0x0.
  */
 
-import { isExecutable } from "@mailwoman/core/fs/readers"
+import { isExecutable } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcess } from "@mailwoman/core/process"
 import { sleep } from "@mailwoman/core/utils/sleep"

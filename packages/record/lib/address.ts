@@ -5,8 +5,9 @@
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address/format"
+import { type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address/format"
 import { canonicalKey } from "@mailwoman/codex/address/key"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import type { GeoCoordinate } from "@mailwoman/spatial"
 
 /**

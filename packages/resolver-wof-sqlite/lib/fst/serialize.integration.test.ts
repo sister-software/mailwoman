@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { buildFSTFromWOF, FSTMatcher, type FSTNode, deserializeFST, serializeFST } from "#fst"

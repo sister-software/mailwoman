@@ -34,7 +34,8 @@
 
 import { APIClient, assertNoOGCServiceException, type CheckedWFSFeatureCount } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { readFileRange, tryStat } from "@mailwoman/core/fs/readers"
+import { readFileRange } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { appendLocalTextFile, makeDirectories, removePathIfPresent, truncateFile } from "@mailwoman/core/fs/writers"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -5,7 +5,8 @@
  * @file Applies a module move plan to the checkout and re-resolves every rewritten specifier against the real tree.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { git } from "@mailwoman/core/git"
 import { dirname, resolvePath } from "path-ts"

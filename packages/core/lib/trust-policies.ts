@@ -24,8 +24,6 @@ import { trustedTypes } from "trusted-types"
 
 import { escapeHTML } from "#strings/escape"
 
-export { escapeHTML } from "#strings/escape"
-
 /**
  * Untrusted html through DOMPurify's default allowlist: safe markup survives,
  * scripts and event handlers do not.

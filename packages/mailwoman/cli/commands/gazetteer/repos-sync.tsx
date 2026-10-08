@@ -7,7 +7,7 @@
  *   its old origin. This command repairs that, opt-in twice because it changes what the next build ingests.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { git } from "@mailwoman/core/git"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

@@ -77,11 +77,6 @@ export function localeHintID(table: AddressSystemTable, country: string | null, 
 }
 
 /**
- * The locale head's country order, re-exported from `#labels`.
- */
-export { LOCALE_COUNTRIES } from "#labels"
-
-/**
  * Returns the locale head's argmax country, or null when its probability is below the threshold.
  */
 function localeVerdict(

@@ -15,7 +15,7 @@
  *   than a number argued to.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { PathBuilder } from "path-ts"
 

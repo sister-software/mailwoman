@@ -58,7 +58,7 @@
  *   sample. A group whose members straddle the cap is reported with the members below it.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { md5Bytes } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

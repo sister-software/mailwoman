@@ -5,7 +5,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { describe, expect, it } from "vitest"
 
 import type { InputSetRef } from "#dev-mcp/input-sets"

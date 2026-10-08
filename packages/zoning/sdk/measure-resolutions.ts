@@ -70,5 +70,3 @@ export async function measureZoningCellResolutions(
 		measurements: indexes.map((index) => index.finish()),
 	}
 }
-
-export { formatResolutionRows } from "#sdk/cells"

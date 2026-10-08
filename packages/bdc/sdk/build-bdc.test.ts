@@ -6,7 +6,8 @@
  *   Tests for {@linkcode buildBDCDatabase}, the stage, materialize and seal build of `bdc.db`.
  */
 
-import { pathExists, statPath, readLocalBuffer, isFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath, isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
@@ -32,8 +33,9 @@ import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { BDCDatabase } from "#schema"
-import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "#sdk/build-bdc"
+import { buildBDCDatabase, peekProviderID, type BuildBDCResult } from "#sdk/build-bdc"
 import type { ProviderID } from "#sdk/common"
+import { geometryCentroid } from "#sdk/geometry"
 import type { BDCAvailabilityRow } from "#sdk/parsing"
 
 const GEOID_SF = "060750001001001"

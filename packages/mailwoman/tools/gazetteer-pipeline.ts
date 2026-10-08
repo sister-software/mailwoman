@@ -14,7 +14,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statLink } from "@mailwoman/core/fs/readers/stat"
 import {
 	changeMode,
 	copyFileTo,
@@ -677,4 +678,25 @@ export * from "#gazetteer/defaults"
 export * from "#gazetteer/fts"
 export * from "#gazetteer/verify"
 export * from "#gazetteer/admin"
+export * from "#gazetteer/admin/enrich"
+export * from "#gazetteer/admin/fold/geonames"
+export * from "#gazetteer/admin/fold/overture"
+export * from "#gazetteer/admin/fold/staleness"
+export * from "#gazetteer/admin/freeze"
+export * from "#gazetteer/admin/ingest-wof"
 export * from "#gazetteer/postcode"
+export * from "#gazetteer/postcode/binary"
+export * from "#gazetteer/postcode/centroid-fills"
+export * from "#gazetteer/postcode/zcta-centroids"
+export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer/defaults"
+
+export {
+	geonamesTailTerms,
+	type DatabaseMetaDatabase,
+	createDatabaseMetaTable,
+	writeMetaRows,
+	type GeonamesPostalSourceFact,
+	type BuildPostcodeGeonamesTailOptions,
+	type BuildPostcodeGeonamesTailResult,
+	buildPostcodeGeonamesTail,
+} from "#gazetteer/postcode/geonames/tail"

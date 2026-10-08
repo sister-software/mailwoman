@@ -15,8 +15,6 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { open } from "#fs/readers/stat"
 import { parseJSONStrict } from "#json"
 
-export * from "#fs/readers/stat"
-
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"
 

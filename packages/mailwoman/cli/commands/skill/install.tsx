@@ -5,7 +5,7 @@
  *
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyPath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { CommandError } from "@mailwoman/core/scripting/command"

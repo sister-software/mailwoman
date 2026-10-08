@@ -6,7 +6,7 @@
  * Tests {@linkcode filerLookup}, {@linkcode pickPrimaryFRN} and the `filer.db` acceptance criteria.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -42,7 +42,8 @@ import {
 	type FilerFamilyTable,
 	type FilerManifestTable,
 } from "#schema"
-import { buildFilerDatabase, type EdgarSubsidiaryRow } from "#sdk/build/filer"
+import type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
+import { buildFilerDatabase } from "#sdk/build/filer"
 import { clusterAuthoritativeComponents } from "#sdk/cluster-filers"
 import { mintFamilyID } from "#sdk/family-id"
 import type { Form499Row } from "#sdk/form499"

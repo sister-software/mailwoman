@@ -17,7 +17,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"

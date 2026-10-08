@@ -15,10 +15,6 @@ import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import { collectMatches } from "#postcode/repair"
 import type { TokenizedPiece } from "#tokenizer"
 
-// The pinned class order lives in `#labels`, and this alias name is kept
-// because the anchor feature layout indexes it.
-export { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
-
 /**
  * Anchor feature width = posterior over the locale set + a 2-d centroid.
  */

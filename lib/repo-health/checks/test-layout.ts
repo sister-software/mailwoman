@@ -5,7 +5,7 @@
  * @file Enforce that each test sits beside the module it covers.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, relative, resolvePath, sep } from "path-ts"
 

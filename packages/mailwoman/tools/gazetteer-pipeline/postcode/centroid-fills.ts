@@ -21,7 +21,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

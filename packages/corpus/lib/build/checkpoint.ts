@@ -15,7 +15,8 @@
  *   `build.test.ts` compares four output digests across two builds over one intermediate directory.
  */
 
-import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"

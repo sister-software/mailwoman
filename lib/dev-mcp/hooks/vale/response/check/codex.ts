@@ -28,7 +28,8 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 

@@ -14,7 +14,8 @@
  * cause the silent eval drift that the eval discipline catches.
  */
 
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 

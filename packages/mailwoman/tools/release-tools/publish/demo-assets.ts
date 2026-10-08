@@ -11,7 +11,8 @@
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"
-import { isDirectory, readFileSize, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { isDirectory, readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { relative, type PathBuilderLike } from "path-ts"

@@ -10,7 +10,7 @@
  *   suite that reads `null` skips rather than asserting on a model it does not have.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath } from "@mailwoman/core/paths"
 
 import { $public } from "#env"

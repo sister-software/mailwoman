@@ -10,7 +10,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"

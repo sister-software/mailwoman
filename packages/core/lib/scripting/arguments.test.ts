@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The argv accessors reach callers only through the `@mailwoman/core/scripting/utils` name re-exports, so a
- * function added to the module but not to that list is importable in the editor and `undefined` at runtime.
+ * The argv accessors `@mailwoman/core/scripting/arguments` exports.
  */
 
 import { describe, expect, it } from "vitest"
 
-import * as scriptingUtils from "#scripting/utils"
+import * as scriptingUtils from "#scripting/arguments"
 
-describe("@mailwoman/core/scripting/utils", () => {
-	it("re-exports every argv accessor", () => {
+describe("@mailwoman/core/scripting/arguments", () => {
+	it("exports every argv accessor", () => {
 		expect(typeof scriptingUtils.cliArguments, "cliArguments").toBe("function")
 		expect(typeof scriptingUtils.optionPropertyName, "optionPropertyName").toBe("function")
 		expect(typeof scriptingUtils.passThroughCLIArguments, "passThroughCLIArguments").toBe("function")

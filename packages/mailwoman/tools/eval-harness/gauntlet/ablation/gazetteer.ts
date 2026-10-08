@@ -6,7 +6,7 @@
  *   The {@linkcode AblationGazetteerProbe} implementation: only wof/admin-global-priority.db and wof/candidate.db are read, both optional, so a machine without them gets `available: false` and anchor-only grading.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

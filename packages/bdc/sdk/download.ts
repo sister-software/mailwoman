@@ -5,7 +5,7 @@
  * @file FCC BDC availability-file download + zip extraction.
  */
 
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractSingleFileZip } from "@mailwoman/core/fs/zip"
 import type { PathBuilderLike } from "path-ts"

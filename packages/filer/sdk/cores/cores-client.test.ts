@@ -10,13 +10,8 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
 import { toFRN, type FRN } from "#frn"
-import {
-	coresDetailURL,
-	fetchCORESRegistration,
-	parseCORESRegistration,
-	recaseUniform,
-	type CORESDocumentClient,
-} from "#sdk/cores/client"
+import { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from "#sdk/cores/document"
+import { parseCORESRegistration, recaseUniform } from "#sdk/cores/registration"
 
 async function fixture(name: string): Promise<string> {
 	return readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "cores", name))

@@ -12,8 +12,6 @@ import { defaultScriptForCountry, layoutForCountry, lineJoinForCountry, type Add
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
-export type { ComponentDict } from "#address/render"
-
 /**
  * Options accepted by {@linkcode formatAddress} and {@linkcode formatAddressRow}.
  */

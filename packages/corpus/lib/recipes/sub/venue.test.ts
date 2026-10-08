@@ -9,23 +9,19 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
+import { allocate, buildSubVenueForm, isBoardReserved, SUBVENUE_LEGS, type SubVenueLeg } from "#recipes/sub/venue"
+import { buildStreetNegatives } from "#recipes/sub/venue/context"
 import {
-	allocate,
 	buildIdentifierModel,
-	buildSubVenueForm,
-	buildStreetNegatives,
 	containsPhrase,
 	defaultLexiconPath,
 	hasPromotedShape,
-	isBoardReserved,
 	isSignIdentifier,
 	matchesPromotedShape,
 	promotedSurfacesFor,
 	readSubVenueLexicon,
 	sampleIdentifier,
-	SUBVENUE_LEGS,
-	type SubVenueLeg,
-} from "#recipes/sub/venue"
+} from "#recipes/sub/venue/sources"
 import { SUBVENUE_PROMOTIONS } from "#tools"
 
 const lexicon = await readSubVenueLexicon(defaultLexiconPath())

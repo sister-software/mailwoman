@@ -19,8 +19,8 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { liveEnv } from "@mailwoman/core/env"
-import { open } from "@mailwoman/core/fs/readers"
-import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
+import { open } from "@mailwoman/core/fs/readers/stat"
+import { passThroughCLIArguments } from "@mailwoman/core/scripting/arguments"
 import { z } from "zod"
 import { $, sleep } from "zx"
 

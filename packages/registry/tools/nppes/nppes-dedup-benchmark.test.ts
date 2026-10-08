@@ -10,7 +10,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { ORG_TAU, orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
+import { ORG_TAU, type NPIPrimary } from "#tools/nppes/org-name"
 import { writeOvermergePacket } from "#tools/nppes/overmerge-packet"
 import { renderNPPESDedupReport, type NPPESReportInput, type SweepArm } from "#tools/nppes/report"
 import type { MessyRow } from "#tools/nppes/sample"
@@ -22,6 +22,7 @@ import {
 	buildOrgNameH3Grain,
 	collectPrimaryCoordinates,
 } from "#tools/nppes/truth-grains"
+import { orgTokens } from "#tools/shared"
 import type { ResolvedEntity, SourceRecord } from "#types"
 
 function record(id: string, latitude?: number, longitude?: number): SourceRecord {

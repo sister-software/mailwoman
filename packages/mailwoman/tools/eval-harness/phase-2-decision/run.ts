@@ -40,11 +40,12 @@ import {
 	type Phase2Instrument,
 	type Phase2Measurement,
 	type Phase2Reading,
-	type Phase2Verdict,
 	phase2DefinitionHash,
 	instrumentFor,
 } from "#tools/eval-harness/phase-2-decision/decision"
-import { createPOIBoardPipeline, type POIBoardOptions, runPOIBoard } from "#tools/eval-harness/poi/board"
+import type { Phase2Verdict } from "#tools/eval-harness/phase-2-decision/results"
+import { runPOIBoard } from "#tools/eval-harness/poi/board"
+import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
 import { runSemanticUtilityProbe } from "#tools/eval-harness/semantic-utility/run"
 
 /**

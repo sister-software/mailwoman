@@ -1,4 +1,5 @@
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"

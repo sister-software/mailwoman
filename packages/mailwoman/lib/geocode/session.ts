@@ -7,7 +7,8 @@
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
 	isBareLocalityTree,
@@ -57,8 +58,6 @@ import {
 	resolveCandidateDBPath,
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
-
-export type { CapitalTier } from "#resolver-backend"
 
 /**
  * The session settings that have a default, resolved once by {@link geocodeSessionSettings}.

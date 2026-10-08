@@ -14,7 +14,8 @@ import {
 	type POIBoardFixture,
 	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
-import { canonicalJSON, loadProbeDefinition } from "#tools/eval-harness/semantic-utility/probe"
+import { canonicalJSON } from "#tools/eval-harness/preregistration"
+import { loadProbeDefinition } from "#tools/eval-harness/semantic-utility/probe"
 
 const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
 const probeDefinition = await loadProbeDefinition()

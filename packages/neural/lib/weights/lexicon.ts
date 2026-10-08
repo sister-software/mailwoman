@@ -6,7 +6,7 @@
  *   Resolves the evidence lexicon files of a weights package against the lexicon versions its model card declares.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

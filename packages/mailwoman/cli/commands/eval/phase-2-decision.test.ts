@@ -25,9 +25,9 @@ import {
 	type Phase2FreezeRecord,
 	type Phase2Measurement,
 	type Phase2Reading,
-	type Phase2Verdict,
 	phase2DefinitionHash,
 } from "#tools/eval-harness/phase-2-decision/decision"
+import type { Phase2Verdict } from "#tools/eval-harness/phase-2-decision/results"
 import { MARKER_PROBE_EXPECTED_CODE } from "#tools/eval-harness/phase-2-decision/run"
 import { PROBE_FREEZE_PATH, type ProbeFreezeRecord } from "#tools/eval-harness/semantic-utility/probe"
 

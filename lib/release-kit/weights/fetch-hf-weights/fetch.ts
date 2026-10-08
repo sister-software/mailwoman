@@ -5,7 +5,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig } from "@mailwoman/core/release-config"
 import { type PathBuilderLike, resolvePath } from "path-ts"

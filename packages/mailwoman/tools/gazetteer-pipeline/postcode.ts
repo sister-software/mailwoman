@@ -13,7 +13,8 @@
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -219,8 +220,3 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		sealed: true,
 	}
 }
-
-export * from "#gazetteer/postcode/binary"
-export * from "#gazetteer/postcode/centroid-fills"
-export * from "#gazetteer/postcode/geonames/tail"
-export * from "#gazetteer/postcode/zcta-centroids"

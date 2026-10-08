@@ -10,7 +10,7 @@
  *   users who only ever run parse/geocode.
  */
 
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, PathBuilder } from "path-ts"

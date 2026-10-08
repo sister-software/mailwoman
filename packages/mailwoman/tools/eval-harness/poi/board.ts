@@ -14,20 +14,6 @@ import { JSONSpliterator } from "spliterator"
 import type { POIBoardExpect } from "#tools/eval-harness/poi/board/expectations"
 import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
 
-export {
-	createPOIBoardPipeline,
-	type POIBoardOptions,
-	type POIBoardPipelineHandle,
-	type POIBoardResolverBackend,
-} from "#tools/eval-harness/poi/board/runtime"
-
-export {
-	type POIBoardAbstainExpect,
-	type POIBoardAddressExpect,
-	type POIBoardExpect,
-	type POIBoardResultsExpect,
-} from "#tools/eval-harness/poi/board/expectations"
-
 /**
  * Repository-relative path of the POI board fixtures.
  */

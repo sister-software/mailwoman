@@ -43,29 +43,13 @@ export {
 
 export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
 
-export {
-	EMPTY_PLACE_FIELDS,
-	hardCountrySafelistFromCoverage,
-	RESOLVE_SWITCH_DEFAULTS,
-	resolveSwitches,
-} from "#resolver/types"
+export { EMPTY_PLACE_FIELDS, RESOLVE_SWITCH_DEFAULTS, resolveSwitches } from "#resolver/types"
+export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
 
 export type {
-	AddressPointHit,
-	AddressPointLookup,
 	Ancestor,
 	BackendCapabilityGap,
 	CoincidentLocality,
-	CountryBBoxFact,
-	CountryCoverageFact,
-	GazetteerArtifactCoverage,
-	InterpolatedPointHit,
-	InterpolationLookup,
-	POIDistanceHit,
-	PostcodePlace,
-	PostcodePrefixAncestor,
-	PostcodePrefixIndexLike,
-	PostcodePrefixNode,
 	ResolveCandidateTrace,
 	ResolveNodeTrace,
 	ResolveOpts,
@@ -75,8 +59,22 @@ export type {
 	ResolvedPlace,
 	Resolver,
 	ResolverBackend,
+	WeakResolutionReading,
+} from "#resolver/types"
+
+export type {
+	AddressPointHit,
+	AddressPointLookup,
+	InterpolatedPointHit,
+	InterpolationLookup,
+	POIDistanceHit,
+	PostcodePlace,
+	PostcodePrefixAncestor,
+	PostcodePrefixIndexLike,
+	PostcodePrefixNode,
 	StreetCentroidHit,
 	StreetCentroidLookup,
-	WeakResolutionReading,
 	WOFAncestor,
-} from "#resolver/types"
+} from "#resolver/lookup-types"
+
+export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "#resolver/coverage-facts"

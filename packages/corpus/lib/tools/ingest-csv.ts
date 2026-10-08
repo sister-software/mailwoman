@@ -30,7 +30,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import type { Database } from "@mailwoman/sqlite/database-schema"

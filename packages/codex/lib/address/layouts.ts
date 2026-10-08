@@ -46,14 +46,6 @@ import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
 
-export {
-	GENERATED_ADDRESS_LAYOUTS,
-	GENERATED_LATIN_ADDRESS_LAYOUTS,
-	GENERATED_LOCAL_ADDRESS_LAYOUTS,
-} from "#address/layouts/generated"
-
-export { S42_ADDRESS_LAYOUTS, S42_LAYOUT_RECORDS, S42_READ_LAYOUTS, type S42LayoutRecord } from "#address/layouts/s42"
-
 /**
  * Which script an address is written in when a country writes two different orders:
  * `local` is the country's own script. libaddressinput's `fmt` states that order.

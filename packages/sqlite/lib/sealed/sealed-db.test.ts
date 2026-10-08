@@ -6,7 +6,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

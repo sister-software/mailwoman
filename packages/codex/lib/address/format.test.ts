@@ -14,7 +14,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { componentsPresentIn, formatAddress, formatAddressRow, type ComponentDict } from "#address/format"
+import { componentsPresentIn, formatAddress, formatAddressRow } from "#address/format"
+import type { ComponentDict } from "#address/render"
 
 const US_ADDRESS: ComponentDict = {
 	house_number: "123",

@@ -12,9 +12,6 @@ import { createBrandLookupCore } from "#brands/lookup-core"
 import { createLookupCore } from "#lookup/core"
 import type { POIBrandTable, POITaxonomyTable } from "#types"
 
-export type { CategoryMatch, POITaxonomyLookup } from "#lookup/core"
-export type { BrandMatch, POIBrandLookup } from "#brands/lookup-core"
-
 /**
  * Builds a {@link POITaxonomyLookup} bound to `table`.
  *

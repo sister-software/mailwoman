@@ -8,7 +8,7 @@
  *   carrying opposite meanings.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { rectangleRing } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"

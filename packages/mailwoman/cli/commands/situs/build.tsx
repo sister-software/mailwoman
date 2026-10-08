@@ -33,7 +33,7 @@
  *   regardless.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/process"
 import { isoDate } from "@mailwoman/core/utils"
@@ -150,7 +150,7 @@ interface StateManifestEntry {
 
 const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
+		const { scriptEntryPath } = await import("@mailwoman/core/scripting/arguments")
 		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)

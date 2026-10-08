@@ -5,12 +5,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import {
-	type BuildCandidateResult,
-	buildCandidateTable,
-	type PlaceAttrs,
-	stageCountryDisplayNames,
-} from "#build/candidate"
+import { type BuildCandidateResult, buildCandidateTable } from "#build/candidate"
+import { stageCountryDisplayNames } from "#candidate/country-display-names"
+import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
 import { ALIAS_SEPARATOR } from "#fts"
 import type { WOFDatabase } from "#schema"

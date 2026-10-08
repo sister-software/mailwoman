@@ -13,7 +13,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 
 import {
 	type CommandSpec,

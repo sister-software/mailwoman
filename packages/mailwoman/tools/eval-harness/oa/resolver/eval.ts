@@ -34,15 +34,6 @@ import {
 	hasStreetHouseNumber,
 } from "#tools/eval-harness/oa/resolver/tree-hits"
 
-/**
- * Re-exports the aggregate counter types so that report code can import them from the eval module.
- */
-export type { Agg, AggPair } from "#tools/eval-harness/oa/resolver/aggregate"
-/**
- * Re-exports the options type that {@linkcode oaResolverEval} accepts.
- */
-export type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
-
 const MAX_DIAGNOSTIC_MISSES = 5000
 
 /**

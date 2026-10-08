@@ -32,9 +32,6 @@ import { hasColumn, hasTable } from "#sqlite-utils"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#street/normalize"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
-export { rankByPrimaryPreference } from "#primary-preference"
-export type { RankedRow } from "#primary-preference"
-
 /**
  * Where a {@link WOFCandidateTableLookup} reads from
  * (a read-only `candidate.db` or a caller-held connection) and how it ranks.

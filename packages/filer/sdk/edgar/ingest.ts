@@ -10,7 +10,7 @@
  *   A pinned CIK at the top score resolves that tie.
  */
 
-import type { EdgarSubsidiaryRow } from "#sdk/build/filer"
+import type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
 import { corroborateCIK, type CIKCorroborationOptions } from "#sdk/cik-corroboration"
 import {
 	fetchExhibit21Documents,

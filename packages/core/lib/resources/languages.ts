@@ -11,8 +11,6 @@ import {
 	type Alpha3bLanguageCode,
 } from "#resources/languages/types.gen"
 
-export * from "#resources/languages/types.gen"
-
 /**
  * Prefixed languages are those which use a street prefix instead of a suffix.
  */

@@ -49,7 +49,8 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 const { PairIndexResolver, serializePairIndex } = await import("#pair")
-const { loadNeuralClassifierFromURLs, resolvePairIndexCountry } = await import("#web/loader")
+const { loadNeuralClassifierFromURLs } = await import("#web/loader")
+const { resolvePairIndexCountry } = await import("#web/pair-index")
 
 const SEQ = 128
 

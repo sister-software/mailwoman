@@ -6,11 +6,13 @@
 
 export * from "#geocode/command-options"
 export * from "#geocode/core"
+export { type GeocodeClassifier } from "#geocode/classifier"
 export * from "#geocode/diff"
 export * from "#geocode/national-overture"
 export * from "#geocode/regions"
 export * from "#geocode/result"
 export * from "#geocode/session"
+export { type CapitalTier } from "#resolver-backend"
 export * from "#geocode/stream"
 export * from "#geocode/tree-reads"
 

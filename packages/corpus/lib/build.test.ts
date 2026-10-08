@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { appendLocalTextFile, removeFile, removePath } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"

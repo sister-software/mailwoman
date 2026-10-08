@@ -8,12 +8,9 @@
  *   narrates everything and owns only the exit code, matching `eval promote` / `eval error-analysis`.
  */
 
-import {
-	type ModelSelectOptions,
-	loadSuite,
-	buildParseFn,
-	runInvarianceSuite,
-} from "#tools/eval-harness/invariance/runner"
+import { loadSuite } from "#tools/eval-harness/invariance/fixtures"
+import { type ModelSelectOptions, buildParseFn } from "#tools/eval-harness/invariance/parser"
+import { runInvarianceSuite } from "#tools/eval-harness/invariance/runner"
 
 export interface InvarianceCommandOptions extends ModelSelectOptions {
 	/**

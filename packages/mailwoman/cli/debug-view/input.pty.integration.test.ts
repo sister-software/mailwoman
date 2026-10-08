@@ -21,7 +21,7 @@
  *   It skips when another `script` executable appears first on `PATH`, like `map-tui/cli.pty.test.ts`.
  */
 
-import { isExecutable } from "@mailwoman/core/fs/readers"
+import { isExecutable } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcess } from "@mailwoman/core/process"
 import { sleep } from "@mailwoman/core/utils/sleep"

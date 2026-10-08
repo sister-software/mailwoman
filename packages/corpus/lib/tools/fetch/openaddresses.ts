@@ -9,7 +9,7 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
 import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"

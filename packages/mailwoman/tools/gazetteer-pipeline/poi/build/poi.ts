@@ -6,7 +6,7 @@
  *   Builds and seals the `poi.db` layer from Overture Places or OSM rows.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	type CoverageCell,
@@ -36,26 +36,6 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
-
-/**
- * Re-exports the Overture Places ingest so the POI build command can import ingest
- * and build from one module.
- */
-export {
-	chooseCategoryColumn,
-	chooseCountryExpression,
-	hasBrandColumn,
-	ingestPlaces,
-	type CountryExpression,
-	type DescribeColumn,
-	type IngestPlacesOptions,
-	type IngestPlacesResult,
-} from "#gazetteer/poi/build/overture"
-
-/**
- * Re-exports the pinned Overture release that the POI ingest uses by default.
- */
-export { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 
 const COVERAGE_H3_RESOLUTION = 6
 

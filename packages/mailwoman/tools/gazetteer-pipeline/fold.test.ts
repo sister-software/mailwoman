@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isWritable } from "@mailwoman/core/fs/readers"
+import { isWritable } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

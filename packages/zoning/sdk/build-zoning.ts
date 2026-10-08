@@ -6,7 +6,7 @@
  * Build `zoning-ireland.db`, the sealed two-tier polygon layer. Its coverage basis and license tier can each refuse publication.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,

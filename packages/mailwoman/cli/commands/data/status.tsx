@@ -10,7 +10,7 @@
 
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { Text } from "ink"
 import type { PathBuilderLike } from "path-ts"
 

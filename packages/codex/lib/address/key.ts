@@ -12,7 +12,7 @@
  *   explainable.
  */
 
-import type { ComponentDict } from "#address/format"
+import type { ComponentDict } from "#address/render"
 import type { ComponentTag } from "#component"
 
 /**

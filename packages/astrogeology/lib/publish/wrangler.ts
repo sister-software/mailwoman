@@ -7,7 +7,7 @@
  *   `CLOUDFLARE_ACCOUNT_ID` from the environment.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
 import type { UploadTransport } from "mailwoman/tools/tiles/publish"

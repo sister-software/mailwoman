@@ -17,7 +17,8 @@
  *     node packages/ban/out/tools/build/street-centroid-database.js --country fr --out /tmp/sc-fr.db
  */
 
-import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { md5File } from "@mailwoman/core/hash"

@@ -25,7 +25,7 @@
 import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
-import { open } from "#fs/readers"
+import { open } from "#fs/readers/stat"
 import { stringifyJSON } from "#json"
 import { resourceDictionaryPath, workspacePath } from "#paths"
 

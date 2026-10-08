@@ -14,9 +14,6 @@ import type { MachinePreferences } from "#pipeline/preferences"
 import type { ResolveOpts, Resolver, ResolverBackend } from "#resolver/types"
 import type { Section } from "#types/classifier"
 
-export { type PipelineFault, type PipelineResult } from "#pipeline/result"
-export { type MachinePreferences } from "#pipeline/preferences"
-
 /**
  * The user's location.
  * The resolver may use it for scoring.

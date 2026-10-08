@@ -12,7 +12,8 @@
  *   Skips per-package when the binary is absent, since a lean checkout legitimately has none.
  */
 
-import { readLocalBuffer, readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"

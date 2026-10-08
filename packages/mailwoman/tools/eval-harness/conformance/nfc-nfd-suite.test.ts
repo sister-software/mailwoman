@@ -1,4 +1,5 @@
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { normalize } from "@mailwoman/normalize"
 import { beforeAll, describe, expect, it } from "vitest"
 

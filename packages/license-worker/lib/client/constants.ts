@@ -7,8 +7,6 @@
 import { AGREEMENT_VERSION, type ShopPlan, SHOP_PLANS } from "#shop/catalog"
 import { SHOP_IDS } from "#shop/ids"
 
-export { AGREEMENT_VERSION } from "#shop/catalog"
-
 /**
  * The license worker's origin: the claim route the issued page polls lives under it.
  */

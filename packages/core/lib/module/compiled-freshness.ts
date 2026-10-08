@@ -14,7 +14,7 @@
 import { basename, PathBuilder, type PathBuilderLike, relative, sep } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { statPath } from "#fs/readers"
+import { statPath } from "#fs/readers/stat"
 
 /**
  * The walk skips these directories because they hold no emitting source.

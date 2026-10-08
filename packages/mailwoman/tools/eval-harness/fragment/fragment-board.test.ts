@@ -13,7 +13,8 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "#tools/eval-harness/fragment/board"
+import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture } from "#tools/eval-harness/fragment/board"
+import { wilson } from "#tools/eval-harness/span-board"
 
 const fixtures = await JSONSpliterator.fromAsync<FragmentFixture>(FRAGMENT_BOARD_FIXTURES).toArray()
 

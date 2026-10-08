@@ -15,7 +15,7 @@
  *   the bytes on disk. `streamToDisk` documents why the transfer uses `fetch` rather than `APIClient`.
  */
 
-import { readFileSize, tryStat } from "@mailwoman/core/fs/readers"
+import { readFileSize, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { createHash, sha256File } from "@mailwoman/core/hash"

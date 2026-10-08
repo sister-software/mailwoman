@@ -7,7 +7,7 @@
  *   positive-evidence-only, so it can add an atlas-confirmed street but never remove a model call.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 import { resolvePath } from "path-ts"
 

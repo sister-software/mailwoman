@@ -18,11 +18,6 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 import { createLabelSetter, isTagLabel, type RepairResult, tagOf, tokenIndicesOverlapping } from "#span/repair"
 
 /**
- * The result of a repair pass.
- */
-export type { RepairResult } from "#span/repair"
-
-/**
  * A tag and the register lookup that completes its spans.
  */
 export interface RegisterBoundaryRepair {

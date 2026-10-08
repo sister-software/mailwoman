@@ -31,16 +31,6 @@ import { MailwomanTokenizer } from "#tokenizer"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
 import { loadPairIndexes, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 
-/**
- * Re-exports the runner diagnostics type, because {@link LoadResult.diagnostics} exposes it.
- */
-export { type WebONNXRunnerDiagnostics } from "#web/onnx-runner"
-/**
- * Re-exports the pair-index selection helpers so browser callers can choose
- * from {@link LoadResult.pairIndexes}.
- */
-export { detectPairIndexCountry, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
-
 const HTTP_NOT_FOUND = 404
 
 /**

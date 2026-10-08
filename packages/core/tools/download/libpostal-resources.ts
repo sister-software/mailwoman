@@ -28,7 +28,8 @@
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { isDirectory, readLocalTextFile } from "#fs/readers"
+import { readLocalTextFile } from "#fs/readers"
+import { isDirectory } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
 import { resourceDictionaryPath } from "#paths"

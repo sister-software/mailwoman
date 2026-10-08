@@ -12,7 +12,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { afterAll, describe, expect, it } from "vitest"

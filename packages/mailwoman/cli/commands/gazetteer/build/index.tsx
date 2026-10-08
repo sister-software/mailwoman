@@ -10,7 +10,7 @@
  *   Both artifacts land at staging/dated paths. swapping/promoting stays deliberate (releasing.md).
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 
 import {
 	type CommandSpec,

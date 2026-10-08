@@ -9,7 +9,7 @@
  *   streams to stderr. The final summary goes to stdout. See releasing.md Step 5.
  */
 
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 
 import {

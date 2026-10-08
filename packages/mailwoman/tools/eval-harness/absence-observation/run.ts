@@ -34,7 +34,7 @@ import {
 	decideAbsenceProbe,
 	loadAbsenceProbeDefinition,
 } from "#tools/eval-harness/absence-observation/probe"
-import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board"
+import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
 
 export type AbsenceArtifactIdentity = PreregisteredArtifactIdentity

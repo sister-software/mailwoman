@@ -11,7 +11,7 @@
  *   because `npm trust` accepts no `--otp` flag. After trust is configured, CI publishes over OIDC.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { type PackageJSONLike, readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { $, type ProcessPromise } from "zx"

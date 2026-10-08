@@ -11,7 +11,7 @@
  *   same reasons, so the two suites run and skip together.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, test } from "vitest"

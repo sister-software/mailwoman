@@ -20,7 +20,8 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/paths"
 import {

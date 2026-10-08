@@ -17,8 +17,6 @@ import {
 	aggregateAblationComponents,
 } from "#tools/eval-harness/gauntlet/ablation/types"
 
-export { ABLATION_ABSENT } from "#ablation/expectation"
-
 /**
  * Renders one cell as `broken/support`, with a missing or zero-support cell rendering
  * as {@linkcode ABLATION_ABSENT} rather than a zero.

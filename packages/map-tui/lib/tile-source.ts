@@ -13,7 +13,8 @@
  * of decoded tiles so repeated draws of the same viewport don't re-decode.
  */
 
-import { type FileHandle, open } from "@mailwoman/core/fs/readers"
+import type { FileHandle } from "@mailwoman/core/fs/readers"
+import { open } from "@mailwoman/core/fs/readers/stat"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { Parser } from "htmlparser2"
 import { PMTiles, type RangeResponse, type Source } from "pmtiles"

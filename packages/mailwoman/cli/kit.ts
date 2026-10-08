@@ -5,6 +5,7 @@
  */
 
 export * from "#cli/kit/shared"
+export { type Check } from "#check"
 export * from "#cli/kit/harness-command"
 export * from "#cli/kit/engine-stamp"
 export * from "#metadata"

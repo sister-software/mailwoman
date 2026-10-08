@@ -9,7 +9,8 @@
  *   markers. A lock and a replaceable payload file serialize concurrent updates.
  */
 
-import { pathExists, readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
 	makeDirectories,
 	makeDirectoryExclusive,

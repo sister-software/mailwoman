@@ -7,7 +7,8 @@
  * build ingests and a read-only answer is safe to ask at any moment.
  */
 
-import { pathExists, readLink, readLocalJSONFile, statLink, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 
 interface ArtifactState {

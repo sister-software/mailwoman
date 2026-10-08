@@ -23,10 +23,10 @@ import {
 	SHOP_PRODUCT,
 	type ShopPlan,
 	shopURLs,
-	WEBHOOK_EVENTS,
 	WEBHOOK_PATH,
 } from "#shop/catalog"
 import { STRIPE_API_VERSION } from "#stripe/client"
+import { ACCEPTED_EVENT_TYPES as WEBHOOK_EVENTS } from "#stripe/webhook"
 
 /**
  * Options for {@link provisionShop}.

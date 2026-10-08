@@ -19,7 +19,7 @@
  *   (`RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID`, plus secret and endpoint) before running.
  */
 
-import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
+import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 /**

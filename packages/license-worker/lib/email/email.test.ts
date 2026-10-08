@@ -12,7 +12,8 @@ import { env } from "cloudflare:workers"
 import { describe, expect, it, test } from "vitest"
 
 import { cloudflareEmailProvider } from "#email/cloudflare"
-import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
+import { licenseEmailSubject } from "#email/content"
+import { renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import { readEnv } from "#env"
 
 test("the Cloudflare provider sends the shared message through the binding and answers its id", async () => {

@@ -8,7 +8,7 @@
  * unreachable rather than wrong.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { runFileSync } from "@mailwoman/core/process"
 import { type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"

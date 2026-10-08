@@ -10,8 +10,9 @@
 
 import type { SendEmail } from "@cloudflare/workers-types"
 
+import { licenseEmailSubject } from "#email/content"
 import type { EmailProvider } from "#email/provider"
-import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
+import { renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import type { LicenseWorkerEnv } from "#env"
 
 export function cloudflareEmailProvider(env: LicenseWorkerEnv, sender: SendEmail): EmailProvider {

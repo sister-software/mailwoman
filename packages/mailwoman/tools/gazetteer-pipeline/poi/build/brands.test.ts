@@ -1,14 +1,8 @@
 import type { POIBrandTable } from "@mailwoman/poi-taxonomy"
 import { describe, expect, it } from "vitest"
 
-import {
-	aggregateBrands,
-	buildBrandTable,
-	type BrandNameCount,
-	DEFAULT_DOMINANCE,
-	DEFAULT_MIN_ROWS,
-	serializeBrandTable,
-} from "#gazetteer/poi/build/brands"
+import { aggregateBrands, buildBrandTable, type BrandNameCount, serializeBrandTable } from "#gazetteer/poi/build/brands"
+import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer/poi/defaults"
 
 const SOURCE_LAYER = { name: "poi", version: "2026-05-20.0", sourceVintage: "2026-05-20.0" }
 

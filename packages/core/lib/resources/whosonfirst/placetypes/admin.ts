@@ -6,13 +6,8 @@
 
 import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
 
-import {
-	type Alpha2LanguageCode,
-	type Alpha3bLanguageCode,
-	Alpha3bToAlpha2,
-	isAlpha2LanguageCode,
-	isAlpha3bLanguageCode,
-} from "#resources/languages"
+import { isAlpha2LanguageCode, isAlpha3bLanguageCode } from "#resources/languages"
+import { type Alpha2LanguageCode, type Alpha3bLanguageCode, Alpha3bToAlpha2 } from "#resources/languages/types.gen"
 import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 
 export interface WOFBaseProperties {

@@ -17,7 +17,7 @@
  *   physical copy, so it cannot diverge. A risk estimate that combines aliases and separate checkouts would be wrong.
  */
 
-import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers"
+import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers/stat"
 import { runFileSync } from "@mailwoman/core/process"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

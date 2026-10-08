@@ -15,7 +15,7 @@
  *   checkout has no history to diff against.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runFileSync } from "@mailwoman/core/process"
 import type { PathBuilderLike } from "path-ts"
 

@@ -13,7 +13,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { optionPropertyName } from "@mailwoman/core/scripting/utils"
+import { optionPropertyName } from "@mailwoman/core/scripting/arguments"
 import { relative } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"

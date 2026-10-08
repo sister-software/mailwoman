@@ -19,7 +19,7 @@
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { $public } from "#env"

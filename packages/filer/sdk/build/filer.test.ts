@@ -1,4 +1,4 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -13,7 +13,8 @@ import {
 	readFilerManifest,
 	type FilerDatabase,
 } from "#schema"
-import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } from "#sdk/build/filer"
+import type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
+import { buildFilerDatabase, type BuildFilerResult } from "#sdk/build/filer"
 import type { Form499Row } from "#sdk/form499"
 import type { ProviderListRow } from "#sdk/provider-list"
 

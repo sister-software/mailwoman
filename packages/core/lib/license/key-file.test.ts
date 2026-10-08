@@ -9,7 +9,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { statPath } from "#fs/readers"
+import { statPath } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import {
 	readConfiguredLicenseToken,

@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { JSONSpliterator } from "spliterator"

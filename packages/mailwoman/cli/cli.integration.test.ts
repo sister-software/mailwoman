@@ -6,7 +6,7 @@
  *   Runs the compiled CLI with an isolated empty data root. It pins the `mw` bin alias because `bin` is a manifest field no part of the build reads.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"

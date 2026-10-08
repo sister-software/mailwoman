@@ -8,7 +8,8 @@ import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { formatPercent, percentile } from "@mailwoman/core/stats"
 
-import type { Agg, AggPair, OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/eval"
+import type { Agg, AggPair } from "#tools/eval-harness/oa/resolver/aggregate"
+import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 
 /**
  * The report inputs: per-arm aggregates, tier hit counts and the run's flags.

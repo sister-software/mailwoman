@@ -29,7 +29,8 @@
  * polygon the builder cannot tell empty moorland from Northern Ireland or open sea.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"

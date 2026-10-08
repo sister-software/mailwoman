@@ -11,7 +11,8 @@
 import { conventionsForSystem } from "@mailwoman/codex"
 import { describe, expect, it } from "vitest"
 
-import { detectAddressSystem, LOCALE_COUNTRIES, localeHintID, parseAddressSystemTable } from "#address-system"
+import { detectAddressSystem, localeHintID, parseAddressSystemTable } from "#address-system"
+import { LOCALE_COUNTRIES } from "#labels"
 import { packLocaleHintFeed } from "#ort-feeds"
 
 /**

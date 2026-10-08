@@ -10,7 +10,7 @@
  *   empty census. An artifact that is not on disk is reported as absent rather than contributing zero rows.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 

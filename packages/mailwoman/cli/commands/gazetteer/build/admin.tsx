@@ -10,7 +10,7 @@
  *   deliberate step (releasing.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 
 import {
 	type CommandSpec,

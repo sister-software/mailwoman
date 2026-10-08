@@ -9,7 +9,8 @@
  */
 
 import { validateTree } from "@mailwoman/core/decoder"
-import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { Globerator } from "spliterator/node/fs"

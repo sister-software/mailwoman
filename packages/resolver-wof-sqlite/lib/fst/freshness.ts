@@ -6,13 +6,14 @@
  * Does an `fst-*.bin` still match the gazetteer it was built from?
  */
 
-import { pathExists, readFileRange, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { readFileRange, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { basename, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { FST_FORMAT_VERSION } from "#fst/serialize"
+import { FST_FORMAT_VERSION } from "#fst/format"
 import type { FSTProvenance } from "#fst/types"
 
 /**

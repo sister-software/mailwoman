@@ -6,7 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GENERATED_ADDRESS_LAYOUTS, layoutForCountry } from "#address/layouts"
+import { layoutForCountry } from "#address/layouts"
+import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS, S42_LAYOUT_RECORDS } from "#address/layouts/s42"
 import { joinRendering, renderAddress } from "#address/render"
 import { S42_TEMPLATE_JURISDICTIONS } from "#address/s42-templates"

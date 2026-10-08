@@ -29,15 +29,14 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	ABLATION_ABSENT,
-	type AblationGrade,
 	achievedRung,
 	buildCaseLadder,
 	describeLadder,
 	expectFor,
 	gradeAgainstLadder,
 	ladderComponentDisagreement,
-	PASSING_GRADES,
 } from "#ablation/expectation"
+import { type AblationGrade, PASSING_GRADES } from "#ablation/grades"
 import { AblationGazetteer } from "#tools/eval-harness/gauntlet/ablation/gazetteer"
 // Re-exported from their historical home so every importer and test keeps its path.
 import { renderAblationMarkdown } from "#tools/eval-harness/gauntlet/ablation/report"
@@ -57,27 +56,6 @@ import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stam
 import { buildGauntletDeps, PRODUCTION_RESOLVER_PINS, runOne } from "#tools/eval-harness/gauntlet/harness"
 import { type GauntletLayerOptions, layerDepsOptions } from "#tools/eval-harness/gauntlet/regression"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
-
-export { ABLATION_ABSENT } from "#ablation/expectation"
-
-export { aggregateCells, classifySlot, isTierDrop, scoreAblation } from "#tools/eval-harness/gauntlet/ablation/scoring"
-
-export {
-	formatAblationCell,
-	formatAblationLadderCell,
-	renderAblationMarkdown,
-} from "#tools/eval-harness/gauntlet/ablation/report"
-
-export {
-	ABLATABLE_COMPONENTS,
-	DEFAULT_ABLATION_TOLERANCE_KM,
-	type AblatableComponent,
-	type AblationCell,
-	type AblationRowResult,
-	type AblationSkip,
-	type AblationVariant,
-	type SlotResult,
-} from "#tools/eval-harness/gauntlet/ablation/types"
 
 /**
  * How many substitutions the console summary lists before it truncates:

@@ -32,7 +32,7 @@
  *   Usage: node packages/mailwoman/tools/dev-tools/probe/referential-delta.run.ts [--board <path>]
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, getRow } from "@mailwoman/core/utils"

@@ -10,7 +10,7 @@
  *   artifacts the parser loads at runtime.
  */
 
-import type { Alpha2LanguageCode } from "#resources/languages"
+import type { Alpha2LanguageCode } from "#resources/languages/types.gen"
 
 /**
  * A libpostal dictionary language, or `all` for the language-agnostic directory.

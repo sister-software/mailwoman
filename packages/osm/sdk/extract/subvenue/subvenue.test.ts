@@ -21,16 +21,14 @@
 
 import { expect, test } from "vitest"
 
+import { harvestLocalizedNames, parseOSMHstore, toSubVenueSourceRow } from "#sdk/extract/subvenue"
 import {
 	buildSubVenueSQL,
-	harvestLocalizedNames,
 	matchSubVenueTagRule,
-	parseOSMHstore,
 	SUBVENUE_TAG_RULES,
 	SubVenueTier,
-	toSubVenueSourceRow,
 	distinctSubVenueTagKeys,
-} from "#sdk/extract/subvenue"
+} from "#sdk/extract/subvenue/rules"
 
 const TAG_KEYS = distinctSubVenueTagKeys(SUBVENUE_TAG_RULES)
 

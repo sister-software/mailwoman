@@ -6,7 +6,8 @@
  * Checks the local export and quantization packages against the training-image pins before local quantization.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { $public } from "#env"

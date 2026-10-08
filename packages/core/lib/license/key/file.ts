@@ -12,7 +12,8 @@
 
 import { configRootPath } from "#data-root"
 import { $public } from "#env"
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "#fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "#fs/readers"
+import { pathExists } from "#fs/readers/stat"
 import { writeLocalTextFile, writePrivateTextFile } from "#fs/writers"
 import { prettyJSON } from "#json"
 

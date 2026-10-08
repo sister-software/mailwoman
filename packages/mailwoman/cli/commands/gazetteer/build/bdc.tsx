@@ -7,7 +7,7 @@
  *   in the loop. Progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
  */
 
-import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
+import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"

@@ -6,7 +6,8 @@
  *   The download step over a stubbed `fetch` that answers with a ZIP built from the reader's fixture.
  */
 
-import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { workspacePath } from "@mailwoman/core/paths"

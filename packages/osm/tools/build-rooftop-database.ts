@@ -18,7 +18,7 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import {
 	assertTierMatchesLicense,

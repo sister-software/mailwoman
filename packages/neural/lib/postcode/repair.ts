@@ -19,11 +19,6 @@ import {
 } from "#span/repair"
 
 /**
- * Re-exports the shared span-repair result type returned by {@link repairPostcodeLabels}.
- */
-export type { RepairResult } from "#span/repair"
-
-/**
  * A detected postcode-shaped substring with its char range and confidence class.
  */
 export interface PostcodeMatch extends SpanMatch {

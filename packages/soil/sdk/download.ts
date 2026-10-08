@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { streamToDisk } from "@mailwoman/core/utils"

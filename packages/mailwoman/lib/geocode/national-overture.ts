@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"

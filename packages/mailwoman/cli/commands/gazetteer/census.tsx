@@ -17,7 +17,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { PathBuilder } from "path-ts"

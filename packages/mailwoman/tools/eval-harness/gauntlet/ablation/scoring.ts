@@ -8,7 +8,8 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { percentile } from "@mailwoman/core/stats"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { emptyGrades, PASSING_GRADES, tierRank, UNCONSTRAINED_RUNG } from "#ablation/expectation"
+import { tierRank, UNCONSTRAINED_RUNG } from "#ablation/expectation"
+import { emptyGrades, PASSING_GRADES } from "#ablation/grades"
 import {
 	type AblatableComponent,
 	type AblationCell,

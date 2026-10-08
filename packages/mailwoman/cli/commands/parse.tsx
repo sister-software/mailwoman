@@ -8,7 +8,7 @@ import { Spinner } from "@inkjs/ui"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import { RESOLVE_SWITCH_DEFAULTS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
@@ -34,16 +34,6 @@ import {
 import { WeightsGuard, type WeightsResult } from "#cli-kit/weights-guard"
 import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
-
-/**
- * Re-exports the country-scope helpers so tests can check the `--locale` to
- * default-country mapping through the command module.
- */
-export { localeToCountry, resolverDefaultCountry } from "#country-scope"
-/**
- * Re-exports the country-scope type alongside its helpers.
- */
-export type { CountryScope } from "#country-scope"
 
 const POLICY_MODES: readonly PolicyMode[] = ["neural_only", "both"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u

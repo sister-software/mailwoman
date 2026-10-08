@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { relativeImportSpecifiers, stageMapLibreWorker } from "@mailwoman/docs/plugins/runtime-assets/artifacts"
 import { basename } from "path-ts"

@@ -29,7 +29,7 @@ import {
 import { normalizeInputCase } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
-import { confidentLocaleCountry, LOCALE_COUNTRIES, localeHintID, resolveSystemVerdict } from "#address-system"
+import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
 import { encodeCharUnits } from "#char-encoder"
 import type {
 	AddressSystemConventions,
@@ -41,7 +41,7 @@ import type {
 import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { buildFSTEmissionPriors } from "#fst-prior"
-import { STAGE2_BIO_LABELS } from "#labels"
+import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"

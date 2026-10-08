@@ -9,7 +9,7 @@
  *   The fixture is a synthetic Overpass response in the real envelope shape, because a node has `lat`/`lon` and a way has `center`; a parser that handles only one still passes tests written against the other.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"

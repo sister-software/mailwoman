@@ -15,7 +15,8 @@
  *   mailwoman dev lint mdx-angles [files...]
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runFileSync } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 

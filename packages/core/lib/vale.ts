@@ -10,7 +10,7 @@
 
 import { PathBuilder } from "path-ts"
 
-import { pathExists } from "#fs/readers"
+import { pathExists } from "#fs/readers/stat"
 import { resolvePackageCommand, type PackageCommand } from "#module/package-command"
 import { resolvePackageJSON } from "#module/resolve-from"
 

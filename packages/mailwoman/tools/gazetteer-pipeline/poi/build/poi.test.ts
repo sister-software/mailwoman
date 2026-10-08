@@ -6,7 +6,7 @@
  *   Tests for {@linkcode buildPOIDatabase} — the load/materialize/seal phase of `poi.db` — fed a synthetic `Iterable<POISourceRow>` so the suite runs without DuckDB or network.
  */
 
-import { isFile, statPath } from "@mailwoman/core/fs/readers"
+import { isFile, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"

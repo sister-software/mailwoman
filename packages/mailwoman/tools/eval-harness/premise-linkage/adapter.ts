@@ -26,7 +26,8 @@ import {
 	type Resolver,
 } from "@mailwoman/core/resolver"
 
-import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
+import type { GeocodeClassifier } from "#geocode/classifier"
+import type { GeocodeDeps } from "#geocode/core"
 import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#tools/eval-harness/premise-linkage/schema"
 
 /**

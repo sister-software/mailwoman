@@ -24,7 +24,8 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { isDirectory, isFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isDirectory, isFile } from "@mailwoman/core/fs/readers/stat"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

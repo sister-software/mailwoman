@@ -6,7 +6,8 @@
 
 import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 import { z } from "zod"
 
@@ -23,10 +24,10 @@ import {
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
+import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import { MailwomanTokenizer } from "#tokenizer"
 import { resolveWeights, type ResolvedWeights } from "#weights"
 import {
-	inferRequiredChannelsFromInputs,
 	loadAnchorLookup,
 	lookupTagCapability,
 	readAddressSystemsFromModelCard,

@@ -18,7 +18,8 @@
  *   because the footprint comes from the authority's statement rather than from the polygons.
  */
 
-import { formatFileSize, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 import {

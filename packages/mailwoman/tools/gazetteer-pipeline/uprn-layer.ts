@@ -5,7 +5,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { tryStat, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { createHash, md5File } from "@mailwoman/core/hash"

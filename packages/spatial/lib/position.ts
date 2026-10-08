@@ -11,8 +11,6 @@ import type { PlanarPoint } from "@mailwoman/annotations"
 
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 
-export { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
-
 /**
  * A point in decimal degrees under the `latitude` and `longitude` keys.
  */

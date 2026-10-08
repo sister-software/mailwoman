@@ -126,12 +126,6 @@ export const SHOP_PLAN_CODES = [
  */
 export const WEBHOOK_PATH = "/v1/webhooks/stripe"
 
-/**
- * Lists the events the webhook destination subscribes to.
- * The worker acts on each listed event.
- */
-export { ACCEPTED_EVENT_TYPES as WEBHOOK_EVENTS } from "#stripe/webhook"
-
 export interface ShopURLs {
 	/**
 	 * Where Checkout returns the buyer: the claim page, with Stripe's session id placeholder.

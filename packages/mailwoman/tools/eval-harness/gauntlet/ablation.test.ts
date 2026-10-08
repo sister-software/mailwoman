@@ -9,21 +9,16 @@
 
 import { describe, expect, it } from "vitest"
 
+import { ABLATION_ABSENT } from "#ablation/expectation"
 import {
-	ABLATABLE_COMPONENTS,
-	ABLATION_ABSENT,
 	ablationBoardID,
 	ablationVariants,
-	type AblationRowResult,
-	aggregateCells,
 	boundedOccurrences,
-	classifySlot,
 	deleteSpan,
-	formatAblationCell,
-	isTierDrop,
-	renderAblationMarkdown,
-	scoreAblation,
 } from "#tools/eval-harness/gauntlet/ablation"
+import { formatAblationCell, renderAblationMarkdown } from "#tools/eval-harness/gauntlet/ablation/report"
+import { aggregateCells, classifySlot, isTierDrop, scoreAblation } from "#tools/eval-harness/gauntlet/ablation/scoring"
+import { ABLATABLE_COMPONENTS, type AblationRowResult } from "#tools/eval-harness/gauntlet/ablation/types"
 import { type GauntletResult, PRODUCTION_RESOLVER_PINS } from "#tools/eval-harness/gauntlet/harness"
 import { runAblationOptions } from "#tools/eval-harness/gauntlet/run"
 

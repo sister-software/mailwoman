@@ -6,7 +6,7 @@
  *   Restores deprecated WOF localities only when an independent source attests them.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

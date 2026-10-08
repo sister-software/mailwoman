@@ -5,6 +5,7 @@
  */
 
 export * from "#anchor-inference"
+export { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 export * from "#classifier"
 export * from "#gazetteer-inference"
 export * from "#labels"

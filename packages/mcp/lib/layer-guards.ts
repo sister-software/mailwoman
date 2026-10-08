@@ -25,7 +25,7 @@
  */
 
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

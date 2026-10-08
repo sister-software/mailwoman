@@ -13,7 +13,7 @@
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
+import type { SubVenueHarvestRow } from "#subvenue/harvest"
 
 /**
  * Overture categories selected for sub-venue designator evidence.

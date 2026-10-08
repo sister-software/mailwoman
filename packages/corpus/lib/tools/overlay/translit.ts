@@ -30,7 +30,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
-import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"

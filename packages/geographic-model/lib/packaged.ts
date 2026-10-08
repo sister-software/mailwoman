@@ -5,7 +5,8 @@
  * @file Reads the compiled model this package ships in `data/geographic-model.json`.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { resolvePath } from "path-ts"
 

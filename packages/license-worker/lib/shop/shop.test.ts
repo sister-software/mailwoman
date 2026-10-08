@@ -8,10 +8,11 @@ import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
-import { AGREEMENT_VERSION, SHOP_PLANS, WEBHOOK_EVENTS } from "#shop/catalog"
+import { AGREEMENT_VERSION, SHOP_PLANS } from "#shop/catalog"
 import { withShopIDs } from "#shop/ids"
 import { provisionShop } from "#shop/provision"
 import { STRIPE_API_VERSION, stripeClient } from "#stripe/client"
+import { ACCEPTED_EVENT_TYPES as WEBHOOK_EVENTS } from "#stripe/webhook"
 import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe/mock"
 
 const worker = readEnv(env)

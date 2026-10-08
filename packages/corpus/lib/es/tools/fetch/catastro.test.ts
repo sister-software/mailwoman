@@ -17,7 +17,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { silentLogger } from "@mailwoman/core/logging"

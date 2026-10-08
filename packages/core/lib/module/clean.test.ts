@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { pathExists } from "#fs/readers"
+import { pathExists } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "#fs/writers"
 import { assertDirectoryIsUntracked, cleanDirectory, cleanFile } from "#module/clean"

@@ -11,6 +11,7 @@ import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
 
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "#bbox"
+import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 import { type H3Cell, shortenH3Cell } from "#h3/cell"
 import { type GeoObjectLiteral, GeometryType } from "#objects"
 import {
@@ -21,8 +22,6 @@ import {
 	isCoordPairLiteral,
 	isGoogleMapsLatLngLiteral,
 	isInterpolatedCoordinates,
-	isValidLatitude,
-	isValidLongitude,
 	wrapLongitude,
 } from "#position"
 

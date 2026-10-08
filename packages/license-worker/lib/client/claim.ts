@@ -15,8 +15,6 @@
 import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-interface"
 import { LICENSE_WORKER_URL } from "#client/constants"
 
-export type { ClaimResponse, IssuedClaim } from "#claim-interface"
-
 export type ClaimState =
 	| { phase: "polling"; attempts: number; startedAt?: number }
 	| { phase: "issued"; claim: IssuedClaim }

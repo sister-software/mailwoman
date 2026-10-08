@@ -1,4 +1,4 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { expect, test } from "vitest"
 
 import { CLIENT_SURFACES, pythonInitPy, pythonPyproject, rustCargoToml, rustLibRs } from "#tools/generate-clients"

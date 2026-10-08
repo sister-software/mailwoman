@@ -9,7 +9,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { silentLogger } from "@mailwoman/core/logging"

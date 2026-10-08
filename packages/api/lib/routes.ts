@@ -10,8 +10,9 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { geocoderUnavailableError, metricsSnapshot, recordTimed, withEngineStamp } from "@mailwoman/api-kit"
 import { toHonoRoute } from "@mailwoman/api-kit/hono-operation"
-import { type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/codex/address/format"
+import { formatAddress, type FormatAddressOptions } from "@mailwoman/codex/address/format"
 import { canonicalKey } from "@mailwoman/codex/address/key"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { EngineStamp } from "@mailwoman/core/license"
 

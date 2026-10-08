@@ -4,7 +4,7 @@
  * @file Builds the runtime pipeline that the POI board and its probes grade against.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"

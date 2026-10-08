@@ -29,7 +29,8 @@
  *   `--country` runs, where a temp-build would wipe prior countries' rows.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
 import { pyRound } from "@mailwoman/core/numeric"

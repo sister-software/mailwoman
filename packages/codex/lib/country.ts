@@ -8,6 +8,7 @@
 
 export * from "#country/codes"
 export * from "#country/country"
+export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/codes"
 export * from "#country/display-names"
 export * from "#country/names"
 export * from "#country/official-languages"

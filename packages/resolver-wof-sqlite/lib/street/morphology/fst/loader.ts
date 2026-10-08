@@ -19,7 +19,8 @@
  *   artifact through `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 

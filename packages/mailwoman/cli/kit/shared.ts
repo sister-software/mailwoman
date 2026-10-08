@@ -23,8 +23,6 @@ import type * as React from "react"
 import type { Check } from "#check"
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
 
-export type { Check } from "#check"
-
 /**
  * Props for commands parsed from a native specification.
  */

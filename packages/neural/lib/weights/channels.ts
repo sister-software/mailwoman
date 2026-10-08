@@ -5,7 +5,8 @@
  * @file Reads a weights package's model card: required channels, declared files, capabilities and labels.
  */
 
-import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -13,12 +14,6 @@ import { type AddressSystemTable, parseAddressSystemTable } from "#address-syste
 import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
 import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
-
-/**
- * Re-exports inference of required channels from ONNX input names.
- * The implementation lives in the browser-safe feed module.
- */
-export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 
 /**
  * The `requires` block of a `model-card.json`, which declares the channel
@@ -240,11 +235,6 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | null | und
 		? `its declared files.${declared.key} (${declared.file}) parsed EMPTY`
 		: `its card declares files.${declared.key} = ${declared.file}, which is NOT in the package`
 }
-
-/**
- * The encoder declared by a model card.
- */
-export type { EncoderDescriptor } from "#char-encoder"
 
 /**
  * Reads the `encoder` block from a model card file with `encoderDescriptorFromCard`.

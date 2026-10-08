@@ -12,8 +12,8 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { TermFrequencyTable } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
-import { orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
-import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "#tools/shared"
+import type { NPIPrimary } from "#tools/nppes/org-name"
+import { orgTokens, addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "#tools/shared"
 
 /**
  * One synthetic input row for the matcher.

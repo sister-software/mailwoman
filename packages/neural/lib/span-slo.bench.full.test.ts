@@ -14,7 +14,8 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 

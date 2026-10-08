@@ -13,7 +13,8 @@
  *   also finds artifacts whose attribution sits in another package's card.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { EffectiveTrainingManifest } from "@mailwoman/corpus/source-register"

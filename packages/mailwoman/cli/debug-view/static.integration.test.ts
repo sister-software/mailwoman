@@ -6,7 +6,7 @@
  *   Every frame is stripped of ANSI before it is matched, because chalk's dim/reset pair around an evidence label means `\s+` cannot span the gap in a colored frame.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

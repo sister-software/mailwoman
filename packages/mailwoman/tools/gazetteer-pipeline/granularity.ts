@@ -15,8 +15,6 @@ import type { PathBuilderLike } from "path-ts"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer/defaults"
 import { PLACETYPE_PROJECTION } from "#gazetteer/placetype-census"
 
-export { DEFAULT_COVERAGE_FLOOR } from "#gazetteer/defaults"
-
 /**
  * The containment rungs from broadest to deepest.
  * Postcode is not a rung.

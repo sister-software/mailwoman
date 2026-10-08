@@ -8,7 +8,8 @@
  *   street-like words. Output components never include street-side tags.
  */
 
-import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address/format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/random"
 

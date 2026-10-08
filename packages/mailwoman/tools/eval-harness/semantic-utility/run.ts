@@ -29,13 +29,8 @@ import {
 	type SemanticObservationRoute,
 	type SemanticRouteIdentity,
 } from "#observations"
-import {
-	createPOIBoardPipeline,
-	POI_BOARD_FIXTURES,
-	type POIBoardFixture,
-	type POIBoardOptions,
-	type POIBoardResult,
-} from "#tools/eval-harness/poi/board"
+import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
+import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
 import {
 	computeProbeCounts,

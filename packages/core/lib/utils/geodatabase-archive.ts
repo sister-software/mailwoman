@@ -14,7 +14,7 @@
 
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { tryStat } from "#fs/readers"
+import { tryStat } from "#fs/readers/stat"
 import { makeDirectories } from "#fs/writers"
 import { runFile } from "#process"
 import { streamToDisk } from "#utils/stream-to-disk"

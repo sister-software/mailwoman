@@ -15,7 +15,8 @@
  *      them. Both enrichment steps must precede the FTS build.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { corePackagePathBuilder } from "@mailwoman/core/paths"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"

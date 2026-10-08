@@ -27,8 +27,6 @@ import {
 } from "#api/retry"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
-export { type IRuntimeLogger } from "#logging"
-
 const MS_PER_MINUTE = 60_000
 
 /**

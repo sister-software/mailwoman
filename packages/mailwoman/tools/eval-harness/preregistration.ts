@@ -15,7 +15,7 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import type { PathBuilderLike } from "path-ts"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
-import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board"
+import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board/runtime"
 
 /**
  * Resolves a committed pre-registration file from the package root.

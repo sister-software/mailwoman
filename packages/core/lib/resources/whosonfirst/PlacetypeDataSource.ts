@@ -8,12 +8,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { DatabaseSyncOptions, SQLInputValue } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import {
-	type Alpha2LanguageCode,
-	type Alpha3bLanguageCode,
-	Alpha3bToAlpha2,
-	isAlpha3bLanguageCode,
-} from "#resources/languages"
+import { isAlpha3bLanguageCode } from "#resources/languages"
+import { type Alpha2LanguageCode, type Alpha3bLanguageCode, Alpha3bToAlpha2 } from "#resources/languages/types.gen"
 import { tryWithBackoff } from "#resources/whosonfirst/backoff"
 import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 

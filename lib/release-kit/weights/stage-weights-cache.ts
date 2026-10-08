@@ -24,7 +24,7 @@
  *       --card /path/to/model-card-eval-en-gb.json
  */
 
-import { isFile, pathExists } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"

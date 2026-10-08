@@ -17,7 +17,7 @@
  *   Run: node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> -- <command> [arg ...]
  */
 
-import { open } from "@mailwoman/core/fs/readers"
+import { open } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

@@ -11,7 +11,8 @@
  *   let the v7.2.0 ship-break class through untested.
  */
 
-import { readLink, readLocalTextFile, tryStatLink } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLink, tryStatLink } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, removePath, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"

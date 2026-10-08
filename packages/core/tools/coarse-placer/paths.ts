@@ -12,7 +12,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { dataRootPath } from "#data-root"
 import { delimitedSource } from "#fs/delimited"
-import { pathExists } from "#fs/readers"
+import { pathExists } from "#fs/readers/stat"
 import { corePackagePathBuilder, repoRootPathBuilder } from "#paths"
 
 /**

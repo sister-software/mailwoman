@@ -17,7 +17,8 @@ import type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "#pipeline/types"
-import type { GazetteerArtifactCoverage, Resolver, ResolveOpts } from "#resolver/types"
+import type { GazetteerArtifactCoverage } from "#resolver/coverage-facts"
+import type { Resolver, ResolveOpts } from "#resolver/types"
 
 function fakeTree(raw: string, roots: AddressNode[] = []): AddressTree {
 	return { raw, roots }

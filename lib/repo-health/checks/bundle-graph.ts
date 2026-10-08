@@ -11,7 +11,7 @@
  *   so it requires a compiled tree.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { build, type Metafile, type Plugin } from "esbuild"
 import { resolvePath } from "path-ts"
 

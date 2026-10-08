@@ -13,7 +13,8 @@
  *   than by cleanup code that must survive kill signals.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"

@@ -15,8 +15,6 @@ import { Alpha3ToCountryRecord, CountryISO2 } from "#country/codes"
 import type { CountryName } from "#country/names"
 import { foldName } from "#normalize"
 
-export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/codes"
-
 /**
  * Common address spellings by ISO alpha-2.
  *

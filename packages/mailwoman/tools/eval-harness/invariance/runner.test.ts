@@ -9,13 +9,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	type InvarianceRow,
-	type ParseFn,
-	loadSuite,
-	localeForCountry,
-	runInvarianceSuite,
-} from "#tools/eval-harness/invariance/runner"
+import { type InvarianceRow, loadSuite } from "#tools/eval-harness/invariance/fixtures"
+import { type ParseFn, localeForCountry } from "#tools/eval-harness/invariance/parser"
+import { runInvarianceSuite } from "#tools/eval-harness/invariance/runner"
 
 describe("loadSuite", () => {
 	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", async () => {

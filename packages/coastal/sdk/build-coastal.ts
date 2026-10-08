@@ -15,7 +15,7 @@
  *   That error would cover ground the source did not map.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,

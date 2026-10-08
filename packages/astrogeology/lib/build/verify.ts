@@ -8,7 +8,8 @@
  *   The publishing step runs this check before upload.
  */
 
-import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { sha256File } from "@mailwoman/core/hash"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { resolvePath } from "path-ts"

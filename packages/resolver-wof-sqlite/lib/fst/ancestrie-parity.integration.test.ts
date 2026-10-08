@@ -9,7 +9,8 @@
  * by updating the frozen copy in the same commit.
  */
 
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 

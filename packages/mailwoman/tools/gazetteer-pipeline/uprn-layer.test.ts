@@ -9,7 +9,7 @@
  *   artifact back through the production reader.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readLayerCoverage, readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"

@@ -8,7 +8,8 @@
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { haversineKm, type GeoCoordinate } from "@mailwoman/spatial"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 

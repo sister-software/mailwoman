@@ -6,7 +6,8 @@
  *   @file Builds the sub-venue designator lexicon from Wikidata, OSM and Overture fetch outputs.
  */
 
-import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
@@ -31,12 +32,6 @@ import {
 } from "#subvenue/table"
 import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
 import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
-
-export * from "#subvenue/harvest"
-export * from "#tools/sub/venue/head-nouns"
-export * from "#subvenue/surfaces"
-export * from "#subvenue/table"
-export * from "#tools/sub/venue/wikidata"
 
 /**
  * Returns a copy of the surfaces with `curated: true` set on each surface that a promotion matches.

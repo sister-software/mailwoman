@@ -9,7 +9,7 @@
  *   fresh `latLngToCell` result.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import {
 	assertAreaAgreement,
 	areaAgreementFrom,

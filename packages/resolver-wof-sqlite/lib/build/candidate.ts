@@ -5,7 +5,7 @@
  */
 
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -31,19 +31,6 @@ import type { CapitalPoint } from "#capitals"
 import { resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
-
-/**
- * Re-exports the country display-name staging pass from the candidate build's public module.
- */
-export { stageCountryDisplayNames } from "#candidate/country-display-names"
-/**
- * Re-exports the gloss detector's excluded placetypes and default key-count threshold.
- */
-export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-roles"
-/**
- * Re-exports the per-place record that every candidate staging pass writes its rows from.
- */
-export type { PlaceAttrs } from "#candidate/place-attrs"
 
 /**
  * Options for {@link buildCandidateTable}.

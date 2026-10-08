@@ -7,7 +7,7 @@
  *   reports an unprovenanced ancestor as `unknown` rather than substituting the file's name.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { licenseIdentifiers } from "@mailwoman/core/license/obligations"

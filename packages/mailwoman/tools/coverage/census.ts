@@ -6,13 +6,8 @@
  * Reports per-country coverage across the corpus, training admission, weights packages, gazetteer and board.
  */
 
-import {
-	isDirectory,
-	pathExists,
-	readLocalJSONFile,
-	readLocalTextFile,
-	statPath,
-} from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isDirectory, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"

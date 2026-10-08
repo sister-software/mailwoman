@@ -9,7 +9,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"

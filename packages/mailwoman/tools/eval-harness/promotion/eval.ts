@@ -11,7 +11,8 @@
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { checkCompiledFreshness } from "@mailwoman/core/module/compiled-freshness"

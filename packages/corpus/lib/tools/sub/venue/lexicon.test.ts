@@ -9,23 +9,13 @@
 
 import { expect, test } from "vitest"
 
+import { classifyIdentifier, extractAttestedPhrases } from "#subvenue/harvest"
 import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
-import {
-	applyPromotions,
-	buildSubVenueLexicon,
-	buildSurfaceIndex,
-	classifyIdentifier,
-	CONCEPT_QIDS,
-	deriveHeadNounSurfaces,
-	extractAttestedPhrases,
-	nameContainsSurfaces,
-	normalizeSurface,
-	SHIPPED_DESIGNATOR_SEED,
-	SHIPPED_MODIFIER_SEED,
-	serializeSubVenueLexicon,
-	type SubVenueSurface,
-	surfacesFromWikidata,
-} from "#tools/sub/venue/lexicon"
+import { buildSurfaceIndex, nameContainsSurfaces, normalizeSurface } from "#subvenue/surfaces"
+import { CONCEPT_QIDS, SHIPPED_DESIGNATOR_SEED, SHIPPED_MODIFIER_SEED, type SubVenueSurface } from "#subvenue/table"
+import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
+import { applyPromotions, buildSubVenueLexicon, serializeSubVenueLexicon } from "#tools/sub/venue/lexicon"
+import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
 
 /**
  * A minimal sparql envelope in the exact shape wdqs serves.

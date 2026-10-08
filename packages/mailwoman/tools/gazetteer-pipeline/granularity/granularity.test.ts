@@ -13,9 +13,9 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
+import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer/defaults"
 import type { CountryGranularity, RungMeasurement } from "#gazetteer/granularity"
 import {
-	DEFAULT_COVERAGE_FLOOR,
 	LADDER,
 	SUB_LOCALITY_RUNGS,
 	bottomsOutAt,

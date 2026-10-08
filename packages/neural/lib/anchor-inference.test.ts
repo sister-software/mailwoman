@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest"
 
 import {
 	ANCHOR_FEATURE_DIM,
-	LOCALE_ORDER,
 	anchorFeatureVector,
 	buildAnchorFeatures,
 	countShapedOnlyKeys,
@@ -19,6 +18,7 @@ import {
 	type AnchorEntry,
 	type AnchorLookup,
 } from "#anchor-inference"
+import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import type { TokenizedPiece } from "#tokenizer"
 
 describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () => {

@@ -17,17 +17,6 @@ import type { InvarianceRow } from "#tools/eval-harness/invariance/fixtures"
 import { localeForCountry, type ParseFn } from "#tools/eval-harness/invariance/parser"
 import { canonicalizeAbbreviations, getTransform } from "#tools/eval-harness/invariance/transforms"
 
-export {
-	buildParseFn,
-	COUNTRY_TO_LOCALE,
-	localeForCountry,
-	type ModelSelectOptions,
-	type ParseCallOpts,
-	type ParseFn,
-} from "#tools/eval-harness/invariance/parser"
-
-export { DEFAULT_SUITE_PATH, loadSuite, type InvarianceRow } from "#tools/eval-harness/invariance/fixtures"
-
 /**
  * Verdict for one pair.
  *

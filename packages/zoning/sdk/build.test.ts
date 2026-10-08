@@ -1,4 +1,4 @@
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { LayerTier } from "@mailwoman/core/layers"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"

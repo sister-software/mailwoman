@@ -11,7 +11,7 @@
 
 import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { PathBuilder } from "path-ts"
 
 import { stableSourceID } from "#adapters/source-id"

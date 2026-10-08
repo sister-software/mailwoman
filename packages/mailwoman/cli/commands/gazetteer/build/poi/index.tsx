@@ -21,7 +21,7 @@
  *   below is untouched and stays byte-identical when `--source` is omitted.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
@@ -89,7 +89,8 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer/poi/build/poi")
+		const { bboxCoverageCells, buildPOIDatabase } = await import("#gazetteer/poi/build/poi")
+		const { ingestPlaces } = await import("#gazetteer/poi/build/overture")
 
 		const buildSHA = resolveBuildSHA(repoRootPath())
 

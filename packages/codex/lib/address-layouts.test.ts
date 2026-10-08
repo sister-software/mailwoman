@@ -25,14 +25,16 @@ import {
 } from "#address/layout"
 import {
 	ADDRESS_LAYOUTS,
-	GENERATED_ADDRESS_LAYOUTS,
-	GENERATED_LATIN_ADDRESS_LAYOUTS,
-	GENERATED_LOCAL_ADDRESS_LAYOUTS,
 	isLargestFirstSystem,
 	layoutForCountry,
 	layoutPrintsLargestFirst,
 	lineJoinForCountry,
 } from "#address/layouts"
+import {
+	GENERATED_ADDRESS_LAYOUTS,
+	GENERATED_LATIN_ADDRESS_LAYOUTS,
+	GENERATED_LOCAL_ADDRESS_LAYOUTS,
+} from "#address/layouts/generated"
 import { joinRendering, renderAddress } from "#address/render"
 import type { ComponentTag } from "#component"
 

@@ -50,13 +50,10 @@ export type {
 	InputModeSelection,
 	LocaleDetector,
 	LocaleHint,
-	MachinePreferences,
 	PhraseGrouper,
 	PhraseKind,
 	PhraseProposal,
-	PipelineFault,
 	PipelineOpts,
-	PipelineResult,
 	PipelineTiming,
 	PlacetypePairSelection,
 	PlacerCountryUse,
@@ -74,3 +71,6 @@ export type {
 	WordConsistencyOpts,
 	WordConsistencySetting,
 } from "#pipeline/types"
+
+export type { MachinePreferences } from "#pipeline/preferences"
+export type { PipelineFault, PipelineResult } from "#pipeline/result"

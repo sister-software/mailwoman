@@ -7,7 +7,8 @@
  *   `./table` entry takes its table from the caller instead.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePath } from "path-ts"
 
 const moduleDir = import.meta.dirname

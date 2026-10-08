@@ -15,24 +15,6 @@ import type {
 	StreetCentroidLookup,
 } from "#resolver/lookup-types"
 
-export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "#resolver/coverage-facts"
-export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
-
-export type {
-	AddressPointHit,
-	AddressPointLookup,
-	InterpolatedPointHit,
-	InterpolationLookup,
-	POIDistanceHit,
-	PostcodePlace,
-	PostcodePrefixAncestor,
-	PostcodePrefixIndexLike,
-	PostcodePrefixNode,
-	StreetCentroidHit,
-	StreetCentroidLookup,
-	WOFAncestor,
-} from "#resolver/lookup-types"
-
 export interface ResolvedPlace {
 	/**
 	 * Resolver-specific place identifier.

@@ -98,8 +98,6 @@ export type ExpectedRung =
  */
 export const UNCONSTRAINED_RUNG = "unconstrained"
 
-export { ABLATION_GRADES, type AblationGrade, emptyGrades, PASSING_GRADES } from "#ablation/grades"
-
 /**
  * Placetype fallback rung radius in km (measured p90 bbox radius).
  *

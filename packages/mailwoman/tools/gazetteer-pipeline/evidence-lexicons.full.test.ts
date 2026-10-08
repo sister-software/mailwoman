@@ -22,7 +22,8 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 

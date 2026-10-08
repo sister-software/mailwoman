@@ -30,7 +30,7 @@
  *     the "100-1000" bucket untested.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"

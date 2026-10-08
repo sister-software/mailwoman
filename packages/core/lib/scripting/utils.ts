@@ -3,8 +3,6 @@ import { defaultRegistry } from "async-init"
 import { ResourceError } from "#errors/schema"
 import { ConsoleLogger } from "#logging"
 
-export { cliArguments, optionPropertyName, passThroughCLIArguments, scriptEntryPath } from "#scripting/arguments"
-
 /**
  * Print a message to stderr and exit non-zero.
  *

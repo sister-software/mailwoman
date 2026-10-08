@@ -18,7 +18,7 @@
  *   can obtain by running the model. A reader of this record must keep those questions separate.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 
 /**

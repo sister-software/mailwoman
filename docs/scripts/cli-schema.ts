@@ -2,7 +2,7 @@
  * Read compiled command modules and assemble their native command specifications.
  */
 
-import { isDirectory } from "@mailwoman/core/fs/readers"
+import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

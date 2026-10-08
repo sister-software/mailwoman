@@ -5,7 +5,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 // Lightweight integration smoke against the actual corpus on this host.

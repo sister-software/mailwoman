@@ -6,7 +6,8 @@
  * Checks representative command snapshots and the committed generated page. It also checks deterministic rendering and omission of host paths and timestamps.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
 	collectCLISurface,
 	COMMANDS_DIRECTORY,

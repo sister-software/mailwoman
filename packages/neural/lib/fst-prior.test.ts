@@ -1,6 +1,6 @@
 import type { AncestrieMatch } from "@mailwoman/ancestrie"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it, test } from "vitest"
 

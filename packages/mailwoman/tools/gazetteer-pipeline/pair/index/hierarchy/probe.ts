@@ -23,7 +23,7 @@
  * per-country pairs are probed. The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { runIfScript } from "@mailwoman/core/scripting"

@@ -7,7 +7,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"

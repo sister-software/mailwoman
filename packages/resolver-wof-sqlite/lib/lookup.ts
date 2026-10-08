@@ -743,5 +743,3 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		}
 	}
 }
-
-export type { RankingWeights } from "#ranking-weights"

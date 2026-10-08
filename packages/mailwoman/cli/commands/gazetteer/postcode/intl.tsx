@@ -27,7 +27,7 @@
  *   `--fold-out` builds a copy of `--fold-into`. Neither option uses an atomic temp-swap.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { getRow } from "@mailwoman/core/utils"

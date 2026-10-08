@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pathExists, readFileRange } from "@mailwoman/core/fs/readers"
+import { readFileRange } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
@@ -38,12 +39,6 @@ import {
 } from "#schema"
 import type { ProviderID } from "#sdk/common"
 import { readAvailabilityRows, type BDCAvailabilityRow } from "#sdk/parsing"
-
-/**
- * Re-exports the TIGER block centroid helpers that callers use to supply
- * {@link BuildBDCOptions.blockCentroids}, since the geometry module has no package entry point of its own.
- */
-export { createTIGERBlockCentroidLookup, geometryCentroid } from "#sdk/geometry"
 
 const STAGE_BATCH_SIZE = 10_000
 

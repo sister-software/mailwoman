@@ -16,7 +16,8 @@ import {
 	readAddressSourceRegister,
 	type AddressSourceRegister,
 } from "@mailwoman/corpus/source-register"
-import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"

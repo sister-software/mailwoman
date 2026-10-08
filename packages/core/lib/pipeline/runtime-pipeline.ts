@@ -12,6 +12,7 @@ import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { errorMessage } from "#errors/schema"
+import type { PipelineFault, PipelineResult } from "#pipeline/result"
 import {
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
@@ -26,9 +27,7 @@ import type {
 	InputMode,
 	LocaleHint,
 	PhraseProposal,
-	PipelineFault,
 	PipelineOpts,
-	PipelineResult,
 	PlacerCountryUse,
 	PlacetypePairSelection,
 	QueryIntentMarker,

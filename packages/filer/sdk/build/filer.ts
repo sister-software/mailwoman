@@ -6,7 +6,7 @@
  *   Builds and seals `filer.db` from Form 499, BDC provider-list and EDGAR Exhibit 21 rows.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, movePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { countRows } from "@mailwoman/sqlite"
@@ -45,8 +45,6 @@ import { createFilerBuildTables } from "#sdk/build/tables"
 import { classifyFiler, parseForm499, type Form499Row } from "#sdk/form499"
 import { assertISODate } from "#sdk/guards"
 import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
-
-export type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
 
 /**
  * Number of source rows per transaction.

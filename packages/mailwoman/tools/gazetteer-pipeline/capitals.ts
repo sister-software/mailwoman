@@ -18,7 +18,8 @@
  *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"

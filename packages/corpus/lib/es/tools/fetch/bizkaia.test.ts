@@ -20,7 +20,8 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"

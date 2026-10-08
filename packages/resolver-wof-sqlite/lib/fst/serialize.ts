@@ -44,11 +44,6 @@ import type { FSTNode } from "#fst/matcher"
 import { FSTMatcher } from "#fst/matcher"
 import type { FSTProvenance, PlaceEntry } from "#fst/types"
 
-/**
- * Re-exports the format version that {@link serializeFST} writes.
- */
-export { FST_FORMAT_VERSION } from "#fst/format"
-
 const MAGIC = Buffer.from(FST_MAGIC_BYTES)
 
 /**

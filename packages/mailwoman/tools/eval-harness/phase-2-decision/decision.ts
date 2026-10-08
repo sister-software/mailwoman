@@ -13,12 +13,6 @@ import type { PathBuilderLike } from "path-ts"
 import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#tools/eval-harness/phase-2-decision/results"
 import { definitionContentHash, loadFrozenDefinition, preregistrationPath } from "#tools/eval-harness/preregistration"
 
-export {
-	type Phase2Comparability,
-	type Phase2Counts,
-	type Phase2Verdict,
-} from "#tools/eval-harness/phase-2-decision/results"
-
 /**
  * Instruments that produce registered measurements.
  */

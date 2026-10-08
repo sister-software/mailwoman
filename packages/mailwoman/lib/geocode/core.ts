@@ -79,8 +79,6 @@ import { recognizeUSRegions } from "#region-recognition"
 import { repairStrandedAffix } from "#stranded-affix-repair"
 import { applyStreetMissFallback } from "#street/miss-fallback"
 
-export type { GeocodeClassifier } from "#geocode/classifier"
-
 /**
  * The on/off settings of a geocode.
  *

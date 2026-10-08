@@ -8,7 +8,7 @@
  *   designation rather than the authority's Zone 1.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import { rectangleRing } from "@mailwoman/spatial"

@@ -9,7 +9,8 @@
  *   only the moved segment of a glob changes.
  */
 
-import { isSymbolicLink, pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isSymbolicLink, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePath } from "path-ts"
 
 import type { ModuleMove, PathLiteralRewrite } from "#repo-health/move/types"

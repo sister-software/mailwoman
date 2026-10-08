@@ -39,10 +39,6 @@ import type { SubVenueLexiconTable } from "#subvenue/table"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 import { alignRow } from "#utils"
 
-export * from "#recipes/sub/venue/sources"
-export * from "#recipes/sub/venue/context"
-export * from "#recipes/sub/venue/render"
-
 // #region Plan
 
 /**

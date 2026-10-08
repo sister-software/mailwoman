@@ -9,13 +9,8 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
-import {
-	type CaseGrade,
-	gradeCase,
-	type POIBoardExpect,
-	type POIBoardFixture,
-	type POIBoardResult,
-} from "#tools/eval-harness/poi/board"
+import { type CaseGrade, gradeCase, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
+import type { POIBoardExpect } from "#tools/eval-harness/poi/board/expectations"
 import {
 	canonicalJSON,
 	definitionContentHash,
@@ -265,8 +260,6 @@ export const PROBE_FREEZE_PATH = preregistrationPath("semantic-utility", "probe-
  * Path to the committed baseline receipt.
  */
 export const PROBE_BASELINE_RECEIPT_PATH = preregistrationPath("semantic-utility", "baseline-receipt.json")
-
-export { canonicalJSON } from "#tools/eval-harness/preregistration"
 
 /**
  * Returns the content hash of a probe definition.

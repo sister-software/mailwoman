@@ -5,14 +5,8 @@
  */
 
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
-import {
-	pathExists,
-	readLocalJSONFile,
-	readLocalTextFile,
-	statPath,
-	readLocalBuffer,
-	statLink,
-} from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath, statLink } from "@mailwoman/core/fs/readers/stat"
 import {
 	createSymbolicLink,
 	makeDirectories,

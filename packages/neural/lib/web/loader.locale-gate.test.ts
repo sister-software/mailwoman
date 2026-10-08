@@ -6,7 +6,8 @@ import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "#pair"
-import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "#web/loader"
+import type { LoadedPairIndex } from "#web/loader"
+import { detectPairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 
 const browserSafePackageRoots = {
 	"locale-hint": resolvePackageDirectory("@mailwoman/locale-hint"),

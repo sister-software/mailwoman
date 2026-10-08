@@ -24,7 +24,7 @@
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"

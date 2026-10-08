@@ -15,7 +15,7 @@
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"

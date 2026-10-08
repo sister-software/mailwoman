@@ -31,7 +31,8 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile, appendLocalTextFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"

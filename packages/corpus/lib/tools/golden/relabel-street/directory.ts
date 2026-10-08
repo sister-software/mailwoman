@@ -5,7 +5,8 @@
  * @file Rewrites a golden-set directory and renders its review deck.
  */
 
-import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
 	makeDirectories,
 	writeLocalFile,

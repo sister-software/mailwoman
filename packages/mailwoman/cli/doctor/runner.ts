@@ -9,7 +9,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
-import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { isSelfServicePayload, type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"

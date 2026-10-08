@@ -47,7 +47,7 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { PathBuilderLike } from "path-ts"
 

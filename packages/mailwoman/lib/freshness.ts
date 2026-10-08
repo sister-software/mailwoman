@@ -12,7 +12,7 @@
  *   The reader does not infer a date from file modification time or filename.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { NamedPath } from "@mailwoman/core/paths"
 

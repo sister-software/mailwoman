@@ -27,7 +27,7 @@
  *     --intermediate <corpus>/intermediate --adapters usgov-nad,ban,wof-admin [--cap 10000000]
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
 import { canonicalDedupKey } from "@mailwoman/corpus/adapters/dedup-key"
 import type { CanonicalRow } from "@mailwoman/corpus/types"

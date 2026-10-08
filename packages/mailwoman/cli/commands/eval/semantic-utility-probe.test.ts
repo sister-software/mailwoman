@@ -7,9 +7,9 @@ import { JSONSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
+import { canonicalJSON } from "#tools/eval-harness/preregistration"
 import {
 	auditProbeDefinition,
-	canonicalJSON,
 	computeProbeCounts,
 	decideProbe,
 	gradeWithComparator,
