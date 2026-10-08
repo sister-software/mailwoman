@@ -287,6 +287,11 @@
 			"node": "./lib/api/paced-client.ts",
 			"default": "./out/api/paced-client.js"
 		},
+		"./resolver/fixture-authoritative-provider": {
+			"types": "./out/resolver/fixture-authoritative-provider.d.ts",
+			"node": "./lib/resolver/fixture-authoritative-provider.ts",
+			"default": "./out/resolver/fixture-authoritative-provider.js"
+		},
 		"./api/test-clocks": {
 			"types": "./out/api/test/clocks.d.ts",
 			"node": "./lib/api/test/clocks.ts",

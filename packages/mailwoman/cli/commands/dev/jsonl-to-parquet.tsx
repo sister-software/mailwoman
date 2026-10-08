@@ -28,7 +28,7 @@ export const spec = {
 
 const DevJSONLToParquet: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { jsonlToParquet } = await import("@mailwoman/corpus/tools")
+		const { jsonlToParquet } = await import("@mailwoman/corpus/tools/jsonl-to-parquet")
 
 		return jsonlToParquet(
 			{ input: options.input, output: options.out, rowGroupSize: options.rowGroupSize },

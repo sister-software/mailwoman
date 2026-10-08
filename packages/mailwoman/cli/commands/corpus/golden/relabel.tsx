@@ -43,7 +43,7 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { relabelGoldenDirectory } = await import("@mailwoman/corpus/tools")
+		const { relabelGoldenDirectory } = await import("@mailwoman/corpus/tools/golden/relabel-street/directory")
 
 		const report = await relabelGoldenDirectory({
 			input: options.input,

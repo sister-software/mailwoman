@@ -60,8 +60,10 @@ function parseExtracts(extractSpec: string | null | undefined): Array<{ path: st
 
 const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } =
-			await import("@mailwoman/corpus/tools")
+		const { generateSubVenueLexicon } = await import("@mailwoman/corpus/tools/sub/venue/lexicon")
+
+		const { readOvertureLayerVintage, readOvertureSubVenues } =
+			await import("@mailwoman/corpus/tools/overture-subvenue")
 
 		const overtureRows = options.overtureDB
 			? await readOvertureSubVenues({ databasePath: options.overtureDB })

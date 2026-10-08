@@ -20,7 +20,7 @@ import {
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools"
+import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

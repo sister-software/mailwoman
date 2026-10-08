@@ -45,7 +45,7 @@ export const spec = {
 const DevLintRecipeOutputVocab: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { lintRecipeVocab } = await import("@mailwoman/corpus/tools")
+			const { lintRecipeVocab } = await import("@mailwoman/corpus/tools/lint/recipe-output/vocab")
 
 			return lintRecipeVocab({
 				recipeOutputPath: options.parquet,

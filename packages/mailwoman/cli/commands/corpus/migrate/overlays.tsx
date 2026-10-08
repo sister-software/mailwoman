@@ -35,7 +35,7 @@ export const spec = {
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-		const { baseManifestFiles, localManifestFilePath } = await import("@mailwoman/corpus/tools")
+		const { baseManifestFiles, localManifestFilePath } = await import("@mailwoman/corpus/tools/overlay/manifest")
 		const { migrateOverlayParquet } = await import("@mailwoman/corpus/tools/migrate/overlay-parquet")
 
 		type Manifest = Parameters<typeof baseManifestFiles>[0]

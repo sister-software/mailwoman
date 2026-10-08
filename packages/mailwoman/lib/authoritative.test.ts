@@ -1,11 +1,9 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { type AuthoritativeQuery, AuthoritativeResponseStatus, type Resolver } from "@mailwoman/core/resolver"
 import {
-	type AuthoritativeQuery,
-	AuthoritativeResponseStatus,
 	createFixtureAuthoritativeProvider,
 	fixtureExactMatch,
-	type Resolver,
-} from "@mailwoman/core/resolver"
+} from "@mailwoman/core/resolver/fixture-authoritative-provider"
 import { describe, expect, it } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"

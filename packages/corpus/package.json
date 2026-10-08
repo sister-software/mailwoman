@@ -48,11 +48,6 @@
 			"node": "./lib/utils.ts",
 			"default": "./out/utils.js"
 		},
-		"#tools": {
-			"types": "./out/tools.d.ts",
-			"node": "./lib/tools.ts",
-			"default": "./out/tools.js"
-		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",

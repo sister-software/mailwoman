@@ -22,7 +22,7 @@ import {
 	readSubVenueLexicon,
 	sampleIdentifier,
 } from "#recipes/sub/venue/sources"
-import { SUBVENUE_PROMOTIONS } from "#tools"
+import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 
 const lexicon = await readSubVenueLexicon(defaultLexiconPath())
 const shippedModifiers = lexicon.modifiers.filter((m) => m.shipped).map((m) => m.id)

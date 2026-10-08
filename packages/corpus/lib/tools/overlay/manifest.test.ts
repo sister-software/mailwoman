@@ -10,7 +10,12 @@ import { describe, expect, it } from "vitest"
 
 import { openDuckDB } from "#parquet/duckdb"
 import { useScratchDir } from "#test-kit"
-import { assembleOverlayManifest, baseManifestFiles, rerootBaseFilePath, splitFromFilename } from "#tools"
+import {
+	assembleOverlayManifest,
+	baseManifestFiles,
+	rerootBaseFilePath,
+	splitFromFilename,
+} from "#tools/overlay/manifest"
 
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 

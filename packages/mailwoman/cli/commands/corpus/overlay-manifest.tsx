@@ -51,7 +51,7 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
+		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools/overlay/manifest")
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)

@@ -21,10 +21,12 @@ import {
 	type AuthoritativeQuery,
 	type AuthoritativeResponse,
 	AuthoritativeResponseStatus,
-	createFixtureAuthoritativeProvider,
-	fixtureExactMatch,
 	type Resolver,
 } from "@mailwoman/core/resolver"
+import {
+	createFixtureAuthoritativeProvider,
+	fixtureExactMatch,
+} from "@mailwoman/core/resolver/fixture-authoritative-provider"
 
 import type { GeocodeClassifier } from "#geocode/classifier"
 import type { GeocodeDeps } from "#geocode/core"

@@ -34,13 +34,6 @@ export type {
 	AuthoritativeResponse,
 } from "#resolver/authoritative-provider"
 
-export {
-	createFixtureAuthoritativeProvider,
-	fixtureExactMatch,
-	type FixtureAuthoritativeProviderOptions,
-	type FixtureAuthoritativeRule,
-} from "#resolver/fixture-authoritative-provider"
-
 export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
 
 export { EMPTY_PLACE_FIELDS, RESOLVE_SWITCH_DEFAULTS, resolveSwitches } from "#resolver/types"

@@ -32,7 +32,7 @@ export const spec = {
 const DevLintCorpusRecipeOutput: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { lintRecipeOutput } = await import("@mailwoman/corpus/tools")
+			const { lintRecipeOutput } = await import("@mailwoman/corpus/tools/lint/recipe-output")
 
 			return lintRecipeOutput(
 				{

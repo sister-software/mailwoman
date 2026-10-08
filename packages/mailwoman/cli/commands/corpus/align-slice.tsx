@@ -30,7 +30,7 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { alignCanonicalRows } = await import("@mailwoman/corpus/tools")
+		const { alignCanonicalRows } = await import("@mailwoman/corpus/tools/align-canonical")
 
 		await alignCanonicalRows({
 			input: options.input,

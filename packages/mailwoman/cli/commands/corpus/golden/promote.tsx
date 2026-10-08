@@ -35,7 +35,7 @@ export const spec = {
 
 const CorpusGoldenPromote: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { promoteGolden } = await import("@mailwoman/corpus/tools")
+		const { promoteGolden } = await import("@mailwoman/corpus/tools/golden/promote")
 
 		return promoteGolden(
 			{

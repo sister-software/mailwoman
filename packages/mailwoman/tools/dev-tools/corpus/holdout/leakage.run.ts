@@ -26,7 +26,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { componentAtSpanSQL } from "@mailwoman/corpus/parquet/span-sql"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
-import { holdoutComponents } from "@mailwoman/corpus/tools"
+import { holdoutComponents } from "@mailwoman/corpus/tools/overlay/split-slice"
 import { defaultHoldouts, holdoutPolicyFor, splitForRow } from "@mailwoman/corpus/utils/split"
 import { join } from "path-ts"
 

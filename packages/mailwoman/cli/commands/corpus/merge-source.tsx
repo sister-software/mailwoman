@@ -33,7 +33,7 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mergeSourceFiles } = await import("@mailwoman/corpus/tools")
+		const { mergeSourceFiles } = await import("@mailwoman/corpus/tools/overlay/merge-source")
 		const inputs = extractDelimited(options.inputs)
 
 		if (inputs.length < 2) {

@@ -22,7 +22,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
+import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools/fetch/geonames/dump"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 

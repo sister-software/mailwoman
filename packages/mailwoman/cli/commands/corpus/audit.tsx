@@ -34,7 +34,7 @@ export const spec = {
 
 const CorpusAudit: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { audit } = await import("@mailwoman/corpus/tools")
+		const { audit } = await import("@mailwoman/corpus/tools/audit")
 
 		audit({ corpusDir: args[0], configPath: options.config, sampleFileCount: options.sample })
 	})

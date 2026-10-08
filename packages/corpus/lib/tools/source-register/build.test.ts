@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { AddressSourceRecord } from "#source-register"
-import { applySourceResolutions, readUnresolvedColumn, resolveRecordedDecisions } from "#tools"
+import { applySourceResolutions, readUnresolvedColumn, resolveRecordedDecisions } from "#tools/source-register/build"
 import { AddressRole } from "#types"
 
 describe("readUnresolvedColumn", () => {

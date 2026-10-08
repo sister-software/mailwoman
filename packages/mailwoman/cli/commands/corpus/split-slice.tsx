@@ -29,7 +29,7 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { splitOverlaySlice } = await import("@mailwoman/corpus/tools")
+		const { splitOverlaySlice } = await import("@mailwoman/corpus/tools/overlay/split-slice")
 
 		return splitOverlaySlice({ input: options.input, outputDir: options.outDir })
 	})

@@ -32,7 +32,7 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
+		const { buildCorpusStats } = await import("@mailwoman/corpus/tools/corpus-stats")
 
 		await buildCorpusStats({
 			parquetPath: options.parquet,

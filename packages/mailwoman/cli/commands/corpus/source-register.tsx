@@ -41,7 +41,7 @@ export const spec = {
 
 const CorpusSourceRegister: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildSourceRegister } = await import("@mailwoman/corpus/tools")
+		const { buildSourceRegister } = await import("@mailwoman/corpus/tools/source-register/build")
 
 		if (!options.inventory) throw new Error("--inventory is required")
 

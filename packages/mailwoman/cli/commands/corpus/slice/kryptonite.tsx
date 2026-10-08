@@ -48,7 +48,7 @@ export const spec = {
 
 const CorpusKryptoniteParquet: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildKryptoniteOverlay } = await import("@mailwoman/corpus/tools")
+		const { buildKryptoniteOverlay } = await import("@mailwoman/corpus/tools/overlay/kryptonite")
 
 		await buildKryptoniteOverlay(
 			{

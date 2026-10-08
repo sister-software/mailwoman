@@ -41,7 +41,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools"
+import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 
 import { readAdmittedCountries } from "#tools/coverage/census"
 
