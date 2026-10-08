@@ -6,7 +6,13 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
-import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import type {
+	CaseNormalization,
+	PlacetypePairSelection,
+	SpanProposerLexicon,
+	StageSource,
+	WordConsistencySetting,
+} from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AddressSystemTable } from "#address-system"
@@ -23,7 +29,6 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
-import type { WordConsistencyOpts } from "#word-consistency"
 
 /**
  * Configures a neural address classifier.
@@ -149,9 +154,11 @@ export interface NeuralAddressClassifierConfig {
 
 	/**
 	 * The default address-system conventions mode.
-	 * See `ParseOpts.addressSystemConventions`.
+	 *
+	 * It defaults to `"off"`.
+	 * See {@link AddressSystemConventions}.
 	 */
-	addressSystemConventions?: "auto" | SystemCode
+	addressSystemConventions?: AddressSystemConventions
 
 	/**
 	 * The model's address-system ids, from its card's `address_systems` field.
@@ -168,12 +175,14 @@ export interface NeuralAddressClassifierConfig {
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * The span proposer configuration, omitted meaning a default built from the
-	 * codex lexicon and `false` disabling it.
+	 * The span proposer.
+	 *
+	 * `"auto"` (the default) builds one from the codex lexicon, `"none"` disables it,
+	 * and a config object replaces it.
 	 *
 	 * Its proposals add emission priors and annotation and quoted spans block punctuation-bridge merges.
 	 */
-	spanProposer?: SpanProposerConfig | false
+	spanProposer?: StageSource<SpanProposerConfig>
 
 	/**
 	 * The default placetype-pair prior options, overridden per parse by `ParseOpts.placetypePair`
@@ -193,8 +202,36 @@ export interface NeuralAddressClassifierConfig {
 	 * tag by a confidence-weighted vote, defaulting to `WORD_CONSISTENCY_SHIP_DEFAULT`
 	 * and never running on the character path.
 	 */
-	enforceWordConsistency?: boolean | WordConsistencyOpts
+	enforceWordConsistency?: WordConsistencySetting
 }
+
+/**
+ * Which address-system conventions a parse enforces.
+ *
+ * - `"off"` applies no conventions.
+ * - `"auto"` detects the system from the model's locale head at a probability of 0.8 or higher.
+ * - A `SystemCode` pins the system.
+ */
+export type AddressSystemConventions = "off" | "auto" | SystemCode
+
+/**
+ * The span proposer for one parse.
+ *
+ * - `"inherit"` uses the config's `spanProposer`.
+ * - `"auto"` uses the default codex proposer, even when the config disabled it.
+ * - `"none"` disables the proposer.
+ * - A config object replaces the config's proposer.
+ */
+export type SpanProposerSelection = "inherit" | StageSource<SpanProposerConfig>
+
+/**
+ * The placetype census for one parse.
+ *
+ * - `"inherit"` uses the config's `placetypeCensus`.
+ * - `"off"` disables the census.
+ * - A census replaces the config's.
+ */
+export type PlacetypeCensusSelection = "inherit" | "off" | PlacetypeCensusLike
 
 /**
  * Configures the span proposer.
@@ -239,7 +276,7 @@ export interface ParseOpts {
 	/**
 	 * The FST gazetteer matcher whose matches add emission biases.
 	 */
-	fst?: FSTMatcherLike
+	fst?: FSTMatcherLike | null
 
 	/**
 	 * The bias magnitude for FST gazetteer matches, defaulting to 1.
@@ -291,10 +328,10 @@ export interface ParseOpts {
 	postcodeRepair?: boolean
 
 	/**
-	 * A per-parse override of the config's `enforceWordConsistency`, where an options
-	 * object sets the vote thresholds and `true` runs the unthresholded vote.
+	 * A per-parse override of the config's `enforceWordConsistency`, where an options object
+	 * sets the vote thresholds, `{}` runs the unthresholded vote and `"off"` skips it.
 	 */
-	enforceWordConsistency?: boolean | WordConsistencyOpts
+	enforceWordConsistency?: WordConsistencySetting
 
 	/**
 	 * Whether to snap or add secondary-unit spans such as "Apt 4B", "Ste 12"
@@ -303,10 +340,11 @@ export interface ParseOpts {
 	unitRepair?: boolean
 
 	/**
-	 * Whether to title-case all-caps ASCII input before inference, defaulting to true,
-	 * since the model trains on mixed-case text and mixed-case input is left unchanged.
+	 * How to treat letter case before inference, defaulting to `"title-case"`,
+	 * which title-cases all-caps ASCII input since the model trains on mixed-case text.
+	 * Mixed-case input is left unchanged.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 
 	/**
 	 * A calibrator that maps each decoded span's confidence to a calibrated probability
@@ -320,16 +358,20 @@ export interface ParseOpts {
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * Whether to run the configured span proposer for this parse, defaulting to true,
-	 * though `true` cannot enable a proposer the config disabled.
+	 * The span proposer for this parse.
+	 *
+	 * The default `"inherit"` uses the config's.
+	 * See {@link SpanProposerSelection}.
 	 */
-	spanProposer?: boolean
+	spanProposer?: SpanProposerSelection
 
 	/**
-	 * The address-system conventions to enforce, `auto` detecting the system from the model's
-	 * locale head at a probability of 0.8 or higher and a `SystemCode` pinning it.
+	 * The address-system conventions to enforce for this parse.
+	 *
+	 * The default `"inherit"` uses the config's.
+	 * See {@link AddressSystemConventions}.
 	 */
-	addressSystemConventions?: "auto" | SystemCode
+	addressSystemConventions?: "inherit" | AddressSystemConventions
 
 	/**
 	 * The ISO 3166-1 alpha-2 country the caller expects the address to be in,
@@ -341,20 +383,37 @@ export interface ParseOpts {
 	localeHint?: string
 
 	/**
-	 * Per-parse override of the config's `placetypePair`.
+	 * Per-parse selection of the placetype-pair prior.
 	 *
-	 * Set it to `false` to disable the prior.
-	 * A `null` value falls back to the config default.
+	 * The default `"inherit"` uses the config's `placetypePair`, `"off"` disables the prior,
+	 * and an options object replaces the config's.
 	 *
 	 * The prior biases a place name toward the tag the pair index recorded beside another input name.
 	 */
-	placetypePair?: PlacetypePairPriorOpts | false | null
+	placetypePair?: PlacetypePairSelection<PlacetypePairPriorOpts>
 
 	/**
-	 * Per-parse override of the config's `placetypeCensus`.
+	 * The placetype census for this parse.
 	 *
-	 * Set it to `false` to disable the census.
+	 * The default `"inherit"` uses the config's.
 	 * This changes only what `traceParse` records.
 	 */
-	placetypeCensus?: PlacetypeCensusLike | false
+	placetypeCensus?: PlacetypeCensusSelection
+}
+
+/**
+ * Whether a loader zeroes the gazetteer channel next to postcode-anchor hits.
+ *
+ * Inference must match training, so the model card's `requires.suppress_gazetteer_near_postcode` decides.
+ * A model whose card does not declare it was trained without the choreography, so it is off.
+ *
+ * A caller's explicit boolean replaces the card's declaration.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ */
+export function gazetteerSuppressionFor(
+	override: boolean | undefined,
+	declared: { suppress_gazetteer_near_postcode?: boolean } | null | undefined
+): boolean {
+	return override ?? declared?.suppress_gazetteer_near_postcode ?? false
 }

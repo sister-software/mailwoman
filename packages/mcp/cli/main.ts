@@ -134,7 +134,7 @@ async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
 	const pipeline = createRuntimePipeline({
 		classifier,
 		resolver,
-		poiQueryKind: dbPath ? { poiDatabasePath: dbPath } : true,
+		poiQueryKind: dbPath ? { poiDatabasePath: dbPath } : "extract",
 	})
 
 	poiPipelines.set(key, pipeline)
@@ -169,17 +169,17 @@ const deps: MCPToolDeps = {
 	async overpassExport(query) {
 		const pipeline = await getPoiPipeline(poiDatabasePath)
 		const result = await pipeline(query)
-		const outcome = result.poiIntent
+		const poiIntent = result.poiIntent
 
-		if (!outcome || outcome.type !== "intent") {
-			const reason = outcome?.type === "abstain" ? `: ${outcome.reason}` : ""
+		if (!poiIntent || poiIntent.type !== "intent") {
+			const reason = poiIntent?.type === "abstain" ? `: ${poiIntent.reason}` : ""
 
 			throw new Error(
-				`mailwoman_overpass_export: query is not POI-shaped (${outcome?.type ?? "no poi intent"}${reason})`
+				`mailwoman_overpass_export: query is not POI-shaped (${poiIntent?.type ?? "no poi intent"}${reason})`
 			)
 		}
 
-		const { subject } = outcome.intent
+		const { subject } = poiIntent.intent
 
 		const osmTags =
 			subject.kind === "category"
@@ -187,7 +187,7 @@ const deps: MCPToolDeps = {
 				: []
 
 		return emitOverpassQL(
-			outcome.intent,
+			poiIntent.intent,
 			subject.kind === "category" && osmTags.length === subject.categoryIDs.length ? { osmTags } : {}
 		)
 	},

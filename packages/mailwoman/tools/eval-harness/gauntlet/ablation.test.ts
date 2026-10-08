@@ -14,7 +14,7 @@ import {
 	ABLATION_ABSENT,
 	ablationBoardID,
 	ablationVariants,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	aggregateCells,
 	boundedOccurrences,
 	classifySlot,
@@ -46,7 +46,7 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 		unit: null,
 		postcode_country_scope: null,
 		capital_promotion: null,
-		variant_alias_exemption: null,
+		variant_alias_exemption: "not_applied",
 		admin_coherence: null,
 		hierarchy: [],
 		components: {},
@@ -207,7 +207,7 @@ describe("classifySlot — substitution is not the same as absence", () => {
 		expect(classifySlot("BT3 9QQ", "bt39qq")).toBe("recovered")
 	})
 
-	// A slot refilled by a different token counts as a substitution, with holds and abstentions as separate outcomes.
+	// A slot refilled by a different token counts as a substitution, with holds and abstentions as separate results.
 	it("reads a different token in the slot as a substitution", () => {
 		expect(classifySlot("94043", "1600")).toBe("substituted")
 		expect(classifySlot("75005", "1802")).toBe("substituted")
@@ -271,9 +271,9 @@ describe("isTierDrop — coarsening costs the user precision even at zero displa
 })
 
 /**
- * A row outcome carrying the fields a cell aggregates, with the rest filler.
+ * A row result carrying the fields a cell aggregates, with the rest filler.
  */
-function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
+function row(over: Partial<AblationRowResult>): AblationRowResult {
 	return {
 		caseID: "case",
 		component: "postcode",
@@ -315,7 +315,7 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 describe("aggregateCells", () => {
 	const meta = { boardID: "board", measuredAt: "2026-08-05T00:00:00.000Z" }
 
-	it("keys by (component, locale) and counts each outcome class once", () => {
+	it("keys by (component, locale) and counts each result class once", () => {
 		const cells = aggregateCells(
 			[
 				row({ caseID: "a", broken: true, displacementKm: 12, tierDrop: true }),

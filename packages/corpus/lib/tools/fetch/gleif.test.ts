@@ -5,7 +5,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -46,8 +46,8 @@ const PUBLISH_BODY = {
 	},
 }
 
-function stubClient(outcomes: StubOutcome[]): APIClient {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient {
+	const transport = stubTransport(results)
 
 	return new APIClient({ displayName: "gleif test", logger: silentLogger(), axios: transport.axios })
 }

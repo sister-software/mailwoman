@@ -14,23 +14,30 @@
  * Database access is injected via {@link RegionDatabaseResolver}.
  */
 
-import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { placetypeMapForCountry } from "@mailwoman/codex/placetype-map"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
+	type CaseNormalization,
+	DEFAULT_CASE_NORMALIZATION,
+	DEFAULT_PLACER_COUNTRY_USE,
 	deriveInputMode,
 	type InputMode,
+	type InputModeSelection,
 	hardCountryFor,
 	isBareLocalityTree,
 	isBarePostcodeTree,
+	type PlacerCountryUse,
 	type QueryKindResult,
+	type StageSource,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
 import type {
 	AuthoritativeProvider,
+	DefaultCountry,
 	AddressPointLookup,
 	PostcodePrefixIndexLike,
 	RegionDatabases,
@@ -70,16 +77,101 @@ import { applyStreetMissFallback } from "#street/miss-fallback"
 
 export type { GeocodeClassifier } from "#geocode/classifier"
 
+/**
+ * The on/off settings of a geocode.
+ *
+ * Every setting has an explicit default in {@link GEOCODE_SWITCH_DEFAULTS}.
+ */
+export interface GeocodeSwitches {
+	/**
+	 * Lets `poi.db` entity upgrades reach the venue tier.
+	 */
+	poiVenueTier: boolean
+	/**
+	 * Applies deterministic input normalization before the parse.
+	 */
+	normalizeInput: boolean
+	/**
+	 * Prefers the postcode-format country prior over the placer when available.
+	 */
+	postcodeCountryPrior: boolean
+	/**
+	 * Enforces admin descendant consistency.
+	 */
+	adminCoherence: boolean
+	/**
+	 * Re-probes unresolved values across admin bands.
+	 * It needs a trace sink.
+	 */
+	diagnoseUnreachable: boolean
+	/**
+	 * Attaches resolved-node ancestors to metadata.
+	 */
+	includeAncestors: boolean
+	/**
+	 * Lets the postcode's country override the country scope.
+	 */
+	postcodeCountryCoherence: boolean
+	/**
+	 * Narrows the postcode systems by the postcode's shape.
+	 */
+	postcodeShapeCoherence: boolean
+	/**
+	 * Passes the postcode as a containment hint to locality lookups.
+	 */
+	postcodeContainmentCoherence: boolean
+	/**
+	 * Reranks locality candidates by containment in a parsed region.
+	 */
+	adminContainmentRerank: boolean
+	/**
+	 * Requires span-rescore recovery to leave a context remainder.
+	 */
+	spanRescoreRequireContextRemainder: boolean
+	/**
+	 * Uses the postcode-prefix prior.
+	 * It needs {@link GeocodeDeps.postcodePrefixIndex}.
+	 */
+	postcodePrefixPrior: boolean
+}
+
+/**
+ * The value of each {@link GeocodeSwitches} setting that a geocode leaves unset.
+ */
+export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
+	poiVenueTier: false,
+	normalizeInput: true,
+	postcodeCountryPrior: true,
+	adminCoherence: true,
+	diagnoseUnreachable: false,
+	includeAncestors: true,
+	postcodeCountryCoherence: true,
+	postcodeShapeCoherence: false,
+	postcodeContainmentCoherence: false,
+	adminContainmentRerank: true,
+	spanRescoreRequireContextRemainder: false,
+	postcodePrefixPrior: false,
+}
+
+/**
+ * Fills each unset switch from {@link GEOCODE_SWITCH_DEFAULTS}.
+ */
+export function geocodeSwitches(deps: Partial<GeocodeSwitches>): GeocodeSwitches {
+	const switches = { ...GEOCODE_SWITCH_DEFAULTS }
+
+	for (const key of Object.keys(GEOCODE_SWITCH_DEFAULTS) as (keyof GeocodeSwitches)[]) {
+		switches[key] = deps[key] ?? GEOCODE_SWITCH_DEFAULTS[key]
+	}
+
+	return switches
+}
+
 // Spatial layers are passed as one route bundle.
-export interface GeocodeDeps extends LayerDesignationRoutes {
+export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwitches> {
 	/**
 	 * Poi.db reader for the fork→entity probe.
 	 */
 	poiLookup?: POIExecutorLookup
-	/**
-	 * Opt-in venue tier for poi.db entity upgrades.
-	 */
-	poiVenueTier?: boolean
 	/**
 	 * Street-morphology token test used by the fork→entity probe.
 	 */
@@ -93,10 +185,6 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
-	 * True when defaultCountry came from locale inference.
-	 */
-	defaultCountryIsInferred?: boolean
-	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
 	classifyKind?: (
@@ -106,10 +194,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	classifier: GeocodeClassifier
 	resolver: Resolver
 	/**
-	 * Explicit input register.
-	 * If unset, it is derived from kind.
+	 * The input register.
+	 * The default `"auto"` derives it from the query kind.
 	 */
-	inputMode?: InputMode
+	inputMode?: InputModeSelection
 	/**
 	 * Per-state database resolver.
 	 */
@@ -127,9 +215,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	authoritativeProvider?: AuthoritativeProvider
 	/**
-	 * Country constraint passed to the resolver.
+	 * Country constraint passed to the resolver, and who chose it.
+	 * When it is unset, the resolver has no default country.
 	 */
-	defaultCountry?: string | null
+	defaultCountry?: DefaultCountry
 	/**
 	 * Locale country as a soft ranking prior when no hard country scope is set.
 	 */
@@ -147,15 +236,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	fuzzyCountryScope?: string
 	/**
-	 * Normalize ALL-CAPS ASCII to title case before parsing.
-	 * Default true.
+	 * How the classifier treats letter case.
+	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
 	 */
-	normalizeCase?: boolean
-	/**
-	 * Deterministic input normalization before parse.
-	 * Default true.
-	 */
-	normalizeInput?: boolean
+	caseNormalization?: CaseNormalization
 	/**
 	 * Pre-parsed tree to skip internal parsing.
 	 */
@@ -166,72 +250,30 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	interpCalibration?: number | InterpCalibrationTable
 	/**
 	 * Coarse country router for soft country priors.
+	 * The default `"auto"` loads the bundled placer.
 	 */
-	placeCountry?: PlaceCountryFn | false
+	placeCountry?: StageSource<PlaceCountryFn>
 	/**
 	 * Proximity bias points forwarded to resolver bias.
 	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
-	 * Enable hard-country filtering from confident placer output (default on).
+	 * How a confident placer or postcode-format country constrains resolution.
+	 * The default is {@link DEFAULT_PLACER_COUNTRY_USE}.
 	 */
-	hardPlaceCountry?: boolean
+	placerCountryUse?: PlacerCountryUse
 	/**
 	 * Optional override for the hard-country coverage safelist.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * Prefer postcode-format country prior over placer when available.
-	 * Default on.
-	 */
-	postcodeCountryPrior?: boolean
-	/**
-	 * Admin descendant-consistency control.
-	 * Default on.
-	 */
-	adminCoherence?: boolean
-	/**
 	 * Optional resolver trace sink.
 	 */
 	resolveTraceSink?: import("@mailwoman/core/resolver").ResolveOpts["traceSink"]
 	/**
-	 * Diagnostic unresolved re-probe across admin bands.
-	 */
-	diagnoseUnreachable?: boolean
-	/**
-	 * Include resolved-node ancestors in metadata.
-	 * Default on.
-	 */
-	includeAncestors?: boolean
-	/**
-	 * Postcode-country coherence control.
-	 * Default on.
-	 */
-	postcodeCountryCoherence?: boolean
-	/**
-	 * Opt-in postcode-shape coherence.
-	 */
-	postcodeShapeCoherence?: boolean
-	/**
-	 * Opt-in postcode-containment coherence.
-	 */
-	postcodeContainmentCoherence?: boolean
-	/**
-	 * Admin-containment rerank control.
-	 */
-	adminContainmentRerank?: boolean
-	/**
-	 * Require context remainder in span-rescore recovery.
-	 */
-	spanRescoreRequireContextRemainder?: boolean
-	/**
 	 * Weak-resolution reading.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
-	/**
-	 * Opt-in postcode-prefix prior (requires postcodePrefixIndex).
-	 */
-	postcodePrefixPrior?: boolean
 	/**
 	 * PFX1 postcode-prefix index used by postcodePrefixPrior.
 	 */
@@ -242,7 +284,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
  * Kind-derived register for geocode input.
  */
 export function deriveGeocodeRegister(parseInput: string, queryShape = computeQueryShape(parseInput)): InputMode {
-	return deriveInputMode(classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
+	return deriveInputMode("auto", classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
 }
 
 /**
@@ -256,41 +298,46 @@ export interface GeocodeParseInputs {
 	queryShape: QueryShape
 	inputMode: InputMode
 	/**
-	 * Kind verdict used to derive inputMode, when derived.
+	 * The kind verdict behind `inputMode`, or `null` when the caller chose the register.
 	 */
-	kind?: QueryKindResult
+	kind: QueryKindResult | null
 	opts: NonNullable<Parameters<GeocodeClassifier["parse"]>[1]>
 }
 
 export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"> &
+	deps: Pick<GeocodeDeps, "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
 	// Stage-1 input normalization before parse.
-	const parseInput = deps.normalizeInput === false ? input : normalizeGeocodeInput(input, deps.classifier).normalized
+	const parseInput = geocodeSwitches(deps).normalizeInput
+		? normalizeGeocodeInput(input, deps.classifier).normalized
+		: input
 
 	// Query shape used as a parse prior.
 	const queryShape = computeQueryShape(parseInput)
 
 	// An explicit register wins.
 	// Otherwise the mode derives from the kind.
-	let inputMode = deps.inputMode
+	const inputModeSelection = deps.inputMode ?? "auto"
 	let kind: QueryKindResult | null = null
+	let inputMode: InputMode
 
-	if (!inputMode) {
+	if (inputModeSelection === "auto") {
 		kind = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)
-		inputMode = deriveInputMode(kind.kind)
+		inputMode = deriveInputMode(inputModeSelection, kind.kind)
+	} else {
+		inputMode = inputModeSelection
 	}
 
 	return {
 		parseInput,
 		queryShape,
 		inputMode,
-		...(kind ? { kind } : {}),
+		kind,
 		opts: {
 			postcodeRepair: true,
-			normalizeCase: deps.normalizeCase ?? true,
+			caseNormalization: deps.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 			queryShape,
 			inputMode,
 			// Default word-consistency enforcement.
@@ -312,7 +359,10 @@ export function geocodeParseInputs(
  */
 export async function parseForGeocode(
 	input: string,
-	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
+	deps: Pick<
+		GeocodeDeps,
+		"classifier" | "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"
+	>
 ): Promise<AddressTree> {
 	const classifier = await classifierForInput(deps.classifier, input)
 	const { parseInput, opts, queryShape } = geocodeParseInputs(input, { ...deps, classifier })
@@ -335,13 +385,12 @@ export async function parseForGeocode(
  * Returns a result.
  * It throws only on a fatal parse or resolve error.
  */
-export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
+export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Optional first-refusal check for thing queries.
-	if (deps.classifyKind && !deps.inputMode) {
-		const parseInput =
-			deps.normalizeInput === false
-				? input
-				: normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
+	if (deps.classifyKind && (deps.inputMode ?? "auto") === "auto") {
+		const parseInput = geocodeSwitches(deps).normalizeInput
+			? normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
+			: input
 
 		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
 
@@ -361,24 +410,24 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 }
 
 /**
+ * Resolves the coarse country router from its source, loading the bundled placer for `"auto"`.
+ */
+async function resolvePlaceCountry(source: StageSource<PlaceCountryFn>): Promise<PlaceCountryFn | null> {
+	if (source === "none") return null
+
+	return source === "auto" ? loadDefaultPlaceCountry() : source
+}
+
+/**
  * Apply country-related evidence to resolver options.
  */
 function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: GeocodeDeps): void {
 	// Countries implied by postcode format.
 	const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
 
-	if (deps.defaultCountry) {
-		// Drop inferred scope when contradictory evidence is stronger.
-		if (shouldDropInferredScope(tree, deps.defaultCountry, deps.defaultCountryIsInferred === true, formatCountries)) {
-			// No hard scope.
-		} else {
-			opts.defaultCountry = deps.defaultCountry
-
-			// Mark inferred default scope so resolver can treat it specially.
-			if (deps.defaultCountryIsInferred === true) {
-				opts.defaultCountryIsInferred = true
-			}
-		}
+	// An inferred scope is dropped when contradictory evidence is stronger.
+	if (deps.defaultCountry && !shouldDropInferredScope(tree, deps.defaultCountry, formatCountries)) {
+		opts.defaultCountry = deps.defaultCountry
 	}
 
 	// Pass format-implied countries to postcode probe.
@@ -414,14 +463,25 @@ const OPT_IN_RESOLVER_PINS = [
 	"postcodeContainmentCoherence",
 	"spanRescoreRequireContextRemainder",
 	"postcodePrefixPrior",
-] as const satisfies readonly (keyof GeocodeDeps & keyof ResolveOpts)[]
+] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]
 
-async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
+/**
+ * The hard-country setting for a geocode: the caller's use and safelist, then the artifact's safelist.
+ */
+function placerCountrySetting(deps: GeocodeDeps): { use: PlacerCountryUse; safelist: ReadonlySet<string> | null } {
+	return {
+		use: deps.placerCountryUse ?? DEFAULT_PLACER_COUNTRY_USE,
+		safelist: deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist ?? null,
+	}
+}
+
+async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Normalize input for parse/placer while keeping raw input for output.
-	const parseInput =
-		deps.normalizeInput === false
-			? input
-			: normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
+	const switches = geocodeSwitches(deps)
+
+	const parseInput = switches.normalizeInput
+		? normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
+		: input
 
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const queryShape = computeQueryShape(parseInput)
@@ -435,12 +495,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const traceSink = trace.traceSink
 
 	const opts: ResolveOpts = {
-		// Keep explicit opt-out behavior for admin coherence.
-		adminCoherence: deps.adminCoherence !== false,
-		// Keep explicit opt-out behavior for ancestor attachment.
-		includeAncestors: deps.includeAncestors !== false,
+		adminCoherence: switches.adminCoherence,
+		includeAncestors: switches.includeAncestors,
 		...(traceSink ? { traceSink } : {}),
-		...(deps.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
+		...(switches.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 	}
 
 	applyCountryEvidence(opts, tree, deps)
@@ -450,8 +508,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	// Coarse country router: default loader, custom function, or disabled.
-	const placeCountry: PlaceCountryFn | null =
-		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
+	const placeCountry = await resolvePlaceCountry(deps.placeCountry ?? "auto")
 
 	// Placer country reused for later country-dependent steps.
 	let placedCountry: string | null = null
@@ -463,12 +520,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
 
 	// Prefer postcode-format country prior when eligible.
-	if (
-		deps.postcodeCountryPrior !== false &&
-		!opts.defaultCountry &&
-		!opts.anchorPosterior &&
-		!isBareLocalityTree(tree)
-	) {
+	if (switches.postcodeCountryPrior && !opts.defaultCountry && !opts.anchorPosterior && !isBareLocalityTree(tree)) {
 		const pcCountry = countryFromPostcodeFormat(decodeAsJSON(tree).postcode as string | null)
 
 		if (pcCountry) {
@@ -477,13 +529,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
 
 			// Hard-country safelist precedence: override -> artifact -> fallback.
-			const hardCountry = hardCountryFor(
-				pcCountry,
-				1,
-				opts,
-				deps.hardPlaceCountry ?? true,
-				deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist
-			)
+			const hardCountry = hardCountryFor({ country: pcCountry, confidence: 1 }, opts, placerCountrySetting(deps))
 
 			if (hardCountry) {
 				opts.hardCountry = hardCountry
@@ -518,11 +564,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 			// Optional hard-country filter with shared coverage guard.
 			const hardCountry = hardCountryFor(
-				placed.country,
-				placed.confidence,
+				{ country: placed.country, confidence: placed.confidence },
 				opts,
-				deps.hardPlaceCountry ?? true,
-				deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist
+				placerCountrySetting(deps)
 			)
 
 			if (hardCountry) {
@@ -545,7 +589,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	// Pre-resolve country: explicit default first, then placer.
-	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase() ?? null
+	const preResolveCountry = (deps.defaultCountry?.country ?? placedCountry)?.toLowerCase() ?? null
 
 	// Country-specific placetype map.
 	opts.placetypeMap = placetypeMapForCountry(preResolveCountry)
@@ -572,7 +616,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 		opts.streetCentroids = (country: string) => provider(country).streetCentroids ?? null
 
-		for (const c of [deps.defaultCountry?.toLowerCase(), placedCountry?.toLowerCase(), streetPlacerCountry]) {
+		for (const c of [deps.defaultCountry?.country.toLowerCase(), placedCountry?.toLowerCase(), streetPlacerCountry]) {
 			if (c && !streetHints.includes(c)) {
 				streetHints.push(c)
 			}
@@ -602,17 +646,16 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	// Keep explicit opt-out behavior for postcode-country coherence.
-	opts.postcodeCountryCoherence = deps.postcodeCountryCoherence !== false
+	opts.postcodeCountryCoherence = switches.postcodeCountryCoherence
 
+	// The resolver treats an unset opt-in as off, so only an enabled one is passed.
 	for (const pin of OPT_IN_RESOLVER_PINS) {
-		if (deps[pin] === true) {
+		if (switches[pin]) {
 			opts[pin] = true
 		}
 	}
 
-	// Default on unless explicitly disabled.
-	if (deps.adminContainmentRerank !== false) {
+	if (switches.adminContainmentRerank) {
 		opts.adminContainmentRerank = true
 	}
 

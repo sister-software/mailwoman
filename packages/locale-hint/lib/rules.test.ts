@@ -5,6 +5,7 @@
  */
 
 import type { KnownFormat, QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 import { scoreByPostcode, scoreByScript, scoreFallback } from "#rules"
@@ -15,7 +16,7 @@ const fmt = (format: KnownFormat, confidence = 0.9, start = 0, end = 5) => ({
 	confidence,
 })
 
-const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
+const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ ...EMPTY_QUERY_SHAPE_VIEW, ...o })
 
 test("scoreByScript: each non-Latin script maps to its default locale", () => {
 	expect(scoreByScript(shape({ characterClass: "cjk" }))).toEqual({
@@ -45,19 +46,19 @@ test("scoreByScript: Latin script classes commit nothing (other scorers decide)"
 })
 
 test("scoreByPostcode: an unambiguous high-confidence hit maps to its implied country", () => {
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.95)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip4", 0.95)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.95,
 		reason: "format=us_zip4",
 	})
 
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("uk_postcode", 0.95)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("uk_postcode", 0.95)] }))).toEqual({
 		locale: "en-GB",
 		confidence: 0.95,
 		reason: "format=uk_postcode",
 	})
 
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("jp_postcode", 0.9)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("jp_postcode", 0.9)] }))).toEqual({
 		locale: "ja-JP",
 		confidence: 0.95,
 		reason: "format=jp_postcode",
@@ -65,7 +66,7 @@ test("scoreByPostcode: an unambiguous high-confidence hit maps to its implied co
 })
 
 test("scoreByPostcode: Canadian postcode defaults to en-CA at 0.9 (FR caller can override)", () => {
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("ca_postcode", 0.92)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("ca_postcode", 0.92)] }))).toEqual({
 		locale: "en-CA",
 		confidence: 0.9,
 		reason: "format=ca_postcode",
@@ -73,27 +74,27 @@ test("scoreByPostcode: Canadian postcode defaults to en-CA at 0.9 (FR caller can
 })
 
 test("scoreByPostcode: confidence boundary — exactly 0.9 counts as unambiguous", () => {
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.9)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip4", 0.9)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.95,
 		reason: "format=us_zip4",
 	})
 
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.89)] }))).toBeNull()
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip4", 0.89)] }))).toBeNull()
 })
 
 test("scoreByPostcode: an unrecognized high-confidence format yields null (switch has no default)", () => {
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("de_postcode", 0.95)] }))).toBeNull()
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("de_postcode", 0.95)] }))).toBeNull()
 })
 
 test("scoreByPostcode: ambiguous 5-digit (us_zip / fr_postcode) falls back to low-confidence US", () => {
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip", 0.6)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip", 0.6)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.5,
 		reason: "ambiguous-5digit-postcode",
 	})
 
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("fr_postcode", 0.6)] }))).toEqual({
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("fr_postcode", 0.6)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.5,
 		reason: "ambiguous-5digit-postcode",
@@ -102,11 +103,13 @@ test("scoreByPostcode: ambiguous 5-digit (us_zip / fr_postcode) falls back to lo
 
 test("scoreByPostcode: no postcode hit at all → null", () => {
 	expect(scoreByPostcode(shape())).toBeNull()
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("po_box", 0.95)] }))).toBeNull()
+	expect(scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("po_box", 0.95)] }))).toBeNull()
 })
 
 test("scoreByPostcode: unambiguous hit wins over a co-present ambiguous 5-digit", () => {
-	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip", 0.6), fmt("us_zip4", 0.95)] }))).toEqual({
+	expect(
+		scoreByPostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip", 0.6), fmt("us_zip4", 0.95)] }))
+	).toEqual({
 		locale: "en-US",
 		confidence: 0.95,
 		reason: "format=us_zip4",

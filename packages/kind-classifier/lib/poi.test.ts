@@ -1,4 +1,5 @@
 import type { LocaleHint } from "@mailwoman/core/pipeline"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { classifyKind, createKindClassifier } from "#index"
@@ -8,35 +9,103 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
 
 	if (norm === "hospital") {
-		return [{ kind: "category", categoryID: "hospital", matchedPhrase: "hospital", confidence: 1 }]
+		return [
+			{
+				kind: "category",
+				categoryID: "hospital",
+				matchedPhrase: "hospital",
+				confidence: 1,
+				mechanism: null,
+				inputPhrase: null,
+				wikidata: null,
+				reading: "preference",
+				countryScope: null,
+			},
+		]
 	}
 
 	if (norm === "drinking fountain") {
-		return [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1 }]
+		return [
+			{
+				kind: "category",
+				categoryID: "drinking_water",
+				matchedPhrase: "drinking fountain",
+				confidence: 1,
+				mechanism: null,
+				inputPhrase: null,
+				wikidata: null,
+				reading: "preference",
+				countryScope: null,
+			},
+		]
 	}
 
 	if (norm === "walk in clinic") {
-		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1 }]
+		return [
+			{
+				kind: "category",
+				categoryID: "clinic",
+				matchedPhrase: "walk in clinic",
+				confidence: 1,
+				mechanism: null,
+				inputPhrase: null,
+				wikidata: null,
+				reading: "preference",
+				countryScope: null,
+			},
+		]
 	}
 
 	if (norm === "places of worship") {
-		return [{ kind: "category", categoryID: "place_of_worship", matchedPhrase: norm, confidence: 1 }]
+		return [
+			{
+				kind: "category",
+				categoryID: "place_of_worship",
+				matchedPhrase: norm,
+				confidence: 1,
+				mechanism: null,
+				inputPhrase: null,
+				wikidata: null,
+				reading: "preference",
+				countryScope: null,
+			},
+		]
 	}
 
 	if (norm === "chevron") {
-		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1 }]
+		return [
+			{
+				kind: "brand",
+				categoryID: "Chevron",
+				wikidata: "Q319642",
+				matchedPhrase: "chevron",
+				confidence: 1,
+				mechanism: null,
+				inputPhrase: null,
+				reading: "preference",
+				countryScope: null,
+			},
+		]
 	}
 
 	return []
 }
 
-const LOCALE: LocaleHint = { locale: "en-US", confidence: 1, alternatives: [], source: "caller" }
+const LOCALE: LocaleHint = {
+	locale: "en-US",
+	confidence: 1,
+	alternatives: [],
+	source: "caller",
+	script: [],
+	evidence: null,
+}
 
 const input = (normalized: string) => ({ raw: normalized, normalized })
 
 const shape = (segments?: string[]) => ({
+	...EMPTY_QUERY_SHAPE_VIEW,
 	knownFormats: [],
-	...(segments ? { segments: segments.map((body, index) => ({ body, index })) } : {}),
+	...(segments ? { segments: segments.map((body, index) => ({ body, index, span: null })) } : {}),
 })
 
 describe("matchPOISubject", () => {
@@ -95,6 +164,10 @@ describe("matchPOISubject", () => {
 			wikidata: "Q319642",
 			matchedPhrase: "chevron",
 			confidence: 1,
+			mechanism: null,
+			inputPhrase: null,
+			reading: "preference",
+			countryScope: null,
 		})
 
 		expect(m?.remainder).toBe("Houston TX")
@@ -105,8 +178,28 @@ describe("a lookup returning several hits", () => {
 	const preferenceList: POIPhraseLookup = (phrase) =>
 		phrase.trim().toLowerCase() === "credit union"
 			? [
-					{ kind: "category", categoryID: "credit_union", matchedPhrase: "credit union", confidence: 1 },
-					{ kind: "category", categoryID: "bank", matchedPhrase: "credit union", confidence: 1 },
+					{
+						kind: "category",
+						categoryID: "credit_union",
+						matchedPhrase: "credit union",
+						confidence: 1,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "preference",
+						countryScope: null,
+					},
+					{
+						kind: "category",
+						categoryID: "bank",
+						matchedPhrase: "credit union",
+						confidence: 1,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "preference",
+						countryScope: null,
+					},
 				]
 			: []
 
@@ -118,14 +211,22 @@ describe("a lookup returning several hits", () => {
 						categoryID: "drugstore",
 						matchedPhrase: "prescription",
 						confidence: 1,
-						searchAsSet: true,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "set",
+						countryScope: null,
 					},
 					{
 						kind: "category",
 						categoryID: "pharmacy",
 						matchedPhrase: "prescription",
 						confidence: 1,
-						searchAsSet: true,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "set",
+						countryScope: null,
 					},
 				]
 			: []
@@ -164,7 +265,21 @@ describe("ANCHOR_SEPARATOR split behavior (byte-identical across the linearizati
 	const subjectLookup: POIPhraseLookup = (phrase) => {
 		const t = phrase.trim().toLowerCase()
 
-		return SUBJECTS.has(t) ? [{ kind: "category", categoryID: t, matchedPhrase: t, confidence: 1 }] : []
+		return SUBJECTS.has(t)
+			? [
+					{
+						kind: "category",
+						categoryID: t,
+						matchedPhrase: t,
+						confidence: 1,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "preference",
+						countryScope: null,
+					},
+				]
+			: []
 	}
 
 	const cases: Array<{ text: string; subject: string; remainder: string }> = [
@@ -200,7 +315,17 @@ describe("ANCHOR_SEPARATOR split behavior (byte-identical across the linearizati
 	it("resolves the whole input when it hits, without scanning for a separator", () => {
 		const m = matchPOISubject("cafe", "en-US", subjectLookup)
 
-		const hit = { kind: "category", categoryID: "cafe", matchedPhrase: "cafe", confidence: 1 }
+		const hit = {
+			kind: "category",
+			categoryID: "cafe",
+			matchedPhrase: "cafe",
+			confidence: 1,
+			mechanism: null,
+			inputPhrase: null,
+			wikidata: null,
+			reading: "preference",
+			countryScope: null,
+		}
 
 		expect(m).toEqual({
 			match: hit,
@@ -232,7 +357,21 @@ describe("span-first adversarial place names", () => {
 		const subject = phrase.trim().toLowerCase()
 		const known = new Set(["restaurants", "hotels", "trains", "flights", "pharmacies", "churches", "places of worship"])
 
-		return known.has(subject) ? [{ kind: "category", categoryID: subject, matchedPhrase: subject, confidence: 1 }] : []
+		return known.has(subject)
+			? [
+					{
+						kind: "category",
+						categoryID: subject,
+						matchedPhrase: subject,
+						confidence: 1,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "preference",
+						countryScope: null,
+					},
+				]
+			: []
 	}
 
 	const cases = [
@@ -267,7 +406,19 @@ describe("span-first multilingual anchors", () => {
 		const subject = phrase.trim().toLowerCase()
 
 		return ["restaurant", "hotel", "pharmacy", "cafe"].includes(subject)
-			? [{ kind: "category", categoryID: subject, matchedPhrase: subject, confidence: 1 }]
+			? [
+					{
+						kind: "category",
+						categoryID: subject,
+						matchedPhrase: subject,
+						confidence: 1,
+						mechanism: null,
+						inputPhrase: null,
+						wikidata: null,
+						reading: "preference",
+						countryScope: null,
+					},
+				]
 			: []
 	}
 

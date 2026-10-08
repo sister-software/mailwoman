@@ -3,40 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Route definitions + handlers for the native `/v1` surface, from which the OpenAPI document is
- *   emitted — there is no handwritten spec.
+ *   Handlers for the native operations. Each operation is defined in `#operations/*`. The
+ *   OpenAPI document is emitted from those definitions, so there is no handwritten spec.
  */
 
-import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import {
-	geocoderUnavailableError,
-	metricsSnapshot,
-	recordTimed,
-	stampedResponseSchema,
-	withEngineStamp,
-	APIErrorSchema,
-} from "@mailwoman/api-kit"
+import type { OpenAPIHono } from "@hono/zod-openapi"
+import { geocoderUnavailableError, metricsSnapshot, recordTimed, withEngineStamp } from "@mailwoman/api-kit"
+import { toHonoRoute } from "@mailwoman/api-kit/hono-operation"
 import { type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/codex/address/format"
 import { canonicalKey } from "@mailwoman/codex/address/key"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import type { AddressTree } from "@mailwoman/core/decoder"
 import type { EngineStamp } from "@mailwoman/core/license"
 
 import type { MailwomanAPIEngine } from "#engine"
-import {
-	BatchRequestSchema,
-	BatchResponseSchema,
-	FormatRequestSchema,
-	FormatResponseSchema,
-	GeocodeOutcomeSchema,
-	GeocodeRequestSchema,
-	HealthResponseSchema,
-	ParseOutcomeSchema,
-	ParseRequestSchema,
-	ResolveRequestSchema,
-	ResolveResponseSchema,
-	type GeocodeOutcome,
-} from "#schema"
+import { FormatAddressOperation } from "#operations/format-address"
+import { GeocodeAddressOperation } from "#operations/geocode/address"
+import { GeocodeBatchOperation } from "#operations/geocode/batch"
+import { ParseAddressOperation } from "#operations/parse/address"
+import { ParseAddressQueryOperation } from "#operations/parse/address/query"
+import { ReloadDataOperation } from "#operations/reload-data"
+import { ResolveTreeOperation } from "#operations/resolve-tree"
+import { RetrieveHealthOperation } from "#operations/retrieve/health"
+import { RetrieveMetricsOperation } from "#operations/retrieve/metrics"
 
 /**
  * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted.
@@ -60,176 +48,6 @@ export interface RegisterMailwomanAPIRoutesOptions {
 	engine?: EngineStamp
 }
 
-const errorContent = (description: string) => ({
-	description,
-	content: { "application/json": { schema: APIErrorSchema } },
-})
-
-const parseQueryParams = z.object({
-	address: z.string().optional().openapi({ description: "The address to parse." }),
-	debug: z.string().optional().openapi({ description: '`"true"` to include a diagnostic report.' }),
-	input_mode: z
-		.enum(["fragmented", "formatted"])
-		.optional()
-		.openapi({ description: "Input register (Decision A): unset → derived from the input's shape." }),
-})
-
-const parseResponses = {
-	200: {
-		description: "The tokenized input span + ranked solutions.",
-		content: { "application/json": { schema: stampedResponseSchema(ParseOutcomeSchema, "StampedParseOutcome") } },
-	},
-	400: errorContent("`address` is required."),
-	501: errorContent("The backing engine method is not wired for this deployment."),
-}
-
-const geocodeResponses = {
-	200: {
-		description: "One geocode result (parse → resolve cascade), passed through from the engine verbatim.",
-		content: { "application/json": { schema: stampedResponseSchema(GeocodeOutcomeSchema, "StampedGeocodeOutcome") } },
-	},
-	400: errorContent("`address` is required."),
-	503: errorContent("The geocoding engine is not wired for this deployment (dependencies missing)."),
-}
-
-const batchResponses = {
-	200: {
-		description: "One result per input address, in input order (per-row error isolation).",
-		content: { "application/json": { schema: stampedResponseSchema(BatchResponseSchema, "StampedBatchResponse") } },
-	},
-	400: errorContent("Body must be `{ addresses: string[] }`."),
-	413: errorContent("`addresses.length` exceeds the configured batch cap."),
-	503: errorContent("The geocoding engine is not wired for this deployment (dependencies missing)."),
-}
-
-const resolveResponses = {
-	200: {
-		description: "The same tree, decorated in place with gazetteer coordinates + attribution.",
-		content: { "application/json": { schema: stampedResponseSchema(ResolveResponseSchema, "StampedResolveResponse") } },
-	},
-	400: errorContent("Body must be `{ tree: AddressTree, opts? }`."),
-	503: errorContent("The resolver is not wired for this deployment (dependencies missing)."),
-}
-
-const reloadResponses = {
-	200: {
-		description: "Versioned data switchover result — the new per-extract version map.",
-		content: {
-			"application/json": { schema: z.looseObject({ reloaded: z.boolean(), versions: z.unknown() }) },
-		},
-	},
-	503: errorContent("The geocoding engine is not wired for this deployment (dependencies missing)."),
-}
-
-const formatResponses = {
-	200: {
-		description: "The rendered address string + the deterministic canonical match key.",
-		content: { "application/json": { schema: stampedResponseSchema(FormatResponseSchema, "StampedFormatResponse") } },
-	},
-	400: errorContent("Invalid request body."),
-}
-
-const healthResponses = {
-	200: {
-		description: "Liveness + engine health block. Answers 200 even when the engine is absent or broken.",
-		content: { "application/json": { schema: HealthResponseSchema } },
-	},
-}
-
-const metricsResponses = {
-	200: {
-		description: "The live in-process timing metrics snapshot (latency percentiles + per-tier counts).",
-		content: { "application/json": { schema: z.looseObject({}) } },
-	},
-}
-
-const parseGetRoute = createRoute({
-	method: "get",
-	path: "/v1/parse",
-	operationId: "parseGet",
-	summary: "Parse an address (query string)",
-	tags: ["parsing"],
-	request: { query: parseQueryParams },
-	responses: parseResponses,
-})
-
-const parsePostRoute = createRoute({
-	method: "post",
-	path: "/v1/parse",
-	operationId: "parsePost",
-	summary: "Parse an address (JSON body)",
-	tags: ["parsing"],
-	request: { body: { content: { "application/json": { schema: ParseRequestSchema } }, required: true } },
-	responses: parseResponses,
-})
-
-const geocodeRoute = createRoute({
-	method: "post",
-	path: "/v1/geocode",
-	operationId: "geocode",
-	summary: "Geocode an address to coordinates",
-	tags: ["geocoding"],
-	request: { body: { content: { "application/json": { schema: GeocodeRequestSchema } }, required: true } },
-	responses: geocodeResponses,
-})
-
-const batchRoute = createRoute({
-	method: "post",
-	path: "/v1/batch",
-	operationId: "batch",
-	summary: "Geocode a batch of addresses",
-	tags: ["geocoding"],
-	request: { body: { content: { "application/json": { schema: BatchRequestSchema } }, required: true } },
-	responses: batchResponses,
-})
-
-const resolveRoute = createRoute({
-	method: "post",
-	path: "/v1/resolve",
-	operationId: "resolve",
-	summary: "Resolve an already-decoded address tree against the gazetteer",
-	tags: ["resolving"],
-	request: { body: { content: { "application/json": { schema: ResolveRequestSchema } }, required: true } },
-	responses: resolveResponses,
-})
-
-const reloadRoute = createRoute({
-	method: "post",
-	path: "/v1/reload",
-	operationId: "reload",
-	summary: "Reload versioned data extracts (deploy-only; check at ingress)",
-	tags: ["meta"],
-	responses: reloadResponses,
-})
-
-const formatRoute = createRoute({
-	method: "post",
-	path: "/v1/format",
-	operationId: "format",
-	summary: "Render address components to a string + canonical match key",
-	tags: ["formatting"],
-	request: { body: { content: { "application/json": { schema: FormatRequestSchema } }, required: true } },
-	responses: formatResponses,
-})
-
-const healthRoute = createRoute({
-	method: "get",
-	path: "/health",
-	operationId: "health",
-	summary: "Liveness + engine health",
-	tags: ["meta"],
-	responses: healthResponses,
-})
-
-const metricsRoute = createRoute({
-	method: "get",
-	path: "/metrics",
-	operationId: "metrics",
-	summary: "In-process timing metrics snapshot",
-	tags: ["meta"],
-	responses: metricsResponses,
-})
-
 /**
  * `components` accepts `string | string[]` per key on the wire, but `formatAddress`
  * and `canonicalKey` take a single string per `ComponentTag`; multi-span values collapse
@@ -252,30 +70,28 @@ function toComponentDict(components: Record<string, string | string[]>): Compone
 /**
  * Register the native `/v1` routes + `/health` + `/metrics` against an injected engine.
  */
-export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = GeocodeOutcome>(
+export function registerMailwomanAPIRoutes(
 	app: OpenAPIHono,
-	engine: MailwomanAPIEngine<T>,
+	engine: MailwomanAPIEngine,
 	options: RegisterMailwomanAPIRoutesOptions = {}
 ): void {
 	const batchMax = options.batchMax ?? DEFAULT_BATCH_MAX
 	const stamp = options.engine
 
-	app.openapi(parseGetRoute, async (c) => {
+	app.openapi(toHonoRoute(ParseAddressQueryOperation), async (c) => {
 		if (!engine.parse) return c.json({ error: "parse not implemented", detail: null }, 501)
 
-		const address = c.req.query("address")?.trim()
+		const query = c.req.valid("query")
+		const address = query.address?.trim()
 
 		if (!address) return c.json({ error: "address is required", detail: null }, 400)
-		const debug = c.req.query("debug") === "true"
-		const inputModeRaw = c.req.query("input_mode")
-		const inputMode = inputModeRaw === "fragmented" || inputModeRaw === "formatted" ? inputModeRaw : undefined
-		const outcome = await engine.parse(address, { debug, inputMode })
+		const response = await engine.parse(address, { debug: query.debug === "true", inputMode: query.input_mode })
 
-		return c.json(withEngineStamp(outcome, stamp), 200)
+		return c.json(withEngineStamp(response, stamp), 200)
 	})
 
 	app.openapi(
-		parsePostRoute,
+		toHonoRoute(ParseAddressOperation),
 		async (c) => {
 			if (!engine.parse) {
 				return c.json({ error: "parse not implemented", detail: null }, 501)
@@ -288,9 +104,9 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				return c.json({ error: "address is required", detail: null }, 400)
 			}
 
-			const outcome = await engine.parse(trimmed, { debug: debug ?? false, inputMode: input_mode })
+			const response = await engine.parse(trimmed, { debug, inputMode: input_mode })
 
-			return c.json(withEngineStamp(outcome, stamp), 200)
+			return c.json(withEngineStamp(response, stamp), 200)
 		},
 		(result, c) => {
 			if (!result.success) return c.json({ error: "address is required", detail: null }, 400)
@@ -300,7 +116,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 	)
 
 	app.openapi(
-		geocodeRoute,
+		toHonoRoute(GeocodeAddressOperation),
 		async (c) => {
 			if (!engine.geocode) {
 				return geocoderUnavailableError(c)
@@ -314,10 +130,10 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 			return engine
 				.geocode(trimmed, { inputMode: input_mode })
-				.then((outcome) => {
-					recordTimed(performance.now() - t0, outcome.resolution_tier ?? "admin")
+				.then((result) => {
+					recordTimed(performance.now() - t0, result.resolution_tier)
 
-					return c.json(withEngineStamp(outcome as GeocodeOutcome, stamp), 200)
+					return c.json(withEngineStamp(result, stamp), 200)
 				})
 				.catch((error) => {
 					recordTimed(performance.now() - t0, "error")
@@ -335,7 +151,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 	)
 
 	app.openapi(
-		batchRoute,
+		toHonoRoute(GeocodeBatchOperation),
 		async (c) => {
 			const { addresses, input_mode } = c.req.valid("json")
 
@@ -352,12 +168,10 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			const t0 = performance.now()
 
 			try {
-				const outcome = await engine.batch(addresses, { inputMode: input_mode ?? "formatted" })
+				const response = await engine.batch(addresses, { inputMode: input_mode })
 				recordTimed(performance.now() - t0, "batch")
 
-				// `BatchRow`'s `GeocodeOutcome` half is a `Record<string, unknown>` passthrough,
-				// so the engine's generic result needs a cast to the schema's shape.
-				return c.json(withEngineStamp(outcome as z.infer<typeof BatchResponseSchema>, stamp), 200)
+				return c.json(withEngineStamp(response, stamp), 200)
 			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
 				throw error
@@ -371,7 +185,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 	)
 
 	app.openapi(
-		resolveRoute,
+		toHonoRoute(ResolveTreeOperation),
 		async (c) => {
 			if (!engine.resolveTree) {
 				return geocoderUnavailableError(c, "resolver")
@@ -379,9 +193,9 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 			const { tree, opts } = c.req.valid("json")
 
-			const outcome = await engine.resolveTree(tree as AddressTree, opts ?? {})
+			const response = await engine.resolveTree(tree, opts)
 
-			return c.json(withEngineStamp(outcome, stamp), 200)
+			return c.json(withEngineStamp(response, stamp), 200)
 		},
 		(result, c) => {
 			if (!result.success) return c.json({ error: "body must be { tree: AddressTree, opts? }", detail: null }, 400)
@@ -390,29 +204,27 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		}
 	)
 
-	app.openapi(reloadRoute, async (c) => {
+	app.openapi(toHonoRoute(ReloadDataOperation), async (c) => {
 		if (!engine.reload) {
 			return geocoderUnavailableError(c)
 		}
 
-		const outcome = await engine.reload()
-
-		return c.json(outcome, 200)
+		return c.json(await engine.reload(), 200)
 	})
 
-	app.openapi(formatRoute, (c) => {
+	app.openapi(toHonoRoute(FormatAddressOperation), (c) => {
 		const { components, country, options: formatOptions } = c.req.valid("json")
 		const dict = toComponentDict(components)
-		const formatted = formatAddress(dict, country, formatOptions as FormatAddressOptions | undefined)
+		const formatted = formatAddress(dict, country, formatOptions as FormatAddressOptions)
 
 		return c.json(withEngineStamp({ formatted, canonicalKey: canonicalKey(dict) }, stamp), 200)
 	})
 
-	app.openapi(healthRoute, async (c) => {
+	app.openapi(toHonoRoute(RetrieveHealthOperation), async (c) => {
 		const uptimeSeconds = Math.round((Date.now() - startedAt) / 1000)
 
-		return c.json({ status: "ok", uptime_s: uptimeSeconds, ...(await engine.health?.()) }, 200)
+		return c.json({ status: "ok" as const, uptime_s: uptimeSeconds, ...(await engine.health?.()) }, 200)
 	})
 
-	app.openapi(metricsRoute, (c) => c.json(metricsSnapshot(), 200))
+	app.openapi(toHonoRoute(RetrieveMetricsOperation), (c) => c.json(metricsSnapshot(), 200))
 }

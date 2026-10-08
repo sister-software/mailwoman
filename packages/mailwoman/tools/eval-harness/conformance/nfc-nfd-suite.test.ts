@@ -106,7 +106,7 @@ describe("the committed canonical-form suite", () => {
 		for (const fixture of fixtures) {
 			const seedCase = corpus.get(splitRowRef(fixture.rowRef!).caseID)!
 
-			const coordinate = fixture.outcomeComparator === "assembled_coordinate"
+			const coordinate = fixture.resultComparator === "assembled_coordinate"
 
 			expect(fixture.toleranceM, `${fixture.id}: toleranceM`).toBe(coordinate ? seedCase.expectToleranceM : null)
 		}
@@ -159,7 +159,7 @@ describe("the committed canonical-form suite", () => {
 	})
 
 	it("measures more than one comparator and more than one country", () => {
-		expect(new Set(fixtures.map((fixture) => fixture.outcomeComparator)).size).toBeGreaterThan(1)
+		expect(new Set(fixtures.map((fixture) => fixture.resultComparator)).size).toBeGreaterThan(1)
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 

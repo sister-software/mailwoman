@@ -127,7 +127,7 @@ export async function readEvalReport(outDir: PathBuilderLike, stdout: string, st
 	} else {
 		notes.push(
 			`No verdict.json at ${verdictPath}. The run did not reach the verdict assembler — read the log. This is not a ` +
-				"FAIL; a check that never graded and a check that graded FAIL are different outcomes."
+				"FAIL; a check that never graded and a check that graded FAIL are different results."
 		)
 	}
 

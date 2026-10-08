@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { clamp } from "@mailwoman/core/numeric"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
@@ -16,7 +17,6 @@ import { resolveTilesPath } from "#cli/debug-view/tiles"
 import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "#cli/debug-view/view-policy"
 import { $public } from "#env"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
-import type { GeocodeResult } from "#geocode/result"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geocode/session"
 
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"

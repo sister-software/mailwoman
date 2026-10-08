@@ -132,7 +132,7 @@ export interface GauntletCaseTable {
 	 */
 	locale: string | null
 	/**
-	 * 1 = this row's expected outcome is no coordinate, so the resolver abstains and any
+	 * 1 = this row's expected result is no coordinate, so the resolver abstains and any
 	 * resolved coordinate fails the row.
 	 *
 	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain,

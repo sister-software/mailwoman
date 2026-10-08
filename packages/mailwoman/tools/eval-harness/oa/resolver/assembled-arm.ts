@@ -64,8 +64,8 @@ export async function buildAssembledArm(
 					...(neural.fstPath ? { fstPath: neural.fstPath } : {}),
 				},
 				resolver,
-				placeCountry: evalPlacer ?? false,
-				hardPlaceCountry: useHardCountry && !!evalPlacer,
+				placeCountry: evalPlacer ?? "none",
+				placerCountryUse: useHardCountry && evalPlacer ? "filter" : "prior",
 				// `--place-country-hard-all` overrides the production coverage safelist with
 				// the full in-map set so every confident country hard-filters.
 				// Plain `--place-country-hard` leaves it undefined.

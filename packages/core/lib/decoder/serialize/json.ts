@@ -16,9 +16,10 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { z } from "zod"
 
 import { slotNodes } from "#decoder/tree/walk"
-import type { AddressNode, AddressTree } from "#decoder/types"
+import { type AddressNode, type AddressTree, ComponentTagSchema } from "#decoder/types"
 import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 
 /**
@@ -31,22 +32,24 @@ import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
  * `region: null` can mean the input had no region.
  * It can also mean the projection dropped an input region.
  */
-export interface DroppedSpan {
+export const DroppedSpanSchema = z.object({
 	/**
 	 * The tag stored on the span.
 	 *
 	 * It is always one already present in the output, because a drop happens only when the slot was taken.
 	 */
-	tag: ComponentTag
+	tag: ComponentTagSchema,
 	/**
 	 * The value that was discarded.
 	 */
-	value: string
+	value: z.string(),
 	/**
 	 * The value that held the slot, so a reader can see which of the two survived without re-walking the tree.
 	 */
-	kept: string
-}
+	kept: z.string(),
+})
+
+export type DroppedSpan = z.infer<typeof DroppedSpanSchema>
 
 /**
  * Options for {@link decodeAsJSON}.

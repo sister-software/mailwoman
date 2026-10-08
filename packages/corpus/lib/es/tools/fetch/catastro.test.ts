@@ -16,7 +16,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -134,7 +134,7 @@ function archiveBody(payload: string): Buffer {
 	return Buffer.concat([Buffer.from("PK\u0003\u0004", "latin1"), Buffer.from(payload, "utf8")])
 }
 
-function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
+function archiveResult(payload: string, lastModified?: string): StubResult {
 	return {
 		body: archiveBody(payload),
 		headers: lastModified ? { "last-modified": lastModified } : {},
@@ -144,8 +144,8 @@ function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
 /**
  * The real client over a scripted transport, with the dispatched URLs recorded on `calls`.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "es-catastro test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -154,11 +154,11 @@ function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 /**
  * The service document, then the one province feed, then its one archive.
  */
-function ceutaOnlyOutcomes(payload = "ceuta"): StubOutcome[] {
+function ceutaOnlyResults(payload = "ceuta"): StubResult[] {
 	return [
 		{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 		{ body: CEUTA_FEED },
-		archiveOutcome(payload),
+		archiveResult(payload),
 	]
 }
 
@@ -330,9 +330,9 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta") + officeXML("15", "Coruña")), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("ceuta", "Fri, 21 Aug 2026 19:41:45 GMT"),
+			archiveResult("ceuta", "Fri, 21 Aug 2026 19:41:45 GMT"),
 			{ body: CORUNA_FEED },
-			archiveOutcome("coruna"),
+			archiveResult("coruna"),
 		])
 
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path })
@@ -376,14 +376,14 @@ describe("harvestESCatastro", () => {
 
 	it("makes no archive request on a re-run where the province feed states the recorded date", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-catastro-rerun-")
-		await using first = stubClient(ceutaOnlyOutcomes())
+		await using first = stubClient(ceutaOnlyResults())
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
 
 		await using second = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("must not be requested"),
+			archiveResult("must not be requested"),
 		])
 
 		const summary = await harvestESCatastro(second, { outputDir: scratch.path })
@@ -394,14 +394,14 @@ describe("harvestESCatastro", () => {
 
 	it("re-fetches the municipality whose stated publication date moved", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-catastro-republished-")
-		await using first = stubClient(ceutaOnlyOutcomes())
+		await using first = stubClient(ceutaOnlyResults())
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
 
 		await using second = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: provinceFeedBytes(municipalityXML("55", "55101", "CEUTA", "2026-11-20T00:00:00Z")) },
-			archiveOutcome("ceuta rebuilt"),
+			archiveResult("ceuta rebuilt"),
 		])
 
 		const summary = await harvestESCatastro(second, { outputDir: scratch.path })
@@ -421,7 +421,7 @@ describe("harvestESCatastro", () => {
 		await using first = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: undated },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
@@ -429,7 +429,7 @@ describe("harvestESCatastro", () => {
 		await using second = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: undated },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		// Both sides read an empty string, so an equality test would hold and keep an
@@ -442,7 +442,7 @@ describe("harvestESCatastro", () => {
 
 	it("re-fetches an archive that is no longer on disk at its recorded length", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-catastro-truncated-")
-		await using first = stubClient(ceutaOnlyOutcomes())
+		await using first = stubClient(ceutaOnlyResults())
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
 
@@ -450,7 +450,7 @@ describe("harvestESCatastro", () => {
 		// recorded byte count is what tells that file apart from the archive.
 		await writeLocalFile(archiveBody("truncated"), scratch.path("A.ES.SDGC.AD.55101.zip"))
 
-		await using second = stubClient(ceutaOnlyOutcomes())
+		await using second = stubClient(ceutaOnlyResults())
 		const summary = await harvestESCatastro(second, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 1, skipped: 0 })
@@ -479,7 +479,7 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path, provinces: ["55"], limit: 1 })
@@ -496,7 +496,7 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path, provinces: ["55", "99"] })

@@ -53,17 +53,19 @@ describe("createPOIExecutor", () => {
 		})
 
 		const intent: POIIntent = {
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		}
 
-		const outcome = executor(intent)
+		const poiResult = executor(intent)
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.results).toEqual([
+		expect(poiResult.results).toEqual([
 			{
 				name: "Springfield General",
 				categoryID: "hospital",
@@ -73,6 +75,7 @@ describe("createPOIExecutor", () => {
 				country: "US",
 				confidence: 0.8,
 				gersID: "08f2836a5411a2ff0300b0a0b0c0d0e0",
+				ancestry: null,
 				distanceM: 120,
 			},
 		])
@@ -97,14 +100,16 @@ describe("createPOIExecutor", () => {
 			resolveOvertureCategories: (id) => (id === "supermarket" ? ["grocery_store", "organic_grocery_store"] : [id]),
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["supermarket"], matched: "grocery" },
-			anchor: { text: "Chicago IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["supermarket"], matched: "grocery", countryBinding: null },
+			anchor: { text: "Chicago IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
 
 		expect(seenQueries).toEqual([
 			{
@@ -114,8 +119,8 @@ describe("createPOIExecutor", () => {
 			},
 		])
 
-		expect(outcome.results![0]!.categoryID).toBe("supermarket")
-		expect(outcome.results![0]!.name).toBe("Jewel-Osco")
+		expect(poiResult.results![0]!.categoryID).toBe("supermarket")
+		expect(poiResult.results![0]!.name).toBe("Jewel-Osco")
 	})
 
 	it("category identity default: no injected resolver ⇒ probes [categoryID] and re-tag is a no-op", () => {
@@ -130,20 +135,22 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
 
 		expect(seenQueries).toEqual([
 			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
 		])
 
-		expect(outcome.results![0]!.categoryID).toBe("hospital")
+		expect(poiResult.results![0]!.categoryID).toBe("hospital")
 	})
 
 	it("union: probes every category the subject reached in a single search", () => {
@@ -159,8 +166,15 @@ describe("createPOIExecutor", () => {
 		})
 
 		executor({
-			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
-			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+			subject: {
+				kind: "category",
+				categoryIDs: ["drugstore", "pharmacy"],
+				matched: "prescription",
+				countryBinding: null,
+			},
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
 		expect(seenQueries).toEqual([
@@ -182,14 +196,21 @@ describe("createPOIExecutor", () => {
 			resolveOvertureCategories: (id) => (id === "pharmacy" ? ["rx"] : [id]),
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
-			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: {
+				kind: "category",
+				categoryIDs: ["drugstore", "pharmacy"],
+				matched: "prescription",
+				countryBinding: null,
+			},
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.results!.map((result) => [result.name, result.categoryID])).toEqual([
+		expect(poiResult.results!.map((result) => [result.name, result.categoryID])).toEqual([
 			["Rite Aid", "drugstore"],
 			["Walgreens Rx", "pharmacy"],
 		])
@@ -204,14 +225,21 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
-			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: {
+				kind: "category",
+				categoryIDs: ["drugstore", "pharmacy"],
+				matched: "prescription",
+				countryBinding: null,
+			},
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.results!.map((result) => result.name)).toEqual(["near drugstore", "far pharmacy"])
+		expect(poiResult.results!.map((result) => result.name)).toEqual(["near drugstore", "far pharmacy"])
 	})
 
 	it("union: probes a leaf two seeds share exactly once", () => {
@@ -228,8 +256,15 @@ describe("createPOIExecutor", () => {
 		})
 
 		executor({
-			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
-			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+			subject: {
+				kind: "category",
+				categoryIDs: ["drugstore", "pharmacy"],
+				matched: "prescription",
+				countryBinding: null,
+			},
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
 		expect(seenQueries[0]!.categoryIDs).toEqual(["drugstore", "rx"])
@@ -241,12 +276,14 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: (categoryID) => categoryID === "fire_hydrant",
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["fire_hydrant", "hospital"], matched: "water" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["fire_hydrant", "hospital"], matched: "water", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 	})
 
 	it("union: abstains when EVERY member is build-local and the search comes back empty", () => {
@@ -255,12 +292,19 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: () => true,
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["fire_hydrant", "drinking_water"], matched: "water" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: {
+				kind: "category",
+				categoryIDs: ["fire_hydrant", "drinking_water"],
+				matched: "water",
+				countryBinding: null,
+			},
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
+		expect(poiResult).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
 	it("Anchor_required: category subject, lookup present without resolvable center", () => {
@@ -269,9 +313,14 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({ subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } })
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			relation: null,
+			anchor: null,
+			limit: null,
+		})
 
-		expect(outcome).toEqual({ type: "abstain", reason: "anchor_required" })
+		expect(poiResult).toEqual({ type: "abstain", reason: "anchor_required" })
 	})
 
 	it("anchor_required: a bare biasPoint anchor is honored (no abstain)", () => {
@@ -280,12 +329,14 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { biasPoint: { latitude: 1, longitude: 2 } },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { biasPoint: { latitude: 1, longitude: 2 }, text: null, tree: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 	})
 
 	it("requires_build_local_layer: fire_hydrant, lookup present, empty result set", () => {
@@ -295,13 +346,15 @@ describe("createPOIExecutor", () => {
 		})
 
 		const intent: POIIntent = {
-			subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+			subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		}
 
-		const outcome = executor(intent)
+		const poiResult = executor(intent)
 
-		expect(outcome).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
+		expect(poiResult).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
 	it("requires_build_local_layer: fires with NO lookup at all, even with no anchor", () => {
@@ -310,18 +363,29 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: (categoryID) => categoryID === "fire_hydrant",
 		})
 
-		const outcome = executor({ subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" } })
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant", countryBinding: null },
+			relation: null,
+			anchor: null,
+			limit: null,
+		})
 
-		expect(outcome).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
+		expect(poiResult).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
 	it("intent-only passthrough: no lookup configured, non-build-local category", () => {
 		const executor = createPOIExecutor({ lookup: null, requiresBuildLocal: NEVER_BUILD_LOCAL })
 
-		const intent: POIIntent = { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } }
-		const outcome = executor(intent)
+		const intent: POIIntent = {
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			relation: null,
+			anchor: null,
+			limit: null,
+		}
 
-		expect(outcome).toEqual({ type: "intent", intent })
+		const poiResult = executor(intent)
+
+		expect(poiResult).toEqual({ type: "intent", intent, results: null })
 	})
 
 	it("Name search without center: OK without abstain, search runs un-anchored", () => {
@@ -348,13 +412,18 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({ subject: { kind: "name", text: "Joe's Diner" } })
+		const poiResult = executor({
+			subject: { kind: "name", text: "Joe's Diner" },
+			relation: null,
+			anchor: null,
+			limit: null,
+		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.results).toEqual([
+		expect(poiResult.results).toEqual([
 			{
 				name: "Joe's Diner",
 				categoryID: null,
@@ -364,27 +433,31 @@ describe("createPOIExecutor", () => {
 				country: "US",
 				confidence: 0.6,
 				gersID: null,
+				ancestry: null,
+				distanceM: null,
 			},
 		])
 
 		expect(seenQueries).toEqual([{ name: "Joe's Diner", center: undefined, limit: undefined }])
 	})
 
-	it("ancestry is ABSENT (no key at all) when no reverseGeocode fn is wired", () => {
+	it("ancestry is null when no reverseGeocode fn is wired", () => {
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => [HOSPITAL_HIT]),
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
-		expect(outcome.results![0]).not.toHaveProperty("ancestry")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
+		expect(poiResult.results![0]!.ancestry).toBeNull()
 	})
 
 	it("ancestry is decorated per-result when reverseGeocode is wired, capped at the result count", () => {
@@ -406,53 +479,59 @@ describe("createPOIExecutor", () => {
 			},
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
-		expect(outcome.results![0]!.ancestry).toEqual(ancestry)
+		if (poiResult.type !== "intent") throw new Error("unreachable")
+		expect(poiResult.results![0]!.ancestry).toEqual(ancestry)
 
 		expect(seenCoords).toEqual([[HOSPITAL_HIT.latitude, HOSPITAL_HIT.longitude]])
 	})
 
-	it("ancestry stays ABSENT for a result when reverseGeocode returns null (e.g. open ocean)", () => {
+	it("ancestry stays null for a result when reverseGeocode returns null (e.g. open ocean)", () => {
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => [HOSPITAL_HIT]),
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 			reverseGeocode: () => null,
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
-		expect(outcome.results![0]).not.toHaveProperty("ancestry")
+		if (poiResult.type !== "intent") throw new Error("unreachable")
+		expect(poiResult.results![0]!.ancestry).toBeNull()
 	})
 
-	it("ancestry stays ABSENT for a result when reverseGeocode returns an empty array ([] leaks the truthy check)", () => {
+	it("ancestry stays null for a result when reverseGeocode returns an empty array ([] leaks the truthy check)", () => {
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => [HOSPITAL_HIT]),
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 			reverseGeocode: () => [],
 		})
 
-		const outcome = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		const poiResult = executor({
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
+			relation: null,
+			limit: null,
 		})
 
-		expect(outcome.type).toBe("intent")
+		expect(poiResult.type).toBe("intent")
 
-		if (outcome.type !== "intent") throw new Error("unreachable")
-		expect("ancestry" in outcome.results![0]!).toBe(false)
+		if (poiResult.type !== "intent") throw new Error("unreachable")
+		expect(poiResult.results![0]!.ancestry).toBeNull()
 	})
 })
 
@@ -479,23 +558,48 @@ describe("resolvePOIAnchorCountry", () => {
 	}
 
 	it("reads the country off the node the search is centered on, upper-cased", () => {
-		expect(resolvePOIAnchorCountry({ subject: { kind: "name", text: "x" }, anchor: { tree: stamped("us") } })).toBe(
-			"US"
-		)
+		expect(
+			resolvePOIAnchorCountry({
+				subject: { kind: "name", text: "x" },
+				anchor: { tree: stamped("us"), text: null, biasPoint: null, radiusM: null },
+				relation: null,
+				limit: null,
+			})
+		).toBe("US")
 	})
 
 	it("falls back to a stamped root when the centered child carries none", () => {
 		const tree = stamped(null, true)
 		tree.roots[0]!.metadata = { resolver_country: "US" }
 
-		expect(resolvePOIAnchorCountry({ subject: { kind: "name", text: "x" }, anchor: { tree } })).toBe("US")
+		expect(
+			resolvePOIAnchorCountry({
+				subject: { kind: "name", text: "x" },
+				anchor: { tree, text: null, biasPoint: null, radiusM: null },
+				relation: null,
+				limit: null,
+			})
+		).toBe("US")
 	})
 
 	it("answers null for a country-less node, a biasPoint anchor, and no anchor", () => {
 		const subject = { kind: "name" as const, text: "x" }
+		const unanchored = { subject, relation: null, anchor: null, limit: null }
 
-		expect(resolvePOIAnchorCountry({ subject, anchor: { tree: stamped(null) } })).toBeNull()
-		expect(resolvePOIAnchorCountry({ subject, anchor: { biasPoint: { latitude: 1, longitude: 2 } } })).toBeNull()
-		expect(resolvePOIAnchorCountry({ subject })).toBeNull()
+		expect(
+			resolvePOIAnchorCountry({
+				...unanchored,
+				anchor: { tree: stamped(null), text: null, biasPoint: null, radiusM: null },
+			})
+		).toBeNull()
+
+		expect(
+			resolvePOIAnchorCountry({
+				...unanchored,
+				anchor: { biasPoint: { latitude: 1, longitude: 2 }, text: null, tree: null, radiusM: null },
+			})
+		).toBeNull()
+
+		expect(resolvePOIAnchorCountry(unanchored)).toBeNull()
 	})
 })

@@ -297,7 +297,7 @@ export async function oaResolverEval(
 	if (collectRows) {
 		await writeLocalJSONFile(outRows, options.outRows || "")
 
-		reportError(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
+		reportError(`wrote ${outRows.length} per-row results → ${options.outRows || ""}`)
 	}
 
 	if (collectResolvedDump) {

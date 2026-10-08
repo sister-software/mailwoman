@@ -55,7 +55,7 @@ export async function buildParseRig(
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
-		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
+		...(ablateToAnchor ? { gazetteer: false, conventions: "off" } : {}),
 		...(anchorOff ? { anchor: false } : {}),
 	}
 
@@ -170,14 +170,12 @@ export async function buildParseRig(
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
-	// normalizeCase is tri-state so an eval leg can pin either side of the library default.
-	// `--normalize-case` pins it on, `--raw-case` pins it off, neither = the library default.
+	// `--case-normalization` pins case handling.
+	// Without it, the library default applies.
 	// Pin explicitly in pre-registered legs.
-	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
-
 	const parseOpts = {
 		postcodeRepair: true,
-		...(normalizeCase !== undefined ? { normalizeCase } : {}),
+		...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
 	} as Parameters<typeof neural.parse>[1]
 
 	// `defaultCountry` is the hard country filter applied to admin lookups

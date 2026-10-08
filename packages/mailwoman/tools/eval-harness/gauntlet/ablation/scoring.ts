@@ -12,9 +12,9 @@ import { emptyGrades, PASSING_GRADES, tierRank, UNCONSTRAINED_RUNG } from "#abla
 import {
 	type AblatableComponent,
 	type AblationCell,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	DEFAULT_ABLATION_TOLERANCE_KM,
-	type SlotOutcome,
+	type SlotResult,
 } from "#tools/eval-harness/gauntlet/ablation/types"
 import { componentOf } from "#tools/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"
@@ -34,7 +34,7 @@ function foldValue(value: string | null): string {
  * `substituted` is the S-2 finding-3 class and the one a completion nudge has to fear:
  * the slot reads as filled, so a naive layer abstains, or confirms a house number as a postcode.
  */
-export function classifySlot(deleted: string, emitted: string | null): SlotOutcome {
+export function classifySlot(deleted: string, emitted: string | null): SlotResult {
 	const got = foldValue(emitted)
 
 	if (!got) return "absent"
@@ -58,7 +58,7 @@ export function scoreAblation(
 	deleted: string,
 	component: AblatableComponent,
 	toleranceKm: number
-): Pick<AblationRowOutcome, "displacementKm" | "broken" | "tierDrop" | "unresolved" | "slot" | "emitted"> {
+): Pick<AblationRowResult, "displacementKm" | "broken" | "tierDrop" | "unresolved" | "slot" | "emitted"> {
 	const anchorResolved = anchor.lat != null && anchor.lon != null
 	const ablatedResolved = ablated.lat != null && ablated.lon != null
 
@@ -81,15 +81,15 @@ export function scoreAblation(
 }
 
 /**
- * Fold per-row outcomes into the (component, locale) map.
+ * Fold per-row results into the (component, locale) map.
  *
  * A pair with no rows produces no cell — see {@linkcode AblationCell.support}.
  */
 export function aggregateCells(
-	rows: readonly AblationRowOutcome[],
+	rows: readonly AblationRowResult[],
 	meta: { boardID: string; measuredAt: string }
 ): AblationCell[] {
-	const groups = new Map<string, AblationRowOutcome[]>()
+	const groups = new Map<string, AblationRowResult[]>()
 
 	for (const row of rows) {
 		const key = `${row.component}|${row.locale}`

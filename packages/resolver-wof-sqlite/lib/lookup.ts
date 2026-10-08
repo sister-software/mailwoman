@@ -307,7 +307,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		// The first non-null result wins and unknown strategy names are skipped.
 		const convention = this.#conventionFor(query)
 
-		let outcome: PlaceCandidate[] = []
+		let found: PlaceCandidate[] = []
 
 		for (const name of convention.candidateStrategies) {
 			const strategy = this.#strategies.get(name)
@@ -321,13 +321,13 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			const result = await strategy(query, convention)
 
 			if (result) {
-				outcome = result
+				found = result
 
 				break
 			}
 		}
 
-		if (outcome.length) return outcome
+		if (found.length) return found
 
 		// On a postcode-typed NL-shape miss, retry with the whitespace-joined form then the 4-digit stem,
 		// restricted to NL so the same shape elsewhere cannot coarsen to another system's code.
@@ -350,7 +350,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			if (stem !== trimmed) return this.findPlace({ ...query, text: stem })
 		}
 
-		return outcome
+		return found
 	}
 
 	/**

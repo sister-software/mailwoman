@@ -150,7 +150,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 
 			for (const fx of fixtures) {
 				const expect_ = fx.expect!
-				const opts = { defaultCountry: fx.country || undefined }
+				const opts = fx.country ? { defaultCountry: { country: fx.country, source: "caller" as const } } : {}
 				let neuralCoord: ReturnType<typeof finestResolvedCoordinate> = null
 				let rulesCoord: ReturnType<typeof finestResolvedCoordinate> = null
 				let implausible = false

@@ -113,7 +113,7 @@ const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoo
  */
 let unrenderable = 0
 
-const outcomes: Array<{
+const results: Array<{
 	locality: string
 	country: string
 	region: string
@@ -160,7 +160,7 @@ for (const place of panel) {
 		verdict = "unreachable"
 	}
 
-	outcomes.push({
+	results.push({
 		locality: place.locality,
 		country: place.country,
 		region: place.region,
@@ -178,12 +178,12 @@ for (const place of panel) {
 const countriesSeen = new Set(panel.map((place) => place.country))
 const tally = new Map<Verdict, number>()
 
-for (const row of outcomes) {
+for (const row of results) {
 	tally.set(row.verdict, (tally.get(row.verdict) ?? 0) + 1)
 }
 
 console.log(
-	`#2309 locality reachability — ${outcomes.length} localities in ${countriesSeen.size} country/countries` +
+	`#2309 locality reachability — ${results.length} localities in ${countriesSeen.size} country/countries` +
 		` (${[...countriesSeen].toSorted().join(", ")}), bare admin arm written through each country's codex layout` +
 		(qualifiersStripped
 			? `\n${qualifiersStripped} expected string(s) carried a trailing parenthetical qualifier, stripped before grading.`
@@ -198,10 +198,10 @@ for (const verdict of ["matched", "reachable_not_picked", "unreachable", "not_as
 	const n = tally.get(verdict) ?? 0
 
 	// Denominated on graded rows rather than on the panel: an unrenderable row was never asked.
-	console.log(`| ${verdict} | ${n} | ${formatPercent(n, outcomes.length)} |`)
+	console.log(`| ${verdict} | ${n} | ${formatPercent(n, results.length)} |`)
 }
 
-const missed = outcomes.filter((row) => row.verdict !== "matched")
+const missed = results.filter((row) => row.verdict !== "matched")
 
 console.log(
 	`\nOf the ${missed.length} non-matching rows: ${tally.get("unreachable") ?? 0} could not be reached at any rank,` +
@@ -210,9 +210,9 @@ console.log(
 )
 
 const shapes = [
-	["ends in a suffix word", outcomes.filter((row) => row.suffixTail !== null)],
-	["other multi-word", outcomes.filter((row) => row.suffixTail === null && row.words > 1)],
-	["single word", outcomes.filter((row) => row.suffixTail === null && row.words === 1)],
+	["ends in a suffix word", results.filter((row) => row.suffixTail !== null)],
+	["other multi-word", results.filter((row) => row.suffixTail === null && row.words > 1)],
+	["single word", results.filter((row) => row.suffixTail === null && row.words === 1)],
 ] as const
 
 console.log(`\nby name shape:\n\n| shape | rows | matched | not_asked | unreachable | mis-ranked |`)
@@ -233,9 +233,9 @@ for (const [name, bucket] of shapes) {
  */
 const MIN_ROWS_PER_WORD = 10
 
-const byWord = new Map<string, typeof outcomes>()
+const byWord = new Map<string, typeof results>()
 
-for (const row of outcomes) {
+for (const row of results) {
 	if (!row.suffixTail) continue
 
 	const bucket = byWord.get(row.suffixTail) ?? []
@@ -280,10 +280,10 @@ if (values["out-json"]) {
 	await writeLocalJSONFile(
 		{
 			panel: panel.length,
-			graded: outcomes.length,
+			graded: results.length,
 			unrenderable,
 			countries: [...countriesSeen].toSorted(),
-			rows: outcomes,
+			rows: results,
 		},
 		values["out-json"]
 	)

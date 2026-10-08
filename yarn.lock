@@ -4951,7 +4951,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastify/error@npm:^4.0.0":
+"@fastify/error@npm:^4.0.0, @fastify/error@npm:^4.2.0":
   version: 4.2.0
   resolution: "@fastify/error@npm:4.2.0"
   checksum: 10/50b0a15a2ec540631a1ea1591ed3281fd6f92258ea61c49b6a1899c44c9ab3567390be87bd13ef9db48190a05c3be0a2afbe646a69da70f68e0be233205e2dd0
@@ -6271,7 +6271,6 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/evidence": "workspace:*"
     hono: "npm:^4.13.13"
     zod: "npm:^4.6.5"
   languageName: unknown
@@ -6388,6 +6387,7 @@ __metadata:
   resolution: "@mailwoman/core@workspace:packages/core"
   dependencies:
     "@duckdb/node-api": "npm:1.5.6-r.1"
+    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
@@ -6553,6 +6553,8 @@ __metadata:
 "@mailwoman/evidence@workspace:*, @mailwoman/evidence@workspace:packages/evidence":
   version: 0.0.0-use.local
   resolution: "@mailwoman/evidence@workspace:packages/evidence"
+  dependencies:
+    zod: "npm:^4.6.5"
   languageName: unknown
   linkType: soft
 
@@ -6560,6 +6562,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/fastify@workspace:packages/fastify"
   dependencies:
+    "@mailwoman/api": "workspace:*"
     "@mailwoman/core": "workspace:^"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
@@ -6567,7 +6570,9 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     fastify: "npm:^5.12.5"
     fastify-plugin: "npm:^6.0.0"
+    fastify-type-provider-zod: "npm:^7.0.0"
     mailwoman: "workspace:^"
+    zod: "npm:^4.6.5"
   peerDependencies:
     fastify: ">=5"
   languageName: unknown
@@ -17456,6 +17461,20 @@ __metadata:
   version: 6.0.0
   resolution: "fastify-plugin@npm:6.0.0"
   checksum: 10/ec41a929dbccc3af4fdaef1faee14aab824420bb11dc2daf06cfa1d6182d37c6d6da2add601f907d6ef27131901165ddb59d5e1d80a05ba70bf28d8e7ff3d60d
+  languageName: node
+  linkType: hard
+
+"fastify-type-provider-zod@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "fastify-type-provider-zod@npm:7.0.0"
+  dependencies:
+    "@fastify/error": "npm:^4.2.0"
+  peerDependencies:
+    "@fastify/swagger": ">=9.5.1"
+    fastify: ^5.5.0
+    openapi-types: ^12.1.3
+    zod: ">=4.1.5"
+  checksum: 10/d1dfb4f58500ba16657ea724b7659ea6dbd47f2829055dfef29b108365f5d8d8a73b15f23c5de5202fc4034df6257f3653a40f0136ceba06cfee9dba590c68f6
   languageName: node
   linkType: hard
 

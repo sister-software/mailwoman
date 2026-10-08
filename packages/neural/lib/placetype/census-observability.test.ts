@@ -247,7 +247,7 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 
 			const text = "brooklyn, new york, ny"
 			const withCensus = await cls.traceParse(text)
-			const withoutCensus = await cls.traceParse(text, { placetypeCensus: false })
+			const withoutCensus = await cls.traceParse(text, { placetypeCensus: "off" })
 
 			expect(withCensus.emissions).toEqual(withoutCensus.emissions)
 			expect(withCensus.path).toEqual(withoutCensus.path)

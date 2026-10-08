@@ -18,7 +18,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	type ConformanceObserver,
@@ -57,7 +57,7 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		base: FR_STREET,
 		variant: WHITESPACE_TRANSFORMATION_BY_NAME.tabbed(FR_STREET),
 		context: { caseCountry: "FR" },
-		outcomeComparator: "parse_whole_strict",
+		resultComparator: "parse_whole_strict",
 		expect: "equivalent",
 		rowRef: "cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore",
 		status: null,
@@ -310,11 +310,11 @@ describe("a seeded whitespace regression", () => {
 				unit: null,
 				postcode_country_scope: null,
 				capital_promotion: null,
-				variant_alias_exemption: null,
+				variant_alias_exemption: "not_applied",
 				admin_coherence: null,
 				hierarchy: [],
 			},
-		} satisfies ConformanceOutcome
+		} satisfies ConformanceResult
 	}
 
 	it("fails with the row, the transformation, the comparator and the mechanism", async () => {

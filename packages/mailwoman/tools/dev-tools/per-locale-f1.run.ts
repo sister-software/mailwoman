@@ -6,6 +6,7 @@
  *   Command-line adapter for `mailwoman/eval-harness/per-locale-f1.ts`.
  */
 
+import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
 
@@ -24,7 +25,7 @@ async function main(): Promise<void> {
 			"model-card": { type: "string" },
 			"no-anchor": { type: "boolean" },
 			"out-json": { type: "string" },
-			"raw-case": { type: "boolean" },
+			"case-normalization": { type: "string", default: DEFAULT_CASE_NORMALIZATION },
 			"suppress-gaz-near-postcode": { type: "boolean" },
 			tokenizer: { type: "string" },
 			"weights-cache": { type: "string" },
@@ -50,7 +51,7 @@ async function main(): Promise<void> {
 		...(values["suppress-gaz-near-postcode"] !== undefined ? { suppressGazNearPostcode: true } : {}),
 		...(values.conventions ? { conventions: values.conventions } : {}),
 		...(values["bridge-gaps"] !== undefined ? { bridgeGaps: true } : {}),
-		...(values["raw-case"] !== undefined ? { rawCase: true } : {}),
+		caseNormalization: caseNormalizationOf(values["case-normalization"]),
 		...(values["out-json"] ? { outJSON: values["out-json"] } : {}),
 	})
 }

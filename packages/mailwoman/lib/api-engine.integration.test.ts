@@ -224,7 +224,7 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
 		const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${handle.port}/v1/resolve` })
-		const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
+		const resolved = await remote.resolveTree(tree, { defaultCountry: { country: "US", source: "caller" } })
 
 		const flat: Array<(typeof resolved.roots)[number]> = []
 

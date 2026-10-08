@@ -84,6 +84,8 @@ async function loadWithCard(card: object | null): Promise<string[]> {
 	const requested: string[] = []
 
 	await loadNeuralClassifierFromURLs({
+		postcodeBinaryURLs: [],
+		pairIndexURLs: [],
 		modelURL: `${BASE}/model.onnx`,
 		tokenizerURL: `${BASE}/tokenizer.model`,
 		modelCardURL: `${BASE}/model-card.json`,
@@ -128,10 +130,12 @@ describe("card-declared lexicon generations", () => {
 		const requested: string[] = []
 
 		await loadNeuralClassifierFromURLs({
+			postcodeBinaryURLs: [],
+			pairIndexURLs: [],
 			modelURL: `${BASE}/model.onnx`,
 			tokenizerURL: `${BASE}/tokenizer.model`,
 			modelCardURL: `${BASE}/model-card.json`,
-			localitySurfaceLexiconURL: "https://elsewhere.example/custom-lexicon.json",
+			localitySurfaceLexicon: { url: "https://elsewhere.example/custom-lexicon.json" },
 			fetchImpl: makeRecordingFetch(
 				{ requires: { locality_surface: { lexicon: "locality-surface-lexicon-v7.json" } } },
 				requested

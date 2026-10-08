@@ -16,7 +16,7 @@
  *
  *   Callers branch on the error's `status` and {@linkcode isTransientResourceError}:
  *
- *   | Outcome                                  | Caller action         | Test                              |
+ *   | Result                                  | Caller action         | Test                              |
  *   | ---------------------------------------- | --------------------- | --------------------------------- |
  *   | `ZERO_RESULTS`                           | Record no match       | `error.status === 404`            |
  *   | `REQUEST_DENIED`                         | Abort the run         | `error.status === 403`            |

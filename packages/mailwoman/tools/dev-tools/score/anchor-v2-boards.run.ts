@@ -8,6 +8,7 @@ import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
@@ -36,7 +37,7 @@ const { values } = parseArguments({
 		 * With normalization on the lowercase leg is rescued before the shaped anchor keyer sees it,
 		 * so this flag is the only way to grade the keyer's register-sensitivity.
 		 */
-		"raw-case": { type: "boolean", default: false },
+		"case-normalization": { type: "string", default: DEFAULT_CASE_NORMALIZATION },
 	},
 })
 
@@ -48,7 +49,8 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 })
 
-const pipeline = createRuntimePipeline({ classifier, ...(values["raw-case"] ? { normalizeCase: false } : {}) })
+const caseNormalization = caseNormalizationOf(values["case-normalization"])
+const pipeline = createRuntimePipeline({ classifier, caseNormalization })
 
 interface Miss {
 	register: Register
@@ -125,7 +127,7 @@ if (board === "gb") {
 		}
 	}
 
-	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} · normalizeCase ${!values["raw-case"]} ===`)
+	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} · caseNormalization ${caseNormalization} ===`)
 	console.log("board                                   hit/total   per register")
 
 	reportBoard("exact postcode", postcode)

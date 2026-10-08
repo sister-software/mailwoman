@@ -46,7 +46,7 @@ describe("geocodeAddress — parsedTree dedupe", () => {
 		await geocodeAddress("500 N Hiatus Rd, Pembroke Pines, FL", {
 			classifier,
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 			parsedTree: provided,
 		})
 
@@ -61,7 +61,7 @@ describe("geocodeAddress — parsedTree dedupe", () => {
 		await geocodeAddress("500 N Hiatus Rd, Pembroke Pines, FL", {
 			classifier,
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 		})
 
 		expect(classifier.parse).toHaveBeenCalledTimes(1)
@@ -69,7 +69,7 @@ describe("geocodeAddress — parsedTree dedupe", () => {
 })
 
 describe("parseForGeocode", () => {
-	test("parses once with the geocode options (postcodeRepair + normalizeCase) and returns a tree", async () => {
+	test("parses once with the geocode options (postcodeRepair + caseNormalization) and returns a tree", async () => {
 		const classifier = fakeClassifier(emptyTree)
 
 		const tree = await parseForGeocode("500 N HIATUS RD, PEMBROKE PINES, FL", {
@@ -80,7 +80,7 @@ describe("parseForGeocode", () => {
 
 		expect(classifier.parse).toHaveBeenCalledWith(
 			expect.any(String),
-			expect.objectContaining({ postcodeRepair: true, normalizeCase: true })
+			expect.objectContaining({ postcodeRepair: true, caseNormalization: "title-case" })
 		)
 
 		expect(tree).toBeDefined()
@@ -91,7 +91,7 @@ describe("parseForGeocode", () => {
 		const { resolver, seen } = captureResolver()
 
 		const tree = await parseForGeocode("x", { classifier })
-		await geocodeAddress("x", { classifier, resolver, placeCountry: false, parsedTree: tree })
+		await geocodeAddress("x", { classifier, resolver, placeCountry: "none", parsedTree: tree })
 
 		// parseForGeocode parsed once. geocodeAddress did not parse again.
 		expect(classifier.parse).toHaveBeenCalledTimes(1)

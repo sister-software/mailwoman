@@ -4,62 +4,55 @@
  * @author Teffen Ellis, et al.
  *
  *   The native-surface engine interface. Engine-agnostic like the drop-ins: the `mailwoman` CLI
- *   wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures. `format` is the
- *   exception — it's wired in-package from `@mailwoman/formatter` (the surface exists to expose it).
+ *   wires the real parse/geocode/resolve stack, and tests inject fixtures. `format` needs no
+ *   engine method, because the routes wire it in-package from `@mailwoman/codex`.
  */
 
-import type { AddressTree, ParseComponent } from "@mailwoman/core"
-import type { InputMode } from "@mailwoman/core/pipeline"
+import type { AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
+import type { InputModeSelection } from "@mailwoman/core/pipeline"
 
-import type { GeocodeOutcomeLike } from "#schema"
-
-/**
- * One parse outcome: ordered components + the full decoded tree (the same language `/v1/resolve` speaks).
- */
-export interface ParsedAddressResult {
-	input: string
-	components: ParseComponent[]
-	tree: AddressTree
-	debug: string | null
-}
-
-export interface BatchResultFailure {
-	input: string
-	error: string
-}
-
-/**
- * A batch row slot (per-row isolation).
- */
-export type BatchResultEntry<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike> = T | BatchResultFailure
-
-export interface ResolveTreeOutcome {
-	tree: AddressTree
-}
+import type { BatchResponse } from "#operations/geocode/batch"
+import type { ParseResponse } from "#operations/parse/address"
+import type { ReloadResponse } from "#operations/reload-data"
+import type { ResolveResponse } from "#operations/resolve-tree"
 
 /**
  * The `/health` data block the engine contributes (model card, data-root inventory).
  */
 export type HealthData = Record<string, unknown>
 
+/**
+ * Per-call options for {@link MailwomanAPIEngine.parse} and the geocode methods.
+ */
 export interface ParseInit {
 	/**
-	 * The input register; `formatted` runs the evidence-bundle channels off.
+	 * The input register; `formatted` runs the evidence-bundle channels off,
+	 * and `auto` derives it from the input.
 	 */
-	inputMode?: InputMode
-	debug?: boolean
+	inputMode: InputModeSelection
+	/**
+	 * Whether to include a diagnostic report.
+	 */
+	debug: boolean
 }
 
-export type GeocodeCallback<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike> = (
-	address: string,
-	opts?: ParseInit
-) => Promise<T>
+/**
+ * Geocode one address.
+ */
+export type GeocodeCallback = (address: string, opts: Pick<ParseInit, "inputMode">) => Promise<GeocodeResult>
 
-export interface MailwomanAPIEngine<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike> {
-	parse?(address: string, opts: ParseInit): Promise<ParsedAddressResult>
-	geocode?: GeocodeCallback<T>
-	batch?(addresses: string[], opts?: ParseInit): Promise<{ results: BatchResultEntry<T>[] }>
-	resolveTree?(tree: AddressTree, opts: Record<string, unknown>): Promise<ResolveTreeOutcome>
-	reload?(): Promise<{ reloaded: boolean; versions: unknown }>
+/**
+ * The engine the native routes call.
+ *
+ * Every method is optional.
+ * A route whose method is absent answers 501 or 503.
+ */
+export interface MailwomanAPIEngine {
+	parse?(address: string, opts: ParseInit): Promise<ParseResponse>
+	geocode?: GeocodeCallback
+	batch?(addresses: string[], opts: Pick<ParseInit, "inputMode">): Promise<BatchResponse>
+	resolveTree?(tree: AddressTree, opts: Record<string, unknown>): Promise<ResolveResponse>
+	reload?(): Promise<ReloadResponse>
 	health?(): Promise<HealthData>
 }

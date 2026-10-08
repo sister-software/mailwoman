@@ -18,6 +18,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
@@ -29,7 +30,7 @@ const { values } = parseArguments({
 		locale: { type: "string", default: "en-gb" },
 		"cache-root": { type: "string" },
 		text: { type: "string", default: "10 Downing Street, Shoreditch, London, SW1A 2AA" },
-		"normalize-case": { type: "string", default: "true" },
+		"case-normalization": { type: "string", default: DEFAULT_CASE_NORMALIZATION },
 	},
 })
 
@@ -47,8 +48,8 @@ console.log(`localitySurface   ${resolved.localitySurfaceLexiconPath ?? "(none)"
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
 const cfg = classifier.config
 
-const normalizeCase = values["normalize-case"] !== "false"
-const text = normalizeCase ? normalizeInputCase(values.text!) : values.text!
+const caseNormalization = caseNormalizationOf(values["case-normalization"])
+const text = caseNormalization === "title-case" ? normalizeInputCase(values.text!) : values.text!
 const pieces = cfg.tokenizer!.encode(text).pieces
 
 const channels = buildSoftFeatures(text, pieces, {
@@ -61,7 +62,7 @@ const channels = buildSoftFeatures(text, pieces, {
 	...(cfg.suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode: true } : {}),
 })
 
-console.log(`\ninput (normalizeCase=${normalizeCase})  ${stringifyJSON(text)}`)
+console.log(`\ninput (caseNormalization=${caseNormalization})  ${stringifyJSON(text)}`)
 console.log(`pieces            ${pieces.length}`)
 console.log(`spanMode          ${stringifyJSON(cfg.postcodeAnchorSpanMode ?? null)}`)
 console.log("\nchannel           lexicon?  pieces with a non-zero clue")

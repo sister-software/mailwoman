@@ -55,9 +55,9 @@ export async function handleStripeEvent(
 		}
 
 		case "invoice.paid": {
-			const outcome = await fulfilInvoice(env, deps, event.data.object.id)
+			const result = await fulfilInvoice(env, deps, event.data.object.id)
 
-			return { handled: outcome.outcome === "refused" ? `refused: ${outcome.reason}` : outcome.outcome }
+			return { handled: result.result === "refused" ? `refused: ${result.reason}` : result.result }
 		}
 
 		case "invoice.payment_failed": {

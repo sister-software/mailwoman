@@ -20,13 +20,34 @@ export {
 
 export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "#pipeline/span-proposer"
 export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipeline/span-proposer"
-export { deriveInputMode, PipelineFaultStage, QueryIntentCode, WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
+
+export {
+	CASE_NORMALIZATIONS,
+	caseNormalizationOf,
+	DEFAULT_CASE_NORMALIZATION,
+	DEFAULT_PLACER_COUNTRY_USE,
+	deriveInputMode,
+	InputModeSchema,
+	InputModeSelectionSchema,
+	PipelineFaultStage,
+	POIIntentSchema,
+	POIQueryResultSchema,
+	POIResultSchema,
+	POISpatialRelationSchema,
+	QueryIntentCode,
+	QueryIntentCodeSchema,
+	QueryIntentMarkerSchema,
+	QueryKindSchema,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+} from "#pipeline/types"
 
 export type {
 	AddressClassifier,
+	CaseNormalization,
 	ClassifierOpts,
 	FSTMatcherLike,
 	InputMode,
+	InputModeSelection,
 	LocaleDetector,
 	LocaleHint,
 	MachinePreferences,
@@ -37,14 +58,19 @@ export type {
 	PipelineOpts,
 	PipelineResult,
 	PipelineTiming,
-	PlacetypePairPassthrough,
+	PlacetypePairSelection,
+	PlacerCountryUse,
 	POIIntent,
-	POIIntentOutcome,
+	POIQueryResult,
 	POIResult,
+	POISpatialRelation,
 	QueryIntentMarker,
 	QueryKind,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
+	StageSource,
 	UserLocation,
+	WordConsistencyOpts,
+	WordConsistencySetting,
 } from "#pipeline/types"

@@ -23,6 +23,8 @@
  *   parse-anchored entries and states each one's standing.
  */
 
+import type { HierarchyEntry } from "@mailwoman/core/geocode"
+
 /**
  * One link of the winner's stamped lineage.
  *
@@ -34,27 +36,15 @@ interface LineageAncestor {
 }
 
 /**
- * The subset of a resolved-tree node the assembly reads, structurally satisfied
- * by the decorated `AddressNode`.
+ * The subset of a resolved-tree node the assembly reads, projected from the decorated `AddressNode`.
  */
 export interface HierarchySourceNode {
 	tag: string
 	value: string
-	lat?: number | undefined
-	lon?: number | undefined
-	placeID?: string | undefined
-	metadata?: Record<string, unknown> | undefined
-}
-
-/**
- * One `GeocodeResult.hierarchy` entry, locality → country (most specific first).
- */
-export interface HierarchyEntry extends HierarchyLineageEntry {
-	tag: string
-	value: string
-	name: string
 	lat: number | null
 	lon: number | null
+	placeID: string | null
+	metadata: Record<string, unknown> | null
 }
 
 /**
@@ -107,7 +97,7 @@ export function assembleHierarchy(
 	anchor: LineageAnchor | null
 ): HierarchyEntry[] {
 	const hierarchy: HierarchyEntry[] = nodes
-		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
+		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat !== null || n.placeID))
 		.toSorted((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
 		.map((n) => ({
 			tag: n.tag,
@@ -116,8 +106,8 @@ export function assembleHierarchy(
 			// and this falls back to the raw parsed span when a node resolved without one.
 			// Consumers should display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | null)?.trim() || n.value.trim(),
-			lat: n.lat ?? null,
-			lon: n.lat != null ? n.lon! : null,
+			lat: n.lat,
+			lon: n.lat !== null ? n.lon : null,
 			placeID: n.placeID || null,
 			in_winner_lineage: null,
 		}))
@@ -154,8 +144,8 @@ export interface HierarchyLineageEntry {
  * (the same anchor `adminCoherenceField` uses).
  */
 export interface LineageAnchor {
-	placeID?: string | undefined
-	metadata?: Record<string, unknown> | undefined
+	placeID: string | null
+	metadata: Record<string, unknown> | null
 }
 
 /**

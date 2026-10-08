@@ -249,9 +249,9 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 		fixtures,
 		REFINEMENT_MONOTONICITY_LAW,
 		(fixture, label, fixtureProblems) => {
-			if (fixture.outcomeComparator !== "candidate_admissibility") {
+			if (fixture.resultComparator !== "candidate_admissibility") {
 				fixtureProblems.push(
-					`${label}: names "${fixture.outcomeComparator}" — this law is stated over the resolver's candidate tables, ` +
+					`${label}: names "${fixture.resultComparator}" — this law is stated over the resolver's candidate tables, ` +
 						`so the only comparator that can read it is "candidate_admissibility"`
 				)
 			}

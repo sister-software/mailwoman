@@ -20,10 +20,10 @@ import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 /**
  * What a stratum's own rule made of one eligible row.
  */
-export type StratumOutcome<Row> =
-	| { readonly outcome: "row"; readonly row: Row }
-	| { readonly outcome: "ungradeable" }
-	| { readonly outcome: "unbuildable" }
+export type StratumResult<Row> =
+	| { readonly result: "row"; readonly row: Row }
+	| { readonly result: "ungradeable" }
+	| { readonly result: "unbuildable" }
 
 /**
  * What the build dropped and why — reported beside the panel, never folded into it.
@@ -63,7 +63,7 @@ export interface FillStratumOptions<Item, Row> {
 	 * Mutated as rows are selected, so strata fill in order against one set.
 	 */
 	used: Set<string>
-	build: (item: Item, index: number) => StratumOutcome<Row>
+	build: (item: Item, index: number) => StratumResult<Row>
 }
 
 /**
@@ -94,13 +94,13 @@ export function fillStratum<Item, Row>(
 
 		const built = build(item, rows.length)
 
-		if (built.outcome === "ungradeable") {
+		if (built.result === "ungradeable") {
 			droppedUngradeableGold++
 
 			continue
 		}
 
-		if (built.outcome === "unbuildable") {
+		if (built.result === "unbuildable") {
 			droppedUnbuildable++
 
 			continue

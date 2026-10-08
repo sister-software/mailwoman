@@ -107,27 +107,32 @@ export type POILiveSearchResult =
 	| { status: "unavailable" }
 
 /**
+ * What a live search looks for near `anchor`: a taxonomy category with its Overture
+ * leaf categories, or a chain brand identified by its Wikidata QID.
+ */
+export type POILiveSearchRequest =
+	| {
+			kind: "category"
+			categoryID: string
+			overtureCategoryIDs: string[]
+			anchor: string
+	  }
+	| {
+			kind: "brand"
+			brandName: string
+			wikidata: string
+			anchor: string
+	  }
+
+/**
  * The injected live-search function.
  *
- * It probes the published poi.db for the resolved category, its Overture leaf
- * categories and the anchor text.
+ * It probes the published poi.db for the request's subject and the anchor text.
  * The explorer runs intent-only when this function is absent.
- *
- * For a brand subject, `brandWikidata` contains the QID and the probe fetches by it.
- * In that case `categoryID` holds the brand name and `overtureCategoryIDs` is empty.
  *
  * A probe that cannot serve brands should leave `usePOISearch`'s `brandLiveSearch` option unset.
  */
-export type POILiveSearch = (params: {
-	categoryID: string
-	overtureCategoryIDs: string[]
-	anchor: string
-	/**
-	 * The brand's Wikidata QID.
-	 * It is `null` unless the subject is a chain brand.
-	 */
-	brandWikidata: string | null
-}) => Promise<POILiveSearchResult>
+export type POILiveSearch = (request: POILiveSearchRequest) => Promise<POILiveSearchResult>
 
 /**
  * The state of a "Search live" request.

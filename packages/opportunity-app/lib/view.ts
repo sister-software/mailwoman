@@ -56,12 +56,12 @@ export const EXAMPLE_DISTRICT: Dataset = {
 /**
  * The result of a model function: its value, its refusal, or no call because no building is selected.
  */
-export type Outcome<T> =
+export type Result<T> =
 	| { status: "computed"; value: T }
 	| { status: "refused"; name: string; message: string }
 	| { status: "empty" }
 
-function outcome<T>(compute: () => T): Outcome<T> {
+function result<T>(compute: () => T): Result<T> {
 	try {
 		return { status: "computed", value: compute() }
 	} catch (error) {
@@ -81,12 +81,12 @@ export interface OpportunityView {
 	labels: ReadonlyMap<EntityID, string>
 	buildings: BuildingCollection
 	districts: DistrictCollection
-	routes: Outcome<RouteCollection>
-	economics: Outcome<SelectionEconomics>
+	routes: Result<RouteCollection>
+	economics: Result<SelectionEconomics>
 	/**
 	 * The cost and value report that `renderScenarioReport` writes for the selection.
 	 */
-	costAndValue: Outcome<string>
+	costAndValue: Result<string>
 	/**
 	 * Each building's part of the dossier report: the text of its `reportLines` records.
 	 */
@@ -107,7 +107,7 @@ export function opportunityView(
 	const buildings = dossier.buildings.map((section) => section.building)
 	const selection = buildings.map((building) => building.id).filter((building) => selected.has(building))
 
-	const forSelection = <T>(compute: () => T): Outcome<T> => (selection.length ? outcome(compute) : { status: "empty" })
+	const forSelection = <T>(compute: () => T): Result<T> => (selection.length ? result(compute) : { status: "empty" })
 	const lines = reportLines(dossier)
 
 	return {

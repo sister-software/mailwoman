@@ -48,10 +48,10 @@ const FilerEdgarIngest: CommandComponent<typeof spec> = ({ options }) => {
 			outDir: options.outDir,
 			cikLookupPath: options.lookup,
 			pinnedCIKs: options.pin,
-			onOutcome: (outcome) => {
-				const prefix = outcome.ok ? "✓" : "✗"
+			onResult: (result) => {
+				const prefix = result.ok ? "✓" : "✗"
 
-				console.error(`  ${prefix} ${outcome.query} — ${outcome.detail}`)
+				console.error(`  ${prefix} ${result.query} — ${result.detail}`)
 			},
 		})
 	})
@@ -63,7 +63,7 @@ const FilerEdgarIngest: CommandComponent<typeof spec> = ({ options }) => {
 
 		return (
 			<Text color="green">
-				edgar-ingest · {report.registrantsWithRows}/{report.outcomes.length} registrants · {report.rows} rows ·{" "}
+				edgar-ingest · {report.registrantsWithRows}/{report.results.length} registrants · {report.rows} rows ·{" "}
 				{lookupEntries.toLocaleString()} index entries · wrote {jsonlPath}
 				{report.skipped.uncorroborated > 0 ? (
 					<Text color="yellow">

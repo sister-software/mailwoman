@@ -74,7 +74,7 @@ describe("mwdev_compare — production board routing", () => {
 							unit: null,
 							postcode_country_scope: null,
 							capital_promotion: null,
-							variant_alias_exemption: null,
+							variant_alias_exemption: "not_applied",
 							hierarchy: [],
 							admin_coherence: null,
 						}),

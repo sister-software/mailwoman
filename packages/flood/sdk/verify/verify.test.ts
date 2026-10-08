@@ -127,7 +127,7 @@ describe("verifyFloodDatabase", () => {
 			points: [INSIDE_FZ3],
 		})
 
-		expect(result.agreement[0]!.outcome).toBe("service_unlabelled")
+		expect(result.agreement[0]!.result).toBe("service_unlabelled")
 		expect(result.agreement[0]!.service).toBeNull()
 		expect(result.serviceUnlabelled).toBe(1)
 		expect(result.agreed).toBe(0)

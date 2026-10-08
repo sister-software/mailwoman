@@ -43,7 +43,7 @@ export function derivePostcodePrefix(code: string, country?: string): string | n
 }
 
 /**
- * The outcome of a successful prefix probe.
+ * The result of a successful prefix probe.
  */
 export interface PostcodePrefixProbeResult {
 	/**

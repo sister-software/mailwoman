@@ -111,7 +111,7 @@ export interface ExternalArmIdentity {
 	interpolation_enabled: boolean | null
 	response_version: string | null
 	/**
-	 * The outcomes of the status and search probes.
+	 * The results of the status and search probes.
 	 */
 	probe: { status_path: string | null; status_http: number | null; search_ok: boolean }
 	warnings: string[]

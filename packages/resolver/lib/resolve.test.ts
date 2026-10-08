@@ -698,7 +698,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		]
 
 		const input = tree("Veneto", [node("region", "Veneto", 0, 6)])
-		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
+
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, {
+			defaultCountry: { country: "IT", source: "caller" },
+		})
+
 		const r = out.roots[0]!
 		expect(r.placeID).toBe("wof:404227501")
 		expect(r.sourceID).toBe("macroregion:404227501")
@@ -721,7 +725,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		]
 
 		const input = tree("Foo", [node("region", "Foo", 0, 3)])
-		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
+
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, {
+			defaultCountry: { country: "IT", source: "caller" },
+		})
+
 		const r = out.roots[0]!
 		expect(r.sourceID).toBe("region:2")
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
@@ -744,7 +752,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		]
 
 		const input = tree("Oberbayern", [node("subregion", "Oberbayern", 0, 10)])
-		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "DE" })
+
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, {
+			defaultCountry: { country: "DE", source: "caller" },
+		})
+
 		const r = out.roots[0]!
 		expect(r.sourceID).toBe("macrocounty:404227567")
 		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
@@ -765,7 +777,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		]
 
 		const input = tree("Brooklyn", [node("locality", "Brooklyn", 0, 8)])
-		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "US" })
+
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, {
+			defaultCountry: { country: "US", source: "caller" },
+		})
+
 		const r = out.roots[0]!
 		expect(r.sourceID).toBe("borough:421205765")
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
@@ -834,7 +850,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
@@ -854,7 +870,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
@@ -863,7 +879,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("Hierarchy completion is ON by default", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWOFResolver(backend).resolveTree(input, { defaultCountry: "DE" })
+
+		const result = await createWOFResolver(backend).resolveTree(input, {
+			defaultCountry: { country: "DE", source: "caller" },
+		})
+
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
@@ -873,7 +893,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: false,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(localityRole(result.roots)).toBeUndefined()
@@ -882,7 +902,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("A backend without the relation no-ops (default-on is safe)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWOFResolver(backend).resolveTree(input, { defaultCountry: "DE" })
+
+		const result = await createWOFResolver(backend).resolveTree(input, {
+			defaultCountry: { country: "DE", source: "caller" },
+		})
+
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
@@ -892,7 +916,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(localityRole(result.roots)).toBeUndefined()
@@ -918,7 +942,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(localityRole(result.roots)).toBeUndefined()
@@ -958,7 +982,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
@@ -970,7 +994,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 		})
 
 		expect(result.roots.filter((r) => r.tag === "locality")).toHaveLength(1)
@@ -1130,7 +1154,7 @@ describe("ResolveTree — interpolation tier", () => {
 
 		const result = await createWOFResolver(backend).resolveTree(input, {
 			addressPoints: exact,
-			defaultCountry: "NZ",
+			defaultCountry: { country: "NZ", source: "caller" },
 		})
 
 		const street = result.roots.find((n) => n.tag === "street")

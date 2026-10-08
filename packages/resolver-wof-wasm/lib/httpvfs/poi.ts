@@ -34,19 +34,17 @@ export function loadPOICategoryCodes(database: RangeDatabase): Promise<Map<strin
 }
 
 /**
- * Options for {@link searchPOICategory}; a non-empty `categoryIDs` replaces `categoryID`.
+ * Options for {@link searchPOICategory}.
  */
 export interface POISearchOpts {
-	categoryID: string
-
 	/**
-	 * The Overture `taxonomy.primary` leaf ids that the canonical category rolls up,
-	 * such as those from `resolveOvertureCategories`.
+	 * The category ids to search: one id, or every Overture `taxonomy.primary` leaf a
+	 * canonical category rolls up, such as those from `resolveOvertureCategories`.
 	 *
 	 * Probes every known leaf per cell and unions the rows.
 	 * Skips unknown leaves.
 	 */
-	categoryIDs?: string[]
+	categoryIDs: readonly string[]
 	center: { lat: number; lon: number }
 
 	/**
@@ -102,8 +100,7 @@ export async function searchPOICategory(database: RangeDatabase, opts: POISearch
 	const maxRings = Math.max(1, opts.maxRings ?? DEFAULT_MAX_RINGS)
 	const codes = await loadPOICategoryCodes(database)
 
-	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
-	const categoryIDs = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
+	const categoryIDs = opts.categoryIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
 	if (!categoryIDs.length) return []
 

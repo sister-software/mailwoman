@@ -7,10 +7,10 @@
  *   `toGauntletResult`.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { describe, expect, it } from "vitest"
 
 import { assessAdminCoherence, type AdminCoherenceWinner } from "#admin-coherence"
-import type { GeocodeResult } from "#geocode"
 import { toGauntletResult } from "#tools/eval-harness/gauntlet/harness"
 
 /**
@@ -230,7 +230,7 @@ describe("toGauntletResult threading (nullable field)", () => {
 		unfollowed_components: null,
 		derivation: null,
 		entity: null,
-		variant_alias_exemption: null,
+		variant_alias_exemption: "not_applied",
 		admin_coherence: null,
 		authoritative: null,
 		intent_markers: [],

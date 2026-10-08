@@ -16,7 +16,7 @@ import {
 	invarianceExpectProblem,
 	MISSING_CASE_COUNTRY_PROBLEM,
 	MISSING_ROW_REF_PROBLEM,
-	type OutcomeComparatorName,
+	type ResultComparatorName,
 } from "#tools/eval-harness/conformance/fixture"
 
 /**
@@ -72,7 +72,7 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 /**
  * Comparators that grade component text copied from the query.
  */
-const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_strict", "component_map"])
+const TEXT_ECHOING_COMPARATORS = new Set<ResultComparatorName>(["parse_whole_strict", "component_map"])
 
 /**
  * Removals whose mark belongs to the preceding token, as in `Str.`.
@@ -180,11 +180,11 @@ export interface PunctuationApplicability {
  */
 export interface PunctuationApplicabilityContext {
 	/**
-	 * The row's `outcomeComparator`.
+	 * The row's `resultComparator`.
 	 *
 	 * The `text-echoing-comparator` rule runs only when this is set.
 	 */
-	comparator?: OutcomeComparatorName
+	comparator?: ResultComparatorName
 	/**
 	 * Component values that the committed row asserts, for example `["Gate 12, Terminal 2"]`.
 	 *
@@ -297,7 +297,7 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 		}
 
 		const applicability = punctuationApplicability(fixture.base, transformation, {
-			comparator: fixture.outcomeComparator,
+			comparator: fixture.resultComparator,
 		})
 
 		if (!applicability.applicable) {

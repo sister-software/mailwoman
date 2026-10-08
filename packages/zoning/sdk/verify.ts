@@ -73,7 +73,7 @@ export interface AgreementRow {
 	 * on the code would be a silent vocabulary defect.
 	 */
 	serviceLocalCode: string | null
-	outcome: "agree" | "disagree" | "boundary_tolerance"
+	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
@@ -156,7 +156,7 @@ export type ServiceFeature = OGCFeature
  * The function exposes only the service read.
  * This keeps the check's own logic testable.
  *
- * The comparison's value is that it decides which of three outcomes a point gets.
+ * The comparison's value is that it decides which of three results a point gets.
  *
  * An HTTP client would let tests observe these decisions only during a live run.
  * A scripted reader pins the decisions. {@link createServiceReader} builds the real reader.
@@ -210,7 +210,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 				local,
 				serviceInside: service.inside,
 				serviceLocalCode: service.localCode,
-				outcome: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				result: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
 				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
@@ -234,12 +234,12 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
 			codeMismatches: agreement.filter(
 				(row) =>
-					row.outcome === "agree" &&
+					row.result === "agree" &&
 					row.serviceInside &&
 					row.serviceLocalCode !== null &&
 					!row.local.designations.some((designation) => designation.localCode === row.serviceLocalCode)

@@ -129,7 +129,7 @@ export interface FellegiSunterModel<R> {
 }
 
 /**
- * The scored outcome for one record pair.
+ * The scored result for one record pair.
  */
 export interface PairScore {
 	/**

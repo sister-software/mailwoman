@@ -22,7 +22,7 @@ import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 import { obligationFindings, type ObligationRefusal } from "#data/obligations"
 
 /**
- * Enumerates check outcomes: working, absent but fixable, or present but impaired.
+ * Enumerates check results: working, absent but fixable, or present but impaired.
  */
 export const CheckStatus = {
 	OK: "ok",
@@ -31,7 +31,7 @@ export const CheckStatus = {
 } as const
 
 /**
- * Enumerates check outcomes: working, absent but fixable, or present but impaired.
+ * Enumerates check results: working, absent but fixable, or present but impaired.
  */
 export type CheckStatus = (typeof CheckStatus)[keyof typeof CheckStatus]
 

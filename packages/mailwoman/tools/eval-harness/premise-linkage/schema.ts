@@ -8,7 +8,7 @@
  *
  *   The row types define the privacy boundary. {@link PremiseLinkageInputRow} holds the licensed address,
  *   expected identifier plus truth coordinate in memory. {@link PremiseLinkageResultRow} persists a salted case
- *   identifier and shape class. It also stores presence booleans and closed-set outcomes without address text.
+ *   identifier and shape class. It also stores presence booleans and closed-set results without address text.
  *
  *   Every rate is a numerator and denominator as separate fields. No field stores a precomputed ratio.
  */
@@ -109,11 +109,11 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
  * What one arm did with one row: `refused` and `ambiguous` are first-class
  * and never recorded as `wrong`, and an ambiguous answer is never `exact`.
  *
- * `errored` is not an outcome the arm produced.
+ * `errored` is not a result the arm produced.
  * It marks a row that could not be graded at all — and is excluded from every rate
  * and reported as its own count.
  */
-export const PremiseLinkageOutcome = {
+export const PremiseLinkageResult = {
 	Exact: "exact",
 	Wrong: "wrong",
 	Refused: "refused",
@@ -121,7 +121,7 @@ export const PremiseLinkageOutcome = {
 	Errored: "errored",
 } as const
 
-export type PremiseLinkageOutcome = (typeof PremiseLinkageOutcome)[keyof typeof PremiseLinkageOutcome]
+export type PremiseLinkageResult = (typeof PremiseLinkageResult)[keyof typeof PremiseLinkageResult]
 
 /**
  * Why a row was not `exact`, from a closed set rather than free text that could
@@ -172,7 +172,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	 */
 	caseID: string
 	inputShapeClass: PremiseLinkageInputShapeClass
-	outcome: PremiseLinkageOutcome
+	result: PremiseLinkageResult
 	/**
 	 * Lets the report writer omit a coordinate when the row's terms forbid publication.
 	 * A permission flag does not supply a licensed coordinate.
@@ -262,7 +262,7 @@ export interface PremiseLinkageArmReport {
 }
 
 /**
- * The arm-to-arm movement over all rows: `changed` counts rows whose outcome differs and `improved`
+ * The arm-to-arm movement over all rows: `changed` counts rows whose result differs and `improved`
  * and `regressed` are its directional halves, with ungradable rows in the denominator and no numerator.
  */
 export interface PremiseLinkageComparison {

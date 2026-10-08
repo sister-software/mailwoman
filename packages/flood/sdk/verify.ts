@@ -63,7 +63,7 @@ export interface AgreementRow {
 	 * let it agree with an artifact that answers Zone 1 by absence.
 	 */
 	service: string | null
-	outcome: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
+	result: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
 	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
@@ -174,7 +174,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 				...point,
 				local,
 				service: service.zone,
-				outcome: service.insideUnlabelled
+				result: service.insideUnlabelled
 					? "service_unlabelled"
 					: localZone === service.zone
 						? "agree"
@@ -197,10 +197,10 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
-			serviceUnlabelled: agreement.filter((row) => row.outcome === "service_unlabelled").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
+			serviceUnlabelled: agreement.filter((row) => row.result === "service_unlabelled").length,
 			outside,
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}

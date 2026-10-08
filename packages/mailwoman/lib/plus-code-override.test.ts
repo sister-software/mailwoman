@@ -6,9 +6,9 @@
  *   gave it and the next span of that tag takes the slot, in both projections.
  */
 
-import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { BIOLabel } from "@mailwoman/codex/component"
 import { buildAddressTree, type DecoderToken } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { describe, expect, it } from "vitest"
 
 import { applyPlusCodeOverride } from "#plus-code-override"
@@ -45,7 +45,7 @@ describe("applyPlusCodeOverride", () => {
 			venue: "Simpson's Field",
 			dependent_locality: null,
 			unit: null,
-		} as GeocodeOutcomeLike
+		} as GeocodeResult
 
 		applyPlusCodeOverride(result, RAW, tree)
 

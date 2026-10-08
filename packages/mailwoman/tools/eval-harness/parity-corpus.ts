@@ -116,7 +116,7 @@ export interface ParityEvalOptions {
 /**
  * Exit code of a parity eval run.
  */
-export interface ParityEvalOutcome {
+export interface ParityEvalResult {
 	exitCode: number
 }
 
@@ -129,7 +129,7 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
  *
  * It prints per-label and per-country precision tables with the floor verdict.
  */
-export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
+export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalResult> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)
 
@@ -189,7 +189,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				queryShape: computeQueryShape(fixture.input),
 				...(fstStreetMorphology ? { fstStreetMorphology } : {}),
 				...(fstGazetteer ? { fst: fstGazetteer } : {}),
-				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
+				enforceWordConsistency: options.wordConsistency === false ? "off" : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
 

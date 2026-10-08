@@ -233,7 +233,7 @@ async function downloadToDisk(url: string, destPath: string): Promise<number> {
 	})
 }
 
-interface PullOutcome {
+interface PullResult {
 	ok: boolean
 	checks: Check[]
 	pulledCandidate: boolean
@@ -249,7 +249,7 @@ async function pullBundles(
 		host?: string
 		refuse: readonly ObligationRefusal[]
 	}
-): Promise<PullOutcome> {
+): Promise<PullResult> {
 	const { dataRoot } = opts
 	const manifest = await readReleaseManifest(dataRoot)
 	const checks: Check[] = []

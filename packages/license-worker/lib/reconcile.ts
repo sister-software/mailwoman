@@ -102,16 +102,16 @@ export async function reconcileLedger(
 
 			if (!license) throw new Error(`token ${token.invoice_id} names license ${token.lid}, which has no row`)
 
-			const outcome = await sendTokenEmail(deps, license, token)
+			const delivery = await sendTokenEmail(deps, license, token)
 
-			if (outcome.state === "sent") {
+			if (delivery.state === "sent") {
 				report.resent.push(token.invoice_id)
 			} else {
 				report.failed.push({
 					stage: "email",
 					invoiceID: token.invoice_id,
 					lid: token.lid,
-					reason: `provider refused: ${failureReason(outcome.reason)}`,
+					reason: `provider refused: ${failureReason(delivery.reason)}`,
 				})
 			}
 		} catch (error) {
@@ -178,12 +178,12 @@ async function mintIfUnminted(
 	try {
 		if (await findToken(deps.ledger, invoiceID)) return
 
-		const outcome = await fulfilInvoice(env, deps, invoiceID)
+		const result = await fulfilInvoice(env, deps, invoiceID)
 
-		if (outcome.outcome === "minted") {
+		if (result.result === "minted") {
 			report.minted.push(invoiceID)
-		} else if (outcome.outcome === "refused") {
-			report.refused.push({ invoiceID, reason: outcome.reason })
+		} else if (result.result === "refused") {
+			report.refused.push({ invoiceID, reason: result.reason })
 		}
 	} catch (error) {
 		report.failed.push({ stage: "mint", invoiceID, reason: failureReason(error) })
@@ -222,7 +222,7 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
  * read from the charge rather than the subscription.
  *
  * A refund leaves the subscription `active`, and a dispute Stripe ruled `won` returns the
- * license to its subscription's state while any other dispute outcome leaves it revoked.
+ * license to its subscription's state while any other dispute result leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

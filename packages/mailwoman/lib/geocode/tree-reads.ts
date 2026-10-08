@@ -7,6 +7,7 @@
  */
 
 import { type AddressNode, type AddressTree, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 
 /**
@@ -41,11 +42,10 @@ export function capitalPromotionOf(tree: AddressTree): string | null {
 }
 
 /**
- * Returns `true` when the variant-alias exemption selected a node's winner.
- * Returns `null` otherwise.
+ * Returns `applied` when the variant-alias exemption selected a node's winner, and `not_applied` otherwise.
  */
-export function variantAliasExemptionOf(tree: AddressTree): true | null {
-	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? true : null
+export function variantAliasExemptionOf(tree: AddressTree): VariantAliasExemption {
+	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? "applied" : "not_applied"
 }
 
 /**

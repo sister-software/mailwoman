@@ -61,7 +61,7 @@ export interface PublishWorkspaceOptions {
 
 export interface PublishWorkspaceReport {
 	workspace: string
-	outcome: "published" | "skipped-weights" | "already-published" | "dry-run"
+	result: "published" | "skipped-weights" | "already-published" | "dry-run"
 	tarballAudit?: string
 }
 
@@ -98,7 +98,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	if (skipWeights && isWeightsWorkspace) {
 		log(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
 
-		return { workspace: workspacePath, outcome: "skipped-weights" }
+		return { workspace: workspacePath, result: "skipped-weights" }
 	}
 
 	const cwd = resolvePath(repoRoot, workspacePath)
@@ -152,7 +152,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	log(`publish-workspace: ${options.dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
 
 	if (options.dryRun) {
-		return { workspace: workspacePath, outcome: "dry-run", tarballAudit }
+		return { workspace: workspacePath, result: "dry-run", tarballAudit }
 	}
 
 	const publishResult = spawnProcessSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
@@ -161,7 +161,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	if (publishResult.status !== 0 && /cannot publish over the previously published version/i.test(stderr)) {
 		log(`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`)
 
-		return { workspace: workspacePath, outcome: "already-published", tarballAudit }
+		return { workspace: workspacePath, result: "already-published", tarballAudit }
 	}
 
 	if (stderr) {
@@ -172,7 +172,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 		throw new Error(`publish-workspace: npm publish exited ${publishResult.status ?? "by signal"} for ${workspacePath}`)
 	}
 
-	return { workspace: workspacePath, outcome: "published", tarballAudit }
+	return { workspace: workspacePath, result: "published", tarballAudit }
 }
 
 // The tarball audit lives in verify-tarball.ts so both publish paths inherit it.

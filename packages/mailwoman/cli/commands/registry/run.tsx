@@ -130,7 +130,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	])
 
 	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
+	const { createResolverBackend } = await import("#resolver-backend")
 
 	const wofPath = await requireCommandWOFPath(options)
 
@@ -157,7 +157,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
-	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
+	const defaultCountry = resolverDefaultCountry(options)
 	const resolver = createWOFResolver(lookup)
 
 	const geocodeForIngest = geocodeAddressVia({
@@ -167,11 +167,11 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 				classifier,
 				resolver,
 				databases,
-				defaultCountry,
+				...(defaultCountry ? { defaultCountry } : {}),
 				interpCalibration: INTERP_RADIUS_CALIBRATION,
-				...(options.placeCountry ? {} : { placeCountry: false }),
+				...(options.placeCountry ? {} : { placeCountry: "none" }),
 			}),
-		country: defaultCountry,
+		country: defaultCountry?.country,
 	})
 
 	return {
@@ -216,8 +216,9 @@ export interface EvalGeocoderFlags {
 }
 
 /**
- * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take,
- * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: false`,
+ * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools`
+ * record-matcher tools take, pinned to a plain `WOFSQLitePlaceLookup`,
+ * `defaultCountry: { country: "US", source: "caller" }`, `placeCountry: "none"`,
  * and `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
@@ -252,9 +253,9 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 				classifier,
 				resolver,
 				databases: regionDatabaseProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
+				defaultCountry: { country: "US", source: "caller" },
+				placeCountry: "none",
+				...(init?.caseNormalization ? { caseNormalization: init.caseNormalization } : {}),
 			})
 
 		const geocodeForIngest = geocodeAddressVia({

@@ -1,5 +1,6 @@
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { KnownFormat, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 import {
@@ -23,7 +24,7 @@ const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) 
 	confidence,
 })
 
-const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
+const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ ...EMPTY_QUERY_SHAPE_VIEW, ...o })
 
 const summarize = (p: PhraseProposal) => ({
 	body: p.span.body,
@@ -81,16 +82,19 @@ test("scoreNumeric: non-digit and mixed tokens emit nothing", () => {
 
 test("scorePostcode: lifts each non-po_box format hit, carrying its confidence through", () => {
 	const text = "10118"
-	const out = scorePostcode(shape({ knownFormats: [fmt("us_zip", 0, 5, 0.92)] }), text)
+	const out = scorePostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("us_zip", 0, 5, 0.92)] }), text)
 	expect(out.map(summarize)).toEqual([{ body: "10118", start: 0, end: 5, kind: "POSTCODE", confidence: 0.92 }])
 })
 
 test("scorePostcode: po_box hits are skipped (the kind classifier owns that signal)", () => {
 	const text = "PO Box 12"
-	expect(scorePostcode(shape({ knownFormats: [fmt("po_box", 0, 6, 0.9)] }), text)).toEqual([])
+
+	expect(scorePostcode(shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("po_box", 0, 6, 0.9)] }), text)).toEqual(
+		[]
+	)
 
 	const out = scorePostcode(
-		shape({ knownFormats: [fmt("po_box", 0, 6, 0.9), fmt("us_zip", 7, 12, 0.8)] }),
+		shape({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [fmt("po_box", 0, 6, 0.9), fmt("us_zip", 7, 12, 0.8)] }),
 		"PO Box 90210"
 	)
 

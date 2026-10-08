@@ -8,9 +8,11 @@ import type { POIIntent } from "@mailwoman/core/pipeline"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { describe, expect, it } from "vitest"
 
-const category = (anchor?: POIIntent["anchor"]): POIIntent => ({
-	subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
-	...(anchor ? { anchor } : {}),
+const category = (anchor: POIIntent["anchor"] = null): POIIntent => ({
+	subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+	relation: null,
+	anchor,
+	limit: null,
 })
 
 describe("emitOverpassQL", () => {
@@ -32,6 +34,8 @@ describe("emitOverpassQL", () => {
 						{ tag: "region", value: "IL", start: 12, end: 14, confidence: 0.9, children: [] },
 					],
 				},
+				biasPoint: null,
+				radiusM: null,
 			}),
 			{ osmTags: ["amenity=hospital"] }
 		)
@@ -45,7 +49,7 @@ describe("emitOverpassQL", () => {
 	// The members sit inside it in the subject's order with no preference between them.
 	it("emits a union block for a category subject reaching several categories", () => {
 		const ql = emitOverpassQL(
-			{ subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" } },
+			{ subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"] }, anchor: null },
 			{ osmTags: ["shop=chemist", "amenity=pharmacy"] }
 		)
 
@@ -55,8 +59,8 @@ describe("emitOverpassQL", () => {
 	it("scopes every member of a union to the anchor area", () => {
 		const ql = emitOverpassQL(
 			{
-				subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
-				anchor: { text: "Coalinga CA", tree: { roots: [{ tag: "locality", value: "Coalinga" }] } },
+				subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"] },
+				anchor: { tree: { roots: [{ tag: "locality", value: "Coalinga" }] } },
 			},
 			{ osmTags: ["shop=chemist", "amenity=pharmacy"] }
 		)
@@ -65,12 +69,12 @@ describe("emitOverpassQL", () => {
 	})
 
 	it("falls back to a name regex for name subjects, with escaping", () => {
-		const ql = emitOverpassQL({ subject: { kind: "name", text: 'Joe"s "Diner"' } })
+		const ql = emitOverpassQL({ subject: { kind: "name", text: 'Joe"s "Diner"' }, anchor: null })
 		expect(ql).toContain('nwr["name"~"Joe\\"s \\"Diner\\"",i]')
 	})
 
 	it("emits a brand name filter for brand subjects", () => {
-		const ql = emitOverpassQL({ subject: { kind: "brand", name: "McDonald's", matched: "mcdonald's" } })
+		const ql = emitOverpassQL({ subject: { kind: "brand", name: "McDonald's" }, anchor: null })
 		expect(ql).toContain('nwr["name"~"McDonald\'s",i]')
 	})
 
@@ -79,12 +83,12 @@ describe("emitOverpassQL", () => {
 	})
 
 	it("escapes regex metacharacters in name subjects for the ~ context", () => {
-		const ql = emitOverpassQL({ subject: { kind: "name", text: "St. Mary's Hospital (Main)" } })
+		const ql = emitOverpassQL({ subject: { kind: "name", text: "St. Mary's Hospital (Main)" }, anchor: null })
 		expect(ql).toContain(String.raw`nwr["name"~"St\\. Mary's Hospital \\(Main\\)",i]`)
 	})
 
 	it("throws on a malformed osmTag", () => {
-		const intent: POIIntent = { subject: { kind: "category", categoryIDs: ["x"], matched: "x" } }
+		const intent = category()
 		expect(() => emitOverpassQL(intent, { osmTags: ["amenity"] })).toThrow(/malformed osmTag/)
 		expect(() => emitOverpassQL(intent, { osmTags: ["a=b=c"] })).toThrow(/malformed osmTag/)
 		expect(() => emitOverpassQL(intent, { osmTags: ["=value"] })).toThrow(/malformed osmTag/)

@@ -8,9 +8,9 @@
  *   their own error shapes.
  */
 
-import { z } from "@hono/zod-openapi"
 import type { Context } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
+import { z } from "zod"
 
 /**
  * The native error envelope: a short machine-stable `error` string plus a human
@@ -21,7 +21,7 @@ export const APIErrorSchema = z
 		error: z.string(),
 		detail: z.string().nullable(),
 	})
-	.openapi("APIError")
+	.meta({ id: "APIError" })
 
 /**
  * Respond with the native error envelope.

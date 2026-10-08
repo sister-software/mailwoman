@@ -15,11 +15,11 @@ import { formatMoney, type Scenario } from "@mailwoman/route-scenarios"
 import type { ReactNode } from "react"
 
 import { COST_AND_VALUE_ANCHOR, dossierAnchor } from "#evidence"
-import type { Outcome } from "#view"
+import type { Result } from "#view"
 import { monthText, originText, recalculationText } from "#words"
 
 export interface SelectionFiguresProps {
-	economics: Outcome<SelectionEconomics>
+	economics: Result<SelectionEconomics>
 	scenario: Scenario
 	selection: readonly EntityID[]
 	labels: ReadonlyMap<EntityID, string>

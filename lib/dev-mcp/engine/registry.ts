@@ -6,9 +6,11 @@
  *   Caches geocode sessions by effective configuration and source fingerprint.
  */
 
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
+	type CapitalTier,
 	createGeocodeCommandOptions,
 	createGeocodeSession,
 	type GeocodeSession,
@@ -51,13 +53,16 @@ export interface EngineConfig {
 	 */
 	poi_venue_tier?: boolean
 	/**
-	 * Enables capital-status ranking.
+	 * The capital-status ranking tier (`"auto"`, `"required"` or `"off"`).
 	 */
-	capital_tier?: boolean
+	capital_tier?: CapitalTier
 	/**
-	 * Exempts own-name variant aliases from the cross-country primary-preference penalty.
+	 * Whether own-name variant aliases are exempt from the cross-country primary-preference penalty.
+	 *
+	 * The vocabulary matches `GeocodeResult.variant_alias_exemption`.
+	 * Unset keeps the production default, `"applied"`.
 	 */
-	variant_alias_exemption?: boolean
+	variant_alias_exemption?: VariantAliasExemption
 	/**
 	 * Records decode-path evidence for each run.
 	 */
@@ -132,8 +137,10 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
 		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
 		...(config.poi_venue_tier === true ? { poiVenueTier: true } : {}),
-		...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
-		...(config.variant_alias_exemption === undefined ? {} : { variantAliasExemption: config.variant_alias_exemption }),
+		capitalTier: config.capital_tier ?? production.capitalTier,
+		variantAliasExemption: config.variant_alias_exemption
+			? config.variant_alias_exemption === "applied"
+			: production.variantAliasExemption,
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),

@@ -19,11 +19,11 @@ import {
 } from "#tools/eval-harness/preregistration"
 
 /**
- * Expected outcome for one registered row.
+ * Expected result for one registered row.
  */
-export const ABSENCE_EXPECTED_OUTCOMES = ["absence_observation", ...ABSENCE_REFUSALS] as const
+export const ABSENCE_EXPECTED_RESULTS = ["absence_observation", ...ABSENCE_REFUSALS] as const
 
-export type AbsenceExpectedOutcome = (typeof ABSENCE_EXPECTED_OUTCOMES)[number]
+export type AbsenceExpectedResult = (typeof ABSENCE_EXPECTED_RESULTS)[number]
 
 /**
  * Target and control row groups.
@@ -40,7 +40,7 @@ export interface AbsenceProbeRow {
 	group: AbsenceRowGroup
 	query: string
 	locale?: string
-	expectedOutcome: AbsenceExpectedOutcome
+	expectedResult: AbsenceExpectedResult
 	/**
 	 * Whether semantic phrase routing is needed to form a POI intent.
 	 */
@@ -77,7 +77,7 @@ export interface AbsenceProbeDefinition {
 	rows: AbsenceProbeRow[]
 	rowsNote: string
 	/**
-	 * Number of rows that must match their registered outcomes.
+	 * Number of rows that must match their registered results.
 	 * The audit requires every row.
 	 */
 	requiredRowHolds: number
@@ -131,17 +131,17 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 			problems.push(`row ${row.id}: group ${stringifyJSON(row.group)} is not a registered group`)
 		}
 
-		if (!(ABSENCE_EXPECTED_OUTCOMES as readonly string[]).includes(row.expectedOutcome)) {
-			problems.push(`row ${row.id}: expectedOutcome ${stringifyJSON(row.expectedOutcome)} is not a registered outcome`)
+		if (!(ABSENCE_EXPECTED_RESULTS as readonly string[]).includes(row.expectedResult)) {
+			problems.push(`row ${row.id}: expectedResult ${stringifyJSON(row.expectedResult)} is not a registered result`)
 		}
 
-		if (row.group === "target" && row.expectedOutcome !== "absence_observation") {
+		if (row.group === "target" && row.expectedResult !== "absence_observation") {
 			problems.push(
-				`row ${row.id}: a target row expects ${stringifyJSON(row.expectedOutcome)} — a target that does not expect the observation measures nothing about the route firing`
+				`row ${row.id}: a target row expects ${stringifyJSON(row.expectedResult)} — a target that does not expect the observation measures nothing about the route firing`
 			)
 		}
 
-		if (row.group !== "target" && row.expectedOutcome === "absence_observation") {
+		if (row.group !== "target" && row.expectedResult === "absence_observation") {
 			problems.push(
 				`row ${row.id}: a ${row.group} control expects the observation — the control groups exist to assert silence`
 			)
@@ -203,14 +203,14 @@ export async function loadAbsenceProbeDefinition(
 /**
  * Measured result for one row.
  */
-export interface AbsenceRowOutcome {
+export interface AbsenceRowResult {
 	id: string
 	group: AbsenceRowGroup
 	query: string
-	expectedOutcome: AbsenceExpectedOutcome
-	observedOutcome: AbsenceExpectedOutcome
+	expectedResult: AbsenceExpectedResult
+	observedResult: AbsenceExpectedResult
 	/**
-	 * Whether the outcome and registered category set matched.
+	 * Whether the result and registered category set matched.
 	 */
 	holds: boolean
 	/**
@@ -231,7 +231,7 @@ export interface AbsenceRowOutcome {
 	 * POI route result.
 	 * The value `none` means the POI route did not run.
 	 */
-	poiOutcome: "none" | "abstain" | "intent"
+	poiResult: "none" | "abstain" | "intent"
 	abstainReason: string | null
 	resultsReturned: number | null
 }
@@ -249,26 +249,26 @@ export interface AbsenceCounts {
 }
 
 /**
- * Counts outcomes.
+ * Counts results.
  *
- * Target and control totals come from the definition, so a missing outcome lowers the pass rate.
+ * Target and control totals come from the definition, so a missing result lowers the pass rate.
  */
 export function computeAbsenceCounts(
 	definition: AbsenceProbeDefinition,
-	outcomes: readonly AbsenceRowOutcome[]
+	results: readonly AbsenceRowResult[]
 ): AbsenceCounts {
 	const registeredTargets = definition.rows.filter((row) => row.group === "target")
 
 	return {
 		rows: definition.rows.length,
-		holds: outcomes.filter((outcome) => outcome.holds).length,
+		holds: results.filter((result) => result.holds).length,
 		targets: registeredTargets.length,
-		targetsFired: outcomes.filter(
-			(outcome) => outcome.group === "target" && outcome.observedOutcome === "absence_observation"
+		targetsFired: results.filter(
+			(result) => result.group === "target" && result.observedResult === "absence_observation"
 		).length,
 		controls: definition.rows.length - registeredTargets.length,
-		controlsSilent: outcomes.filter(
-			(outcome) => outcome.group !== "target" && outcome.observedOutcome !== "absence_observation"
+		controlsSilent: results.filter(
+			(result) => result.group !== "target" && result.observedResult !== "absence_observation"
 		).length,
 	}
 }
@@ -279,41 +279,42 @@ export function computeAbsenceCounts(
  */
 export const ABSENCE_DECISIONS = ["HOLDS", "BREACHED"] as const
 
-export type AbsenceDecisionOutcome = (typeof ABSENCE_DECISIONS)[number]
+export type AbsenceDecisionResult = (typeof ABSENCE_DECISIONS)[number]
 
 /**
  * Decision and counts for a probe run, with its failing rows.
  */
 export interface AbsenceVerdict {
-	decision: AbsenceDecisionOutcome
+	decision: AbsenceDecisionResult
 	counts: AbsenceCounts
 	reasons: string[]
 	/**
-	 * Rows that violate the registered outcome or category set.
+	 * Rows whose observed result differs from the registered one, or that searched
+	 * an unregistered category set.
 	 */
 	breaches: string[]
 }
 
 /**
- * Decides whether every outcome satisfies the frozen definition.
+ * Decides whether every result satisfies the frozen definition.
  */
 export function decideAbsenceProbe(
 	definition: AbsenceProbeDefinition,
-	outcomes: readonly AbsenceRowOutcome[]
+	results: readonly AbsenceRowResult[]
 ): AbsenceVerdict {
-	const counts = computeAbsenceCounts(definition, outcomes)
+	const counts = computeAbsenceCounts(definition, results)
 
-	const breaches = outcomes
-		.filter((outcome) => !outcome.holds)
-		.map((outcome) =>
-			outcome.observedOutcome === outcome.expectedOutcome && outcome.searchedSetBreach
-				? `${outcome.id}: ${outcome.searchedSetBreach}`
-				: `${outcome.id}: registered ${outcome.expectedOutcome}, observed ${outcome.observedOutcome}` +
-					(outcome.searchedSetBreach ? ` — ${outcome.searchedSetBreach}` : "")
+	const breaches = results
+		.filter((result) => !result.holds)
+		.map((result) =>
+			result.observedResult === result.expectedResult && result.searchedSetBreach
+				? `${result.id}: ${result.searchedSetBreach}`
+				: `${result.id}: registered ${result.expectedResult}, observed ${result.observedResult}` +
+					(result.searchedSetBreach ? ` — ${result.searchedSetBreach}` : "")
 		)
 
 	const reasons = [
-		`rows holding their registered outcome ${counts.holds}/${counts.rows} (required ${definition.requiredRowHolds})`,
+		`rows holding their registered result ${counts.holds}/${counts.rows} (required ${definition.requiredRowHolds})`,
 		`targets carrying the absence observation ${counts.targetsFired}/${counts.targets}`,
 		`controls silent ${counts.controlsSilent}/${counts.controls}`,
 	]

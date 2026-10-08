@@ -11,6 +11,8 @@
  * A mismatch causes refusal rather than exclusion.
  */
 
+import { z } from "zod"
+
 /**
  * What a `completeness` value rests on.
  *
@@ -36,7 +38,12 @@ export const CoverageBasis = {
 	SourcePresent: "source_present",
 } as const
 
-export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
+/**
+ * {@link CoverageBasis} as a schema.
+ */
+export const CoverageBasisSchema = z.enum(CoverageBasis).meta({ id: "CoverageBasis" })
+
+export type CoverageBasis = z.infer<typeof CoverageBasisSchema>
 
 /**
  * Whether a coverage reading can support an exclusion.
@@ -52,23 +59,30 @@ export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boole
 /**
  * What an exclusion rests on, preserved in the derivation so a reader can audit the refusal.
  */
-export interface CoverageScope {
-	layer: string
-	h3Cell: number
-	basis: CoverageBasis
+export const CoverageScopeSchema = z.object({
+	layer: z.string(),
+	h3Cell: z.number(),
+	basis: CoverageBasisSchema,
 	/**
 	 * The fold both the layer's builder and this probe used.
 	 * Their agreement is what licensed the exclusion.
 	 */
-	fold: string
-}
+	fold: z.string().meta({ description: "The fold both the layer's builder and the probe used." }),
+})
 
-export interface Exclusion {
-	kind: "exclusion"
-	source: string
-	vintage: string
-	scope: CoverageScope
-}
+export type CoverageScope = z.infer<typeof CoverageScopeSchema>
+
+/**
+ * Proof that a candidate is impossible, built only through {@link requireExclusionBasis}.
+ */
+export const ExclusionSchema = z.object({
+	kind: z.literal("exclusion"),
+	source: z.string(),
+	vintage: z.string(),
+	scope: CoverageScopeSchema,
+})
+
+export type Exclusion = z.infer<typeof ExclusionSchema>
 
 export interface RequireExclusionInput {
 	layer: string

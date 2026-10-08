@@ -68,7 +68,7 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	trainEm?: boolean
 	/**
-	 * Reproduce the pre-flip ingest (space-joined address columns with `normalizeCase` off),
+	 * Reproduce the pre-flip ingest (space-joined address columns with case normalization off),
 	 * so that with the same data and GBT only the flip is toggled.
 	 * Default off.
 	 */
@@ -148,7 +148,7 @@ export async function nppesDedupBenchmark(
 
 	if (PARALLEL_GEOCODE) {
 		// `address` is a single pre-joined column on this path, so `--legacy-join` is a no-op
-		// and `normalizeCase` follows the worker default (on).
+		// and case normalization follows the worker default (`"title-case"`).
 		if (!options.geocodeStream) {
 			throw new Error("parallelGeocode requires the injected geocodeStream (see ./eval-geocoder.ts)")
 		}
@@ -170,7 +170,7 @@ export async function nppesDedupBenchmark(
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 		records = geocoded
 	} else {
-		const geocoder = await options.createGeocoder({ normalizeCase: !LEGACY })
+		const geocoder = await options.createGeocoder({ caseNormalization: LEGACY ? "preserve" : "title-case" })
 
 		const countedGeocodeForIngest: GeocodeAddress = async (raw) => {
 			const g = await geocoder.geocodeAddress(raw)

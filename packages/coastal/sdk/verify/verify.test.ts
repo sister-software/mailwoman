@@ -145,7 +145,7 @@ describe("the positive half", () => {
 		// Every row records distance to the edge, including tolerated rows.
 		expect(row.nearestEdgeMetres).toBeDefined()
 		expect(row.nearestEdgeMetres!).toBeLessThan(BOUNDARY_TOLERANCE_METRES)
-		expect(row.outcome).not.toBe("disagree")
+		expect(row.result).not.toBe("disagree")
 	})
 })
 

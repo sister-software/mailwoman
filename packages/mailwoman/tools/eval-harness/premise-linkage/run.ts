@@ -7,18 +7,17 @@
  *   dependencies. The second adds a configured authoritative provider. The arm-to-arm difference therefore measures
  *   the provider rather than the harness.
  *
- *   The open arm has no authoritative namespace for identity. Its identifier outcome is `refused` on every row.
+ *   The open arm has no authoritative namespace for identity. Its identifier result is `refused` on every row.
  *   The comparable metric is the coordinate table. A refusal, ambiguous answer and transport failure have distinct
- *   outcomes: `refused`, a non-exact result and `errored`. A match without an identifier in the graded scheme is
+ *   results: `refused`, a non-exact result and `errored`. A match without an identifier in the graded scheme is
  *   ungradable.
  */
 
+import type { AuthoritativeAssertion, GeocodeResult } from "@mailwoman/core/geocode"
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { AuthoritativeAssertion } from "#authoritative"
 import { geocodeAddress, type GeocodeDeps } from "#geocode/core"
-import type { GeocodeResult } from "#geocode/result"
 import type { PremiseLinkageAdapter } from "#tools/eval-harness/premise-linkage/adapter"
 import { assertUsableSalt, caseIDFor } from "#tools/eval-harness/premise-linkage/case-id"
 import {
@@ -31,7 +30,7 @@ import {
 	type PremiseLinkageInputShapeClass,
 	type PremiseLinkageMode,
 	type PremiseLinkageObjectID,
-	PremiseLinkageOutcome,
+	PremiseLinkageResult,
 	PremiseLinkagePolicy,
 	type PremiseLinkageRates,
 	type PremiseLinkageReport,
@@ -68,59 +67,59 @@ const METERS_PER_KM = 1000
 const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 
 /**
- * Ranks outcomes to measure ladder improvement or regression.
+ * Ranks results to measure ladder improvement or regression.
  *
  * A confidently wrong identifier ranks lowest, followed by an abstention,
  * then candidates and a committed correct identifier.
  * Ungradable rows have no rank and stay outside the comparison.
  */
-const OUTCOME_RANK: Readonly<Record<string, number>> = {
-	[PremiseLinkageOutcome.Wrong]: 0,
-	[PremiseLinkageOutcome.Refused]: 1,
-	[PremiseLinkageOutcome.Ambiguous]: 2,
-	[PremiseLinkageOutcome.Exact]: 3,
+const RESULT_RANK: Readonly<Record<string, number>> = {
+	[PremiseLinkageResult.Wrong]: 0,
+	[PremiseLinkageResult.Refused]: 1,
+	[PremiseLinkageResult.Ambiguous]: 2,
+	[PremiseLinkageResult.Exact]: 3,
 }
 
 /**
- * Records how one arm's answer graded and explains an outcome short of exact.
+ * Records how one arm's answer graded and explains a result short of exact.
  */
 export interface PremiseLinkageGrade {
-	outcome: PremiseLinkageOutcome
+	result: PremiseLinkageResult
 	failureCategory: PremiseLinkageFailureCategory | null
 }
 
 /**
- * Map one arm's authoritative block onto the outcome vocabulary.
- * The only place an outcome is decided.
+ * Map one arm's authoritative block onto the result vocabulary.
+ * The only place a result is decided.
  */
-export function outcomeFor(
+export function resultFor(
 	assertion: AuthoritativeAssertion | null,
 	expected: PremiseLinkageObjectID
 ): PremiseLinkageGrade {
 	if (!assertion) {
 		return {
-			outcome: PremiseLinkageOutcome.Refused,
+			result: PremiseLinkageResult.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ArmAssertsNoIdentifier,
 		}
 	}
 
 	if (assertion.status === "transport_error") {
 		return {
-			outcome: PremiseLinkageOutcome.Errored,
+			result: PremiseLinkageResult.Errored,
 			failureCategory: PremiseLinkageFailureCategory.TransportError,
 		}
 	}
 
 	if (assertion.status === "refused") {
 		return {
-			outcome: PremiseLinkageOutcome.Refused,
+			result: PremiseLinkageResult.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ProviderRefused,
 		}
 	}
 
 	if (assertion.status === "ambiguous") {
 		return {
-			outcome: PremiseLinkageOutcome.Ambiguous,
+			result: PremiseLinkageResult.Ambiguous,
 			failureCategory: PremiseLinkageFailureCategory.ProviderAmbiguous,
 		}
 	}
@@ -130,15 +129,15 @@ export function outcomeFor(
 
 	if (!observed) {
 		return {
-			outcome: PremiseLinkageOutcome.Errored,
+			result: PremiseLinkageResult.Errored,
 			failureCategory: PremiseLinkageFailureCategory.SchemeAbsent,
 		}
 	}
 
-	if (observed === expected.id) return { outcome: PremiseLinkageOutcome.Exact, failureCategory: null }
+	if (observed === expected.id) return { result: PremiseLinkageResult.Exact, failureCategory: null }
 
 	return {
-		outcome: PremiseLinkageOutcome.Wrong,
+		result: PremiseLinkageResult.Wrong,
 		failureCategory: PremiseLinkageFailureCategory.IdentifierMismatch,
 	}
 }
@@ -187,7 +186,7 @@ function gradeRow(
 	mailwomanVersion: string
 ): PremiseLinkageResultRow {
 	const assertion = result.authoritative
-	const grade = outcomeFor(assertion ?? null, row.expectedObjectID)
+	const grade = resultFor(assertion ?? null, row.expectedObjectID)
 	const coordinateErrorM = coordinateErrorFor(row, result, assertion ?? null)
 
 	return {
@@ -198,7 +197,7 @@ function gradeRow(
 		hasStreet: row.hasStreet,
 		hasLocality: row.hasLocality,
 		hasHistoricalAlias: row.hasHistoricalAlias,
-		outcome: grade.outcome,
+		result: grade.result,
 		coordinatePublishable: row.coordinatePublishable,
 		coordinateErrorM,
 		providerName: assertion?.provider ?? OPEN_PROVIDER_NAME,
@@ -225,14 +224,14 @@ function count(n: number, of: number): PremiseLinkageCount {
 }
 
 function isErrored(row: PremiseLinkageResultRow): boolean {
-	return row.outcome === PremiseLinkageOutcome.Errored
+	return row.result === PremiseLinkageResult.Errored
 }
 
 /**
  * Returns rows eligible for exact answers.
  *
  * It removes ungradable rows and removes refusals only under `abstain_ok`.
- * Each refusal retains its `refused` outcome in the row.
+ * Each refusal retains its `refused` result in the row.
  */
 function eligibleRows(
 	rows: readonly PremiseLinkageResultRow[],
@@ -242,7 +241,7 @@ function eligibleRows(
 
 	if (policy === PremiseLinkagePolicy.UniqueRequired) return gradable
 
-	return gradable.filter((row) => row.outcome !== PremiseLinkageOutcome.Refused)
+	return gradable.filter((row) => row.result !== PremiseLinkageResult.Refused)
 }
 
 function ratesFor(rows: readonly PremiseLinkageResultRow[], policy: PremiseLinkagePolicy): PremiseLinkageRates {
@@ -250,19 +249,19 @@ function ratesFor(rows: readonly PremiseLinkageResultRow[], policy: PremiseLinka
 
 	return {
 		exactOverEligible: count(
-			countWhere(eligible, (row) => row.outcome === PremiseLinkageOutcome.Exact),
+			countWhere(eligible, (row) => row.result === PremiseLinkageResult.Exact),
 			eligible.length
 		),
 		wrongOverEligible: count(
-			countWhere(eligible, (row) => row.outcome === PremiseLinkageOutcome.Wrong),
+			countWhere(eligible, (row) => row.result === PremiseLinkageResult.Wrong),
 			eligible.length
 		),
 		refusedOverAll: count(
-			countWhere(rows, (row) => row.outcome === PremiseLinkageOutcome.Refused),
+			countWhere(rows, (row) => row.result === PremiseLinkageResult.Refused),
 			rows.length
 		),
 		ambiguousOverAll: count(
-			countWhere(rows, (row) => row.outcome === PremiseLinkageOutcome.Ambiguous),
+			countWhere(rows, (row) => row.result === PremiseLinkageResult.Ambiguous),
 			rows.length
 		),
 	}
@@ -331,12 +330,12 @@ function compareArms(
 		// A row ungradable in either arm stays in the denominator and contributes to no numerator.
 		if (!after || isErrored(before) || isErrored(after)) continue
 
-		if (before.outcome === after.outcome) continue
+		if (before.result === after.result) continue
 
 		changed++
 
-		const beforeRank = OUTCOME_RANK[before.outcome] ?? 0
-		const afterRank = OUTCOME_RANK[after.outcome] ?? 0
+		const beforeRank = RESULT_RANK[before.result] ?? 0
+		const afterRank = RESULT_RANK[after.result] ?? 0
 
 		if (afterRank > beforeRank) {
 			improved++

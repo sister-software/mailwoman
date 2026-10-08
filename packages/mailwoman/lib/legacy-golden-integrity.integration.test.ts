@@ -55,19 +55,19 @@ test("parity-raw.jsonl: aligned 1:1 with parity-inputs", async () => {
 	}
 })
 
-test("v1-parse-golden.jsonl: outcomes carry solutions arrays", async () => {
+test("v1-parse-golden.jsonl: responses carry solutions arrays", async () => {
 	const rows = (await readRows(
 		workspacePath("mailwoman", "lib", "test-fixtures", "legacy-golden", "v1-parse-golden.jsonl")
 	)) as Array<{
 		input?: string
-		outcome?: { solutions?: unknown[] }
+		response?: { solutions?: unknown[] }
 	}>
 
 	expect(rows.length).toBeGreaterThanOrEqual(350)
 
 	for (const row of rows) {
 		expect(typeof row.input).toBe("string")
-		expect(Array.isArray(row.outcome?.solutions)).toBe(true)
+		expect(Array.isArray(row.response?.solutions)).toBe(true)
 	}
 })
 

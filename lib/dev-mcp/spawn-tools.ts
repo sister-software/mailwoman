@@ -346,7 +346,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					// graded failure from a process crash.
 					...(job.state === "failed" && report.verdict
 						? {
-								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
+								job_result: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
 							}
 						: {}),
 					summary: summarizeJob(job.state, summary.elapsed_s, report, Boolean(promotionEvalOutDir)),

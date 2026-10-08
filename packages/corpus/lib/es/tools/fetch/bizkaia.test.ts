@@ -19,7 +19,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { silentLogger } from "@mailwoman/core/logging"
@@ -127,8 +127,8 @@ function featuresXML(type: string, count: number, firstID = 1): string {
 /**
  * The real client over a stubbed transport, so the requests take the production path.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "bizkaia test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -137,7 +137,7 @@ function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 /**
  * The hits and feature responses for every component type, with one feature each.
  */
-function componentOutcomes(): StubOutcome[] {
+function componentResults(): StubResult[] {
 	return ES_BIZKAIA_COMPONENT_TYPES.flatMap((type) => [{ body: hitsXML(1) }, { body: featuresXML(type, 1) }])
 }
 
@@ -263,7 +263,7 @@ describe("harvestESBizkaia", () => {
 			{ body: SERVICE_XML },
 			{ body: archiveBody("abadino"), headers: { "last-modified": "Thu, 01 Oct 2026 00:01:15 GMT" } },
 			{ body: archiveBody("ziortza"), headers: { "last-modified": "Thu, 01 Oct 2026 00:01:15 GMT" } },
-			...componentOutcomes(),
+			...componentResults(),
 		])
 
 		const summary = await harvestESBizkaia(client, { outputDir: temporary.path })
@@ -301,12 +301,12 @@ describe("harvestESBizkaia", () => {
 			{ body: SERVICE_XML },
 			{ body: archiveBody("abadino") },
 			{ body: archiveBody("ziortza") },
-			...componentOutcomes(),
+			...componentResults(),
 		])
 
 		await harvestESBizkaia(first, { outputDir: temporary.path })
 
-		const second = stubClient([{ body: SERVICE_XML }, ...componentOutcomes()])
+		const second = stubClient([{ body: SERVICE_XML }, ...componentResults()])
 		const summary = await harvestESBizkaia(second, { outputDir: temporary.path })
 
 		expect(summary.skipped).toBe(2)
@@ -317,7 +317,7 @@ describe("harvestESBizkaia", () => {
 
 	it("reports a municipality code the service document does not list as a failure", async () => {
 		await using temporary = await temporaryDirectory("mailwoman-bizkaia-unknown-")
-		const client = stubClient([{ body: SERVICE_XML }, ...componentOutcomes()])
+		const client = stubClient([{ body: SERVICE_XML }, ...componentResults()])
 
 		const summary = await harvestESBizkaia(client, {
 			outputDir: temporary.path,
@@ -348,7 +348,7 @@ describe("harvestESBizkaia", () => {
 		const client = stubClient([
 			{ body: SERVICE_XML },
 			{ body: "<html><body>Service unavailable</body></html>" },
-			...componentOutcomes(),
+			...componentResults(),
 		])
 
 		const summary = await harvestESBizkaia(client, { outputDir: temporary.path, limit: 1 })

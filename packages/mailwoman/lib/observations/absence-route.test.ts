@@ -5,7 +5,7 @@
  *
  *   Tests the coverage-qualified absence route: its conjunction, recorded absences, observation authority, plus construction refusals.
  *
- *   The route reads a finished `POIIntentOutcome` and a sealed coverage layer supplied here.
+ *   The route reads a finished `POIQueryResult` and a sealed coverage layer supplied here.
  *   The same query and empty answer produce opposite readings for two cells that differ only in `basis`.
  *
  *   The committed pre-registration is asserted too, because its hash is what stops a row that failed from being rewritten into a row that passes.
@@ -21,7 +21,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
@@ -152,7 +152,7 @@ function answered(
 	categoryID: string,
 	center: { latitude: number; longitude: number },
 	results: POIResult[] = []
-): POIIntentOutcome {
+): POIQueryResult {
 	const node: AddressNode = {
 		tag: "locality",
 		value: "anchor",
@@ -167,9 +167,10 @@ function answered(
 	const tree: AddressTree = { raw: "anchor", roots: [node] }
 
 	const intent: POIIntent = {
-		subject: { kind: "category", categoryIDs: [categoryID], matched: categoryID },
+		subject: { kind: "category", categoryIDs: [categoryID], matched: categoryID, countryBinding: null },
 		relation: "near",
-		anchor: { text: "anchor", tree },
+		anchor: { text: "anchor", tree, biasPoint: null, radiusM: null },
+		limit: null,
 	}
 
 	return { type: "intent", intent, results }
@@ -185,6 +186,8 @@ function poiRow(latitude: number, longitude: number): POIResult {
 		country: "FR",
 		confidence: 1,
 		gersID: null,
+		ancestry: null,
+		distanceM: null,
 	}
 }
 
@@ -262,16 +265,16 @@ describe("the conjunction's other half — the artifact", () => {
 	// covers one, so the whole searched set must be the surveyed class or the cell is not decidable.
 	it("refuses a searched union that reaches past the surveyed class", async () => {
 		const route = await routeOver()
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty)
 
-		if (outcome.type !== "intent" || outcome.intent.subject.kind !== "category") throw new Error("unreachable")
+		if (poiResult.type !== "intent" || poiResult.intent.subject.kind !== "category") throw new Error("unreachable")
 
 		// The same cell and answer, with the second class added to the search.
-		expect(await route.observe(outcome)).toMatchObject({ fired: true })
+		expect(await route.observe(poiResult)).toMatchObject({ fired: true })
 
-		outcome.intent.subject.categoryIDs = ["drugstore", "pharmacy"]
+		poiResult.intent.subject.categoryIDs = ["drugstore", "pharmacy"]
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "category_not_surveyed" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "category_not_surveyed" })
 	})
 })
 
@@ -289,8 +292,13 @@ describe("the silences that are about the answer rather than the world", () => {
 
 	it("refuses an intent the executor never ran — a search that did not happen returns nothing for its own reasons", async () => {
 		const route = await routeOver()
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
-		const unexecuted: POIIntentOutcome = { type: "intent", intent: (outcome as { intent: POIIntent }).intent }
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty)
+
+		const unexecuted: POIQueryResult = {
+			type: "intent",
+			intent: (poiResult as { intent: POIIntent }).intent,
+			results: null,
+		}
 
 		expect(await route.observe(unexecuted)).toEqual({ fired: false, refusal: "executor_did_not_run" })
 	})
@@ -298,45 +306,50 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses a non-category subject", async () => {
 		const route = await routeOver()
 
-		const outcome: POIIntentOutcome = {
+		const poiResult: POIQueryResult = {
 			type: "intent",
-			intent: { subject: { kind: "name", text: "Pharmacie du Centre" } },
+			intent: { subject: { kind: "name", text: "Pharmacie du Centre" }, relation: null, anchor: null, limit: null },
 			results: [],
 		}
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "subject_not_a_category" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "subject_not_a_category" })
 	})
 
 	it("refuses an un-anchored search — there is no cell to qualify", async () => {
 		const route = await routeOver()
 
-		const outcome: POIIntentOutcome = {
+		const poiResult: POIQueryResult = {
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [],
 		}
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "no_search_center" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "no_search_center" })
 	})
 
 	it("refuses when the answer returns a row inside the cell the coverage row calls empty", async () => {
 		const route = await routeOver()
 
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty, [
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty, [
 			poiRow(POINTS.surveyedEmpty.latitude, POINTS.surveyedEmpty.longitude),
 		])
 
-		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "coverage_contradicted_by_answer" })
+		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "coverage_contradicted_by_answer" })
 	})
 
 	it("still fires when the answer returns rows from OTHER cells — the claim is about the queried cell", async () => {
 		const route = await routeOver()
 
-		const outcome = answered("pharmacy", POINTS.surveyedEmpty, [
+		const poiResult = answered("pharmacy", POINTS.surveyedEmpty, [
 			poiRow(POINTS.surveyedPopulated.latitude, POINTS.surveyedPopulated.longitude),
 		])
 
-		const decision = await route.observe(outcome)
+		const decision = await route.observe(poiResult)
 
 		expect(decision.fired).toBe(true)
 
@@ -454,14 +467,14 @@ describe("the frozen pre-registration", () => {
 
 	it("refuses a target row that does not expect the observation", () => {
 		const broken: AbsenceProbeDefinition = structuredClone(definition)
-		broken.rows.find((row) => row.group === "target")!.expectedOutcome = "cell_unsurveyed"
+		broken.rows.find((row) => row.group === "target")!.expectedResult = "cell_unsurveyed"
 
 		expect(auditAbsenceProbeDefinition(broken)).toContainEqual(expect.stringContaining("a target row expects"))
 	})
 
 	it("refuses a control row that expects the observation", () => {
 		const broken: AbsenceProbeDefinition = structuredClone(definition)
-		broken.rows.find((row) => row.group !== "target")!.expectedOutcome = "absence_observation"
+		broken.rows.find((row) => row.group !== "target")!.expectedResult = "absence_observation"
 
 		expect(auditAbsenceProbeDefinition(broken)).toContainEqual(
 			expect.stringContaining("control expects the observation")

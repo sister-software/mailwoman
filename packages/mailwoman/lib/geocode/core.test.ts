@@ -11,7 +11,9 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
+	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
+	geocodeSwitches,
 	type GeocodeClassifier,
 	type GeocodeDeps,
 	parseForGeocode,
@@ -598,7 +600,7 @@ describe("The lineage-attachment wiring", () => {
 			capabilityGaps: null,
 		}
 
-		return { classifier, resolver, placeCountry: false }
+		return { classifier, resolver, placeCountry: "none" }
 	}
 
 	it("opts into includeAncestors by default — the stamp the admin-coherence verdicts read", async () => {
@@ -613,6 +615,38 @@ describe("The lineage-attachment wiring", () => {
 		await geocodeAddress("Weimar", { ...capturingDeps(captured), includeAncestors: false })
 
 		expect(captured[0]?.includeAncestors).toBe(false)
+	})
+
+	it("an unset switch resolves exactly as its explicit default", async () => {
+		const unset: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", capturingDeps(unset))
+
+		const explicit: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", { ...capturingDeps(explicit), ...GEOCODE_SWITCH_DEFAULTS })
+
+		expect(explicit).toEqual(unset)
+		expect(geocodeSwitches({})).toEqual(GEOCODE_SWITCH_DEFAULTS)
+
+		expect(geocodeSwitches({ adminCoherence: false, poiVenueTier: true })).toMatchObject({
+			adminCoherence: false,
+			poiVenueTier: true,
+			includeAncestors: true,
+		})
+	})
+
+	it("passes the on-by-default switches as explicit values and omits the off opt-ins", async () => {
+		const captured: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", capturingDeps(captured))
+
+		expect(captured[0]).toMatchObject({
+			adminCoherence: true,
+			includeAncestors: true,
+			postcodeCountryCoherence: true,
+			adminContainmentRerank: true,
+		})
+
+		expect(captured[0]).not.toHaveProperty("postcodeShapeCoherence")
+		expect(captured[0]).not.toHaveProperty("diagnoseUnreachable")
 	})
 })
 
@@ -668,7 +702,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
 
-		placeCountry: false,
+		placeCountry: "none",
 	})
 
 	it("returns every namesake, not just the winner", async () => {

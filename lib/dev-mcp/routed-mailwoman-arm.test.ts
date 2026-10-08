@@ -25,7 +25,7 @@ const EMPTY_RESULT = {
 	unit: null,
 	postcode_country_scope: null,
 	capital_promotion: null,
-	variant_alias_exemption: null,
+	variant_alias_exemption: "not_applied",
 	hierarchy: [],
 	admin_coherence: null,
 } as GauntletResult
@@ -178,8 +178,8 @@ describe("buildRoutedMailwomanArm", () => {
 				postcode_country_coherence: false,
 				gazetteer_prior: false,
 				admin_containment_rerank: true,
-				capital_tier: true,
-				variant_alias_exemption: true,
+				capital_tier: "required",
+				variant_alias_exemption: "applied",
 			},
 			[resolvedInput({ id: "us", input: "1 Main St", country: "us" })],
 			deps
@@ -192,7 +192,7 @@ describe("buildRoutedMailwomanArm", () => {
 				postcodeCountryCoherence: false,
 				gazetteerPrior: false,
 				adminContainmentRerank: true,
-				capitalTier: true,
+				capitalTier: "required",
 				variantAliasExemption: true,
 			},
 		})

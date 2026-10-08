@@ -30,7 +30,7 @@ interface GoldenRow {
  * them adjacently, driven by the row's own components rather than by a shape:
  * a country whose layout writes the postcode first or has no region produces no change.
  *
- * The caller counts that outcome instead of emitting an unperturbed row.
+ * The caller counts that result instead of emitting an unperturbed row.
  */
 function glue(raw: string, components: Record<string, string>): string {
 	const region = components.region?.trim()

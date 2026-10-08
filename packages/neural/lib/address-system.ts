@@ -164,20 +164,17 @@ export function confidentLocaleCountry(
  * A pinned `SystemCode` is used as given.
  * The value `"auto"` uses {@link detectAddressSystem}.
  *
- * A `null` value turns conventions off and yields a null system.
+ * The value `"off"` turns conventions off and yields a null system.
  */
 export function resolveSystemVerdict(
-	conventionsOpt: SystemCode | "auto" | null,
+	conventionsOpt: SystemCode | "auto" | "off",
 	localeLogits: readonly number[] | null
 ): { detectedSystem: SystemCode | null; systemSource: "off" | "auto" | "pinned" } {
-	const detectedSystem = conventionsOpt
-		? conventionsOpt === "auto"
-			? (detectAddressSystem(localeLogits)?.system ?? null)
-			: conventionsOpt
-		: null
+	if (conventionsOpt === "off") return { detectedSystem: null, systemSource: "off" }
 
-	return {
-		detectedSystem,
-		systemSource: conventionsOpt ? (conventionsOpt === "auto" ? "auto" : "pinned") : "off",
+	if (conventionsOpt === "auto") {
+		return { detectedSystem: detectAddressSystem(localeLogits)?.system ?? null, systemSource: "auto" }
 	}
+
+	return { detectedSystem: conventionsOpt, systemSource: "pinned" }
 }

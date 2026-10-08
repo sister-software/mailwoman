@@ -1,7 +1,7 @@
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
- * @file Phase 2 measured-decision outcome types.
+ * @file Phase 2 measured-decision result types.
  */
 
 import type { Phase2Decision } from "#tools/eval-harness/phase-2-decision/decision"

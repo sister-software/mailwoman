@@ -17,7 +17,7 @@ import {
 	assembleAccount,
 	expectationCase,
 	matchShapes,
-	collectOutcomeFacts,
+	collectResultFacts,
 	collectParseFacts,
 	renderAccount,
 	collectRetrievalFacts,
@@ -214,9 +214,9 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 })
 
-describe("collectOutcomeFacts — lineage standing is three-valued", () => {
+describe("collectResultFacts — lineage standing is three-valued", () => {
 	it("counts vouched, contradicted and unverifiable separately", () => {
-		const facts = collectOutcomeFacts({
+		const facts = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -235,7 +235,7 @@ describe("collectOutcomeFacts — lineage standing is three-valued", () => {
 
 	it("reports an absent coherence report as null, never as a passing check", () => {
 		expect(
-			collectOutcomeFacts({ lat: null, lon: null, resolution_tier: "admin", components: {}, hierarchy: [] })
+			collectResultFacts({ lat: null, lon: null, resolution_tier: "admin", components: {}, hierarchy: [] })
 				.admin_coherence
 		).toBeNull()
 	})
@@ -246,7 +246,7 @@ describe("matchShapes", () => {
 		parse: null,
 		evidence: null,
 		retrieval: collectRetrievalFacts([]),
-		outcome: collectOutcomeFacts({ lat: 1, lon: 2, resolution_tier: "admin", components: {}, hierarchy: [] }),
+		result: collectResultFacts({ lat: 1, lon: 2, resolution_tier: "admin", components: {}, hierarchy: [] }),
 	}
 
 	it("flags a high-confidence known format the parse contradicted, and ignores an ambiguous one", () => {
@@ -316,7 +316,7 @@ describe("matchShapes", () => {
 	})
 
 	it("flags a contradicted qualifier and a fragment outside the winner's lineage under one shape", () => {
-		const contradicted = collectOutcomeFacts({
+		const contradicted = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -325,7 +325,7 @@ describe("matchShapes", () => {
 			admin_coherence: { region: "contradicted", country: "confirmed" },
 		})
 
-		const chimera = collectOutcomeFacts({
+		const chimera = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -333,12 +333,12 @@ describe("matchShapes", () => {
 			hierarchy: [{ tag: "region", name: "Texas", in_winner_lineage: false }],
 		})
 
-		expect(matchShapes({ ...EMPTY, outcome: contradicted })).toContain("wrong_instance_detected")
-		expect(matchShapes({ ...EMPTY, outcome: chimera })).toContain("wrong_instance_detected")
+		expect(matchShapes({ ...EMPTY, result: contradicted })).toContain("wrong_instance_detected")
+		expect(matchShapes({ ...EMPTY, result: chimera })).toContain("wrong_instance_detected")
 	})
 
 	it("reads an unverifiable coherence verdict as no finding — absence of evidence is not evidence", () => {
-		const unverifiable = collectOutcomeFacts({
+		const unverifiable = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -347,7 +347,7 @@ describe("matchShapes", () => {
 			admin_coherence: { region: "unverifiable", country: "unstated" },
 		})
 
-		expect(matchShapes({ ...EMPTY, outcome: unverifiable })).toEqual([])
+		expect(matchShapes({ ...EMPTY, result: unverifiable })).toEqual([])
 	})
 
 	it("orders multiple matches by pipeline execution stage", () => {
@@ -361,7 +361,7 @@ describe("matchShapes", () => {
 					picked: { id: 9, name: "Astoria", source: "ranked" },
 				}),
 			]),
-			outcome: collectOutcomeFacts({
+			result: collectResultFacts({
 				lat: 1,
 				lon: 2,
 				resolution_tier: "admin",
@@ -445,7 +445,7 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("never lets a failed expectation add to a MECHANISM claim", () => {
-		// Commitment 1: expectations pin outcomes, never mechanisms, so a row that matched
+		// Commitment 1: expectations pin results, never mechanisms, so a row that matched
 		// a mechanism shape keeps it whether it passed or failed.
 		const starved = run({ trace: traceOf({ parse: trace({ gazetteer: SILENT_CHANNEL }) }) })
 

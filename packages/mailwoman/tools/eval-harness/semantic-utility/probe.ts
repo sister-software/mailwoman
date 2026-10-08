@@ -14,7 +14,7 @@ import {
 	gradeCase,
 	type POIBoardExpect,
 	type POIBoardFixture,
-	type POIBoardOutcome,
+	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
 import {
 	canonicalJSON,
@@ -25,7 +25,7 @@ import {
 } from "#tools/eval-harness/preregistration"
 
 /**
- * Outcome shapes derived from `PipelineResult.path` and `POIIntentOutcome.type`.
+ * Result shapes derived from `PipelineResult.path` and `POIQueryResult.type`.
  *
  * - `no_poi_branch`: the coordinator did not take the POI branch.
  * - `poi_abstain`: the POI branch declined.
@@ -34,7 +34,7 @@ import {
  * - `poi_intent_results`: the executor returned at least one row.
  *   Only this shape can pass the primary metric, because the comparator reads the top result.
  */
-export const POI_OUTCOME_SHAPES = [
+export const POI_RESULT_SHAPES = [
 	"no_poi_branch",
 	"poi_abstain",
 	"poi_intent_no_results",
@@ -42,23 +42,23 @@ export const POI_OUTCOME_SHAPES = [
 ] as const
 
 /**
- * One POI outcome shape.
+ * One POI result shape.
  */
-export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
+export type POIResultShape = (typeof POI_RESULT_SHAPES)[number]
 
 /**
- * Classifies the POI outcome shape of a pipeline result.
+ * Classifies the POI result shape of a pipeline result.
  */
-export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
-	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"
+export function poiResultShape(result: POIBoardResult): POIResultShape {
+	if (result.path !== "poi" || !result.poiIntent) return "no_poi_branch"
 
-	if (outcome.poiIntent.type === "abstain") return "poi_abstain"
+	if (result.poiIntent.type === "abstain") return "poi_abstain"
 
-	return outcome.poiIntent.results?.length ? "poi_intent_results" : "poi_intent_no_results"
+	return result.poiIntent.results?.length ? "poi_intent_results" : "poi_intent_no_results"
 }
 
 /**
- * The registered outcome comparators.
+ * The registered result comparators.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 
@@ -73,13 +73,13 @@ export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
 	fixture: POIBoardFixture,
-	outcome: POIBoardOutcome
+	result: POIBoardResult
 ): CaseGrade {
 	if (comparator !== "poi_board_assembled_answer") {
-		throw new Error(`semantic-utility probe: unregistered outcome comparator ${stringifyJSON(comparator)}`)
+		throw new Error(`semantic-utility probe: unregistered result comparator ${stringifyJSON(comparator)}`)
 	}
 
-	return gradeCase(fixture, outcome)
+	return gradeCase(fixture, result)
 }
 
 /**
@@ -112,7 +112,7 @@ export interface ProbeTargetRow extends POIBoardFixture {
 	/**
 	 * The measured baseline shape for this row.
 	 */
-	baselineShape: POIOutcomeShape
+	baselineShape: POIResultShape
 	/**
 	 * The information this row's baseline inputs lack.
 	 */
@@ -223,10 +223,10 @@ export interface SemanticProbeDefinition {
 	failureClass: string
 	semanticObservation: string
 	missingDistinction: string
-	baselineFailureShape: POIOutcomeShape
+	baselineFailureShape: POIResultShape
 	baselineFailureShapeNote: string
-	outcomeComparator: ProbeComparatorName
-	outcomeComparatorNote: string
+	resultComparator: ProbeComparatorName
+	resultComparatorNote: string
 	targetRows: ProbeTargetRow[]
 	targetRowsNote: string
 	controlRows: ProbeControlRow[]
@@ -282,12 +282,12 @@ export function probeDefinitionHash(definition: SemanticProbeDefinition): string
 export function auditProbeDefinition(definition: SemanticProbeDefinition): string[] {
 	const problems: string[] = []
 
-	if (!(PROBE_COMPARATORS as readonly string[]).includes(definition.outcomeComparator)) {
-		problems.push(`outcomeComparator ${stringifyJSON(definition.outcomeComparator)} is not registered`)
+	if (!(PROBE_COMPARATORS as readonly string[]).includes(definition.resultComparator)) {
+		problems.push(`resultComparator ${stringifyJSON(definition.resultComparator)} is not registered`)
 	}
 
-	if (!(POI_OUTCOME_SHAPES as readonly string[]).includes(definition.baselineFailureShape)) {
-		problems.push(`baselineFailureShape ${stringifyJSON(definition.baselineFailureShape)} is not a POI outcome shape`)
+	if (!(POI_RESULT_SHAPES as readonly string[]).includes(definition.baselineFailureShape)) {
+		problems.push(`baselineFailureShape ${stringifyJSON(definition.baselineFailureShape)} is not a POI result shape`)
 	}
 
 	if (!definition.targetRows.length) {
@@ -307,10 +307,8 @@ export function auditProbeDefinition(definition: SemanticProbeDefinition): strin
 			)
 		}
 
-		if (!(POI_OUTCOME_SHAPES as readonly string[]).includes(row.baselineShape)) {
-			problems.push(
-				`target row ${row.id}: baselineShape ${stringifyJSON(row.baselineShape)} is not a POI outcome shape`
-			)
+		if (!(POI_RESULT_SHAPES as readonly string[]).includes(row.baselineShape)) {
+			problems.push(`target row ${row.id}: baselineShape ${stringifyJSON(row.baselineShape)} is not a POI result shape`)
 		}
 
 		if (!row.missingDistinction.trim()) {
@@ -456,14 +454,14 @@ export function resolveControlRows(
 }
 
 /**
- * The measured outcome of one target or control row.
+ * The measured result of one target or control row.
  */
-export interface ProbeRowOutcome {
+export interface ProbeRowResult {
 	id: string
 	role: "target" | "control"
 	group: ProbeControlGroup | null
 	query: string
-	shape: POIOutcomeShape
+	shape: POIResultShape
 	abstainReason: string | null
 	grade: CaseGrade
 }
@@ -482,21 +480,21 @@ export interface ProbeCounts {
 }
 
 /**
- * Counts a run's outcomes, with denominators from the definition's registered row counts.
+ * Counts a run's results, with denominators from the definition's registered row counts.
  */
 export function computeProbeCounts(
 	definition: SemanticProbeDefinition,
-	outcomes: readonly ProbeRowOutcome[]
+	results: readonly ProbeRowResult[]
 ): ProbeCounts {
-	const targets = outcomes.filter((outcome) => outcome.role === "target")
-	const controls = outcomes.filter((outcome) => outcome.role === "control")
+	const targets = results.filter((result) => result.role === "target")
+	const controls = results.filter((result) => result.role === "control")
 
 	return {
-		primaryNumerator: targets.filter((outcome) => outcome.grade.pass).length,
+		primaryNumerator: targets.filter((result) => result.grade.pass).length,
 		primaryDenominator: definition.primaryMetric.denominator,
-		diagnosticNumerator: targets.filter((outcome) => outcome.shape !== "no_poi_branch").length,
+		diagnosticNumerator: targets.filter((result) => result.shape !== "no_poi_branch").length,
 		diagnosticDenominator: definition.diagnosticMetric.denominator,
-		controlHoldNumerator: controls.filter((outcome) => outcome.grade.pass).length,
+		controlHoldNumerator: controls.filter((result) => result.grade.pass).length,
 		controlDenominator: definition.controlMetric.denominator,
 	}
 }

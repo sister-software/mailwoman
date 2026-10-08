@@ -163,7 +163,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolver,
 				databases: extracts.for,
 				nationalDatabases: banExtracts.for,
-				defaultCountry: userCountry,
+				...(userCountry ? { defaultCountry: { country: userCountry, source: "caller" } } : {}),
 			})
 
 			if (result.lat == null || result.lon == null) return []

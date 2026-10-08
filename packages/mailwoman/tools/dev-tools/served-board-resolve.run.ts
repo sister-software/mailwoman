@@ -102,16 +102,16 @@ async function main(): Promise<void> {
 	for (const [index, row] of rows.entries()) {
 		traces.length = 0
 
-		const outcome = (await geocodeAddress(row.raw, {
+		const result = (await geocodeAddress(row.raw, {
 			classifier,
 			resolver,
-			defaultCountry: country,
+			defaultCountry: { country, source: "caller" },
 			adminContainmentRerank: true,
 			...(values.normalize === "false" ? { normalizeInput: false } : {}),
 		})) as { lat: number | null; lon: number | null; resolution_tier?: string | null }
 
 		const distanceKm =
-			outcome.lat != null && outcome.lon != null ? haversineKm(row.lat, row.lon, outcome.lat, outcome.lon) : null
+			result.lat != null && result.lon != null ? haversineKm(row.lat, row.lon, result.lat, result.lon) : null
 
 		if (index < traceRows) {
 			console.log(`TRACE ${row.raw}`)
@@ -124,9 +124,9 @@ async function main(): Promise<void> {
 		graded.push({
 			raw: row.raw,
 			register: row.register,
-			lat: outcome.lat,
-			lon: outcome.lon,
-			tier: outcome.resolution_tier ?? null,
+			lat: result.lat,
+			lon: result.lon,
+			tier: result.resolution_tier ?? null,
 			distanceKm,
 			accepted: distanceKm != null && distanceKm <= toleranceKm,
 		})

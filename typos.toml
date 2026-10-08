@@ -229,6 +229,8 @@ byAnc = "byAnc"
 FulfilDependencies = "FulfilDependencies"
 fulfilInvoice = "fulfilInvoice"
 MAILWOMAN_LICENCE = "MAILWOMAN_LICENCE"
+FulfilResult = "FulfilResult"
+# docs/superpowers plans keep the historical name.
 FulfilOutcome = "FulfilOutcome"
 neighbourhood_id = "neighbourhood_id"
 segmentDistanceMetres = "segmentDistanceMetres"

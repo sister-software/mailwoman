@@ -85,7 +85,7 @@ export interface AblationLadder {
 export const ABSTAIN_RUNG = "abstain"
 
 /**
- * Expected rung outcome with reason.
+ * Expected rung result with reason.
  */
 export type ExpectedRung =
 	| { kind: "rung"; depth: number; why: string }
@@ -572,7 +572,7 @@ export function gradeAgainstLadder(input: {
 	lat: number | null
 	lon: number | null
 	/**
-	 * Deleted component slot outcome (`substituted` is hard fail).
+	 * Deleted component slot result (`substituted` is hard fail).
 	 */
 	slot: "absent" | "recovered" | "substituted"
 	/**

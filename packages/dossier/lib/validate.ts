@@ -387,11 +387,11 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		checkCheck(ref, disposition.check)
 		checkDate(ref, "decidedAt", disposition.decidedAt)
 
-		if (disposition.outcome) {
-			checkSource(ref, disposition.outcome.evidence.source)
-			checkDate(ref, "outcome.at", disposition.outcome.at)
-			checkDuration(ref, "outcome.minutesSpent", disposition.outcome.minutesSpent)
-			checkDuration(ref, "outcome.baselineMinutes", disposition.outcome.baselineMinutes)
+		if (disposition.result) {
+			checkSource(ref, disposition.result.evidence.source)
+			checkDate(ref, "result.at", disposition.result.at)
+			checkDuration(ref, "result.minutesSpent", disposition.result.minutesSpent)
+			checkDuration(ref, "result.baselineMinutes", disposition.result.baselineMinutes)
 		}
 	}
 

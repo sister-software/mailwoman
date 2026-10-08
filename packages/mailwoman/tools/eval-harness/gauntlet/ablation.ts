@@ -13,7 +13,7 @@
  *
  * Every variant grades against a graceful-degradation ladder synthesized per row from the gazetteer, with the
  * expected rung computed from the components the deletion left behind rather than from the variant's own output.
- * Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
+ * Three results are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
  * justifies, or it abstained where the surviving evidence justifies no pick. Substitution is a hard fail at every
  * rung, because a coordinate cannot redeem a slot refilled by the wrong token.
  *
@@ -47,7 +47,7 @@ import {
 	ABLATABLE_COMPONENTS,
 	type AblatableComponent,
 	type AblationCell,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	type AblationSkip,
 	type AblationVariant,
 	DEFAULT_ABLATION_TOLERANCE_KM,
@@ -73,10 +73,10 @@ export {
 	DEFAULT_ABLATION_TOLERANCE_KM,
 	type AblatableComponent,
 	type AblationCell,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	type AblationSkip,
 	type AblationVariant,
-	type SlotOutcome,
+	type SlotResult,
 } from "#tools/eval-harness/gauntlet/ablation/types"
 
 /**
@@ -414,7 +414,7 @@ export async function runAblationLayer(
 			: `[ablation] ⚠ NO EXPECTATION MODEL — ${gazetteer.unavailableReason}. Every variant grades \`ungraded\`; only the anchor-graded columns mean anything.`
 	)
 
-	const rows: AblationRowOutcome[] = []
+	const rows: AblationRowResult[] = []
 	const skips: Array<AblationSkip & { caseID: string }> = []
 	const ladderProblems: Array<{ caseID: string; reason: string }> = []
 	let anchorsRun = 0
@@ -531,7 +531,7 @@ export async function runAblationLayer(
 					expectedRungDepth: expectation.depth,
 					expectedWhy: expectation.why,
 					expectedSource: expectation.source,
-					ladderAnchor: ("anchorSource" in built ? built.anchorSource : null) as AblationRowOutcome["ladderAnchor"],
+					ladderAnchor: ("anchorSource" in built ? built.anchorSource : null) as AblationRowResult["ladderAnchor"],
 					anchorRungDepth,
 					achievedRung: achievedRungName,
 					achievedRungDepth: graded.achievedRungDepth,
@@ -619,7 +619,7 @@ function describePins(options: AblationLayerOptions): string {
 
 function printSummary(
 	cells: readonly AblationCell[],
-	rows: readonly AblationRowOutcome[],
+	rows: readonly AblationRowResult[],
 	meta: {
 		boardID: string
 		measuredAt: string
@@ -713,7 +713,7 @@ function printSummary(
 	const recovered = rows.filter((r) => r.slot === "recovered")
 
 	console.log(
-		`\n  slot outcomes: ${rows.filter((r) => r.slot === "absent").length} absent, ${recovered.length} recovered, ${substituted.length} substituted`
+		`\n  slot results: ${rows.filter((r) => r.slot === "absent").length} absent, ${recovered.length} recovered, ${substituted.length} substituted`
 	)
 
 	if (meta.skips.length) {

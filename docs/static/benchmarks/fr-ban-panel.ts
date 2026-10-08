@@ -321,7 +321,7 @@ async function run() {
 					nationalDatabases: banExtracts.for,
 					// Pinned to `FR`, so the panel measures resolution inside France
 					// and makes no claim about country disambiguation.
-					defaultCountry: "FR",
+					defaultCountry: { country: "FR", source: "caller" },
 				})
 			} catch (error) {
 				records.push({

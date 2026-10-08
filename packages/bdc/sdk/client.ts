@@ -7,7 +7,7 @@
  *   Requests fail with {@linkcode ResourceError}. Callers branch on the status and on
  *   `isTransientResourceError` as follows.
  *
- *   | Outcome                           | Caller action    | Test                                       |
+ *   | Result                           | Caller action    | Test                                       |
  *   | --------------------------------- | ---------------- | ------------------------------------------ |
  *   | 401 / 403                         | abort the run    | `error.status === 401 \|\| === 403`         |
  *   | 404                               | skip this file   | `error.status === 404`                     |

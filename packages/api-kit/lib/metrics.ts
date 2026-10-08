@@ -7,6 +7,7 @@
  */
 
 import { percentileSorted } from "@mailwoman/core/stats"
+import { z } from "zod"
 
 /**
  * Recent-latency reservoir size, roughly 2k samples for a stable p99 within bounded memory.
@@ -56,19 +57,26 @@ function latencyPercentile(sorted: readonly number[], p: number): number {
 	return Math.round(value * 100) / 100
 }
 
-export interface MetricsSnapshot {
-	uptime_s: number
-	timings: {
-		total: number
-		errors: number
-		/**
-		 * Per-tier counts, absent for a tier that was never recorded.
-		 */
-		tiers: Record<string, number>
-		latency_ms: { p50: number; p90: number; p99: number; max: number } | null
-		latency_samples: number
-	}
-}
+/**
+ * The in-process timing metrics: latency percentiles and per-tier counts.
+ */
+export const MetricsSnapshotSchema = z
+	.object({
+		uptime_s: z.number(),
+		timings: z.object({
+			total: z.number(),
+			errors: z.number(),
+			/**
+			 * Per-tier counts, absent for a tier that was never recorded.
+			 */
+			tiers: z.record(z.string(), z.number()),
+			latency_ms: z.object({ p50: z.number(), p90: z.number(), p99: z.number(), max: z.number() }).nullable(),
+			latency_samples: z.number(),
+		}),
+	})
+	.meta({ id: "MetricsSnapshot", description: "The live in-process timing metrics snapshot." })
+
+export type MetricsSnapshot = z.infer<typeof MetricsSnapshotSchema>
 
 /**
  * The current metrics snapshot, with sorted-reservoir percentiles and counters.

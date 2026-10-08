@@ -8,6 +8,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import type { AdminCoherenceReport, GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
@@ -21,12 +22,11 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AdminCoherenceReport } from "#admin-coherence"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import type { GeocodeResult } from "#geocode/result"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
-import { createResolverBackend, loadCapitalIndex, resolveCandidateDBPath } from "#resolver-backend"
+import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
 
 export interface GauntletDeps extends Disposable {
@@ -139,13 +139,12 @@ export interface GauntletResolverPins {
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym class,
-	 * carrying an artifact (the candidate `capital` table with a repo-file fallback) that
-	 * the harness loads rather than `resolverPinDeps`; default on, `false` pins the off arm.
-	 *
-	 * An unset value uses the default and degrades on a reference-less artifact.
+	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
+	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
+	 * that the harness loads rather than `resolverPinDeps`.
+	 * Unpinned uses the session default.
 	 */
-	capitalTier?: boolean
+	capitalTier?: CapitalTier
 	/**
 	 * Exempt own-name `variant` aliases from the cross-country primary-preference
 	 * penalty. the stamp lives in the candidate build's own-name detector,
@@ -221,7 +220,7 @@ export function describeResolverPins(pins?: GauntletResolverPins | null): string
 	}
 
 	if (pins?.capitalTier !== undefined) {
-		entries.push(`capitalTier=${pins.capitalTier ? "ON" : "OFF"}`)
+		entries.push(`capitalTier=${pins.capitalTier}`)
 	}
 
 	if (pins?.variantAliasExemption !== undefined) {
@@ -472,6 +471,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			locale: "en-US",
 			confidence: 1,
 			alternatives: [],
+			script: [],
+			evidence: null,
 			source: "caller",
 		})
 
@@ -496,22 +497,16 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		await createResolverBackend(resolverMod, {
 			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			...(opts.pins?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
+			variantAliasExemption: opts.pins?.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		})
 	)
 
 	// The reference loads here and becomes the per-candidate `capitalLevel` closure,
 	// matching `createGeocodeSession`.
-	// `false` pins the off arm.
-	// Explicit `true` requires the reference.
-	// An unset value uses the default (on) and degrades on a reference-less artifact.
-	const capitalIndex =
-		opts.pins?.capitalTier === false
-			? undefined
-			: await loadCapitalIndex({
-					candidateDB: (await resolveCandidateDBPath(opts.candidateDB)) ?? undefined,
-					missing: opts.pins?.capitalTier === true ? "throw" : "degrade",
-				})
+	const capitalIndex = await capitalIndexFor(
+		opts.pins?.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
+		await resolveCandidateDBPath(opts.candidateDB)
+	)
 
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
@@ -623,7 +618,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		geoOpts: GauntletGeocodeOpts | null,
 		extra: Pick<GeocodeDeps, "resolveTraceSink">
 	): Promise<GeocodeResult> => {
-		const { caseCountry, ...forwarded } = geoOpts ?? {}
+		const { caseCountry, defaultCountry, ...forwarded } = geoOpts ?? {}
 		const caseClassifier = await classifierFor(caseCountry)
 
 		return geocodeAddress(input, {
@@ -631,7 +626,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// Same lexicon-aware kind classifier the CLI session wires, so the harness grades the user's path.
 			classifyKind: poiKindClassifier,
 			// Unset on every shipping path, so the register comes from the verdict as production derives it.
-			...(opts.forceQueryKind ? { inputMode: deriveInputMode(opts.forceQueryKind) } : {}),
+			...(opts.forceQueryKind ? { inputMode: deriveInputMode("auto", opts.forceQueryKind) } : {}),
 			resolver,
 			databases: regionDatabaseProvider.for,
 			nationalDatabases: banProvider.for,
@@ -641,6 +636,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 			...forkEntityDeps,
 			...forwarded,
+			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
 			...extra,
 		})
 	}
@@ -717,10 +713,10 @@ export interface GauntletResult {
 	 */
 	capital_promotion: string | null
 	/**
-	 * The variant-exemption firing receipt, projected verbatim: `true` when the exemption
-	 * spared the winning candidate the cross-country alias penalty, and null otherwise.
+	 * The variant-exemption firing receipt, projected verbatim: `applied` when the exemption
+	 * spared the winning candidate the cross-country alias penalty, and `not_applied` otherwise.
 	 */
-	variant_alias_exemption: true | null
+	variant_alias_exemption: VariantAliasExemption
 	/**
 	 * The resolved admin chain, locality → country, verbatim from
 	 * {@linkcode GeocodeResult.hierarchy}; Cases do not assert this value.
@@ -766,7 +762,7 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
 		capital_promotion: g.capital_promotion ?? null,
-		variant_alias_exemption: g.variant_alias_exemption === true ? true : null,
+		variant_alias_exemption: g.variant_alias_exemption,
 		admin_coherence: g.admin_coherence ?? null,
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,

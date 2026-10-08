@@ -29,7 +29,7 @@ export interface GoldenStreetRow {
 }
 
 /**
- * The relabel outcome class for one row.
+ * The relabel result class for one row.
  */
 export type GoldenRelabelClass =
 	| "split-suffix"

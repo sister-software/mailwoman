@@ -6,7 +6,7 @@
  *   resolved ancestry labeled by tag, so a Japanese municipality is `city` and a prefecture `state`.
  */
 
-import type { GeocodeResult } from "mailwoman/geocode"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 
 import type { NominatimAddressDetails, ResolvedAddress } from "#index"
 

@@ -137,11 +137,14 @@ Options:
   \-\-[no\-]admin\-containment\-rerank             Region\-qualifier containment reranking of locality
                                               candidates; \-\-no\-admin\-containment\-rerank disables it.
                                               (default: true)
-  \-\-capital\-tier                              Bounded national\-capital promotion on bare city names
-                                              (default on); \-\-no\-capital\-tier disables it.
-  \-\-variant\-alias\-exemption                   Own\-name variant aliases keep their holder's rank in
+  \-\-capital\-tier <string>                     Bounded national\-capital promotion on bare city names:
+                                              auto (skip when the capitals reference is missing),
+                                              required (fail when it is missing), or off. (default:
+                                              auto)
+  \-\-[no\-]variant\-alias\-exemption              Own\-name variant aliases keep their holder's rank in
                                               cross\-country contests (default on);
-                                              \-\-no\-variant\-alias\-exemption disables it.
+                                              \-\-no\-variant\-alias\-exemption disables it. (default:
+                                              true)
   \-\-place\-country\-threshold <probability>     Coarse\-placer abstention threshold. (default: 0.9)
   \-\-format <string>                           Output format. (default: json)
   \-\-json                                      Shorthand for \-\-format json. (default: false)

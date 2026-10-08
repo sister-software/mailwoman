@@ -34,7 +34,7 @@ import {
 	POI_BOARD_FIXTURES,
 	type POIBoardFixture,
 	type POIBoardOptions,
-	type POIBoardOutcome,
+	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
 import {
@@ -42,9 +42,9 @@ import {
 	decideProbe,
 	gradeWithComparator,
 	loadProbeDefinition,
-	poiOutcomeShape,
+	poiResultShape,
 	type ProbeCounts,
-	type ProbeRowOutcome,
+	type ProbeRowResult,
 	type ProbeVerdict,
 	probeDefinitionHash,
 	resolveControlRows,
@@ -90,7 +90,7 @@ export interface ProbeReceipt {
 	 * "no route was asked for" and "this receipt predates the field" the same reading.
 	 */
 	semanticRoute: ProbeSemanticRouteRecord
-	rows: ProbeRowOutcome[]
+	rows: ProbeRowResult[]
 	/**
 	 * Every firing of the injected route, in row order.
 	 * Empty on an un-injected run.
@@ -154,7 +154,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 
 	const { pipeline, db, backend } = pipelineHandle
 
-	const rows: ProbeRowOutcome[] = []
+	const rows: ProbeRowResult[] = []
 	const semanticObservations: ProbeRowObservation[] = []
 
 	for (const target of definition.targetRows) {
@@ -163,9 +163,9 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 	}
 
 	for (const control of controls) {
-		const outcome = await gradeRow(pipeline, definition, control, "control")
+		const board = await gradeRow(pipeline, definition, control, "control")
 
-		rows.push({ ...outcome, group: groupByID.get(control.id) ?? null })
+		rows.push({ ...board, group: groupByID.get(control.id) ?? null })
 		semanticObservations.push(...drainObservations(route ?? null, control.id))
 	}
 
@@ -202,11 +202,11 @@ async function gradeRow(
 	definition: SemanticProbeDefinition,
 	fixture: POIBoardFixture,
 	role: "target" | "control"
-): Promise<ProbeRowOutcome> {
+): Promise<ProbeRowResult> {
 	const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 	const result = await pipeline(fixture.query, runOpts)
-	const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent ?? null }
-	const shape = poiOutcomeShape(outcome)
+	const board: POIBoardResult = { path: result.path, poiIntent: result.poiIntent ?? null }
+	const shape = poiResultShape(board)
 
 	return {
 		id: fixture.id,
@@ -214,8 +214,8 @@ async function gradeRow(
 		group: null,
 		query: fixture.query,
 		shape,
-		abstainReason: outcome.poiIntent?.type === "abstain" ? outcome.poiIntent.reason : null,
-		grade: gradeWithComparator(definition.outcomeComparator, fixture, outcome),
+		abstainReason: board.poiIntent?.type === "abstain" ? board.poiIntent.reason : null,
+		grade: gradeWithComparator(definition.resultComparator, fixture, board),
 	}
 }
 

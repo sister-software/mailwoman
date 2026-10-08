@@ -7,9 +7,9 @@
  *   geocode file holds the cascade, this one holds the retry). Interface in {@link applyStreetMissFallback}.
  */
 
-import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { loneValueNode } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 
 /**
@@ -18,7 +18,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
  * The retry omits inferred country constraints but preserves an explicit default country.
  */
 export async function applyStreetMissFallback(
-	result: GeocodeOutcomeLike,
+	result: GeocodeResult,
 	ctx: {
 		tree: AddressTree
 		opts: ResolveOpts
@@ -28,13 +28,12 @@ export async function applyStreetMissFallback(
 		 */
 		deps: {
 			resolver?: { resolveTree(tree: AddressTree, opts: ResolveOpts): Promise<AddressTree> }
-			defaultCountryIsInferred?: boolean
 		}
 		input: string
 		forkDeclared: boolean
-		extract: (input: string, tree: AddressTree) => GeocodeOutcomeLike
+		extract: (input: string, tree: AddressTree) => GeocodeResult
 	}
-): Promise<GeocodeOutcomeLike> {
+): Promise<GeocodeResult> {
 	const { tree, opts, deps, input, forkDeclared, extract } = ctx
 
 	if (result.lat !== null || !deps.resolver || forkDeclared) return result
@@ -47,11 +46,14 @@ export async function applyStreetMissFallback(
 		roots: [{ tag: "locality", value: bare, start: 0, end: bare.length, confidence: 1, children: [] }],
 	}
 
-	const retryOpts = {
-		...opts,
-		hardCountry: undefined,
-		anchorPosterior: undefined,
-		...(deps.defaultCountryIsInferred === true ? { defaultCountry: undefined } : {}),
+	// The retry drops the placer's country evidence and any locale-inferred scope.
+	// A caller's scope stays.
+	const retryOpts: ResolveOpts = { ...opts }
+	delete retryOpts.hardCountry
+	delete retryOpts.anchorPosterior
+
+	if (retryOpts.defaultCountry?.source === "inferred") {
+		delete retryOpts.defaultCountry
 	}
 
 	const reresolved = await deps.resolver.resolveTree(localityTree, retryOpts)

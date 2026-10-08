@@ -21,7 +21,7 @@ import {
 	CONFORMANCE_RELATIONS,
 	type ConformanceFixture,
 	loadConformanceFixtures,
-	OUTCOME_COMPARATORS,
+	RESULT_COMPARATORS,
 	parseConformanceFixture,
 	RELATIONS_BY_COMPARATOR,
 } from "#tools/eval-harness/conformance/fixture"
@@ -48,7 +48,7 @@ function record(over: Record<string, unknown> = {}): Record<string, unknown> {
 		law: "case-folding-invariance",
 		base: "10 Downing Street, London",
 		variant: "10 DOWNING STREET, LONDON",
-		outcomeComparator: "resolution_identity",
+		resultComparator: "resolution_identity",
 		expect: "equivalent",
 		...over,
 	}
@@ -65,7 +65,7 @@ async function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): Promise
 
 describe("conformance fixture vocabulary", () => {
 	it("closes the comparator set at six named instruments", () => {
-		expect([...OUTCOME_COMPARATORS]).toEqual([
+		expect([...RESULT_COMPARATORS]).toEqual([
 			"resolution_identity",
 			"assembled_coordinate",
 			"parse_whole_strict",
@@ -79,12 +79,12 @@ describe("conformance fixture vocabulary", () => {
 		expect(RELATIONS_BY_COMPARATOR["candidate_admissibility"]).toEqual(["refines", "diverges"])
 
 		expect(() =>
-			parseConformanceFixture(record({ outcomeComparator: "candidate_admissibility", expect: "equivalent" }), "inline")
+			parseConformanceFixture(record({ resultComparator: "candidate_admissibility", expect: "equivalent" }), "inline")
 		).toThrow(/cannot express the relation "equivalent"/)
 	})
 
 	it("declares supported relations for every comparator", () => {
-		for (const comparator of OUTCOME_COMPARATORS) {
+		for (const comparator of RESULT_COMPARATORS) {
 			const supported = RELATIONS_BY_COMPARATOR[comparator]
 
 			expect(supported.length).toBeGreaterThan(0)
@@ -101,23 +101,23 @@ describe("parseConformanceFixture", () => {
 		const fixture = parseConformanceFixture(record(), "inline")
 
 		expect(fixture.id).toBe("cnf-sample-01")
-		expect(fixture.outcomeComparator).toBe("resolution_identity")
+		expect(fixture.resultComparator).toBe("resolution_identity")
 		expect(fixture.expect).toBe("equivalent")
 		expect(fixture.context).toBeNull()
 	})
 
 	it("rejects a fixture with no comparator, naming the fixture and the closed set", () => {
 		const raw = record()
-		delete raw["outcomeComparator"]
+		delete raw["resultComparator"]
 
 		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/cnf-sample-01/)
-		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/"outcomeComparator" is required/)
+		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/"resultComparator" is required/)
 		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/mechanism_shape/)
 	})
 
 	it("rejects an unknown comparator rather than skipping the row", () => {
-		expect(() => parseConformanceFixture(record({ outcomeComparator: "nearby_enough" }), "inline")).toThrow(
-			/cnf-sample-01.*unknown outcomeComparator "nearby_enough"/s
+		expect(() => parseConformanceFixture(record({ resultComparator: "nearby_enough" }), "inline")).toThrow(
+			/cnf-sample-01.*unknown resultComparator "nearby_enough"/s
 		)
 	})
 
@@ -135,7 +135,7 @@ describe("parseConformanceFixture", () => {
 	})
 
 	it("rejects a relation the named comparator cannot express", () => {
-		const raw = record({ outcomeComparator: "parse_whole_strict", expect: "refines" })
+		const raw = record({ resultComparator: "parse_whole_strict", expect: "refines" })
 
 		expect(() => parseConformanceFixture(raw, "inline")).toThrow(
 			/comparator "parse_whole_strict" cannot express the relation "refines"/
@@ -167,13 +167,13 @@ describe("parseConformanceFixture", () => {
 	})
 
 	it("accepts a tolerance on the comparator that reads it", () => {
-		const raw = record({ outcomeComparator: "assembled_coordinate", toleranceM: 250 })
+		const raw = record({ resultComparator: "assembled_coordinate", toleranceM: 250 })
 
 		expect(parseConformanceFixture(raw, "inline").toleranceM).toBe(250)
 	})
 
 	it("rejects a non-positive tolerance", () => {
-		const raw = record({ outcomeComparator: "assembled_coordinate", toleranceM: 0 })
+		const raw = record({ resultComparator: "assembled_coordinate", toleranceM: 0 })
 
 		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/must be a positive finite number/)
 	})
@@ -222,10 +222,10 @@ describe("parseConformanceFixture", () => {
 describe("loadConformanceFixtures", () => {
 	it("loads the worked example, exercising every comparator once", async () => {
 		const fixtures = await loadConformanceFixtures(EXAMPLE_SUITE)
-		const used = fixtures.map((fixture) => fixture.outcomeComparator)
+		const used = fixtures.map((fixture) => fixture.resultComparator)
 
-		expect(fixtures).toHaveLength(OUTCOME_COMPARATORS.length)
-		expect(used.toSorted()).toEqual([...OUTCOME_COMPARATORS].toSorted())
+		expect(fixtures).toHaveLength(RESULT_COMPARATORS.length)
+		expect(used.toSorted()).toEqual([...RESULT_COMPARATORS].toSorted())
 	})
 
 	it("carries the optional row reference and per-row context through", async () => {
@@ -251,8 +251,8 @@ describe("loadConformanceFixtures", () => {
 	})
 
 	it("refuses the whole suite on one bad row rather than loading the good ones", async () => {
-		const path = writeSuite([record(), record({ id: "cnf-sample-02", outcomeComparator: "vibes" })])
+		const path = writeSuite([record(), record({ id: "cnf-sample-02", resultComparator: "vibes" })])
 
-		await expect(loadConformanceFixtures(await path)).rejects.toThrow(/cnf-sample-02.*unknown outcomeComparator/s)
+		await expect(loadConformanceFixtures(await path)).rejects.toThrow(/cnf-sample-02.*unknown resultComparator/s)
 	})
 })

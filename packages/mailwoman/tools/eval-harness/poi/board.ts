@@ -7,7 +7,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { PipelineOpts, PipelineResult, POIQueryResult } from "@mailwoman/core/pipeline"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
@@ -146,9 +146,9 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 /**
  * Pipeline result fields that grading reads.
  */
-export interface POIBoardOutcome {
+export interface POIBoardResult {
 	path: PipelineResult["path"]
-	poiIntent: POIIntentOutcome | null
+	poiIntent: POIQueryResult | null
 }
 
 /**
@@ -169,11 +169,11 @@ export interface CaseGrade {
 }
 
 /**
- * Grades one row from its pipeline outcome.
+ * Grades one row from its pipeline result.
  * It performs no I/O.
  */
-export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): CaseGrade {
-	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent != null
+export function gradeCase(fixture: POIBoardFixture, boardResult: POIBoardResult): CaseGrade {
+	const tookPoiPath = boardResult.path === "poi" && boardResult.poiIntent != null
 	const expect = fixture.expect
 
 	if (expect.kind === "address") {
@@ -183,7 +183,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 					query: fixture.query,
 					expectKind: "address",
 					pass: false,
-					detail: `expected the address path, but the poi branch claimed it (${outcome.poiIntent?.type})`,
+					detail: `expected the address path, but the poi branch claimed it (${boardResult.poiIntent?.type})`,
 					nearestKm: null,
 					resultCount: null,
 				}
@@ -204,28 +204,28 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			query: fixture.query,
 			expectKind: expect.kind,
 			pass: false,
-			detail: `expected a poi outcome (${expect.kind}), got path=${outcome.path} (no poi intent)`,
+			detail: `expected a poi result (${expect.kind}), got path=${boardResult.path} (no poi intent)`,
 			nearestKm: null,
 			resultCount: null,
 		}
 	}
 
-	const poiOutcome = outcome.poiIntent!
+	const poiResult = boardResult.poiIntent!
 
 	if (expect.kind === "abstain") {
-		if (poiOutcome.type !== "abstain") {
+		if (poiResult.type !== "abstain") {
 			return {
 				id: fixture.id,
 				query: fixture.query,
 				expectKind: "abstain",
 				pass: false,
-				detail: `expected abstain(${expect.reason}), got type=intent (${poiOutcome.results?.length ?? 0} results)`,
+				detail: `expected abstain(${expect.reason}), got type=intent (${poiResult.results?.length ?? 0} results)`,
 				nearestKm: null,
 				resultCount: null,
 			}
 		}
 
-		const pass = poiOutcome.reason === expect.reason
+		const pass = poiResult.reason === expect.reason
 
 		return {
 			id: fixture.id,
@@ -233,8 +233,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			expectKind: "abstain",
 			pass,
 			detail: pass
-				? `abstain: ${poiOutcome.reason}`
-				: `expected abstain(${expect.reason}), got abstain(${poiOutcome.reason})`,
+				? `abstain: ${poiResult.reason}`
+				: `expected abstain(${expect.reason}), got abstain(${poiResult.reason})`,
 			nearestKm: null,
 			resultCount: null,
 		}
@@ -245,19 +245,19 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 		? `brandWikidata=${expect.brandWikidata}`
 		: `categoryID=${expect.categoryID}`
 
-	if (poiOutcome.type !== "intent") {
+	if (poiResult.type !== "intent") {
 		return {
 			id: fixture.id,
 			query: fixture.query,
 			expectKind: "results",
 			pass: false,
-			detail: `expected results (${expectedLabel}), got abstain(${poiOutcome.reason})`,
+			detail: `expected results (${expectedLabel}), got abstain(${poiResult.reason})`,
 			nearestKm: null,
 			resultCount: null,
 		}
 	}
 
-	const results = poiOutcome.results ?? []
+	const results = poiResult.results ?? []
 
 	if (!results.length) {
 		return {
@@ -598,8 +598,8 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 	for (const fixture of fixtures) {
 		const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 		const result = await pipeline(fixture.query, runOpts)
-		const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent ?? null }
-		const grade = gradeCase(fixture, outcome)
+		const boardResult: POIBoardResult = { path: result.path, poiIntent: result.poiIntent ?? null }
+		const grade = gradeCase(fixture, boardResult)
 		cases.push(grade)
 
 		if (grade.nearestKm !== null) {

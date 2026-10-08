@@ -5,7 +5,7 @@
  */
 
 import { type CoverageCell, type LayerManifest, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIQueryResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import type {
@@ -148,7 +148,7 @@ export interface AbsenceRouteIdentity {
 }
 
 /**
- * An open absence route decides whether each POI outcome records an absence
+ * An open absence route decides whether each POI result records an absence
  * observation or an explicit refusal.
  * Route disposal closes the coverage database.
  */
@@ -156,9 +156,9 @@ export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
 
 	/**
-	 * Decides one answered query without changing the outcome.
+	 * Decides one answered query without changing the result.
 	 */
-	observe: (outcome: POIIntentOutcome | null) => Promise<AbsenceDecision>
+	observe: (answer: POIQueryResult | null) => Promise<AbsenceDecision>
 }
 
 /**
@@ -279,7 +279,7 @@ export async function createAbsenceObservationRoute(
 
 		return {
 			identity,
-			observe: (outcome) => decide(outcome, { affording, model, db, identity }),
+			observe: (answer) => decide(answer, { affording, model, db, identity }),
 			[Symbol.dispose]: () => db[Symbol.dispose](),
 		}
 	} catch (error) {
@@ -296,10 +296,10 @@ interface DecisionContext {
 	identity: AbsenceRouteIdentity
 }
 
-async function decide(outcome: POIIntentOutcome | null, context: DecisionContext): Promise<AbsenceDecision> {
-	if (!outcome || outcome.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
+async function decide(answer: POIQueryResult | null, context: DecisionContext): Promise<AbsenceDecision> {
+	if (!answer || answer.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
 
-	const { intent, results } = outcome
+	const { intent, results } = answer
 
 	if (!results) return { fired: false, refusal: "executor_did_not_run" }
 

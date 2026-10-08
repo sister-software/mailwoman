@@ -314,7 +314,7 @@ export async function scoreConventionsMaskOffOn(
 		return decodeAsJSON(parsed) as Record<string, string>
 	}
 
-	const offScorer = await createScorer({ ...base, overrides: { ...options.tierOverrides, conventions: false } })
+	const offScorer = await createScorer({ ...base, overrides: { ...options.tierOverrides, conventions: "off" } })
 	const off = await scorePerTagF1(rows, tags, classifyWith(offScorer))
 
 	const onScorer = await createScorer({ ...base, overrides: { ...options.tierOverrides, conventions: "auto" } })

@@ -311,7 +311,7 @@ export function stripAnsi(value: string): string {
 /**
  * The result shape shared by polygon-layer verifications.
  */
-export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
+export interface LayerVerificationLike<Row extends { result: string; label: string }> {
 	agreement: readonly Row[]
 	agreed: number
 	disagreed: number
@@ -334,12 +334,12 @@ export interface FormatLayerVerificationOptions<Row> {
 /**
  * Prints each disagreement to stderr and returns the verification summary lines.
  */
-export function formatLayerVerification<Row extends { outcome: string; label: string }>(
+export function formatLayerVerification<Row extends { result: string; label: string }>(
 	verified: LayerVerificationLike<Row>,
 	options: FormatLayerVerificationOptions<Row>
 ): string[] {
 	for (const row of verified.agreement) {
-		if (row.outcome === "disagree") {
+		if (row.result === "disagree") {
 			console.error(options.describeRow(row))
 		}
 	}

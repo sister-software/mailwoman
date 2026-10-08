@@ -286,7 +286,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 ]
 
 /**
- * The synthetic fixture set: every outcome the harness can record, at least once,
+ * The synthetic fixture set: every result the harness can record, at least once,
  * across the five shape classes.
  */
 export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
@@ -380,5 +380,5 @@ export function syntheticFixtureDeps(): GeocodeDeps {
 		}),
 	}
 
-	return { classifier, resolver, placeCountry: false }
+	return { classifier, resolver, placeCountry: "none" }
 }

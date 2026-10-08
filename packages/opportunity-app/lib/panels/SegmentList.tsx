@@ -12,11 +12,11 @@ import type { RouteCollection } from "@mailwoman/opportunity-map"
 import type { ReactNode } from "react"
 
 import { SegmentGlyph } from "#glyphs"
-import type { Outcome } from "#view"
+import type { Result } from "#view"
 import { segmentText } from "#words"
 
 export interface SegmentListProps {
-	routes: Outcome<RouteCollection>
+	routes: Result<RouteCollection>
 	labels: ReadonlyMap<EntityID, string>
 }
 

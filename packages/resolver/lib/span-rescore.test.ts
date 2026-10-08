@@ -532,7 +532,11 @@ describe("resolveTree + spanRescore", () => {
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 
-		const out = await resolver.resolveTree(input, { defaultCountry: "PL", spanRescore: true })
+		const out = await resolver.resolveTree(input, {
+			defaultCountry: { country: "PL", source: "caller" },
+			spanRescore: true,
+		})
+
 		const injected = out.roots.find((n) => n.placeID === "wof:1")
 		expect(injected).toBeDefined()
 		expect(injected?.tag).toBe("locality")
@@ -551,7 +555,7 @@ describe("resolveTree + spanRescore", () => {
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 
-		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
+		const out = await resolver.resolveTree(input, { defaultCountry: { country: "PL", source: "caller" } })
 		expect(out.roots.find((n) => n.placeID === "wof:1")?.value).toBe("Grudziądz")
 	})
 
@@ -560,7 +564,7 @@ describe("resolveTree + spanRescore", () => {
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
 
 		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), {
-			defaultCountry: "PL",
+			defaultCountry: { country: "PL", source: "caller" },
 			spanRescore: false,
 		})
 
@@ -574,7 +578,7 @@ describe("resolveTree + spanRescore", () => {
 		const out = await resolver.resolveTree(
 			tree("Springfield", [node({ tag: "street", value: "Springfield", start: 0, end: 11, confidence: 0.4 })]),
 			{
-				defaultCountry: "US",
+				defaultCountry: { country: "US", source: "caller" },
 			}
 		)
 
@@ -590,7 +594,7 @@ describe("resolveTree + spanRescore", () => {
 
 		const out = await resolver.resolveTree(
 			tree("Grudziądzek", [node({ tag: "street", value: "Grudziądzek", start: 0, end: 11, confidence: 0.4 })]),
-			{ defaultCountry: "PL" }
+			{ defaultCountry: { country: "PL", source: "caller" } }
 		)
 
 		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
@@ -618,7 +622,7 @@ describe("resolveTree + spanRescore", () => {
 		const out = await resolver.resolveTree(
 			tree("Grudziądz", [node({ tag: "locality", value: "Grudziądz", start: 0, end: 9 })]),
 			{
-				defaultCountry: "PL",
+				defaultCountry: { country: "PL", source: "caller" },
 				spanRescore: true,
 			}
 		)

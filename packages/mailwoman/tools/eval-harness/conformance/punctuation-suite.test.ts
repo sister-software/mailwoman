@@ -126,7 +126,7 @@ describe("the committed punctuation suite", () => {
 				if (present.has(transformation)) continue
 
 				const reading = punctuationApplicability(sample.base, transformation, {
-					comparator: sample.outcomeComparator,
+					comparator: sample.resultComparator,
 					echoedSpans: assertedSpans(corpus.get(caseID)!),
 				})
 
@@ -145,7 +145,7 @@ describe("the committed punctuation suite", () => {
 
 			for (const transformation of PUNCTUATION_TRANSFORMATIONS) {
 				const reading = punctuationApplicability(fixture.base, transformation, {
-					comparator: fixture.outcomeComparator,
+					comparator: fixture.resultComparator,
 					echoedSpans: assertedSpans(corpus.get(caseID)!),
 				})
 
@@ -161,7 +161,7 @@ describe("the committed punctuation suite", () => {
 	})
 
 	it("measures more than one comparator and more than one country", () => {
-		expect(new Set(fixtures.map((fixture) => fixture.outcomeComparator)).size).toBeGreaterThan(1)
+		expect(new Set(fixtures.map((fixture) => fixture.resultComparator)).size).toBeGreaterThan(1)
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 

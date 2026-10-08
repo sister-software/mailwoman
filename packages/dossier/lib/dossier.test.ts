@@ -551,9 +551,9 @@ describe("buildDossier: the claims a section shows", () => {
 	})
 })
 
-describe("buildDossier: operator outcomes", () => {
+describe("buildDossier: operator results", () => {
 	test("reports blocker accuracy and time saved over the admitted dispositions", () => {
-		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }).outcomes).toEqual({
+		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }).operatorResults).toEqual({
 			dispositions: 1,
 			pending: 0,
 			pendingSources: [],
@@ -563,7 +563,7 @@ describe("buildDossier: operator outcomes", () => {
 	})
 
 	test("a disposition whose record is not yet available leaves both measures unknown", () => {
-		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-20" }).outcomes).toMatchObject({
+		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-20" }).operatorResults).toMatchObject({
 			dispositions: 0,
 			blockerAccuracy: { status: "unknown" },
 			timeSaved: { status: "unknown" },

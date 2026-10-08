@@ -18,7 +18,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -89,7 +89,7 @@ function archiveBody(payload: string): Buffer {
 	return Buffer.concat([Buffer.from("PK\u0003\u0004", "latin1"), Buffer.from(payload, "utf8")])
 }
 
-function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
+function archiveResult(payload: string, lastModified?: string): StubResult {
 	return {
 		body: archiveBody(payload),
 		headers: lastModified ? { "last-modified": lastModified } : {},
@@ -99,8 +99,8 @@ function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
 /**
  * The real client over a scripted transport, with the dispatched URLs recorded on `calls`.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "es-navarra test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -168,8 +168,8 @@ describe("harvestESNavarra", () => {
 
 		await using client = stubClient([
 			{ body: serviceXML() },
-			archiveOutcome("partition 1", "Tue, 14 Apr 2026 10:08:19 GMT"),
-			archiveOutcome("partition 100"),
+			archiveResult("partition 1", "Tue, 14 Apr 2026 10:08:19 GMT"),
+			archiveResult("partition 100"),
 		])
 
 		const summary = await harvestESNavarra(client, { outputDir: scratch.path })
@@ -205,8 +205,8 @@ describe("harvestESNavarra", () => {
 
 		await using client = stubClient([
 			{ body: serviceXML(entryXML(100) + entryXML(2)) },
-			archiveOutcome("partition 100"),
-			archiveOutcome("partition 2"),
+			archiveResult("partition 100"),
+			archiveResult("partition 2"),
 		])
 
 		await harvestESNavarra(client, { outputDir: scratch.path })
@@ -219,11 +219,11 @@ describe("harvestESNavarra", () => {
 	it("makes no archive request on a re-run where the feed states the recorded date", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-navarra-rerun-")
 
-		await using first = stubClient([{ body: serviceXML() }, archiveOutcome("one"), archiveOutcome("hundred")])
+		await using first = stubClient([{ body: serviceXML() }, archiveResult("one"), archiveResult("hundred")])
 
 		await harvestESNavarra(first, { outputDir: scratch.path })
 
-		await using second = stubClient([{ body: serviceXML() }, archiveOutcome("must not be requested")])
+		await using second = stubClient([{ body: serviceXML() }, archiveResult("must not be requested")])
 		const summary = await harvestESNavarra(second, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 2, failed: 0 })
@@ -233,13 +233,13 @@ describe("harvestESNavarra", () => {
 	it("re-fetches only the partition whose stated publication date moved", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-navarra-republished-")
 
-		await using first = stubClient([{ body: serviceXML() }, archiveOutcome("one"), archiveOutcome("hundred")])
+		await using first = stubClient([{ body: serviceXML() }, archiveResult("one"), archiveResult("hundred")])
 
 		await harvestESNavarra(first, { outputDir: scratch.path })
 
 		const republished = serviceXML(entryXML(1) + entryXML(100, "2026-09-30T08:00:00Z"))
 
-		await using second = stubClient([{ body: republished }, archiveOutcome("hundred rebuilt")])
+		await using second = stubClient([{ body: republished }, archiveResult("hundred rebuilt")])
 		const summary = await harvestESNavarra(second, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 1, skipped: 1, failed: 0 })
@@ -250,11 +250,11 @@ describe("harvestESNavarra", () => {
 		await using scratch = await temporaryDirectory("mailwoman-navarra-silent-")
 		const undated = serviceXML(entryXML(1, ""))
 
-		await using first = stubClient([{ body: undated }, archiveOutcome("one")])
+		await using first = stubClient([{ body: undated }, archiveResult("one")])
 
 		await harvestESNavarra(first, { outputDir: scratch.path })
 
-		await using second = stubClient([{ body: undated }, archiveOutcome("one")])
+		await using second = stubClient([{ body: undated }, archiveResult("one")])
 
 		// Both sides read an empty string, so an equality test would hold and keep an
 		// archive of unknown age for as long as the publisher stayed silent.
@@ -267,13 +267,13 @@ describe("harvestESNavarra", () => {
 	it("re-fetches an archive that is no longer on disk at its recorded length", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-navarra-truncated-")
 
-		await using first = stubClient([{ body: serviceXML(entryXML(1)) }, archiveOutcome("one")])
+		await using first = stubClient([{ body: serviceXML(entryXML(1)) }, archiveResult("one")])
 
 		await harvestESNavarra(first, { outputDir: scratch.path })
 
 		await writeLocalFile(archiveBody("short"), scratch.path("AD_Navarra_1.gml.zip"))
 
-		await using second = stubClient([{ body: serviceXML(entryXML(1)) }, archiveOutcome("one")])
+		await using second = stubClient([{ body: serviceXML(entryXML(1)) }, archiveResult("one")])
 		const summary = await harvestESNavarra(second, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 1, skipped: 0 })
@@ -286,7 +286,7 @@ describe("harvestESNavarra", () => {
 		await using client = stubClient([
 			{ body: serviceXML() },
 			{ body: "<html><body>Not found</body></html>", headers: { "content-type": "text/html" } },
-			archiveOutcome("hundred"),
+			archiveResult("hundred"),
 		])
 
 		const summary = await harvestESNavarra(client, { outputDir: scratch.path })
@@ -302,7 +302,7 @@ describe("harvestESNavarra", () => {
 
 	it("harvests a bounded subset, which is how the mechanism is proved without a full harvest", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-navarra-limit-")
-		await using client = stubClient([{ body: serviceXML() }, archiveOutcome("one")])
+		await using client = stubClient([{ body: serviceXML() }, archiveResult("one")])
 
 		const summary = await harvestESNavarra(client, { outputDir: scratch.path, limit: 1 })
 
@@ -312,7 +312,7 @@ describe("harvestESNavarra", () => {
 
 	it("reports a named partition the service document does not list rather than ignoring it", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-navarra-unknown-")
-		await using client = stubClient([{ body: serviceXML() }, archiveOutcome("one")])
+		await using client = stubClient([{ body: serviceXML() }, archiveResult("one")])
 
 		const summary = await harvestESNavarra(client, { outputDir: scratch.path, partitions: ["1", "909"] })
 

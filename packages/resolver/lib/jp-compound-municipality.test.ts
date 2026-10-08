@@ -156,7 +156,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "兵庫県", [node("municipality", "神戸市西区")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBe(34.67)
@@ -185,7 +185,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "茨城県", [node("municipality", "猿島郡五霞町")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBe(36.11)
@@ -214,7 +214,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "栃木県", [node("municipality", "猿島郡五霞町")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBeUndefined()
@@ -230,7 +230,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "兵庫県", [node("municipality", "尼崎市")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBeUndefined()

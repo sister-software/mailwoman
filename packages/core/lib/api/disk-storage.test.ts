@@ -337,11 +337,11 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 				client.fetch({ url: "/concurrent.json" }),
 			])
 
-			expect(settled.map((outcome) => outcome.status)).toEqual(["fulfilled", "fulfilled", "fulfilled"])
+			expect(settled.map((settledResult) => settledResult.status)).toEqual(["fulfilled", "fulfilled", "fulfilled"])
 
-			for (const outcome of settled) {
-				if (outcome.status === "rejected") {
-					expect(isTransientResourceError(outcome.reason)).toBe(true)
+			for (const settledResult of settled) {
+				if (settledResult.status === "rejected") {
+					expect(isTransientResourceError(settledResult.reason)).toBe(true)
 				}
 			}
 		} finally {

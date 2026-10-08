@@ -7,46 +7,13 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AuthoritativeAssertion, AuthoritativeAssertionMatch } from "@mailwoman/core/geocode"
 import type {
 	AuthoritativeMatch,
 	AuthoritativeProvider,
 	AuthoritativeQuery,
 	AuthoritativeQueryComponent,
 } from "@mailwoman/core/resolver"
-
-/**
- * The snake_case wire projection of {@link AuthoritativeMatch}, field for field,
- * with no field defaulted in when the provider's answer omitted it.
- */
-interface AuthoritativeAssertionMatch {
-	provider_place_id: string
-	object_ids: Record<string, string> | null
-	canonical_fields: Record<string, string> | null
-	lat: number | null
-	lon: number | null
-	precision: string | null
-	match_status: "exact" | "approximate"
-	provider_score: number | null
-}
-
-/**
- * The result-level block: `status` is the provider's response status plus `transport_error`,
- * and `matches` is non-null exactly when the provider returned candidates —
- * one for `matched`, all of them in the provider's order for `ambiguous`.
- */
-export interface AuthoritativeAssertion {
-	provider: string
-	status: "matched" | "ambiguous" | "refused" | "transport_error"
-	matches: AuthoritativeAssertionMatch[] | null
-	attribution: string | null
-	license: string | null
-	retrieved_at: string | null
-	dataset_version: string | null
-	/**
-	 * `transport_error` only: the thrown message, verbatim.
-	 */
-	error: string | null
-}
 
 /**
  * The subset of a geocode result this module reads: structural, so the helper never

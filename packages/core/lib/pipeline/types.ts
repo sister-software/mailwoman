@@ -7,8 +7,9 @@
  */
 
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import { z } from "zod"
 
-import type { AddressTree } from "#decoder/types"
+import { type AddressTree, AddressTreeSchema } from "#decoder/types"
 import type { MachinePreferences } from "#pipeline/preferences"
 import type { ResolveOpts, Resolver, ResolverBackend } from "#resolver/types"
 import type { Section } from "#types/classifier"
@@ -23,9 +24,110 @@ export { type MachinePreferences } from "#pipeline/preferences"
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
 
 /**
- * A placetype-pair prior that core passes to the classifier without inspecting it.
+ * The placetype-pair prior for one parse.
+ *
+ * - `"inherit"` uses the classifier's configured prior, if it has one.
+ * - `"off"` disables the prior for the parse.
+ * - A prior object replaces the configured one.
+ *   Core passes it to the classifier without inspecting it.
  */
-export type PlacetypePairPassthrough = object | false | null
+export type PlacetypePairSelection<Prior extends object = object> = "inherit" | "off" | Prior
+
+/**
+ * How the classifier treats letter case before inference.
+ *
+ * - `"title-case"` title-cases detected all-caps ASCII input.
+ *   Mixed-case input is unchanged.
+ * - `"preserve"` passes the raw case to the model.
+ */
+export type CaseNormalization = "title-case" | "preserve"
+
+/**
+ * How a caller sources an optional stage.
+ *
+ * - `"auto"` loads the bundled default, usually on the first parse.
+ * - `"none"` disables the stage.
+ * - Any other value is the stage itself.
+ */
+export type StageSource<T extends object> = "auto" | "none" | T
+
+/**
+ * How the pipeline uses the coarse placer's country guess.
+ *
+ * - `"filter"` turns a confident guess for a country in the hard-country safelist
+ *   into a hard country filter, and keeps the soft prior otherwise.
+ * - `"prior"` only adds the guess as a soft country prior.
+ */
+export type PlacerCountryUse = "filter" | "prior"
+
+/**
+ * The placer-country use every parse and geocode applies unless a caller chooses otherwise.
+ */
+export const DEFAULT_PLACER_COUNTRY_USE = "filter" satisfies PlacerCountryUse
+
+/**
+ * The case normalization every parse uses unless a caller chooses otherwise.
+ */
+export const DEFAULT_CASE_NORMALIZATION = "title-case" satisfies CaseNormalization
+
+/**
+ * Every {@link CaseNormalization} value, for flag choices and validation.
+ */
+export const CASE_NORMALIZATIONS = ["title-case", "preserve"] as const satisfies readonly CaseNormalization[]
+
+/**
+ * Reads a flag value as a {@link CaseNormalization}, falling back to
+ * {@link DEFAULT_CASE_NORMALIZATION} when unset and throwing on anything else.
+ */
+export function caseNormalizationOf(value: string | undefined): CaseNormalization {
+	if (!value) return DEFAULT_CASE_NORMALIZATION
+
+	if (!(CASE_NORMALIZATIONS as readonly string[]).includes(value)) {
+		throw new Error(`unknown case normalization "${value}"; expected one of ${CASE_NORMALIZATIONS.join(", ")}`)
+	}
+
+	return value as CaseNormalization
+}
+
+/**
+ * Limits which words the word-consistency repair relabels.
+ *
+ * An empty object relabels every word whose pieces disagree on entity type.
+ */
+export interface WordConsistencyOpts {
+	/**
+	 * Leaves a word unchanged when the winning type's mean probability across its
+	 * pieces falls below this floor; `0` or unset never skips.
+	 *
+	 * A low-confidence vote marks rows where per-piece confidence is unreliable.
+	 * A relabelled row would amplify noise.
+	 */
+	minMeanConfidence?: number
+
+	/**
+	 * Leaves any word containing a byte-fallback piece (`<0xNN>`) unchanged.
+	 *
+	 * Its surviving pieces are not trustworthy voters.
+	 * The default is `false`.
+	 */
+	skipByteFallbackWords?: boolean
+
+	/**
+	 * Treats a punctuation-only piece as a word separator, like whitespace.
+	 * The default is `false`.
+	 *
+	 * Otherwise a continuation piece such as the `,` in `Ave,` joins the word.
+	 * Its `O` label can outvote a real span.
+	 *
+	 * The halves of a slash compound such as `12/345` can also vote independently.
+	 */
+	splitOnPunctuation?: boolean
+}
+
+/**
+ * The word-consistency repair setting: `"off"`, or the options of the vote to run.
+ */
+export type WordConsistencySetting = "off" | WordConsistencyOpts
 
 /**
  * Per-call options for the runtime pipeline.
@@ -35,9 +137,9 @@ export interface PipelineOpts {
 	userLocation?: UserLocation
 	/**
 	 * The input register.
-	 * When unset, the pipeline derives it from the query kind.
+	 * The default `"auto"` derives it from the query kind.
 	 */
-	inputMode?: InputMode
+	inputMode?: InputModeSelection
 	/**
 	 * Disables the postcode and locality fast paths.
 	 * POI routing still applies.
@@ -49,19 +151,21 @@ export interface PipelineOpts {
 	 */
 	resolveOpts?: ResolveOpts
 	/**
-	 * Normalizes all-caps ASCII input before classification.
-	 * Pass `false` to keep the raw case.
+	 * How the classifier treats letter case.
+	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 	/**
-	 * A per-parse placetype-pair prior for the classifier.
-	 * An unset value disables the prior.
+	 * The placetype-pair prior for this parse.
+	 *
+	 * The default `"inherit"` uses the classifier's configured prior.
 	 */
-	placetypePair?: PlacetypePairPassthrough
+	placetypePair?: PlacetypePairSelection
 	/**
-	 * Allows a confident placer result for a safelisted country to become a hard country filter.
+	 * How the coarse placer's country guess constrains resolution.
+	 * The default is {@link DEFAULT_PLACER_COUNTRY_USE}.
 	 */
-	hardPlaceCountry?: boolean
+	placerCountryUse?: PlacerCountryUse
 	/**
 	 * Replaces the artifact's hard-country safelist.
 	 */
@@ -78,22 +182,22 @@ export interface QueryShapeLite {
 		span: { start: number; end: number }
 		confidence: number
 	}>
-	segments?: ReadonlyArray<{ body: string; index: number }>
-	characterClass?: string
+	segments: ReadonlyArray<{ body: string; index: number; span: { start: number; end: number } | null }> | null
+	characterClass: string | null
 	/**
 	 * ISO 15924 scripts ranked by share of script-bearing characters.
 	 */
-	scripts?: ReadonlyArray<{ script: string; share: number }>
+	scripts: ReadonlyArray<{ script: string; share: number }> | null
 	/**
 	 * The class and script of each token.
 	 */
-	tokenClasses?: ReadonlyArray<{
+	tokenClasses: ReadonlyArray<{
 		span: { start: number; end: number; body: string }
 		class: string
 		length: number
-		script?: string
-	}>
-	totalLength?: number
+		script: string | null
+	}> | null
+	totalLength: number | null
 }
 
 /**
@@ -110,48 +214,48 @@ export interface LocaleHint {
 	 * The array is empty when the input has no script-bearing text.
 	 * `locale` stays a BCP-47 language tag.
 	 */
-	script?: ReadonlyArray<{ script: string; confidence: number }>
+	script: ReadonlyArray<{ script: string; confidence: number }>
 	/**
-	 * Diagnostic values that fed the inferred preferences.
+	 * Diagnostic values that fed the inferred preferences, or null when none did.
 	 * Locale and time zone are independent signals.
 	 */
-	evidence?: {
-		intlLocale?: string
-		timeZone?: string
-		environmentLocale?: Intl.UnicodeBCP47LocaleIdentifier
-	}
+	evidence: {
+		intlLocale: string | null
+		timeZone: string | null
+		environmentLocale: Intl.UnicodeBCP47LocaleIdentifier | null
+	} | null
 }
 
 /**
  * The query kinds the kind classifier emits.
  *
- * The last four kinds describe the requested operation instead of the input's structure.
+ * The last four kinds describe the requested operation instead of the input's structure:
+ *
+ * - `bare_toponym`: a bare place name with no address components.
+ *   Resolution uses it to report ambiguity.
+ * - `route_pair`: two place names with no address grammar between them.
+ *   The pipeline reports both readings and does no routing.
+ * - `near_me`: a relative location query that needs the caller's position.
+ * - `poi_category`: a POI category query with no search anchor.
  */
-export type QueryKind =
-	| "postcode_only"
-	| "locality_only"
-	| "structured_address"
-	| "intersection"
-	| "po_box"
-	| "landmark"
-	| "poi_query"
-	| "vague"
-	/**
-	 * A bare place name with no address components. Resolution uses it to report ambiguity.
-	 */
-	| "bare_toponym"
-	/**
-	 * Two place names with no address grammar between them. The pipeline reports both readings and does no routing.
-	 */
-	| "route_pair"
-	/**
-	 * A relative location query that needs the caller's position.
-	 */
-	| "near_me"
-	/**
-	 * A POI category query with no search anchor.
-	 */
-	| "poi_category"
+export const QueryKindSchema = z
+	.enum([
+		"postcode_only",
+		"locality_only",
+		"structured_address",
+		"intersection",
+		"po_box",
+		"landmark",
+		"poi_query",
+		"vague",
+		"bare_toponym",
+		"route_pair",
+		"near_me",
+		"poi_category",
+	])
+	.meta({ id: "QueryKind", description: "The query kind the kind classifier assigned." })
+
+export type QueryKind = z.infer<typeof QueryKindSchema>
 
 /**
  * Advisory codes that report how a query was interpreted or what evidence is missing.
@@ -189,35 +293,46 @@ export const QueryIntentCode = {
 } as const
 
 /**
+ * {@link QueryIntentCode} as a schema.
+ */
+export const QueryIntentCodeSchema = z.enum(QueryIntentCode).meta({ id: "QueryIntentCode" })
+
+/**
  * One of the {@link QueryIntentCode} values.
  */
-export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentCode]
+export type QueryIntentCode = z.infer<typeof QueryIntentCodeSchema>
 
 /**
  * An advisory from query-intent logic.
  * It leaves the selected answer unchanged.
  */
-export interface QueryIntentMarker {
-	/**
-	 * The query kind that produced the marker.
-	 * It must appear in the classifier result.
-	 */
-	kind: QueryKind
-	code: QueryIntentCode
-	/**
-	 * A `family:rule` identifier for the producer.
-	 */
-	mechanism: string
-	/**
-	 * Human-readable text.
-	 * Branch on `code`, which is stable.
-	 */
-	message: string
-	/**
-	 * Measurements from supporting sources, when available.
-	 */
-	evidence?: Record<string, unknown>
-}
+export const QueryIntentMarkerSchema = z
+	.object({
+		/**
+		 * The query kind that produced the marker.
+		 * It must appear in the classifier result.
+		 */
+		kind: QueryKindSchema,
+		code: QueryIntentCodeSchema,
+		/**
+		 * A `family:rule` identifier for the producer.
+		 */
+		mechanism: z.string(),
+		/**
+		 * Human-readable text.
+		 * Branch on `code`, which is stable.
+		 */
+		message: z.string(),
+		/**
+		 * Measurements from supporting sources, when available.
+		 *
+		 * Each `code` has its own measurement, so the record stays open.
+		 */
+		evidence: z.record(z.string(), z.unknown()).nullable(),
+	})
+	.meta({ id: "QueryIntentMarker", description: "A query-intent advisory; it never changes the answer." })
+
+export type QueryIntentMarker = z.infer<typeof QueryIntentMarkerSchema>
 
 /**
  * The kind classifier's result.
@@ -236,15 +351,31 @@ export interface QueryKindResult {
  * The parse register.
  *
  * `fragmented` suits search input and `formatted` suits complete postal records.
- *
- * When unset, {@link deriveInputMode} derives it from the query kind.
  */
-export type InputMode = "fragmented" | "formatted"
+export const InputModeSchema = z
+	.enum(["fragmented", "formatted"])
+	.meta({ id: "InputMode", description: "The parse register." })
+
+export type InputMode = z.infer<typeof InputModeSchema>
 
 /**
- * Maps complete-address kinds to `formatted` and every other kind to `fragmented`.
+ * A parse register, or `"auto"` to let {@link deriveInputMode} derive it from the query kind.
  */
-export function deriveInputMode(kind: QueryKind): InputMode {
+export const InputModeSelectionSchema = z
+	.enum(["fragmented", "formatted", "auto"])
+	.meta({ id: "InputModeSelection", description: 'The parse register, or `"auto"` to derive it from the input.' })
+
+export type InputModeSelection = z.infer<typeof InputModeSelectionSchema>
+
+/**
+ * Resolves an input-mode selection.
+ *
+ * An explicit register passes through.
+ * `"auto"` maps complete-address kinds to `formatted` and every other kind to `fragmented`.
+ */
+export function deriveInputMode(selection: InputModeSelection, kind: QueryKind): InputMode {
+	if (selection !== "auto") return selection
+
 	switch (kind) {
 		case "structured_address":
 		case "po_box":
@@ -256,73 +387,111 @@ export function deriveInputMode(kind: QueryKind): InputMode {
 }
 
 /**
+ * The relation between a POI subject and its anchor, as the query phrased it.
+ */
+export const POISpatialRelationSchema = z.enum(["comma", "near", "in", "at", "around", "to"])
+
+export type POISpatialRelation = z.infer<typeof POISpatialRelationSchema>
+
+const POICategorySubjectSchema = z.object({
+	kind: z.literal("category"),
+	/**
+	 * Category IDs to search together.
+	 * The order does not rank these values.
+	 */
+	categoryIDs: z.array(z.string()),
+	matched: z.string(),
+	/**
+	 * Categories that the resolved anchor country excludes.
+	 */
+	countryBinding: z
+		.object({ anchorCountry: z.string().nullable(), excludedCategoryIDs: z.array(z.string()) })
+		.nullable(),
+})
+
+const POIBrandSubjectSchema = z.object({
+	kind: z.literal("brand"),
+	name: z.string(),
+	wikidata: z.string().nullable(),
+	matched: z.string(),
+})
+
+const POINameSubjectSchema = z.object({ kind: z.literal("name"), text: z.string() })
+
+/**
+ * The parsed spatial anchor of a POI query.
+ */
+const POIAnchorSchema = z.object({
+	text: z.string().nullable(),
+	tree: AddressTreeSchema.nullable(),
+	/**
+	 * A caller-supplied location, used when no anchor tree is available.
+	 */
+	biasPoint: z.object({ latitude: z.number(), longitude: z.number() }).nullable(),
+	radiusM: z.number().nullable(),
+})
+
+/**
  * A structured POI query that classification hands to search executors.
  */
-export interface POIIntent {
-	subject:
-		| {
-				kind: "category"
-				/**
-				 * Category IDs to search together.
-				 * The order does not rank these values.
-				 */
-				categoryIDs: string[]
-				matched: string
-				/**
-				 * Categories that the resolved anchor country excludes.
-				 */
-				countryBinding?: { anchorCountry: string | null; excludedCategoryIDs: string[] }
-		  }
-		| { kind: "brand"; name: string; wikidata?: string; matched: string }
-		| { kind: "name"; text: string }
-	/**
-	 * The relation between the subject and the anchor.
-	 */
-	relation?: "comma" | "near" | "in" | "at" | "around" | "to"
-	/**
-	 * The parsed spatial anchor, when the query has one.
-	 */
-	anchor?: {
-		text?: string
-		tree?: AddressTree
+export const POIIntentSchema = z
+	.object({
+		subject: z.discriminatedUnion("kind", [POICategorySubjectSchema, POIBrandSubjectSchema, POINameSubjectSchema]),
 		/**
-		 * A caller-supplied location, used when no anchor tree is available.
+		 * The relation between the subject and the anchor.
 		 */
-		biasPoint?: { latitude: number; longitude: number }
-		radiusM?: number
-	}
-	limit?: number
-}
+		relation: POISpatialRelationSchema.nullable(),
+		/**
+		 * The parsed spatial anchor, when the query has one.
+		 */
+		anchor: POIAnchorSchema.nullable(),
+		limit: z.number().nullable(),
+	})
+	.meta({ id: "POIIntent", description: "A structured POI query." })
+
+export type POIIntent = z.infer<typeof POIIntentSchema>
 
 /**
  * One POI search result.
  */
-export interface POIResult {
-	name: string | null
-	categoryID: string | null
-	brandWikidata: string | null
-	latitude: number
-	longitude: number
-	country: string
-	confidence: number
-	/**
-	 * The Overture GERS ID.
-	 */
-	gersID: string | null
-	/**
-	 * WOF ancestry, deepest first.
-	 * It is absent when no reverse geocoder is configured.
-	 */
-	ancestry?: ReadonlyArray<{ placetype: string; name: string; wofID: number }>
-	distanceM?: number
-}
+export const POIResultSchema = z
+	.object({
+		name: z.string().nullable(),
+		categoryID: z.string().nullable(),
+		brandWikidata: z.string().nullable(),
+		latitude: z.number(),
+		longitude: z.number(),
+		country: z.string(),
+		confidence: z.number(),
+		/**
+		 * The Overture GERS ID.
+		 */
+		gersID: z.string().nullable(),
+		/**
+		 * WOF ancestry, deepest first.
+		 * It is `null` when no reverse geocoder is configured.
+		 */
+		ancestry: z
+			.array(z.object({ placetype: z.string(), name: z.string(), wofID: z.number() }))
+			.readonly()
+			.nullable(),
+		distanceM: z.number().nullable(),
+	})
+	.meta({ id: "POIResult", description: "One POI search result." })
+
+export type POIResult = z.infer<typeof POIResultSchema>
 
 /**
- * The outcome of POI handling: an intent with optional results, or an abstention with a reason.
+ * The result of POI handling: an intent with optional results, or an abstention with a reason.
  */
-export type POIIntentOutcome =
-	| { type: "intent"; intent: POIIntent; results?: POIResult[] }
-	| { type: "abstain"; reason: string }
+export const POIQueryResultSchema = z
+	.discriminatedUnion("type", [
+		z.object({ type: z.literal("intent"), intent: POIIntentSchema, results: z.array(POIResultSchema).nullable() }),
+		z.object({ type: z.literal("abstain"), reason: z.string() }),
+	])
+	.meta({ id: "POIQueryResult", description: "A POI intent with its results, or an abstention." })
+
+export type POIQueryResult = z.infer<typeof POIQueryResultSchema>
 
 /**
  * Structural phrase shapes that the phrase grouper proposes before classification.
@@ -368,9 +537,13 @@ export interface FSTMatcherLike {
  * Options for {@link AddressClassifier.parse}.
  */
 export interface ClassifierOpts {
-	queryShape?: QueryShapeLite
+	/**
+	 * The pipeline's query shape.
+	 * Classifiers read its format hits.
+	 */
+	queryShape?: Pick<QueryShapeLite, "knownFormats">
 	inputMode?: InputMode
-	fst?: FSTMatcherLike
+	fst?: FSTMatcherLike | null
 	fstBiasScale?: number
 	/**
 	 * The street-morphology matcher for the street-context check.
@@ -386,17 +559,15 @@ export interface ClassifierOpts {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * Title-cases all-caps ASCII input before classification.
-	 * Set `false` to keep the raw case.
+	 * How the classifier treats letter case.
+	 * The default is {@link DEFAULT_CASE_NORMALIZATION}.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 	/**
 	 * Reconciles differing BIO tags among the pieces of one word.
 	 */
-	enforceWordConsistency?:
-		| boolean
-		| { minMeanConfidence?: number; skipByteFallbackWords?: boolean; splitOnPunctuation?: boolean }
-	placetypePair?: PlacetypePairPassthrough
+	enforceWordConsistency?: WordConsistencySetting
+	placetypePair?: PlacetypePairSelection
 }
 
 /**
@@ -405,7 +576,7 @@ export interface ClassifierOpts {
 export const WORD_CONSISTENCY_SHIP_DEFAULT = {
 	skipByteFallbackWords: true,
 	splitOnPunctuation: true,
-} as const satisfies ClassifierOpts["enforceWordConsistency"]
+} as const satisfies WordConsistencyOpts
 
 /**
  * A classifier that parses text into an address tree.
@@ -431,7 +602,8 @@ export type LocaleDetector = (
 
 /**
  * The stage implementations that the runtime pipeline composes.
- * Every stage is optional.
+ *
+ * Every stage is optional, and a missing stage is skipped or replaced by its built-in default.
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
@@ -455,7 +627,7 @@ export interface RuntimePipelineStages {
 	 * The POI handler.
 	 * A `null` result falls through to the full parse.
 	 */
-	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>
+	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIQueryResult | null>
 	/**
 	 * The phrase grouper.
 	 *

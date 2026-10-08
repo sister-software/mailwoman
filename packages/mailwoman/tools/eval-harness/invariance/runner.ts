@@ -34,18 +34,18 @@ export { DEFAULT_SUITE_PATH, loadSuite, type InvarianceRow } from "#tools/eval-h
  * `GAINED` means the candidate holds a pair that the baseline violated.
  * It never fails the check.
  */
-export type OutcomeVerdict = Verdict | "GAINED"
+export type ResultVerdict = Verdict | "GAINED"
 
 /**
  * Result for one row and transform.
  */
-export interface PairOutcome {
+export interface PairResult {
 	rowID: string
 	raw: string
 	country: string
 	transformID: string
 	transformed: string
-	verdict: OutcomeVerdict
+	verdict: ResultVerdict
 	diff: string[]
 	/**
 	 * Baseline parser's verdict on the same pair.
@@ -64,10 +64,10 @@ export interface PairOutcome {
 }
 
 /**
- * Pair outcomes, counts and the check verdict for a suite run.
+ * Pair results, counts and the check verdict for a suite run.
  */
 export interface InvarianceReport {
-	outcomes: PairOutcome[]
+	results: PairResult[]
 	skipped: Array<{ rowID: string; transformID: string; reason: string }>
 	counts: { invariant: number; degraded: number; lost: number; gained: number }
 	/**
@@ -143,7 +143,7 @@ function hasCriticalComponent(components: Record<string, string>): boolean {
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0
 	const report = options.report ?? console.error
-	const outcomes: PairOutcome[] = []
+	const results: PairResult[] = []
 	const skipped: Array<{ rowID: string; transformID: string; reason: string }> = []
 
 	// The idempotence check compares a cached parse with a fresh one, so its second call bypasses this cache.
@@ -195,30 +195,30 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 				continue
 			}
 
-			let candidateOutcome: ReturnType<typeof compareComponents> & { transformed: string }
+			let candidateResult: ReturnType<typeof compareComponents> & { transformed: string }
 
 			if (transformID === "idempotence") {
 				const a = await originalFor(row)
 				const b = await options.parse(row.raw, { locale: rowLocale })
-				candidateOutcome = { transformed: row.raw, ...compareForTransform(transformID, a, b) }
+				candidateResult = { transformed: row.raw, ...compareForTransform(transformID, a, b) }
 			} else {
 				const original = await originalFor(row)
 				const perturbed = await options.parse(transformedText, { locale: rowLocale })
 
-				candidateOutcome = {
+				candidateResult = {
 					transformed: transformedText,
 					...compareForTransform(transformID, original, perturbed),
 				}
 			}
 
-			const outcome: PairOutcome = {
+			const result: PairResult = {
 				rowID: row.id,
 				raw: row.raw,
 				country: row.country,
 				transformID,
-				transformed: candidateOutcome.transformed,
-				verdict: candidateOutcome.verdict,
-				diff: candidateOutcome.diff,
+				transformed: candidateResult.transformed,
+				verdict: candidateResult.verdict,
+				diff: candidateResult.diff,
 				baselineVerdict: null,
 				preExisting: null,
 				gainedCapability: null,
@@ -240,29 +240,29 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 								return compareForTransform(transformID, original, perturbed)
 							})()
 
-				outcome.baselineVerdict = baselineResult.verdict
-				outcome.gainedCapability = gainedCapabilityRow
+				result.baselineVerdict = baselineResult.verdict
+				result.gainedCapability = gainedCapabilityRow
 
-				if (candidateOutcome.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
-					outcome.verdict = "GAINED"
+				if (candidateResult.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
+					result.verdict = "GAINED"
 				} else {
 					// The comparison uses verdict severity only.
 					// The diff contents may differ.
-					outcome.preExisting =
+					result.preExisting =
 						!gainedCapabilityRow &&
-						candidateOutcome.verdict !== "INVARIANT" &&
-						VERDICT_SEVERITY[candidateOutcome.verdict] <= VERDICT_SEVERITY[baselineResult.verdict]
+						candidateResult.verdict !== "INVARIANT" &&
+						VERDICT_SEVERITY[candidateResult.verdict] <= VERDICT_SEVERITY[baselineResult.verdict]
 				}
 			}
 
-			outcomes.push(outcome)
+			results.push(result)
 		}
 	}
 
 	const counts = { invariant: 0, degraded: 0, lost: 0, gained: 0 }
 	const newCounts = { degraded: 0, lost: 0, gained: 0 }
 
-	for (const o of outcomes) {
+	for (const o of results) {
 		if (o.verdict === "INVARIANT") {
 			counts.invariant++
 		} else if (o.verdict === "DEGRADED") {
@@ -290,13 +290,13 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	}
 
 	report(`\n=== invariance mini-suite ===`)
-	report(`  rows: ${options.rows.length}   pairs: ${outcomes.length}   skipped (n/a): ${skipped.length}`)
+	report(`  rows: ${options.rows.length}   pairs: ${results.length}   skipped (n/a): ${skipped.length}`)
 
 	report(
 		`  INVARIANT ${counts.invariant}   DEGRADED ${counts.degraded}${options.baselineParse ? ` (${newCounts.degraded} new)` : ""}   LOST ${counts.lost}${options.baselineParse ? ` (${newCounts.lost} new)` : ""}${options.baselineParse ? `   GAINED ${counts.gained}` : ""}`
 	)
 
-	const violations = outcomes.filter((o) => o.verdict !== "INVARIANT" && o.verdict !== "GAINED")
+	const violations = results.filter((o) => o.verdict !== "INVARIANT" && o.verdict !== "GAINED")
 
 	if (violations.length) {
 		report(`\nviolations:`)
@@ -322,7 +322,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	}
 
 	if (options.baselineParse) {
-		const gains = outcomes.filter((o) => o.verdict === "GAINED")
+		const gains = results.filter((o) => o.verdict === "GAINED")
 
 		if (gains.length) {
 			report(`\ngains (capability the baseline lacked, the candidate holds — non-blocking):`)
@@ -350,7 +350,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	)
 
 	return {
-		outcomes,
+		results,
 		skipped,
 		counts,
 		newCounts,

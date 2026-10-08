@@ -34,7 +34,7 @@ const IGNORE_PATTERNS: RegExp[] = [
 	// The data origin resets a long download now and then and the runtime retries it once.
 	// The browser logs the first attempt regardless.
 	// A reset that the retry cannot recover from causes a loader error or a missing result.
-	// The readiness wait and result assertions catch both outcomes.
+	// The readiness wait and result assertions catch both results.
 	/net::ERR_CONNECTION_RESET/,
 	/Removing initializer 'val_/, // onnxruntime cleanup
 	/WebGL.*GPU stall/i,

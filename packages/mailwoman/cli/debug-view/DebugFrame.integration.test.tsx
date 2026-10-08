@@ -5,11 +5,12 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, ribbonSegments } from "mailwoman/debug-view/DebugFrame"
 import { describe, expect, it } from "vitest"
 
 import { renderInkToString } from "#cli/debug-view/static-render"
-import type { GeocodeResult, GeocodeTrace } from "#geocode"
+import type { GeocodeTrace } from "#geocode"
 
 const TREE = {
 	raw: "3215 SE Clinton St, Portland OR",
@@ -60,7 +61,7 @@ const RESULT = {
 	unfollowed_components: null,
 	derivation: null,
 	entity: null,
-	variant_alias_exemption: null,
+	variant_alias_exemption: "not_applied",
 	admin_coherence: null,
 	authoritative: null,
 	intent_markers: [],

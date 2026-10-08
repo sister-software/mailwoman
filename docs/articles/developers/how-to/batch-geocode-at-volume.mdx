@@ -62,11 +62,21 @@ const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
 for (const q of rows.slice(0, 5))
-	await geocodeAddress(q, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
+	await geocodeAddress(q, {
+		classifier,
+		resolver,
+		databases: extracts.for,
+		defaultCountry: { country: "US", source: "caller" },
+	})
 
 const t1 = performance.now()
 for (const q of queries) {
-	await geocodeAddress(q, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
+	await geocodeAddress(q, {
+		classifier,
+		resolver,
+		databases: extracts.for,
+		defaultCountry: { country: "US", source: "caller" },
+	})
 }
 const runMs = performance.now() - t1
 
@@ -148,7 +158,12 @@ using extracts = await USStateDatabaseProvider.create(
 	{ AddressPointSqliteLookup, StreetInterpolator },
 	workerData.dataRoot
 )
-const deps = { classifier, resolver, databases: extracts.for, defaultCountry: workerData.country }
+const deps = {
+	classifier,
+	resolver,
+	databases: extracts.for,
+	defaultCountry: { country: workerData.country, source: "caller" },
+}
 
 parentPort.on("message", async (batch) => {
 	const out = []

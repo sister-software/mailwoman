@@ -35,7 +35,7 @@ import {
 	describeBar,
 	loadPhase2Definition,
 	type Phase2ArtifactPins,
-	type Phase2CheckOutcome,
+	type Phase2CheckResult,
 	type Phase2DecisionDefinition,
 	type Phase2Instrument,
 	type Phase2Measurement,
@@ -125,7 +125,7 @@ export interface Phase2Receipt {
 	instruments: Phase2InstrumentRecord[]
 	readings: Phase2Reading[]
 	lanes: Phase2LaneReport[]
-	checks: Phase2CheckOutcome[]
+	checks: Phase2CheckResult[]
 	verdict: Phase2Verdict
 	/**
 	 * Always `false`; the ruler maps measurements onto one decision and recording it is the operator's.
@@ -397,7 +397,7 @@ async function measure(
 			readings,
 			"absence_probe.rows_holding",
 			absence.counts.holds,
-			`${absence.counts.holds}/${absence.counts.rows} registered rows produced the outcome registered for them, verdict ${absence.verdict.decision}`
+			`${absence.counts.holds}/${absence.counts.rows} registered rows produced the result registered for them, verdict ${absence.verdict.decision}`
 		)
 
 		record(

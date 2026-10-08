@@ -14,7 +14,7 @@ import type {
 	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
-	POIIntentOutcome,
+	POIQueryResult,
 } from "#pipeline/types"
 
 /**
@@ -57,9 +57,9 @@ export interface PipelineResult {
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
 	/**
-	 * The poi-intent stage's outcome, or `null` when it produced none.
+	 * The poi-intent stage's result, or `null` when it produced none.
 	 */
-	poiIntent: POIIntentOutcome | null
+	poiIntent: POIQueryResult | null
 	timing: PipelineTiming
 	/**
 	 * Every stage crash the coordinator caught and degraded past, in order.

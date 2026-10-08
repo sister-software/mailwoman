@@ -60,6 +60,7 @@ function traceOf(overrides: Partial<GeocodeTrace["parse"]> = {}): GeocodeTrace {
 			...overrides,
 		} as GeocodeTrace["parse"],
 		queryShape: queryShapeOf(),
+		kind: null,
 		inputMode: "formatted",
 		resolver: [],
 		locale: "en-US",

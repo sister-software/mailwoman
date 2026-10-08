@@ -18,7 +18,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
  *
  * `null` marks an option that JSON cannot express, such as a function or a map.
  */
-type KnobOptionKind = "number" | "boolean" | "string" | "string[]" | "weak-resolution" | null
+type KnobOptionKind = "number" | "boolean" | "string" | "string[]" | "weak-resolution" | "default-country" | null
 
 /**
  * The JSON type of every `ResolveOpts` field.
@@ -29,8 +29,7 @@ const KNOB_OPTION_KINDS = {
 	maxLookups: "number",
 	minWinningScore: "number",
 	candidatesPerLookup: "number",
-	defaultCountry: "string",
-	defaultCountryIsInferred: "boolean",
+	defaultCountry: "default-country",
 	fuzzyCountryScope: "string",
 	bias: null,
 	parentFallback: "boolean",
@@ -93,6 +92,12 @@ function matchesKind(value: unknown, kind: Exclude<KnobOptionKind, null>): boole
 			return Array.isArray(value) && value.every((entry) => typeof entry === "string")
 		case "weak-resolution":
 			return typeof value === "string" && WEAK_RESOLUTION_READINGS.has(value)
+		case "default-country": {
+			if (typeof value !== "object" || !value) return false
+			const { country, source } = value as { country?: unknown; source?: unknown }
+
+			return typeof country === "string" && (source === "caller" || source === "inferred")
+		}
 	}
 }
 

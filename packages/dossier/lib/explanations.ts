@@ -158,7 +158,7 @@ export interface ExplanationProbability {
 /**
  * The result an operator recorded for an investigation.
  */
-export interface OperatorOutcome {
+export interface OperatorResult {
 	/**
 	 * Whether the investigated explanation held.
 	 */
@@ -173,16 +173,16 @@ export interface OperatorOutcome {
 	 */
 	baselineMinutes: number | null
 	/**
-	 * The record of the outcome.
+	 * The record of the result.
 	 *
-	 * A dossier admits the outcome by this record's availability date.
+	 * A dossier admits the result by this record's availability date.
 	 * That date can follow the decision's.
 	 */
 	evidence: Evidence
 }
 
 /**
- * An operator's decision about a check's explanations, with the outcome once one is recorded.
+ * An operator's decision about a check's explanations, with the result once one is recorded.
  *
  * A disposition is the operator's own record.
  * A public record that resolves an exception is a reading in the dossier and never a disposition.
@@ -203,7 +203,7 @@ export interface OperatorDisposition {
 	decision: string
 	decidedAt: ISODate
 	evidence: Evidence
-	outcome: OperatorOutcome | null
+	result: OperatorResult | null
 }
 
 export interface Investigation {
@@ -319,7 +319,7 @@ export interface CheckResult {
 	 */
 	exception: ServiceabilityException | null
 	/**
-	 * The operator's dispositions as decisions and their admitted outcomes as facts, in decision order.
+	 * The operator's dispositions as decisions and their admitted results as facts, in decision order.
 	 */
 	decisions: readonly Statement[]
 }
@@ -971,12 +971,12 @@ function decisionStatements(check: AvailabilityCheck, dispositions: readonly Ope
 				`On ${disposition.decidedAt} the operator decided to investigate ${disposition.investigated}: "${withoutFinalPeriod(disposition.decision)}".`,
 				[disposition.evidence.source]
 			),
-			...(disposition.outcome
+			...(disposition.result
 				? [
 						statement(
 							StatementKind.Fact,
-							`On ${disposition.outcome.at} the operator recorded that the ${disposition.investigated} explanation ${disposition.outcome.held ? "held" : "did not hold"}.`,
-							[disposition.outcome.evidence.source]
+							`On ${disposition.result.at} the operator recorded that the ${disposition.investigated} explanation ${disposition.result.held ? "held" : "did not hold"}.`,
+							[disposition.result.evidence.source]
 						),
 					]
 				: []),

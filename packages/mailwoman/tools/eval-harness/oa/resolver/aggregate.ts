@@ -14,7 +14,7 @@ import { percentile } from "@mailwoman/core/stats"
  * Every `neural+<tier>` arm reuses the neural arm's flags and substitutes only `err`,
  * so an arm-to-arm delta isolates exactly what the tier sharpens.
  */
-export interface ArmOutcome {
+export interface ArmResult {
 	locMatch: boolean
 	regMatch: boolean
 	resolved: boolean
@@ -53,7 +53,7 @@ export function newAgg(): Agg {
 }
 
 /**
- * Fold one row's outcome into a single counter set.
+ * Fold one row's result into a single counter set.
  */
 export function bump(a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void {
 	a.n++
@@ -88,20 +88,20 @@ export function stateBucket(state: string | null): string {
 }
 
 /**
- * Fold one row's outcome into an arm's per-state bucket and into its headline.
+ * Fold one row's result into an arm's per-state bucket and into its headline.
  *
  * A row with no state lands in `??` rather than being dropped, so the per-state
  * buckets always sum to the headline.
  */
-export function recordInto(pair: AggPair, state: string | null, outcome: ArmOutcome): void {
+export function recordInto(pair: AggPair, state: string | null, result: ArmResult): void {
 	const st = stateBucket(state)
 
 	if (!pair.byState.has(st)) {
 		pair.byState.set(st, newAgg())
 	}
 
-	bump(pair.byState.get(st)!, outcome.locMatch, outcome.regMatch, outcome.resolved, outcome.err)
-	bump(pair.overall, outcome.locMatch, outcome.regMatch, outcome.resolved, outcome.err)
+	bump(pair.byState.get(st)!, result.locMatch, result.regMatch, result.resolved, result.err)
+	bump(pair.overall, result.locMatch, result.regMatch, result.resolved, result.err)
 }
 
 /**

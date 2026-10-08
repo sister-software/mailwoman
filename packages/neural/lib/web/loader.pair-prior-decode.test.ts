@@ -117,11 +117,12 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 	return {
 		modelURL: MODEL_URL,
 		tokenizerURL: TOKENIZER_URL,
-		gazetteerLexiconURL: null,
-		countryLexiconURL: null,
-		streetTypeLexiconURL: null,
-		localitySurfaceLexiconURL: null,
+		gazetteerLexicon: "none" as const,
+		countryLexicon: "none" as const,
+		streetTypeLexicon: "none" as const,
+		localitySurfaceLexicon: "none" as const,
 		pairIndexURLs,
+		postcodeBinaryURLs: [],
 		...(country ? { country } : {}),
 		runner: { useWebGPU: false },
 		fetchImpl: makeFetch(),
@@ -139,7 +140,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(pairIndexes).toHaveLength(1)
 		expect(pairIndexes[0]!.resolver).not.toBeNull()
 
-		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: false })
+		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: "none" })
 
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
@@ -157,7 +158,11 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
 		expect(placetypePair).not.toBeNull()
 
-		const json = await result.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
+		const json = await result.classifier.parseJSON("Shoreditch London", {
+			spanProposer: "none",
+			placetypePair: placetypePair ?? "inherit",
+		})
+
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
 	})
@@ -177,8 +182,12 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const placetypePair = loaded.selectPairIndexForText("Shoreditch London")
 		expect(placetypePair).toBeNull()
 
-		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
-		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })
+		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", {
+			spanProposer: "none",
+			placetypePair: placetypePair ?? "inherit",
+		})
+
+		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: "none" })
 
 		expect(loadedJSON).toEqual(priorFreeJSON)
 		expect(loadedJSON.street).toBe("Shoreditch")

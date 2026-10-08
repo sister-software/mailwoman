@@ -14,7 +14,7 @@
  *
  *   Exit-code interface:
  *
- *   - 0 on any completed probe, including "no POI intent" and abstain outcomes.
+ *   - 0 on any completed probe, including "no POI intent" and abstain results.
  *   - 1 on a missing positional query or a fatal pipeline error.
  *
  *   Resolver wiring: an anchor remainder ("near Springfield IL") only gains a searchable center when the
@@ -27,7 +27,7 @@
 
 import { Spinner } from "@inkjs/ui"
 import { prettyJSON } from "@mailwoman/core/json"
-import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
@@ -164,7 +164,7 @@ function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
 	return parts.length ? ` · ${parts.join(", ")}` : ""
 }
 
-function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>): string[] {
+function formatResultsTable(results: NonNullable<Extract<POIQueryResult, { type: "intent" }>["results"]>): string[] {
 	if (!results.length) return ["(no results)"]
 
 	const lines = [
@@ -187,16 +187,16 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 	return lines
 }
 
-async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promise<string> {
+async function formatResult(result: POIQueryResult, options: Options): Promise<string> {
 	const lines: string[] = []
 
-	if (outcome.type === "abstain") {
-		lines.push(`abstain: ${outcome.reason}`)
+	if (result.type === "abstain") {
+		lines.push(`abstain: ${result.reason}`)
 
 		return lines.join("\n")
 	}
 
-	const { intent, results } = outcome
+	const { intent, results } = result
 	lines.push(`subject: ${formatSubject(intent.subject)}`)
 
 	if (intent.anchor?.text) {
@@ -232,7 +232,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 	const resolverHandle = await tryLoadResolver(options)
 
 	try {
-		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : true
+		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : "extract"
 
 		const pipeline = createRuntimePipeline({
 			classifier: classifier ?? undefined,
@@ -253,7 +253,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 			)
 		}
 
-		return await formatOutcome(result.poiIntent, options)
+		return await formatResult(result.poiIntent, options)
 	} finally {
 		resolverHandle?.[Symbol.dispose]()
 	}

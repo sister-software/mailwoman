@@ -41,7 +41,7 @@ function testDeps(): GeocodeDeps {
 		capabilityGaps: null,
 	}
 
-	return { classifier, resolver, placeCountry: false }
+	return { classifier, resolver, placeCountry: "none" }
 }
 
 const INPUT = "1 Example Terrace, Testtown TT1 1TT"
@@ -110,7 +110,7 @@ describe(": the authoritative provider block on GeocodeResult", () => {
 		expect(result.authoritative!.matches![1]!.match_status).toBe("approximate")
 	})
 
-	it("A refusal is a spoken outcome: status `refused` with null matches, and the open answer stands", async () => {
+	it("A refusal is a spoken result: status `refused` with null matches, and the open answer stands", async () => {
 		const provider = createFixtureAuthoritativeProvider({ rules: [] })
 
 		const result = await geocodeAddress(INPUT, { ...testDeps(), authoritativeProvider: provider })

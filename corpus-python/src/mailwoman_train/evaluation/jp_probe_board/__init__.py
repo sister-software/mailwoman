@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from .cli import CTX, MAX_UNITS, PROBE_DIR_PARTS, WIDTH, format_report, main, parse_args, probe_dir, resolve_tags_for
 from .decode import decode_all_spans, decode_runs, decode_spans, haversine_km, norm_key
-from .score import ACCEPT_KM, CHECK, RESOLVE_TAGS, BoardTallies, RowOutcome, score_board, score_row
+from .score import ACCEPT_KM, CHECK, RESOLVE_TAGS, BoardTallies, RowResult, score_board, score_row
 
 __all__ = [
     "ACCEPT_KM",
@@ -21,7 +21,7 @@ __all__ = [
     "RESOLVE_TAGS",
     "WIDTH",
     "BoardTallies",
-    "RowOutcome",
+    "RowResult",
     "decode_all_spans",
     "decode_runs",
     "decode_spans",

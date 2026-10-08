@@ -19,7 +19,7 @@ function row(
 ): ConformanceFixture {
 	return {
 		law: REFINEMENT_MONOTONICITY_LAW,
-		outcomeComparator: "candidate_admissibility",
+		resultComparator: "candidate_admissibility",
 		expect: "refines",
 		context: { caseCountry: "US" },
 		rowRef: "cases/us/regression.jsonl#us-springfield-il-region-guard",
@@ -160,7 +160,7 @@ describe("the suite audit", () => {
 
 	it("refuses a comparator that cannot read a candidate table", () => {
 		const problems = auditRefinementSuite([
-			row({ id: "a", base: "Springfield", variant: "Springfield, IL", outcomeComparator: "resolution_identity" }),
+			row({ id: "a", base: "Springfield", variant: "Springfield, IL", resultComparator: "resolution_identity" }),
 		])
 
 		expect(problems.join("\n")).toContain("candidate_admissibility")

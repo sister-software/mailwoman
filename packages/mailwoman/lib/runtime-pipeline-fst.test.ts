@@ -85,15 +85,15 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })
 	})
 
-	it("fst: false suppresses the auto-load (byte-stable override)", async () => {
+	it("fst: none suppresses the auto-load (byte-stable override)", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-fst-optout-")
 		const dir = dirDirectory.path
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier, fst: false })
+		const pipeline = createRuntimePipeline({ classifier, fst: "none" })
 
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
-		expect(calls[0]!.fst).toBeUndefined()
+		expect(calls[0]!.fst).toBeNull()
 		expect(calls[0]!.fstStreetMorphology).toBeUndefined()
 	})
 
@@ -103,7 +103,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 
 		await pipeline("1 Anywhere Road")
 		expect(calls.length).toBeGreaterThan(0)
-		expect(calls[0]!.fst).toBeUndefined()
+		expect(calls[0]!.fst).toBeNull()
 	})
 
 	it("an explicit caller-supplied FST wins over the auto-load", async () => {

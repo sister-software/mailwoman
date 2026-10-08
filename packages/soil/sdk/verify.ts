@@ -36,7 +36,7 @@ export interface SoilAgreementRow {
 	 * The map unit Soil Data Access puts here.
 	 */
 	serviceMukey: string | null
-	outcome: "agree" | "disagree" | "boundary_tolerance"
+	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Meters from the point to the nearest edge of the delineation the artifact matched.
 	 *
@@ -133,7 +133,7 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 				...point,
 				localMukey: local.mukey,
 				serviceMukey,
-				outcome: local.mukey === serviceMukey ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				result: local.mukey === serviceMukey ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
 				nearestEdgeMetres: local.nearestEdgeMetres,
 			})
 
@@ -150,9 +150,9 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
 			outside,
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}

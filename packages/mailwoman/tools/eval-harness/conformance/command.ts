@@ -131,7 +131,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 	// The resolver's trace bookkeeping is opt-in, so the observer is chosen from the
 	// comparators the loaded rows name rather than enabled for every run.
-	const wantsTrace = fixtures.some((fixture) => fixture.outcomeComparator === "candidate_admissibility")
+	const wantsTrace = fixtures.some((fixture) => fixture.resultComparator === "candidate_admissibility")
 
 	if (wantsTrace) {
 		console.error("[conformance] resolver trace ON — a loaded row reads the candidate tables")

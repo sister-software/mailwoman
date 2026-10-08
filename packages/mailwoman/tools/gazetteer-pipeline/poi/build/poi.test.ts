@@ -163,7 +163,7 @@ describe("buildPOIDatabase", () => {
 		expect(await readLayerCoverage(kdb, 999_999_999)).toBeNull()
 
 		using lookup = new POILookup({ databasePath: out })
-		const cafeHits = lookup.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 5 })
+		const cafeHits = lookup.search({ categoryIDs: ["cafe"], center: SPRINGFIELD, limit: 5 })
 		expect(cafeHits.length).toBeGreaterThan(0)
 		expect(cafeHits.every((h) => h.name?.startsWith("US cafe"))).toBe(true)
 		expect(cafeHits[0]!.confidence).toBeCloseTo(0.85, 10)

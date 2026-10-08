@@ -8,10 +8,11 @@
 
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
+import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
+import { type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 
@@ -111,9 +112,9 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 }
 
 /**
- * The outcome fields that an entity answer writes.
+ * The result fields that an entity answer writes.
  *
- * The type is structural to avoid an import cycle with the outcome module.
+ * The type is structural to avoid an import cycle with the result module.
  */
 export interface ForkEntityAnswerTarget {
 	lat: number | null
@@ -127,7 +128,7 @@ export interface ForkEntityAnswerTarget {
 }
 
 /**
- * Writes the entity's coordinates, venue tier and admin coherence report to the outcome.
+ * Writes the entity's coordinates, venue tier and admin coherence report to the result.
  */
 function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,

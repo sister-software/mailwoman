@@ -3,6 +3,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it, vi } from "vitest"
@@ -11,12 +12,19 @@ import { loadDefaultReverseGeocoder } from "#default"
 import { bindCountryScope, createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi"
 import { createRuntimePipeline } from "#runtime-pipeline"
 
-const LOCALE: LocaleHint = { locale: "en-US", confidence: 1, alternatives: [], source: "caller" }
+const LOCALE: LocaleHint = {
+	locale: "en-US",
+	confidence: 1,
+	alternatives: [],
+	source: "caller",
+	script: [],
+	evidence: null,
+}
 
 const anchorResult = (raw: string): PipelineResult => ({
 	input: raw,
 	normalized: { raw, normalized: raw },
-	queryShape: { knownFormats: [] },
+	queryShape: { ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] },
 	locale: LOCALE,
 	kind: { kind: "structured_address", confidence: 0.5, alternatives: [], intentMarkers: null },
 	phraseProposals: [],
@@ -55,7 +63,17 @@ describe("poiTaxonomyLookup adapter", () => {
 
 	it("falls through to the brand table on a category miss (exact brand name)", () => {
 		const hits = poiTaxonomyLookup("chevron", "en-US")
-		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", confidence: 1 })
+
+		expect(hits[0]).toMatchObject({
+			kind: "brand",
+			categoryID: "Chevron",
+			wikidata: "Q319642",
+			confidence: 1,
+			mechanism: "exact",
+			inputPhrase: "chevron",
+			reading: "preference",
+			countryScope: null,
+		})
 	})
 
 	it("chains through variant-aliases for locale-restricted brand slang, resolving a QID", () => {
@@ -116,6 +134,11 @@ describe("createPOINameLookup", () => {
 				categoryID: "Statue of Liberty",
 				matchedPhrase: "Statue of Liberty",
 				confidence: 1,
+				mechanism: "exact",
+				inputPhrase: "statue OF liberty",
+				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			},
 		])
 	})
@@ -144,7 +167,7 @@ describe("createPOINameLookup", () => {
 
 		const result = await classify(
 			{ raw: "Statue of Liberty", normalized: "Statue of Liberty" },
-			{ knownFormats: [] },
+			{ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] },
 			LOCALE
 		)
 
@@ -156,11 +179,12 @@ describe("createPOIIntentStage", () => {
 	it("returns a name intent for an exact known POI", async () => {
 		const lookup = createPOINameLookup({ search: () => [{ name: "Statue of Liberty", confidence: 0.99 }] })
 		const stage = createPOIIntentStage({ lookup, parseAnchor: async (text) => anchorResult(text) })
-		const outcome = await stage({ raw: "Statue of Liberty", normalized: "Statue of Liberty" }, LOCALE)
+		const poiResult = await stage({ raw: "Statue of Liberty", normalized: "Statue of Liberty" }, LOCALE)
 
-		expect(outcome).toEqual({
+		expect(poiResult).toEqual({
 			type: "intent",
-			intent: { subject: { kind: "name", text: "Statue of Liberty" } },
+			intent: { subject: { kind: "name", text: "Statue of Liberty" }, relation: null, anchor: null, limit: null },
+			results: null,
 		})
 	})
 
@@ -176,18 +200,24 @@ describe("createPOIIntentStage", () => {
 			},
 		})
 
-		const outcome = await stage(
+		const poiResult = await stage(
 			{ raw: "hospital near Springfield IL", normalized: "hospital near Springfield IL" },
 			LOCALE
 		)
 
-		expect(outcome?.type).toBe("intent")
+		expect(poiResult?.type).toBe("intent")
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({ kind: "category", categoryIDs: ["hospital"], matched: "hospital" })
-		expect(outcome.intent.anchor?.text).toBe("Springfield IL")
-		expect(outcome.intent.relation).toBe("near")
+		expect(poiResult.intent.subject).toEqual({
+			kind: "category",
+			categoryIDs: ["hospital"],
+			matched: "hospital",
+			countryBinding: null,
+		})
+
+		expect(poiResult.intent.anchor?.text).toBe("Springfield IL")
+		expect(poiResult.intent.relation).toBe("near")
 		expect(parsed).toEqual(["Springfield IL"])
 	})
 
@@ -197,20 +227,20 @@ describe("createPOIIntentStage", () => {
 			parseAnchor: async (text) => anchorResult(text),
 		})
 
-		const outcome = await stage({ raw: "chevron near Houston TX", normalized: "chevron near Houston TX" }, LOCALE)
+		const poiResult = await stage({ raw: "chevron near Houston TX", normalized: "chevron near Houston TX" }, LOCALE)
 
-		expect(outcome?.type).toBe("intent")
+		expect(poiResult?.type).toBe("intent")
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "brand",
 			name: "Chevron",
 			wikidata: "Q319642",
 			matched: "Chevron",
 		})
 
-		expect(outcome.intent.anchor?.text).toBe("Houston TX")
+		expect(poiResult.intent.anchor?.text).toBe("Houston TX")
 	})
 
 	it("returns a bare-subject intent with no anchor and no anchor parse", async () => {
@@ -221,16 +251,16 @@ describe("createPOIIntentStage", () => {
 			},
 		})
 
-		const outcome = await stage({ raw: "fire hydrant", normalized: "fire hydrant" }, LOCALE)
+		const poiResult = await stage({ raw: "fire hydrant", normalized: "fire hydrant" }, LOCALE)
 
-		expect(outcome?.type).toBe("intent")
+		expect(poiResult?.type).toBe("intent")
 	})
 
 	it("returns null when no subject matches (fall-through)", async () => {
 		const stage = createPOIIntentStage({ lookup: poiTaxonomyLookup, parseAnchor: async (t) => anchorResult(t) })
-		const outcome = await stage({ raw: "Empire State Building", normalized: "Empire State Building" }, LOCALE)
+		const poiResult = await stage({ raw: "Empire State Building", normalized: "Empire State Building" }, LOCALE)
 
-		expect(outcome).toBeNull()
+		expect(poiResult).toBeNull()
 	})
 })
 
@@ -260,10 +290,23 @@ const PRESCRIPTION_SET: POIPhraseMatch[] = [
 		categoryID: "drugstore",
 		matchedPhrase: "prescription",
 		confidence: 1,
-		searchAsSet: true,
+		mechanism: null,
+		inputPhrase: null,
+		wikidata: null,
+		reading: "set",
 		countryScope: ["US"],
 	},
-	{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+	{
+		kind: "category",
+		categoryID: "pharmacy",
+		matchedPhrase: "prescription",
+		confidence: 1,
+		reading: "set",
+		mechanism: null,
+		inputPhrase: null,
+		wikidata: null,
+		countryScope: null,
+	},
 ]
 
 const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
@@ -276,14 +319,14 @@ describe("The place binding of a country-scoped claim", () => {
 			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
 		})
 
-		const outcome = await stage(
+		const poiResult = await stage(
 			{ raw: "prescription near Garancières", normalized: "prescription near Garancières" },
 			LOCALE
 		)
 
-		if (outcome?.type !== "intent") throw new Error(`expected an intent, got ${stringifyJSON(outcome)}`)
+		if (poiResult?.type !== "intent") throw new Error(`expected an intent, got ${stringifyJSON(poiResult)}`)
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "category",
 			categoryIDs: ["pharmacy"],
 			matched: "prescription",
@@ -297,14 +340,14 @@ describe("The place binding of a country-scoped claim", () => {
 			parseAnchor: async (text) => resolvedAnchor(text, "US"),
 		})
 
-		const outcome = await stage(
+		const poiResult = await stage(
 			{ raw: "prescription near Denver CO", normalized: "prescription near Denver CO" },
 			LOCALE
 		)
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({
+		expect(poiResult.intent.subject).toEqual({
 			kind: "category",
 			categoryIDs: ["drugstore", "pharmacy"],
 			matched: "prescription",
@@ -325,13 +368,13 @@ describe("The place binding of a country-scoped claim", () => {
 			},
 		})
 
-		for (const outcome of [
+		for (const poiResult of [
 			await countryless({ raw: "prescription near Zzyzx", normalized: "prescription near Zzyzx" }, LOCALE),
 			await bare({ raw: "prescription", normalized: "prescription" }, LOCALE),
 		]) {
-			if (outcome?.type !== "intent") throw new Error("unreachable")
+			if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-			expect(outcome.intent.subject).toMatchObject({
+			expect(poiResult.intent.subject).toMatchObject({
 				categoryIDs: ["pharmacy"],
 				countryBinding: { anchorCountry: null, excludedCategoryIDs: ["drugstore"] },
 			})
@@ -347,9 +390,12 @@ describe("The place binding of a country-scoped claim", () => {
 			},
 		})
 
-		const outcome = await stage({ raw: "prescription near Toulouse", normalized: "prescription near Toulouse" }, LOCALE)
+		const poiResult = await stage(
+			{ raw: "prescription near Toulouse", normalized: "prescription near Toulouse" },
+			LOCALE
+		)
 
-		expect(outcome).toEqual({ type: "abstain", reason: "country_scope_excluded" })
+		expect(poiResult).toEqual({ type: "abstain", reason: "country_scope_excluded" })
 	})
 
 	it("records no binding when no reached category carries a scope — there was nothing to bind", async () => {
@@ -358,11 +404,11 @@ describe("The place binding of a country-scoped claim", () => {
 			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
 		})
 
-		const outcome = await stage({ raw: "hospital near Toulouse", normalized: "hospital near Toulouse" }, LOCALE)
+		const poiResult = await stage({ raw: "hospital near Toulouse", normalized: "hospital near Toulouse" }, LOCALE)
 
-		if (outcome?.type !== "intent") throw new Error("unreachable")
+		if (poiResult?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
+		expect(poiResult.intent.subject).toHaveProperty("countryBinding", null)
 	})
 
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
@@ -382,7 +428,7 @@ describe("The place binding of a country-scoped claim", () => {
 	})
 })
 
-const HERMETIC = { placeCountry: false as const, streetEvidence: false as const }
+const HERMETIC = { placeCountry: "none" as const, streetEvidence: "none" as const }
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
 	it("ON by default: a category phrase takes the poi path without opting in", async () => {
@@ -397,8 +443,8 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.intentMarkers.map((m) => m.code)).toEqual(["poi_category"])
 	})
 
-	it("OFF: poiQueryKind: false disables the poi path entirely", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: false })
+	it("OFF: poiQueryKind: none disables the poi path entirely", async () => {
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "none" })
 		const result = await pipeline("hospital")
 
 		expect(result.path).not.toBe("poi")
@@ -407,7 +453,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a category phrase takes the poi path end-to-end", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("hospital near Springfield")
 
 		expect(result.path).toBe("poi")
@@ -419,6 +465,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			kind: "category",
 			categoryIDs: ["hospital"],
 			matched: "hospital",
+			countryBinding: null,
 		})
 
 		expect(result.poiIntent.intent.anchor?.text).toBe("Springfield")
@@ -433,7 +480,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		["churches near Church of the Holy Sepulchre", "place_of_worship", "near", "Church of the Holy Sepulchre"],
 		["places of worship in Stratford-upon-Avon", "place_of_worship", "in", "Stratford-upon-Avon"],
 	] as const)("keeps span-first POI semantics for %s", async (query, categoryID, relation, anchor) => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline(query, { locale: "en-GB" })
 
 		expect(result.path).toBe("poi")
@@ -457,7 +504,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		["restaurant in 東京", "ja-JP", "restaurant", "東京"],
 		["hotel near Санкт-Петербург", "ru-RU", "hotel", "Санкт-Петербург"],
 	] as const)("preserves the multilingual anchor in %s", async (query, locale, categoryID, anchor) => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline(query, { locale })
 
 		expect(result.path).toBe("poi")
@@ -474,7 +521,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	it.each(["Carmel-by-the-Sea", "12 Carmel-by-the-Sea Road", "Church of the Holy Sepulchre"])(
 		"does not route the control %s as a category query",
 		async (query) => {
-			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 			const result = await pipeline(query, { locale: "en-GB" })
 
 			expect(result.path).not.toBe("poi")
@@ -568,7 +615,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a plain address stays on the normal path", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("350 5th Ave, New York, NY 10118")
 
 		expect(result.path).not.toBe("poi")
@@ -576,14 +623,14 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a bare build-local-only category (neither local layer nor db) abstains", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("fire hydrant")
 
 		expect(result.path).toBe("poi")
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
-	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
+	it("object form: reverse-geocoder degrade is hermetic — no throw, intent result, results (if any) carry no ancestry", async () => {
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
 
 		try {
@@ -621,7 +668,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		if (first.poiIntent?.type !== "intent") throw new Error("unreachable")
 
-		expect(first.poiIntent.results).toBeUndefined()
+		expect(first.poiIntent.results).toBeNull()
 
 		const second = await pipeline("hospital near Springfield")
 		expect(second.poiIntent?.type).toBe("intent")

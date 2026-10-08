@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LocaleHint, PipelineOpts, PipelineResult, POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { LocaleHint, PipelineOpts, PipelineResult, POIIntent, POIQueryResult } from "@mailwoman/core/pipeline"
 import { matchPOISubject, type POIPhraseLookup, type POIPhraseMatch } from "@mailwoman/kind-classifier"
 import {
 	lookupPOIBrand,
@@ -41,7 +41,21 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 			return candidate.name.normalize("NFKC").trim().replaceAll(/\s+/g, " ").toLocaleLowerCase() === expected
 		})
 
-		return hit?.name ? [{ kind: "name", categoryID: hit.name, matchedPhrase: hit.name, confidence: 1 }] : []
+		return hit?.name
+			? [
+					{
+						kind: "name",
+						categoryID: hit.name,
+						matchedPhrase: hit.name,
+						confidence: 1,
+						mechanism: "exact",
+						inputPhrase: phrase,
+						wikidata: null,
+						reading: "preference",
+						countryScope: null,
+					},
+				]
+			: []
 	}
 }
 
@@ -77,37 +91,48 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	}
 
 	if (categoryHits.length) {
-		return categoryHits.map((m) => ({
+		return categoryHits.map((m): POIPhraseMatch => ({
 			kind: "category",
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
+			mechanism: "exact",
+			inputPhrase: phrase,
+			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
 	const localeNormalizedHits = lookupPOICategoryLocaleNormalized(phrase, locale)
 
 	if (localeNormalizedHits.length) {
-		return localeNormalizedHits.map((m) => ({
+		return localeNormalizedHits.map((m): POIPhraseMatch => ({
 			kind: "category",
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
 			mechanism: "locale_normalized",
 			inputPhrase: phrase,
+			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
 	const typoHits = lookupPOICategoryTypo(phrase, locale)
 
 	if (typoHits.length) {
-		return typoHits.map((m) => ({
+		return typoHits.map((m): POIPhraseMatch => ({
 			kind: "category",
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
 			mechanism: "typo",
 			inputPhrase: phrase,
+			wikidata: null,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
@@ -120,6 +145,10 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			wikidata: m.brand.wikidata,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
+			mechanism: "exact",
+			inputPhrase: phrase,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 
@@ -136,16 +165,20 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 		return {
 			kind: "brand",
 			categoryID: alias.brand,
-			wikidata: brand?.wikidata,
+			wikidata: brand?.wikidata ?? null,
 			matchedPhrase: alias.variant,
 			confidence,
+			mechanism: "locale_normalized",
+			inputPhrase: phrase,
+			reading: "preference",
+			countryScope: null,
 		}
 	})
 }
 
 /**
  * Supplies {@link createPOIIntentStage} with its phrase lookup, the parser for the anchor
- * remainder and an optional executor that turns an intent into an outcome.
+ * remainder and an optional executor that turns an intent into a result.
  */
 export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
@@ -164,7 +197,7 @@ export interface POIIntentStageDeps {
 	 *
 	 * Without it, the stage returns the intent unexecuted.
 	 */
-	execute?: (intent: POIIntent) => POIIntentOutcome
+	execute?: (intent: POIIntent) => POIQueryResult
 }
 
 /**
@@ -172,7 +205,7 @@ export interface POIIntentStageDeps {
  */
 export function createPOIIntentStage(
 	deps: POIIntentStageDeps
-): (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null> {
+): (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIQueryResult | null> {
 	return async (input, locale, opts) => {
 		const matched = matchPOISubject(input.normalized, locale.locale, deps.lookup)
 
@@ -194,16 +227,16 @@ export function createPOIIntentStage(
 
 								categoryIDs: [...new Set(matched.matches.map((hit) => hit.categoryID))],
 								matched: matched.match.matchedPhrase,
+								countryBinding: null,
 							},
-		}
-
-		if (matched.relation) {
-			intent.relation = matched.relation
+			relation: matched.relation ?? null,
+			anchor: null,
+			limit: null,
 		}
 
 		if (matched.remainder) {
 			const anchor = await deps.parseAnchor(matched.remainder, opts)
-			intent.anchor = { text: matched.remainder, tree: anchor.tree }
+			intent.anchor = { text: matched.remainder, tree: anchor.tree, biasPoint: null, radiusM: null }
 		}
 
 		if (intent.subject.kind === "category") {
@@ -223,7 +256,7 @@ export function createPOIIntentStage(
 			}
 		}
 
-		return deps.execute ? deps.execute(intent) : { type: "intent", intent }
+		return deps.execute ? deps.execute(intent) : { type: "intent", intent, results: null }
 	}
 }
 
@@ -238,7 +271,7 @@ export function bindCountryScope(
 	matches: ReadonlyArray<POIPhraseMatch>,
 	anchorCountry: string | null
 ): { anchorCountry: string | null; categoryIDs: string[]; excludedCategoryIDs: string[] } | null {
-	if (!matches.some((hit) => hit.countryScope?.length)) return null
+	if (!matches.some((hit) => hit.countryScope)) return null
 
 	const reached: string[] = []
 	const admitted = new Set<string>()
@@ -250,7 +283,7 @@ export function bindCountryScope(
 
 		const scope = hit.countryScope
 
-		if (!scope?.length || (anchorCountry && scope.some((country) => country.toUpperCase() === anchorCountry))) {
+		if (!scope || (anchorCountry && scope.some((country) => country.toUpperCase() === anchorCountry))) {
 			admitted.add(hit.categoryID)
 		}
 	}

@@ -16,7 +16,7 @@
  */
 
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
-import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceError`);
 // the value arrives via the post-reset dynamic import below, while a `const` has no type side,
 // so the type position needs its own static import (type-only, so it never evaluates the mock chain).
@@ -84,8 +84,8 @@ const DEFAULT_INTERVAL_MS = 6000
  */
 const BDC_EMPTY_ENVELOPE = { data: [] }
 
-function bdcTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubTransport {
-	return stubTransport(outcomes, { clock, defaultBody: BDC_EMPTY_ENVELOPE })
+function bdcTransport(results: StubResult[], clock?: { now(): number }): StubTransport {
+	return stubTransport(results, { clock, defaultBody: BDC_EMPTY_ENVELOPE })
 }
 
 let cacheDir: PathBuilder
@@ -598,8 +598,8 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 // The interface an ingestion run depends on: each branch is decided from `status`
 // and `isTransientResourceError()` directly, never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
-	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
-		const client = clientFor(bdcTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })
+	async function failureFor(results: StubResult[], maxAttempts = 2): Promise<unknown> {
+		const client = clientFor(bdcTransport(results), { maxAttempts, baseRetryDelayMs: 1 })
 
 		return client.get("/map/taxonomy-probe").catch((error: unknown) => error)
 	}

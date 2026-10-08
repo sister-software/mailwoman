@@ -131,7 +131,7 @@ export async function createResolverBackend(
 
 		return new mod.WOFCandidateTableLookup({
 			databasePath: candidate,
-			...(opts.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
+			...(opts.variantAliasExemption === undefined ? {} : { variantAliasExemption: opts.variantAliasExemption }),
 		})
 	}
 
@@ -154,6 +154,29 @@ export async function createResolverBackend(
  */
 export function conventionCapitalsPath(): PathBuilder {
 	return repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
+}
+
+/**
+ * How a geocode treats the national-capital promotion among same-name bare-toponym candidates.
+ *
+ * - `"auto"` promotes when the capitals reference exists and degrades to no
+ *   promotion (one stderr line) when it does not.
+ * - `"required"` promotes and throws when the reference is missing.
+ * - `"off"` never promotes.
+ */
+export type CapitalTier = "auto" | "required" | "off"
+
+/**
+ * Loads the capital index a {@link CapitalTier} asks for, or `null` when the tier is off
+ * or the reference is missing under `"auto"`.
+ */
+export async function capitalIndexFor(
+	tier: CapitalTier,
+	candidateDB: PathBuilderLike | null
+): Promise<CapitalIndex | null> {
+	if (tier === "off") return null
+
+	return loadCapitalIndex({ candidateDB, missing: tier === "required" ? "throw" : "degrade" })
 }
 
 /**

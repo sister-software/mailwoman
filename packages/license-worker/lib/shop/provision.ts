@@ -51,7 +51,7 @@ export interface ProvisionInput {
 }
 
 /**
- * The outcome for one object.
+ * The result for one object.
  *
  * `exists` matches the catalog or retains reported drift.
  * `updated` was brought in line.
@@ -65,7 +65,7 @@ export interface ProvisionInput {
 const ProvisionActionSchema = z.enum(["exists", "updated", "replaced", "created", "missing", "blocked"])
 
 /**
- * The outcome for one provisioned object.
+ * The result for one provisioned object.
  */
 export type ProvisionAction = z.infer<typeof ProvisionActionSchema>
 

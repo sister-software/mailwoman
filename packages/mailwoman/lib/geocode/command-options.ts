@@ -7,6 +7,9 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import type { CapitalTier } from "#resolver-backend"
+
 export interface GeocodeCommandOptions {
 	locale: string
 	bias?: string
@@ -33,21 +36,14 @@ export interface GeocodeCommandOptions {
 	 */
 	adminContainmentRerank: boolean
 	/**
-	 * Capital-status ranking axis.
-	 *
-	 * Deliberately tri-state with no entry in {@link createGeocodeCommandOptions}:
-	 * unstated flows through as absent so the session default applies.
-	 * `--capital-tier` requires the reference and reports a clear error when it is missing.
-	 * `--no-capital-tier` opts out.
+	 * Capital-status ranking axis (`--capital-tier auto|required|off`).
 	 */
-	capitalTier?: boolean
+	capitalTier: CapitalTier
 	/**
 	 * Own-name variant-alias exemption.
-	 *
-	 * Tri-state for the same reason.
 	 * `--no-variant-alias-exemption` opts out.
 	 */
-	variantAliasExemption?: boolean
+	variantAliasExemption: boolean
 	placeCountryThreshold: number
 	format: "json" | "text" | "jsonld"
 	json: boolean
@@ -66,13 +62,15 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		countryScope: "auto",
 		dataRoot: dataRootPath(),
 		localeCountryPrior: false,
-		gazetteerPrior: true,
+		gazetteerPrior: GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
 		placeCountry: true,
 		postcodeCountryCoherence: true,
 		forkEntity: true,
 		postcodeShapeCoherence: false,
 		postcodeContainmentCoherence: false,
 		adminContainmentRerank: true,
+		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
+		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,
 		format: "json",
 		json: false,

@@ -333,8 +333,8 @@ describe("validateRecords: availability checks and the records that explain them
 				{
 					...ACCESS_DISPOSITION,
 					id: "x3",
-					outcome: {
-						...ACCESS_DISPOSITION.outcome!,
+					result: {
+						...ACCESS_DISPOSITION.result!,
 						minutesSpent: -5,
 						evidence: { source: "no-such-log", observedAt: null, validFrom: null, validTo: null },
 					},

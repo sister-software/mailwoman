@@ -34,6 +34,7 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { type CaseNormalization, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import {
 	NeuralAddressClassifier,
 	parseAnchorLookup,
@@ -94,10 +95,10 @@ export interface PerLocaleF1Options {
 	bridgeGaps?: boolean
 	outJSON?: string
 	/**
-	 * Disable the all-caps title-case shim (`normalizeCase: false`), the all-caps read.
-	 * Default false.
+	 * The all-caps case handling; `"preserve"` disables the title-case shim for the all-caps read.
+	 * Defaults to the library default, `"title-case"`.
 	 */
-	rawCase?: boolean
+	caseNormalization?: CaseNormalization
 	/**
 	 * Parse each row with the register returned by `deriveGeocodeRegister`.
 	 * The geocode path uses the same register.
@@ -359,7 +360,7 @@ export async function perLocaleF1(
 		...options,
 		goldenDir: options.goldenDir ?? "data/eval/golden/v0.1.2/dev",
 		files: options.files ?? ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
-		rawCase: options.rawCase ?? false,
+		caseNormalization: options.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 		productionRegister: options.productionRegister ?? false,
 	}
 
@@ -496,9 +497,9 @@ export async function perLocaleF1(
 				// Production feeds them only where the kind verdict requires them.
 				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
-				// `--raw-case` disables the all-caps title-case shim.
+				// `--case-normalization preserve` disables the all-caps title-case shim.
 				// The shim would hide the model's own case handling from this measurement.
-				...(args.rawCase ? { normalizeCase: false } : {}),
+				caseNormalization: args.caseNormalization,
 			})
 
 			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country ?? null))

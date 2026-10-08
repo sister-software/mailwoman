@@ -11,7 +11,7 @@
 			"id": "abs-t-01",
 			"group": "target",
 			"query": "pharmacy near Garancières",
-			"expectedOutcome": "absence_observation",
+			"expectedResult": "absence_observation",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Cell 557747808501759 (861fb44c7ffffff) is one of the pilot layer's 88 zero-observed surveyed cells. `Garancières` is a gazetteer place whose coordinates fall inside it, and whose resolved search centre lands back in it — 48.8200, 1.7553.",
 			"guards": "The venue-noun form of the target intent. A route that only ever fired behind the activity phrase would be reading the phrase table rather than the coverage."
@@ -20,7 +20,7 @@
 			"id": "abs-t-02",
 			"group": "target",
 			"query": "where can i pick up a prescription near Garancières",
-			"expectedOutcome": "absence_observation",
+			"expectedResult": "absence_observation",
 			"requiresSemanticRoute": true,
 			"searchedCategories": ["pharmacy"],
 			"anchorDerivation": "The same cell and the same anchor as abs-t-01; only the subject form varies.",
@@ -30,7 +30,7 @@
 			"id": "abs-t-03",
 			"group": "target",
 			"query": "pharmacy near Mortcerf",
-			"expectedOutcome": "absence_observation",
+			"expectedResult": "absence_observation",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Cell 557488499851263 (861fb0867ffffff), zero-observed and surveyed. `Mortcerf` resolves to 48.7835, 2.9188, inside it.",
 			"guards": "A second cell, so a firing cannot be a property of one cell's arithmetic."
@@ -39,7 +39,7 @@
 			"id": "abs-t-04",
 			"group": "target",
 			"query": "pharmacy near Touquin",
-			"expectedOutcome": "absence_observation",
+			"expectedResult": "absence_observation",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Cell 557488634068991 (861fb086fffffff), zero-observed and surveyed. `Touquin` resolves to 48.7361, 3.0294, inside it.",
 			"guards": "A third cell, in a different département from abs-t-01."
@@ -48,7 +48,7 @@
 			"id": "abs-t-05",
 			"group": "target",
 			"query": "where can i pick up a prescription near Amillis",
-			"expectedOutcome": "absence_observation",
+			"expectedResult": "absence_observation",
 			"requiresSemanticRoute": true,
 			"searchedCategories": ["pharmacy"],
 			"anchorDerivation": "Cell 557499774140415 (861fb0b07ffffff), zero-observed and surveyed. `Amillis` resolves to 48.7353, 3.1347, inside it.",
@@ -58,7 +58,7 @@
 			"id": "abs-c-01",
 			"group": "outside_coverage",
 			"query": "pharmacy near Denver CO",
-			"expectedOutcome": "cell_unsurveyed",
+			"expectedResult": "cell_unsurveyed",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Outside the pilot region entirely. The layer holds no coverage row for the cell the search is centred on.",
 			"guards": "The whole contract. The answer is empty for exactly the same reason shape as a target row's — the layer holds nothing there — and the route must stay silent, because a missing coverage row is unmapped, never surveyed-and-empty."
@@ -67,7 +67,7 @@
 			"id": "abs-c-02",
 			"group": "outside_coverage",
 			"query": "where can i pick up a prescription near Denver CO",
-			"expectedOutcome": "category_not_surveyed",
+			"expectedResult": "category_not_surveyed",
 			"requiresSemanticRoute": true,
 			"searchedCategories": ["drugstore", "pharmacy"],
 			"anchorDerivation": "The same anchor as abs-c-01, reached through the activity phrase.",
@@ -77,7 +77,7 @@
 			"id": "abs-c-03",
 			"group": "outside_coverage",
 			"query": "pharmacy near Bray-sur-Seine",
-			"expectedOutcome": "cell_unsurveyed",
+			"expectedResult": "cell_unsurveyed",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Inside the pilot layer's bounding rectangle but outside its interior cell set: the resolved centre 48.4133, 3.2426 falls in cell 557466219708415, which the layer carries no row for.",
 			"guards": "The near-miss. `Denver CO` is far enough away that a coarse country or bbox test would still refuse it; this row is metres from surveyed ground and must refuse for the same reason."
@@ -86,7 +86,7 @@
 			"id": "abs-c-04",
 			"group": "wrong_class",
 			"query": "cafe near Garancières",
-			"expectedOutcome": "no_affordance_assertion",
+			"expectedResult": "no_affordance_assertion",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "The exact cell abs-t-01 fires on — 557747808501759, surveyed, zero-observed — with a different category.",
 			"guards": "The artifact half of the conjunction, at a cell where the coverage half holds. The layer surveyed pharmacies, so its completeness says nothing about cafés; the compiled artifact carries no café concept either, and the route must refuse on the first of those it reaches rather than reading a pharmacy survey as a café absence."
@@ -95,7 +95,7 @@
 			"id": "abs-c-05",
 			"group": "cell_populated",
 			"query": "pharmacy near Liverdy-en-Brie",
-			"expectedOutcome": "cell_not_empty",
+			"expectedResult": "cell_not_empty",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Cell 557487023456255, surveyed and exclusion-grade, holding one pharmacy row. The resolved centre 48.6955, 2.7799 falls inside it.",
 			"guards": "The answer is empty and the coverage row is not. Whether the search reached the row the layer holds is a retrieval question; reading the empty answer as absence would turn a retrieval miss into a claim about the world."
@@ -104,16 +104,16 @@
 			"id": "abs-c-06",
 			"group": "cell_populated",
 			"query": "pharmacy near Chartrettes",
-			"expectedOutcome": "cell_not_empty",
+			"expectedResult": "cell_not_empty",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Cell 557457629773823, surveyed and exclusion-grade, holding two pharmacy rows. The resolved centre 48.4831, 2.7065 falls inside it.",
 			"guards": "The ordinary answered query, inside exclusion-grade coverage, returning rows. The route must stay silent on the case it will meet most often."
 		}
 	],
-	"rowsNote": "Anchors were selected cell-first: the pilot layer's own zero-observed cells were enumerated, gazetteer places whose coordinates fall inside one were collected, and a place was admitted only when the pipeline's resolved search centre landed back in the same cell. No street line is written by hand anywhere in this file. A cell centroid is a coordinate, and the anchor a row carries is a place the gazetteer already holds — not an address composed to reach one. A row's registered outcome binds to the categories the layer surveyed. An activity phrase reaches a SET of categories, and the anchor's country binds that set before the search (#1999); a row whose set the binding decides states the searched set it is graded on in `searchedCategories`, and the runner refuses a row that fired or refused over a set nobody registered (#1998).",
+	"rowsNote": "Anchors were selected cell-first: the pilot layer's own zero-observed cells were enumerated, gazetteer places whose coordinates fall inside one were collected, and a place was admitted only when the pipeline's resolved search centre landed back in the same cell. No street line is written by hand anywhere in this file. A cell centroid is a coordinate, and the anchor a row carries is a place the gazetteer already holds — not an address composed to reach one. A row's registered result binds to the categories the layer surveyed. An activity phrase reaches a SET of categories, and the anchor's country binds that set before the search (#1999); a row whose set the binding decides states the searched set it is graded on in `searchedCategories`, and the runner refuses a row that fired or refused over a set nobody registered (#1998).",
 	"requiredRowHolds": 11,
 	"decisionRule": [
-		"HOLDS — every registered row produced the outcome registered for it.",
+		"HOLDS — every registered row produced the result registered for it.",
 		"BREACHED — any row did not, whether it fired where silence was registered, stayed silent where the observation was registered, or stayed silent for a reason nobody registered.",
 		"There is no middle decision. The claim is a conjunction over the row set, and a conjunction with a tolerance is a different claim."
 	]

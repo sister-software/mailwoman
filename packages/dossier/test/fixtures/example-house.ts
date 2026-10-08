@@ -9,7 +9,7 @@
  *   identification number, so each identifier cites the permit.
  *
  *   The cable check on Example House fails at a source-present empty reading, and the operator's log
- *   records one investigation of it with its outcome.
+ *   records one investigation of it with its result.
  *
  *   The survey places Example House in cell-1, and the permit places both buildings in district-1. No
  *   record places a building in cell-3, so the survey's cable reading there attaches to no building. Every
@@ -465,7 +465,7 @@ export const ACCESS_DISPOSITION: OperatorDisposition = {
 	decision: "Ask Example Management Co whether the provider holds permission for the south entrance",
 	decidedAt: "2022-06-01",
 	evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
-	outcome: {
+	result: {
 		held: true,
 		at: "2022-06-20",
 		minutesSpent: 30,

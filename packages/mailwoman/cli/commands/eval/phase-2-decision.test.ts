@@ -20,7 +20,7 @@ import {
 	PHASE2_MEASUREMENTS,
 	PHASE2_RECEIPT_PATH,
 	type Phase2ArtifactPins,
-	type Phase2CheckOutcome,
+	type Phase2CheckResult,
 	type Phase2DecisionDefinition,
 	type Phase2FreezeRecord,
 	type Phase2Measurement,
@@ -45,7 +45,7 @@ interface CommittedReceipt {
 	artifact: Phase2ArtifactPins
 	artifactPinDeviations: string[]
 	readings: Phase2Reading[]
-	checks: Phase2CheckOutcome[]
+	checks: Phase2CheckResult[]
 	verdict: Phase2Verdict
 	recorded: boolean
 	recordingNote: string
@@ -99,7 +99,7 @@ function withReading(
 	return new Map([...readings, override])
 }
 
-function outcomesAt(readings: Map<Phase2Measurement, Phase2Reading>): Phase2CheckOutcome[] {
+function resultsAt(readings: Map<Phase2Measurement, Phase2Reading>): Phase2CheckResult[] {
 	return evaluatePhase2Checks(definition, readings)
 }
 
@@ -274,10 +274,10 @@ describe("reading the registered checks", () => {
 	})
 
 	it("grades every registered check when every measurement is answered", async () => {
-		const outcomes = outcomesAt(baselineReadings())
+		const results = resultsAt(baselineReadings())
 
-		expect(outcomes).toHaveLength(definition.checks.length)
-		expect(outcomes.every((outcome) => outcome.met)).toBe(true)
+		expect(results).toHaveLength(definition.checks.length)
+		expect(results.every((result) => result.met)).toBe(true)
 	})
 
 	it("compares each bar kind the way its name reads", async () => {
@@ -285,13 +285,13 @@ describe("reading the registered checks", () => {
 		expect(describeBar({ kind: "at_most", value: 0 })).toBe("≤ 0")
 		expect(describeBar({ kind: "exactly", value: 51 })).toBe("= 51")
 
-		const overCounted = outcomesAt(withReading(baselineReadings(), "poi_board.counted_rows", 52))
+		const overCounted = resultsAt(withReading(baselineReadings(), "poi_board.counted_rows", 52))
 
-		expect(overCounted.find((outcome) => outcome.id === "srf-c-02")!.met).toBe(false)
+		expect(overCounted.find((result) => result.id === "srf-c-02")!.met).toBe(false)
 
-		const overPassing = outcomesAt(withReading(baselineReadings(), "poi_board.counted_passing", 51))
+		const overPassing = resultsAt(withReading(baselineReadings(), "poi_board.counted_passing", 51))
 
-		expect(overPassing.find((outcome) => outcome.id === "srf-c-03")!.met).toBe(true)
+		expect(overPassing.find((result) => result.id === "srf-c-03")!.met).toBe(true)
 	})
 
 	it("counts the registered checks rather than the ones that answered", async () => {
@@ -306,14 +306,14 @@ describe("reading the registered checks", () => {
 
 describe("the decision the ruler maps to", () => {
 	it("reads PROCEED-AS-AUTHORIZED at the committed baselines", async () => {
-		const verdict = decidePhase2(definition, outcomesAt(baselineReadings()))
+		const verdict = decidePhase2(definition, resultsAt(baselineReadings()))
 
 		expect(verdict.decision).toBe("PROCEED-AS-AUTHORIZED")
 		expect(verdict.misses).toEqual([])
 	})
 
 	it("records partial coverage and names the blocked lane on every run", async () => {
-		const verdict = decidePhase2(definition, outcomesAt(baselineReadings()))
+		const verdict = decidePhase2(definition, resultsAt(baselineReadings()))
 
 		expect(verdict.coverage).toBe("partial")
 		expect(verdict.blockedLanes).toEqual(["semantic_breadth"])
@@ -323,7 +323,7 @@ describe("the decision the ruler maps to", () => {
 
 	it("Checks control misses FIRST — a control regression stops a run whose targets all hold", async () => {
 		const readings = withReading(baselineReadings(), "semantic_utility.treatment.control_holds", 5)
-		const verdict = decidePhase2(definition, outcomesAt(readings))
+		const verdict = decidePhase2(definition, resultsAt(readings))
 
 		expect(verdict.decision).toBe("STOP-REDESIGN")
 		expect(verdict.counts.resolutionMet).toBe(3)
@@ -333,7 +333,7 @@ describe("the decision the ruler maps to", () => {
 
 	it("reads EVIDENCE-ONLY when the observation surface holds and recognition does not", async () => {
 		const readings = withReading(baselineReadings(), "semantic_utility.treatment.primary_passes", 1)
-		const verdict = decidePhase2(definition, outcomesAt(readings))
+		const verdict = decidePhase2(definition, resultsAt(readings))
 
 		expect(verdict.decision).toBe("EVIDENCE-ONLY")
 		expect(verdict.counts.evidenceMet).toBe(6)
@@ -342,7 +342,7 @@ describe("the decision the ruler maps to", () => {
 
 	it("reads STOP-REDESIGN when the evidence bar is not reached, whatever recognition did", async () => {
 		const readings = withReading(baselineReadings(), "absence_probe.targets_fired", 0)
-		const verdict = decidePhase2(definition, outcomesAt(readings))
+		const verdict = decidePhase2(definition, resultsAt(readings))
 
 		expect(verdict.decision).toBe("STOP-REDESIGN")
 		expect(verdict.counts.resolutionMet).toBe(3)
@@ -350,17 +350,17 @@ describe("the decision the ruler maps to", () => {
 	})
 
 	it("stops when a measurable lane did not report at all", async () => {
-		const outcomes = outcomesAt(baselineReadings()).filter((outcome) => outcome.lane !== "absence")
-		const verdict = decidePhase2(definition, outcomes)
+		const results = resultsAt(baselineReadings()).filter((result) => result.lane !== "absence")
+		const verdict = decidePhase2(definition, results)
 
 		expect(verdict.decision).toBe("STOP-REDESIGN")
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("an unreported lane is not a passing one"))
 	})
 
 	it("Reports an artifact pin deviation without letting it change the decision", async () => {
-		const outcomes = outcomesAt(baselineReadings())
-		const pinned = decidePhase2(definition, outcomes)
-		const deviated = decidePhase2(definition, outcomes, { deviations: ['weightsVersion: observed "9.2.0"'] })
+		const results = resultsAt(baselineReadings())
+		const pinned = decidePhase2(definition, results)
+		const deviated = decidePhase2(definition, results, { deviations: ['weightsVersion: observed "9.2.0"'] })
 
 		expect(pinned.comparability).toBe("pinned")
 		expect(deviated.comparability).toBe("deviated")
@@ -369,7 +369,7 @@ describe("the decision the ruler maps to", () => {
 	})
 
 	it("reports the unmet default-change rows without letting them change the decision", async () => {
-		const verdict = decidePhase2(definition, outcomesAt(baselineReadings()))
+		const verdict = decidePhase2(definition, resultsAt(baselineReadings()))
 
 		expect(verdict.decision).toBe("PROCEED-AS-AUTHORIZED")
 		expect(verdict.defaultChangeBarUnmetRows).toEqual([1, 2, 3, 4, 5, 6, 7, 9])

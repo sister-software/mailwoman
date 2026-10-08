@@ -49,7 +49,6 @@
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/evidence": "workspace:*",
 		"hono": "^4.13.13",
 		"zod": "^4.6.5"
 	}

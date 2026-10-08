@@ -10,14 +10,14 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
-import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#tools/eval-harness/phase-2-decision/outcomes"
+import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#tools/eval-harness/phase-2-decision/results"
 import { definitionContentHash, loadFrozenDefinition, preregistrationPath } from "#tools/eval-harness/preregistration"
 
 export {
 	type Phase2Comparability,
 	type Phase2Counts,
 	type Phase2Verdict,
-} from "#tools/eval-harness/phase-2-decision/outcomes"
+} from "#tools/eval-harness/phase-2-decision/results"
 
 /**
  * Instruments that produce registered measurements.
@@ -309,7 +309,7 @@ export interface Phase2DecisionDefinition {
 	/**
 	 * Scope authorized by `PROCEED-AS-AUTHORIZED`.
 	 */
-	authorizedOutcome: string
+	authorizedResult: string
 	scopeNote: string
 	baselineNote: string
 	artifactPins: Phase2ArtifactPins
@@ -687,7 +687,7 @@ export interface Phase2Reading {
 	observed: number
 	/**
 	 * Instrument's description of what it counted.
-	 * The check outcome repeats it next to the number.
+	 * The check result repeats it next to the number.
 	 */
 	detail: string
 }
@@ -695,7 +695,7 @@ export interface Phase2Reading {
 /**
  * Result of evaluating one check against its reading.
  */
-export interface Phase2CheckOutcome {
+export interface Phase2CheckResult {
 	id: string
 	lane: string
 	role: Phase2CheckRole
@@ -737,7 +737,7 @@ export function describeBar(bar: Phase2Bar): string {
 export function evaluatePhase2Checks(
 	definition: Phase2DecisionDefinition,
 	readings: ReadonlyMap<Phase2Measurement, Phase2Reading>
-): Phase2CheckOutcome[] {
+): Phase2CheckResult[] {
 	return definition.checks.map((check) => {
 		const reading = readings.get(check.measurement)
 
@@ -766,24 +766,24 @@ export function evaluatePhase2Checks(
 /**
  * Counts passing checks per tier and role.
  *
- * The totals come from the definition, so a missing outcome counts as a miss.
+ * The totals come from the definition, so a missing result counts as a miss.
  */
 export function computePhase2Counts(
 	definition: Phase2DecisionDefinition,
-	outcomes: readonly Phase2CheckOutcome[]
+	results: readonly Phase2CheckResult[]
 ): Phase2Counts {
-	const resolution = outcomes.filter((outcome) => outcome.tier === "resolution")
-	const evidence = outcomes.filter((outcome) => outcome.tier === "evidence")
-	const controls = outcomes.filter((outcome) => outcome.role === "control")
+	const resolution = results.filter((result) => result.tier === "resolution")
+	const evidence = results.filter((result) => result.tier === "evidence")
+	const controls = results.filter((result) => result.role === "control")
 
 	return {
 		resolutionChecks: definition.checks.filter((check) => check.tier === "resolution").length,
-		resolutionMet: resolution.filter((outcome) => outcome.met).length,
+		resolutionMet: resolution.filter((result) => result.met).length,
 		evidenceChecks: definition.checks.filter((check) => check.tier === "evidence").length,
-		evidenceMet: evidence.filter((outcome) => outcome.met).length,
+		evidenceMet: evidence.filter((result) => result.met).length,
 		controlChecks: definition.checks.filter((check) => check.role === "control").length,
-		controlMet: controls.filter((outcome) => outcome.met).length,
-		controlMisses: controls.filter((outcome) => !outcome.met).length,
+		controlMet: controls.filter((result) => result.met).length,
+		controlMisses: controls.filter((result) => !result.met).length,
 	}
 }
 
@@ -797,23 +797,23 @@ export function computePhase2Counts(
  */
 export function decidePhase2(
 	definition: Phase2DecisionDefinition,
-	outcomes: readonly Phase2CheckOutcome[],
+	results: readonly Phase2CheckResult[],
 	comparability: Phase2Comparability = { deviations: [] }
 ): Phase2Verdict {
-	const counts = computePhase2Counts(definition, outcomes)
+	const counts = computePhase2Counts(definition, results)
 	const thresholds = definition.thresholds
 	const blockedLanes = definition.lanes.filter((lane) => lane.status === "blocked").map((lane) => lane.id)
-	const reportedLanes = new Set(outcomes.map((outcome) => outcome.lane))
+	const reportedLanes = new Set(results.map((result) => result.lane))
 
 	const defaultChangeBarUnmetRows = definition.defaultChangeBar
 		.filter((row) => row.state !== "met")
 		.map((row) => row.row)
 
-	const misses = outcomes
-		.filter((outcome) => !outcome.met)
+	const misses = results
+		.filter((result) => !result.met)
 		.map(
-			(outcome) =>
-				`${outcome.id} (${outcome.role}${outcome.tier ? `/${outcome.tier}` : ""}): ${outcome.observed}/${outcome.denominator} against ${describeBar(outcome.bar)} — ${outcome.detail}`
+			(result) =>
+				`${result.id} (${result.role}${result.tier ? `/${result.tier}` : ""}): ${result.observed}/${result.denominator} against ${describeBar(result.bar)} — ${result.detail}`
 		)
 
 	const reasons = [

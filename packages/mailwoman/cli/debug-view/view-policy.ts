@@ -6,10 +6,10 @@
  * Holds the zoom, flag and frame-size rules shared by the static `--debug` capture and the interactive session.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import type { GeocodeCommandOptions } from "#geocode/command-options"
-import type { GeocodeResult } from "#geocode/result"
 
 // #region Zoom heuristic
 

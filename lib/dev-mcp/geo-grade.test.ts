@@ -43,7 +43,7 @@ describe("hitAt", () => {
 
 describe("gradeAtThreshold", () => {
 	it("grades on crossing the threshold, not on being closer", () => {
-		// 40km → 30km is a real improvement in distance and no improvement in outcome: neither arm found the address.
+		// 40km → 30km is a real improvement in distance and no improvement in result: neither arm found the address.
 		expect(gradeAtThreshold(40, 30, 25)).toBe("neutral")
 		expect(gradeAtThreshold(40, 20, 25)).toBe("improved")
 		expect(gradeAtThreshold(20, 40, 25)).toBe("regressed")

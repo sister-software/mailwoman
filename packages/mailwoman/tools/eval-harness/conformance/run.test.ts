@@ -6,11 +6,11 @@
  *   The test would turn the strongest available nondeterminism check into a tautology if it derived the identity law's second side from the first. It observes both sides independently.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import type { GeocodeResult } from "#geocode"
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	type ConformanceObserver,
@@ -28,7 +28,7 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		base: "10 Downing Street, London",
 		variant: "10 DOWNING STREET, LONDON",
 		context: null,
-		outcomeComparator: "component_map",
+		resultComparator: "component_map",
 		expect: "equivalent",
 		status: null,
 		bugRef: null,
@@ -68,11 +68,11 @@ function tableObserver(table: Record<string, Record<string, string>>): {
 				unit: null,
 				postcode_country_scope: null,
 				capital_promotion: null,
-				variant_alias_exemption: null,
+				variant_alias_exemption: "not_applied",
 				admin_coherence: null,
 				hierarchy: [],
 			},
-		} satisfies ConformanceOutcome
+		} satisfies ConformanceResult
 	}
 
 	return { observe, calls }
@@ -251,7 +251,7 @@ describe("formatConformanceFinding", () => {
 		})
 
 		const { findings } = await runConformanceFixtures(
-			[fixture({ outcomeComparator: "mechanism_shape", base: "10 Downing", variant: "somewhere else" })],
+			[fixture({ resultComparator: "mechanism_shape", base: "10 Downing", variant: "somewhere else" })],
 			shaped
 		)
 
@@ -310,20 +310,20 @@ describe("gauntletObserver", () => {
 			unfollowed_components: null,
 			derivation: null,
 			entity: null,
-			variant_alias_exemption: null,
+			variant_alias_exemption: "not_applied",
 			admin_coherence: null,
 			authoritative: null,
 		})
 
-		const outcome = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
+		const observed = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
 
-		expect(outcome.result.tier).toBe("address_point")
-		expect(outcome.result.country).toBe("United Kingdom")
-		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
+		expect(observed.result.tier).toBe("address_point")
+		expect(observed.result.country).toBe("United Kingdom")
+		expect(observed.result.hierarchy[0]?.placeID).toBe("wof:101750367")
 		// The observer supplies no shape vocabulary, so `mechanismShapes` and `candidates`
 		// are absent rather than empty — the distinction `candidate_admissibility` reads.
-		expect(outcome.mechanismShapes).toBeUndefined()
-		expect(outcome.candidates).toBeUndefined()
+		expect(observed.mechanismShapes).toBeUndefined()
+		expect(observed.candidates).toBeUndefined()
 	})
 })
 
@@ -356,7 +356,7 @@ describe("tracedGauntletObserver", () => {
 			unfollowed_components: null,
 			derivation: null,
 			entity: null,
-			variant_alias_exemption: null,
+			variant_alias_exemption: "not_applied",
 			admin_coherence: null,
 			authoritative: null,
 		},
@@ -390,12 +390,12 @@ describe("tracedGauntletObserver", () => {
 	})
 
 	it("attaches the resolver's own records, projecting the result through the same mapping", async () => {
-		const outcome = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
+		const observed = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
 
-		expect(outcome.result.locality).toBe("Springfield")
-		expect(outcome.candidates).toHaveLength(1)
-		expect(outcome.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
-		expect(outcome.candidates![0]!.query.limit).toBe(5)
+		expect(observed.result.locality).toBe("Springfield")
+		expect(observed.candidates).toHaveLength(1)
+		expect(observed.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
+		expect(observed.candidates![0]!.query.limit).toBe(5)
 	})
 
 	it("reads a refinement pair end to end, through the closed comparator set", async () => {
@@ -406,7 +406,7 @@ describe("tracedGauntletObserver", () => {
 					law: "refinement-monotonicity",
 					base: "Springfield",
 					variant: "Springfield",
-					outcomeComparator: "candidate_admissibility",
+					resultComparator: "candidate_admissibility",
 					expect: "refines",
 				}),
 			],
@@ -495,7 +495,7 @@ describe("the unmeasured verdict bucket", () => {
 		law: "refinement-monotonicity",
 		base: "Springfield",
 		variant: "Springfield, IL",
-		outcomeComparator: "candidate_admissibility",
+		resultComparator: "candidate_admissibility",
 		expect: "refines",
 	})
 

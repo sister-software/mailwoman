@@ -15,16 +15,21 @@ import { deriveInputMode } from "#pipeline/types"
 
 describe("deriveInputMode (Decision A)", () => {
 	it("multi-component postal kinds are the formatted register", () => {
-		expect(deriveInputMode("structured_address")).toBe("formatted")
-		expect(deriveInputMode("po_box")).toBe("formatted")
-		expect(deriveInputMode("intersection")).toBe("formatted")
+		expect(deriveInputMode("auto", "structured_address")).toBe("formatted")
+		expect(deriveInputMode("auto", "po_box")).toBe("formatted")
+		expect(deriveInputMode("auto", "intersection")).toBe("formatted")
 	})
 
 	it("single-thing lookups are the fragmented register", () => {
-		expect(deriveInputMode("postcode_only")).toBe("fragmented")
-		expect(deriveInputMode("locality_only")).toBe("fragmented")
-		expect(deriveInputMode("landmark")).toBe("fragmented")
-		expect(deriveInputMode("poi_query")).toBe("fragmented")
-		expect(deriveInputMode("vague")).toBe("fragmented")
+		expect(deriveInputMode("auto", "postcode_only")).toBe("fragmented")
+		expect(deriveInputMode("auto", "locality_only")).toBe("fragmented")
+		expect(deriveInputMode("auto", "landmark")).toBe("fragmented")
+		expect(deriveInputMode("auto", "poi_query")).toBe("fragmented")
+		expect(deriveInputMode("auto", "vague")).toBe("fragmented")
+	})
+
+	it("an explicit register passes through regardless of kind", () => {
+		expect(deriveInputMode("fragmented", "structured_address")).toBe("fragmented")
+		expect(deriveInputMode("formatted", "poi_query")).toBe("formatted")
 	})
 })
