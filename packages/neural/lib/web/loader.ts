@@ -354,6 +354,17 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface"))
 	)
 
+	// The postcode binaries and pair indexes are independent of the model group.
+	// Their fetches start beside it.
+	// Both loaders skip a failed file and resolve, so the model group's await meets no unhandled rejection.
+	const postcodeAnchorLookupLoad = opts.postcodeBinaryURLs.length
+		? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
+		: Promise.resolve<AnchorLookup | null>(null)
+
+	const pairIndexesLoad = opts.pairIndexURLs.length
+		? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
+		: Promise.resolve<LoadedPairIndex[]>([])
+
 	const [
 		modelBytes,
 		embeddings,
@@ -376,10 +387,8 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, { ...opts.runner, ...(embeddings ? { embeddings } : {}) }),
-		opts.postcodeBinaryURLs.length
-			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
-			: Promise.resolve<AnchorLookup | null>(null),
-		opts.pairIndexURLs.length ? loadPairIndexes(opts.pairIndexURLs, fetchImpl) : Promise.resolve<LoadedPairIndex[]>([]),
+		postcodeAnchorLookupLoad,
+		pairIndexesLoad,
 	])
 
 	let configPairIndex: PairIndexResolver | null = null
