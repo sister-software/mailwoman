@@ -23,6 +23,7 @@ EXPECTED = {
     "eval",
     "export",
     "quantize",
+    "split-embeddings",
     "package",
     "smoke",
     "tokenizer",
