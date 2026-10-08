@@ -37,6 +37,7 @@ import {
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 } from "@mailwoman/neural"
+import { type AddressSystemConventions, parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -59,7 +60,7 @@ interface Args {
 	modelCardPath?: string
 	gazetteerLexiconPath?: string
 	anchorLookupPath?: string
-	conventions?: string
+	conventions?: AddressSystemConventions
 	bridgeGaps?: boolean
 	adminFSTPath?: string
 	morphologyEnabled: boolean
@@ -138,7 +139,7 @@ function parseArgs(): Args {
 	}
 
 	if (values["conventions"]) {
-		out.conventions = values["conventions"] as string
+		out.conventions = parseAddressSystemConventions(values["conventions"] as string)
 	}
 
 	if (values["bridge-gaps"] != null) {
@@ -737,7 +738,7 @@ async function main(): Promise<void> {
 			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: true } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			// `--conventions auto|<system>` enables the address-system conventions mask.
-			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
+			...(args.conventions ? { addressSystemConventions: args.conventions } : {}),
 			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
 		})
 	} else {

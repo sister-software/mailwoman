@@ -100,9 +100,9 @@ const TIERS: Record<string, ScorerOverrides> = {
 	// Production default: anchor and gazetteer both fed (no override needed, createScorer's defaults).
 	server: {},
 	// On-device lighter feed: anchor fed, gazetteer ablated.
-	// `overrides.gazetteer:false` warns loudly (a declared ablation), which is correct,
+	// `overrides.gazetteer: "off"` warns loudly (a declared ablation), which is correct,
 	// since pocket is a deliberate below-ship-config tier.
-	pocket: { gazetteer: false },
+	pocket: { gazetteer: "off" },
 }
 
 /**

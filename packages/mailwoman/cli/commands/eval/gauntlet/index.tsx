@@ -21,6 +21,22 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 
 /**
+ * The values of a resolver pin flag.
+ */
+const PIN_CHOICES = ["on", "off"] as const
+
+type PinChoice = (typeof PIN_CHOICES)[number]
+
+/**
+ * The `runGauntlet` field one pin flag sets, or an empty object when the flag is unset.
+ */
+function pinFor<Key extends string>(key: Key, choice: PinChoice | undefined): Partial<Record<Key, boolean>> {
+	if (choice === undefined) return {}
+
+	return { [key]: choice === "on" } as Partial<Record<Key, boolean>>
+}
+
+/**
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
@@ -41,25 +57,26 @@ export const spec = {
 		out: { type: "string", description: "Ablation artifact dir" },
 		components: { type: "string", description: "Components to delete" },
 		limit: { type: "number", description: "Case limit" },
-		"postcode-country-coherence": { type: "boolean", default: false, description: "Force coherence on" },
-		"postcode-country-coherence-off": { type: "boolean", default: false, description: "Force coherence off" },
-		"gazetteer-prior": { type: "boolean", default: false, description: "Force the gazetteer FST prior on" },
-		"gazetteer-prior-off": { type: "boolean", default: false, description: "Force the gazetteer FST prior off" },
-		"admin-containment-rerank": { type: "boolean", default: false, description: "Force the containment rerank on" },
-		"admin-containment-rerank-off": {
-			type: "boolean",
-			default: false,
-			description: "Force the containment rerank off",
+		"postcode-country-coherence": {
+			type: "string",
+			choices: PIN_CHOICES,
+			description: "Pin postcode-country coherence; unset grades the production default",
+		},
+		"gazetteer-prior": {
+			type: "string",
+			choices: PIN_CHOICES,
+			description: "Pin the gazetteer FST prior; unset grades the production default",
+		},
+		"admin-containment-rerank": {
+			type: "string",
+			choices: PIN_CHOICES,
+			description: "Pin the containment rerank; unset grades the production default",
 		},
 		"span-rescore-require-context-remainder": {
-			type: "boolean",
-			default: false,
-			description: "A span-rescore sub-span may drop context, never a word of the name",
-		},
-		"span-rescore-require-context-remainder-off": {
-			type: "boolean",
-			default: false,
-			description: "Force that refusal off",
+			type: "string",
+			choices: PIN_CHOICES,
+			description:
+				"Pin the refusal of a span-rescore sub-span that drops a word of the name; unset grades the production default",
 		},
 		"span-rescore-weak-resolution": {
 			type: "string",
@@ -73,13 +90,11 @@ export const spec = {
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {
-		// The `*Off` names are CLI-only spellings of the off half of a tri-state,
-		// destructured out so none reaches `runGauntlet` as its own field.
 		const {
-			postcodeCountryCoherenceOff,
-			gazetteerPriorOff,
-			adminContainmentRerankOff,
-			spanRescoreRequireContextRemainderOff,
+			postcodeCountryCoherence,
+			gazetteerPrior,
+			adminContainmentRerank,
+			spanRescoreRequireContextRemainder,
 			components,
 			...rest
 		} = options
@@ -94,21 +109,11 @@ const EvalGauntlet = harnessCommand(
 				// string never becomes an empty filter.
 				// That would silently measure no rows and print a map of one header row.
 				...(components ? { components: extractDelimited(components) } : {}),
-				// The schema supplies `false` for both halves of each tri-state pin,
-				// so an unset flag must stay `undefined` rather than pinning the change either way:
-				// "no flag" keeps meaning "grade whatever production does".
-				postcodeCountryCoherence: options.postcodeCountryCoherence
-					? true
-					: postcodeCountryCoherenceOff
-						? false
-						: undefined,
-				gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
-				adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
-				spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder
-					? true
-					: spanRescoreRequireContextRemainderOff
-						? false
-						: undefined,
+				// An unset flag leaves its switch unpinned, so the run grades the production default.
+				...pinFor("postcodeCountryCoherence", postcodeCountryCoherence),
+				...pinFor("gazetteerPrior", gazetteerPrior),
+				...pinFor("adminContainmentRerank", adminContainmentRerank),
+				...pinFor("spanRescoreRequireContextRemainder", spanRescoreRequireContextRemainder),
 				// Three readings rather than two states, so there is no off spelling:
 				// an absent flag is the production default.
 				// That default takes a `placeID` at face value and never lifts the brake.

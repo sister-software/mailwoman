@@ -10,6 +10,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
+import type { AddressSystemConventions } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -185,7 +186,7 @@ export interface UnfoldedEvalClassifierOptions {
 	/**
 	 * `auto` | `<system>` enables the address-system conventions mask.
 	 */
-	conventions?: string
+	conventions?: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
 	 */
@@ -224,7 +225,7 @@ export async function createUnfoldedEvalClassifier(
 			? { gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(options.gazetteerLexicon)) }
 			: {}),
 		suppressGazetteerNearPostcode: options.suppressGazNearPostcode,
-		...(options.conventions ? { addressSystemConventions: options.conventions as "auto" } : {}),
+		...(options.conventions ? { addressSystemConventions: options.conventions } : {}),
 		...(options.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
 	})
 }
@@ -277,7 +278,7 @@ export interface MaskScorerArtifactPaths {
 export interface MaskOffOnOptions {
 	/**
 	 * Serving-tier channel overrides layered under the conventions toggle
-	 * (`{ gazetteer: false }` for the pocket tier).
+	 * (`{ gazetteer: "off" }` for the pocket tier).
 	 */
 	tierOverrides?: ScorerOverrides
 	/**

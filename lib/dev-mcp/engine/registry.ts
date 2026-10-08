@@ -13,6 +13,7 @@ import {
 	type CapitalTier,
 	createGeocodeCommandOptions,
 	createGeocodeSession,
+	GEOCODE_SWITCH_DEFAULTS,
 	type GeocodeSession,
 	type GeocodeSessionOptions,
 } from "mailwoman/geocode"
@@ -48,8 +49,8 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * Enables the POI venue tier.
-	 * The default is off.
+	 * Whether `poi.db` entity upgrades reach the venue tier.
+	 * Defaults to `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`.
 	 */
 	poi_venue_tier?: boolean
 	/**
@@ -136,7 +137,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
 		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
 		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
-		...(config.poi_venue_tier === true ? { poiVenueTier: true } : {}),
+		poiVenueTier: config.poi_venue_tier ?? GEOCODE_SWITCH_DEFAULTS.poiVenueTier,
 		capitalTier: config.capital_tier ?? production.capitalTier,
 		variantAliasExemption: config.variant_alias_exemption
 			? config.variant_alias_exemption === "applied"

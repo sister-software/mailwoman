@@ -13,6 +13,7 @@
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { AddressSystemConventions } from "@mailwoman/neural/classifier/options"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -56,7 +57,7 @@ export interface ScoreCountryHomographOptions {
 	/**
 	 * `auto` or `<system>` enables the address-system conventions mask.
 	 */
-	conventions?: string
+	conventions?: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
 	 */

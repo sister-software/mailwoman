@@ -9,6 +9,7 @@
 import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 
 import { perLocaleF1 } from "#tools/eval-harness/per/locale-f1"
 
@@ -49,7 +50,7 @@ async function main(): Promise<void> {
 		...(values["gazetteer-lexicon"] ? { gazetteerLexiconPath: values["gazetteer-lexicon"] } : {}),
 		...(values["no-anchor"] !== undefined ? { noAnchor: true } : {}),
 		...(values["suppress-gaz-near-postcode"] !== undefined ? { suppressGazNearPostcode: true } : {}),
-		...(values.conventions ? { conventions: values.conventions } : {}),
+		...(values.conventions ? { conventions: parseAddressSystemConventions(values.conventions) } : {}),
 		...(values["bridge-gaps"] !== undefined ? { bridgeGaps: true } : {}),
 		caseNormalization: caseNormalizationOf(values["case-normalization"]),
 		...(values["out-json"] ? { outJSON: values["out-json"] } : {}),

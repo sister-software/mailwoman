@@ -39,12 +39,17 @@ describe("resolveSwitches", () => {
 			"postcodeContainmentCoherence",
 			"postcodePrefixPrior",
 			"includeAncestors",
-			"adminContainmentRerank",
 			"diagnoseUnreachable",
 		] as const) {
 			expect(resolveSwitches({})[key]).toBe(false)
 			expect(resolveSwitches({ [key]: true })[key]).toBe(true)
 		}
+	})
+
+	// The geocode path promoted the rerank to on (#1717); the resolver now shares that one default.
+	test("adminContainmentRerank defaults on and an explicit false turns it off", () => {
+		expect(resolveSwitches({}).adminContainmentRerank).toBe(true)
+		expect(resolveSwitches({ adminContainmentRerank: false }).adminContainmentRerank).toBe(false)
 	})
 
 	test("an explicit undefined falls back to the default", () => {

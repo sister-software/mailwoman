@@ -25,6 +25,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import {
 	candidatePool,
 	canonicalQueryKey,
+	SAME_DATA_RESOLVER_PINS,
 	SAME_DATA_SCHEMA_VERSION,
 	type SameDataCandidate,
 	type SameDataFixtureRow,
@@ -218,7 +219,7 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 
 		for (const options of armOptions) {
 			try {
-				await recorder.resolveTree(tree, options)
+				await recorder.resolveTree(tree, { ...SAME_DATA_RESOLVER_PINS, ...options })
 			} catch (error) {
 				recordingError = error instanceof Error ? error.message : String(error)
 			}

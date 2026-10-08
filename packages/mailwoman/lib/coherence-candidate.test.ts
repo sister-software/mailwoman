@@ -101,8 +101,8 @@ afterEach(async () => {
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
  *
- * `adminCoherence: false` keeps the re-pick out of the way, since this test
- * is about the stamp and the verdict.
+ * `adminCoherence: false` and `adminContainmentRerank: false` keep the re-pick and the
+ * containment rerank out of the way, since this test is about the stamp and the verdict.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolver = createWOFResolver(lookup)
@@ -110,6 +110,7 @@ async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolved = await resolver.resolveTree(tree(node("locality", "Weimar"), node("region", regionValue)), {
 		includeAncestors,
 		adminCoherence: false,
+		adminContainmentRerank: false,
 	})
 
 	const nodes = [...walkNodes(resolved.roots)] as AdminCoherenceSourceNode[]

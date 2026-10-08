@@ -286,7 +286,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	adminCoherence: true,
 	hierarchyCompletion: true,
 	includeAncestors: false,
-	adminContainmentRerank: false,
+	adminContainmentRerank: true,
 	diagnoseUnreachable: false,
 }
 
@@ -474,7 +474,9 @@ export interface ResolveOpts {
 	 */
 	includeAncestors?: boolean
 	/**
-	 * Enables admin-containment rerank for locality candidates.
+	 * Reranks locality candidates by containment in a parsed region qualifier.
+	 *
+	 * It stands down under a caller-supplied `defaultCountry`.
 	 * Defaults to {@link RESOLVE_SWITCH_DEFAULTS}.
 	 */
 	adminContainmentRerank?: boolean

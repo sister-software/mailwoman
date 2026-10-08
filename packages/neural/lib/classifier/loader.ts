@@ -9,8 +9,14 @@ import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
-import { NeuralAddressClassifier, type AddressSystemConventions } from "#classifier"
-import { gazetteerSuppressionFor } from "#classifier/options"
+import { NeuralAddressClassifier } from "#classifier"
+import {
+	addressSystemConventionsFor,
+	type ConventionsSetting,
+	gazetteerSuppressionFor,
+	type ModelCardToggle,
+	punctuationBridgingFor,
+} from "#classifier/options"
 import { ScriptRoutedClassifier } from "#classifier/script-router"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
@@ -64,7 +70,26 @@ export async function loadClassifierFromWeights(
 
 		placetypeCensusPath?: PathBuilderLike
 
-		suppressGazetteerNearPostcode?: boolean
+		/**
+		 * Whether to zero the gazetteer channel next to postcode-anchor hits.
+		 *
+		 * The default `"declared"` follows the model card (see {@link gazetteerSuppressionFor}).
+		 */
+		suppressGazetteerNearPostcode?: ModelCardToggle
+
+		/**
+		 * Whether to merge same-tag spans split by punctuation.
+		 *
+		 * The default `"declared"` follows the model card (see {@link punctuationBridgingFor}).
+		 */
+		bridgePunctuationGaps?: ModelCardToggle
+
+		/**
+		 * The address-system conventions mode.
+		 *
+		 * The default `"declared"` follows the model card (see {@link addressSystemConventionsFor}).
+		 */
+		addressSystemConventions?: ConventionsSetting
 	} = {}
 ): Promise<NeuralAddressClassifier> {
 	/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
@@ -232,11 +257,13 @@ export async function loadClassifierFromWeights(
 		opts.placetypeCensusPath
 	)
 
-	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode, declared)
+	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(
+		opts.suppressGazetteerNearPostcode ?? "declared",
+		declared
+	)
 
-	const addressSystemConventions = (
-		declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : "off"
-	) as AddressSystemConventions
+	const bridgePunctuationGaps = punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared)
+	const addressSystemConventions = addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared)
 
 	const addressSystems =
 		(await readAddressSystemsFromModelCard(resolved.modelCardPath ?? null)) ??
@@ -263,8 +290,8 @@ export async function loadClassifierFromWeights(
 		...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
-		...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
-
+		suppressGazetteerNearPostcode,
+		bridgePunctuationGaps,
 		addressSystemConventions,
 	})
 }

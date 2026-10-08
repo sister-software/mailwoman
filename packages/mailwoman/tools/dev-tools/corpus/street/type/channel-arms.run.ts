@@ -203,7 +203,7 @@ const arms: readonly Arm[] = [
 	{
 		key: "ablated",
 		label: "no street_type channel",
-		build: () => createScorer({ ...base, overrides: { streetType: false } }),
+		build: () => createScorer({ ...base, overrides: { streetType: "off" } }),
 	},
 	{
 		key: "extended",

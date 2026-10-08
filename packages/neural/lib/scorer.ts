@@ -8,11 +8,18 @@ import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
+import { z } from "zod"
 
 import type { AddressSystemTable } from "#address-system"
 import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
-import { NeuralAddressClassifier, type AddressSystemConventions } from "#classifier"
-import { gazetteerSuppressionFor } from "#classifier/options"
+import { NeuralAddressClassifier } from "#classifier"
+import {
+	addressSystemConventionsFor,
+	type ConventionsSetting,
+	gazetteerSuppressionFor,
+	type ModelCardToggle,
+	punctuationBridgingFor,
+} from "#classifier/options"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
@@ -31,10 +38,12 @@ import {
 import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 
 /**
- * A scorer's conventions override: `"declared"` follows the model card, `"off"` disables
- * conventions, and `"auto"` or a system code replaces the card's mode.
+ * A scorer's channel override: `"declared"` (the default) feeds the channel and enforces
+ * the card's requirement, and `"off"` ablates it even when the card requires it.
  */
-export type ScorerConventions = "declared" | AddressSystemConventions
+export const ScorerChannelSchema = z.enum(["declared", "off"])
+
+export type ScorerChannel = z.infer<typeof ScorerChannelSchema>
 
 /**
  * The largest F1 drop (`maskOffF1 − maskOnF1`) a conventions mask may cause on a
@@ -134,45 +143,46 @@ function assertShapedKeyerObligation(
  */
 export interface ScorerOverrides {
 	/**
-	 * Set `false` to disable the postcode anchor channel even when the card requires it.
+	 * The postcode anchor channel.
 	 */
-	anchor?: boolean
+	anchor?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the gazetteer channel even when the card requires it.
+	 * The gazetteer channel.
 	 */
-	gazetteer?: boolean
+	gazetteer?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the street-type evidence channel even when the card requires it.
+	 * The street-type evidence channel.
 	 */
-	streetType?: boolean
+	streetType?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the locality-surface evidence channel even when the card requires it.
+	 * The locality-surface evidence channel.
 	 */
-	localitySurface?: boolean
+	localitySurface?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the country channel even when the card requires it.
+	 * The country channel.
 	 */
-	country?: boolean
+	country?: ScorerChannel
 
 	/**
 	 * The conventions mode: `"declared"` (the default) follows the card, `"off"` disables
 	 * conventions, and `"auto"` or a system code replaces the card's mode.
 	 */
-	conventions?: ScorerConventions
+	conventions?: ConventionsSetting
 
 	/**
-	 * Replaces the card's `bridge` declaration for punctuation-gap bridging.
+	 * Punctuation-gap bridging: `"declared"` (the default) follows the card's `bridge` declaration.
 	 */
-	bridge?: boolean
+	bridge?: ModelCardToggle
 
 	/**
-	 * Replaces the card's `suppress_gazetteer_near_postcode` declaration.
+	 * Gazetteer suppression near postcodes: `"declared"` (the default) follows the
+	 * card's `suppress_gazetteer_near_postcode` declaration.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: ModelCardToggle
 }
 
 /**
@@ -362,10 +372,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const anchorRequired = declared.anchor?.required ?? false
 	let postcodeAnchorLookup: AnchorLookup | null = null
 
-	if (overrides.anchor === false) {
+	if (overrides.anchor === "off") {
 		if (anchorRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: anchor channel ABLATED (override anchor:false) but the model-card ` +
+				`[createScorer] OVERRIDE: anchor channel ABLATED (override anchor:"off") but the model-card ` +
 					`declares it REQUIRED. Deliberate OOD — the model was TRAINED with the anchor channel.`
 			)
 		}
@@ -381,7 +391,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			fail(
 				strict,
 				`anchor channel is declared REQUIRED by the model-card but cannot be fed: ${reason}. ` +
-					`Provide a valid --anchor-lookup, or pass overrides.anchor=false for a deliberate ablation.`
+					`Provide a valid --anchor-lookup, or pass overrides.anchor="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -393,10 +403,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const gazetteerRequired = declared.gazetteer?.required ?? false
 	let gazetteerLexicon: GazetteerLexicon | null = null
 
-	if (overrides.gazetteer === false) {
+	if (overrides.gazetteer === "off") {
 		if (gazetteerRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: gazetteer channel ABLATED (override gazetteer:false) but the ` +
+				`[createScorer] OVERRIDE: gazetteer channel ABLATED (override gazetteer:"off") but the ` +
 					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the gazetteer clue.`
 			)
 		}
@@ -411,7 +421,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 				strict,
 				`gazetteer channel is declared REQUIRED by the model-card but the lexicon file was not found ` +
 					`at ${gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON}. Provide a valid --gazetteer-lexicon, or pass ` +
-					`overrides.gazetteer=false for a deliberate ablation.`
+					`overrides.gazetteer="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -423,10 +433,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const countryRequired = declared.country?.required ?? false
 	let countryLexicon: CountryLexicon | null = null
 
-	if (overrides.country === false) {
+	if (overrides.country === "off") {
 		if (countryRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: country channel ABLATED (override country:false) but the ` +
+				`[createScorer] OVERRIDE: country channel ABLATED (override country:"off") but the ` +
 					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the country clue.`
 			)
 		}
@@ -441,7 +451,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 				strict,
 				`country channel is declared REQUIRED by the model-card but the lexicon file was not found ` +
 					`at ${countryLexiconPath ?? DEFAULT_COUNTRY_LEXICON}. Provide a valid --country-lexicon, or pass ` +
-					`overrides.country=false for a deliberate ablation.`
+					`overrides.country="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -457,10 +467,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const streetTypeRequired = declared.street_type?.required ?? false
 	let streetTypeLexicon: GazetteerLexicon | null = null
 
-	if (overrides.streetType === false) {
+	if (overrides.streetType === "off") {
 		if (streetTypeRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: street_type channel ABLATED (override streetType:false) but the ` +
+				`[createScorer] OVERRIDE: street_type channel ABLATED (override streetType:"off") but the ` +
 					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the bundle.`
 			)
 		}
@@ -475,7 +485,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 				strict,
 				`street_type channel is declared REQUIRED by the model-card but the lexicon was not found ` +
 					`at ${streetTypeLexiconPath ?? "(unresolved)"}. Provide streetTypeLexiconPath, or pass ` +
-					`overrides.streetType=false for a deliberate ablation.`
+					`overrides.streetType="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -487,10 +497,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
 	let localitySurfaceLexicon: GazetteerLexicon | null = null
 
-	if (overrides.localitySurface === false) {
+	if (overrides.localitySurface === "off") {
 		if (localitySurfaceRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: locality_surface channel ABLATED (override localitySurface:false) but ` +
+				`[createScorer] OVERRIDE: locality_surface channel ABLATED (override localitySurface:"off") but ` +
 					`the model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the bundle.`
 			)
 		}
@@ -505,45 +515,36 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 				strict,
 				`locality_surface channel is declared REQUIRED by the model-card but the lexicon was not found ` +
 					`at ${localitySurfaceLexiconPath ?? "(unresolved)"}. Provide localitySurfaceLexiconPath, or pass ` +
-					`overrides.localitySurface=false for a deliberate ablation.`
+					`overrides.localitySurface="off" for a deliberate ablation.`
 			)
 		}
 	}
 
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
-	let addressSystemConventions: "auto" | string | null
 	const conventionsOverride = overrides.conventions ?? "declared"
 
 	if (conventionsOverride === "off") {
-		addressSystemConventions = null
-
 		if (conventionsRequired) {
 			console.error(
 				`[createScorer] OVERRIDE: conventions DISABLED (override conventions:"off") but the ` +
 					`model-card declares them REQUIRED (mode "${declaredConventionsMode}").`
 			)
 		}
-	} else if (conventionsOverride !== "declared") {
-		addressSystemConventions = conventionsOverride
-
-		if (conventionsOverride !== declaredConventionsMode) {
-			console.error(
-				`[createScorer] OVERRIDE: conventions mode set to "${conventionsOverride}" (model-card ` +
-					`declares "${declaredConventionsMode}").`
-			)
-		}
-	} else {
-		addressSystemConventions = conventionsRequired ? declaredConventionsMode : null
-
-		if (conventionsRequired && !addressSystemConventions) {
-			fail(strict, `conventions are declared REQUIRED by the model-card but no mode could be resolved.`)
-		}
+	} else if (conventionsOverride !== "declared" && conventionsOverride !== declaredConventionsMode) {
+		console.error(
+			`[createScorer] OVERRIDE: conventions mode set to "${conventionsOverride}" (model-card ` +
+				`declares "${declaredConventionsMode}").`
+		)
 	}
 
-	const bridgePunctuationGaps = overrides.bridge ?? declared.bridge?.required ?? false
+	const addressSystemConventions = addressSystemConventionsFor(conventionsOverride, declared)
+	const bridgePunctuationGaps = punctuationBridgingFor(overrides.bridge ?? "declared", declared)
 
-	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(overrides.suppressGazetteerNearPostcode, declared)
+	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(
+		overrides.suppressGazetteerNearPostcode ?? "declared",
+		declared
+	)
 
 	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 
@@ -561,7 +562,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		suppressGazetteerNearPostcode,
 
-		addressSystemConventions: (addressSystemConventions ?? "off") as AddressSystemConventions,
+		addressSystemConventions,
 		bridgePunctuationGaps,
 	})
 }

@@ -48,15 +48,15 @@ export async function buildParseRig(
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = options.modelAnchorLookup || ""
 	const ablateToAnchor = options.ablateToAnchor ?? false
-	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor=false` through
+	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor="off"` through
 	// createScorer (a loud warning rather than a throw).
 	// Replaces the old empty-anchor.json idiom.
 	// The fail-closed check refuses it (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
-		...(ablateToAnchor ? { gazetteer: false, conventions: "off" } : {}),
-		...(anchorOff ? { anchor: false } : {}),
+		...(ablateToAnchor ? { gazetteer: "off", conventions: "off" } : {}),
+		...(anchorOff ? { anchor: "off" } : {}),
 	}
 
 	const neural = await createScorer({
@@ -81,7 +81,7 @@ export async function buildParseRig(
 	)
 
 	if (anchorOff) {
-		reportError("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
+		reportError('[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor="off", #887 declared ablation)')
 	}
 
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range

@@ -5,6 +5,7 @@ import {
 	type Resolver,
 	type ResolveOpts,
 	countryFromPostcodeFormat,
+	RESOLVE_SWITCH_DEFAULTS,
 } from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -634,7 +635,7 @@ describe("The lineage-attachment wiring", () => {
 		})
 	})
 
-	it("passes the on-by-default switches as explicit values and omits the off opt-ins", async () => {
+	it("passes every forwarded switch as an explicit value", async () => {
 		const captured: Array<ResolveOpts | undefined> = []
 		await geocodeAddress("Weimar", capturingDeps(captured))
 
@@ -643,10 +644,35 @@ describe("The lineage-attachment wiring", () => {
 			includeAncestors: true,
 			postcodeCountryCoherence: true,
 			adminContainmentRerank: true,
+			postcodeShapeCoherence: false,
+			postcodeContainmentCoherence: false,
+			spanRescoreRequireContextRemainder: false,
+			postcodePrefixPrior: false,
 		})
 
-		expect(captured[0]).not.toHaveProperty("postcodeShapeCoherence")
 		expect(captured[0]).not.toHaveProperty("diagnoseUnreachable")
+	})
+
+	it("forwards an explicit adminContainmentRerank: false", async () => {
+		const captured: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", { ...capturingDeps(captured), adminContainmentRerank: false })
+
+		expect(captured[0]?.adminContainmentRerank).toBe(false)
+	})
+
+	it("shares the resolver's default for every switch it only forwards", () => {
+		for (const key of [
+			"adminCoherence",
+			"diagnoseUnreachable",
+			"postcodeCountryCoherence",
+			"postcodeShapeCoherence",
+			"postcodeContainmentCoherence",
+			"adminContainmentRerank",
+			"spanRescoreRequireContextRemainder",
+			"postcodePrefixPrior",
+		] as const) {
+			expect(GEOCODE_SWITCH_DEFAULTS[key]).toBe(RESOLVE_SWITCH_DEFAULTS[key])
+		}
 	})
 })
 

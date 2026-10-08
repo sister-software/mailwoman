@@ -62,7 +62,7 @@ describe.skipIf(!haveAll)("CreateScorer capability delta check", () => {
 			forbiddenTags: ["street_prefix"],
 		}
 
-		await expect(createScorer({ ...baseOpts, tier: "pocket", overrides: { gazetteer: false } })).rejects.toThrow(
+		await expect(createScorer({ ...baseOpts, tier: "pocket", overrides: { gazetteer: "off" } })).rejects.toThrow(
 			/tier `pocket`.*maskOff F1 \d/s
 		)
 	})

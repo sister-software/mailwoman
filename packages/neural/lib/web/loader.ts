@@ -10,8 +10,15 @@ import type { StageSource } from "@mailwoman/core/pipeline"
 import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
-import { type AddressSystemConventions, NeuralAddressClassifier } from "#classifier"
-import { gazetteerSuppressionFor } from "#classifier/options"
+import { NeuralAddressClassifier } from "#classifier"
+import {
+	addressSystemConventionsFor,
+	type ConventionsSetting,
+	type DeclaredModelBehavior,
+	gazetteerSuppressionFor,
+	type ModelCardToggle,
+	punctuationBridgingFor,
+} from "#classifier/options"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
@@ -220,21 +227,23 @@ export interface LoadFromURLsOptions {
 	/**
 	 * Whether to zero the gazetteer channel next to postcode-anchor hits.
 	 *
-	 * The default follows the model card's declaration (see {@link gazetteerSuppressionFor}).
+	 * The default `"declared"` follows the model card (see {@link gazetteerSuppressionFor}).
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: ModelCardToggle
 
 	/**
 	 * The address-system conventions mode.
-	 * The default is `"auto"`.
+	 *
+	 * The default `"declared"` follows the model card (see {@link addressSystemConventionsFor}).
 	 */
-	addressSystemConventions?: AddressSystemConventions
+	addressSystemConventions?: ConventionsSetting
 
 	/**
 	 * Whether to merge same-tag spans split by punctuation, as in `P.O. Box`.
-	 * It defaults to `true`.
+	 *
+	 * The default `"declared"` follows the model card (see {@link punctuationBridgingFor}).
 	 */
-	bridgePunctuationGaps?: boolean
+	bridgePunctuationGaps?: ModelCardToggle
 
 	/**
 	 * The fetch implementation.
@@ -420,6 +429,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	}
 
 	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : null
+	const declared = (modelCard?.requires ?? null) as DeclaredModelBehavior | null
 
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
@@ -432,12 +442,9 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
-		suppressGazetteerNearPostcode: gazetteerSuppressionFor(
-			opts.suppressGazetteerNearPostcode,
-			modelCard?.requires as { suppress_gazetteer_near_postcode?: boolean } | undefined
-		),
-		addressSystemConventions: opts.addressSystemConventions ?? "auto",
-		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
+		suppressGazetteerNearPostcode: gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode ?? "declared", declared),
+		addressSystemConventions: addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared),
+		bridgePunctuationGaps: punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared),
 	})
 
 	await runner.infer([0])

@@ -30,6 +30,7 @@ import {
 	type ArmEvidenceObservation,
 	observeEvidence,
 	replayBackend,
+	SAME_DATA_RESOLVER_PINS,
 	type SameDataFixtureRow,
 	type SameDataPanelRow,
 } from "#tools/eval-harness/same-data/fixture"
@@ -206,6 +207,7 @@ export async function runResolverArm(
 		const resolver = createWOFResolver(replayBackend(row, misses))
 
 		const decorated = await resolver.resolveTree(row.tree, {
+			...SAME_DATA_RESOLVER_PINS,
 			...opts,
 			traceSink: (record) => traces.push(record),
 		})

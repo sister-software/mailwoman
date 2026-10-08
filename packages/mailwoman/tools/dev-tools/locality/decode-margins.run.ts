@@ -101,7 +101,7 @@ if (!byGroup.size) {
 
 const deps = await buildGauntletDeps({
 	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
-	...(values["no-gazetteer-suppression"] ? { suppressGazetteerNearPostcode: false } : {}),
+	suppressGazetteerNearPostcode: values["no-gazetteer-suppression"] ? "off" : "declared",
 })
 
 function isLocalityLabel(label: string): boolean {

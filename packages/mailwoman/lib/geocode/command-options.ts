@@ -7,6 +7,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
+import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import type { CapitalTier } from "#resolver-backend"
 
@@ -64,11 +65,11 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		localeCountryPrior: false,
 		gazetteerPrior: GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
 		placeCountry: true,
-		postcodeCountryCoherence: true,
+		postcodeCountryCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence,
 		forkEntity: true,
-		postcodeShapeCoherence: false,
-		postcodeContainmentCoherence: false,
-		adminContainmentRerank: true,
+		postcodeShapeCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeShapeCoherence,
+		postcodeContainmentCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
+		adminContainmentRerank: GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
 		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,

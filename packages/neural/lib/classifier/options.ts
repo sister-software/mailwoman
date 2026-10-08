@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { SystemCode } from "@mailwoman/codex"
+import { SYSTEM_CODES, type SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type {
 	CaseNormalization,
@@ -14,6 +14,7 @@ import type {
 	WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
+import { z } from "zod"
 
 import type { AddressSystemTable } from "#address-system"
 import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
@@ -402,18 +403,112 @@ export interface ParseOpts {
 }
 
 /**
+ * Schema for {@link AddressSystemConventions}.
+ */
+export const AddressSystemConventionsSchema = z.union([
+	z.enum(["off", "auto"]),
+	z.enum(SYSTEM_CODES as [SystemCode, ...SystemCode[]]),
+])
+
+/**
+ * Reads an address-system conventions mode from a command-line or card string.
+ *
+ * @throws When the value is not `"off"`, `"auto"` or a known system code.
+ */
+export function parseAddressSystemConventions(value: string): AddressSystemConventions {
+	const result = AddressSystemConventionsSchema.safeParse(value)
+
+	if (!result.success) {
+		throw new Error(
+			`unknown address-system conventions mode "${value}": expected "off", "auto" or one of ${SYSTEM_CODES.join(", ")}`
+		)
+	}
+
+	return result.data
+}
+
+/**
+ * How a loader sets a behavior that the model card declares.
+ *
+ * - `"declared"` (the default) follows the card, and a card that does not
+ *   declare the behavior leaves it off.
+ * - `"on"` and `"off"` replace the card's declaration, a deliberate departure from how the model trained.
+ */
+export const ModelCardToggleSchema = z.enum(["declared", "on", "off"])
+
+export type ModelCardToggle = z.infer<typeof ModelCardToggleSchema>
+
+/**
+ * How a loader sets the address-system conventions: `"declared"` (the default) follows
+ * the card, and any {@link AddressSystemConventions} mode replaces it.
+ */
+export const ConventionsSettingSchema = z.union([z.literal("declared"), AddressSystemConventionsSchema])
+
+export type ConventionsSetting = z.infer<typeof ConventionsSettingSchema>
+
+/**
+ * The model-card `requires` fields that the loaders resolve through this module.
+ */
+export interface DeclaredModelBehavior {
+	suppress_gazetteer_near_postcode?: boolean
+	bridge?: { required: boolean }
+	conventions?: { required: boolean; mode?: string }
+}
+
+function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): boolean {
+	if (setting === "declared") return declared ?? false
+
+	return setting === "on"
+}
+
+/**
  * Whether a loader zeroes the gazetteer channel next to postcode-anchor hits.
  *
  * Inference must match training, so the model card's `requires.suppress_gazetteer_near_postcode` decides.
  * A model whose card does not declare it was trained without the choreography, so it is off.
  *
- * A caller's explicit boolean replaces the card's declaration.
- *
  * Every loader (Node, scorer, browser) resolves the setting here.
  */
 export function gazetteerSuppressionFor(
-	override: boolean | undefined,
-	declared: { suppress_gazetteer_near_postcode?: boolean } | null | undefined
+	setting: ModelCardToggle,
+	declared: DeclaredModelBehavior | null | undefined
 ): boolean {
-	return override ?? declared?.suppress_gazetteer_near_postcode ?? false
+	return toggleFor(setting, declared?.suppress_gazetteer_near_postcode)
+}
+
+/**
+ * Whether a loader merges same-tag spans split by short punctuation.
+ *
+ * The model card's `requires.bridge` decides, and a card that does not declare it leaves bridging off.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ */
+export function punctuationBridgingFor(
+	setting: ModelCardToggle,
+	declared: DeclaredModelBehavior | null | undefined
+): boolean {
+	return toggleFor(setting, declared?.bridge?.required)
+}
+
+/**
+ * The address-system conventions mode a loader configures.
+ *
+ * A card that requires conventions supplies its `mode`, defaulting to `"auto"`.
+ * A card that does not require them leaves conventions `"off"`.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ *
+ * @throws When the card declares a mode that is not a known conventions mode.
+ */
+export function addressSystemConventionsFor(
+	setting: ConventionsSetting,
+	declared: DeclaredModelBehavior | null | undefined
+): AddressSystemConventions {
+	if (setting !== "declared") return setting
+
+	const conventions = declared?.conventions
+
+	if (!conventions?.required) return "off"
+
+	return parseAddressSystemConventions(conventions.mode ?? "auto")
 }

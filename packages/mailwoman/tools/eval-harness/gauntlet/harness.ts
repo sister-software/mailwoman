@@ -15,6 +15,7 @@ import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import type { ModelCardToggle } from "@mailwoman/neural/classifier/options"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
@@ -87,12 +88,12 @@ export interface GauntletDepsOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * Override the card's near-postcode gazetteer choreography for this run.
+	 * The near-postcode gazetteer choreography for this run, `"declared"` (the card's) by default.
 	 *
-	 * A declared ablation that pairs with the train-time half, so serving a model trained
-	 * with it under `false` is a deliberate mismatch and never a shipping configuration.
+	 * Any other value is a declared ablation that pairs with the train-time half, so serving a model
+	 * trained with it under `"off"` is a deliberate mismatch and never a shipping configuration.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: ModelCardToggle
 	/**
 	 * Replace the kind classifier's top verdict on every input this deps object geocodes —
 	 * a declared ablation, never a shipping configuration.
@@ -376,10 +377,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		}
 	}
 
-	const ablation =
-		opts.suppressGazetteerNearPostcode === undefined
-			? {}
-			: { suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode }
+	const ablation = { suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? "declared" }
 
 	const classifier = opts.weightsCacheRoot
 		? await NeuralAddressClassifier.loadFromWeights({

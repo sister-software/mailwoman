@@ -8,6 +8,7 @@
 
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 
 import { scoreAffix } from "#tools/eval-harness/score/affix"
 
@@ -31,7 +32,7 @@ async function main(): Promise<void> {
 	const values = rawValues as Record<string, string | boolean | undefined>
 
 	await scoreAffix({
-		conventions: values["conventions"] as string | undefined,
+		conventions: values["conventions"] ? parseAddressSystemConventions(values["conventions"] as string) : undefined,
 		file: values["file"] as string | undefined,
 		gazetteerLexicon: values["gazetteer-lexicon"] as string | undefined,
 		json: values["json"] as string | undefined,

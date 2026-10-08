@@ -142,8 +142,8 @@ export interface GeocodeSessionOptions {
 	postcodeContainmentCoherence: boolean
 
 	/**
-	 * Whether a parsed region re-ranks locality candidates by admin containment,
-	 * where only `false` disables it.
+	 * Whether a parsed region re-ranks locality candidates by admin containment.
+	 * Defaults to {@link GEOCODE_SWITCH_DEFAULTS}.
 	 */
 	adminContainmentRerank?: boolean
 

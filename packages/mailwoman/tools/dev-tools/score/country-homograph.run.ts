@@ -12,6 +12,7 @@
 
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 
 import { scoreCountryHomograph } from "#tools/eval-harness/score/country-homograph"
 
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
 	const values = rawValues as Record<string, string | boolean | undefined>
 
 	await scoreCountryHomograph({
-		conventions: values["conventions"] as string | undefined,
+		conventions: values["conventions"] ? parseAddressSystemConventions(values["conventions"] as string) : undefined,
 		file: values["file"] as string | undefined,
 		gazetteerLexicon: values["gazetteer-lexicon"] as string | undefined,
 		json: values["json"] as string | undefined,

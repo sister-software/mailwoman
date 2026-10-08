@@ -69,19 +69,16 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					argv.push("--layer", layer)
 				}
 
-				if (args["gazetteer_prior"]) {
-					argv.push("--gazetteer-prior")
-				}
+				// An unset pin passes no flag, so the gauntlet grades the production default.
+				for (const [flag, key] of [
+					["--gazetteer-prior", "gazetteer_prior"],
+					["--postcode-country-coherence", "postcode_country_coherence"],
+				] as const) {
+					const pin = args[key]
 
-				// The CLI uses separate flags for the two directions.
-				// `undefined` reaches neither flag.
-				// Unset means the production default that the board grades.
-				if (args["postcode_country_coherence"] === true) {
-					argv.push("--postcode-country-coherence")
-				}
-
-				if (args["postcode_country_coherence"] === false) {
-					argv.push("--postcode-country-coherence-off")
+					if (typeof pin === "boolean") {
+						argv.push(flag, pin ? "on" : "off")
+					}
 				}
 
 				for (const [flag, key] of [

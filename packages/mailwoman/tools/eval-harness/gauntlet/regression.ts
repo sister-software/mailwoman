@@ -46,15 +46,15 @@ export interface GauntletLayerOptions {
 	 */
 	model?: string
 	/**
-	 * Override the card's near-postcode gazetteer choreography.
+	 * The near-postcode gazetteer choreography, `"declared"` (the card's) by default.
 	 *
-	 * A declared ablation.
-	 * The choreography pairs with the train-time half, so a board run under `false`
+	 * Any other value is a declared ablation.
+	 * The choreography pairs with the train-time half, so a board run under `"off"`
 	 * measures what the channel is worth on every tag at once.
 	 *
 	 * This is the only way to price the locality it recovers against the postcode it was added to guard.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: GauntletDepsOptions["suppressGazetteerNearPostcode"]
 	/**
 	 * Candidate tokenizer (tokenizer-splice candidates only).
 	 */
@@ -91,9 +91,10 @@ export interface GauntletLayerOptions {
 export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
 	const pins = {
 		...(options.pins ? { pins: options.pins } : {}),
-		...(options.suppressGazetteerNearPostcode === undefined
-			? {}
-			: { suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode }),
+		// Unset leaves `buildGauntletDeps` its one default, the card's declaration.
+		...(options.suppressGazetteerNearPostcode
+			? { suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode }
+			: {}),
 	}
 
 	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...pins }

@@ -150,9 +150,17 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 		expect(locality?.regionQualifier).toBe("Thuria")
 	})
 
-	it("does NOT thread the qualifier when the setting is off — the default is byte-stable", async () => {
+	it("threads the qualifier by default, because the setting defaults on", async () => {
 		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
-		const { locality } = await resolveWith([{ id: 1, country: "US" }], {}, seen)
+
+		await resolveWith([{ id: 1, country: "US" }], {}, seen)
+
+		expect(seen.find((q) => q.placetype === "locality")?.regionQualifier).toBe("Thuria")
+	})
+
+	it("does NOT thread the qualifier when the setting is off — the off arm is byte-stable", async () => {
+		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
+		const { locality } = await resolveWith([{ id: 1, country: "US" }], { adminContainmentRerank: false }, seen)
 
 		expect(seen.every((q) => q.regionQualifier === undefined)).toBe(true)
 		expect(locality.metadata?.["admin_containment"]).toBeUndefined()

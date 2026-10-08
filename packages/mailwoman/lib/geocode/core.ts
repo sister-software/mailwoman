@@ -45,7 +45,11 @@ import type {
 	Resolver,
 	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
-import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
+import {
+	countriesFromPostcodeFormat,
+	countryFromPostcodeFormat,
+	RESOLVE_SWITCH_DEFAULTS,
+} from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
@@ -137,20 +141,23 @@ export interface GeocodeSwitches {
 
 /**
  * The value of each {@link GeocodeSwitches} setting that a geocode leaves unset.
+ *
+ * A switch the geocode only forwards to the resolver takes the resolver's default.
+ * `includeAncestors` departs from it on purpose, because the admin-coherence verdicts read the ancestors.
  */
 export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	poiVenueTier: false,
 	normalizeInput: true,
 	postcodeCountryPrior: true,
-	adminCoherence: true,
-	diagnoseUnreachable: false,
+	adminCoherence: RESOLVE_SWITCH_DEFAULTS.adminCoherence,
+	diagnoseUnreachable: RESOLVE_SWITCH_DEFAULTS.diagnoseUnreachable,
 	includeAncestors: true,
-	postcodeCountryCoherence: true,
-	postcodeShapeCoherence: false,
-	postcodeContainmentCoherence: false,
-	adminContainmentRerank: true,
-	spanRescoreRequireContextRemainder: false,
-	postcodePrefixPrior: false,
+	postcodeCountryCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeCountryCoherence,
+	postcodeShapeCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeShapeCoherence,
+	postcodeContainmentCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
+	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
+	spanRescoreRequireContextRemainder: RESOLVE_SWITCH_DEFAULTS.spanRescoreRequireContextRemainder,
+	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 }
 
 /**
@@ -456,11 +463,13 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 }
 
 /**
- * Resolver options that are explicit opt-ins.
+ * The geocode switches the resolver reads under the same name, each forwarded as an explicit value.
  */
-const OPT_IN_RESOLVER_PINS = [
+const FORWARDED_RESOLVER_SWITCHES = [
+	"postcodeCountryCoherence",
 	"postcodeShapeCoherence",
 	"postcodeContainmentCoherence",
+	"adminContainmentRerank",
 	"spanRescoreRequireContextRemainder",
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]
@@ -646,17 +655,8 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	opts.postcodeCountryCoherence = switches.postcodeCountryCoherence
-
-	// The resolver treats an unset opt-in as off, so only an enabled one is passed.
-	for (const pin of OPT_IN_RESOLVER_PINS) {
-		if (switches[pin]) {
-			opts[pin] = true
-		}
-	}
-
-	if (switches.adminContainmentRerank) {
-		opts.adminContainmentRerank = true
+	for (const key of FORWARDED_RESOLVER_SWITCHES) {
+		opts[key] = switches[key]
 	}
 
 	// Pin weak-resolution mode only when explicitly set.

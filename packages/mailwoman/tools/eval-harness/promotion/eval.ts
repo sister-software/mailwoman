@@ -18,6 +18,7 @@ import { checkCompiledFreshness } from "@mailwoman/core/module/compiled-freshnes
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -452,7 +453,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		channelOptions.suppressGazNearPostcode = true
 	}
 
-	const CONV_MODE = check.requires_conventions ?? ""
+	const CONV_MODE = check.requires_conventions ? parseAddressSystemConventions(check.requires_conventions) : null
 
 	if (CONV_MODE) {
 		channelOptions.conventions = CONV_MODE

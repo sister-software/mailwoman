@@ -172,7 +172,7 @@ describe("gazetteerPrior pin (#1497)", () => {
 
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 	// A one-sided forward that handles only the truthy half silently discards
-	// `--gazetteer-prior-off`, grading the default arm under an off label.
+	// `--gazetteer-prior off`, grading the default arm under an off label.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})

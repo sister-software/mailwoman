@@ -15,7 +15,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import { canonicalJSON, definitionContentHash } from "#tools/eval-harness/preregistration"
@@ -40,6 +40,16 @@ export const WITHHELD_CANDIDATE_FIELDS = [
 	"resolutionQuality",
 	"variantAliasExempted",
 ] as const
+
+/**
+ * Resolver options every arm records and replays under unless the arm sets them itself.
+ *
+ * The containment rerank acts on `containedByQualifier`, a verdict the fixture withholds,
+ * so the benchmark pins it off rather than inheriting the resolver's default.
+ */
+export const SAME_DATA_RESOLVER_PINS = {
+	adminContainmentRerank: false,
+} as const satisfies ResolveOpts
 
 /**
  * One candidate as the fixture represents it: a `ResolvedPlace` minus the withheld verdicts.

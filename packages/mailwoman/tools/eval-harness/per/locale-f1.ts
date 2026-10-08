@@ -41,6 +41,7 @@ import {
 	parseGazetteerLexicon,
 	parseWordConsistencyEnv,
 } from "@mailwoman/neural"
+import type { AddressSystemConventions } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -91,7 +92,7 @@ export interface PerLocaleF1Options {
 	gazetteerLexiconPath?: string
 	noAnchor?: boolean
 	suppressGazNearPostcode?: boolean
-	conventions?: string
+	conventions?: AddressSystemConventions
 	bridgeGaps?: boolean
 	outJSON?: string
 	/**
@@ -447,7 +448,7 @@ export async function perLocaleF1(
 			gazetteerLexicon,
 			suppressGazetteerNearPostcode: !!args.suppressGazNearPostcode,
 			// `--conventions auto|<system>` enables the address-system conventions mask.
-			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
+			...(args.conventions ? { addressSystemConventions: args.conventions } : {}),
 			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
 		})
 	} else {
