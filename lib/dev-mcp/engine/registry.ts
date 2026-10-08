@@ -17,6 +17,7 @@ import {
 	type GeocodeSession,
 	type GeocodeSessionOptions,
 } from "mailwoman/geocode"
+import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/switch-pin"
 import type { PathBuilderLike } from "path-ts"
 
 import { missingWeightsCacheArtifacts } from "#dev-mcp/eval-report"
@@ -39,20 +40,20 @@ export interface EngineConfig {
 	 * A candidate weights bundle to load instead of the installed package.
 	 */
 	weights_cache?: string
-	gazetteer_prior?: boolean
-	place_country?: boolean
+	gazetteer_prior?: SwitchPin
+	place_country?: SwitchPin
 	place_country_threshold?: number
-	postcode_country_coherence?: boolean
-	fork_entity?: boolean
-	locale_country_prior?: boolean
-	postcode_shape_coherence?: boolean
-	postcode_containment_coherence?: boolean
-	admin_containment_rerank?: boolean
+	postcode_country_coherence?: SwitchPin
+	fork_entity?: SwitchPin
+	locale_country_prior?: SwitchPin
+	postcode_shape_coherence?: SwitchPin
+	postcode_containment_coherence?: SwitchPin
+	admin_containment_rerank?: SwitchPin
 	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 * Defaults to `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`.
 	 */
-	poi_venue_tier?: boolean
+	poi_venue_tier?: SwitchPin
 	/**
 	 * The capital-status ranking tier (`"auto"`, `"required"` or `"off"`).
 	 */
@@ -128,19 +129,30 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		locale: config.locale ?? production.locale,
 		countryScope: config.country_scope ?? production.countryScope,
 		dataRoot: config.data_root ?? production.dataRoot,
-		localeCountryPrior: config.locale_country_prior ?? production.localeCountryPrior,
-		placeCountry: config.place_country ?? production.placeCountry,
-		postcodeCountryCoherence: config.postcode_country_coherence ?? production.postcodeCountryCoherence,
-		forkEntity: config.fork_entity ?? production.forkEntity,
-		postcodeShapeCoherence: config.postcode_shape_coherence ?? production.postcodeShapeCoherence,
-		postcodeContainmentCoherence: config.postcode_containment_coherence ?? production.postcodeContainmentCoherence,
+		localeCountryPrior: pinnedSwitch(config.locale_country_prior ?? "production", production.localeCountryPrior),
+		placeCountry: pinnedSwitch(config.place_country ?? "production", production.placeCountry),
+		postcodeCountryCoherence: pinnedSwitch(
+			config.postcode_country_coherence ?? "production",
+			production.postcodeCountryCoherence
+		),
+		forkEntity: pinnedSwitch(config.fork_entity ?? "production", production.forkEntity),
+		postcodeShapeCoherence: pinnedSwitch(
+			config.postcode_shape_coherence ?? "production",
+			production.postcodeShapeCoherence
+		),
+		postcodeContainmentCoherence: pinnedSwitch(
+			config.postcode_containment_coherence ?? "production",
+			production.postcodeContainmentCoherence
+		),
 		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
-		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
-		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
-		poiVenueTier: config.poi_venue_tier ?? GEOCODE_SWITCH_DEFAULTS.poiVenueTier,
+		gazetteerPrior: pinnedSwitch(config.gazetteer_prior ?? "production", production.gazetteerPrior),
+		adminContainmentRerank: pinnedSwitch(
+			config.admin_containment_rerank ?? "production",
+			production.adminContainmentRerank
+		),
+		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,
-		variantAliasExemption:
-			(config.variant_alias_exemption ?? (production.variantAliasExemption ? "applied" : "not_applied")) === "applied",
+		variantAliasExemption: config.variant_alias_exemption ?? production.variantAliasExemption,
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),

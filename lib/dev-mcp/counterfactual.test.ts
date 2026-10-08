@@ -33,6 +33,15 @@ describe("enumerateFlips — one setting at a time", () => {
 		}
 	})
 
+	it("patches a switch with the pin opposite to its effective value", async () => {
+		const effective = resolveConfig({})
+		const { flips } = await enumerateFlips(effective, "US")
+		const prior = flips.find((flip) => flip.setting === "gazetteer_prior")!
+
+		expect(prior.patch).toEqual({ gazetteer_prior: effective.gazetteerPrior ? "off" : "on" })
+		expect(resolveConfig(prior.patch).gazetteerPrior).toBe(!effective.gazetteerPrior)
+	})
+
 	it("offers every setting in the fixed space where it applies", async () => {
 		const { flips } = await enumerateFlips(resolveConfig({}), "GB")
 

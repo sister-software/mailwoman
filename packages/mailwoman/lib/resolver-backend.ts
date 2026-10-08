@@ -1,5 +1,6 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type {
@@ -120,8 +121,10 @@ export async function createResolverBackend(
 		dataRoot?: PathBuilderLike
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
-
-		variantAliasExemption?: boolean
+		/**
+		 * The candidate backend's variant-alias exemption, defaulting to the backend's own default.
+		 */
+		variantAliasExemption?: VariantAliasExemption
 	}
 ): Promise<PlaceLookup> {
 	const candidate = await resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
@@ -131,7 +134,7 @@ export async function createResolverBackend(
 
 		return new mod.WOFCandidateTableLookup({
 			databasePath: candidate,
-			...(opts.variantAliasExemption === undefined ? {} : { variantAliasExemption: opts.variantAliasExemption }),
+			...(opts.variantAliasExemption ? { variantAliasExemption: opts.variantAliasExemption } : {}),
 		})
 	}
 

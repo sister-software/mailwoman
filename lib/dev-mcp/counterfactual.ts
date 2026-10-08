@@ -115,7 +115,7 @@ export async function enumerateFlips(
 		setting: "gazetteer_prior",
 		from: String(effective.gazetteerPrior),
 		to: String(!effective.gazetteerPrior),
-		patch: { gazetteer_prior: !effective.gazetteerPrior },
+		patch: { gazetteer_prior: effective.gazetteerPrior ? "off" : "on" },
 	})
 
 	const scopeTo = effective.countryScope === "none" ? "auto" : "none"
@@ -131,7 +131,7 @@ export async function enumerateFlips(
 		setting: "fork_entity",
 		from: String(effective.forkEntity),
 		to: String(!effective.forkEntity),
-		patch: { fork_entity: !effective.forkEntity },
+		patch: { fork_entity: effective.forkEntity ? "off" : "on" },
 	})
 
 	return { flips, skipped }

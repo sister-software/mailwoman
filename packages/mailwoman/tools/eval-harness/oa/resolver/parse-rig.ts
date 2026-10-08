@@ -223,7 +223,7 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		// The cap is passed through at zero as well as at a distance.
 		// Zero rejects every fall.
 		// This arm separates the pass's re-pick behavior from its coordinate fallback.
-		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
+		...switchPinEntry("postcodeConsistency", options.postcodeConsistency ?? "production"),
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
 			: {}),

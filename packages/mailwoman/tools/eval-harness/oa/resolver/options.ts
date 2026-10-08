@@ -115,15 +115,16 @@ export interface OAResolverEvalOptions {
 	 */
 	modelCard?: string
 	/**
-	 * Force `postcodeConsistency` off.
+	 * Pins `postcodeConsistency`.
+	 * Defaults to `"production"`.
 	 *
-	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices the cap without a sweep,
+	 * Paired with {@link postcodeConsistencyMaxMoveKm}, `"off"` prices the cap without a sweep,
 	 * because the rows whose answer differs from the shipped arm are exactly the ones the
 	 * pass touched and the coordinate distance is how far its fallback moved each.
 	 */
-	noPostcodeConsistency?: boolean
+	postcodeConsistency?: SwitchPin
 	/**
-	 * How far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point.
+	 * How far the {@link postcodeConsistency} pass may move a coordinate onto the postcode point.
 	 * Unset is the library default.
 	 */
 	postcodeConsistencyMaxMoveKm?: number

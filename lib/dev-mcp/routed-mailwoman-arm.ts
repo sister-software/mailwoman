@@ -19,7 +19,6 @@ import {
 	PRODUCTION_RESOLVER_PINS,
 } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { overlayLocale } from "mailwoman/tools/eval-harness/gauntlet/routing"
-import { switchPinOf } from "mailwoman/tools/eval-harness/switch-pin"
 import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
@@ -246,12 +245,12 @@ export async function buildRoutedMailwomanArm(
 			...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 			pins: {
 				...PRODUCTION_RESOLVER_PINS,
-				postcodeCountryCoherence: switchPinOf(config.postcode_country_coherence),
-				gazetteerPrior: switchPinOf(config.gazetteer_prior),
-				adminContainmentRerank: switchPinOf(config.admin_containment_rerank),
+				postcodeCountryCoherence: config.postcode_country_coherence ?? "production",
+				gazetteerPrior: config.gazetteer_prior ?? "production",
+				adminContainmentRerank: config.admin_containment_rerank ?? "production",
 				capitalTier: config.capital_tier ?? "production",
 				variantAliasExemption: config.variant_alias_exemption ?? "production",
-				poiVenueTier: switchPinOf(config.poi_venue_tier),
+				poiVenueTier: config.poi_venue_tier ?? "production",
 			},
 		})
 	)

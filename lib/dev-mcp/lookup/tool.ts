@@ -464,7 +464,7 @@ async function probeLocaleFST(
 	const engine = await registry.acquire({
 		...args.config,
 		...(locale ? { locale } : {}),
-		gazetteer_prior: true,
+		gazetteer_prior: "on",
 	})
 
 	const path =

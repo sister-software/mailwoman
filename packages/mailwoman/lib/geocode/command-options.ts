@@ -5,6 +5,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import type { PathBuilderLike } from "path-ts"
 
 import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
@@ -41,10 +42,9 @@ export interface GeocodeCommandOptions {
 	 */
 	capitalTier: CapitalTier
 	/**
-	 * Own-name variant-alias exemption.
-	 * `--no-variant-alias-exemption` opts out.
+	 * Own-name variant-alias exemption (`--variant-alias-exemption applied|not_applied`).
 	 */
-	variantAliasExemption: boolean
+	variantAliasExemption: VariantAliasExemption
 	placeCountryThreshold: number
 	format: "json" | "text" | "jsonld"
 	json: boolean

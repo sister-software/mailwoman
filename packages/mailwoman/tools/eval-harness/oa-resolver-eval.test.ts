@@ -338,7 +338,8 @@ describe("resolveOptsFrom", () => {
 	})
 
 	it("turns the whole pass off on its own pin, which is a different arm from any cap", () => {
-		expect(resolveOptsFrom({ noPostcodeConsistency: true }, "none")).toEqual({ postcodeConsistency: false })
+		expect(resolveOptsFrom({ postcodeConsistency: "off" }, "none")).toEqual({ postcodeConsistency: false })
+		expect(resolveOptsFrom({ postcodeConsistency: "production" }, "none")).toEqual({})
 	})
 
 	it("carries the #2266 span-rescore pin only when it is set", () => {

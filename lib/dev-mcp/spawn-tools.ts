@@ -12,6 +12,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
+import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { z } from "zod"
 
 import { checkCLIAllowlist } from "#dev-mcp/cli/allowlist"
@@ -46,8 +47,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					.enum(["regression", "metamorphic", "holdout", "ablation", "all"])
 					.default("regression")
 					.describe("`all` runs the multi-layer sequence and takes considerably longer."),
-				gazetteer_prior: z.boolean().optional(),
-				postcode_country_coherence: z.boolean().optional(),
+				gazetteer_prior: SwitchPinSchema.default("production"),
+				postcode_country_coherence: SwitchPinSchema.default("production"),
 				candidate: z.string().optional().describe("Candidate ONNX path — required for the held-out layer."),
 				weights_cache: z.string().optional(),
 				tokenizer: z.string().optional(),
@@ -69,16 +70,11 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					argv.push("--layer", layer)
 				}
 
-				// An unset pin passes no flag, so the gauntlet grades the production default.
 				for (const [flag, key] of [
 					["--gazetteer-prior", "gazetteer_prior"],
 					["--postcode-country-coherence", "postcode_country_coherence"],
 				] as const) {
-					const pin = args[key]
-
-					if (typeof pin === "boolean") {
-						argv.push(flag, pin ? "on" : "off")
-					}
+					argv.push(flag, SwitchPinSchema.parse(args[key] ?? "production"))
 				}
 
 				for (const [flag, key] of [

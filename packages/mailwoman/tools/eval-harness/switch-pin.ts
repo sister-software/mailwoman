@@ -22,15 +22,6 @@ export const SwitchPinSchema = z.enum(SWITCH_PIN_CHOICES)
 export type SwitchPin = z.infer<typeof SwitchPinSchema>
 
 /**
- * The pin an optional boolean from an external interface, such as a tool schema, describes.
- */
-export function switchPinOf(value: boolean | undefined): SwitchPin {
-	if (value === undefined) return "production"
-
-	return value ? "on" : "off"
-}
-
-/**
  * The switch's value under a pin, taking `production` when the pin is `"production"`.
  */
 export function pinnedSwitch(pin: SwitchPin, production: boolean): boolean {

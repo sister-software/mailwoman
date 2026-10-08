@@ -504,7 +504,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			variantAliasExemption:
 				pins.variantAliasExemption === "production"
 					? GEOCODE_SESSION_DEFAULTS.variantAliasExemption
-					: pins.variantAliasExemption === "applied",
+					: pins.variantAliasExemption,
 		})
 	)
 

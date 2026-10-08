@@ -154,7 +154,7 @@ describe("buildRoutedMailwomanArm", () => {
 		const deps = fakeDeps()
 
 		const arm = await buildRoutedMailwomanArm(
-			{ weights_cache: "/candidate", default_country: "US", gazetteer_prior: false },
+			{ weights_cache: "/candidate", default_country: "US", gazetteer_prior: "off" },
 			[resolvedInput({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" })],
 			deps
 		)
@@ -179,9 +179,9 @@ describe("buildRoutedMailwomanArm", () => {
 			{
 				weights_cache: "/candidate",
 				candidate_db: "/staging/candidate-variant.db",
-				postcode_country_coherence: false,
-				gazetteer_prior: false,
-				admin_containment_rerank: true,
+				postcode_country_coherence: "off",
+				gazetteer_prior: "off",
+				admin_containment_rerank: "on",
 				capital_tier: "required",
 				variant_alias_exemption: "applied",
 			},

@@ -8,7 +8,7 @@ import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
-import type { GeocodeResult } from "@mailwoman/core/geocode"
+import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -66,7 +66,7 @@ export type { CapitalTier } from "#resolver-backend"
 export interface GeocodeSessionSettings {
 	gazetteerPrior: boolean
 	capitalTier: CapitalTier
-	variantAliasExemption: boolean
+	variantAliasExemption: VariantAliasExemption
 }
 
 /**
@@ -75,7 +75,7 @@ export interface GeocodeSessionSettings {
 export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
 	gazetteerPrior: true,
 	capitalTier: "auto",
-	variantAliasExemption: true,
+	variantAliasExemption: "applied",
 }
 
 /**
@@ -137,7 +137,7 @@ export interface GeocodeSessionOptions {
 	 * affecting only the candidate backend and requiring the `name_role` column.
 	 * Defaults to {@link GEOCODE_SESSION_DEFAULTS}.
 	 */
-	variantAliasExemption?: boolean
+	variantAliasExemption?: VariantAliasExemption
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 

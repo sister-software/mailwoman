@@ -6,7 +6,7 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
-import type { GeocodeResult } from "@mailwoman/core/geocode"
+import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
@@ -133,10 +133,11 @@ export const spec = {
 				"Bounded national-capital promotion on bare city names: auto (skip when the capitals reference is missing), required (fail when it is missing), or off.",
 		},
 		"variant-alias-exemption": {
-			type: "boolean",
-			default: true,
+			type: "string",
+			default: "applied",
+			choices: VariantAliasExemptionSchema.options,
 			description:
-				"Own-name variant aliases keep their holder's rank in cross-country contests (default on); --no-variant-alias-exemption disables it.",
+				"Whether own-name variant aliases keep their holder's rank in cross-country contests: applied or not_applied.",
 		},
 		"place-country-threshold": {
 			type: "number",
@@ -207,7 +208,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
 		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
-		variantAliasExemption: booleanValue(values, "variant-alias-exemption"),
+		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),

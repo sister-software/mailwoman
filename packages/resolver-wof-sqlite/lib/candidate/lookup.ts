@@ -5,6 +5,7 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { type Ancestor, type GazetteerArtifactCoverage, referentialFromPopulation } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
@@ -43,9 +44,9 @@ export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<Candida
 	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference penalty.
 	 *
 	 * No-ops without the role column.
-	 * Defaults to `true`; pass `false` to penalize variant aliases like any other.
+	 * Defaults to `"applied"`; `"not_applied"` penalizes variant aliases like any other.
 	 */
-	variantAliasExemption?: boolean
+	variantAliasExemption?: VariantAliasExemption
 }
 
 type CandidateRow = Pick<
@@ -160,7 +161,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		// Optional columns are detected once here for hot-path reads.
 		this.#importanceSelect = hasColumn(this.database, "candidate", "importance") ? ", importance" : ""
 		this.#hasNameRole = hasColumn(this.database, "candidate", "name_role")
-		this.#variantAliasExemption = opts.variantAliasExemption ?? true
+		this.#variantAliasExemption = (opts.variantAliasExemption ?? "applied") === "applied"
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
 		if (hasTable(this.database, CANDIDATE_ANCESTOR_TABLE)) {

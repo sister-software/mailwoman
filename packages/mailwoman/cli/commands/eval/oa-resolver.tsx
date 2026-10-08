@@ -48,7 +48,12 @@ export const spec = {
 			default: "production",
 			description: "Pin postcode-country coherence",
 		},
-		"postcode-consistency-off": booleanOption("Force postcode-disambiguated locality selection off"),
+		"postcode-consistency": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin postcode-disambiguated locality selection",
+		},
 		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
 		"span-rescore-require-context-remainder": booleanOption("A sub-span may drop context, never a word of the name"),
 		"span-rescore-weak-resolution": {
@@ -84,13 +89,12 @@ export const spec = {
 
 // The eval prints its own markdown report on stdout, so no `json`.
 const EvalOAResolver = harnessCommand(spec, async (options) => {
-	const { adminFst, postcodeConsistencyOff, postcodeMaxMoveKM, ...rest } = options
+	const { adminFst, postcodeMaxMoveKM, ...rest } = options
 
 	const { oaResolverEval } = await import("#tools/eval-harness/oa/resolver/eval")
 
 	return oaResolverEval({
 		...rest,
-		noPostcodeConsistency: postcodeConsistencyOff,
 		// CLI kebab derivation forces the lowercase-acronym prop above.
 		// The harness option keeps the house spelling, so the rename happens here
 		// rather than in the eval's own interface.

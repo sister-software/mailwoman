@@ -6,15 +6,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { pinnedSwitch, switchPinEntry, switchPinOf, SwitchPinSchema } from "#tools/eval-harness/switch-pin"
+import { pinnedSwitch, switchPinEntry, SwitchPinSchema } from "#tools/eval-harness/switch-pin"
 
 describe("switch pins", () => {
-	it("read an optional boolean as production, on or off", () => {
-		expect(switchPinOf(undefined)).toBe("production")
-		expect(switchPinOf(true)).toBe("on")
-		expect(switchPinOf(false)).toBe("off")
-	})
-
 	it("resolve to the production value only when unpinned", () => {
 		expect(pinnedSwitch("production", true)).toBe(true)
 		expect(pinnedSwitch("production", false)).toBe(false)

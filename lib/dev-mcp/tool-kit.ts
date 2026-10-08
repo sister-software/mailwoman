@@ -9,6 +9,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
+import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { z } from "zod"
 
 import type { Engine, EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -178,8 +179,7 @@ export const INPUT_SET_SCHEMA = z
 /**
  * Validates engine configuration pins, using the CLI's key names.
  *
- * An unset key keeps the production default.
- * It never turns the feature off.
+ * A switch takes `"production"`, `"on"` or `"off"`, and an unset switch is `"production"`.
  */
 export const ENGINE_CONFIG_SCHEMA = z
 	.object({
@@ -200,21 +200,23 @@ export const ENGINE_CONFIG_SCHEMA = z
 					"REFUSED, not silently replaced by the shipped weights — the resolution ladder falls through, so an " +
 					"unchecked typo would grade the default model under the candidate's name."
 			),
-		gazetteer_prior: z.boolean().optional(),
-		place_country: z.boolean().optional(),
+		gazetteer_prior: SwitchPinSchema.optional(),
+		place_country: SwitchPinSchema.optional(),
 		place_country_threshold: z.number().optional(),
-		postcode_country_coherence: z.boolean().optional(),
-		fork_entity: z.boolean().optional(),
-		locale_country_prior: z.boolean().optional(),
-		postcode_shape_coherence: z.boolean().optional(),
-		postcode_containment_coherence: z.boolean().optional(),
-		admin_containment_rerank: z.boolean().optional(),
-		poi_venue_tier: z.boolean().optional(),
+		postcode_country_coherence: SwitchPinSchema.optional(),
+		fork_entity: SwitchPinSchema.optional(),
+		locale_country_prior: SwitchPinSchema.optional(),
+		postcode_shape_coherence: SwitchPinSchema.optional(),
+		postcode_containment_coherence: SwitchPinSchema.optional(),
+		admin_containment_rerank: SwitchPinSchema.optional(),
+		poi_venue_tier: SwitchPinSchema.optional(),
 		capital_tier: z.enum(["auto", "required", "off"]).optional(),
 		variant_alias_exemption: VariantAliasExemptionSchema.optional(),
 	})
 	.strict()
-	.describe("Every pin, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
+	.describe(
+		'Every pin, in the CLI\'s vocabulary. A switch takes "production", "on" or "off"; unset means "production".'
+	)
 
 /**
  * The shared services that each dev MCP tool factory receives.
