@@ -1,5 +1,9 @@
 import type { ResolvedWeights } from "@mailwoman/neural/weights"
-import type { GauntletDeps, GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import {
+	type GauntletDeps,
+	type GauntletResult,
+	PRODUCTION_RESOLVER_PINS,
+} from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
@@ -159,7 +163,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
-			pins: { gazetteerPrior: false },
+			pins: { ...PRODUCTION_RESOLVER_PINS, gazetteerPrior: "off" },
 		})
 
 		expect(deps.runOne).toHaveBeenCalledWith("10 Downing Street, London SW1A 2AA", expect.anything(), {
@@ -189,11 +193,12 @@ describe("buildRoutedMailwomanArm", () => {
 			weightsCacheRoot: "/candidate",
 			candidateDB: "/staging/candidate-variant.db",
 			pins: {
-				postcodeCountryCoherence: false,
-				gazetteerPrior: false,
-				adminContainmentRerank: true,
+				...PRODUCTION_RESOLVER_PINS,
+				postcodeCountryCoherence: "off",
+				gazetteerPrior: "off",
+				adminContainmentRerank: "on",
 				capitalTier: "required",
-				variantAliasExemption: true,
+				variantAliasExemption: "applied",
 			},
 		})
 	})

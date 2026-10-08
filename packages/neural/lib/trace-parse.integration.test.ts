@@ -367,7 +367,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
-		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: true, spanProposer: "none" })
+		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: "on", spanProposer: "none" })
 		const bridge = trace.repairs.find((r) => r.pass === "spanBridge")
 
 		expect(trace.tokens.length).toBeLessThan(pieces.length)

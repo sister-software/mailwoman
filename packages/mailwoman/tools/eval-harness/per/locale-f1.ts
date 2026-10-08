@@ -41,7 +41,7 @@ import {
 	parseGazetteerLexicon,
 	parseWordConsistencyEnv,
 } from "@mailwoman/neural"
-import type { AddressSystemConventions } from "@mailwoman/neural/classifier/options"
+import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -91,9 +91,19 @@ export interface PerLocaleF1Options {
 	modelAnchorLookupPath?: PathBuilderLike
 	gazetteerLexiconPath?: string
 	noAnchor?: boolean
-	suppressGazNearPostcode?: boolean
+	/**
+	 * Defaults to {@linkcode DEFAULT_TOGGLE}.
+	 */
+	suppressGazetteerNearPostcode?: Toggle
+	/**
+	 * `auto` | `<system>` enables the address-system conventions mask.
+	 * Defaults to `"off"`.
+	 */
 	conventions?: AddressSystemConventions
-	bridgeGaps?: boolean
+	/**
+	 * Defaults to {@linkcode DEFAULT_TOGGLE}.
+	 */
+	bridgePunctuationGaps?: Toggle
 	outJSON?: string
 	/**
 	 * The all-caps case handling; `"preserve"` disables the title-case shim for the all-caps read.
@@ -446,10 +456,9 @@ export async function perLocaleF1(
 			labels: card.labels,
 			postcodeAnchorLookup,
 			gazetteerLexicon,
-			suppressGazetteerNearPostcode: !!args.suppressGazNearPostcode,
-			// `--conventions auto|<system>` enables the address-system conventions mask.
-			...(args.conventions ? { addressSystemConventions: args.conventions } : {}),
-			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
+			suppressGazetteerNearPostcode: args.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
+			addressSystemConventions: args.conventions ?? "off",
+			bridgePunctuationGaps: args.bridgePunctuationGaps ?? DEFAULT_TOGGLE,
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()

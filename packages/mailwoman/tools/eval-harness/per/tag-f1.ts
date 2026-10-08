@@ -10,7 +10,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import type { AddressSystemConventions } from "@mailwoman/neural/classifier/options"
+import type { AddressSystemConventions, Toggle } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -182,15 +182,15 @@ export interface UnfoldedEvalClassifierOptions {
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode (paired with the lexicon feed).
 	 */
-	suppressGazNearPostcode: boolean
+	suppressGazetteerNearPostcode: Toggle
 	/**
-	 * `auto` | `<system>` enables the address-system conventions mask.
+	 * `auto` | `<system>` enables the address-system conventions mask, and `off` disables it.
 	 */
-	conventions?: AddressSystemConventions
+	conventions: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
 	 */
-	bridgeGaps?: boolean
+	bridgePunctuationGaps: Toggle
 }
 
 /**
@@ -224,9 +224,9 @@ export async function createUnfoldedEvalClassifier(
 		...(feedGazetteerLexicon
 			? { gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(options.gazetteerLexicon)) }
 			: {}),
-		suppressGazetteerNearPostcode: options.suppressGazNearPostcode,
-		...(options.conventions ? { addressSystemConventions: options.conventions } : {}),
-		...(options.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
+		suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode,
+		addressSystemConventions: options.conventions,
+		bridgePunctuationGaps: options.bridgePunctuationGaps,
 	})
 }
 

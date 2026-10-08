@@ -443,28 +443,17 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	if (guardExit !== null) return guardExit
 
-	const channelOptions: Pick<
-		ScoreAffixOptions,
-		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
-	> = {}
-
-	if (check.requires_gazetteer_lexicon === true) {
-		channelOptions.gazetteerLexicon = GAZ
-		channelOptions.suppressGazNearPostcode = true
-	}
-
 	const CONV_MODE = check.requires_conventions ? parseAddressSystemConventions(check.requires_conventions) : null
 
-	if (CONV_MODE) {
-		channelOptions.conventions = CONV_MODE
-	}
-
-	let BRIDGE_MODE = ""
-
-	if (check.requires_bridge === true) {
-		channelOptions.bridgeGaps = true
-		BRIDGE_MODE = "1"
-	}
+	const channelOptions = {
+		...(check.requires_gazetteer_lexicon === true ? { gazetteerLexicon: GAZ } : {}),
+		suppressGazetteerNearPostcode: check.requires_gazetteer_lexicon === true ? "on" : "off",
+		conventions: CONV_MODE ?? "off",
+		bridgePunctuationGaps: check.requires_bridge === true ? "on" : "off",
+	} as const satisfies Pick<
+		ScoreAffixOptions,
+		"gazetteerLexicon" | "suppressGazetteerNearPostcode" | "conventions" | "bridgePunctuationGaps"
+	>
 
 	if (check.golden_dir) {
 		console.log(`golden dir: ${check.golden_dir} (spec-declared)`)
@@ -499,9 +488,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 					// per-locale-f1 uses `gazetteerLexiconPath` (not `gazetteerLexicon`).
 					...(check.golden_dir ? { goldenDir: check.golden_dir } : {}),
 					...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
-					...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
-					...(channelOptions.conventions ? { conventions: channelOptions.conventions } : {}),
-					...(channelOptions.bridgeGaps ? { bridgeGaps: true } : {}),
+					suppressGazetteerNearPostcode: channelOptions.suppressGazetteerNearPostcode,
+					conventions: channelOptions.conventions,
+					bridgePunctuationGaps: channelOptions.bridgePunctuationGaps,
 					outJSON: `${OUT_DIR}/${tag}-per-locale.json`,
 				},
 				(line) => perLocaleLines.push(line)
@@ -534,7 +523,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				{
 					...probeOptions,
 					...channelOptions,
-					suppressGazNearPostcode: true,
+					suppressGazetteerNearPostcode: "on",
 					json: `${OUT_DIR}/${tag}-country.json`,
 				},
 				(line) => countryLines.push(line)
@@ -637,7 +626,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						anchorLookup: LK,
 						outDir: `${OUT_DIR}/arenas`,
 						...(CONV_MODE ? { conventions: CONV_MODE } : {}),
-						...(BRIDGE_MODE ? { bridgeGaps: true } : {}),
+						bridgePunctuationGaps: channelOptions.bridgePunctuationGaps,
 					},
 					(line) => arenaOut.push(line),
 					(line) => arenaErr.push(line)

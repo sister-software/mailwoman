@@ -17,6 +17,9 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { pinnedSwitch, type SwitchPin } from "#tools/eval-harness/switch-pin"
+
 /**
  * Maximum number of spurious-emission examples printed per label.
  */
@@ -98,10 +101,10 @@ export interface ParityEvalOptions {
 	 */
 	streetMorphology?: boolean
 	/**
-	 * Whether to apply the gazetteer FST emission prior.
-	 * It is on unless set to `false`.
+	 * Pins the gazetteer FST emission prior.
+	 * Defaults to `"production"`, the geocode session's default.
 	 */
-	gazetteerPrior?: boolean
+	gazetteerPrior?: SwitchPin
 	/**
 	 * Whether to apply word-consistency healing.
 	 * It follows the production default unless set to `false`.
@@ -143,7 +146,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 	let fstGazetteer: FSTMatcher | null = null
 
-	if (options.gazetteerPrior !== false) {
+	if (pinnedSwitch(options.gazetteerPrior ?? "production", GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) {
 		// The runtime loads the FST that sits beside the classifier's weights, so the eval does too.
 		const fstPath = (classifier as { fstPath?: PathBuilderLike }).fstPath
 

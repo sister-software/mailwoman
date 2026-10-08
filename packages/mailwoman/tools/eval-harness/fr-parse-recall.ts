@@ -224,9 +224,9 @@ export async function frParseRecall(
 			labels: card.labels,
 			postcodeAnchorLookup: anchor,
 			gazetteerLexicon: lexicon,
-			suppressGazetteerNearPostcode: true,
+			suppressGazetteerNearPostcode: "on",
 			addressSystemConventions: "auto",
-			bridgePunctuationGaps: true,
+			bridgePunctuationGaps: "on",
 		})
 	})()
 

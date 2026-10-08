@@ -10,6 +10,7 @@ import {
 	buildAnchorFeatures,
 	warnShapedKeyerObligationOnce,
 } from "#anchor-inference"
+import type { Toggle } from "#classifier/options"
 import { buildCountryFeatures, type CountryLexicon } from "#country-inference"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "#gazetteer-inference"
 import type { TokenizedPiece } from "#tokenizer"
@@ -81,9 +82,9 @@ export interface SoftFeatureSources {
 	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit.
 	 *
 	 * It needs both the gazetteer lexicon and the anchor lookup.
-	 * Enable it only for a model trained with the same suppression.
+	 * Turn it on only for a model trained with the same suppression.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode: Toggle
 
 	/**
 	 * The street-type evidence lexicon uses the gazetteer lexicon schema.
@@ -116,7 +117,7 @@ export function buildSoftFeatures(
 		: undefined
 
 	const gazFed =
-		gazetteer && anchor && sources.suppressGazetteerNearPostcode
+		gazetteer && anchor && sources.suppressGazetteerNearPostcode === "on"
 			? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 			: gazetteer
 

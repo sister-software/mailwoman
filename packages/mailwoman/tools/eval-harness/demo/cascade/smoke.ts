@@ -221,9 +221,9 @@ export async function demoCascadeSmoke(
 		labels: card.labels,
 		...(anchorLookup ? { postcodeAnchorLookup: anchorLookup } : {}),
 		gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(GAZ)),
-		suppressGazetteerNearPostcode: true,
+		suppressGazetteerNearPostcode: "on",
 		addressSystemConventions: "auto",
-		bridgePunctuationGaps: true,
+		bridgePunctuationGaps: "on",
 	})
 
 	const fst = deserializeFST(await readLocalBuffer(FST))

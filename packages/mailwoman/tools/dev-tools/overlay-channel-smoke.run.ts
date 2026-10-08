@@ -21,6 +21,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_TOGGLE } from "@mailwoman/neural/classifier/options"
 import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
@@ -59,7 +60,7 @@ const channels = buildSoftFeatures(text, pieces, {
 	...(cfg.countryLexicon ? { countryLexicon: cfg.countryLexicon } : {}),
 	...(cfg.streetTypeLexicon ? { streetTypeLexicon: cfg.streetTypeLexicon } : {}),
 	...(cfg.localitySurfaceLexicon ? { localitySurfaceLexicon: cfg.localitySurfaceLexicon } : {}),
-	...(cfg.suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode: true } : {}),
+	suppressGazetteerNearPostcode: cfg.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
 })
 
 console.log(`\ninput (caseNormalization=${caseNormalization})  ${stringifyJSON(text)}`)

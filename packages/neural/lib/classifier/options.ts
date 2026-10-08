@@ -150,8 +150,10 @@ export interface NeuralAddressClassifierConfig {
 	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit,
 	 * needing both `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a
 	 * model trained with the matching `data.gazetteer_choreography`.
+	 *
+	 * It defaults to `"off"`; loaders resolve it with {@link gazetteerSuppressionFor}.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: Toggle
 
 	/**
 	 * The default address-system conventions mode.
@@ -172,8 +174,9 @@ export interface NeuralAddressClassifierConfig {
 	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
 	 *
 	 * The model splits these spans because the corpus label format cannot mark punctuation inside a span.
+	 * It defaults to `"off"`; loaders resolve it with {@link punctuationBridgingFor}.
 	 */
-	bridgePunctuationGaps?: boolean
+	bridgePunctuationGaps?: Toggle
 
 	/**
 	 * The span proposer.
@@ -354,9 +357,11 @@ export interface ParseOpts {
 	calibrate?: Calibrator
 
 	/**
-	 * A per-parse override of the config's `bridgePunctuationGaps`.
+	 * Punctuation-gap bridging for this parse.
+	 *
+	 * The default `"inherit"` uses the config's `bridgePunctuationGaps`.
 	 */
-	bridgePunctuationGaps?: boolean
+	bridgePunctuationGaps?: ToggleSelection
 
 	/**
 	 * The span proposer for this parse.
@@ -455,10 +460,27 @@ export interface DeclaredModelBehavior {
 	conventions?: { required: boolean; mode?: string }
 }
 
-function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): boolean {
-	if (setting === "declared") return declared ?? false
+/**
+ * A resolved on/off behavior of a classifier.
+ */
+export const ToggleSchema = z.enum(["on", "off"])
 
-	return setting === "on"
+export type Toggle = z.infer<typeof ToggleSchema>
+
+/**
+ * The value of a classifier {@link Toggle} its config leaves unset.
+ */
+export const DEFAULT_TOGGLE: Toggle = "off"
+
+/**
+ * A per-parse override: `"inherit"` (the default) uses the config's value.
+ */
+export type ToggleSelection = "inherit" | Toggle
+
+function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): Toggle {
+	if (setting !== "declared") return setting
+
+	return declared ? "on" : "off"
 }
 
 /**
@@ -472,7 +494,7 @@ function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): boo
 export function gazetteerSuppressionFor(
 	setting: ModelCardToggle,
 	declared: DeclaredModelBehavior | null | undefined
-): boolean {
+): Toggle {
 	return toggleFor(setting, declared?.suppress_gazetteer_near_postcode)
 }
 
@@ -486,7 +508,7 @@ export function gazetteerSuppressionFor(
 export function punctuationBridgingFor(
 	setting: ModelCardToggle,
 	declared: DeclaredModelBehavior | null | undefined
-): boolean {
+): Toggle {
 	return toggleFor(setting, declared?.bridge?.required)
 }
 

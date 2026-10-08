@@ -17,6 +17,7 @@ import {
 	type DeclaredModelBehavior,
 	gazetteerSuppressionFor,
 	type ModelCardToggle,
+	type NeuralAddressClassifierConfig,
 	punctuationBridgingFor,
 } from "#classifier/options"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
@@ -356,7 +357,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	const encoder = encoderDescriptorFromCard(modelCard, opts.modelCardURL ?? "(no card)")
 
 	if (encoder.kind === "char") {
-		return loadCharClassifierFromURLs(opts, encoder, labels, fetchImpl, modelBytesLoad)
+		return loadCharClassifierFromURLs(opts, modelCard, encoder, labels, fetchImpl, modelBytesLoad)
 	}
 
 	if (!opts.tokenizerURL) {
@@ -429,7 +430,6 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	}
 
 	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : null
-	const declared = (modelCard?.requires ?? null) as DeclaredModelBehavior | null
 
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
@@ -442,9 +442,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
-		suppressGazetteerNearPostcode: gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode ?? "declared", declared),
-		addressSystemConventions: addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared),
-		bridgePunctuationGaps: punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared),
+		...declaredBehavior(opts, modelCard),
 	})
 
 	await runner.infer([0])
@@ -667,8 +665,29 @@ function toBase64(bytes: Uint8Array): string {
 	return Buffer.from(binary, "binary").toString("base64")
 }
 
+/**
+ * The model-card-declared behaviors both browser load paths configure,
+ * each resolved by the helper the Node loader and the scorer use.
+ */
+function declaredBehavior(
+	opts: LoadFromURLsOptions,
+	modelCard: Record<string, unknown> | null
+): Pick<
+	NeuralAddressClassifierConfig,
+	"suppressGazetteerNearPostcode" | "addressSystemConventions" | "bridgePunctuationGaps"
+> {
+	const declared = (modelCard?.requires ?? null) as DeclaredModelBehavior | null
+
+	return {
+		suppressGazetteerNearPostcode: gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode ?? "declared", declared),
+		addressSystemConventions: addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared),
+		bridgePunctuationGaps: punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared),
+	}
+}
+
 async function loadCharClassifierFromURLs(
 	opts: LoadFromURLsOptions,
+	modelCard: Record<string, unknown> | null,
 	encoder: Extract<EncoderDescriptor, { kind: "char" }>,
 	labels: readonly string[] | null,
 	fetchImpl: typeof fetch,
@@ -696,6 +715,7 @@ async function loadCharClassifierFromURLs(
 		},
 		runner,
 		...(labels ? { labels } : {}),
+		...declaredBehavior(opts, modelCard),
 	})
 
 	return {

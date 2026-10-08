@@ -9,13 +9,15 @@ import type { CaseNormalization } from "@mailwoman/core/pipeline"
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
 import type { PathBuilderLike } from "path-ts"
 
+import type { SwitchPin } from "#tools/eval-harness/switch-pin"
+
 /**
  * Options for {@linkcode oaResolverEval}.
  *
  * Keys mirror the command's kebab flags (`--out-md` → `outMd`).
  * Booleans default off.
  *
- * Tri-states are paired on/off flags that eval legs pin (`adminCoherence`/`noAdminCoherence`).
+ * A switch an eval leg pins either way takes a {@link SwitchPin}.
  */
 export interface OAResolverEvalOptions {
 	/**
@@ -27,9 +29,10 @@ export interface OAResolverEvalOptions {
 	 */
 	addressPoints?: string
 	/**
-	 * Tri-state pin: force `adminCoherence` on.
+	 * Pins `adminCoherence`.
+	 * Defaults to `"production"`.
 	 */
-	adminCoherence?: boolean
+	adminCoherence?: SwitchPin
 	/**
 	 * Minimum anchor confidence to trust the anchor coordinate.
 	 *
@@ -112,16 +115,7 @@ export interface OAResolverEvalOptions {
 	 */
 	modelCard?: string
 	/**
-	 * Tri-state pin: force `adminCoherence` off.
-	 */
-	noAdminCoherence?: boolean
-	/**
-	 * Tri-state pin: force `postcodeCountryCoherence` off, the leg that measures whether a
-	 * coherent (postcode, locality) pair overriding `defaultCountry` is byte-flat on a US panel.
-	 */
-	noPostcodeCountryCoherence?: boolean
-	/**
-	 * Tri-state pin: force `postcodeConsistency` off.
+	 * Force `postcodeConsistency` off.
 	 *
 	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices the cap without a sweep,
 	 * because the rows whose answer differs from the shipped arm are exactly the ones the
@@ -153,12 +147,13 @@ export interface OAResolverEvalOptions {
 	 */
 	caseNormalization?: CaseNormalization
 	/**
-	 * Tri-state pin: force `postcodeCountryCoherence` on.
+	 * Pins `postcodeCountryCoherence`.
+	 * Defaults to `"production"`.
 	 *
-	 * The library default is on, so this is a no-op restatement kept because a check
-	 * leg saying what it graded is the point of a tri-state.
+	 * `"off"` is the leg that measures whether a coherent (postcode, locality) pair
+	 * overriding `defaultCountry` is byte-flat on a US panel.
 	 */
-	postcodeCountryCoherence?: boolean
+	postcodeCountryCoherence?: SwitchPin
 	/**
 	 * Write the aggregate JSON dump here.
 	 */

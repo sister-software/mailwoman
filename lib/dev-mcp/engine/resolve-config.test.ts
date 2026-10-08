@@ -49,6 +49,12 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 		expect(resolved.adminContainmentRerank).toBe(false)
 	})
 
+	it("resolves variant_alias_exemption from either named value or the production default", () => {
+		expect(resolveConfig({}).variantAliasExemption).toBe(createGeocodeCommandOptions().variantAliasExemption)
+		expect(resolveConfig({ variant_alias_exemption: "applied" }).variantAliasExemption).toBe(true)
+		expect(resolveConfig({ variant_alias_exemption: "not_applied" }).variantAliasExemption).toBe(false)
+	})
+
 	it("resolves poi_venue_tier to an explicit value in both directions", () => {
 		expect(resolveConfig({}).poiVenueTier).toBe(GEOCODE_SWITCH_DEFAULTS.poiVenueTier)
 		expect(resolveConfig({ poi_venue_tier: true }).poiVenueTier).toBe(true)

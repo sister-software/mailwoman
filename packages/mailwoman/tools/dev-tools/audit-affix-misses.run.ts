@@ -57,7 +57,7 @@ const neural = new NeuralAddressClassifier({
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(LK)),
 	gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(args["gazetteer-lexicon"]!)),
-	suppressGazetteerNearPostcode: true,
+	suppressGazetteerNearPostcode: "on",
 })
 
 // TODO: susceptible to drft.

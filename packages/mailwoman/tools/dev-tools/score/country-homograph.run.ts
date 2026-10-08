@@ -41,8 +41,8 @@ async function main(): Promise<void> {
 		gazetteerLexicon: values["gazetteer-lexicon"] as string | undefined,
 		json: values["json"] as string | undefined,
 		model: values["model"] as string | undefined,
-		bridgeGaps: values["bridge-gaps"] as boolean | undefined,
-		suppressGazNearPostcode: values["suppress-gaz-near-postcode"] as boolean | undefined,
+		bridgePunctuationGaps: values["bridge-gaps"] ? "on" : "off",
+		suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] ? "on" : "off",
 		weightsCache: values["weights-cache"] as string | undefined,
 	})
 }

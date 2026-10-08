@@ -48,7 +48,11 @@ describe("buildSoftFeatures — US postcode anchor hit", () => {
 	const LOOKUP: AnchorLookup = new Map([["30301", { posterior: { US: 1 }, lat: 33.749, lon: -84.388 }]])
 
 	it("confidence 1.0 + the feature vector on exactly the postcode pieces; no gazetteer when unconfigured", () => {
-		const soft = buildSoftFeatures(TEXT, PIECES, { postcodeAnchorLookup: LOOKUP })
+		const soft = buildSoftFeatures(TEXT, PIECES, {
+			postcodeAnchorLookup: LOOKUP,
+			suppressGazetteerNearPostcode: "off",
+		})
+
 		expect(soft.gazetteer).toBeNull()
 		expect(soft.anchor).toBeDefined()
 		expect(soft.anchor!.confidence).toEqual([0, 0, 0, 1, 1])
@@ -69,7 +73,11 @@ describe("buildSoftFeatures — homograph gazetteer hit", () => {
 	const PIECES = [piece("▁Atlanta", 0, 7), piece("▁Geo", 8, 11), piece("rgia", 11, 15)]
 
 	it("paints the homograph clue on the Georgia pieces; no anchor when unconfigured", () => {
-		const soft = buildSoftFeatures(TEXT, PIECES, { gazetteerLexicon: LEXICON })
+		const soft = buildSoftFeatures(TEXT, PIECES, {
+			gazetteerLexicon: LEXICON,
+			suppressGazetteerNearPostcode: "off",
+		})
+
 		expect(soft.anchor).toBeNull()
 		expect(soft.gazetteer).toBeDefined()
 		const homo = [1, 1, 0, 0, 1] // country | region | homograph
@@ -87,7 +95,12 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 	const LOOKUP: AnchorLookup = new Map([["30301", { posterior: { US: 1 }, lat: 33.749, lon: -84.388 }]])
 
 	it("WITHOUT suppression: the GA region clue fires", () => {
-		const soft = buildSoftFeatures(TEXT, PIECES, { postcodeAnchorLookup: LOOKUP, gazetteerLexicon: LEXICON })
+		const soft = buildSoftFeatures(TEXT, PIECES, {
+			postcodeAnchorLookup: LOOKUP,
+			gazetteerLexicon: LEXICON,
+			suppressGazetteerNearPostcode: "off",
+		})
+
 		expect(soft.anchor!.confidence).toEqual([0, 1, 1])
 		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0])
 		expect(soft.gazetteer!.confidence).toEqual([1, 0, 0])
@@ -97,7 +110,7 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 		const soft = buildSoftFeatures(TEXT, PIECES, {
 			postcodeAnchorLookup: LOOKUP,
 			gazetteerLexicon: LEXICON,
-			suppressGazetteerNearPostcode: true,
+			suppressGazetteerNearPostcode: "on",
 		})
 
 		expect(soft.gazetteer!.features[0]).toEqual(ZERO_GAZ)
@@ -108,7 +121,7 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 	it("suppression is a no-op without an anchor channel (needs both)", () => {
 		const soft = buildSoftFeatures(TEXT, PIECES, {
 			gazetteerLexicon: LEXICON,
-			suppressGazetteerNearPostcode: true,
+			suppressGazetteerNearPostcode: "on",
 		})
 
 		expect(soft.anchor).toBeNull()

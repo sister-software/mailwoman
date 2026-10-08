@@ -24,7 +24,7 @@ import {
 	renderAblationMarkdown,
 	scoreAblation,
 } from "#tools/eval-harness/gauntlet/ablation"
-import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"
+import { type GauntletResult, PRODUCTION_RESOLVER_PINS } from "#tools/eval-harness/gauntlet/harness"
 import { runAblationOptions } from "#tools/eval-harness/gauntlet/run"
 
 /**
@@ -470,14 +470,14 @@ describe("runAblationOptions — a CLI flag reaches the layer", () => {
 	it("carries the three ablation options alongside the shared model/pin ladder", () => {
 		const options = runAblationOptions({
 			candidate: "./out/v9/model.onnx",
-			postcodeCountryCoherence: false,
+			postcodeCountryCoherence: "off",
 			out: "/tmp/map",
 			components: ["postcode", "street"],
 			limit: 12,
 		})
 
 		expect(options.model).toBe("./out/v9/model.onnx")
-		expect(options.pins).toEqual({ postcodeCountryCoherence: false })
+		expect(options.pins).toEqual({ ...PRODUCTION_RESOLVER_PINS, postcodeCountryCoherence: "off" })
 		expect(options.outDir).toBe("/tmp/map")
 		expect(options.components).toEqual(["postcode", "street"])
 		expect(options.limit).toBe(12)

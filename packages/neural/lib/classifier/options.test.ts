@@ -21,27 +21,27 @@ const SHIPPED_CARD = {
 
 describe("gazetteerSuppressionFor", () => {
 	it("follows the card's declaration and defaults off without one", () => {
-		expect(gazetteerSuppressionFor("declared", SHIPPED_CARD)).toBe(true)
-		expect(gazetteerSuppressionFor("declared", {})).toBe(false)
-		expect(gazetteerSuppressionFor("declared", null)).toBe(false)
+		expect(gazetteerSuppressionFor("declared", SHIPPED_CARD)).toBe("on")
+		expect(gazetteerSuppressionFor("declared", {})).toBe("off")
+		expect(gazetteerSuppressionFor("declared", null)).toBe("off")
 	})
 
 	it("lets an explicit setting replace the card", () => {
-		expect(gazetteerSuppressionFor("off", SHIPPED_CARD)).toBe(false)
-		expect(gazetteerSuppressionFor("on", null)).toBe(true)
+		expect(gazetteerSuppressionFor("off", SHIPPED_CARD)).toBe("off")
+		expect(gazetteerSuppressionFor("on", null)).toBe("on")
 	})
 })
 
 describe("punctuationBridgingFor", () => {
 	it("follows the card's bridge declaration and defaults off without one", () => {
-		expect(punctuationBridgingFor("declared", SHIPPED_CARD)).toBe(false)
-		expect(punctuationBridgingFor("declared", { bridge: { required: true } })).toBe(true)
-		expect(punctuationBridgingFor("declared", null)).toBe(false)
+		expect(punctuationBridgingFor("declared", SHIPPED_CARD)).toBe("off")
+		expect(punctuationBridgingFor("declared", { bridge: { required: true } })).toBe("on")
+		expect(punctuationBridgingFor("declared", null)).toBe("off")
 	})
 
 	it("lets an explicit setting replace the card", () => {
-		expect(punctuationBridgingFor("on", SHIPPED_CARD)).toBe(true)
-		expect(punctuationBridgingFor("off", { bridge: { required: true } })).toBe(false)
+		expect(punctuationBridgingFor("on", SHIPPED_CARD)).toBe("on")
+		expect(punctuationBridgingFor("off", { bridge: { required: true } })).toBe("off")
 	})
 })
 

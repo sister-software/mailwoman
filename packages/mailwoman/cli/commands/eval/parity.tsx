@@ -11,6 +11,7 @@
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
+import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
 
 /**
  * Largest disagreement sample that keeps parity output reviewable.
@@ -33,13 +34,11 @@ export const spec = {
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
-		// The runner reads `gazetteerPrior !== false`, so the prior is on unless a caller
-		// forces it off and `false` is the only useful value for this flag.
-		// The flag label matches the property it binds to.
-		"gazetteer-prior-off": {
-			type: "boolean",
-			default: false,
-			description: "Disable the gazetteer FST emission prior (#1497)",
+		"gazetteer-prior": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the gazetteer FST emission prior (#1497)",
 		},
 		"word-consistency": { type: "boolean", default: true, description: "Enable word-consistency healing" },
 		failing: {
@@ -67,7 +66,7 @@ const EvalParity = harnessCommand(
 				fixturesPath: options.fixtures,
 				weightsCacheRoot: options.weightsCache,
 				streetMorphology: options.streetMorphology,
-				gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
+				gazetteerPrior: options.gazetteerPrior,
 				wordConsistency: options.wordConsistency,
 				failing: options.failing,
 			})

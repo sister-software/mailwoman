@@ -54,7 +54,7 @@ import {
 } from "#tools/eval-harness/gauntlet/ablation/types"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stamp"
-import { buildGauntletDeps, runOne } from "#tools/eval-harness/gauntlet/harness"
+import { buildGauntletDeps, PRODUCTION_RESOLVER_PINS, runOne } from "#tools/eval-harness/gauntlet/harness"
 import { type GauntletLayerOptions, layerDepsOptions } from "#tools/eval-harness/gauntlet/regression"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
 
@@ -612,9 +612,11 @@ export async function runAblationLayer(
 }
 
 function describePins(options: AblationLayerOptions): string {
-	return options.pins?.postcodeCountryCoherence === undefined
+	const pin = (options.pins ?? PRODUCTION_RESOLVER_PINS).postcodeCountryCoherence
+
+	return pin === "production"
 		? "resolver pins: (none pinned — production defaults)"
-		: `resolver pins: postcodeCountryCoherence=${options.pins.postcodeCountryCoherence ? "ON" : "OFF"}`
+		: `resolver pins: postcodeCountryCoherence=${pin.toUpperCase()}`
 }
 
 function printSummary(

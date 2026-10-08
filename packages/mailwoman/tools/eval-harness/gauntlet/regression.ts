@@ -19,16 +19,19 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
 import { checkCase } from "#tools/eval-harness/gauntlet/check-case"
 import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stamp"
 import {
 	buildGauntletDeps,
 	type GauntletDepsOptions,
 	type GauntletResolverPins,
+	PRODUCTION_RESOLVER_PINS,
 	runOne,
 } from "#tools/eval-harness/gauntlet/harness"
 import { routeCountry } from "#tools/eval-harness/gauntlet/routing"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
+import { pinnedSwitch } from "#tools/eval-harness/switch-pin"
 
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.
@@ -209,7 +212,12 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// Printed whenever the pass could have fired, except when it is explicitly pinned off.
 	// An enabled-pin key would hide the firing count on the standard unpinned run.
 	// The pass is now enabled by default.
-	if (options.pins?.postcodeCountryCoherence !== false) {
+	if (
+		pinnedSwitch(
+			(options.pins ?? PRODUCTION_RESOLVER_PINS).postcodeCountryCoherence,
+			GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence
+		)
+	) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 
 		for (const o of overrides) {

@@ -37,7 +37,12 @@ import {
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 } from "@mailwoman/neural"
-import { type AddressSystemConventions, parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
+import {
+	type AddressSystemConventions,
+	DEFAULT_TOGGLE,
+	parseAddressSystemConventions,
+	type Toggle,
+} from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -60,8 +65,8 @@ interface Args {
 	modelCardPath?: string
 	gazetteerLexiconPath?: string
 	anchorLookupPath?: string
-	conventions?: AddressSystemConventions
-	bridgeGaps?: boolean
+	conventions: AddressSystemConventions
+	bridgePunctuationGaps: Toggle
 	adminFSTPath?: string
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
@@ -86,6 +91,8 @@ function parseArgs(): Args {
 		postcodeRepair: false,
 		unitRepair: false,
 		assembled: false,
+		conventions: "off",
+		bridgePunctuationGaps: DEFAULT_TOGGLE,
 	}
 
 	const { values } = parseArguments({
@@ -143,7 +150,7 @@ function parseArgs(): Args {
 	}
 
 	if (values["bridge-gaps"] != null) {
-		out.bridgeGaps = true
+		out.bridgePunctuationGaps = "on"
 	}
 
 	if (values["admin-fst"]) {
@@ -735,11 +742,11 @@ async function main(): Promise<void> {
 			tokenizer,
 			runner,
 			labels,
-			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: true } : {}),
+			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: "on" } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			// `--conventions auto|<system>` enables the address-system conventions mask.
-			...(args.conventions ? { addressSystemConventions: args.conventions } : {}),
-			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
+			addressSystemConventions: args.conventions,
+			bridgePunctuationGaps: args.bridgePunctuationGaps,
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()

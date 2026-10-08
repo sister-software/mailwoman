@@ -13,6 +13,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { buildLocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 import type { LookupCensus } from "#tools/eval-harness/oa/resolver/profile"
+import { switchPinEntry } from "#tools/eval-harness/switch-pin"
 
 /**
  * Assembles the scorer, gazetteer-backed resolver and per-call option bags used
@@ -211,26 +212,12 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 	// `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
 
-	// adminCoherence is on by default in the resolver, so the pin is tri-state for check legs:
-	// `--admin-coherence` pins it on, `--no-admin-coherence` pins it off, neither = the library default.
-	const adminCoherence =
-		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
-
-	// postcodeCountryCoherence is on by default in the resolver, so the pin is a full
-	// tri-state like adminCoherence's: `--postcode-country-coherence` pins it on,
-	// `--postcode-country-coherence-off` pins it off, neither = the library default.
-	const postcodeCountryCoherence =
-		(options.postcodeCountryCoherence ?? false)
-			? true
-			: (options.noPostcodeCountryCoherence ?? false)
-				? false
-				: undefined
-
 	return {
 		...(defaultCountry && defaultCountry.toLowerCase() !== "none" ? { defaultCountry } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
-		...(adminCoherence !== undefined ? { adminCoherence } : {}),
-		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
+		// A `"production"` pin passes no option, so the resolver's defaults table decides.
+		...switchPinEntry("adminCoherence", options.adminCoherence ?? "production"),
+		...switchPinEntry("postcodeCountryCoherence", options.postcodeCountryCoherence ?? "production"),
 		// The pass is on by default and the cap is unbounded by default, so neither
 		// pin set leaves this eval byte-identical.
 		// The cap is passed through at zero as well as at a distance.

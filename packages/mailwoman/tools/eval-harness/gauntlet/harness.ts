@@ -29,6 +29,7 @@ import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
 import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
+import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/switch-pin"
 
 export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
@@ -104,6 +105,7 @@ export interface GauntletDepsOptions {
 	forceQueryKind?: QueryKind
 	/**
 	 * Resolver-side pins applied to every geocode this deps object performs.
+	 * Defaults to {@link PRODUCTION_RESOLVER_PINS}.
 	 */
 	pins?: GauntletResolverPins
 }
@@ -113,90 +115,94 @@ export interface GauntletDepsOptions {
  * `modelPath`/`tokenizerPath` swaps.
  *
  * The `eval oa-resolver` idiom treats a pin as a default override rather than a new mechanism:
- * Every field maps 1:1 onto a {@linkcode geocodeAddress} dependency of the same name.
- * An absent field leaves the production default in force.
- * `undefined` also means the production default.
+ * every field maps 1:1 onto a {@linkcode geocodeAddress} dependency or session setting
+ * of the same name, and `"production"` leaves the production default in force.
  */
 export interface GauntletResolverPins {
 	/**
 	 * Postcode-country coherence — a (postcode, locality) pair coherent in exactly
 	 * one country overrides a wrong `defaultCountry`.
-	 *
-	 * The default is on.
-	 * `false` grades the off arm.
 	 */
-	postcodeCountryCoherence?: boolean
+	postcodeCountryCoherence: SwitchPin
 	/**
 	 * Feed the gazetteer FST prior to the parse.
 	 *
-	 * Unlike the boolean pins this one selects an artifact, so the harness loads it
-	 * rather than `resolverPinDeps`, and only an explicit `false` withholds it.
+	 * Unlike the switch pins this one selects an artifact, so the harness loads it
+	 * rather than `resolverPinDeps`, and only `"off"` withholds it.
 	 */
-	gazetteerPrior?: boolean
+	gazetteerPrior: SwitchPin
 	/**
 	 * The admin-containment re-rank: a parsed region qualifier participates in
-	 * locality-candidate selection through the candidate gazetteer's ancestors
-	 * sidecar. default off, so `true` enables the evidence.
+	 * locality-candidate selection through the candidate gazetteer's ancestors sidecar.
 	 */
-	adminContainmentRerank?: boolean
+	adminContainmentRerank: SwitchPin
 	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
 	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
 	 * that the harness loads rather than `resolverPinDeps`.
-	 * Unpinned uses the session default.
 	 */
-	capitalTier?: CapitalTier
+	capitalTier: "production" | CapitalTier
 	/**
-	 * Exempt own-name `variant` aliases from the cross-country primary-preference
-	 * penalty. the stamp lives in the candidate build's own-name detector,
-	 * so against a candidate.db without it the exemption matches no row.
-	 */
-	variantAliasExemption?: boolean
-	/**
-	 * The opt-in venue tier: upgrade a venue-led address's admin or street answer to
-	 * the poi.db entity with the venue's name near the resolved anchor.
+	 * Whether own-name `variant` aliases are exempt from the cross-country primary-preference penalty.
 	 *
-	 * The default is off.
-	 * `true` degrades to the incumbent answer on a machine without poi.db.
+	 * The stamp lives in the candidate build's own-name detector, so against a
+	 * candidate.db without it the exemption matches no row.
 	 */
-	poiVenueTier?: boolean
+	variantAliasExemption: "production" | VariantAliasExemption
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name. default off,
-	 * so `true` enables the evidence.
+	 * The venue tier: upgrade a venue-led address's admin or street answer to the
+	 * poi.db entity with the venue's name near the resolved anchor.
+	 *
+	 * `"on"` degrades to the incumbent answer on a machine without poi.db.
 	 */
-	spanRescoreRequireContextRemainder?: boolean
+	poiVenueTier: SwitchPin
 	/**
-	 * Which reading of a weak resolution lifts the span-rescore brake. three readings exist
-	 * and the shipped brake is the absence of all of them, so `undefined` is the
-	 * production arm and there is no off pin.
+	 * A span-rescore sub-span may drop context but never a word of the name.
 	 */
-	spanRescoreWeakResolution?: WeakResolutionReading
+	spanRescoreRequireContextRemainder: SwitchPin
+	/**
+	 * Which reading of a weak resolution lifts the span-rescore brake.
+	 *
+	 * Three readings exist and the shipped brake is the absence of all of them, so there is no off pin.
+	 */
+	spanRescoreWeakResolution: "production" | WeakResolutionReading
+}
+
+/**
+ * The pin set that grades production everywhere.
+ */
+export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
+	postcodeCountryCoherence: "production",
+	gazetteerPrior: "production",
+	adminContainmentRerank: "production",
+	capitalTier: "production",
+	variantAliasExemption: "production",
+	poiVenueTier: "production",
+	spanRescoreRequireContextRemainder: "production",
+	spanRescoreWeakResolution: "production",
 }
 
 /**
  * The geocode deps a pin set turns into, spread into every {@linkcode geocodeAddress} call the run makes.
  *
+ * A `"production"` pin contributes no dep, so the geocode's own defaults table decides.
  * Pure and exported so the pin-reaches-the-pipeline interface is testable without the full database set.
  */
-export function resolverPinDeps(pins?: GauntletResolverPins | null): {
+export function resolverPinDeps(pins: GauntletResolverPins): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 	poiVenueTier?: boolean
 	spanRescoreRequireContextRemainder?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
 } {
-	if (!pins) return {}
-
-	// A key is emitted only when the runner set it: an `undefined` value would still
-	// be an own property and reads as an explicit pin.
 	return {
-		...(pins.postcodeCountryCoherence === undefined ? {} : { postcodeCountryCoherence: pins.postcodeCountryCoherence }),
-		...(pins.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: pins.adminContainmentRerank }),
-		...(pins.poiVenueTier === undefined ? {} : { poiVenueTier: pins.poiVenueTier }),
-		...(pins.spanRescoreRequireContextRemainder === undefined
+		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
+		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
+		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
+		...switchPinEntry("spanRescoreRequireContextRemainder", pins.spanRescoreRequireContextRemainder),
+		...(pins.spanRescoreWeakResolution === "production"
 			? {}
-			: { spanRescoreRequireContextRemainder: pins.spanRescoreRequireContextRemainder }),
-		...(pins.spanRescoreWeakResolution ? { spanRescoreWeakResolution: pins.spanRescoreWeakResolution } : {}),
+			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),
 	}
 }
 
@@ -205,8 +211,9 @@ export function resolverPinDeps(pins?: GauntletResolverPins | null): {
  *
  * It prints on the unpinned run too, so two gauntlet logs can be told apart,
  * because an off/on pair whose logs are indistinguishable is not evidence about the pin.
+ * Only pins away from `"production"` are listed.
  */
-export function describeResolverPins(pins?: GauntletResolverPins | null): string {
+export function describeResolverPins(pins: GauntletResolverPins): string {
 	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
 	// so this list includes every pin rather than only the boolean ones.
 	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
@@ -214,18 +221,16 @@ export function describeResolverPins(pins?: GauntletResolverPins | null): string
 		typeof v === "boolean" ? `${k}=${v ? "ON" : "OFF"}` : `${k}=${v}`
 	)
 
-	// Printed only when pinned away from the production default.
-	// An unset pin prints no line, so "no flag" reads as "grade whatever production does".
-	if (pins?.gazetteerPrior !== undefined) {
-		entries.push(`gazetteerPrior=${pins.gazetteerPrior ? "ON" : "OFF"}`)
+	if (pins.gazetteerPrior !== "production") {
+		entries.push(`gazetteerPrior=${pins.gazetteerPrior.toUpperCase()}`)
 	}
 
-	if (pins?.capitalTier !== undefined) {
+	if (pins.capitalTier !== "production") {
 		entries.push(`capitalTier=${pins.capitalTier}`)
 	}
 
-	if (pins?.variantAliasExemption !== undefined) {
-		entries.push(`variantAliasExemption=${pins.variantAliasExemption ? "ON" : "OFF"}`)
+	if (pins.variantAliasExemption !== "production") {
+		entries.push(`variantAliasExemption=${pins.variantAliasExemption === "applied" ? "ON" : "OFF"}`)
 	}
 
 	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
@@ -350,6 +355,7 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
  */
 export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+	const pins = opts.pins ?? PRODUCTION_RESOLVER_PINS
 
 	// A package-shaped candidate weights dir.
 	// Prefer this over `modelPath` when the vocab differs, because `loadFromWeights({cacheRoot})`
@@ -495,14 +501,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		await createResolverBackend(resolverMod, {
 			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			variantAliasExemption: opts.pins?.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
+			variantAliasExemption:
+				pins.variantAliasExemption === "production"
+					? GEOCODE_SESSION_DEFAULTS.variantAliasExemption
+					: pins.variantAliasExemption === "applied",
 		})
 	)
 
 	// The reference loads here and becomes the per-candidate `capitalLevel` closure,
 	// matching `createGeocodeSession`.
 	const capitalIndex = await capitalIndexFor(
-		opts.pins?.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
+		pins.capitalTier === "production" ? GEOCODE_SESSION_DEFAULTS.capitalTier : pins.capitalTier,
 		await resolveCandidateDBPath(opts.candidateDB)
 	)
 
@@ -522,7 +531,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banProvider = await BANRegionDatabaseProvider.create(dataRootPath)
 
-	const pinDeps = resolverPinDeps(opts.pins)
+	const pinDeps = resolverPinDeps(pins)
 
 	// This pin selects an artifact rather than a boolean value.
 	// The artifact is PER classifier.
@@ -539,8 +548,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		forClassifier: typeof classifier,
 		label: string
 	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
-		// Default-on: only an explicit `false` withholds the prior.
-		if (opts.pins?.gazetteerPrior === false) return {}
+		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
 
 		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
 		const fstPath = (forClassifier as { fstPath?: PathBuilderLike }).fstPath?.toString()
@@ -586,7 +594,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return deps
 	}
 
-	console.error(`[gauntlet] ${describeResolverPins(opts.pins)}`)
+	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every
 	// optional artifact and mirroring the CLI's wiring so the board grades what production runs.

@@ -10,6 +10,7 @@
  */
 
 import { booleanOption, type CommandSpec, harnessCommand } from "#cli-kit"
+import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
@@ -35,10 +36,18 @@ export const spec = {
 			choices: ["title-case", "preserve"],
 			description: "Pin case handling. Omitted, the library default applies",
 		},
-		"admin-coherence": booleanOption("Force admin coherence on"),
-		"admin-coherence-off": booleanOption("Force admin coherence off"),
-		"postcode-country-coherence": booleanOption("Force postcode-country coherence on"),
-		"postcode-country-coherence-off": booleanOption("Force postcode-country coherence off"),
+		"admin-coherence": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin admin coherence",
+		},
+		"postcode-country-coherence": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin postcode-country coherence",
+		},
 		"postcode-consistency-off": booleanOption("Force postcode-disambiguated locality selection off"),
 		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
 		"span-rescore-require-context-remainder": booleanOption("A sub-span may drop context, never a word of the name"),
@@ -75,22 +84,13 @@ export const spec = {
 
 // The eval prints its own markdown report on stdout, so no `json`.
 const EvalOAResolver = harnessCommand(spec, async (options) => {
-	const {
-		adminCoherenceOff,
-		adminFst,
-		postcodeConsistencyOff,
-		postcodeCountryCoherenceOff,
-		postcodeMaxMoveKM,
-		...rest
-	} = options
+	const { adminFst, postcodeConsistencyOff, postcodeMaxMoveKM, ...rest } = options
 
 	const { oaResolverEval } = await import("#tools/eval-harness/oa/resolver/eval")
 
 	return oaResolverEval({
 		...rest,
-		noAdminCoherence: adminCoherenceOff,
 		noPostcodeConsistency: postcodeConsistencyOff,
-		noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
 		// CLI kebab derivation forces the lowercase-acronym prop above.
 		// The harness option keeps the house spelling, so the rename happens here
 		// rather than in the eval's own interface.

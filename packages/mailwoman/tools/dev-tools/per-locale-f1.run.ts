@@ -49,9 +49,9 @@ async function main(): Promise<void> {
 		...(values["model-anchor-lookup"] ? { modelAnchorLookupPath: values["model-anchor-lookup"] } : {}),
 		...(values["gazetteer-lexicon"] ? { gazetteerLexiconPath: values["gazetteer-lexicon"] } : {}),
 		...(values["no-anchor"] !== undefined ? { noAnchor: true } : {}),
-		...(values["suppress-gaz-near-postcode"] !== undefined ? { suppressGazNearPostcode: true } : {}),
+		suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] !== undefined ? "on" : "off",
 		...(values.conventions ? { conventions: parseAddressSystemConventions(values.conventions) } : {}),
-		...(values["bridge-gaps"] !== undefined ? { bridgeGaps: true } : {}),
+		bridgePunctuationGaps: values["bridge-gaps"] !== undefined ? "on" : "off",
 		caseNormalization: caseNormalizationOf(values["case-normalization"]),
 		...(values["out-json"] ? { outJSON: values["out-json"] } : {}),
 	})

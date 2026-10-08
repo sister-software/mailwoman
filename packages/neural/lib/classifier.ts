@@ -38,6 +38,7 @@ import type {
 	ParseWithLogitsResult,
 	SpanProposerConfig,
 } from "#classifier/options"
+import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { buildFSTEmissionPriors } from "#fst-prior"
 import { STAGE2_BIO_LABELS } from "#labels"
@@ -421,7 +422,7 @@ export class NeuralAddressClassifier {
 					postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
 					gazetteerLexicon: this.cfg.gazetteerLexicon,
 					countryLexicon: this.cfg.countryLexicon,
-					suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+					suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
 					streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
 					localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
 				})
@@ -743,7 +744,12 @@ export class NeuralAddressClassifier {
 
 		// The opt-in punctuation bridge merges same-tag fragments split by punctuation.
 		// Annotation and quoted spans block merges across their boundaries.
-		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
+		const bridgeSelection = opts?.bridgePunctuationGaps ?? "inherit"
+
+		const bridging =
+			bridgeSelection === "inherit" ? (this.cfg.bridgePunctuationGaps ?? DEFAULT_TOGGLE) : bridgeSelection
+
+		if (bridging === "on") {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length ? { blockedSpans } : undefined)

@@ -39,6 +39,7 @@
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
@@ -79,12 +80,14 @@ export interface ExternalArenasOptions {
 	anchorLookup?: PathBuilderLike
 	/**
 	 * Conventions mask: `auto` for v4.3.0+ ship config.
+	 * It defaults to `"off"`.
 	 */
-	conventions?: string
+	conventions?: AddressSystemConventions
 	/**
 	 * Span bridge (v4.4.0 corrective).
+	 * It defaults to {@linkcode DEFAULT_TOGGLE}.
 	 */
-	bridgeGaps?: boolean
+	bridgePunctuationGaps?: Toggle
 }
 
 /**
@@ -128,11 +131,9 @@ export async function externalArenas(
 			modelArgs.push("--anchor-lookup", options.anchorLookup.toString())
 		}
 
-		if (options.conventions) {
-			modelArgs.push("--conventions", options.conventions)
-		}
+		modelArgs.push("--conventions", options.conventions ?? "off")
 
-		if (options.bridgeGaps) {
+		if ((options.bridgePunctuationGaps ?? DEFAULT_TOGGLE) === "on") {
 			modelArgs.push("--bridge-gaps")
 		}
 

@@ -157,9 +157,9 @@ async function main(): Promise<void> {
 		labels: modelCard.labels,
 		postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(anchorPath)),
 		gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(gazPath)),
-		suppressGazetteerNearPostcode: true,
+		suppressGazetteerNearPostcode: "on",
 		addressSystemConventions: "auto",
-		bridgePunctuationGaps: true,
+		bridgePunctuationGaps: "on",
 	})
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]

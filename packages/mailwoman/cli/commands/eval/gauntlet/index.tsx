@@ -17,24 +17,9 @@
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
+import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
 
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
-
-/**
- * The values of a resolver pin flag.
- */
-const PIN_CHOICES = ["on", "off"] as const
-
-type PinChoice = (typeof PIN_CHOICES)[number]
-
-/**
- * The `runGauntlet` field one pin flag sets, or an empty object when the flag is unset.
- */
-function pinFor<Key extends string>(key: Key, choice: PinChoice | undefined): Partial<Record<Key, boolean>> {
-	if (choice === undefined) return {}
-
-	return { [key]: choice === "on" } as Partial<Record<Key, boolean>>
-}
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -59,28 +44,32 @@ export const spec = {
 		limit: { type: "number", description: "Case limit" },
 		"postcode-country-coherence": {
 			type: "string",
-			choices: PIN_CHOICES,
-			description: "Pin postcode-country coherence; unset grades the production default",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin postcode-country coherence",
 		},
 		"gazetteer-prior": {
 			type: "string",
-			choices: PIN_CHOICES,
-			description: "Pin the gazetteer FST prior; unset grades the production default",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the gazetteer FST prior",
 		},
 		"admin-containment-rerank": {
 			type: "string",
-			choices: PIN_CHOICES,
-			description: "Pin the containment rerank; unset grades the production default",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the containment rerank",
 		},
 		"span-rescore-require-context-remainder": {
 			type: "string",
-			choices: PIN_CHOICES,
-			description:
-				"Pin the refusal of a span-rescore sub-span that drops a word of the name; unset grades the production default",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the refusal of a span-rescore sub-span that drops a word of the name",
 		},
 		"span-rescore-weak-resolution": {
 			type: "string",
-			choices: ["score", "containment", "either"],
+			choices: ["production", "score", "containment", "either"],
+			default: "production",
 			description: "Which reading of a weak resolution lifts the #685 brake",
 		},
 	},
@@ -90,14 +79,7 @@ export const spec = {
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {
-		const {
-			postcodeCountryCoherence,
-			gazetteerPrior,
-			adminContainmentRerank,
-			spanRescoreRequireContextRemainder,
-			components,
-			...rest
-		} = options
+		const { components, ...rest } = options
 
 		const { runGauntlet } = await import("#tools/eval-harness/gauntlet/run")
 
@@ -109,15 +91,6 @@ const EvalGauntlet = harnessCommand(
 				// string never becomes an empty filter.
 				// That would silently measure no rows and print a map of one header row.
 				...(components ? { components: extractDelimited(components) } : {}),
-				// An unset flag leaves its switch unpinned, so the run grades the production default.
-				...pinFor("postcodeCountryCoherence", postcodeCountryCoherence),
-				...pinFor("gazetteerPrior", gazetteerPrior),
-				...pinFor("adminContainmentRerank", adminContainmentRerank),
-				...pinFor("spanRescoreRequireContextRemainder", spanRescoreRequireContextRemainder),
-				// Three readings rather than two states, so there is no off spelling:
-				// an absent flag is the production default.
-				// That default takes a `placeID` at face value and never lifts the brake.
-				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 			})
 		).exitCode
 	},

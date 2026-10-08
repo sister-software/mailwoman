@@ -139,9 +139,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
 		poiVenueTier: config.poi_venue_tier ?? GEOCODE_SWITCH_DEFAULTS.poiVenueTier,
 		capitalTier: config.capital_tier ?? production.capitalTier,
-		variantAliasExemption: config.variant_alias_exemption
-			? config.variant_alias_exemption === "applied"
-			: production.variantAliasExemption,
+		variantAliasExemption:
+			(config.variant_alias_exemption ?? (production.variantAliasExemption ? "applied" : "not_applied")) === "applied",
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),

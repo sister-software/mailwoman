@@ -16,8 +16,10 @@ import {
 	type GauntletDeps,
 	type GauntletDepsOptions,
 	type GauntletResult,
+	PRODUCTION_RESOLVER_PINS,
 } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { overlayLocale } from "mailwoman/tools/eval-harness/gauntlet/routing"
+import { switchPinOf } from "mailwoman/tools/eval-harness/switch-pin"
 import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
@@ -243,18 +245,13 @@ export async function buildRoutedMailwomanArm(
 			...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
 			...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 			pins: {
-				...(config.postcode_country_coherence === undefined
-					? {}
-					: { postcodeCountryCoherence: config.postcode_country_coherence }),
-				...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
-				...(config.admin_containment_rerank === undefined
-					? {}
-					: { adminContainmentRerank: config.admin_containment_rerank }),
-				...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
-				...(config.variant_alias_exemption
-					? { variantAliasExemption: config.variant_alias_exemption === "applied" }
-					: {}),
-				...(config.poi_venue_tier === undefined ? {} : { poiVenueTier: config.poi_venue_tier }),
+				...PRODUCTION_RESOLVER_PINS,
+				postcodeCountryCoherence: switchPinOf(config.postcode_country_coherence),
+				gazetteerPrior: switchPinOf(config.gazetteer_prior),
+				adminContainmentRerank: switchPinOf(config.admin_containment_rerank),
+				capitalTier: config.capital_tier ?? "production",
+				variantAliasExemption: config.variant_alias_exemption ?? "production",
+				poiVenueTier: switchPinOf(config.poi_venue_tier),
 			},
 		})
 	)
