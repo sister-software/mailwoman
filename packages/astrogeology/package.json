@@ -36,7 +36,7 @@
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
 		"react": "^19.3.0",
-		"spliterator": "^8.1.0",
+		"spliterator": "^9.0.0",
 		"wrangler": "^4.148.0",
 		"zod": "^4.6.5"
 	},

@@ -70,7 +70,7 @@
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"spliterator": "^8.1.0"
+		"spliterator": "^9.0.0"
 	},
 	"devDependencies": {
 		"path-ts": "^2.5.0"

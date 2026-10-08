@@ -86,7 +86,7 @@
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.6",
 		"path-ts": "^2.5.0",
-		"spliterator": "^8.1.0",
+		"spliterator": "^9.0.0",
 		"type-fest": "^5.10.0",
 		"zod": "^4.6.5"
 	},

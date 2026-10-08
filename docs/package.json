@@ -119,7 +119,7 @@
 		"@types/react-map-gl": "^6.1.10",
 		"@typescript/native": "npm:typescript@^7.0.2",
 		"@vitejs/plugin-react": "^6.1.2",
-		"spliterator": "^8.1.0",
+		"spliterator": "^9.0.0",
 		"storybook": "^10.6.1",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"unist": "^0.0.1",

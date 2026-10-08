@@ -75,7 +75,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"path-ts": "^2.5.0",
-		"spliterator": "^8.1.0"
+		"spliterator": "^9.0.0"
 	},
 	"devDependencies": {
 		"adm-zip": "^0.6.1"
