@@ -17,7 +17,7 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
-import { fetchWithProgress, fetchWithRetry } from "#browser-runtime/fetch"
+import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
 import type { ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
@@ -169,22 +169,37 @@ export async function loadReleaseAssets(
 		? settleOptional(loadStreetMorphologyFST(DEFAULT_LOCALE, release.version))
 		: null
 
-	// Dynamic so the onnxruntime-web chunk loads only when a release does.
-	// The result is narrowed to the structural classifier interface this module exposes,
-	// so the neural package's own classifier type never enters a host bundle.
-	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
-
 	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
 	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
 	// Each smaller asset would move the bar backwards if the loader reported it when loading began.
 	const reportBytes = progress.setByteFraction
 
-	const modelFetch = reportBytes
+	const progressFetch = reportBytes
 		? fetchWithProgress(
 				(received, total) => reportBytes(total ? Math.min(1, received / total) : null),
 				(url) => url.endsWith(".onnx")
 			)
 		: fetchWithRetry
+
+	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
+		hasAnchor: release.hasAnchor,
+		splitEmbeddings: release.splitEmbeddings,
+	})
+
+	// The card, model, embedding and tokenizer URLs are known now.
+	// Their fetches start before the loader chunk arrives.
+	// The loader reads each through `modelFetch` and reports a failure with its own message.
+	const modelFetch = prefetchingFetch(progressFetch, [
+		classifierURLs.modelCardURL,
+		classifierURLs.modelURL,
+		...("embeddings" in classifierURLs ? [classifierURLs.embeddings.hotURL] : []),
+		classifierURLs.tokenizerURL,
+	])
+
+	// Dynamic so the onnxruntime-web chunk loads only when a release does.
+	// The result is narrowed to the structural classifier interface this module exposes,
+	// so the neural package's own classifier type never enters a host bundle.
+	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
 
 	const {
 		classifier,
@@ -194,10 +209,7 @@ export async function loadReleaseAssets(
 		// `release` is the ReleaseInfo parameter in this scope. The classifier's disposer needs its own name.
 		release: releaseClassifier,
 	} = (await loadNeuralClassifierFromURLs({
-		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-			hasAnchor: release.hasAnchor,
-			splitEmbeddings: release.splitEmbeddings,
-		}),
+		...classifierURLs,
 		...(wasmBinary ? { runner: { wasmBinary } } : {}),
 		fetchImpl: modelFetch,
 		// Every published pair index is loaded.

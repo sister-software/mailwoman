@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The release loader starts the FST, morphology, calibration and ORT wasm fetches beside the classifier, and still
- *   advances the step labels in order.
+ *   The release loader starts the FST, morphology, calibration and ORT wasm fetches beside the classifier, starts the
+ *   card, model, embedding and tokenizer fetches before the loader chunk resolves, and still advances the step labels
+ *   in order.
  */
 
 import { afterAll, afterEach, describe, expect, test, vi } from "vitest"
@@ -101,6 +102,66 @@ describe("loadReleaseAssets", () => {
 		expect(assets.fstMatcher).toEqual({ fst: true })
 		expect(assets.streetMorphologyMatcher).toEqual({ morphology: true })
 		expect(assets.calibrator).toBeNull()
+	})
+
+	test("the card, model, embedding and tokenizer fetches start before the loader runs and are handed to it", async () => {
+		const requested: string[] = []
+
+		vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+			requested.push(String(input))
+
+			return new Response("{}", { status: 200 })
+		})
+
+		let requestedAtLoaderCall: string[] = []
+
+		classifierLoad.mockImplementation(
+			async (opts: { modelCardURL: string; modelURL: string; tokenizerURL: string; fetchImpl: typeof fetch }) => {
+				requestedAtLoaderCall = [...requested]
+
+				// The loader's own reads take the started responses rather than issuing new requests.
+				await opts.fetchImpl(opts.modelCardURL)
+				await opts.fetchImpl(opts.modelURL)
+				await opts.fetchImpl(opts.tokenizerURL)
+
+				return { classifier: {}, diagnostics: null }
+			}
+		)
+
+		await loadReleaseAssets(
+			{ version: "v1", label: "v1", hasFST: false, hasWOFDB: false, splitEmbeddings: true } as Parameters<
+				typeof loadReleaseAssets
+			>[0],
+			makeProgress([])
+		)
+
+		const started = ["model-card.json", "encoder.onnx", "embeddings-hot.bin", "tokenizer.model"]
+
+		for (const name of started) {
+			expect(requestedAtLoaderCall.filter((url) => url.endsWith(name))).toHaveLength(1)
+			expect(requested.filter((url) => url.endsWith(name))).toHaveLength(1)
+		}
+	})
+
+	test("a failed prefetched card rejects at the loader's read, not before it", async () => {
+		vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+			if (String(input).endsWith("model-card.json")) throw new SyntaxError("card unreadable")
+
+			return new Response(null, { status: 404 })
+		})
+
+		classifierLoad.mockImplementation(async (opts: { modelCardURL: string; fetchImpl: typeof fetch }) => {
+			await opts.fetchImpl(opts.modelCardURL)
+
+			return { classifier: {}, diagnostics: null }
+		})
+
+		await expect(
+			loadReleaseAssets(
+				{ version: "v1", label: "v1", hasFST: false, hasWOFDB: false } as Parameters<typeof loadReleaseAssets>[0],
+				makeProgress([])
+			)
+		).rejects.toThrow("card unreadable")
 	})
 
 	test("the morphology matcher is dropped when the gazetteer FST fails, and the failure is not unhandled", async () => {
