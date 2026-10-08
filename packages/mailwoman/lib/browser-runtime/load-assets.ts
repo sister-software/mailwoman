@@ -88,6 +88,24 @@ export interface LoadReleaseAssetsOptions {
 	 * Omit it and `lookup` is `null` without a gazetteer step.
 	 */
 	gazetteer?: { sqliteRuntimeBaseURL: string }
+
+	/**
+	 * The URL of the onnxruntime-web `.wasm` binary the host's bundle serves.
+	 *
+	 * Given it, the loader downloads the binary beside the model and hands it to the session.
+	 * Without it, onnxruntime-web requests the binary after the model has arrived.
+	 */
+	ortWASMURL?: string
+}
+
+/**
+ * Resolve an optional asset load to its value, or to `null` when it throws.
+ *
+ * Every optional fetch starts at the top of {@link loadReleaseAssets} and is awaited later.
+ * Its failure settles at once, so an earlier stage's await never sees an unhandled rejection.
+ */
+function settleOptional<T>(load: Promise<T>): Promise<T | null> {
+	return load.catch(() => null)
 }
 
 /**
@@ -126,6 +144,31 @@ export async function loadReleaseAssets(
 	// so a rebuilt index is readable only from a fresh path.
 	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
 
+	// Every fetch below starts now, beside the model, rather than when the stage before it finishes.
+	// The stages are still awaited in order, so the step labels advance in order.
+	const ortWASMURL = options.ortWASMURL
+
+	const wasmBinary = ortWASMURL
+		? settleOptional(
+				fetchWithRetry(ortWASMURL).then(async (res) => (res.ok ? new Uint8Array(await res.arrayBuffer()) : null))
+			)
+		: null
+
+	const calibrationLoad = settleOptional(
+		fetchWithRetry(assetURL(DEFAULT_LOCALE, release.version, "calibration.json")).then(async (res) =>
+			// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
+			res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
+		)
+	)
+
+	// The street-context check needs both matchers, so the morphology matcher is kept only beside the FST.
+	// A release that predates the morphology artifact answers null, and the parse runs with the check off.
+	const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(DEFAULT_LOCALE, release.version)) : null
+
+	const streetMorphologyLoad = release.hasFST
+		? settleOptional(loadStreetMorphologyFST(DEFAULT_LOCALE, release.version))
+		: null
+
 	// Dynamic so the onnxruntime-web chunk loads only when a release does.
 	// The result is narrowed to the structural classifier interface this module exposes,
 	// so the neural package's own classifier type never enters a host bundle.
@@ -155,6 +198,7 @@ export async function loadReleaseAssets(
 			hasAnchor: release.hasAnchor,
 			splitEmbeddings: release.splitEmbeddings,
 		}),
+		...(wasmBinary ? { runner: { wasmBinary } } : {}),
 		fetchImpl: modelFetch,
 		// Every published pair index is loaded.
 		// The loader keeps each live and `selectPairIndexForText` picks per parse.
@@ -177,43 +221,13 @@ export async function loadReleaseAssets(
 	progress.setStepIndex(0)
 
 	// The calibration table is the model's own held-out reliability, so it must match the loaded version.
-	// A release without one leaves `calibrator` null and the host shows raw softmax scores.
-	let calibrator: Calibrator | null = null
+	const calibrator: Calibrator | null = await calibrationLoad
 
-	try {
-		const calRes = await fetchWithRetry(assetURL(DEFAULT_LOCALE, release.version, "calibration.json"))
-
-		if (calRes.ok) {
-			calibrator = createCalibrator((await calRes.json()) as CalibrationTable)
-		}
-	} catch {
-		// No calibration table for this version, so raw scores it is.
-	}
-
-	let fstMatcher: FSTMatcherLike | null = null
-	let fstProvenance: FSTProvenance | null = null
-	let streetMorphologyMatcher: FSTMatcherLike | null = null
-
-	if (release.hasFST) {
-		try {
-			const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, release.version)
-			fstMatcher = fstResult.matcher
-			fstProvenance = fstResult.provenance ?? null
-		} catch {
-			// FST not available for this version.
-		}
-
-		// The street-context check needs both matchers, so the morphology matcher
-		// is loaded only once the gazetteer FST is.
-		// A release that predates the artifact answers null and the parse runs with the check off.
-		if (fstMatcher) {
-			try {
-				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
-			} catch {
-				// A corrupt or unfetchable artifact leaves the check off.
-			}
-		}
-	}
+	const fstResult = fstLoad ? await fstLoad : null
+	const fstMatcher: FSTMatcherLike | null = fstResult?.matcher ?? null
+	const fstProvenance: FSTProvenance | null = fstResult?.provenance ?? null
+	const streetMorphology = streetMorphologyLoad ? await streetMorphologyLoad : null
+	const streetMorphologyMatcher: FSTMatcherLike | null = fstMatcher ? streetMorphology : null
 
 	progress.setStepIndex(1)
 

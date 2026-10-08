@@ -6538,6 +6538,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^6.1.2"
     mailwoman: "workspace:*"
     maplibre-gl: "npm:^6.13.0"
+    onnxruntime-web: "npm:1.30.0"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     react-map-gl: "npm:^8.1.3"

@@ -41,6 +41,16 @@ export interface WebONNXRunnerOpts {
 	 * An unsplit `model.onnx` reads `input_ids` and needs none.
 	 */
 	embeddings?: EmbeddingTable
+
+	/**
+	 * The onnxruntime-web `.wasm` binary, fetched by the caller.
+	 *
+	 * Without it, onnxruntime-web requests the binary when the session is created.
+	 * A host that downloads it beside the model takes it off the critical path.
+	 *
+	 * When the promise resolves `null` or rejects, onnxruntime-web fetches it.
+	 */
+	wasmBinary?: Promise<Uint8Array | null>
 }
 
 /**
@@ -95,11 +105,13 @@ export class WebONNXRunner implements NeuralRunner {
 
 	readonly #modelByteLength: number
 	readonly #embeddings: EmbeddingTable | null
+	readonly #wasmBinary: Promise<Uint8Array | null> | null
 
 	private constructor(modelBytes: Uint8Array, opts: WebONNXRunnerOpts) {
 		this.#modelBytes = modelBytes
 		this.#modelByteLength = modelBytes.byteLength
 		this.#embeddings = opts.embeddings ?? null
+		this.#wasmBinary = opts.wasmBinary ?? null
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
 
@@ -142,6 +154,19 @@ export class WebONNXRunner implements NeuralRunner {
 				const modelBytes = this.#modelBytes
 
 				if (!modelBytes) throw new Error("the ONNX runner has been released")
+
+				// onnxruntime-web reads the binary once, when its first session initializes the runtime.
+				if (this.#wasmBinary && !ort.env.wasm.wasmBinary) {
+					try {
+						const wasmBinary = await this.#wasmBinary
+
+						if (wasmBinary) {
+							ort.env.wasm.wasmBinary = wasmBinary
+						}
+					} catch {
+						// onnxruntime-web fetches the binary from its own location.
+					}
+				}
 
 				const session = await ort.InferenceSession.create(modelBytes, {
 					executionProviders: ["wasm"],

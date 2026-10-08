@@ -48,7 +48,7 @@ import {
 } from "mailwoman/browser-runtime/classify"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
-import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import {
 	assetURL,
@@ -59,6 +59,10 @@ import {
 	streetExtractURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+// The binary that `onnxruntime-web/wasm` instantiates.
+// Vite emits one file for this import and for the bundle's own reference.
+// The loader's early download is therefore the file the session would request.
+import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
@@ -124,20 +128,44 @@ function disposeAssets(assets: ReleaseAssets): Promise<void> {
 }
 
 /**
+ * The releases-manifest fetch the entry module starts before React mounts,
+ * taken by the first manifest load.
+ */
+let earlyManifest: Promise<ReleasesManifest | null> | null = null
+
+/**
+ * Start the releases-manifest fetch ahead of the first render, so the model download
+ * begins as soon as the manifest arrives rather than after the app has mounted.
+ *
+ * The first manifest load of {@link useGeocoderRuntime} takes this promise.
+ * Every later load fetches afresh.
+ */
+export function prefetchReleasesManifest(): void {
+	earlyManifest ??= fetchReleasesManifest()
+	// The hook awaits and reports a failure, so the early promise must not report it a second time.
+	earlyManifest.catch(() => {})
+}
+
+function takeReleasesManifest(): Promise<ReleasesManifest | null> {
+	const early = earlyManifest
+
+	earlyManifest = null
+
+	return early ?? fetchReleasesManifest()
+}
+
+/**
  * Build the real {@link GeocoderRuntime} by injecting the browser runtime's
  * loaders into `useReleaseRuntime`.
  */
 export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqliteRuntimeBaseURL } = config
 
-	const loadManifest = useCallback(
-		async (): Promise<ReleaseManifest<ReleaseInfo> | null> => fetchReleasesManifest(),
-		[]
-	)
+	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
 
 	const loadAssets = useCallback(
 		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
-			loadReleaseAssets(release, ctx, { gazetteer: { sqliteRuntimeBaseURL } }),
+			loadReleaseAssets(release, ctx, { gazetteer: { sqliteRuntimeBaseURL }, ortWASMURL }),
 		[sqliteRuntimeBaseURL]
 	)
 
