@@ -45,6 +45,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@fastify/swagger": "^9.9.1",
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/core": "workspace:^",
 		"@mailwoman/neural": "workspace:*",
@@ -54,6 +55,7 @@
 		"fastify-plugin": "^6.0.0",
 		"fastify-type-provider-zod": "^7.0.0",
 		"mailwoman": "workspace:^",
+		"openapi-types": "^12.1.3",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
