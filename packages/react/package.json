@@ -169,11 +169,6 @@
 			"node": "./lib/map/ResolvedPlaceLayers.tsx",
 			"default": "./out/map/ResolvedPlaceLayers.js"
 		},
-		"./map/BackendControl": {
-			"types": "./out/map/BackendControl.d.ts",
-			"node": "./lib/map/BackendControl.tsx",
-			"default": "./out/map/BackendControl.js"
-		},
 		"./map/CompareToggle": {
 			"types": "./out/map/CompareToggle.d.ts",
 			"node": "./lib/map/CompareToggle.tsx",

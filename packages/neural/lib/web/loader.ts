@@ -13,6 +13,7 @@ import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary 
 import { type AddressSystemConventions, NeuralAddressClassifier } from "#classifier"
 import { gazetteerSuppressionFor } from "#classifier/options"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
+import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import type { PairIndexResolver } from "#pair/index/resolver"
@@ -109,6 +110,13 @@ export interface LoadFromURLsOptions {
 	modelURL: string
 
 	/**
+	 * The embedding row files of a split release, whose `modelURL` names `encoder.onnx`.
+	 *
+	 * The loader fetches `hotURL` whole and reads each other row from `rowsURL` by HTTP range on first use.
+	 */
+	embeddings?: { hotURL: string; rowsURL: string }
+
+	/**
 	 * The URL of the SentencePiece tokenizer model.
 	 *
 	 * It is required unless the model card declares a character encoder.
@@ -133,7 +141,7 @@ export interface LoadFromURLsOptions {
 	modelCardURL?: string
 
 	/**
-	 * Runner options include the WebGPU toggle, fixed sequence length and wasm path.
+	 * Runner options include the fixed sequence length and wasm path.
 	 */
 	runner?: WebONNXRunnerOpts
 
@@ -346,20 +354,28 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface"))
 	)
 
-	const [modelBytes, tokenizerBytes, gazetteerLexicon, countryLexicon, streetTypeLexicon, localitySurfaceLexicon] =
-		await Promise.all([
-			fetchBytes(opts.modelURL, fetchImpl),
-			fetchBytes(opts.tokenizerURL, fetchImpl),
-			gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
-			countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
+	const [
+		modelBytes,
+		embeddings,
+		tokenizerBytes,
+		gazetteerLexicon,
+		countryLexicon,
+		streetTypeLexicon,
+		localitySurfaceLexicon,
+	] = await Promise.all([
+		fetchBytes(opts.modelURL, fetchImpl),
+		opts.embeddings ? loadEmbeddingTable(opts.embeddings, fetchImpl) : Promise.resolve(null),
+		fetchBytes(opts.tokenizerURL, fetchImpl),
+		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
+		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
 
-			streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
-			localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
-		])
+		streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
+		localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
+	])
 
 	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
-		WebONNXRunner.fromBytes(modelBytes, opts.runner),
+		WebONNXRunner.fromBytes(modelBytes, { ...opts.runner, ...(embeddings ? { embeddings } : {}) }),
 		opts.postcodeBinaryURLs.length
 			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
 			: Promise.resolve<AnchorLookup | null>(null),
@@ -586,6 +602,16 @@ function labelsFromModelCard(card: Record<string, unknown>, url: string): readon
 	}
 
 	return Object.freeze(labels.slice())
+}
+
+async function loadEmbeddingTable(
+	urls: NonNullable<LoadFromURLsOptions["embeddings"]>,
+	fetchImpl: typeof fetch
+): Promise<EmbeddingTable> {
+	return EmbeddingTable.fromBytes(
+		await fetchBytes(urls.hotURL, fetchImpl),
+		httpEmbeddingRangeReader(urls.rowsURL, fetchImpl)
+	)
 }
 
 function toBase64(bytes: Uint8Array): string {

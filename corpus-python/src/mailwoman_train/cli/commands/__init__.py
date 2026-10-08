@@ -10,13 +10,14 @@ The tokenizer commands sit outside the pipeline.
 from __future__ import annotations
 
 from ...protocols import CLICommand
-from . import evaluate, export, package, quantize, smoke, tokenizer, train, verify_tokenizer
+from . import evaluate, export, package, quantize, smoke, split_embeddings, tokenizer, train, verify_tokenizer
 
 COMMANDS: tuple[CLICommand, ...] = (
     train,
     evaluate,
     export,
     quantize,
+    split_embeddings,
     package,
     smoke,
     tokenizer,

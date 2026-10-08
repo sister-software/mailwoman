@@ -78,13 +78,6 @@ const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 const INIT_WASM_MS_BUDGET = 12_000
 
 /**
- * Session init on the WebGPU arm, asserted only when the browser granted an adapter
- * and the runner's diagnostics report `webgpu`; the receipt prints the adapter's identity
- * because a software adapter and a discrete GPU are different arms wearing the same name.
- */
-const INIT_WEBGPU_MS_BUDGET = 20_000
-
-/**
  * Median tokenize+infer on the wasm arm, single-threaded.
  */
 const WARM_P50_WASM_MS_BUDGET = 140
@@ -156,14 +149,6 @@ const CANDIDATE_PROBE_LIMIT = 8
 const HTTPVFS_CHUNK_SIZE = 65_536
 
 /**
- * Chromium flags that let the WebGPU arm be attempted at all.
- *
- * The arm skips when the browser grants no adapter.
- * The receipt records the adapter's identity when one is granted.
- */
-const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
-
-/**
  * The candidate-table probe: a contiguous probe on the `without rowid` B-tree keyed by
  * `name_key`, whose access pattern decides the range-fetch count rather than the select list.
  */
@@ -214,10 +199,10 @@ const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (
 const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
- * A locator for the onnxruntime-web asset directory rather than the file the runtime will fetch: the
- * whole directory is mounted at `/ort/` so whichever `.wasm` variant ORT picks is served and counted.
+ * A locator for the onnxruntime-web asset directory: the whole directory is mounted at `/ort/`,
+ * and the receipt counts whichever `.wasm` file the runtime fetches from it.
  */
-const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
+const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.wasm")
 
 /**
  * A locator for the sqlite-wasm runtime directory: the range worker imports `index.mjs`
@@ -527,10 +512,8 @@ interface BrowserSLOAPI {
 	initRunner(options: {
 		modelURL: string
 		tokenizerURL: string
-		useWebGPU: boolean
 	}): Promise<{ backend: string | null; tokenizerMs: number; sessionMs: number; totalMs: number }>
 	warm(texts: readonly string[], iterations: number, warmupIterations: number): Promise<number[]>
-	probeWebGPU(): Promise<{ exposed: boolean; adapter: boolean; info: string }>
 	heapSupported(): boolean
 	peakHeapBytes(): number
 }
@@ -580,7 +563,7 @@ const GAZETTEER_ENTRY_SOURCE = [
 const RANGE_WORKER_ENTRY_SOURCE = 'import "@mailwoman/resolver-wof-wasm/httpvfs/range-worker"'
 
 const BROWSER_ENTRY_SOURCE = [
-	'import * as ort from "onnxruntime-web/webgpu"',
+	'import * as ort from "onnxruntime-web/wasm"',
 	// These two lines are the bundled entry's source. esbuild resolves them from
 	// `BUNDLE_RESOLVE_DIR`, the repository root.
 	// A `#` specifier resolves against the nearest `package.json`, so it reads
@@ -629,10 +612,7 @@ const BROWSER_ENTRY_SOURCE = [
 	"	const t0 = performance.now()",
 	"	tokenizer = await MailwomanTokenizer.loadFromBytes(tokenizerBytes)",
 	"	const tokenizerReady = performance.now()",
-	"	const nextRunner = await WebONNXRunner.fromBytes(modelBytes, {",
-	"		useWebGPU: options.useWebGPU,",
-	'		wasmPathsRoot: "/ort/",',
-	"	})",
+	'	const nextRunner = await WebONNXRunner.fromBytes(modelBytes, { wasmPathsRoot: "/ort/" })',
 	"	// The session is built lazily; this forces it, which is the cost the number is about.",
 	"	await nextRunner.infer([0])",
 	"	const done = performance.now()",
@@ -661,26 +641,10 @@ const BROWSER_ENTRY_SOURCE = [
 	"	return durations",
 	"}",
 	"",
-	"async function probeWebGPU() {",
-	'	if (!("gpu" in navigator)) return { exposed: false, adapter: false, info: "" }',
-	"	try {",
-	"		const adapter = await navigator.gpu.requestAdapter()",
-	'		if (!adapter) return { exposed: true, adapter: false, info: "" }',
-	"		const info = adapter.info || {}",
-	"		// The adapter's identity belongs in the receipt: a software adapter and a discrete GPU are",
-	"		// not the same arm, and the number alone cannot tell them apart.",
-	'		const described = [info.vendor, info.architecture, info.description].filter(Boolean).join(" ")',
-	'		return { exposed: true, adapter: true, info: described || "unnamed adapter" }',
-	"	} catch {",
-	'		return { exposed: true, adapter: false, info: "" }',
-	"	}",
-	"}",
-	"",
 	"globalThis.mwSLO = {",
 	"	download,",
 	"	initRunner,",
 	"	warm,",
-	"	probeWebGPU,",
 	"	heapSupported: () => !!performance.memory,",
 	"	peakHeapBytes: () => {",
 	"		sampleHeap()",
@@ -742,7 +706,6 @@ interface Measurement {
 	readonly download: Tally
 	readonly downloadMs: number
 	readonly wasmInit: ArmInit
-	readonly webgpu: { readonly exposed: boolean; readonly adapter: string; readonly init: ArmInit | null }
 	readonly wasmWarm: WarmStats
 	readonly gazetteer: GazetteerMeasurement | null
 	readonly peakHeapBytes: number
@@ -840,7 +803,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	// Declared server-first so disposal runs browser-first: the pages have to be gone
 	// before the origin they were fetching from stops answering.
 	await using server = await createAssetServer(inlineRoutes, mounts, rangeMount)
-	await using browser: Browser = await chromium.launch({ args: [...WEBGPU_LAUNCH_ARGS] })
+	await using browser: Browser = await chromium.launch()
 	const pageErrors: string[] = []
 
 	const page = await browser.newPage()
@@ -871,7 +834,6 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	const wasmInit = await page.evaluate((options) => globalThis.mwSLO.initRunner(options), {
 		modelURL,
 		tokenizerURL,
-		useWebGPU: false,
 	})
 
 	const wasmDurations = await page.evaluate((args) => globalThis.mwSLO.warm(args.texts, args.iterations, args.warmup), {
@@ -886,24 +848,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	// onnxruntime-web pulls its `.wasm` during session creation.
 	// The range reader pulls its worker and wasm when the gazetteer database opens.
 	// An earlier snapshot would report zero bytes for both classes and imply this session downloads no wasm.
-	// Everything after this line is deliberately excluded: a second session on the
-	// WebGPU arm re-fetches artifacts a cold user session pays for once.
 	const download = server.snapshot()
-	const webgpuProbe = await page.evaluate(() => globalThis.mwSLO.probeWebGPU())
-	let webgpuInit: ArmInit | null = null
-
-	if (webgpuProbe.adapter) {
-		const attempt = await page.evaluate((options) => globalThis.mwSLO.initRunner(options), {
-			modelURL,
-			tokenizerURL,
-			useWebGPU: true,
-		})
-
-		// `WebONNXRunner` falls back to wasm silently when the WebGPU session fails to build,
-		// so the arm is only real if the diagnostics say so.
-		webgpuInit = attempt.backend === "webgpu" ? attempt : null
-	}
-
 	const heapSupported = await page.evaluate(() => globalThis.mwSLO.heapSupported())
 	const peakHeapBytes = await page.evaluate(() => globalThis.mwSLO.peakHeapBytes())
 
@@ -915,7 +860,6 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 		download,
 		downloadMs: downloadResult.totalMs,
 		wasmInit,
-		webgpu: { exposed: webgpuProbe.exposed, adapter: webgpuProbe.info, init: webgpuInit },
 		wasmWarm: statsOf(wasmDurations),
 		gazetteer,
 		peakHeapBytes,
@@ -1027,19 +971,6 @@ function gazetteerRows(gazetteer: GazetteerMeasurement | null): string[] {
 	]
 }
 
-function webgpuRows(webgpu: Measurement["webgpu"]): string[] {
-	if (webgpu.init) {
-		return [
-			initRow("webgpu arm", webgpu.init, INIT_WEBGPU_MS_BUDGET),
-			`      ${" ".repeat(16)} adapter: ${webgpu.adapter}`,
-		]
-	}
-
-	const why = webgpu.exposed ? "no adapter granted" : "navigator.gpu not exposed by this browser"
-
-	return [`      ${"webgpu arm".padEnd(16)} NOT MEASURED — ${why}; the budget is not asserted`]
-}
-
 function formatReceipt(m: Measurement): string {
 	const heapMiB = (m.peakHeapBytes / BYTES_PER_MEBIBYTE).toFixed(0)
 	const heapBudgetMiB = (PEAK_HEAP_BYTES_BUDGET / BYTES_PER_MEBIBYTE).toFixed(0)
@@ -1062,7 +993,6 @@ function formatReceipt(m: Measurement): string {
 		"",
 		"  2 init (model bytes already in memory — no network in the number)",
 		initRow("wasm arm", m.wasmInit, INIT_WASM_MS_BUDGET),
-		...webgpuRows(m.webgpu),
 		"",
 		`  3 warm inference — wasm arm, 1 thread, ${m.wasmWarm.samples} parses over ${WARM_INPUTS.length} inputs (${WARM_LOWERCASE_INPUTS} lowercase)`,
 		`      p50 ${m.wasmWarm.p50.toFixed(1)} ms   p95 ${m.wasmWarm.p95.toFixed(1)} ms   budget p50 ${WARM_P50_WASM_MS_BUDGET} / p95 ${WARM_P95_WASM_MS_BUDGET}`,
@@ -1079,8 +1009,9 @@ function formatReceipt(m: Measurement): string {
 // MARK: Suite.
 
 /**
- * The whole probe runs once: a browser launch plus a 39 MB model load per arm
- * is not something to repeat per assertion.
+ * The whole probe runs once.
+ *
+ * A browser launch plus a 39 MB model load is not something to repeat per assertion.
  *
  * Generous rather than a performance target.
  */
@@ -1140,21 +1071,6 @@ describe.skipIf(!canRun)("#378 browser SLO — decomposed cold path", () => {
 	test("2 · init — wasm arm", () => {
 		expect(measurement.wasmInit.backend).toBe("wasm")
 		expect(measurement.wasmInit.totalMs).toBeLessThanOrEqual(INIT_WASM_MS_BUDGET)
-	})
-
-	test("2 · init — webgpu arm", (ctx) => {
-		if (!measurement.webgpu.init) {
-			ctx.skip(
-				measurement.webgpu.exposed
-					? "WebGPU is exposed but no adapter was granted"
-					: "navigator.gpu is not exposed by this browser — headless Chromium on Linux does not ship it"
-			)
-
-			return
-		}
-
-		expect(measurement.webgpu.init.backend).toBe("webgpu")
-		expect(measurement.webgpu.init.totalMs).toBeLessThanOrEqual(INIT_WEBGPU_MS_BUDGET)
 	})
 
 	test("3 · warm inference — wasm arm median", () => {

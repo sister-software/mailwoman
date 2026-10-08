@@ -58,9 +58,7 @@ export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}
 		],
 		selectedVersion: "v7.2.0",
 		selectVersion: () => {},
-		activeBackend: "webgpu (28 MB int8)",
-		forceWASM: false,
-		setForceWASM: () => {},
+		activeBackend: "wasm (28 MB int8)",
 
 		resolveMapPlace: (candidate): ResolvedMapPlace => ({
 			...candidate,

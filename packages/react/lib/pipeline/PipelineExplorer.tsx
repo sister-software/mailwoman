@@ -62,7 +62,6 @@ function PipelineExplorerInner({ runtime, defaultAddress, presets, panels }: Pip
 			{panels.header}
 			{panels.releaseInfo}
 			{panels.versionControl}
-			{panels.backendControl}
 
 			<QueryForm
 				value={text}

@@ -302,16 +302,25 @@ export function regionToStateSlug(region: string | null): string | null {
 export function neuralClassifierLoadURLs(
 	locale: string,
 	version: string,
-	opts: { hasAnchor?: boolean; forceWASM: boolean }
+	opts: { hasAnchor?: boolean; splitEmbeddings?: boolean }
 ) {
 	return {
-		modelURL: assetURL(locale, version, "model.onnx"),
+		// A split release loads the encoder and reads the embedding rows separately.
+		// Its directory still holds `model.onnx` for runtimes that predate the split.
+		...(opts.splitEmbeddings
+			? {
+					modelURL: assetURL(locale, version, "encoder.onnx"),
+					embeddings: {
+						hotURL: assetURL(locale, version, "embeddings-hot.bin"),
+						rowsURL: assetURL(locale, version, "embeddings.rows"),
+					},
+				}
+			: { modelURL: assetURL(locale, version, "model.onnx") }),
 		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
 		modelCardURL: assetURL(locale, version, "model-card.json"),
 		// Gazetteer-trained bundles require the lexicon.
 		// Older releases may not include it.
 		gazetteerLexicon: { url: assetURL(locale, version, "anchor-lexicon-v1.json") },
-		runner: { useWebGPU: !opts.forceWASM },
 		postcodeBinaryURLs: opts.hasAnchor
 			? [
 					assetURL(locale, version, "postcode-us.bin"),

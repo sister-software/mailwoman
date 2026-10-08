@@ -19,7 +19,6 @@ interface TestRelease extends ReleaseBase {
 
 interface TestAssets {
 	loadedVersion: string
-	forcedWASM: boolean
 }
 
 const MANIFEST: ReleaseManifest<TestRelease> = {
@@ -36,11 +35,11 @@ const loadManifest = async (): Promise<ReleaseManifest<TestRelease>> => MANIFEST
 const loadAssetsOK = async (release: TestRelease, ctx: AssetsLoadContext): Promise<TestAssets> => {
 	ctx.setProgress(`Loading ${release.version} (~${release.modelSize})…`)
 	ctx.setStepLabels(["Loading classifier", "Loading gazetteer"])
-	ctx.setBackend(ctx.forceWASM ? "wasm" : "webgpu")
+	ctx.setBackend("wasm (20 MB int8)")
 	ctx.setStepIndex(0)
 	ctx.setStepIndex(1)
 
-	return { loadedVersion: release.version, forcedWASM: ctx.forceWASM }
+	return { loadedVersion: release.version }
 }
 
 const loadAssetsFail = async (): Promise<TestAssets> => {
@@ -64,7 +63,6 @@ function Harness({
 			<span className="version">{rt.selectedVersion ?? "none"}</span>
 			<span className="ready">{rt.ready ? "yes" : "no"}</span>
 			<span className="assets-version">{rt.assets?.loadedVersion ?? ""}</span>
-			<span className="assets-wasm">{rt.assets ? String(rt.assets.forcedWASM) : ""}</span>
 			<span className="backend">{rt.activeBackend}</span>
 			<span className="progress">{rt.loadingProgress}</span>
 			<span className="step">{rt.loadingStepIndex}</span>
@@ -73,9 +71,6 @@ function Harness({
 			<span className="release-label">{rt.selectedRelease?.label ?? ""}</span>
 			<button type="button" className="pick-v1" onClick={() => rt.selectVersion("v1")}>
 				v1
-			</button>
-			<button type="button" className="force-wasm" onClick={() => rt.setForceWASM(true)}>
-				wasm
 			</button>
 		</div>
 	)
@@ -90,7 +85,7 @@ test("mount → manifest → default version → assets → ready", async () => 
 
 	expect(text(container, ".version")).toBe("v2")
 	expect(text(container, ".assets-version")).toBe("v2")
-	expect(text(container, ".backend")).toBe("webgpu")
+	expect(text(container, ".backend")).toBe("wasm (20 MB int8)")
 	expect(text(container, ".progress")).toBe("")
 	expect(text(container, ".step")).toBe("1")
 	expect(text(container, ".steplabels")).toBe("Loading classifier|Loading gazetteer")
@@ -107,17 +102,6 @@ test("selectVersion reloads the bundle for the new version", async () => {
 	await vi.waitFor(() => expect(text(container, ".assets-version")).toBe("v1"), { timeout: 2000 })
 	expect(text(container, ".version")).toBe("v1")
 	expect(text(container, ".ready")).toBe("yes")
-})
-
-test("setForceWASM reloads with the WASM flag set", async () => {
-	const { container } = renderComponent(<Harness />)
-	await vi.waitFor(() => expect(text(container, ".ready")).toBe("yes"), { timeout: 2000 })
-	expect(text(container, ".assets-wasm")).toBe("false")
-
-	await userEvent.click(container.querySelector(".force-wasm") as HTMLButtonElement)
-
-	await vi.waitFor(() => expect(text(container, ".assets-wasm")).toBe("true"), { timeout: 2000 })
-	expect(text(container, ".backend")).toBe("wasm")
 })
 
 test("a rejecting loadAssets surfaces errorMessage and stays not-ready", async () => {

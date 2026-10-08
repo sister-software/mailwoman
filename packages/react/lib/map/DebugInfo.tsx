@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  *
  *   Display and log build, model and runtime details for bug reports.
- *   Report the actual execution backend because successful loading does not imply WebGPU ran.
  */
 
 import { type ReactNode, useEffect, useMemo } from "react"
@@ -13,15 +12,9 @@ import { useBuildInfo } from "#common/useBuildInfo"
 
 export interface DebugInfoProps {
 	/**
-	 * The backend the runtime resolved to (e.g. `webgpu (28 MB int8)`); empty before it is known.
+	 * The runtime's backend and model size (e.g. `wasm (28 MB int8)`); empty before the model loads.
 	 */
 	activeBackend?: string
-	/**
-	 * Whether the CPU/wasm backend is currently forced.
-	 *
-	 * This explains a `wasm` backend that would otherwise indicate a WebGPU failure.
-	 */
-	forceWASM?: boolean
 	/**
 	 * The model version the runtime loaded.
 	 *
@@ -47,7 +40,7 @@ function Row({ label, value }: { label: string; value: string }): ReactNode {
 	)
 }
 
-export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: DebugInfoProps): ReactNode {
+export function DebugInfo({ activeBackend, selectedVersion, ready }: DebugInfoProps): ReactNode {
 	const build = useBuildInfo()
 
 	// Memoized on the primitives it reads, so the log below fires when a value changes
@@ -60,11 +53,9 @@ export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: 
 			buildTime: build?.buildTime ?? "—",
 			model: selectedVersion ?? "—",
 			backend: activeBackend || (ready ? "unknown" : "loading…"),
-			forceWASM: Boolean(forceWASM),
-			webgpuInBrowser: typeof navigator !== "undefined" && "gpu" in navigator,
 			userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "—",
 		}),
-		[build?.app, build?.commit, build?.revision, build?.buildTime, selectedVersion, activeBackend, forceWASM, ready]
+		[build?.app, build?.commit, build?.revision, build?.buildTime, selectedVersion, activeBackend, ready]
 	)
 
 	useEffect(() => {
@@ -79,10 +70,6 @@ export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: 
 			<Row label="Built" value={record.buildTime} />
 			<Row label="Model" value={record.model} />
 			<Row label="Backend" value={record.backend} />
-			{/* A browser with no WebGPU at all explains a `wasm` backend that is otherwise indistinguishable from a
-			    WebGPU session that threw. */}
-			<Row label="WebGPU available" value={record.webgpuInBrowser ? "yes" : "no"} />
-			<Row label="Force WASM" value={record.forceWASM ? "on" : "off"} />
 		</div>
 	)
 }

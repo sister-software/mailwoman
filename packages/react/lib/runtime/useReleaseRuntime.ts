@@ -39,14 +39,9 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
  */
 export interface AssetsLoadContext {
 	/**
-	 * The signal aborts when a version or backend switch supersedes this load or when the component unmounts.
+	 * The signal aborts when a version switch supersedes this load or when the component unmounts.
 	 */
 	signal: AbortSignal
-
-	/**
-	 * Whether this load should use the CPU WASM backend instead of WebGPU.
-	 */
-	forceWASM: boolean
 
 	/**
 	 * Sets the progress line, such as `Loading v7 model (~28 MB)…`.
@@ -61,7 +56,7 @@ export interface AssetsLoadContext {
 	setStepIndex: (index: number) => void
 
 	/**
-	 * Reports the backend that the neural runtime resolved to, such as `webgpu (27 MB int8)`.
+	 * Reports the neural runtime's backend and model size, such as `wasm (27 MB int8)`.
 	 */
 	setBackend: (backend: string) => void
 
@@ -87,9 +82,12 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 
 	/**
-	 * Loads the asset bundle for one release and reports progress through `ctx`;
-	 * the hook calls it on every version or `forceWASM` change, reports a rejection through
-	 * `errorMessage`, and disposes a result that resolves after `ctx.signal` aborts.
+	 * Loads the asset bundle for one release and reports progress through `ctx`.
+	 *
+	 * The hook calls it on every version change.
+	 * It reports a rejection through `errorMessage`.
+	 *
+	 * It disposes a result that resolves after `ctx.signal` aborts.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 
@@ -163,31 +161,19 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	errorMessage: string | null
 
 	/**
-	 * The backend the neural runtime resolved to, such as `webgpu (27 MB int8)`;
-	 * it is `""` before the backend is known.
+	 * The neural runtime's backend and model size, such as `wasm (27 MB int8)`;
+	 * it is `""` before the model loads.
 	 */
 	activeBackend: string
-
-	/**
-	 * Whether the CPU WASM backend is forced instead of WebGPU.
-	 */
-	forceWASM: boolean
 
 	/**
 	 * Switches to another version, clearing any error and reloading the asset bundle.
 	 */
 	selectVersion: (version: string) => void
-
-	/**
-	 * Forces or releases the CPU WASM backend.
-	 * Either change reloads the asset bundle.
-	 */
-	setForceWASM: (forceWASM: boolean) => void
 }
 
 /**
- * Loads the release manifest on mount and the selected release's assets whenever
- * the version or `forceWASM` changes.
+ * Loads the release manifest on mount and the selected release's assets whenever the version changes.
  *
  * Each reload aborts the previous load and disposes the old assets.
  * `ready` becomes true after the new assets load.
@@ -206,7 +192,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
-	const [forceWASM, setForceWASMState] = useState(false)
 
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
@@ -279,7 +264,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 				const ctx: AssetsLoadContext = {
 					signal,
-					forceWASM,
 					setProgress: (progress) => guard(() => setLoadingProgress(progress)),
 					setStepLabels: (labels) => guard(() => setLoadingStepLabels(labels)),
 					setStepIndex: (index) => guard(() => setLoadingStepIndex(index)),
@@ -307,7 +291,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		})()
 
 		return () => controller.abort()
-	}, [selectedVersion, forceWASM])
+	}, [selectedVersion])
 
 	useEffect(() => {
 		return () => {
@@ -326,8 +310,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		setErrorMessage(null)
 	}, [])
 
-	const setForceWASM = useCallback((next: boolean) => setForceWASMState(next), [])
-
 	const selectedRelease = useMemo(
 		() => manifest?.releases.find((r) => r.version === selectedVersion) ?? null,
 		[manifest, selectedVersion]
@@ -345,8 +327,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		loadingByteFraction,
 		errorMessage,
 		activeBackend,
-		forceWASM,
 		selectVersion,
-		setForceWASM,
 	}
 }

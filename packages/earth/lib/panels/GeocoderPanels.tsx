@@ -54,7 +54,7 @@ function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loa
 }
 
 export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): GeocoderPanels {
-	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = handle
+	const { runtime, releases, geoBias, calibrator, traceParse, supportsTrace } = handle
 
 	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
 	const [devMode, setDevMode] = useState(debugDefault)
@@ -134,7 +134,6 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 					compareVersion={ctx.compareVersion}
 					primaryVersion={selectedVersion ?? "?"}
 					releases={releases}
-					forceWASM={forceWASM}
 				/>
 			),
 		}),
@@ -142,7 +141,6 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			selectedRelease,
 			selectedVersion,
 			releases,
-			forceWASM,
 			geoBias,
 			calibrator,
 			calibrateConfidence,

@@ -22,7 +22,7 @@ import { serializePairIndex, type PairIndexHeaderInput } from "#pair"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -124,7 +124,6 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 		pairIndexURLs,
 		postcodeBinaryURLs: [],
 		...(country ? { country } : {}),
-		runner: { useWebGPU: false },
 		fetchImpl: makeFetch(),
 	}
 }

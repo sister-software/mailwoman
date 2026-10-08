@@ -5,11 +5,13 @@
  * @file Publishes the browser demo's runtime assets to Cloudflare R2.
  *
  *   The staged directory mirrors the object layout below the configured prefix. Versioned objects receive a long,
- *   immutable cache lifetime. Mutable release manifests receive a short lifetime. Binary content types remain
- *   uncompressed so the browser can read database byte ranges.
+ *   immutable cache lifetime. Mutable release manifests receive a short lifetime. A `.bin` or `.onnx` object is fetched whole, so
+ *   it is stored gzip-compressed with `Content-Encoding: gzip` and the browser decodes it transparently. Every other
+ *   binary stays identity-encoded, because a byte-range read of an encoded object returns encoded bytes.
  */
 
-import { isDirectory, readFileSize } from "@mailwoman/core/fs/readers"
+import { gzip } from "@mailwoman/core/fs/compression"
+import { isDirectory, readFileSize, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { relative, type PathBuilderLike } from "path-ts"
@@ -43,13 +45,27 @@ const CONTENT_TYPES = new Map([
 	[".wasm", "application/wasm"],
 ])
 
+/**
+ * Extensions whose objects are always fetched whole and are therefore stored gzip-encoded.
+ *
+ * A database (`.db`) and an embedding row file (`.rows`) are read by HTTP range and stay identity-encoded.
+ */
+const WHOLE_FETCH_ENCODED_EXTENSIONS = new Set([".bin", ".onnx"])
+
 export interface DemoAssetUpload {
 	file: string
 	relativePath: string
 	key: string
+	/**
+	 * The local file's size, before any content encoding.
+	 */
 	size: number
 	contentType: string
 	cacheControl: string
+	/**
+	 * The `Content-Encoding` the stored object carries, when the upload compresses it.
+	 */
+	contentEncoding?: "gzip"
 }
 
 export type DemoAssetTransport = (upload: DemoAssetUpload, bucket: string) => Promise<void>
@@ -85,12 +101,14 @@ function extension(path: string): string {
 	return dot === -1 ? "" : filename.slice(dot).toLowerCase()
 }
 
-function metadataFor(relativePath: string): Pick<DemoAssetUpload, "contentType" | "cacheControl"> {
+function metadataFor(relativePath: string): Pick<DemoAssetUpload, "contentType" | "cacheControl" | "contentEncoding"> {
 	const filename = relativePath.split("/").at(-1) ?? relativePath
+	const ext = extension(relativePath)
 
 	return {
-		contentType: CONTENT_TYPES.get(extension(relativePath)) ?? "application/octet-stream",
+		contentType: CONTENT_TYPES.get(ext) ?? "application/octet-stream",
 		cacheControl: MUTABLE_FILES.has(filename) ? MUTABLE_CACHE_CONTROL : IMMUTABLE_CACHE_CONTROL,
+		...(WHOLE_FETCH_ENCODED_EXTENSIONS.has(ext) ? { contentEncoding: "gzip" as const } : {}),
 	}
 }
 
@@ -167,15 +185,18 @@ async function awsTransport(env: DemoAssetEnvironment): Promise<DemoAssetTranspo
 	})
 
 	return async (asset, bucket) => {
+		const encoded = asset.contentEncoding ? await gzip(await readLocalBuffer(asset.file)) : undefined
+
 		await new Upload({
 			client,
 			params: {
 				Bucket: bucket,
 				Key: asset.key,
-				Body: openReadStream(asset.file),
-				ContentLength: asset.size,
+				Body: encoded ?? openReadStream(asset.file),
+				ContentLength: encoded?.byteLength ?? asset.size,
 				ContentType: asset.contentType,
 				CacheControl: asset.cacheControl,
+				ContentEncoding: asset.contentEncoding,
 			},
 		}).done()
 	}
@@ -184,7 +205,9 @@ async function awsTransport(env: DemoAssetEnvironment): Promise<DemoAssetTranspo
 function objectLine(asset: DemoAssetUpload, dryRun: boolean): string {
 	const sizeMiB = (asset.size / 1024 / 1024).toFixed(1)
 
-	return `  ${dryRun ? "[dry-run]" : "✓"} ${asset.key}  (${asset.contentType}, ${asset.cacheControl}, ${sizeMiB} MB)`
+	const encoding = asset.contentEncoding ? `, ${asset.contentEncoding}` : ""
+
+	return `  ${dryRun ? "[dry-run]" : "✓"} ${asset.key}  (${asset.contentType}${encoding}, ${asset.cacheControl}, ${sizeMiB} MB)`
 }
 
 /**

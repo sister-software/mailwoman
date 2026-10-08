@@ -21,6 +21,8 @@ import { describe, expect, it } from "vitest"
 import { WebONNXRunner } from "#web/onnx-runner"
 import { weightsCachePackageDir } from "#weights"
 
+import { installORTWasmBinary } from "../test/ort-wasm-binary.ts"
+
 /**
  * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
  *
@@ -35,12 +37,14 @@ const V264 = stagedModel("v264-cache")
 const V301 = stagedModel("v301-cache")
 const have = (await pathExists(V264)) && (await pathExists(V301))
 
+await installORTWasmBinary()
+
 describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 	it("reports the browser-runtime cost of the span graph", async () => {
 		const ids = Array.from({ length: 24 }, (_, i) => 100 + i)
 
 		const bench = async (path: PathBuilder): Promise<{ ms: number; spans: boolean }> => {
-			const runner = await WebONNXRunner.fromBytes(new Uint8Array(await readLocalBuffer(path)), { useWebGPU: false })
+			const runner = await WebONNXRunner.fromBytes(new Uint8Array(await readLocalBuffer(path)))
 
 			for (let i = 0; i < 8; i++) {
 				await runner.infer(ids)

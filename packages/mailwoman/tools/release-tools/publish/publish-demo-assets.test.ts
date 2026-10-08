@@ -47,6 +47,25 @@ describe("publishDemoAssets", () => {
 		])
 	})
 
+	it("gzip-encodes whole-fetch binaries and leaves range-read databases identity-encoded", async () => {
+		await using directory = await temporaryDirectory("mw-demo-assets-")
+		await makeDirectories(directory.path("en-us", "v10.0.0"))
+		await writeLocalFile("fst", directory.path("en-us", "v10.0.0", "fst-en-US.bin"))
+		await writeLocalFile("db", directory.path("en-us", "v10.0.0", "candidate.db"))
+		await writeLocalFile("model", directory.path("en-us", "v10.0.0", "model.onnx"))
+		await writeLocalFile("rows", directory.path("en-us", "v10.0.0", "embeddings.rows"))
+
+		const uploads = await planDemoAssetUploads(directory.path, "mailwoman")
+		const encodings = Object.fromEntries(uploads.map((upload) => [upload.relativePath, upload.contentEncoding]))
+
+		expect(encodings).toEqual({
+			"en-us/v10.0.0/candidate.db": undefined,
+			"en-us/v10.0.0/embeddings.rows": undefined,
+			"en-us/v10.0.0/fst-en-US.bin": "gzip",
+			"en-us/v10.0.0/model.onnx": "gzip",
+		})
+	})
+
 	it("refuses a flat pair-index key before invoking the upload transport", async () => {
 		await using directory = await temporaryDirectory("mw-demo-assets-")
 		await makeDirectories(directory.path("pair-index"))

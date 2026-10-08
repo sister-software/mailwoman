@@ -37,6 +37,10 @@ export const spec = {
 		"locality-surface-lexicon": { type: "string", description: "Locality-surface evidence lexicon JSON" },
 		polygons: { type: "string", description: "Crisp-polygon DB" },
 		fisher: { type: "string", description: "Comma-separated Fisher consolidation artifacts" },
+		"split-embeddings": {
+			type: "string",
+			description: "split-embeddings output directory (encoder.onnx, embeddings-hot.bin, embeddings.rows)",
+		},
 		"set-default": { type: "boolean", default: false, description: "Set releases.json defaultVersion" },
 		"wof-hot": { type: "string", description: "Retired compatibility option; accepted and ignored" },
 	},

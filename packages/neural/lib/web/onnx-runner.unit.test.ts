@@ -22,7 +22,7 @@ import { GAZETTEER_FEATURE_DIM } from "#gazetteer-inference"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -112,7 +112,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"gazetteer_confidence",
 		])
 
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const result = await runner.infer([5, 6, 7])
 		expect(result.logits).toHaveLength(3)
@@ -147,7 +147,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"gazetteer_confidence",
 		])
 
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const gazRow = [1, 0, 1, 0, 0] // country + po_box bits, lexicon featureDim = 5
 		const anchorRow = Array.from({ length: ANCHOR_FEATURE_DIM }, (_, i) => (i === 0 ? 0.9 : 0))
@@ -175,7 +175,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 	test("plain graph (no gazetteer inputs) + gazetteer features provided → clue is NOT fed", async () => {
 		// Mirrors the node ONNXRunner's inputNames guard: feeding an undeclared input crashes ORT.
 		const session = mockSession(["input_ids", "attention_mask"])
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		await runner.infer([5], undefined, { features: [[1, 0, 0, 0, 0]], confidence: [1] })
 
@@ -195,7 +195,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"country_confidence",
 		])
 
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const result = await runner.infer([5, 6, 7])
 		expect(result.logits).toHaveLength(3)
@@ -209,7 +209,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 	test("caller-provided country features are fed through verbatim", async () => {
 		const session = mockSession(["input_ids", "attention_mask", "country_features", "country_confidence"])
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const countryRow = [1, 0]
 
@@ -230,7 +230,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 	test("plain graph (no country inputs) + country features provided → clue is NOT fed", async () => {
 		const session = mockSession(["input_ids", "attention_mask"])
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		await runner.infer([5], undefined, undefined, { features: [[1, 0]], confidence: [1] })
 
@@ -240,7 +240,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 	test("locale_logits output surfaces as `localeLogits` when the graph exports it", async () => {
 		mockSession(["input_ids", "attention_mask"], { localeLogits: [0.25, 0.5, 0.125, 0.125] })
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const result = await runner.infer([5, 6])
 		expect(result.localeLogits).toEqual([0.25, 0.5, 0.125, 0.125])
@@ -261,7 +261,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		}
 
 		mockSession(["input_ids", "attention_mask"], { spanScores: flat, spanDims: [1, SEQ, L, T] })
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const result = await runner.infer([5, 6])
 		expect(result.maxSpan).toBe(L)
@@ -275,7 +275,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 	test("spanScores is null on pre-v3 graphs — the BIO path is unaffected", async () => {
 		mockSession(["input_ids", "attention_mask"])
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const result = await runner.infer([5])
 		expect(result.spanScores).toBeNull()
@@ -284,7 +284,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 	test("localeLogits is absent (undefined) on graphs without the locale head", async () => {
 		mockSession(["input_ids", "attention_mask"])
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 
 		const result = await runner.infer([5])
 		expect(result.localeLogits).toBeNull()
@@ -292,7 +292,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 	test("inputNames is null before the session exists and populated after", async () => {
 		mockSession(["input_ids", "attention_mask", "gazetteer_features", "gazetteer_confidence"])
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 		expect(runner.inputNames).toBeNull()
 		await runner.infer([5])
 		expect(runner.inputNames).toContain("gazetteer_features")
@@ -308,7 +308,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			})
 		)
 
-		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 		const inference = runner.infer([5])
 		const released = runner.release()
 
@@ -362,7 +362,7 @@ describe("cross-runner parity (#727 span read)", () => {
 		}
 
 		mockSession(["input_ids", "attention_mask"], { spanScores: flat, spanDims: [1, SEQ, L, T] })
-		const web = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const web = await WebONNXRunner.fromBytes(new Uint8Array([1]))
 		const webResult = await web.infer([5, 6])
 
 		// The node runner's read, replicated: if that file's loop changes and this
