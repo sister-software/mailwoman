@@ -22,6 +22,7 @@ import { localeScopeCheck } from "#repo-health/checks/locale/scope"
 import { localeTablesCheck } from "#repo-health/checks/locale/tables"
 import { manifestTargetsCheck } from "#repo-health/checks/manifest-targets"
 import { moduleCohesionCheck } from "#repo-health/checks/module/cohesion"
+import { moduleReexportsCheck } from "#repo-health/checks/module/reexports"
 import { moduleSurfaceCheck } from "#repo-health/checks/module/surface"
 import { nestedIndexCheck } from "#repo-health/checks/nested-index"
 import { noRootScriptsCheck } from "#repo-health/checks/no-root-scripts"
@@ -71,6 +72,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	workspaceFilesCheck,
 	moduleSurfaceCheck,
 	moduleCohesionCheck,
+	moduleReexportsCheck,
 	privateNameShadowsCheck,
 	cliFlagPropertiesCheck,
 	prefixDirectoriesCheck,
