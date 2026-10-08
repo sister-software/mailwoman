@@ -1,9 +1,9 @@
 {
 	"definition": "packages/mailwoman/tools/eval-harness/same-data/benchmark-definition.json",
 	"benchmarkID": "same-data-resolver-v1",
-	"version": "1.2.0",
-	"sha256": "41503371c5b2acc26d3d19b067c8673e62acce66cc6b6537d565539a292a48b7",
-	"frozenAt": "2026-09-13",
+	"version": "1.3.0",
+	"sha256": "762b086badb078ed652ef6b29e036010a4dc64dc0a4ab2431ce172c875633947",
+	"frozenAt": "2026-10-08",
 	"note": "Content hash over the definition, keys sorted at every depth. The loader refuses a definition whose hash has moved. What is frozen is the SELECTION RULES, the sampling seed and the decision rule — a rule editable after a result is visible asserts nothing, because the rule that produced the losing panel can be rewritten into the rule that produces the winning one. Changing the definition bumps BOTH the version and this hash.",
 	"changeLog": [
 		{
@@ -23,6 +23,12 @@
 			"frozenAt": "2026-09-13",
 			"sha256": "41503371c5b2acc26d3d19b067c8673e62acce66cc6b6537d565539a292a48b7",
 			"note": "NUMBERS ONLY — no rule changed, and still no arm had run. Version 1.1.0 justified the set-valued gold with '4,304 of 13,465 concord to more than one city-tier row'. That count was taken over concordance ROWS, and the table writes the same link more than once: 2,057,196 gn:id rows over 1,775,438 distinct (id, other_id) pairs. Counted over DISTINCT ids the figure is 21 of 10,738. The set-valued gold stays, because 21 real cases exist and grading against an arbitrary member would be wrong for them — but the guard's placetype and name checks, not the set rule, are what most exclusions rest on, and the definition now says so."
+		},
+		{
+			"version": "1.3.0",
+			"frozenAt": "2026-10-08",
+			"sha256": "762b086badb078ed652ef6b29e036010a4dc64dc0a4ab2431ce172c875633947",
+			"note": "WORDING ONLY — no rule, seed or threshold changed. The withheld-fields reason said adminContainmentRerank's library default is off. The resolver's default became on, so the definition now says the benchmark pins it off for every arm (SAME_DATA_RESOLVER_PINS) against that default. Every arm replays exactly as under 1.2.0."
 		}
 	]
 }
