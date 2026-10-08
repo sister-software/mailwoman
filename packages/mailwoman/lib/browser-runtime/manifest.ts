@@ -10,7 +10,7 @@
 
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithRetry } from "#browser-runtime/fetch"
-import { releasesManifestURL } from "#browser-runtime/resources"
+import { type PostcodeAnchorAssets, releasesManifestURL } from "#browser-runtime/resources"
 
 export interface ReleaseInfo {
 	version: string
@@ -52,6 +52,14 @@ export const BROWSER_RUNTIME_CAPABILITIES: readonly string[] = ["locale_hint"]
  */
 export function runtimeSupports(release: Pick<ReleaseInfo, "requiresRuntime">): boolean {
 	return (release.requiresRuntime ?? []).every((capability) => BROWSER_RUNTIME_CAPABILITIES.includes(capability))
+}
+
+/**
+ * Whether a release's classifier load fetches the postcode-anchor binaries:
+ * only a release whose manifest entry sets `hasAnchor`.
+ */
+export function postcodeAnchorAssetsOf(release: Pick<ReleaseInfo, "hasAnchor"> | null): PostcodeAnchorAssets {
+	return release?.hasAnchor === true ? "load" : "skip"
 }
 
 export interface ReleasesManifest {

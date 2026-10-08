@@ -18,16 +18,13 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
-import type { ReleaseInfo } from "#browser-runtime/manifest"
+import { postcodeAnchorAssetsOf, type ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
 	assetURL,
 	loadFSTGazetteer,
 	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
-	PAIR_INDEX_VERSION,
-	pairIndexBaseURL,
-	pairIndexURLs,
 } from "#browser-runtime/resources"
 import type { AssetLoadProgress, FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
@@ -139,11 +136,6 @@ export async function loadReleaseAssets(
 
 	progress.setStepLabels(steps)
 
-	// The pair indexes live on the public bucket beside every other model asset,
-	// under a dated generation: the objects ship an immutable Cache-Control,
-	// so a rebuilt index is readable only from a fresh path.
-	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
-
 	// Every fetch below starts now, beside the model, rather than when the stage before it finishes.
 	// The stages are still awaited in order, so the step labels advance in order.
 	const ortWASMURL = options.ortWASMURL
@@ -182,7 +174,7 @@ export async function loadReleaseAssets(
 		: fetchWithRetry
 
 	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-		hasAnchor: release.hasAnchor,
+		postcodeAnchor: postcodeAnchorAssetsOf(release),
 		splitEmbeddings: release.splitEmbeddings,
 	})
 
@@ -212,10 +204,6 @@ export async function loadReleaseAssets(
 		...classifierURLs,
 		...(wasmBinary ? { runner: { wasmBinary } } : {}),
 		fetchImpl: modelFetch,
-		// Every published pair index is loaded.
-		// The loader keeps each live and `selectPairIndexForText` picks per parse.
-		// Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
-		pairIndexURLs: pairIndexURLs(pairIndexBase),
 	})) as {
 		classifier: MailwomanClassifierLike
 		diagnostics?: { backend: string; modelBytes: number } | null
