@@ -110,7 +110,8 @@ export interface GeocodeSessionOptions {
 	 */
 	venueHeadPrior?: boolean
 	/**
-	 * Multiplier on the venue-head table's biases, which are log rate ratios.
+	 * Multiplier on the venue-head table's biases.
+	 * Each bias is a log rate ratio.
 	 *
 	 * @defaultValue `1`
 	 */

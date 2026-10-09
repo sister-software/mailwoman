@@ -134,8 +134,8 @@ export function buildVenueHeadEmissionPriors(
 	const words = wordsWithSegments(groupPiecesIntoWords(pieces), pieces)
 
 	// Every piece of the span takes the bias on both venue columns.
-	// A piece between two words, such as a bare `▁`, belongs to no word and keeps `O`;
-	// the next word can then open a new venue span only if its `B-venue` cell carries the bias too.
+	// A piece between two words, such as a bare `▁`, belongs to no word and keeps `O`.
+	// The next word can then open a new venue span only if its `B-venue` cell holds the bias too.
 	const mark = (word: Word, bias: number): void => {
 		for (const pieceIndex of word.group.pieceIndices) {
 			const row = matrix[pieceIndex]!

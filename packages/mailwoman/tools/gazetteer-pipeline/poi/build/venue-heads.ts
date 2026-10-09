@@ -7,7 +7,7 @@
  *   venue names from an Overture places names file, place names from the Who's On First candidate
  *   database with postal codes excluded, and street spans from the train split of a corpus
  *   manifest. Names are split on whitespace and each word is normalized with `normalizeFSTToken`,
- *   the form the decoder's word groups carry, so a table key matches the word the prior reads.
+ *   the form the decoder's word groups use, so a table key matches the word the prior reads.
  *
  *   A head's bias is the natural log of its venue rate over the higher of its place rate and street
  *   rate. Each rate adds half a name to its count, so a head absent from a population has a finite
@@ -36,7 +36,7 @@ import type {
 export const MIN_SUPPORT = 30
 
 /**
- * The minimum bias an entry carries.
+ * The minimum bias of an entry.
  *
  * A head below twice its comparison rate adds less than `ln 2` logits
  * and is omitted to keep the packaged table small.
@@ -64,11 +64,11 @@ const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kataka
  * The placetypes whose single-word names are excluded as first-word
  * and last-word heads, whatever their population.
  *
- * A venue carries its town's name at either end (`Croydon Dental Practice`, `Hotel Adlon London`),
+ * A venue name may put its town's name at either end (`Croydon Dental Practice`, `Hotel Adlon London`),
  * and in a large city those venues outnumber the place names ending in the city's name,
- * so the rates alone would admit `london` as a head.
+ * so without the exclusion the rates would admit `london` as a head.
  * Who's On First leaves population and importance empty on most localities, so neither
- * field can tell a town from a hamlet, and a hamlet named `Palace` removes that word too.
+ * field can tell a town from a hamlet, and a hamlet called `Palace` removes that word too.
  *
  * A head word that is also a place name is then left to the model rather than the prior.
  */

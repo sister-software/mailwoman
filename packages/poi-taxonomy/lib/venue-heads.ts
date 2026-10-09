@@ -11,7 +11,7 @@
  *
  *   Each entry holds a bias in natural-log units: the log of the head's rate in venue names over
  *   its higher rate in place names or street names of the same country. A head is positive evidence
- *   only. A word without an entry carries no information about whether the phrase is a venue.
+ *   only. A word without an entry gives no information about whether the phrase is a venue.
  */
 
 import { readPackagedTable } from "#packaged-data"

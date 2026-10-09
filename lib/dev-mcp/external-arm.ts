@@ -140,7 +140,7 @@ function fields(value: unknown): Record<string, unknown> {
 	return isRecordLike(value) ? (value as Record<string, unknown>) : {}
 }
 
-function readString(value: unknown): string | null {
+function nonEmptyString(value: unknown): string | null {
 	return typeof value === "string" && value ? value : null
 }
 
@@ -176,8 +176,8 @@ function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 
 	const feature = features[0]
 	const properties = fields(feature?.properties)
-	const label = readString(properties["name"]) ?? readString(properties["label"])
-	const resultType = readString(properties[typeKey])
+	const label = nonEmptyString(properties["name"]) ?? nonEmptyString(properties["label"])
+	const resultType = nonEmptyString(properties[typeKey])
 
 	if (!isPointLiteral(feature?.geometry)) {
 		return { lat: null, lon: null, label, resultType, noResultReason: "the top feature carried no point geometry" }
@@ -202,9 +202,9 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const geocoding = fields(fields(searchBody)["geocoding"])
 
 			return {
-				version: readString(fields(geocoding["engine"])["version"]),
+				version: nonEmptyString(fields(geocoding["engine"])["version"]),
 				data_vintage: null,
-				response_version: readString(geocoding["version"]),
+				response_version: nonEmptyString(geocoding["version"]),
 			}
 		},
 	},
@@ -216,8 +216,8 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const status = fields(statusBody)
 
 			return {
-				version: readString(status["version"]),
-				data_vintage: readString(status["import_date"]),
+				version: nonEmptyString(status["version"]),
+				data_vintage: nonEmptyString(status["import_date"]),
 				response_version: null,
 			}
 		},
@@ -243,8 +243,8 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const top = fields(body[0])
 			const lat = readCoordinate(top["lat"], isValidLatitude)
 			const lon = readCoordinate(top["lon"], isValidLongitude)
-			const label = readString(top["display_name"])
-			const resultType = readString(top["addresstype"]) ?? readString(top["type"])
+			const label = nonEmptyString(top["display_name"])
+			const resultType = nonEmptyString(top["addresstype"]) ?? nonEmptyString(top["type"])
 
 			if (lat === null || lon === null) {
 				return { lat: null, lon: null, label, resultType, noResultReason: "the top place carried no readable lat/lon" }
@@ -256,9 +256,9 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const status = fields(statusBody)
 
 			return {
-				version: readString(status["software_version"]),
-				data_vintage: readString(status["data_updated"]),
-				response_version: readString(status["database_version"]),
+				version: nonEmptyString(status["software_version"]),
+				data_vintage: nonEmptyString(status["data_updated"]),
+				response_version: nonEmptyString(status["database_version"]),
 			}
 		},
 	},
