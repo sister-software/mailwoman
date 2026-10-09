@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The postcode binaries and pair indexes are fetched beside the model group.
+ *   The model and tokenizer are fetched beside the model card, and the postcode binaries and pair indexes beside the
+ *   model group.
  *   The runner hands a caller's early ORT wasm download to onnxruntime-web before the session is created.
  */
 
@@ -49,6 +50,7 @@ const { loadNeuralClassifierFromURLs } = await import("#web/loader")
 const SEQ = 128
 const MODEL_URL = "https://cdn.example/mailwoman/v9/model.onnx"
 const TOKENIZER_URL = "https://cdn.example/mailwoman/v9/tokenizer.model"
+const CARD_URL = "https://cdn.example/mailwoman/v9/model-card.json"
 const POSTCODE_URL = "https://cdn.example/mailwoman/v9/postcode-us.bin"
 const PAIR_INDEX_URL = "https://cdn.example/pair-index/pair-index-gb.bin"
 
@@ -103,6 +105,61 @@ describe("loadNeuralClassifierFromURLs request order", () => {
 		await expect(loading).resolves.toMatchObject({ pairIndexes: [] })
 
 		warn.mockRestore()
+	})
+
+	test("the model and tokenizer fetches start before the model card resolves", async () => {
+		const requested: string[] = []
+		let releaseCard: () => void = () => {}
+
+		const cardHeld = new Promise<void>((resolve) => {
+			releaseCard = resolve
+		})
+
+		const fetchImpl: typeof fetch = async (input) => {
+			const url = String(input)
+			requested.push(url)
+
+			if (url === CARD_URL) {
+				await cardHeld
+
+				return new Response("{}", { status: 200 })
+			}
+
+			return new Response(new Uint8Array([1, 2, 3]))
+		}
+
+		const loading = loadNeuralClassifierFromURLs({
+			...baseOpts(fetchImpl),
+			modelCardURL: CARD_URL,
+			postcodeBinaryURLs: [],
+			pairIndexURLs: [],
+		})
+
+		await vi.waitFor(() => expect(requested).toEqual(expect.arrayContaining([MODEL_URL, TOKENIZER_URL])))
+		expect(requested).toContain(CARD_URL)
+
+		releaseCard()
+
+		await expect(loading).resolves.toMatchObject({ pairIndexes: [] })
+	})
+
+	test("a failed card rejects with its own message while the model fetch it overlapped also fails", async () => {
+		const fetchImpl: typeof fetch = async (input) => {
+			const url = String(input)
+
+			if (url === CARD_URL) return new Response(null, { status: 500, statusText: "Server Error" })
+
+			throw new TypeError("network down")
+		}
+
+		await expect(
+			loadNeuralClassifierFromURLs({
+				...baseOpts(fetchImpl),
+				modelCardURL: CARD_URL,
+				postcodeBinaryURLs: [],
+				pairIndexURLs: [],
+			})
+		).rejects.toThrow(`fetch ${CARD_URL} failed: 500 Server Error`)
 	})
 
 	test("the runner hands an early wasm download to onnxruntime-web before creating the session", async () => {

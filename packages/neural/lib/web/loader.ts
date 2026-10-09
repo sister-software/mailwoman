@@ -331,12 +331,23 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
 	}
 
+	// The model, embedding and tokenizer URLs are known before the card is read.
+	// Their fetches start beside it.
+	// The card is still awaited first, so its error is the one a caller sees when both fail.
+	const modelBytesLoad = startEarly(fetchBytes(opts.modelURL, fetchImpl))
+
+	const embeddingsLoad = startEarly(
+		opts.embeddings ? loadEmbeddingTable(opts.embeddings, fetchImpl) : Promise.resolve(null)
+	)
+
+	const tokenizerBytesLoad = opts.tokenizerURL ? startEarly(fetchBytes(opts.tokenizerURL, fetchImpl)) : null
+
 	const modelCard = opts.modelCardURL ? await fetchModelCardJSON(opts.modelCardURL, fetchImpl) : null
 	const labels = modelCard ? labelsFromModelCard(modelCard, opts.modelCardURL!) : null
 	const encoder = encoderDescriptorFromCard(modelCard, opts.modelCardURL ?? "(no card)")
 
 	if (encoder.kind === "char") {
-		return loadCharClassifierFromURLs(opts, encoder, labels, fetchImpl)
+		return loadCharClassifierFromURLs(opts, encoder, labels, fetchImpl, modelBytesLoad)
 	}
 
 	if (!opts.tokenizerURL) {
@@ -374,9 +385,9 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		streetTypeLexicon,
 		localitySurfaceLexicon,
 	] = await Promise.all([
-		fetchBytes(opts.modelURL, fetchImpl),
-		opts.embeddings ? loadEmbeddingTable(opts.embeddings, fetchImpl) : Promise.resolve(null),
-		fetchBytes(opts.tokenizerURL, fetchImpl),
+		modelBytesLoad,
+		embeddingsLoad,
+		tokenizerBytesLoad ?? fetchBytes(opts.tokenizerURL, fetchImpl),
 		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
 		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
 
@@ -587,6 +598,18 @@ async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promis
 	)
 }
 
+/**
+ * Mark a fetch started ahead of the await that reads it as handled, and return it unchanged.
+ *
+ * A rejection still reaches the later await.
+ * Before that await, or when the result goes unused, it is not unhandled.
+ */
+function startEarly<T>(load: Promise<T>): Promise<T> {
+	load.catch(() => {})
+
+	return load
+}
+
 async function fetchModelCardJSON(url: string, fetchImpl: typeof fetch): Promise<Record<string, unknown> | null> {
 	const res = await fetchImpl(url)
 
@@ -641,12 +664,13 @@ async function loadCharClassifierFromURLs(
 	opts: LoadFromURLsOptions,
 	encoder: Extract<EncoderDescriptor, { kind: "char" }>,
 	labels: readonly string[] | null,
-	fetchImpl: typeof fetch
+	fetchImpl: typeof fetch,
+	modelBytesLoad: Promise<Uint8Array>
 ): Promise<LoadResult> {
 	const charVocabURL = opts.charVocabURL ?? new URL(encoder.charVocab, opts.modelURL).toString()
 
 	const [modelBytes, vocabularyJSON] = await Promise.all([
-		fetchBytes(opts.modelURL, fetchImpl),
+		modelBytesLoad,
 		fetchImpl(charVocabURL).then(async (response) => {
 			if (!response.ok) {
 				throw new Error(`failed to fetch char vocabulary ${charVocabURL}: HTTP ${response.status}`)
