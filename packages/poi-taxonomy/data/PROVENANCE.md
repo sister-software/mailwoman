@@ -58,19 +58,22 @@ the modal name by count descending then name ascending, aliases alphabetical.
 node packages/mailwoman/out/cli/main.js gazetteer build poi-brands
 ```
 
-## `venue-word-hints.json` — the mined single-token venue-class hint table
+## `venue-heads.json`: venue head words per country and per language
 
-Produced by `scripts/build-venue-word-hints.ts` from the f6 venue-word survey artifact
-(`$MAILWOMAN_DATA_ROOT/derived/venue-word-lexicon-f6.json`, md5 `a2ae6f4b29ee0ee45870273487d86e79`).
-**Do not hand-edit.** The survey compared token rates across 13.68M Overture poi names (the poi.db
-build corpus, CDLA-Permissive-2.0) against 4.8M candidate-gazetteer primary place names; the
-committed subset keeps the 2,249 tokens that clear the composed bars recorded in the file's own
-provenance block (venue ratio ≥ 0.9 at ≥ 100 poi occurrences, top CLASS share ≥ 0.7 excluding
-`other`, place rate ≤ 5 ppm — the toponym suppressor). Generated 2026-08-12. Regenerate with:
+Produced by `packages/mailwoman/tools/gazetteer-pipeline/poi/build/venue-heads.ts`. Do not edit it by
+hand. The builder compares three populations of names per country:
+
+- Venue names: the primary names of Overture places at confidence 0.85 or higher, release
+  `2026-09-23.1`, CDLA-Permissive-2.0, fetched to
+  `$MAILWOMAN_DATA_ROOT/overture/2026-09-23.1/place-names/names.parquet`.
+- Place names: the Who's On First candidate database, `$MAILWOMAN_DATA_ROOT/db/wof/candidate.db`,
+  with postal codes excluded.
+- Street names: the street spans of the train split of corpus `0.7.2-address-systems`, excluding
+  rows licensed under ODbL, rows whose license names OpenStreetMap, and rows with no recorded license.
+
+The table records each population's size per country, so a country with no street spans is visible.
+It holds words and rates only, and it carries no OpenStreetMap data. Regenerate with:
 
 ```bash
-node poi-taxonomy/scripts/build-venue-word-hints.ts && npx oxfmt poi-taxonomy/data/venue-word-hints.json
+node packages/mailwoman/out/cli/main.js gazetteer build venue-heads && npx oxfmt packages/poi-taxonomy/data/venue-heads.json
 ```
-
-No OSM-derived data: the survey's corpora are Overture poi names and the gazetteer's own primary
-names, so the table carries no ODbL obligation.

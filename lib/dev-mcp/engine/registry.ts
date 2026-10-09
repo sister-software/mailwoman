@@ -41,6 +41,16 @@ export interface EngineConfig {
 	 */
 	weights_cache?: string
 	gazetteer_prior?: SwitchPin
+	/**
+	 * Whether the venue-head prior feeds the parse.
+	 *
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.venueHeadPrior`
+	 */
+	venue_head_prior?: SwitchPin
+	/**
+	 * Multiplier on the venue-head table's biases.
+	 */
+	venue_head_bias_scale?: number
 	place_country?: SwitchPin
 	place_country_threshold?: number
 	postcode_country_coherence?: SwitchPin
@@ -89,6 +99,8 @@ export const EFFECTIVE_KEY_FOR = {
 	data_root: "dataRoot",
 	weights_cache: "weightsCacheRoot",
 	gazetteer_prior: "gazetteerPrior",
+	venue_head_prior: "venueHeadPrior",
+	venue_head_bias_scale: "venueHeadBiasScale",
 	place_country: "placeCountry",
 	place_country_threshold: "placeCountryThreshold",
 	postcode_country_coherence: "postcodeCountryCoherence",
@@ -147,6 +159,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		),
 		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
 		gazetteerPrior: pinnedSwitch(config.gazetteer_prior ?? "production", production.gazetteerPrior),
+		venueHeadPrior: pinnedSwitch(config.venue_head_prior ?? "production", production.venueHeadPrior),
+		venueHeadBiasScale: config.venue_head_bias_scale ?? production.venueHeadBiasScale,
 		adminContainmentRerank: pinnedSwitch(
 			config.admin_containment_rerank ?? "production",
 			production.adminContainmentRerank

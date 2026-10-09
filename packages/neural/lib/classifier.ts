@@ -40,7 +40,7 @@ import type {
 } from "#classifier/options"
 import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
-import { buildFSTEmissionPriors } from "#fst-prior"
+import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
 import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
@@ -58,6 +58,7 @@ import type { MailwomanTokenizer, TokenizedPiece } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
 import type { NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
+import { buildVenueHeadEmissionPriors } from "#venue-head-prior"
 import {
 	argmaxWithConfidence,
 	buildBIOEndMask,
@@ -549,6 +550,21 @@ export class NeuralAddressClassifier {
 		}
 
 		tracePriors?.push(untracedPrior("spanProposer", spanProposals.length > 0))
+
+		const morphologyFST = opts?.fstStreetMorphology
+
+		const venueHeadPrior = opts?.venueHead
+			? buildVenueHeadEmissionPriors(opts.venueHead, pieces, this.labels, {
+					...(morphologyFST ? { isStreetAffix: (word: string) => isStreetAffix(morphologyFST, word) } : {}),
+					...opts.venueHeadOpts,
+				})
+			: undefined
+
+		if (venueHeadPrior) {
+			emissions = addEmissionMatrix(emissions, venueHeadPrior)
+		}
+
+		tracePriors?.push(untracedPrior("venueHead", venueHeadPrior !== undefined && matrixHasBias(venueHeadPrior)))
 
 		// The placetype-pair prior stays off unless options or config enable it.
 		// It runs before the conventions mask, so the mask still removes any

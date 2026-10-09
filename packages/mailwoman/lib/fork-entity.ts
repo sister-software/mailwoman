@@ -250,6 +250,10 @@ export function probeVenueNearAnchor(
  * Applies the fork-entity probe, then the optional near-anchor venue refinement.
  *
  * The fork probe runs only for a declared fork with no coordinate.
+ * When `poiVenueTier` is set, a parsed venue with no coordinate takes the same exact-name probe,
+ * so `Buckingham Palace` parsed as one venue span resolves without a locality to anchor it.
+ *
+ * The probe answers only when one entity holds the name.
  * The refinement runs only when `poiVenueTier` is set and the current tier is `admin` or `street`.
  */
 export function applyEntityTiers(
@@ -273,6 +277,14 @@ export function applyEntityTiers(
 		deps.isStreetGeneric
 	) {
 		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+
+		if (entity) {
+			applyForkEntityAnswer(result, entity, resolvedRoots)
+		}
+	}
+
+	if (deps.poiVenueTier === true && result.lat === null && result.venue && deps.poiLookup && deps.isStreetGeneric) {
+		const entity = probeForkEntity(result.venue, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
 
 		if (entity) {
 			applyForkEntityAnswer(result, entity, resolvedRoots)

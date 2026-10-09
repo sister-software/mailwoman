@@ -25,6 +25,15 @@ export interface GeocodeCommandOptions {
 	interpCalibration?: number
 	localeCountryPrior: boolean
 	gazetteerPrior: boolean
+	/**
+	 * Venue-head prior (`--venue-head-prior`).
+	 * Off by default.
+	 */
+	venueHeadPrior: boolean
+	/**
+	 * Multiplier on the venue-head table's biases (`--venue-head-bias-scale`).
+	 */
+	venueHeadBiasScale: number
 	placeCountry: boolean
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
@@ -64,6 +73,8 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		dataRoot: dataRootPath(),
 		localeCountryPrior: false,
 		gazetteerPrior: GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
+		venueHeadPrior: GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
+		venueHeadBiasScale: 1,
 		placeCountry: true,
 		postcodeCountryCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence,
 		forkEntity: true,

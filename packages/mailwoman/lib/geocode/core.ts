@@ -190,6 +190,15 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
+	 * Venue-head lookups for the session's locale.
+	 * Absent, the venue-head prior does not run.
+	 */
+	venueHead?: import("@mailwoman/neural/venue-head-prior").VenueHeadLexiconLike
+	/**
+	 * Overrides for the venue-head prior's bias scale, cap and extension.
+	 */
+	venueHeadOpts?: import("@mailwoman/neural/venue-head-prior").VenueHeadPriorOpts
+	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
 	classifyKind?: (
@@ -313,7 +322,10 @@ export interface GeocodeParseInputs {
 
 export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"> &
+	deps: Pick<
+		GeocodeDeps,
+		"normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology" | "venueHead" | "venueHeadOpts"
+	> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
 	// Stage-1 input normalization before parse.
@@ -356,6 +368,8 @@ export function geocodeParseInputs(
 				...(deps.fst ? { fst: deps.fst } : {}),
 				...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
 			}),
+			...(deps.venueHead ? { venueHead: deps.venueHead } : {}),
+			...(deps.venueHead && deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
 		},
 	}
 }
@@ -368,7 +382,14 @@ export async function parseForGeocode(
 	input: string,
 	deps: Pick<
 		GeocodeDeps,
-		"classifier" | "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"
+		| "classifier"
+		| "normalizeInput"
+		| "caseNormalization"
+		| "inputMode"
+		| "fst"
+		| "streetMorphology"
+		| "venueHead"
+		| "venueHeadOpts"
 	>
 ): Promise<AddressTree> {
 	const classifier = await classifierForInput(deps.classifier, input)

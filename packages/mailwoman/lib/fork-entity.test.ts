@@ -13,6 +13,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
 import {
+	applyEntityTiers,
 	probeForkEntity,
 	probeVenueNearAnchor,
 	probeVenueNearAnchorFolded,
@@ -260,5 +261,59 @@ describe("venueAnchorRadiusM (the reach the anchor's grade allows)", () => {
 
 	it("keeps the locality reach with no postcode node at all", () => {
 		expect(venueAnchorRadiusM(ANSWER, [node({ tag: "locality", value: "Bognor Regis", ...ANSWER })])).toBe(30_000)
+	})
+})
+
+describe("applyEntityTiers for a parsed venue with no coordinate", () => {
+	const unplaced = (venue: string): Parameters<typeof applyEntityTiers>[0] => ({
+		lat: null,
+		lon: null,
+		resolution_tier: null,
+		countryCode: null,
+		venue,
+		entity: null,
+		admin_coherence: null,
+	})
+
+	const palace = stubLookup([
+		{ name: "Buckingham Palace", categoryID: "park", lat: 51.500274, lon: -0.14507, country: "GB" },
+	])
+
+	it("places the venue through the exact-name probe when poiVenueTier is on", () => {
+		const result = unplaced("Buckingham Palace")
+
+		applyEntityTiers(result, [], "Buckingham Palace", [], {
+			poiLookup: palace,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBe(51.500274)
+		expect(result.entity?.name).toBe("Buckingham Palace")
+	})
+
+	it("leaves the result unplaced when poiVenueTier is off", () => {
+		const result = unplaced("Buckingham Palace")
+		applyEntityTiers(result, [], "Buckingham Palace", [], { poiLookup: palace, isStreetGeneric: NO_GENERICS })
+
+		expect(result.lat).toBeNull()
+	})
+
+	it("abstains when two entities share the venue name", () => {
+		const twoPalaces = stubLookup([
+			{ name: "Thai Palace", lat: 51.5, lon: -0.1, country: "GB" },
+			{ name: "Thai Palace", lat: 53.48, lon: -2.24, country: "GB" },
+		])
+
+		const result = unplaced("Thai Palace")
+
+		applyEntityTiers(result, [], "Thai Palace", [], {
+			poiLookup: twoPalaces,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(result.lat).toBeNull()
 	})
 })
