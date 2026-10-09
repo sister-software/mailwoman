@@ -29,8 +29,26 @@ export interface BuildStamp {
 	builtAt: string
 }
 
-export function headingsText(record: Pick<SearchRecord, "hierarchy">): string {
-	return record.hierarchy.filter((entry): entry is string => entry !== null).join("\n")
+/**
+ * The words of a page's last path segment, so `/docs/kb/decoding-and-viterbi` yields `decoding and viterbi`.
+ */
+export function slugWords(url: string): string {
+	const segments = url.split("/")
+	const last = segments.findLast((segment) => segment !== "") ?? ""
+
+	return last.replaceAll(/[-_]+/g, " ")
+}
+
+/**
+ * The text of the headings column: the heading path, plus the page's slug words on its top-of-page record.
+ *
+ * A page whose URL holds a term that its headings lack then matches that term in the weighted column.
+ * Without the slug, BM25's length normalization ranks a short mention elsewhere above the page's long body.
+ */
+export function headingsText(record: Pick<SearchRecord, "hierarchy" | "url" | "anchor">): string {
+	const names = record.hierarchy.filter((entry): entry is string => entry !== null)
+
+	return (record.anchor === "" ? [...names, slugWords(record.url)] : names).join("\n")
 }
 
 /**

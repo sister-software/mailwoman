@@ -15,7 +15,7 @@ import { describe, expect, test } from "vitest"
 import { SEARCH_INDEX_FILENAME } from "../../src/search/constants.ts"
 import { FIXTURE_RECORDS } from "../../src/search/fixtures.ts"
 import type { SearchIndexDatabase } from "./schema.ts"
-import { writeSearchIndex } from "./write-index.ts"
+import { headingsText, slugWords, writeSearchIndex } from "./write-index.ts"
 
 const STAMP = { commit: "abc1234", builtAt: "2026-10-03T00:00:00Z" }
 
@@ -50,6 +50,17 @@ describe("writeSearchIndex", () => {
 			commit_sha: "abc1234",
 			records: FIXTURE_RECORDS.length,
 		})
+	})
+
+	test("indexes a page's slug words with its top-of-page headings only", () => {
+		const url = "/docs/kb/decoding-and-viterbi"
+
+		const top = headingsText({ hierarchy: ["Docs", "A page", null], url, anchor: "" })
+		const section = headingsText({ hierarchy: ["Docs", "A page", "Part"], url, anchor: "part" })
+
+		expect(slugWords(url)).toBe("decoding and viterbi")
+		expect(top).toBe("Docs\nA page\ndecoding and viterbi")
+		expect(section).toBe("Docs\nA page\nPart")
 	})
 
 	test("throws on a duplicate record id", async () => {

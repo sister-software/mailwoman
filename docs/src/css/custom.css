@@ -133,8 +133,11 @@ html {
 /* The navbar search control (src/theme/SearchBar.tsx). It sits on the navy navbar in both themes, so it
    takes the navbar's link color and a translucent outline rather than a filled field. */
 .navbar__search-button {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
 	margin: 0 0.5rem;
-	padding: 0.3rem 0.9rem;
+	padding: 0.3rem 0.6rem 0.3rem 0.75rem;
 	border: 1px solid color-mix(in srgb, var(--ifm-navbar-link-color) 40%, transparent);
 	border-radius: 999px;
 	background: transparent;
@@ -148,4 +151,26 @@ html {
 .navbar__search-button:focus-visible {
 	outline: 2px solid var(--ifm-color-primary);
 	outline-offset: 2px;
+}
+.navbar__search-icon {
+	width: 1rem;
+	height: 1rem;
+}
+.navbar__search-keys {
+	padding: 0 0.35rem;
+	font: inherit;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	border: 1px solid color-mix(in srgb, var(--ifm-navbar-link-color) 40%, transparent);
+	border-radius: 0.3rem;
+}
+@media (width <= 996px) {
+	.navbar__search-label,
+	.navbar__search-keys {
+		display: none;
+	}
+	.navbar__search-button {
+		padding: 0.4rem;
+		border-radius: 50%;
+	}
 }
