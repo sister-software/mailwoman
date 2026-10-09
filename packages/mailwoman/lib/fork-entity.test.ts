@@ -316,4 +316,37 @@ describe("applyEntityTiers for a parsed venue with no coordinate", () => {
 
 		expect(result.lat).toBeNull()
 	})
+
+	it("leaves a worldwide-ambiguous name to the anchored refinement, which answers from an admin anchor", () => {
+		const twoTaverns = stubLookup([
+			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
+			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
+		])
+
+		const bare = unplaced("Nine Elms Tavern")
+
+		applyEntityTiers(bare, [], "Nine Elms Tavern", [], {
+			poiLookup: twoTaverns,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		// The anchor-free probe abstains on two bearers, and the refinement has no anchor to read.
+		expect(bare.lat).toBeNull()
+		expect(bare.resolution_tier).toBeNull()
+
+		const anchored = { ...unplaced("Nine Elms Tavern"), lat: 51.5074, lon: -0.1278, resolution_tier: "admin" }
+
+		applyEntityTiers(anchored, [], "Nine Elms Tavern, London", [], {
+			poiLookup: twoTaverns,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		// A placed result skips the anchor-free probe.
+		// The refinement answers from the admin anchor.
+		expect(anchored.resolution_tier).toBe("venue")
+		expect(anchored.lat).toBeCloseTo(51.48223)
+		expect(anchored.entity?.country).toBe("GB")
+	})
 })

@@ -9,6 +9,11 @@
  *   last-word or suffix head biases itself and the words before it toward `venue`. A first-word
  *   head biases itself and the words after it.
  *
+ *   A first-word or last-word head is read only when the word has a neighbor in the same segment,
+ *   so a single-word input such as `Rijksmuseum` receives a bias only through its suffix entry. A
+ *   lone word is as often a locality as a venue, and the table's position rates were measured on
+ *   names of two or more words.
+ *
  *   The extension stays inside one comma-separated segment and stops at a word that contains a
  *   digit, because a house number or postcode is never part of the venue name it sits beside. Each
  *   word further from the head receives the head's bias multiplied by `extensionDecay` once more.
