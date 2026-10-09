@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { SearchModal } from "@mailwoman/react/search/SearchModal"
 import type { SearchResponse } from "@mailwoman/react/search/types"
 import { expect, test, vi } from "vitest"
@@ -25,10 +26,14 @@ function response(query: string, urls: string[], corrected: string | null = null
 	}
 }
 
-function mount(search: (q: string, signal: AbortSignal) => Promise<SearchResponse>) {
+function mount(search: (q: string, signal: AbortSignal) => Promise<SearchResponse>, recentKey?: string) {
 	const onClose = vi.fn()
 	const onNavigate = vi.fn()
-	const view = renderComponent(<SearchModal open onClose={onClose} onNavigate={onNavigate} search={search} />)
+
+	const view = renderComponent(
+		<SearchModal open onClose={onClose} onNavigate={onNavigate} search={search} recentKey={recentKey} />
+	)
+
 	const dialog = view.container.querySelector("dialog") as HTMLDialogElement
 	const input = view.container.querySelector('input[type="search"]') as HTMLInputElement
 
@@ -66,7 +71,96 @@ test("renders hits as options in labeled groups and selects the first", async ()
 	expect(options[1]!.tagName).toBe("A")
 	expect(options[1]!.getAttribute("href")).toBe("/b#section")
 	expect(options[1]!.querySelector("a, button, input, [tabindex]")).toBeNull()
-	expect(options[0]!.querySelector("mark")?.textContent).toBe("Snippet")
+	expect(options[0]!.querySelector(".mw-search__snippet mark")?.textContent).toBe("Snippet")
+})
+
+test("emphasizes the query in the title and shows the heading path above a section hit", async () => {
+	const { container, input } = mount(async (q) => ({
+		query: q,
+		corrected: null,
+		hits: [
+			{
+				url: "/a",
+				anchor: "scope",
+				hierarchy: ["Reference", "Locales and tiers", "Scope", null, null, null, null],
+				snippet: "",
+				highlights: [],
+			},
+		],
+	}))
+
+	await userEvent.type(input, "scope")
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(1))
+
+	const option = container.querySelector('[role="option"]')!
+
+	expect(option.querySelector(".mw-search__path")?.textContent).toBe("Locales and tiers")
+	expect(option.querySelector(".mw-search__title mark")?.textContent).toBe("Scope")
+	expect(option.className).toContain("mw-search__option--section")
+})
+
+test("offers recent queries while the field is empty and removes one on request", async () => {
+	const key = `mw-search-test-${Date.now()}`
+
+	localStorage.setItem(key, stringifyJSON(["earlier", "older"]))
+
+	const { container, input } = mount(async (q) => response(q, ["/x"]), key)
+
+	await vi.waitFor(() => expect(container.querySelectorAll(".mw-search__recent-query")).toHaveLength(2))
+
+	await userEvent.click(container.querySelector('[aria-label="Remove “older” from recent searches"]') as HTMLElement)
+	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual(["earlier"])
+
+	await userEvent.click(container.querySelector(".mw-search__recent-query") as HTMLElement)
+	expect(input.value).toBe("earlier")
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(1))
+	expect(container.querySelector(".mw-search__recent")).toBeNull()
+
+	await userEvent.keyboard("{Enter}")
+	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual(["earlier"])
+	localStorage.removeItem(key)
+})
+
+test("remembers a query that led to a hit, newest first, five at most", async () => {
+	const key = `mw-search-test-${Date.now()}-b`
+
+	localStorage.setItem(key, stringifyJSON(["one", "two", "three", "four", "five"]))
+
+	const { input, onNavigate } = mount(async (q) => response(q, ["/x"]), key)
+
+	await userEvent.type(input, "six")
+	await vi.waitFor(() => expect(input.getAttribute("aria-expanded")).toBe("true"))
+	await userEvent.keyboard("{Enter}")
+
+	expect(onNavigate).toHaveBeenCalledWith("/x")
+	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual(["six", "one", "two", "three", "four"])
+	localStorage.removeItem(key)
+})
+
+test("shows the keyboard hints in the footer and the result count beside them", async () => {
+	const { container, input } = mount(async (q) => response(q, ["/a", "/b"]))
+
+	expect(container.querySelector('.mw-search__hints[aria-label="Keyboard shortcuts"]')?.textContent).toContain("esc")
+
+	await userEvent.type(input, "x")
+
+	await vi.waitFor(() =>
+		expect(container.querySelector(".mw-search__footer .mw-search__status")?.textContent).toBe("2 results.")
+	)
+})
+
+test("words the empty result and shows the search icon in the field", async () => {
+	const { container, input } = mount(async (q) => response(q, []))
+
+	expect(container.querySelector(".mw-search__field .mw-search__icon")).not.toBeNull()
+
+	await userEvent.type(input, "zzz")
+
+	await vi.waitFor(() =>
+		expect(container.querySelector(".mw-search__empty")?.textContent).toBe(
+			"No results for “zzz”. Try a different spelling or a shorter query."
+		)
+	)
 })
 
 test("moves the selection with the arrow keys, wraps, and navigates on Enter", async () => {

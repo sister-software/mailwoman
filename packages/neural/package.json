@@ -105,7 +105,7 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.5.0",
-		"spliterator": "^9.0.0",
+		"spliterator": "^9.2.0",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {

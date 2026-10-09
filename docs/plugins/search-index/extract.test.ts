@@ -96,4 +96,39 @@ describe("extractRecords", () => {
 		expect(extractRecords(page(`<h1>A</h1>`, `<meta name="robots" content="noindex, nofollow">`), "/a")).toEqual([])
 		expect(extractRecords(`<html><body><h1>A</h1></body></html>`, "/a")).toEqual([])
 	})
+
+	test("drops a heading's hash link and its zero-width space from the heading text", () => {
+		const records = extractRecords(
+			page(
+				`<h1>A</h1><h2 class="anchor" id="scope">Scope<a href="#scope" class="hash-link" aria-label="Direct link to Scope">​</a></h2>`
+			),
+			"/docs/a"
+		)
+
+		expect(records[1]?.hierarchy[2]).toBe("Scope")
+		expect(records.flatMap((record) => [...record.hierarchy, record.content]).join("")).not.toMatch(/​/)
+	})
+
+	test("reads a glossary term once and leaves its tooltip definition out", () => {
+		const records = extractRecords(
+			page(
+				`<h1>A</h1><p>A <span class="glossary-term-wrapper"><span><a class="glossaryTerm" href="/glossary#locale">locale</a><span role="tooltip"><strong>locale</strong>The combination of language and country.</span></span></span> is chosen.</p>`
+			),
+			"/docs/a"
+		)
+
+		expect(records[0]?.content).toBe("A locale is chosen.")
+	})
+
+	test("joins a table row keyed by a number to the section instead of making it a record", () => {
+		const records = extractRecords(
+			page(`<h1>Tiers</h1><h2 id="tiers">Tiers</h2><table><tbody>
+				<tr><td>1</td><td>Trained, with a regression bar.</td></tr>
+				<tr><td>Norway</td><td>Elected</td></tr></tbody></table>`),
+			"/docs/tiers"
+		)
+
+		expect(records.filter((record) => record.level === 5).map((record) => record.hierarchy[5])).toEqual(["Norway"])
+		expect(records[1]?.content).toBe("1 Trained, with a regression bar.")
+	})
 })

@@ -39,7 +39,7 @@ function wofPaths(): Promise<string[]> {
 
 	if ($public.MAILWOMAN_WOF_DB) return Promise.resolve(paths)
 
-	return AsyncSequence.from(paths).parallelFilter(pathExists).toArray()
+	return AsyncSequence.from<string>(paths).parallelFilter(pathExists).toArray()
 }
 
 /**

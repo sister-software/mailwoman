@@ -12,7 +12,7 @@ import { useHistory } from "@docusaurus/router"
 import { SearchModal } from "@mailwoman/react/search/SearchModal"
 import type { SearchResponse } from "@mailwoman/react/search/types"
 import { openWholeDatabase, type RangeDatabase } from "@mailwoman/resolver-wof-wasm/httpvfs/database"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 
 import { SEARCH_INDEX_PATH, SQLITE_RUNTIME_PATH } from "../search/constants.ts"
 import { search } from "../search/search.ts"
@@ -21,9 +21,23 @@ function isEditable(target: EventTarget | null): boolean {
 	return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
 }
 
+/**
+ * Recent queries are kept per viewer under this `localStorage` key.
+ */
+const RECENT_KEY = "mailwoman.docs-search.recent"
+
 export default function SearchBar() {
 	const history = useHistory()
 	const [open, setOpen] = useState(false)
+
+	// The server render shows the Control key.
+	// The browser snapshot reads the platform after hydration.
+	const modifier = useSyncExternalStore(
+		() => () => {},
+		() => (/Mac|iPhone|iPad/.test(globalThis.navigator.platform) ? "⌘" : "Ctrl"),
+		() => "Ctrl"
+	)
+
 	const database = useRef<Promise<RangeDatabase> | null>(null)
 
 	const openDatabase = useCallback((): Promise<RangeDatabase> => {
@@ -79,13 +93,21 @@ export default function SearchBar() {
 				aria-keyshortcuts="Control+K Meta+K /"
 				onClick={() => setOpen(true)}
 			>
-				Search
+				<svg className="navbar__search-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+					<circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
+					<path d="M13 13l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+				</svg>
+				<span className="navbar__search-label">Search</span>
+				<kbd className="navbar__search-keys" aria-hidden="true">
+					{modifier} K
+				</kbd>
 			</button>
 			<SearchModal
 				open={open}
 				onClose={() => setOpen(false)}
 				onNavigate={(href) => history.push(href)}
 				search={runSearch}
+				recentKey={RECENT_KEY}
 			/>
 		</>
 	)

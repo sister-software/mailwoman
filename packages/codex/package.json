@@ -47,7 +47,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"spliterator": "^9.0.0",
+		"spliterator": "^9.2.0",
 		"type-fest": "^5.10.0"
 	},
 	"devDependencies": {
