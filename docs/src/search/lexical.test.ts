@@ -39,6 +39,10 @@ describe("lexicalRows", () => {
 		expect(rows.map((row) => row.id)).toEqual(["viterbi-top", "viterbi-section"])
 	})
 
+	test("ranks a page whose heading matches above a table row whose name matches", async () => {
+		expect((await lexicalRows(db, ["norway"])).map((row) => row.id)).toEqual(["norway-page", "row"])
+	})
+
 	test("matches the last token as a prefix", async () => {
 		expect((await lexicalRows(db, ["decoder", "gram"])).map((row) => row.id)).toContain("viterbi-section")
 	})

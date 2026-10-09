@@ -18,6 +18,29 @@ const HEADING = /^h([1-6])$/
 const TABLE_ROW_LEVEL = 5
 
 /**
+ * Headings whose section is a list of links to other pages.
+ *
+ * Each linked page is indexed under its own title, so the list yields no record.
+ */
+const LINK_LIST_HEADINGS = new Set(["related", "see also", "next"])
+
+/**
+ * Whether a route is a page of its own rather than a listing of other pages.
+ *
+ * The research archive, its tag pages and its pagination repeat the posts' titles and excerpts.
+ */
+export function isIndexedRoute(route: string): boolean {
+	return !(
+		route === "/404" ||
+		route === "/404.html" ||
+		route === "/research/archive" ||
+		route === "/research/tags" ||
+		route.startsWith("/research/tags/") ||
+		/^\/research\/page\/\d+$/.test(route)
+	)
+}
+
+/**
  * Zero-width and byte-order characters.
  * Docusaurus's heading anchors hold one as their text.
  */
@@ -115,10 +138,18 @@ export function extractRecords(html: string, url: string): SearchRecord[] {
 
 		if (heading) {
 			const level = Number(heading[1])
+			const name = cleanText(element)
 
-			hierarchy[level] = cleanText(element)
+			hierarchy[level] = name
 			hierarchy.fill(null, level + 1)
 			anchor = level === 1 ? "" : (getAttributeValue(element, "id") ?? anchor)
+
+			if (level > 1 && LINK_LIST_HEADINGS.has(name.toLowerCase())) {
+				section = null
+
+				continue
+			}
+
 			section = { anchor, hierarchy: [...hierarchy], level, parts: [] }
 			drafts.push(section)
 		} else if (element.name === "tr") {

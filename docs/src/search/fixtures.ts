@@ -52,6 +52,15 @@ export const FIXTURE_RECORDS: SearchRecord[] = [
 		position: 0,
 	},
 	{
+		id: "norway-page",
+		url: "/docs/locales/norway",
+		anchor: "",
+		hierarchy: ["Reference", "Norway", N, N, N, N, N],
+		content: "Norway's register is elected, and its rows are measured whole against the Kartverket download.",
+		level: 1,
+		position: 0,
+	},
+	{
 		id: "row",
 		url: "/docs/reference/coverage",
 		anchor: "rows",
