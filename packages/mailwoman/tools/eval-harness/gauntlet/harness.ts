@@ -159,6 +159,17 @@ export interface GauntletResolverPins {
 	 */
 	poiVenueTier: SwitchPin
 	/**
+	 * The venue-head emission prior, read from the head-word table for each row's route country.
+	 *
+	 * This pin selects an artifact, so the harness loads it rather than `resolverPinDeps`.
+	 */
+	venueHeadPrior: SwitchPin
+	/**
+	 * Multiplier on the venue-head table's biases.
+	 * `"production"` takes the session default.
+	 */
+	venueHeadBiasScale: "production" | number
+	/**
 	 * A span-rescore sub-span may drop context but never a word of the name.
 	 */
 	spanRescoreRequireContextRemainder: SwitchPin
@@ -180,6 +191,8 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	capitalTier: "production",
 	variantAliasExemption: "production",
 	poiVenueTier: "production",
+	venueHeadPrior: "production",
+	venueHeadBiasScale: "production",
 	spanRescoreRequireContextRemainder: "production",
 	spanRescoreWeakResolution: "production",
 }
@@ -233,6 +246,14 @@ export function describeResolverPins(pins: GauntletResolverPins): string {
 
 	if (pins.variantAliasExemption !== "production") {
 		entries.push(`variantAliasExemption=${pins.variantAliasExemption === "applied" ? "ON" : "OFF"}`)
+	}
+
+	if (pins.venueHeadPrior !== "production") {
+		entries.push(`venueHeadPrior=${pins.venueHeadPrior.toUpperCase()}`)
+	}
+
+	if (pins.venueHeadBiasScale !== "production") {
+		entries.push(`venueHeadBiasScale=${pins.venueHeadBiasScale}`)
 	}
 
 	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
@@ -596,6 +617,33 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return deps
 	}
 
+	// The venue-head prior reads one lexicon per route country, the lookup the session builds from its locale.
+	// The lexicon is cached per country.
+	const venueHeadByCountry = new Map<string, Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">>()
+
+	async function venueHeadDepsFor(
+		caseCountry: string | undefined
+	): Promise<Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">> {
+		if (!pinnedSwitch(pins.venueHeadPrior, GEOCODE_SESSION_DEFAULTS.venueHeadPrior)) return {}
+
+		const country = (caseCountry ?? "").toUpperCase()
+		const cached = venueHeadByCountry.get(country)
+
+		if (cached) return cached
+
+		const { venueHeadLexicon } = await import("@mailwoman/poi-taxonomy/venue-heads")
+
+		// An unpinned scale leaves `venueHeadOpts` unset, so the prior applies its own default.
+		const deps: Pick<GeocodeDeps, "venueHead" | "venueHeadOpts"> = {
+			venueHead: venueHeadLexicon(country),
+			...(pins.venueHeadBiasScale === "production" ? {} : { venueHeadOpts: { biasScale: pins.venueHeadBiasScale } }),
+		}
+
+		venueHeadByCountry.set(country, deps)
+
+		return deps
+	}
+
 	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every
@@ -642,6 +690,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			...pinDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
+			...(await venueHeadDepsFor(caseCountry)),
 			...forkEntityDeps,
 			...forwarded,
 			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
@@ -653,7 +702,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		diagnoseParse: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry } = geoOpts ?? {}
 			const caseClassifier = await classifierFor(caseCountry)
-			const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+
+			const priorDeps = {
+				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
+				...(await venueHeadDepsFor(caseCountry)),
+			}
+
 			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)
 
 			return {

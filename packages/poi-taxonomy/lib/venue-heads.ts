@@ -82,6 +82,7 @@ export interface VenueHeadTable {
 		placeSource: string
 		streetSource: string
 		minSupport: number
+		minSuffixStems: number
 		minBias: number
 		minCountryVenueNames: number
 	}

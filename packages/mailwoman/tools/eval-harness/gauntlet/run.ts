@@ -112,6 +112,21 @@ export interface GauntletRunOptions {
 	 */
 	spanRescoreWeakResolution?: "production" | WeakResolutionReading
 	/**
+	 * Pin the POI venue tier for every layer.
+	 * @defaultValue `"production"`
+	 */
+	poiVenueTier?: SwitchPin
+	/**
+	 * Pin the venue-head emission prior for every layer.
+	 * @defaultValue `"production"`
+	 */
+	venueHeadPrior?: SwitchPin
+	/**
+	 * Multiplier on the venue-head table's biases.
+	 * @defaultValue the session default
+	 */
+	venueHeadBiasScale?: number
+	/**
 	 * Ablation: where the map artifacts land.
 	 *
 	 * @defaultValue `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
@@ -157,6 +172,9 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		adminContainmentRerank: options.adminContainmentRerank ?? "production",
 		spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
+		poiVenueTier: options.poiVenueTier ?? "production",
+		venueHeadPrior: options.venueHeadPrior ?? "production",
+		venueHeadBiasScale: options.venueHeadBiasScale ?? "production",
 	}
 }
 

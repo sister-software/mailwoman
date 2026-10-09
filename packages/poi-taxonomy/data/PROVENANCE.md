@@ -72,7 +72,15 @@ hand. The builder compares three populations of names per country:
   rows licensed under ODbL, rows whose license names OpenStreetMap, and rows with no recorded license.
 
 The table records each population's size per country, so a country with no street spans is visible.
-It holds words and rates only, and it carries no OpenStreetMap data. Regenerate with:
+It holds words and rates only, and it carries no OpenStreetMap data.
+
+A head is admitted when it is two or more characters long, when it is not an administrative name of
+the country, and when its venue rate exceeds its rate at any position in the country's place names
+and street names. The administrative names come from the candidate database's admin rows and from
+the codex: the country's display names in every ICU locale and its US, Canadian and Australian
+subdivision codes and names. A suffix is admitted when it ends at least `minSuffixStems` distinct
+venue last words and, in a spaced script, is itself a venue last word with `minSupport` names, so a
+city name cannot supply a suffix by itself. Regenerate with:
 
 ```bash
 node packages/mailwoman/out/cli/main.js gazetteer build venue-heads && npx oxfmt packages/poi-taxonomy/data/venue-heads.json

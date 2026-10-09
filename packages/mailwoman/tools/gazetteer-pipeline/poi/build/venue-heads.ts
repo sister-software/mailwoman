@@ -12,10 +12,21 @@
  *   A head's bias is the natural log of its venue rate over the higher of its place rate and street
  *   rate. Each rate adds half a name to its count, so a head absent from a population has a finite
  *   rate. A head that is the complete name of an admin place in the country is excluded, because a
- *   city name ends venue names such as `Hotel Adlon Berlin` without marking them.
+ *   city name ends venue names such as `Hotel Adlon Berlin` without marking them. The exclusion
+ *   reads the candidate database's admin names, the country's names in every ICU locale, and the
+ *   codex's subdivision codes and subdivision names, so `Deutschland`, `NSW` and `DC` are excluded
+ *   with `Germany`, `New South Wales` and `Washington`.
+ *
+ *   A suffix is counted from the last word of every name, with admin words left out, and it needs
+ *   several distinct words ending in it: a suffix that ends one word only is that word rather than a
+ *   morpheme, so `ondon` is `London` and `galerie` is a head.
  */
 
+import { AU_STATE_ABBREVIATIONS } from "@mailwoman/codex/au/state"
+import { CA_PROVINCES } from "@mailwoman/codex/ca/province"
+import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import { officialLanguagesAlpha3 } from "@mailwoman/codex/country/region-languages"
+import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us/state"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -55,6 +66,13 @@ export const MIN_COUNTRY_VENUE_NAMES = 10_000
  * is dropped, because the runtime falls back to that shorter suffix with nearly the same bias.
  */
 export const SUFFIX_PRUNE_DELTA = 0.5
+
+/**
+ * The minimum number of distinct last words that must end in a suffix before it gets an entry.
+ *
+ * A suffix that ends fewer words is a fragment of those words rather than a morpheme.
+ */
+export const MIN_SUFFIX_STEMS = 3
 
 const MAX_SUFFIX_LENGTH = 8
 const MIN_ALPHABETIC_SUFFIX_LENGTH = 4
@@ -115,12 +133,21 @@ export function wordSuffixes(word: string): string[] {
 
 /**
  * Head counts for one population of one country.
+ *
+ * `first` and `last` count names of two or more words.
+ * `lastWords` counts the last word of every name, single-word names included,
+ * and is the source of the suffix counts.
+ *
+ * `words` counts the names that contain a word at any position, once per name, and is the
+ * comparison rate for a first-word or last-word head: a word that is common anywhere in
+ * place names, such as `on` in `Walton on the Naze`, is weak evidence wherever it sits.
  */
 export class HeadCounts {
 	names = 0
 	readonly first = new Map<string, number>()
 	readonly last = new Map<string, number>()
-	readonly suffix = new Map<string, number>()
+	readonly lastWords = new Map<string, number>()
+	readonly words = new Map<string, number>()
 
 	/**
 	 * Counts one name at each position.
@@ -138,14 +165,78 @@ export class HeadCounts {
 			increment(this.last, lastWord)
 		}
 
-		for (const suffix of wordSuffixes(lastWord)) {
-			increment(this.suffix, suffix)
+		increment(this.lastWords, lastWord)
+
+		for (const word of new Set(words)) {
+			increment(this.words, word)
 		}
 	}
 }
 
 function increment(map: Map<string, number>, key: string): void {
 	map.set(key, (map.get(key) ?? 0) + 1)
+}
+
+/**
+ * A suffix's name count and the number of distinct words that end in it.
+ */
+export interface SuffixCount {
+	count: number
+	stems: number
+}
+
+/**
+ * Sums last-word counts into suffix counts, skipping the words in `excluded`.
+ */
+export function suffixCounts(
+	lastWords: ReadonlyMap<string, number>,
+	excluded?: ReadonlySet<string>
+): Map<string, SuffixCount> {
+	const out = new Map<string, SuffixCount>()
+
+	for (const [word, count] of lastWords) {
+		if (excluded?.has(word)) continue
+
+		for (const suffix of wordSuffixes(word)) {
+			const entry = out.get(suffix) ?? { count: 0, stems: 0 }
+			entry.count += count
+
+			entry.stems++
+			out.set(suffix, entry)
+		}
+	}
+
+	return out
+}
+
+/**
+ * Returns the single-word admin names held by the codex for a country: the country's name in
+ * every ICU locale, and its subdivision codes and subdivision names where the codex lists them.
+ */
+export function codexAdminWords(country: string): Set<string> {
+	const names: string[] = [...countryDisplayNames(country)]
+
+	if (country === "US") {
+		names.push(...Object.keys(US_STATE_BY_ABBREVIATION), ...Object.values(US_STATE_BY_ABBREVIATION))
+	} else if (country === "CA") {
+		for (const province of Object.values(CA_PROVINCES)) {
+			names.push(province.code, province.name, province.french)
+		}
+	} else if (country === "AU") {
+		names.push(...Object.keys(AU_STATE_ABBREVIATIONS), ...Object.values(AU_STATE_ABBREVIATIONS))
+	}
+
+	const words = new Set<string>()
+
+	for (const name of names) {
+		const parts = nameWords(name)
+
+		if (parts.length === 1) {
+			words.add(parts[0]!)
+		}
+	}
+
+	return words
 }
 
 /**
@@ -163,31 +254,64 @@ function rate(count: number, names: number): number {
 }
 
 const POSITIONS = ["first", "last", "suffix"] as const satisfies readonly VenueHeadPosition[]
+const WORD_POSITIONS = ["first", "last"] as const satisfies readonly VenueHeadPosition[]
+
+/**
+ * Whether a head is a word of a spaced script with one character, an initial
+ * or an article rather than a head.
+ */
+function isSingleLetter(head: string): boolean {
+	return [...head].length === 1 && !SPACELESS_SCRIPT_RE.test(head)
+}
 
 /**
  * Scores one country's heads.
  *
- * A head needs {@link MIN_SUPPORT} venue names and a bias of at least {@link MIN_BIAS};
- * an admin place name is excluded at the first-word and last-word positions.
+ * A head needs {@link MIN_SUPPORT} venue names and a bias of at least {@link MIN_BIAS}.
+ * A first-word or last-word head is compared with the word's rate at any
+ * position in place names and street names.
+ *
+ * An admin place name is excluded at those positions and contributes no suffix.
+ * A suffix needs {@link MIN_SUFFIX_STEMS} distinct venue last words, and in a
+ * spaced script it must itself end {@link MIN_SUPPORT} venue names as a whole word,
+ * so `galerie` is a suffix and `ções` is an inflection.
  */
 export function scoreCountry(counts: CountryCounts): VenueHeadEntries {
 	const entries: VenueHeadEntries = { first: {}, last: {}, suffix: {} }
 
-	for (const position of POSITIONS) {
+	const score = (venueCount: number, placeCount: number, streetCount: number): number | null => {
+		const venueRate = rate(venueCount, counts.venue.names)
+		const placeRate = rate(placeCount, counts.place.names)
+		const streetRate = counts.street.names ? rate(streetCount, counts.street.names) : 0
+		const bias = Math.log(venueRate / Math.max(placeRate, streetRate))
+
+		return bias >= MIN_BIAS ? round(bias) : null
+	}
+
+	for (const position of WORD_POSITIONS) {
 		for (const [head, venueCount] of counts.venue[position]) {
-			if (venueCount < MIN_SUPPORT) continue
+			if (venueCount < MIN_SUPPORT || counts.adminWords.has(head) || isSingleLetter(head)) continue
 
-			if (position !== "suffix" && counts.adminWords.has(head)) continue
-			const venueRate = rate(venueCount, counts.venue.names)
-			const placeRate = rate(counts.place[position].get(head) ?? 0, counts.place.names)
+			const bias = score(venueCount, counts.place.words.get(head) ?? 0, counts.street.words.get(head) ?? 0)
 
-			const streetRate = counts.street.names ? rate(counts.street[position].get(head) ?? 0, counts.street.names) : 0
-
-			const bias = Math.log(venueRate / Math.max(placeRate, streetRate))
-
-			if (bias >= MIN_BIAS) {
-				entries[position][head] = round(bias)
+			if (bias !== null) {
+				entries[position][head] = bias
 			}
+		}
+	}
+
+	const placeSuffixes = suffixCounts(counts.place.lastWords)
+	const streetSuffixes = suffixCounts(counts.street.lastWords)
+
+	for (const [suffix, { count, stems }] of suffixCounts(counts.venue.lastWords, counts.adminWords)) {
+		if (count < MIN_SUPPORT || stems < MIN_SUFFIX_STEMS) continue
+
+		if (!SPACELESS_SCRIPT_RE.test(suffix) && (counts.venue.lastWords.get(suffix) ?? 0) < MIN_SUPPORT) continue
+
+		const bias = score(count, placeSuffixes.get(suffix)?.count ?? 0, streetSuffixes.get(suffix)?.count ?? 0)
+
+		if (bias !== null) {
+			entries.suffix[suffix] = bias
 		}
 	}
 
@@ -289,6 +413,10 @@ export interface BuildVenueHeadOptions {
 	 */
 	out?: string
 	onProgress?: (line: string) => void
+	/**
+	 * Receives each country's counts beside its scored entries, for inspection of what the floors refused.
+	 */
+	onCountryScored?: (country: string, counts: CountryCounts, scored: VenueHeadEntries) => void
 }
 
 /**
@@ -342,7 +470,6 @@ export async function buildVenueHeadTable(
 		JOIN wof.country_codes c ON c.id = k.country_id
 		JOIN wof.placetype_codes p ON p.id = k.placetype_id`
 
-	// Admin words first: every population's suffix counts skip a last word that is one.
 	await stream(
 		"admin",
 		`SELECT DISTINCT c.code AS country, k.name AS name ${placeJoin} WHERE ${placeFilter} AND p.placetype IN (${adminList})`,
@@ -410,7 +537,13 @@ export async function buildVenueHeadTable(
 		if (!entry.venue.names) continue
 		const languages = [...officialLanguagesAlpha3(country)]
 		countryLanguages[country] = languages
+
+		for (const word of codexAdminWords(country)) {
+			entry.adminWords.add(word)
+		}
+
 		const scored = scoreCountry(entry)
+		opts.onCountryScored?.(country, entry, scored)
 
 		for (const language of languages) {
 			const members = languageMembers.get(language) ?? []
@@ -439,6 +572,7 @@ export async function buildVenueHeadTable(
 			placeSource: opts.candidateDB,
 			streetSource: opts.corpusManifest,
 			minSupport: MIN_SUPPORT,
+			minSuffixStems: MIN_SUFFIX_STEMS,
 			minBias: round(MIN_BIAS),
 			minCountryVenueNames: MIN_COUNTRY_VENUE_NAMES,
 		},

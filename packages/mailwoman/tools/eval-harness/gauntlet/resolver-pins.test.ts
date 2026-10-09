@@ -78,6 +78,16 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: "off" })).toEqual(pinned({ postcodeCountryCoherence: "off" }))
 	})
 
+	it("carries the venue-head prior pin and its bias scale", () => {
+		expect(runResolverPins({ venueHeadPrior: "on", venueHeadBiasScale: 1.5, poiVenueTier: "on" })).toEqual(
+			pinned({ venueHeadPrior: "on", venueHeadBiasScale: 1.5, poiVenueTier: "on" })
+		)
+
+		expect(describeResolverPins(pinned({ venueHeadPrior: "on", venueHeadBiasScale: 2 }))).toBe(
+			"resolver pins: venueHeadPrior=ON, venueHeadBiasScale=2"
+		)
+	})
+
 	it("is the production pin set when no flag is set", () => {
 		expect(runResolverPins({})).toEqual(PRODUCTION_RESOLVER_PINS)
 		expect(runResolverPins({ candidate: "./out/model.onnx" })).toEqual(PRODUCTION_RESOLVER_PINS)

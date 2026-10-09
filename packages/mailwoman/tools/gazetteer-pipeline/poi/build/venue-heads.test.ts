@@ -8,11 +8,14 @@ import { describe, expect, it } from "vitest"
 
 import {
 	aggregateLanguage,
+	codexAdminWords,
 	HeadCounts,
+	MIN_SUFFIX_STEMS,
 	MIN_SUPPORT,
 	nameWords,
 	pruneSuffixes,
 	scoreCountry,
+	suffixCounts,
 	wordSuffixes,
 	type CountryCounts,
 } from "#gazetteer/poi/build/venue-heads"
@@ -70,6 +73,36 @@ describe("HeadCounts", () => {
 		expect(c.names).toBe(2)
 		expect(c.last.get("gallery")).toBe(1)
 		expect(c.first.get("art")).toBe(1)
+		expect(c.lastWords.get("gallery")).toBe(2)
+	})
+})
+
+describe("suffixCounts", () => {
+	it("sums name counts per suffix and counts the distinct words ending in it", () => {
+		const lastWords = new Map([
+			["nationalgalerie", 5],
+			["kunstgalerie", 2],
+			["london", 40],
+		])
+
+		const bySuffix = suffixCounts(lastWords)
+
+		expect(bySuffix.get("alerie")).toEqual({ count: 7, stems: 2 })
+		expect(bySuffix.get("ondon")).toEqual({ count: 40, stems: 1 })
+	})
+
+	it("skips an excluded word", () => {
+		expect(suffixCounts(new Map([["london", 40]]), new Set(["london"])).size).toBe(0)
+	})
+})
+
+describe("codexAdminWords", () => {
+	it("holds the country's names in other languages and its subdivision codes", () => {
+		expect(codexAdminWords("DE")).toContain("deutschland")
+		expect(codexAdminWords("AU")).toContain("nsw")
+		expect(codexAdminWords("US")).toContain("dc")
+		expect(codexAdminWords("US")).toContain("washington")
+		expect(codexAdminWords("CA")).toContain("québec")
 	})
 })
 
@@ -99,6 +132,55 @@ describe("scoreCountry", () => {
 
 		expect(entries.first.london).toBeUndefined()
 		expect(entries.last.london).toBeUndefined()
+	})
+
+	it("keeps a suffix that ends several words and is itself a venue last word", () => {
+		const stems = Array.from({ length: MIN_SUFFIX_STEMS }, (_, i) => `stem${i}galerie`)
+		const venue = [...stems.flatMap((stem) => repeat("v", stem, MIN_SUPPORT)), ...repeat("v", "galerie", MIN_SUPPORT)]
+		const entries = scoreCountry(counts(venue, repeat("p", "town", 50), []))
+
+		expect(entries.suffix.galerie).toBeDefined()
+		// `erie` ends the same names but is no venue word of its own.
+		expect(entries.suffix.erie).toBeUndefined()
+	})
+
+	it("refuses a suffix carried by one word", () => {
+		const venue = [...repeat("v", "nationalgalerie", MIN_SUPPORT * 3), ...repeat("v", "galerie", MIN_SUPPORT)]
+		const entries = scoreCountry(counts(venue, repeat("p", "town", 50), []))
+
+		expect(entries.suffix).toEqual({})
+	})
+
+	it("keeps a single-character suffix in a script without spaces", () => {
+		const venue = ["国立西洋美術館", "東京都美術館", "江戸東京博物館", "科学館"].flatMap((stem) =>
+			repeat("v", stem, MIN_SUPPORT)
+		)
+
+		const entries = scoreCountry(counts(venue, repeat("p", "町", 50), []))
+
+		expect(entries.suffix["館"]).toBeDefined()
+	})
+
+	it("gives an admin place name no suffix entry", () => {
+		const stems = ["london", "hendon", "swindon"]
+		const venue = [...stems.flatMap((stem) => repeat("v", stem, MIN_SUPPORT)), ...repeat("v", "ndon", MIN_SUPPORT)]
+
+		expect(scoreCountry(counts(venue, repeat("p", "town", 50), [])).suffix.ndon).toBeDefined()
+		expect(scoreCountry(counts(venue, repeat("p", "town", 50), [], stems)).suffix).toEqual({})
+	})
+
+	it("compares a head with the word's rate at any position in place names", () => {
+		const venue = repeat("v", "on", MIN_SUPPORT)
+		const places = Array.from({ length: 50 }, (_, i) => `Walton${i} on the Naze`)
+
+		expect(scoreCountry(counts(venue, places, [])).last.on).toBeUndefined()
+		expect(scoreCountry(counts(venue, repeat("p", "town", 50), [])).last.on).toBeDefined()
+	})
+
+	it("refuses a single-letter head", () => {
+		const entries = scoreCountry(counts(repeat("v", "n", MIN_SUPPORT), repeat("p", "town", 50), []))
+
+		expect(entries.last.n).toBeUndefined()
 	})
 
 	it("uses the street rate when a head is common in street names", () => {

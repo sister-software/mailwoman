@@ -66,6 +66,22 @@ export const spec = {
 			default: "production",
 			description: "Pin the refusal of a span-rescore sub-span that drops a word of the name",
 		},
+		"poi-venue-tier": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the POI venue tier",
+		},
+		"venue-head-prior": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the venue-head emission prior",
+		},
+		"venue-head-bias-scale": {
+			type: "number",
+			description: "Multiplier on the venue-head biases; unset takes the session default",
+		},
 		"span-rescore-weak-resolution": {
 			type: "string",
 			choices: ["production", "score", "containment", "either"],
