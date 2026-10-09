@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { extractRecords } from "./extract.ts"
+import { extractRecords, isIndexedRoute } from "./extract.ts"
 
 function page(article: string, head = ""): string {
 	return `<html><head>${head}</head><body>
@@ -130,5 +130,32 @@ describe("extractRecords", () => {
 
 		expect(records.filter((record) => record.level === 5).map((record) => record.hierarchy[5])).toEqual(["Norway"])
 		expect(records[1]?.content).toBe("1 Trained, with a regression bar.")
+	})
+
+	test("yields no record for a Related, See also or Next link list", () => {
+		const records = extractRecords(
+			page(`<h1>Deploy</h1><p>Run it.</p>
+				<h2 id="related">Related</h2><ul><li><a href="/a">Docker</a></li></ul>
+				<h2 id="see-also">See also</h2><ul><li><a href="/b">Footprints</a></li></ul>
+				<h2 id="next">Next</h2><ul><li><a href="/c">Pricing</a></li></ul>`),
+			"/docs/deploy"
+		)
+
+		expect(records.map((record) => record.anchor)).toEqual([""])
+		expect(records[0]?.content).toBe("Run it.")
+	})
+})
+
+describe("isIndexedRoute", () => {
+	test("admits pages and refuses the research listings and the 404 page", () => {
+		expect(
+			["/", "/docs/developers/reference/cli", "/research/2026/05/27/fst-ships-to-browser"].map(isIndexedRoute)
+		).toEqual([true, true, true])
+
+		expect(
+			["/404", "/404.html", "/research/archive", "/research/tags", "/research/tags/hybrid", "/research/page/2"].map(
+				isIndexedRoute
+			)
+		).toEqual([false, false, false, false, false, false])
 	})
 })

@@ -34,6 +34,9 @@ const ACCEPTANCE: [query: string, url: string][] = [
 	["mcp server", "/docs/developers/how-to/use-the-mcp-server"],
 	["parse in the browser", "/docs/developers/tutorials/parse-in-the-browser"],
 	["vitrebi", "/docs/developers/knowledge-base/address-intelligence/decoding-and-viterbi"],
+	["cli", "/docs/developers/reference/cli"],
+	["docker", "/docs/developers/how-to/deploy-docker"],
+	["reverse geocoding", "/docs/developers/how-to/reverse-geocode"],
 ]
 
 // The acceptance suite needs a docs build.
