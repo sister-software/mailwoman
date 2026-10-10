@@ -96,8 +96,9 @@ export const spec = {
 		},
 		"venue-head-prior": {
 			type: "boolean",
-			default: false,
-			description: "Feed the venue-head prior, from @mailwoman/poi-taxonomy's head-word table, to the parse.",
+			default: true,
+			description:
+				"Feed the venue-head prior, from @mailwoman/poi-taxonomy's head-word table, to the parse; --no-venue-head-prior disables it.",
 		},
 		"venue-head-bias-scale": {
 			type: "number",

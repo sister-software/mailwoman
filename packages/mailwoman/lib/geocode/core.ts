@@ -144,7 +144,7 @@ export interface GeocodeSwitches {
  * `includeAncestors` departs from it on purpose, because the admin-coherence verdicts read the ancestors.
  */
 export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
-	poiVenueTier: false,
+	poiVenueTier: true,
 	normalizeInput: true,
 	postcodeCountryPrior: true,
 	adminCoherence: RESOLVE_SWITCH_DEFAULTS.adminCoherence,
@@ -762,8 +762,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		].filter((marker) => marker !== null)
 	)
 
-	// Apply entity tiers (declared-fork rescue and optional venue tier).
-	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
+	// Apply entity tiers (declared-fork rescue and the venue tier).
+	// The tier reads the merged switch, so a caller that leaves `poiVenueTier` unset
+	// gets the switch's default as a session does.
+	applyEntityTiers(result, markers, parseInput, resolved.roots, { ...deps, poiVenueTier: switches.poiVenueTier })
 
 	// Append designation markers from attached spatial layers.
 	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]

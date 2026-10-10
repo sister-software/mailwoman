@@ -74,7 +74,7 @@ export interface GeocodeSessionSettings {
  */
 export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
 	gazetteerPrior: true,
-	venueHeadPrior: false,
+	venueHeadPrior: true,
 	capitalTier: "auto",
 	variantAliasExemption: "applied",
 }
