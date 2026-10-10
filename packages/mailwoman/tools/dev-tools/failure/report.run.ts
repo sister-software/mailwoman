@@ -241,7 +241,10 @@ async function runFailureReport(): Promise<void> {
 		{ name: "non-ASCII", pred: (r) => r.flags.hasNonAscii },
 		{ name: "has country gold", pred: (r) => r.flags.hasCountryGold },
 		{ name: "≤3 tokens", pred: (r) => r.flags.tokenCount <= SHORT_QUERY_TOKENS },
+		// country-branch: the report's fixed strata are the two tier-1 locales.
+		// A stratum per country present would replace them.
 		{ name: "US", pred: (r) => r.country === "US" },
+		// country-branch: see the US stratum above.
 		{ name: "FR", pred: (r) => r.country === "FR" },
 		{ name: "ZZ (synthetic)", pred: (r) => r.country === "ZZ" },
 	]

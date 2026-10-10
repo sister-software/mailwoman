@@ -42,8 +42,11 @@ import { SurfaceOrigin } from "#types"
 function regionCodeSurface(cc: string, region: string): string | null {
 	const country = cc.toUpperCase()
 
+	// country-branch: the codex holds region codes for CA and US only.
+	// The WOF admin database's `place_abbr` covers every country and would replace both lookups.
 	if (country === "CA") return lookupCanadianProvince(region)
 
+	// country-branch: see the CA branch above.
 	return country === "US" ? lookupUSState(region) : null
 }
 

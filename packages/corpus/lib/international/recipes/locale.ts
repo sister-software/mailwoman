@@ -462,10 +462,14 @@ export const localeRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const order = random() < intlFraction ? "international" : "native"
 
-			// These draws happen only for ES and NL, so other countries' seeded output is unaffected.
+			// These draws happen only for ES and NL, so other countries' seeded output
+			// is unaffected. country-branch: the ES house-number join and the NL glued
+			// postcode are measured surface shares for those two sources.
+			// A per-country surface table in the codex address layouts would replace both branches.
 			const nativeHouseJoin =
 				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : undefined
 
+			// country-branch: see the ES branch above.
 			const postcodeShape =
 				country === "NL"
 					? random() < NL_GLUED_POSTCODE_FRACTION

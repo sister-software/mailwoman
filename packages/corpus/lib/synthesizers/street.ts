@@ -224,6 +224,8 @@ export function synthesizeStreetRow(
 	const random = opts.random ?? Math.random
 	const includeHN = opts.includeHouseNumberProb ?? 0.85
 
+	// country-branch: the street vocabulary and admin tails are US English.
+	// The codex address layouts cover the rest.
 	if (base.country !== "US") return null
 
 	const prefix = sample(DIRECTIONAL_PREFIXES, random)

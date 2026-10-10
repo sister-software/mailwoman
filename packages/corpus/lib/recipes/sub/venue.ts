@@ -644,7 +644,8 @@ async function buildLegPools(
 		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)
 		: EMPTY_NAME_POOLS
 
-	// Only the US and FR legs have rows in poi.db.
+	// Only the US and FR legs have rows in poi.db. country-branch: `poi.db` covers five countries.
+	// The Overture place-names file (392 country codes) would replace it.
 	const poiPools =
 		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDB, leg.country, query) : EMPTY_NAME_POOLS
 

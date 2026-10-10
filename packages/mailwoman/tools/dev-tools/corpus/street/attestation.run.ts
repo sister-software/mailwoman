@@ -186,6 +186,9 @@ for (const seed of rows) {
 	let streetColumn = "street"
 	let localityExpression: string | null = null
 
+	// country-branch: GB streets are attested against a CSV register with its own columns,
+	// every other country against the parquet corpus.
+	// A register table keyed by country would replace this.
 	if (country === "GB" && gbRegister) {
 		register = gbRegister
 		source = `read_csv('${escapeSQLString(gbRegister)}', header = true)`
@@ -238,6 +241,8 @@ for (const seed of rows) {
 		continue
 	}
 
+	// country-branch: the GB register's locality is a scalar column and the corpus's is a list.
+	// See the register branch above.
 	const localityClause =
 		localityLiteral && localityExpression
 			? country === "GB"

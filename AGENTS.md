@@ -126,6 +126,15 @@ which adds no runtime dependency; the `duplicate-exported-shape` repository chec
 interface or type alias whose body another workspace also exports. When two platforms must
 agree on behavior, share the function rather than copying its constants.
 
+A rule about one country lives in per-country data or under a per-country directory, never as a
+hard-coded branch in a shared module. The codex holds per-country tables, and an adapter or recipe for
+one country sits under `packages/<workspace>/lib/<cc>/`. A shared module that must branch on a country
+writes `// country-branch: <reason>` on the line above, stating why the rule is one country's and which
+planetary source would replace it. The `country-branches` repository check reports every other
+comparison against a country literal. Before writing a branch for US, GB or another well-covered locale,
+look for the source that covers every country: Who's On First admin names and abbreviations, the
+Overture places file, the codex country tables.
+
 The acronym convention capitalizes each acronym as a complete camel-case component: `createWOFResolver`,
 `parseJSON`, `readID`, and `modelURL`. Preserve external names, snake-case wire fields, and documented
 CLI adapter keys. `sister-software/no-title-case-acronym` enforces the convention.

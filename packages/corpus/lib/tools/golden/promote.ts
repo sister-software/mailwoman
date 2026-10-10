@@ -122,6 +122,8 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false
 
+	// country-branch: FR writes the postcode before the locality.
+	// The codex address layout's postcode position per country would replace this.
 	if (entry.country === "FR" || entry.country === "France") return false
 	const postcode = entry.components.postcode
 

@@ -59,7 +59,8 @@ export const houseVenueRecipe: CorpusRecipe = {
 			read++
 
 			// FR renders without a region (postcode-before-locality tail — the run-2 contingency),
-			// so an empty region is valid there and stays required everywhere else.
+			// so an empty region is valid there and stays required everywhere else. country-branch: whether
+			// a layout writes a region is a property of the codex address layout, which would replace this.
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && tuple.country !== "FR")) {
 				skipped++
 

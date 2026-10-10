@@ -125,6 +125,8 @@ const LOCALE_TAG: Record<string, string> = {
  * Other countries pass through unchanged.
  */
 function normalizePostcode(postcode: string, country: string): string {
+	// country-branch: the NL postcode is the one whose source spells it without the space the layout writes.
+	// The codex postal regimes' canonical spacing per country would replace this.
 	if (country === "NL") {
 		const m = /^(\d{4})\s*([A-Za-z]{2})$/.exec(postcode)
 

@@ -48,6 +48,8 @@ const US_STATE_ABBREVIATION_BY_NAME: ReadonlyMap<string, string> = new Map(
  * Other names pass through.
  */
 function regionSurface(country: string, name: string): string {
+	// country-branch: the codex holds a name-to-code table for US states only.
+	// The WOF admin database's `place_abbr` covers every country and would replace this.
 	if (country !== "US") return name
 
 	return US_STATE_ABBREVIATION_BY_NAME.get(name.trim().toLowerCase()) ?? name

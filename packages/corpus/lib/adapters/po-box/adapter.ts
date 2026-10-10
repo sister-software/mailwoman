@@ -163,7 +163,9 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 
 				// US military/diplomatic rows are self-contained and off by default,
 				// so the default random stream and output stay byte-identical.
-				// They are US-only and count against `limit`.
+				// They are US-only and count against `limit`. country-branch: APO/FPO/DPO
+				// rows exist in the US postal system only.
+				// A postal-regime flag in the codex would replace this.
 				const militaryAllowed = !options.country || options.country === "US"
 
 				if (

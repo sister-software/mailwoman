@@ -339,6 +339,8 @@ export function synthesizeBoundaryStressRow(
 		const venue = random() < 0.45 ? sample(VENUES, random) : ""
 		const withCountry = random() < 0.12
 
+		// country-branch: the synthesizer hand-writes the FR postcode-first tail and the US tail.
+		// The codex address layouts would render every country.
 		if (b.country === "FR") {
 			const core = `${b.postcode} ${b.locality}${withCountry ? ", France" : ""}`
 

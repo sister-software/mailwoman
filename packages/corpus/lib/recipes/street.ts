@@ -62,6 +62,8 @@ export const streetRecipe: CorpusRecipe = {
 				continue
 			}
 
+			// country-branch: `synthesizeStreetRow` renders the US layout only.
+			// The codex layouts in the `locale` recipe cover the rest.
 			if (tuple.country !== "US") {
 				skipped++
 

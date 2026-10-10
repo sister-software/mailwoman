@@ -185,8 +185,12 @@ export function synthesizeHouseVenueRow(
 	const locale = countryToLocale(base.country)
 	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
 
+	// country-branch: the synthesizer hand-writes four admin tails (FR, GB, VE and the US default).
+	// The codex address layouts would render every country.
 	const frOrder = base.country === "FR"
+	// country-branch: see the FR branch above.
 	const gbOrder = base.country === "GB"
+	// country-branch: see the FR branch above.
 	const veOrder = base.country === "VE"
 
 	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)

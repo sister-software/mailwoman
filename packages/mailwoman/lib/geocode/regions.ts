@@ -85,6 +85,8 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	// or Spain's `CA` would select a US state's database.
 	// A resolved non-US country therefore gets no slug.
 	// An unresolved country still gets one so that US addresses keep their street tiers.
+	// country-branch: the per-state street databases exist for the US only.
+	// A per-country street layer manifest would replace this.
 	if (resolvedCountry && resolvedCountry !== "US") return null
 
 	return regionToStateSlug(regionValue, regionResolverName)

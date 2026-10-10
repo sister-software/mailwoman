@@ -143,6 +143,9 @@ export function buildPostcodeBinaryEntries(
 ): BuildPostcodeBinaryResult {
 	const cc = country.toUpperCase()
 
+	// country-branch: GB is the one postcode system split into outward and inward halves.
+	// A granularity per country in the codex postal regimes would replace the
+	// three GB branches in this module.
 	if (cc !== "GB") {
 		return {
 			entries: rows.map((row) => ({
@@ -222,6 +225,7 @@ export const POSTCODE_BINARY_KEY_FLOORS: Readonly<Record<string, number>> = {
  */
 export function keyFloorFor(country: string, granularity: GBGranularity): number {
 	const cc = country.toUpperCase()
+	// country-branch: see `buildPostcodeBinary` above.
 	const keyed = cc === "GB" && granularity === "outward" ? "GB:outward" : cc
 
 	return POSTCODE_BINARY_KEY_FLOORS[keyed] ?? 1
@@ -235,6 +239,7 @@ export function keyFloorViolation(country: string, keys: number, granularity: GB
 
 	if (keys >= floor) return null
 	const cc = country.toUpperCase()
+	// country-branch: see `buildPostcodeBinary` above.
 	const scope = cc === "GB" ? `${cc} (${granularity} granularity)` : cc
 
 	return (
