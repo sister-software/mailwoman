@@ -79,5 +79,5 @@ def test_every_corpus_version_can_be_read_off_the_table() -> None:
 def test_the_totals_match_the_measured_census() -> None:
     """Pin the total transfer and verified-path counts across the whole table."""
     plans = [plan_sync(entry) for entry in CORPUS_VERSIONS.values()]
-    assert sum(len(plan.rclone_commands) for plan in plans) == 65
-    assert sum(len(plan.check_paths) for plan in plans) == 188
+    assert sum(len(plan.rclone_commands) for plan in plans) == 67
+    assert sum(len(plan.check_paths) for plan in plans) == 193

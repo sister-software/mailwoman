@@ -746,8 +746,9 @@ def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> N
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
+    from mailwoman_train.audits.label_support import head_labels
     from mailwoman_train.config import load_config
-    from mailwoman_train.data.loader import IGNORE_INDEX, iter_encoded
+    from mailwoman_train.data.loader import iter_encoded
     from mailwoman_train.data.source_reps import resolve_config_reps
     from mailwoman_train.labels import resolve_label_set
     from mailwoman_train.tokenizer import Tokenizer
@@ -772,7 +773,7 @@ def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> N
         for example in stream:
             row = seen.pop()
             total += 1
-            present = {bio[i][2:] for i in example.labels if i != IGNORE_INDEX and bio[i].startswith("B-")}
+            present = head_labels(example.labels, bio)
             rows_with.update(present)
             supplier = f"{row.get('source', '?')}/{str(row.get('country') or '?').upper()}"
             source_rows[supplier] += 1

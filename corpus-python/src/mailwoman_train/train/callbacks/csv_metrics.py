@@ -37,6 +37,7 @@ class CSVMetricsCallback:
             self._writer.writerow(
                 ["step", "wall_seconds", "train_loss", "lr", "val_loss", "val_macro_f1"]
                 + [f"f1.{tag}" for tag in self._tags]
+                + [f"support.{tag}" for tag in self._tags]
             )
 
     def on_step_end(self, state: TrainState, step: int) -> None:
@@ -44,7 +45,7 @@ class CSVMetricsCallback:
             return
         self._writer.writerow(
             [step, f"{state.elapsed:.1f}", f"{state.train_loss:.6f}", f"{state.learning_rate:.8f}", "", ""]
-            + [""] * len(self._tags)
+            + [""] * (2 * len(self._tags))
         )
         self._handle.flush()
 

@@ -4,6 +4,7 @@ from .app import app
 from .artifacts import export_onnx, push_artifact_r2, quantize_onnx
 from .audits import (
     audit_epoch_mixture,
+    audit_label_support,
     audit_suffix_feed,
     audit_validation_coverage,
     census_comma_segment_number,
@@ -30,6 +31,7 @@ __all__ = [
     "_train_gpu",
     "app",
     "audit_epoch_mixture",
+    "audit_label_support",
     "audit_suffix_feed",
     "audit_validation_coverage",
     "bucket_census",

@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from .schema import Config, CorpusReceiptConfig, DataConfig, ValidationCoverageConfig
+from .schema import Config, CorpusReceiptConfig, DataConfig, LabelSupportConfig, ValidationCoverageConfig
 
 
 def merge_into(
@@ -141,6 +141,31 @@ def _coerce(
         if len(keys) != len(set(keys)):
             raise ValueError("data.required_validation_coverage entries must be unique per country and split")
         return wanted
+    if isinstance(dst, DataConfig) and key == "required_validation_label_support":
+        if not isinstance(value, list):
+            raise TypeError("data.required_validation_label_support must be a list")
+        floors: list[LabelSupportConfig] = []
+        for index, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise TypeError(f"data.required_validation_label_support[{index}] must be a mapping")
+            floor = LabelSupportConfig()
+            merge_into(floor, item, strict=strict, _path=f"{path}[{index}]", _source=source)
+            floors.append(floor)
+        for floor in floors:
+            if not isinstance(floor.label, str) or not floor.label.strip() or floor.label == "O" or "-" in floor.label:
+                raise ValueError(
+                    f"every data.required_validation_label_support entry needs a bare component tag, got {floor.label!r}"
+                )
+            if floor.split not in ("val", "test"):
+                raise ValueError(
+                    f"label support for {floor.label!r} names split {floor.split!r}; only 'val' and 'test' are held out"
+                )
+            if type(floor.min_rows) is not int or floor.min_rows <= 0:
+                raise ValueError(f"label support for {floor.label!r} min_rows must be a positive integer")
+        floor_keys = [(floor.label, floor.split) for floor in floors]
+        if len(floor_keys) != len(set(floor_keys)):
+            raise ValueError("data.required_validation_label_support entries must be unique per label and split")
+        return floors
     declared = fields[key].type
     if not isinstance(value, str):
         return value

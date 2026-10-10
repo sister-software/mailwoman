@@ -21,6 +21,15 @@ class ValidationCoverageConfig:
 
 
 @dataclass
+class LabelSupportConfig:
+    """A floor on the rows of a held-out split's trainer draw that hold one component label."""
+
+    label: str = ""
+    split: str = "val"
+    min_rows: int = 1
+
+
+@dataclass
 class DataConfig:
     corpus_dir: str = "/data/corpus/versioned/v0.1.0/corpus-v0.1.0"
     tokenizer_dir: str = "/data/models/tokenizer/v0.1.0"
@@ -35,6 +44,8 @@ class DataConfig:
     required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)
 
     required_validation_coverage: list[ValidationCoverageConfig] = field(default_factory=list)
+
+    required_validation_label_support: list[LabelSupportConfig] = field(default_factory=list)
 
     train_rows_per_epoch: int | None = None
     val_rows: int | None = 4096
