@@ -262,3 +262,40 @@ def audit_validation_coverage(
 
     vol.commit()
     print(f"\nAudit committed to volume: {json_path}")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=3600,
+    memory=16384,
+)
+def audit_label_support(config_name: str) -> None:
+    """Count the rows of the trainer's validation draw that hold each label, against the config's floors.
+
+    The draw is the one `evaluate()` scores: `data.val_rows` rows of the `val` split under
+    `train.seed + 1`, read through the loader. `train()` runs this audit in its preflight when a
+    recipe declares `data.required_validation_label_support`, the way it runs
+    `audit_validation_coverage` for the per-country floors. This function is the standalone entry
+    point. The report is committed to the volume before a missed floor raises.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.label_support import LabelSupportError, run
+
+    json_path = Path(f"{AUDITS}/label-support-{config_path.stem}.json")
+    try:
+        run(config_path, json_path=json_path)
+    except LabelSupportError:
+        vol.commit()
+        print(f"\nAudit committed to volume: {json_path}")
+        raise
+
+    vol.commit()
+    print(f"\nAudit committed to volume: {json_path}")
