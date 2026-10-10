@@ -153,9 +153,9 @@ export function synthesizeIntersectionRow(
 ): SynthesizedIntersectionRow | null {
 	const random = opts.random ?? Math.random
 
-	// country-branch: the junction connectors and the street vocabulary are US English.
-	// A per-locale junction vocabulary in the codex would replace the branch.
-	// The admin tail already renders through the country's layout.
+	// The junction connectors and the street vocabulary are US English,
+	// which is why this synthesizer sits under `us/`.
+	// The admin tail renders through the country's layout.
 	if (base.country !== "US") return null
 
 	const a = buildStreetName(random)

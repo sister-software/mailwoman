@@ -12,13 +12,13 @@
 import { mulberry32 } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
+import type { CanonicalRow } from "#types"
 import {
 	DEFAULT_US_BASES,
 	generateIntersectionRows,
 	synthesizeIntersectionRow,
 	type SynthesizedIntersectionRow,
-} from "#synthesizers/intersection"
-import type { CanonicalRow } from "#types"
+} from "#us/synthesizers/intersection"
 import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedIntersectionRow): CanonicalRow {

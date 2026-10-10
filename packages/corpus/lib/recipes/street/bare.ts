@@ -22,9 +22,9 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { recipeSourceID, requireRegister, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
-import { DEFAULT_US_BASES } from "#synthesizers/intersection"
-import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { SurfaceOrigin } from "#types"
+import { DEFAULT_US_BASES } from "#us/synthesizers/intersection"
+import { synthesizeStreetRow, type StreetBaseTuple } from "#us/synthesizers/street"
 import { alignRow } from "#utils"
 
 /**

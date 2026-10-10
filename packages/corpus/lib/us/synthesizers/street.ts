@@ -221,9 +221,9 @@ export function synthesizeStreetRow(
 	const random = opts.random ?? Math.random
 	const includeHN = opts.includeHouseNumberProb ?? 0.85
 
-	// country-branch: the street vocabulary is US English (`STREET_NAMES`, `STREET_SUFFIXES`, the directionals).
-	// A per-country street vocabulary in the codex would replace the branch.
-	// The admin tail already renders through the country's layout.
+	// The street vocabulary (`STREET_NAMES`, `STREET_SUFFIXES`, the directionals) is
+	// US English, which is why this synthesizer sits under `us/`.
+	// The admin tail renders through the country's layout.
 	if (base.country !== "US") return null
 
 	const prefix = sample(DIRECTIONAL_PREFIXES, random)

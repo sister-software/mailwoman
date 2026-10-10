@@ -12,7 +12,6 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { upperFirst } from "@mailwoman/normalize/case"
-import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
@@ -30,11 +29,12 @@ import {
 	type PromotedSurface,
 	promotedSurfacesFor,
 	readExtractPools,
-	readPOIPools,
+	readOvertureNamePools,
 	readSubVenueLexicon,
 	rejectedPhrasesFor,
 	sampleIdentifier,
 } from "#recipes/sub/venue/sources"
+import { DEFAULT_VENUE_NAMES } from "#recipes/venue"
 import type { SubVenueLexiconTable } from "#subvenue/table"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 import { alignRow } from "#utils"
@@ -58,7 +58,7 @@ export interface SubVenueLeg {
 	/**
 	 * The OSM extract filename under `--extracts-dir`.
 	 *
-	 * A leg without an extract draws its venue and confound pools from `poi.db`.
+	 * Every leg draws venue and confound pools from the Overture place-names file as well.
 	 */
 	extract?: string
 	/**
@@ -142,7 +142,7 @@ export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
  * The region whose identifier distribution the en-US leg uses.
  *
  * The en-US leg has no OSM extract.
- * Its `poi.db` contains venue names without refs.
+ * The Overture names file carries venue names without refs.
  * The recipe borrows the identifier distribution from GB.
  */
 export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
@@ -632,24 +632,21 @@ export function allocate(total: number, shares: readonly number[]): number[] {
 }
 
 /**
- * Builds one leg's name pools from its extract and `poi.db`, plus its address context.
+ * Builds one leg's name pools from its extract and the Overture place-names file, plus its address context.
  */
 async function buildLegPools(
 	leg: SubVenueLeg,
 	query: PoolQuery,
 	contextByCountry: ReadonlyMap<string, LocaleBaseTuple[]>,
-	paths: { extractsDir: PathBuilderLike; poiDB: PathBuilderLike }
+	paths: { extractsDir: PathBuilderLike; venueNames: PathBuilderLike }
 ): Promise<LegPools> {
 	const extractPools = leg.extract
 		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)
 		: EMPTY_NAME_POOLS
 
-	// Only the US and FR legs have rows in poi.db. country-branch: `poi.db` covers five countries.
-	// The Overture place-names file (392 country codes) would replace it.
-	const poiPools =
-		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDB, leg.country, query) : EMPTY_NAME_POOLS
+	const overturePools = await readOvertureNamePools(paths.venueNames, leg.country, query)
 
-	const names = mergeNamePools(extractPools, poiPools)
+	const names = mergeNamePools(extractPools, overturePools)
 	let context = contextByCountry.get(leg.country) ?? []
 
 	if (leg.postcodePrefixes) {
@@ -708,8 +705,8 @@ export const subVenueRecipe: CorpusRecipe = {
 			description: "OSM sub-venue extract JSONLs (default: $MAILWOMAN_DATA_ROOT/sub-venue/extracts)",
 		},
 		{
-			flag: "--poi-db <path>",
-			description: "poi.db for the en-US / fr-FR pools (default: $MAILWOMAN_DATA_ROOT/db/poi/poi.db)",
+			flag: "--venue-names <parquet>",
+			description: `Overture place-names file for every leg's venue and confound pools (default ${DEFAULT_VENUE_NAMES})`,
 		},
 		{ flag: "--sub-venue-tuples <path>", description: "GB/US/FR address-context tuples JSONL" },
 		{
@@ -722,7 +719,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		const count = opts.count
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
-		const poiDB = opts.poiDB ?? poiDatabasePath("poi.db")
+		const venueNames = opts.venueNames ?? DEFAULT_VENUE_NAMES
 		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
 		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
@@ -753,7 +750,7 @@ export const subVenueRecipe: CorpusRecipe = {
 				english: leg.english,
 			}
 
-			const pools = await buildLegPools(leg, query, contextByCountry, { extractsDir, poiDB })
+			const pools = await buildLegPools(leg, query, contextByCountry, { extractsDir, venueNames })
 
 			legPromoted.set(leg.locale, promoted)
 			legPools.set(leg.locale, pools)

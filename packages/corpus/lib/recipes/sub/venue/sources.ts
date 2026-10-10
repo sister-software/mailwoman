@@ -9,10 +9,9 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { sample } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { upperFirst } from "@mailwoman/normalize/case"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { classifyIdentifier, readSubVenueJSONL } from "#subvenue/harvest"
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#subvenue/promotions"
 import type { SubVenueLexiconTable } from "#subvenue/table"
@@ -516,43 +515,39 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
 ]
 
 /**
- * Reads the venue and confound name pools for one country from `poi.db`.
+ * Reads the venue and confound name pools for one country from the Overture place-names file,
+ * which holds `name`, `category` and `country` for every country the release covers.
  *
- * The database covers only a few countries, so an empty result may reflect missing coverage.
+ * The venue categories fill the `venues` pool.
+ * Every row of a venue or confound category is tested against the rejected phrases
+ * and the designator phrases, as the OSM extracts are.
  */
-export function readPOIPools(dbPath: PathBuilderLike, country: string, query: PoolQuery): NamePools {
-	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
+export async function readOvertureNamePools(
+	venueNames: PathBuilderLike,
+	country: string,
+	query: PoolQuery
+): Promise<NamePools> {
+	const categories = [...POI_VENUE_CATEGORIES, ...POI_CONFOUND_CATEGORIES].map((c) => `'${escapeSQLString(c)}'`)
 
-	const codes = db.prepare("select id, category from poi_category_codes").all() as Array<{
-		id: number
-		category: string
-	}>
+	using db = await openDuckDB({ threads: 4 })
 
-	const byName = new Map(codes.map((c) => [c.category, c.id]))
-	const venueIDs = POI_VENUE_CATEGORIES.map((c) => byName.get(c)).filter((id): id is number => id != null)
-	const confoundIDs = POI_CONFOUND_CATEGORIES.map((c) => byName.get(c)).filter((id): id is number => id != null)
-	const wanted = [...venueIDs, ...confoundIDs]
+	const result = await db.runAndReadAll(
+		`SELECT DISTINCT name, category FROM read_parquet('${escapeSQLString(String(venueNames))}')
+		WHERE country = '${escapeSQLString(country)}' AND name IS NOT NULL AND category IN (${categories.join(",")})`
+	)
 
-	if (!wanted.length) throw new Error(`poi.db at ${dbPath} has none of the expected categories`)
-
-	const rows = db
-		.prepare(
-			`select name, category_id from poi where country = ? and name is not null and category_id in (${wanted.map(() => "?").join(",")})`
-		)
-		.all(country, ...wanted) as Array<{ name: string; category_id: number }>
-
-	const venueSet = new Set(venueIDs)
+	const venueSet = new Set(POI_VENUE_CATEGORIES)
 	const venues = new Set<string>()
 	const rejectedVenues = new Set<string>()
 	const longerNames = new Set<string>()
 
-	for (const row of rows) {
-		const name = row.name.trim()
+	for (const [nameValue, categoryValue] of result.getRows()) {
+		const name = String(nameValue).trim()
 
 		if (!isVenueSlotName(name)) continue
 		const low = name.toLowerCase()
 
-		if (venueSet.has(row.category_id)) {
+		if (venueSet.has(String(categoryValue))) {
 			venues.add(name)
 		}
 
