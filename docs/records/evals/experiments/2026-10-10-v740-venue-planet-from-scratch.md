@@ -98,7 +98,7 @@ Portland St, London W1W 8QJ` loses `London` from the venue and retags the traili
 v7.4.0 does not ship: the D-rule refuses it on four locales and the battery misses two US floors. The run
 answers the question #2511 left open, whether the venue rows belong in a from-scratch base at this share:
 the venue and thin-system rows improve, and the bare-street rows pay for them. The next arm keeps
-`spliced-venue-locality` and removes or cuts `fragment-venue-bare`, whose bare multi-word names are the
+`spliced-venue-locality` and removes or lowers the share of `fragment-venue-bare`, whose bare multi-word names are the
 rows that compete with bare streets, or pairs it with a bare-street fragment source at equal share so the
 model sees both readings of a bare multi-word name. The v7.3.1 fine-tune (net +6 attributable, 18 of 18
 floors, one tracked GB row the placebo also loses) remains the only candidate that clears the battery.
