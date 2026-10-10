@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/soil",
-	"version": "10.2.0",
+	"version": "10.2.1",
 	"description": "USDA NRCS SSURGO soil capability — acquisition, build, and the soil.db layer reader",
 	"keywords": [
 		"farmland",
