@@ -16,7 +16,7 @@
  *
  *   The extension stays inside one comma-separated segment and stops at an identifier word: one that
  *   contains a digit, or one of a single letter. A house number or postcode is never part of the venue
- *   name it sits beside, and the `B` of `Concourse B` or the `A` of `Gate A` belongs to the designator
+ *   name it sits beside, and the `B` of `Concourse B` or the `C` of `Terminal C` belongs to the designator
  *   before it. Each word further from the head receives the head's bias multiplied by `extensionDecay`
  *   once more.
  *   The prior composes with the admin FST and the street-morphology prior through
