@@ -21,7 +21,13 @@ import {
 	ObservationStance,
 	observationsDisagree,
 } from "#address/convention-claims"
-import { ADDRESS_LAYOUTS, conventionClaimForCountry, layoutForCountry } from "#address/layouts"
+import {
+	ADDRESS_LAYOUTS,
+	conventionClaimForCountry,
+	layoutForCountry,
+	layoutPrintsPostcodeBeforeLocality,
+	layoutPrintsTag,
+} from "#address/layouts"
 import {
 	GENERATED_ADDRESS_LAYOUTS,
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
@@ -215,5 +221,22 @@ describe("conventionClaimForCountry", () => {
 			expect(answer.observations.some((entry) => entry.stance === ObservationStance.Contradicts)).toBe(true)
 			expect(layoutForCountry(code)).not.toBeNull()
 		}
+	})
+})
+
+describe("layoutPrintsTag and layoutPrintsPostcodeBeforeLocality", () => {
+	it("read the FR layout as printing no region and the postcode before the locality", () => {
+		const fr = layoutForCountry("FR")!
+
+		expect(layoutPrintsTag(fr, "region")).toBe(false)
+		expect(layoutPrintsTag(fr, "postcode")).toBe(true)
+		expect(layoutPrintsPostcodeBeforeLocality(fr)).toBe(true)
+	})
+
+	it("read the US layout as printing a region and the postcode after the locality", () => {
+		const us = layoutForCountry("US")!
+
+		expect(layoutPrintsTag(us, "region")).toBe(true)
+		expect(layoutPrintsPostcodeBeforeLocality(us)).toBe(false)
 	})
 })

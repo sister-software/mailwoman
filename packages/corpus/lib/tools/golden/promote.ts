@@ -31,6 +31,8 @@
  *   ```
  */
 
+import { layoutForCountry, layoutPrintsPostcodeBeforeLocality } from "@mailwoman/codex/address/layouts"
+import { matchCountry } from "@mailwoman/codex/country"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -113,18 +115,18 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 }
 
 /**
- * Heuristic: in US/UK conventions, postcode goes at the END of the address.
+ * Heuristic: where the country's layout prints the postcode after the locality, a postcode in the
+ * first third of a multi-component raw with 4+ components means the LLM reordered the address.
  *
- * If postcode appears in the first third of a multi-component raw and there are 4+
- * components, the LLM probably over-aggressively reordered.
- * FR is exempt (postcode often precedes locality there).
+ * A country whose layout prints the postcode before the locality (FR, DE) is exempt,
+ * as is a country with no layout or a layout that prints one of the two.
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false
 
-	// country-branch: FR writes the postcode before the locality.
-	// The codex address layout's postcode position per country would replace this.
-	if (entry.country === "FR" || entry.country === "France") return false
+	const layout = layoutForCountry(matchCountry(entry.country)?.iso2 ?? entry.country)
+
+	if (!layout || layoutPrintsPostcodeBeforeLocality(layout) !== false) return false
 	const postcode = entry.components.postcode
 
 	if (!postcode) return false

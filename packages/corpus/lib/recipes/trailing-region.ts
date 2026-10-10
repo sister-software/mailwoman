@@ -43,7 +43,9 @@ function regionCodeSurface(cc: string, region: string): string | null {
 	const country = cc.toUpperCase()
 
 	// country-branch: the codex holds region codes for CA and US only.
-	// The WOF admin database's `place_abbr` covers every country and would replace both lookups.
+	// The WOF admin database's `place_abbr` holds codes for ten countries
+	// (IT, US, ES, MX, BR, CA, AU, AE, UA, AD), and an ISO 3166-2 table would cover every country.
+	// The tree holds neither as a lookup yet.
 	if (country === "CA") return lookupCanadianProvince(region)
 
 	// country-branch: see the CA branch above.

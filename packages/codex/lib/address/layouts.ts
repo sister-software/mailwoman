@@ -143,6 +143,28 @@ export function layoutPrintsLargestFirst(layout: AddressLayout): boolean | null 
 }
 
 /**
+ * Whether a layout prints the component, so a row that omits it is still a complete row
+ * of that country: the FR layout prints no `region`, and a FR row without one is whole.
+ */
+export function layoutPrintsTag(layout: AddressLayout, tag: ComponentTag): boolean {
+	return printedTags(layout).includes(tag)
+}
+
+/**
+ * Whether the layout prints the postcode before the locality, as FR and DE do,
+ * or `null` when the layout prints one of the two and not the other.
+ */
+export function layoutPrintsPostcodeBeforeLocality(layout: AddressLayout): boolean | null {
+	const tags = printedTags(layout)
+	const postcodeAt = tags.indexOf("postcode")
+	const localityAt = tags.indexOf("locality")
+
+	if (postcodeAt === -1 || localityAt === -1) return null
+
+	return postcodeAt < localityAt
+}
+
+/**
  * Every slot a layout prints, in print order, flattened across lines
  * rather than per line, because the CJK systems put the whole admin run on one line
  * and a comparison of line indices would read them as unordered.
