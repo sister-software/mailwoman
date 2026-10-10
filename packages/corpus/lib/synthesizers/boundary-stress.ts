@@ -10,9 +10,11 @@
    synthesizer draws from is `US_TUPLES`, a hardcoded US list. The comma-less arm deliberately malforms that order.
  A layout cannot express it. The arm stresses the segmentation cue created by commas. */
 
+import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
 
+import { renderAdminTail } from "#synthesizers/tail"
 import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -339,40 +341,30 @@ export function synthesizeBoundaryStressRow(
 		const venue = random() < 0.45 ? sample(VENUES, random) : ""
 		const withCountry = random() < 0.12
 
-		// country-branch: the synthesizer hand-writes the FR postcode-first tail and the US tail.
-		// The codex address layouts would render every country.
-		if (b.country === "FR") {
-			const core = `${b.postcode} ${b.locality}${withCountry ? ", France" : ""}`
-
-			return {
-				raw: venue ? `${venue}, ${core}` : core,
-				components: {
-					...(venue ? { venue } : {}),
-					postcode: b.postcode,
-					locality: b.locality,
-					...(withCountry ? { country: "France" } : {}),
-				},
-				locale: "fr-FR",
-				template,
-			}
-		}
-
 		const withZip = random() < 0.5
-		const comma = random() < 0.6 ? "," : ""
-		// The base corpus labels this spelling as country.
-		const countryName = "United States"
-		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
+		const comma = random() < 0.6
+		// The base corpus labels these spellings as country.
+		const countryName = countryDisplayNames(b.country, ["en"])[0] ?? b.country
+
+		// The layout renders the tail in the country's order: `75005 Paris` for FR
+		// and `Boston, MA 02116` for the US.
+		// Dropping the layout's commas is a surface perturbation that applies to any country.
+		const tail = renderAdminTail(b.country, {
+			locality: b.locality,
+			region: b.region,
+			postcode: withZip ? b.postcode : undefined,
+			country: withCountry ? countryName : undefined,
+		})
+
+		const core = tail ? (comma ? tail.raw : tail.raw.replaceAll(", ", " ")) : b.locality
 
 		return {
 			raw: venue ? `${venue}, ${core}` : core,
 			components: {
 				...(venue ? { venue } : {}),
-				locality: b.locality,
-				region: b.region,
-				...(withZip ? { postcode: b.postcode } : {}),
-				...(withCountry ? { country: countryName } : {}),
+				...(tail ? tail.components : { locality: b.locality }),
 			},
-			locale: "en-US",
+			locale: localeFor[b.country] ?? "en-US",
 			template,
 		}
 	}
