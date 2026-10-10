@@ -64,6 +64,7 @@ export const spec = {
 		"poi-db": stringOption("POI database"),
 		"sub-venue-tuples": stringOption("address-context tuples"),
 		"negative-fraction": stringOption("confound-negative fraction"),
+		"venue-names": stringOption("venue: Overture place-names parquet"),
 	},
 } as const satisfies CommandSpec
 
@@ -130,6 +131,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 			poiDB: options.poiDB,
 			subVenueTuples: options.subVenueTuples,
 			negativeFraction: num(options.negativeFraction),
+			venueNames: options.venueNames,
 		}
 
 		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)

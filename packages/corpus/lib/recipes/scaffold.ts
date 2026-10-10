@@ -494,6 +494,12 @@ export interface RecipeOptions {
 	 * @defaultValue `0.3`
 	 */
 	negativeFraction?: number
+	/**
+	 * `venue`: the Overture place-names Parquet file with `name`, `category` and `country` columns.
+	 *
+	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/overture`
+	 */
+	venueNames?: PathBuilderLike
 }
 
 /**
