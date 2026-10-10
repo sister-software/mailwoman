@@ -10,6 +10,7 @@
  *   it replaced.
  */
 
+import { layoutForCountry, layoutPrintsTag } from "@mailwoman/codex/address/layouts"
 import { makeLcg } from "@mailwoman/core/utils"
 
 import {
@@ -58,9 +59,12 @@ export const houseVenueRecipe: CorpusRecipe = {
 		for await (const tuple of readTuples(opts.input)) {
 			read++
 
-			// FR renders without a region (postcode-before-locality tail — the run-2 contingency),
-			// so an empty region is valid there and stays required everywhere else.
-			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && tuple.country !== "FR")) {
+			// A region is required where the country's layout prints one.
+			// The FR layout prints none, so an FR tuple without a region is whole.
+			const layout = tuple.country ? layoutForCountry(tuple.country) : null
+			const regionRequired = layout ? layoutPrintsTag(layout, "region") : true
+
+			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && regionRequired)) {
 				skipped++
 
 				continue

@@ -201,6 +201,8 @@ export const ENGINE_CONFIG_SCHEMA = z
 					"unchecked typo would grade the default model under the candidate's name."
 			),
 		gazetteer_prior: SwitchPinSchema.optional(),
+		venue_head_prior: SwitchPinSchema.optional(),
+		venue_head_bias_scale: z.number().optional(),
 		place_country: SwitchPinSchema.optional(),
 		place_country_threshold: z.number().optional(),
 		postcode_country_coherence: SwitchPinSchema.optional(),

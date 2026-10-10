@@ -5,7 +5,7 @@
  *
  * @file The sub-venue lexicon's record schema and the shipped vocabulary it is seeded from.
  *
- * The seeds mirror `neural/venue-structure.ts`. `@mailwoman/corpus` has no dependency on `@mailwoman/neural`,
+ * The seeds mirror `neural/venue/structure.ts`. `@mailwoman/corpus` has no dependency on `@mailwoman/neural`,
  * so this file declares the shipped vocabulary locally. `sub-venue-lexicon.test.ts` pins the seed values
  * and fails when either copy changes.
  */
@@ -39,7 +39,7 @@ export interface SubVenueDesignator {
 	/**
 	 * Canonical id, lowercase English.
 	 *
-	 * It matches `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
+	 * It matches `neural/venue/structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
 	 */
 	id: string
 	tier: LexiconTier
@@ -186,7 +186,7 @@ export interface SubVenueLexiconTable {
 }
 
 /**
- * The vocabulary that already ships in `neural/venue-structure.ts`, re-declared
+ * The vocabulary that already ships in `neural/venue/structure.ts`, re-declared
  * below for the module docstring's dependency-direction reason.
  *
  * `tier` is added here: the seven WOF placetypes plus `terminal`/`gate` are all venue-interior,
@@ -210,7 +210,7 @@ export const SHIPPED_DESIGNATOR_SEED: ReadonlyArray<{
 ]
 
 /**
- * The shipped positional modifiers, re-declared from `neural/venue-structure.ts`'s `VENUE_STRUCTURE_MODIFIERS`.
+ * The shipped positional modifiers, re-declared from `neural/venue/structure.ts`'s `VENUE_STRUCTURE_MODIFIERS`.
  */
 export const SHIPPED_MODIFIER_SEED: readonly string[] = [
 	"central",

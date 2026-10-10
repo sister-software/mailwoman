@@ -19,13 +19,10 @@
  *   adapter.
  */
 
-/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
-   refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
-   string for the only country that reaches it. The function would read as though the file served more. */
-
 import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
 
+import { layoutAdminTail } from "#synthesizers/tail"
 import { tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
@@ -224,6 +221,9 @@ export function synthesizeStreetRow(
 	const random = opts.random ?? Math.random
 	const includeHN = opts.includeHouseNumberProb ?? 0.85
 
+	// The street vocabulary (`STREET_NAMES`, `STREET_SUFFIXES`, the directionals) is
+	// US English, which is why this synthesizer sits under `us/`.
+	// The admin tail renders through the country's layout.
 	if (base.country !== "US") return null
 
 	const prefix = sample(DIRECTIONAL_PREFIXES, random)
@@ -248,13 +248,13 @@ export function synthesizeStreetRow(
 	const bareProb = opts.bareProb ?? 0
 	const bare = bareProb > 0 && random() < bareProb
 
-	const components: CanonicalRow["components"] = bare
-		? {}
-		: {
-				region: base.region,
-				locality: base.locality,
-				postcode: base.postcode,
-			}
+	const tail = bare
+		? null
+		: layoutAdminTail(base.country, { locality: base.locality, region: base.region, postcode: base.postcode })
+
+	if (!bare && !tail) return null
+
+	const components: CanonicalRow["components"] = tail ? { ...tail.components } : {}
 
 	if (decomposed.prefix) {
 		components.street_prefix = decomposed.prefix
@@ -273,9 +273,9 @@ export function synthesizeStreetRow(
 	if (random() < includeHN) {
 		const hn = randomHouseNumber(random)
 		components.house_number = hn
-		raw = bare ? `${hn} ${fullStreet}` : `${hn} ${fullStreet}, ${base.locality}, ${base.region} ${base.postcode}`
+		raw = tail ? `${hn} ${fullStreet}, ${tail.raw}` : `${hn} ${fullStreet}`
 	} else {
-		raw = bare ? fullStreet : `${fullStreet}, ${base.locality}, ${base.region} ${base.postcode}`
+		raw = tail ? `${fullStreet}, ${tail.raw}` : fullStreet
 	}
 
 	return { raw, components, locale: "en-US" }

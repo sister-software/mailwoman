@@ -21,6 +21,7 @@ import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
 import { createRuntimePipeline } from "#index"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
+import { localeForCountry } from "#tools/eval-harness/invariance/parser"
 
 const { values } = parseArguments({
 	options: {
@@ -39,11 +40,6 @@ if (!fixtures.length) throw new Error(`No fixtures selected${values.country ? ` 
 const perTag = new Map<ComponentTag, { hit: number; total: number }>()
 let caseHit = 0
 const failures: string[] = []
-
-// Mirrors gauntlet/harness.ts today: GB has a shipped overlay.
-// JP still grades through the base model until its package-shaped sibling model is wired into the gauntlet.
-// This board keeps that limitation visible.
-const localeForCountry = (country: string): string => (country === "GB" ? "en-GB" : "en-US")
 
 for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)))) {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({

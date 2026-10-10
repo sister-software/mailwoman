@@ -61,9 +61,10 @@ export const spec = {
 		"multilocale-count": stringOption("multilocale row count"),
 		lexicon: stringOption("sub-venue lexicon"),
 		"extracts-dir": stringOption("OSM extract directory"),
-		"poi-db": stringOption("POI database"),
 		"sub-venue-tuples": stringOption("address-context tuples"),
 		"negative-fraction": stringOption("confound-negative fraction"),
+		"venue-names": stringOption("venue, sub-venue: Overture place-names parquet"),
+		"venue-region-fraction": stringOption("venue: share of locality rows that also carry the region"),
 	},
 } as const satisfies CommandSpec
 
@@ -127,9 +128,10 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 			multilocaleCount: num(options.multilocaleCount),
 			lexicon: options.lexicon,
 			extractsDir: options.extractsDir,
-			poiDB: options.poiDB,
 			subVenueTuples: options.subVenueTuples,
 			negativeFraction: num(options.negativeFraction),
+			venueNames: options.venueNames,
+			venueRegionFraction: num(options.venueRegionFraction),
 		}
 
 		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)

@@ -19,13 +19,10 @@
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
 
-/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
-   refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
-   string for the only country that reaches it. The function would read as though the file served more. */
-
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
 
+import { layoutAdminTail } from "#synthesizers/tail"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -156,6 +153,9 @@ export function synthesizeIntersectionRow(
 ): SynthesizedIntersectionRow | null {
 	const random = opts.random ?? Math.random
 
+	// The junction connectors and the street vocabulary are US English,
+	// which is why this synthesizer sits under `us/`.
+	// The admin tail renders through the country's layout.
 	if (base.country !== "US") return null
 
 	const a = buildStreetName(random)
@@ -187,17 +187,16 @@ export function synthesizeIntersectionRow(
 	} else {
 		const includePostcode = base.postcode != null && random() < 0.7
 
-		const tail = includePostcode
-			? `, ${base.locality}, ${base.region} ${base.postcode}`
-			: `, ${base.locality}, ${base.region}`
+		const tail = layoutAdminTail(base.country, {
+			locality: base.locality,
+			region: base.region,
+			postcode: includePostcode ? base.postcode : undefined,
+		})
 
-		raw = `${cornerPrefix}${a}${connector}${b}${tail}`
-		components.locality = base.locality
-		components.region = base.region
+		if (!tail) return null
 
-		if (includePostcode) {
-			components.postcode = base.postcode
-		}
+		raw = `${cornerPrefix}${a}${connector}${b}, ${tail.raw}`
+		Object.assign(components, tail.components)
 	}
 
 	return { raw, components, locale: "en-US" }

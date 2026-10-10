@@ -5,7 +5,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { PathBuilder } from "path-ts"
+import { dirname, PathBuilder } from "path-ts"
 
 import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 
@@ -191,4 +191,55 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	db.closeSync()
 
 	return { release, outDir: outDir.toString(), countryParquet, categoryColumn, hasBrand }
+}
+
+/**
+ * The default path of {@link ingestPlaceNames}'s output for a release.
+ */
+export function placeNamesPath(release: string): string {
+	return dataRootPath("overture", release, "place-names", "names.parquet").toString()
+}
+
+/**
+ * Copies the primary name, category and country of every Overture place at or above the
+ * confidence floor, in every country the release holds, into one Parquet file.
+ */
+export async function ingestPlaceNames(opts: {
+	release: string
+	out?: string
+	onPhase?: (phase: string, detail?: string) => void
+}): Promise<{ path: string; rows: number; countries: number }> {
+	const path = opts.out ?? placeNamesPath(opts.release)
+	const phase = opts.onPhase ?? (() => {})
+	await makeDirectories(dirname(path))
+
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const db = await (await DuckDBInstance.create()).connect()
+
+	for (const statement of ["INSTALL httpfs; LOAD httpfs;", "SET s3_region='us-west-2';", "SET threads=8;"]) {
+		await db.run(statement)
+	}
+
+	const glob = S3_GLOB(opts.release)
+	const describe = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${glob}') LIMIT 1`)
+	const columns = describe.getRowObjects().map((row) => ({ column_name: String(row["column_name"]) }))
+	const country = chooseCountryExpression(columns)
+	const started = Date.now()
+
+	await db.run(`
+		COPY (
+			SELECT names.primary AS name, ${chooseCategoryColumn(columns)} AS category, ${country.selectExpr}
+			FROM read_parquet('${glob}', hive_partitioning = 1)
+			WHERE confidence >= ${MIN_CONFIDENCE} AND names.primary IS NOT NULL
+		) TO '${path}' (FORMAT PARQUET, COMPRESSION ZSTD)
+	`)
+
+	const summary = (
+		await db.runAndReadAll(`SELECT count(*) AS n, count(DISTINCT country) AS c FROM read_parquet('${path}')`)
+	).getRowObjects()[0]!
+
+	db.closeSync()
+	phase("ingest", `${path} (${((Date.now() - started) / 1000).toFixed(0)}s)`)
+
+	return { path, rows: Number(summary["n"]), countries: Number(summary["c"]) }
 }

@@ -99,7 +99,8 @@ describe("synthesizeHouseVenueRow", () => {
 		})
 
 		expect(row).not.toBeNull()
-		expect(row!.raw).toMatch(/^.+, 27 Minories, London EC3N 1DE$/)
+		// The GB layout prints the postcode on its own line, which the one-line form joins with a comma.
+		expect(row!.raw).toMatch(/^.+, 27 Minories, London, EC3N 1DE$/)
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("EC3N 1DE")
 		expect(row!.components.locality).toBe("London")
@@ -165,7 +166,7 @@ describe("synthesizeHouseVenueRow", () => {
 		)
 
 		expect(row).not.toBeNull()
-		expect(row!.raw).toMatch(/^101 Portland Street, .+, Manchester M1 1AE$/)
+		expect(row!.raw).toMatch(/^101 Portland Street, .+, Manchester, M1 1AE$/)
 	})
 
 	it("GB emits range house numbers at the pre-registered rate (~15% across 2000 rows)", () => {
@@ -226,7 +227,7 @@ describe("synthesizeHouseVenueRow", () => {
 			)
 
 			if (row!.components.country) {
-				expect(row!.raw).toMatch(/, 27 Minories, London EC3N 1DE, (United Kingdom|UK)$/)
+				expect(row!.raw).toMatch(/, 27 Minories, London, EC3N 1DE, (United Kingdom|UK)$/)
 
 				return
 			}

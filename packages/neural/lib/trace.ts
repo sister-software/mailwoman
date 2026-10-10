@@ -20,6 +20,7 @@ export const TRACE_PRIOR_KINDS = [
 	"fst",
 	"streetMorphology",
 	"spanProposer",
+	"venueHead",
 	"placetypePair",
 	"placetypeCensus",
 	"conventionsMask",

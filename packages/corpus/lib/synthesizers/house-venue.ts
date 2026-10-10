@@ -6,10 +6,9 @@
  *   Generates addresses in which a house number, a street and a venue appear together.
  */
 
-/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written per country on purpose. */
-
 import { sample } from "@mailwoman/core/random"
 
+import { layoutAdminTail } from "#synthesizers/tail"
 import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
@@ -172,10 +171,11 @@ const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
 }
 
 /**
- * Synthesizes one row with a house number, a street, a venue and the tuple's locality and postcode.
+ * Synthesizes one row with a house number, a street, a venue and the tuple's admin tail,
+ * rendered through the country's codex layout.
+ * A country with no layout yields `null`.
  *
  * GB rows sometimes use British venue names and ranged house numbers.
- * FR and GB rows omit the region.
  */
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
@@ -185,54 +185,50 @@ export function synthesizeHouseVenueRow(
 	const locale = countryToLocale(base.country)
 	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
 
-	const frOrder = base.country === "FR"
-	const gbOrder = base.country === "GB"
-	const veOrder = base.country === "VE"
+	// country-branch: the British venue pool and the ranged house number are GB English data.
+	// A per-country venue pool from the Overture names file would replace the branch.
+	const gbPools = base.country === "GB"
 
-	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
+	const venue = gbPools && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
 	const street = base.street ?? sample(FALLBACK_STREETS, random)
 	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
 
-	if (gbOrder && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
+	if (gbPools && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
 		const start = Number.parseInt(houseNumber, 10)
 		const span = (1 + Math.floor(random() * 4)) * 2
 
 		houseNumber = `${start}-${start + span}`
 	}
 
+	const countrySurfaces = COUNTRY_SURFACES[base.country]
+	const countrySurface = countrySurfaces && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : undefined
+
+	// The layout decides the tail's order and which parts it prints: FR prints no region,
+	// VE keeps the region after the postcode, GB puts the postcode after the locality.
+	const tail = layoutAdminTail(base.country, {
+		locality: base.locality,
+		region: base.region,
+		postcode: base.postcode,
+		country: countrySurface,
+	})
+
+	if (!tail) return null
+
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
 		venue,
-		locality: base.locality,
-		...(frOrder || gbOrder ? {} : { region: base.region }),
-		postcode: base.postcode,
-	}
-
-	let tail = frOrder
-		? `${base.postcode} ${base.locality}`
-		: gbOrder
-			? `${base.locality} ${base.postcode}`
-			: veOrder
-				? `${base.locality} ${base.postcode}, ${base.region}`
-				: `${base.locality}, ${base.region} ${base.postcode}`
-
-	const countrySurfaces = COUNTRY_SURFACES[base.country]
-
-	if (countrySurfaces && random() < COUNTRY_APPEND_RATE) {
-		const countrySurface = sample(countrySurfaces, random)
-		components.country = countrySurface
-		tail = `${tail}, ${countrySurface}`
+		...tail.components,
 	}
 
 	let raw: string
 
 	switch (template) {
 		case "venue-after-street":
-			raw = `${houseNumber} ${street}, ${venue}, ${tail}`
+			raw = `${houseNumber} ${street}, ${venue}, ${tail.raw}`
 			break
 		case "venue-before-street":
-			raw = `${venue}, ${houseNumber} ${street}, ${tail}`
+			raw = `${venue}, ${houseNumber} ${street}, ${tail.raw}`
 			break
 	}
 

@@ -447,7 +447,11 @@ export function normalizeFSTToken(s: string): string {
 	return cleaned ?? ""
 }
 
-function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
+/**
+ * Whether the street-morphology FST accepts `token`, in {@linkcode normalizeFSTToken}
+ * form, as a street-type affix.
+ */
+export function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
 	const match = fst.walk([token])
 
 	if (!match?.accepted) return false

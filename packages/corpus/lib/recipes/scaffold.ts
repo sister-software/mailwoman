@@ -352,7 +352,8 @@ export function alignAndWrite(
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
-	if (!aligned.row) return false
+	// A quarantined result also has a `row`, the quarantine record, so the kind decides.
+	if (aligned.kind !== "labeled") return false
 
 	write(
 		stringifyJSON({
@@ -475,13 +476,6 @@ export interface RecipeOptions {
 	 */
 	extractsDir?: string
 	/**
-	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound
-	 * pools (the two of poi.db's four countries this recipe has legs for).
-	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/poi/poi.db`
-	 */
-	poiDB?: string
-	/**
 	 * `sub-venue`: GB/US/FR address-context tuples jsonl.
 	 *
 	 * @defaultValue the house-venue v3 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`);
@@ -494,6 +488,19 @@ export interface RecipeOptions {
 	 * @defaultValue `0.3`
 	 */
 	negativeFraction?: number
+	/**
+	 * `venue` and `sub-venue`: the Overture place-names Parquet file with `name`,
+	 * `category` and `country` columns.
+	 *
+	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/overture`
+	 */
+	venueNames?: PathBuilderLike
+	/**
+	 * `venue`: share of locality rows that also carry the tuple's region after the locality.
+	 *
+	 * @defaultValue `0.5`
+	 */
+	venueRegionFraction?: number
 }
 
 /**

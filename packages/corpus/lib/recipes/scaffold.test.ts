@@ -14,9 +14,55 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
-import { type CSVRecord, readCSVRecords, readTuples } from "#recipes/scaffold"
+import { alignAndWrite, type CSVRecord, readCSVRecords, readTuples } from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
+
+describe("alignAndWrite", () => {
+	const provenance = { register: null, surface: SurfaceOrigin.Invented, baseSourceID: null }
+
+	it("writes a labeled row with its spans", () => {
+		const lines: string[] = []
+
+		const ok = alignAndWrite(
+			(line) => lines.push(line),
+			{
+				raw: "Sunrise Bakery, Athens",
+				components: { venue: "Sunrise Bakery", locality: "Athens" },
+				country: "US",
+				source: "s",
+				source_id: "s-1",
+			},
+			"test",
+			provenance
+		)
+
+		expect(ok).toBe(true)
+		expect(parseJSONStrict<{ span_tags: string[] }>(lines[0]!).span_tags).toEqual(["venue", "locality"])
+	})
+
+	it("writes no line for a row whose component is absent from the text", () => {
+		const lines: string[] = []
+
+		const ok = alignAndWrite(
+			(line) => lines.push(line),
+			{
+				raw: "Sunrise Bakery",
+				components: { venue: "Sunrise Bakery", locality: "Athens" },
+				country: "US",
+				source: "s",
+				source_id: "s-2",
+			},
+			"test",
+			provenance
+		)
+
+		expect(ok).toBe(false)
+		expect(lines).toEqual([])
+	})
+})
 
 async function* byteAtATime(csv: string): AsyncGenerator<Uint8Array> {
 	for (const byte of new TextEncoder().encode(csv)) {

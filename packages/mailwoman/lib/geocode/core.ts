@@ -144,7 +144,7 @@ export interface GeocodeSwitches {
  * `includeAncestors` departs from it on purpose, because the admin-coherence verdicts read the ancestors.
  */
 export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
-	poiVenueTier: false,
+	poiVenueTier: true,
 	normalizeInput: true,
 	postcodeCountryPrior: true,
 	adminCoherence: RESOLVE_SWITCH_DEFAULTS.adminCoherence,
@@ -189,6 +189,15 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * Street-morphology matcher for street-context checks.
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
+	/**
+	 * Venue-head lookups for the session's locale.
+	 * Absent, the venue-head prior does not run.
+	 */
+	venueHead?: import("@mailwoman/neural/venue/head-prior").VenueHeadLexiconLike
+	/**
+	 * Overrides for the venue-head prior's bias scale, cap and extension.
+	 */
+	venueHeadOpts?: import("@mailwoman/neural/venue/head-prior").VenueHeadPriorOpts
 	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
@@ -313,7 +322,10 @@ export interface GeocodeParseInputs {
 
 export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"> &
+	deps: Pick<
+		GeocodeDeps,
+		"normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology" | "venueHead" | "venueHeadOpts"
+	> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
 	// Stage-1 input normalization before parse.
@@ -356,6 +368,8 @@ export function geocodeParseInputs(
 				...(deps.fst ? { fst: deps.fst } : {}),
 				...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
 			}),
+			...(deps.venueHead ? { venueHead: deps.venueHead } : {}),
+			...(deps.venueHead && deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
 		},
 	}
 }
@@ -368,7 +382,14 @@ export async function parseForGeocode(
 	input: string,
 	deps: Pick<
 		GeocodeDeps,
-		"classifier" | "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"
+		| "classifier"
+		| "normalizeInput"
+		| "caseNormalization"
+		| "inputMode"
+		| "fst"
+		| "streetMorphology"
+		| "venueHead"
+		| "venueHeadOpts"
 	>
 ): Promise<AddressTree> {
 	const classifier = await classifierForInput(deps.classifier, input)
@@ -741,8 +762,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		].filter((marker) => marker !== null)
 	)
 
-	// Apply entity tiers (declared-fork rescue and optional venue tier).
-	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
+	// Apply entity tiers (declared-fork rescue and the venue tier).
+	// The tier reads the merged switch, so a caller that leaves `poiVenueTier` unset
+	// gets the switch's default as a session does.
+	applyEntityTiers(result, markers, parseInput, resolved.roots, { ...deps, poiVenueTier: switches.poiVenueTier })
 
 	// Append designation markers from attached spatial layers.
 	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]

@@ -30,6 +30,7 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "#venue/head-prior"
 
 /**
  * Configures a neural address classifier.
@@ -326,6 +327,19 @@ export interface ParseOpts {
 	 * Overrides for the street-morphology prior's bias magnitudes.
 	 */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
+
+	/**
+	 * Venue-head lookups for the session's locale.
+	 *
+	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
+	 * Absent, the prior does not run.
+	 */
+	venueHead?: VenueHeadLexiconLike
+
+	/**
+	 * Overrides for the venue-head prior's bias magnitudes and extension.
+	 */
+	venueHeadOpts?: VenueHeadPriorOpts
 
 	/**
 	 * Whether to snap or add postcode spans matching a known shape after decoding,

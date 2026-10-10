@@ -395,4 +395,52 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "corpus/versioned/v8-jp-shi-2026-09-06/val/part-0000.parquet",
         ),
     ),
+    "v730_venue": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.7.3-venue", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v7.3.0-null-4k.yaml",
+            "corpus-python/src/mailwoman_train/configs/v7.3.0-venue-4k.yaml",
+            "corpus/versioned/v0.7.2-address-systems/corpus-v0.7.2-address-systems/MANIFEST.json",
+            "corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/MANIFEST.json",
+            "corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/train/spliced-venue-locality.train.parquet",
+            "corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/train/fragment-venue-bare.train.parquet",
+            "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+            "output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz",
+            "models/tokenizer/v0.9.0-multisplice/tokenizer.model",
+        ),
+    ),
+    "v731_venue_nr": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.7.3.1-venue-nr", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v7.3.1-venue-nr-4k.yaml",
+            "corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/MANIFEST.json",
+            "corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/train/spliced-venue-locality.train.parquet",
+            "corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/train/fragment-venue-bare.train.parquet",
+            "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+            "output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz",
+        ),
+    ),
+    "v732_venue_planet": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.7.3.2-venue-planet", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v7.3.2-venue-planet-4k.yaml",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/MANIFEST.json",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/spliced-venue-locality.train.parquet",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/fragment-venue-bare.train.parquet",
+            "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+            "output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz",
+        ),
+    ),
 }

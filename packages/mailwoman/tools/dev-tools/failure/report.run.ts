@@ -241,9 +241,11 @@ async function runFailureReport(): Promise<void> {
 		{ name: "non-ASCII", pred: (r) => r.flags.hasNonAscii },
 		{ name: "has country gold", pred: (r) => r.flags.hasCountryGold },
 		{ name: "≤3 tokens", pred: (r) => r.flags.tokenCount <= SHORT_QUERY_TOKENS },
-		{ name: "US", pred: (r) => r.country === "US" },
-		{ name: "FR", pred: (r) => r.country === "FR" },
-		{ name: "ZZ (synthetic)", pred: (r) => r.country === "ZZ" },
+		// One stratum per country the rows hold, so a new locale appears without an edit here.
+		...[...new Set(all.map((r) => r.country))].toSorted().map((country) => ({
+			name: country === "ZZ" ? "ZZ (synthetic)" : country,
+			pred: (r: FixtureFailures) => r.country === country,
+		})),
 	]
 
 	const summary = {

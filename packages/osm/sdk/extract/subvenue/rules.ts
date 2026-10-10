@@ -47,7 +47,7 @@ export type SubVenueTier = (typeof SubVenueTier)[keyof typeof SubVenueTier]
 export interface SubVenueTagRule {
 	/**
 	 * The designator this rule attests, lowercased and in the same vocabulary as
-	 * `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` where the two
+	 * `neural/venue/structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` where the two
 	 * overlap (`terminal`, `gate`, `campus`).
 	 */
 	designatorID: string

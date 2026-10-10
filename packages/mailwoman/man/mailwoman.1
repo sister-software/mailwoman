@@ -124,6 +124,12 @@ Options:
                                               ranking prior. (default: false)
   \-\-[no\-]gazetteer\-prior                      Feed the gazetteer FST prior to the parse;
                                               \-\-no\-gazetteer\-prior disables it. (default: true)
+  \-\-[no\-]venue\-head\-prior                     Feed the venue\-head prior, from
+                                              @mailwoman/poi\-taxonomy's head\-word table, to the
+                                              parse; \-\-no\-venue\-head\-prior disables it. (default:
+                                              true)
+  \-\-venue\-head\-bias\-scale <multiplier>        Multiplier on the venue\-head table's biases. (default:
+                                              1)
   \-\-[no\-]place\-country                        Use the coarse\-placer country prior;
                                               \-\-no\-place\-country disables it. (default: true)
   \-\-[no\-]postcode\-country\-coherence           Allow coherent postcode/locality evidence to override

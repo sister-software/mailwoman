@@ -198,9 +198,19 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		["fr-bare-street-v20", "fr/recipes/bare-street.ts"],
 		["fr-bare-street-v21", "fr/recipes/bare-street.ts"],
 		["fr-bare-street-v22", "fr/recipes/bare-street.ts"],
+		[
+			"venue-bare",
+			"recipes/venue.ts",
+			"An Overture place name as the whole query. The retired spelling never reached a corpus: the recipe was written after the rename.",
+		],
 	]),
 	...entries(SourceOperation.Spliced, "spliced", [
 		["unit", "recipes/unit.ts", "The unit designator and number are drawn."],
+		[
+			"venue-locality",
+			"recipes/venue.ts",
+			"The locality is drawn from the country's admin tuples. The retired spelling never reached a corpus.",
+		],
 		["unit-v30", "recipes/unit.ts"],
 		["affix", "recipes/street/affix.ts"],
 		["suffix-boundary", "recipes/street/affix.ts"],

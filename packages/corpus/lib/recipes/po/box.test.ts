@@ -44,13 +44,17 @@ describe("po-box military rows", () => {
 		}
 	})
 
-	it("writes strictly more at variants 1 than at variants 0 — the discriminator the CLI defect erased", async () => {
-		// An exact count here would assert the Spanish po-box template: these tuples name a country
-		// the rendered line omits, so every tuple-driven row quarantines on `component-not-found:country`.
+	it("attempts one tuple row per input at variants 1 and none at variants 0 — the discriminator the CLI defect erased", async () => {
+		// These tuples name a country the Spanish po-box template omits from the line,
+		// so every tuple-driven row quarantines on `component-not-found:country`
+		// and reaches the output as a skip rather than a row.
+		// The variants flag is therefore visible in `skipped`, and the written
+		// rows stay the military rows alone.
 		const zero = await run(TUPLES, [], { variants: 0, militaryRatio: 1 })
 		const one = await run(TUPLES, [], { variants: 1, militaryRatio: 1 })
 
-		expect(one.rows.length).toBeGreaterThan(zero.rows.length)
+		expect(one.stats.skipped).toBe(zero.stats.skipped + TUPLES.length)
+		expect(one.rows).toHaveLength(zero.rows.length)
 	})
 
 	it("emits no military row when the ratio is left at zero", async () => {

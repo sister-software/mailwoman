@@ -94,6 +94,18 @@ export const spec = {
 			default: true,
 			description: "Feed the gazetteer FST prior to the parse; --no-gazetteer-prior disables it.",
 		},
+		"venue-head-prior": {
+			type: "boolean",
+			default: true,
+			description:
+				"Feed the venue-head prior, from @mailwoman/poi-taxonomy's head-word table, to the parse; --no-venue-head-prior disables it.",
+		},
+		"venue-head-bias-scale": {
+			type: "number",
+			default: 1,
+			hint: "multiplier",
+			description: "Multiplier on the venue-head table's biases.",
+		},
 		"place-country": {
 			type: "boolean",
 			default: true,
@@ -201,6 +213,8 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 			: {}),
 		localeCountryPrior: booleanValue(values, "locale-country-prior"),
 		gazetteerPrior: booleanValue(values, "gazetteer-prior"),
+		venueHeadPrior: booleanValue(values, "venue-head-prior"),
+		venueHeadBiasScale: numberValue(values, "venue-head-bias-scale")!,
 		placeCountry: booleanValue(values, "place-country"),
 		postcodeCountryCoherence: booleanValue(values, "postcode-country-coherence"),
 		forkEntity: booleanValue(values, "fork-entity"),

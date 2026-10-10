@@ -138,6 +138,8 @@ export function buildStreetNegatives(
 				isPair = true
 			}
 
+			// country-branch: `-gate` is a street-name suffix in British English only.
+			// The street-morphology FST per locale would replace it.
 			if (country === "GB" && token.length >= MIN_GATE_SUFFIX_TOKEN_LENGTH && token.endsWith("gate")) {
 				gateSuffix.push(tuple)
 			}

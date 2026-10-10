@@ -34,6 +34,8 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"capital_tier",
 	"variant_alias_exemption",
 	"poi_venue_tier",
+	"venue_head_prior",
+	"venue_head_bias_scale",
 ])
 
 /**
@@ -251,6 +253,8 @@ export async function buildRoutedMailwomanArm(
 				capitalTier: config.capital_tier ?? "production",
 				variantAliasExemption: config.variant_alias_exemption ?? "production",
 				poiVenueTier: config.poi_venue_tier ?? "production",
+				venueHeadPrior: config.venue_head_prior ?? "production",
+				venueHeadBiasScale: config.venue_head_bias_scale ?? "production",
 			},
 		})
 	)

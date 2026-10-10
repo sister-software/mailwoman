@@ -131,6 +131,32 @@ describe("readWeightsRecipe — the dev-only FSTs", () => {
 	})
 })
 
+describe("readWeightsRecipe — an overlay that declares a base", () => {
+	it("lists no graph or tokenizer for it, and both for a package that declares none", async () => {
+		const { repoRoot, dataRoot } = await fixture(CONFIG)
+		const gbPackage = repoRoot("packages", "neural-weights-en-gb")
+		const usPackage = repoRoot("packages", "neural-weights-en-us")
+
+		await makeDirectories(gbPackage, usPackage)
+
+		await writeLocalJSONFile(
+			{ name: "@mailwoman/neural-weights-en-gb", mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" } },
+			gbPackage("package.json")
+		)
+
+		await writeLocalJSONFile({ name: "@mailwoman/neural-weights-en-us" }, usPackage("package.json"))
+
+		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
+		const gb = recipe.linkableFor("en-gb").map((a) => a.shippedName)
+		const us = recipe.linkableFor("en-us").map((a) => a.shippedName)
+
+		expect(recipe.inheritsBase("en-gb")).toBe(true)
+		expect(gb).not.toContain("model.onnx")
+		expect(gb).toContain("fst-en-gb.bin")
+		expect(us).toContain("model.onnx")
+	})
+})
+
 describe("readWeightsRecipe — overrides", () => {
 	it("takes the model override outright, so callers cannot disagree about precedence", async () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)

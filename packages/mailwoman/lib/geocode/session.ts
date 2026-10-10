@@ -64,6 +64,7 @@ import {
  */
 export interface GeocodeSessionSettings {
 	gazetteerPrior: boolean
+	venueHeadPrior: boolean
 	capitalTier: CapitalTier
 	variantAliasExemption: VariantAliasExemption
 }
@@ -73,6 +74,7 @@ export interface GeocodeSessionSettings {
  */
 export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
 	gazetteerPrior: true,
+	venueHeadPrior: true,
 	capitalTier: "auto",
 	variantAliasExemption: "applied",
 }
@@ -83,6 +85,7 @@ export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
 export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>): GeocodeSessionSettings {
 	return {
 		gazetteerPrior: options.gazetteerPrior ?? GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
+		venueHeadPrior: options.venueHeadPrior ?? GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
 		capitalTier: options.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: options.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 	}
@@ -99,6 +102,20 @@ export interface GeocodeSessionOptions {
 	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
 	 */
 	gazetteerPrior?: boolean
+	/**
+	 * Whether to feed the venue-head prior to the parse, using the head words of the
+	 * default country, or of the locale's country when no default country is set.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
+	 */
+	venueHeadPrior?: boolean
+	/**
+	 * Multiplier on the venue-head table's biases.
+	 * Each bias is a log rate ratio.
+	 *
+	 * @defaultValue `1`
+	 */
+	venueHeadBiasScale?: number
 	locale: string
 
 	/**
@@ -472,6 +489,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		}
 	}
 
+	const venueHeadCountry = (options.defaultCountry ?? options.locale.split("-")[1] ?? "").toUpperCase()
+
+	const venueHead = settings.venueHeadPrior
+		? (await import("@mailwoman/poi-taxonomy/venue-heads")).venueHeadLexicon(venueHeadCountry)
+		: null
+
 	const weightsLoadedAt = performance.now()
 
 	progress("Opening resolver…")
@@ -635,11 +658,22 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const parseDeps: Pick<
 		GeocodeDeps,
-		"classifier" | "normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology"
+		| "classifier"
+		| "normalizeInput"
+		| "caseNormalization"
+		| "inputMode"
+		| "fst"
+		| "streetMorphology"
+		| "venueHead"
+		| "venueHeadOpts"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
+		...(venueHead ? { venueHead } : {}),
+		...(venueHead && options.venueHeadBiasScale !== undefined
+			? { venueHeadOpts: { biasScale: options.venueHeadBiasScale } }
+			: {}),
 	}
 
 	const traceOf = async (input: string): Promise<Omit<GeocodeTrace, "resolver"> | null> => {

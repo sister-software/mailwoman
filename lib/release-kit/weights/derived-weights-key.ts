@@ -180,6 +180,9 @@ export async function derivedStoreServeViolation(filename: string, path: PathBui
 
 	const records = header.readUInt32LE(4)
 
+	// country-branch: GB is the one postcode binary built at outward granularity,
+	// so its key floor has its own entry.
+	// A per-country granularity in the codex postal regimes would replace the branch.
 	const floor =
 		country === "GB" ? POSTCODE_BINARY_KEY_FLOORS["GB:outward"]! : (POSTCODE_BINARY_KEY_FLOORS[country] ?? 1)
 

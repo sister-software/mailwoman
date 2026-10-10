@@ -12,8 +12,8 @@ import { makeLcg } from "@mailwoman/core/utils"
 import { stableSourceID } from "#adapters/source-id"
 import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
-import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { SurfaceOrigin } from "#types"
+import { synthesizeStreetRow, type StreetBaseTuple } from "#us/synthesizers/street"
 
 /**
  * The recipe draws a street name from a pool and joins it to a tuple's locality, region and postcode.
@@ -62,6 +62,8 @@ export const streetRecipe: CorpusRecipe = {
 				continue
 			}
 
+			// country-branch: `synthesizeStreetRow` renders the US layout only.
+			// The codex layouts in the `locale` recipe cover the rest.
 			if (tuple.country !== "US") {
 				skipped++
 

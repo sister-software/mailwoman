@@ -266,6 +266,13 @@
 			"censusProbedParents": null
 		},
 		{
+			"kind": "venueHead",
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
+		},
+		{
 			"kind": "placetypePair",
 			"applied": false,
 			"probePath": null,
