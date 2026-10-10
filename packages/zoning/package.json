@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/zoning",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "Irish Generalised Zoning Types (MyPlan.ie) — acquisition, build, and the zoning-ireland.db layer reader",
 	"keywords": [
 		"geospatial",
