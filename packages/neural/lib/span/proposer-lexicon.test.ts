@@ -7,7 +7,7 @@
 import { expect, test } from "vitest"
 
 import { buildCodexSpanLexicon } from "#span"
-import { VENUE_STRUCTURE_DESIGNATORS } from "#venue-structure"
+import { VENUE_STRUCTURE_DESIGNATORS } from "#venue/structure"
 
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])

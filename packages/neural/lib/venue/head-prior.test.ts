@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildVenueHeadEmissionPriors, type VenueHeadLexiconLike } from "#venue-head-prior"
+import { buildVenueHeadEmissionPriors, type VenueHeadLexiconLike } from "#venue/head-prior"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-venue", "I-venue"]
 const B = LABELS.indexOf("B-venue")
@@ -124,6 +124,20 @@ describe("buildVenueHeadEmissionPriors", () => {
 		expect(m[3]![I]).toBe(0)
 		expect(m[1]![I]).toBe(0)
 		expect(m[1]![B]).toBe(0)
+	})
+
+	it("stops the span at a single-letter word, which belongs to the designator before it", () => {
+		const m = buildVenueHeadEmissionPriors(
+			lexicon({ last: { airport: 2 } }),
+			pieces("Concourse", "B", "O'Hare", "International", "Airport"),
+			LABELS
+		)
+
+		expect(m[4]![B]).toBeCloseTo(2)
+		expect(m[2]![I]).toBeCloseTo(2)
+		expect(m[1]![B]).toBe(0)
+		expect(m[1]![I]).toBe(0)
+		expect(m[0]![I]).toBe(0)
 	})
 
 	it("requires a neighbor in the segment for a first-word or last-word head", () => {

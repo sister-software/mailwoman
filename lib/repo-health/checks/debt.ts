@@ -478,7 +478,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/osm/sdk/extract/subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/osm/sdk/extract/subvenue/rules.ts", "the sub-venue tag rules name the physical gate"],
 	["packages/osm/sdk/extract/subvenue/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
-	["packages/neural/lib/venue-structure.ts", "venue structure names the physical gate"],
+	["packages/neural/lib/venue/structure.ts", "venue structure names the physical gate"],
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.test.ts", "span proposal tests name the physical gate"],

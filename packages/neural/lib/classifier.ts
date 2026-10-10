@@ -58,7 +58,7 @@ import type { MailwomanTokenizer, TokenizedPiece } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
 import type { NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
-import { buildVenueHeadEmissionPriors } from "#venue-head-prior"
+import { buildVenueHeadEmissionPriors } from "#venue/head-prior"
 import {
 	argmaxWithConfidence,
 	buildBIOEndMask,

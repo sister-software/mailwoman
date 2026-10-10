@@ -14,9 +14,11 @@
  *   lone word is as often a locality as a venue, and the table's position rates were measured on
  *   names of two or more words.
  *
- *   The extension stays inside one comma-separated segment and stops at a word that contains a
- *   digit, because a house number or postcode is never part of the venue name it sits beside. Each
- *   word further from the head receives the head's bias multiplied by `extensionDecay` once more.
+ *   The extension stays inside one comma-separated segment and stops at an identifier word: one that
+ *   contains a digit, or one of a single letter. A house number or postcode is never part of the venue
+ *   name it sits beside, and the `B` of `Concourse B` or the `A` of `Gate A` belongs to the designator
+ *   before it. Each word further from the head receives the head's bias multiplied by `extensionDecay`
+ *   once more.
  *   The prior composes with the admin FST and the street-morphology prior through
  *   `addEmissionMatrix`; where the admin FST also claims a word, the decoder weighs both biases.
  */
@@ -92,7 +94,14 @@ const DIGIT_RE = /\p{N}/u
 interface Word {
 	group: WordGroup
 	segment: number
-	hasDigit: boolean
+	/**
+	 * Whether the word is an identifier rather than a name word: it contains a digit or is a single letter.
+	 */
+	isIdentifier: boolean
+}
+
+function isIdentifierWord(token: string): boolean {
+	return DIGIT_RE.test(token) || [...token].length === 1
 }
 
 function wordsWithSegments(groups: readonly WordGroup[], pieces: ReadonlyArray<{ piece: string }>): Word[] {
@@ -103,7 +112,7 @@ function wordsWithSegments(groups: readonly WordGroup[], pieces: ReadonlyArray<{
 		const text = group.pieceIndices.map((i) => pieces[i]!.piece).join("")
 
 		if (group.fstToken !== "") {
-			words.push({ group, segment, hasDigit: DIGIT_RE.test(group.fstToken) })
+			words.push({ group, segment, isIdentifier: isIdentifierWord(group.fstToken) })
 		}
 
 		if (SEGMENT_BREAK_RE.test(text)) {
@@ -155,7 +164,7 @@ export function buildVenueHeadEmissionPriors(
 		for (let k = 1; k <= extensionWords; k++) {
 			const next = words[head + direction * k]
 
-			if (!next || next.segment !== words[head]!.segment || next.hasDigit || isStreetAffix(next.group.fstToken)) {
+			if (!next || next.segment !== words[head]!.segment || next.isIdentifier || isStreetAffix(next.group.fstToken)) {
 				break
 			}
 
@@ -166,9 +175,9 @@ export function buildVenueHeadEmissionPriors(
 	for (let index = 0; index < words.length; index++) {
 		const word = words[index]!
 
-		if (word.hasDigit) continue
+		if (word.isIdentifier) continue
 		const token = word.group.fstToken
-		const sameSegment = (other: Word | undefined): boolean => other?.segment === word.segment && !other.hasDigit
+		const sameSegment = (other: Word | undefined): boolean => other?.segment === word.segment && !other.isIdentifier
 		const following = words[index + 1]
 
 		// A head followed by a street type is the street's name, as in `Museum Street`.

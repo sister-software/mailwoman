@@ -30,7 +30,7 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
-import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "#venue-head-prior"
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "#venue/head-prior"
 
 /**
  * Configures a neural address classifier.

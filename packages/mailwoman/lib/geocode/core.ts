@@ -193,11 +193,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * Venue-head lookups for the session's locale.
 	 * Absent, the venue-head prior does not run.
 	 */
-	venueHead?: import("@mailwoman/neural/venue-head-prior").VenueHeadLexiconLike
+	venueHead?: import("@mailwoman/neural/venue/head-prior").VenueHeadLexiconLike
 	/**
 	 * Overrides for the venue-head prior's bias scale, cap and extension.
 	 */
-	venueHeadOpts?: import("@mailwoman/neural/venue-head-prior").VenueHeadPriorOpts
+	venueHeadOpts?: import("@mailwoman/neural/venue/head-prior").VenueHeadPriorOpts
 	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */

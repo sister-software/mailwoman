@@ -83,7 +83,7 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 	}
 }
 
-test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
+test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue/structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
 	// The drift pin: `@mailwoman/corpus` does not depend on `@mailwoman/neural`,
 	// so this list is a copy and the copy is what this test exists to catch.
 	expect(SHIPPED_DESIGNATOR_SEED.map((d) => d.id).toSorted()).toEqual([

@@ -104,7 +104,7 @@ Observed. Only 21 pieces in the vocabulary begin with a digit, so every number i
 
 ## 4a. Who's On First placetypes and venue structure
 
-Sources: the `PlacetypeName` union in `packages/core/lib/resources/whosonfirst/placetypes/definition.ts` (35 names), `placetype_codes` in `/mnt/mw/db/wof/candidate.db` (12 rows: `country`, `region`, `neighbourhood`, `locality`, `county`, `microhood`, `macrohood`, `macroregion`, `macrocounty`, `localadmin`, `borough`, `postalcode`), and the designator lists exported by `packages/neural/lib/venue-structure.ts` (21 terms, among them `arcade`, `building`, `campus`, `concourse`, `wing`, `terminal`, the four compass points, `upper`/`lower`, `main`, `central`, `inner`, `outer`, `front` and `rear`). Current vocabulary, md5 `5c01cdcd…`:
+Sources: the `PlacetypeName` union in `packages/core/lib/resources/whosonfirst/placetypes/definition.ts` (35 names), `placetype_codes` in `/mnt/mw/db/wof/candidate.db` (12 rows: `country`, `region`, `neighbourhood`, `locality`, `county`, `microhood`, `macrohood`, `macroregion`, `macrocounty`, `localadmin`, `borough`, `postalcode`), and the designator lists exported by `packages/neural/lib/venue/structure.ts` (21 terms, among them `arcade`, `building`, `campus`, `concourse`, `wing`, `terminal`, the four compass points, `upper`/`lower`, `main`, `central`, `inner`, `outer`, `front` and `rear`). Current vocabulary, md5 `5c01cdcd…`:
 
 | list                         | terms | whole |    split | pieces/word | C5 split |
 | ---------------------------- | ----: | ----: | -------: | ----------: | -------: |
