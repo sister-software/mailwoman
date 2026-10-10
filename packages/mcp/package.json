@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/mcp",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "MCP server — mailwoman's toolset for agents: address parsing and geocoding, POI search and Overpass export, layer manifests, plausibility checks, and FCC broadband and filer lookups.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
