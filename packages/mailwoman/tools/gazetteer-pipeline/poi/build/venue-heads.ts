@@ -13,20 +13,18 @@
  *   rate. Each rate adds half a name to its count, so a head absent from a population has a finite
  *   rate. A head that is the complete name of an admin place in the country is excluded, because a
  *   city name ends venue names such as `Hotel Adlon Berlin` without marking them. The exclusion
- *   reads the candidate database's admin names, the country's names in every ICU locale, and the
- *   codex's subdivision codes and subdivision names, so `Deutschland`, `NSW` and `DC` are excluded
- *   with `Germany`, `New South Wales` and `Washington`.
+ *   reads the candidate database's admin names, every language's name for each admin place in the
+ *   Who's On First admin database together with its abbreviations, and the country's names in every
+ *   ICU locale, so `Deutschland`, `Bayern`, `NSW` and `DC` are excluded with `Germany`, `Bavaria`,
+ *   `New South Wales` and `Washington` for every country the admin database covers.
  *
  *   A suffix is counted from the last word of every name, with admin words left out, and it needs
  *   several distinct words ending in it: a suffix that ends one word only is that word rather than a
  *   morpheme, so `ondon` is `London` and `galerie` is a head.
  */
 
-import { AU_STATE_ABBREVIATIONS } from "@mailwoman/codex/au/state"
-import { CA_PROVINCES } from "@mailwoman/codex/ca/province"
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import { officialLanguagesAlpha3 } from "@mailwoman/codex/country/region-languages"
-import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us/state"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -210,25 +208,14 @@ export function suffixCounts(
 }
 
 /**
- * Returns the single-word admin names held by the codex for a country: the country's name in
- * every ICU locale, and its subdivision codes and subdivision names where the codex lists them.
+ * Returns the single-word names of a country held by the codex: the country's name in every ICU locale.
+ *
+ * Subdivision names and codes come from the admin database, which covers every country.
  */
 export function codexAdminWords(country: string): Set<string> {
-	const names: string[] = [...countryDisplayNames(country)]
-
-	if (country === "US") {
-		names.push(...Object.keys(US_STATE_BY_ABBREVIATION), ...Object.values(US_STATE_BY_ABBREVIATION))
-	} else if (country === "CA") {
-		for (const province of Object.values(CA_PROVINCES)) {
-			names.push(province.code, province.name, province.french)
-		}
-	} else if (country === "AU") {
-		names.push(...Object.keys(AU_STATE_ABBREVIATIONS), ...Object.values(AU_STATE_ABBREVIATIONS))
-	}
-
 	const words = new Set<string>()
 
-	for (const name of names) {
+	for (const name of countryDisplayNames(country)) {
 		const parts = nameWords(name)
 
 		if (parts.length === 1) {
@@ -400,6 +387,12 @@ export interface BuildVenueHeadOptions {
 	 */
 	candidateDB: string
 	/**
+	 * The Who's On First admin database, read for every language's name of each admin
+	 * place (`names`) and the abbreviations (`place_abbr`), so a region's endonyms
+	 * and codes are excluded as heads in every country.
+	 */
+	adminDB: string
+	/**
 	 * A corpus `MANIFEST.json` whose train slices supply street spans.
 	 */
 	corpusManifest: string
@@ -480,6 +473,30 @@ export async function buildVenueHeadTable(
 				countryCounts(String(row.country)).adminWords.add(words[0]!)
 			}
 		}
+	)
+
+	await db.run(`ATTACH '${opts.adminDB}' AS admin (TYPE sqlite, READ_ONLY)`)
+
+	const addAdminWord = (row: Record<string, unknown>): void => {
+		const words = nameWords(String(row.name))
+
+		if (words.length === 1) {
+			countryCounts(String(row.country)).adminWords.add(words[0]!)
+		}
+	}
+
+	// Every language's name for an admin place, so an endonym or a translation such
+	// as `Bayern` or `Baviera` is excluded as the primary name is.
+	await stream(
+		"admin names in every language",
+		`SELECT DISTINCT country, name FROM admin.names WHERE placetype IN (${adminList}) AND name IS NOT NULL AND country IS NOT NULL`,
+		addAdminWord
+	)
+
+	await stream(
+		"admin abbreviations",
+		`SELECT DISTINCT s.country AS country, a.abbr AS name FROM admin.place_abbr a JOIN admin.spr s ON s.id = a.id WHERE s.country IS NOT NULL`,
+		addAdminWord
 	)
 
 	await stream(
@@ -570,6 +587,7 @@ export async function buildVenueHeadTable(
 		provenance: {
 			venueSource: opts.venueNames,
 			placeSource: opts.candidateDB,
+			adminSource: opts.adminDB,
 			streetSource: opts.corpusManifest,
 			minSupport: MIN_SUPPORT,
 			minSuffixStems: MIN_SUFFIX_STEMS,

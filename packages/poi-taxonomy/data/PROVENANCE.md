@@ -76,9 +76,11 @@ It holds words and rates only, and it carries no OpenStreetMap data.
 
 A head is admitted when it is two or more characters long, when it is not an administrative name of
 the country, and when its venue rate exceeds its rate at any position in the country's place names
-and street names. The administrative names come from the candidate database's admin rows and from
-the codex: the country's display names in every ICU locale and its US, Canadian and Australian
-subdivision codes and names. A suffix is admitted when it ends at least `minSuffixStems` distinct
+and street names. The administrative names come from the candidate database's admin rows, from the
+admin database `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db` (every language's
+name for each admin place in its `names` table and the abbreviations in `place_abbr`, so `Bayern`,
+`Baviera`, `NSW` and `DC` are excluded in every country the database covers), and from the codex's
+country display names in every ICU locale. A suffix is admitted when it ends at least `minSuffixStems` distinct
 venue last words and, in a spaced script, is itself a venue last word with `minSupport` names, so a
 city name cannot supply a suffix by itself. Regenerate with:
 

@@ -30,6 +30,11 @@ export const spec = {
 			type: "string",
 			description: "WOF candidate database (default $MAILWOMAN_DATA_ROOT/db/wof/candidate.db)",
 		},
+		"admin-db": {
+			type: "string",
+			description:
+				"WOF admin database for every language's admin names and abbreviations (default $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db)",
+		},
 		out: { type: "string", description: "Output path (default the package's data/venue-heads.json)" },
 	},
 } as const satisfies CommandSpec
@@ -51,6 +56,7 @@ const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) =>
 		const { path, table } = await buildVenueHeadTable({
 			venueNames: placeNamesPath(options.release),
 			candidateDB: options.candidateDB ?? dataRootPath("db", "wof", "candidate.db").toString(),
+			adminDB: options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db").toString(),
 			corpusManifest: options.corpusManifest,
 			slicePath: (slice) => slice.replace(/^\/data\//, `${dataRoot}/`),
 			...(options.out ? { out: options.out } : {}),

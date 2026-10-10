@@ -80,6 +80,10 @@ export interface VenueHeadTable {
 	provenance: {
 		venueSource: string
 		placeSource: string
+		/**
+		 * The admin database whose every-language names and abbreviations are excluded as heads.
+		 */
+		adminSource: string
 		streetSource: string
 		minSupport: number
 		minSuffixStems: number

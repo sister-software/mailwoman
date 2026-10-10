@@ -97,12 +97,11 @@ describe("suffixCounts", () => {
 })
 
 describe("codexAdminWords", () => {
-	it("holds the country's names in other languages and its subdivision codes", () => {
+	it("holds the country's one-word names in other languages", () => {
 		expect(codexAdminWords("DE")).toContain("deutschland")
-		expect(codexAdminWords("AU")).toContain("nsw")
-		expect(codexAdminWords("US")).toContain("dc")
-		expect(codexAdminWords("US")).toContain("washington")
-		expect(codexAdminWords("CA")).toContain("québec")
+		expect(codexAdminWords("DE")).toContain("alemania")
+		expect(codexAdminWords("JP")).toContain("日本")
+		expect(codexAdminWords("US")).not.toContain("united")
 	})
 })
 
