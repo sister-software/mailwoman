@@ -154,6 +154,39 @@ def test_validation_coverage_defaults_to_the_val_split_and_no_street_floor(tmp_p
     assert entry.min_street_rows == 0
 
 
+def test_label_support_floors_load_as_typed_configs(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n  required_validation_label_support:\n    - {label: po_box, min_rows: 100}\n    - {label: unit, split: test, min_rows: 50}\n",
+    )
+
+    floors = load_config(path).data.required_validation_label_support
+
+    assert [(f.label, f.split, f.min_rows) for f in floors] == [("po_box", "val", 100), ("unit", "test", 50)]
+
+
+def test_label_support_rejects_a_bio_tag_and_a_train_split(tmp_path):
+    with pytest.raises(ValueError, match="bare component tag"):
+        load_config(
+            _write(tmp_path, "data:\n  required_validation_label_support:\n    - {label: B-po_box, min_rows: 1}\n")
+        )
+
+    with pytest.raises(ValueError, match="only 'val' and 'test' are held out"):
+        load_config(
+            _write(tmp_path, "data:\n  required_validation_label_support:\n    - {label: po_box, split: train}\n")
+        )
+
+
+def test_label_support_rejects_a_repeated_label_and_split(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n  required_validation_label_support:\n    - {label: po_box, min_rows: 1}\n    - {label: po_box, min_rows: 2}\n",
+    )
+
+    with pytest.raises(ValueError, match="unique per label and split"):
+        load_config(path)
+
+
 def test_validation_coverage_rejects_a_split_that_is_not_held_out(tmp_path):
     # A coverage floor must measure held-out rows. The run trains on the `train` split.
     path = _write(tmp_path, "data:\n  required_validation_coverage:\n    - {country: GB, split: train, min_rows: 1}\n")

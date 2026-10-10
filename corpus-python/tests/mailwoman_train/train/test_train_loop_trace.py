@@ -148,6 +148,7 @@ def test_the_csv_carries_a_log_row_and_an_eval_row_per_interval(tmp_path: Path) 
         "val_loss",
         "val_macro_f1",
         *(f"f1.{t}" for t in tags),
+        *(f"support.{t}" for t in tags),
     ]
 
     # A log row leaves the val cells blank and an eval row fills them. Steps 2 and 4 each have both.

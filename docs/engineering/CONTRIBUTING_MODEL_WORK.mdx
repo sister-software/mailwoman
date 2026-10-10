@@ -67,6 +67,15 @@ steps to follow.
    preflight before a GPU is allocated, in the same way `required_corpus_receipts` fails
    `audit_epoch_mixture`.
 
+   A label needs the same floor. `macro_f1` weighs every supported label equally, so a label held by
+   three validation rows moves the headline score as much as one held by two thousand, and its F1
+   swings with each of those rows. `po_box` entered v7.2.0's macro score from 3 rows of 4,096
+   (#2438). Declare `data.required_validation_label_support`, a list of `{label, split, min_rows}`
+   over bare component tags. `audit_label_support` counts the rows of the trainer's own validation
+   draw that hold each label and fails the preflight below a floor. `train_log.csv` writes each
+   label's piece support beside its F1 as `support.<tag>`, so a reader sees the denominator behind
+   every macro term.
+
    **The opt-in half: a default-off path must ship with tests that turn it on.** The opt-in path is
    one of the three compliant options above, so default-off is where most new mechanisms land. An
    untested default-off path breaks without anyone noticing. No test exercises it, so no test fails

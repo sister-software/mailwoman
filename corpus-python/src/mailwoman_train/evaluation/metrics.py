@@ -160,11 +160,15 @@ def per_locale_tag_f1(
 
 
 def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequence[str]) -> list[str | int]:
-    """The train_log.csv eval row, one `f1.<tag>` cell per tag of the run's label set.
+    """The train_log.csv eval row: one `f1.<tag>` cell, then one `support.<tag>` cell, per tag of the run's label set.
 
     The header is written from the run's label set, so the row must be too. A row built from the
     default 16-tag list against a 35-tag ``stage3-cjk`` header left every JP fine tag and
     ``locality_unit`` unreadable. It also shifted the present cells under the wrong names.
+
+    The support cell is the label's piece count in the validation draw, the denominator behind its
+    F1 and its term in ``macro_f1``. A reader sees that `po_box` entered the macro score from a
+    handful of pieces beside the F1 that those pieces produced.
     """
     cells: list[str | int] = [
         step,
@@ -177,4 +181,6 @@ def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequ
     for tag in tags:
         supported = int(val.get(f"support_tag.{tag}", 0)) > 0
         cells.append(f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if supported else "")
+    for tag in tags:
+        cells.append(int(val.get(f"support_tag.{tag}", 0)))
     return cells

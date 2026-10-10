@@ -167,6 +167,19 @@ def _train_gpu(
         )
         print(f"Validation coverage: verified ({len(cfg.data.required_validation_coverage)} locales)")
 
+    if cfg.data.required_validation_label_support:
+        # `macro_f1` weighs every supported label equally, so a label held by a few validation rows
+        # moves the headline score as much as a label held by thousands, and its F1 swings with each
+        # of those rows. The check reads the trainer's own validation draw and fails here, before the
+        # GPU time is spent.
+        from pathlib import Path
+
+        from mailwoman_train.audits.label_support import run as verify_label_support
+
+        support_report = Path(f"{VOL_MOUNT}/audits/label-support-{Path(config_path).stem}.json")
+        verify_label_support(Path(config_path), json_path=support_report)
+        print(f"Validation label support: verified ({len(cfg.data.required_validation_label_support)} labels)")
+
     # Preflight the wall-clock budget: a recipe whose step count cannot fit this function's timeout
     # must fail here rather than die at the wire.
     required = _required_train_seconds(cfg.train.max_steps)
