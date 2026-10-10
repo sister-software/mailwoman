@@ -22,7 +22,7 @@
 import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
 
-import { renderAdminTail } from "#synthesizers/tail"
+import { layoutAdminTail } from "#synthesizers/tail"
 import { tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
@@ -250,7 +250,7 @@ export function synthesizeStreetRow(
 
 	const tail = bare
 		? null
-		: renderAdminTail(base.country, { locality: base.locality, region: base.region, postcode: base.postcode })
+		: layoutAdminTail(base.country, { locality: base.locality, region: base.region, postcode: base.postcode })
 
 	if (!bare && !tail) return null
 

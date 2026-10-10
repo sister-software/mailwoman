@@ -8,7 +8,7 @@
 
 import { sample } from "@mailwoman/core/random"
 
-import { renderAdminTail } from "#synthesizers/tail"
+import { layoutAdminTail } from "#synthesizers/tail"
 import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
@@ -205,7 +205,7 @@ export function synthesizeHouseVenueRow(
 
 	// The layout decides the tail's order and which parts it prints: FR prints no region,
 	// VE keeps the region after the postcode, GB puts the postcode after the locality.
-	const tail = renderAdminTail(base.country, {
+	const tail = layoutAdminTail(base.country, {
 		locality: base.locality,
 		region: base.region,
 		postcode: base.postcode,

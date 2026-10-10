@@ -14,7 +14,7 @@ import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
 
-import { renderAdminTail } from "#synthesizers/tail"
+import { layoutAdminTail } from "#synthesizers/tail"
 import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -349,7 +349,7 @@ export function synthesizeBoundaryStressRow(
 		// The layout renders the tail in the country's order: `75005 Paris` for FR
 		// and `Boston, MA 02116` for the US.
 		// Dropping the layout's commas is a surface perturbation that applies to any country.
-		const tail = renderAdminTail(b.country, {
+		const tail = layoutAdminTail(b.country, {
 			locality: b.locality,
 			region: b.region,
 			postcode: withZip ? b.postcode : undefined,

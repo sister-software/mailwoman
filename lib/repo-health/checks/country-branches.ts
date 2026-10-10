@@ -29,7 +29,7 @@ import { trackedSourcePaths } from "#repo-health/tracked-sources"
 /**
  * The marker a shared module writes beside a country branch it keeps on purpose.
  */
-export const COUNTRY_BRANCH_MARKER = "country-branch:"
+const COUNTRY_BRANCH_MARKER = "country-branch:"
 
 const COUNTRY_LITERAL = /^[A-Z]{2}$/u
 

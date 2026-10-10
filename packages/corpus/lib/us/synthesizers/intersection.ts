@@ -22,7 +22,7 @@
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
 
-import { renderAdminTail } from "#synthesizers/tail"
+import { layoutAdminTail } from "#synthesizers/tail"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -187,7 +187,7 @@ export function synthesizeIntersectionRow(
 	} else {
 		const includePostcode = base.postcode != null && random() < 0.7
 
-		const tail = renderAdminTail(base.country, {
+		const tail = layoutAdminTail(base.country, {
 			locality: base.locality,
 			region: base.region,
 			postcode: includePostcode ? base.postcode : undefined,

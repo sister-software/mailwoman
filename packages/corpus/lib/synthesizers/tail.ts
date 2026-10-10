@@ -29,7 +29,7 @@ export interface AdminTailParts {
 /**
  * A rendered tail and the parts the layout printed, with the caller's values.
  */
-export interface AdminTail {
+export interface RenderedTail {
 	raw: string
 	components: ComponentDict
 }
@@ -38,7 +38,7 @@ export interface AdminTail {
  * Renders the admin parts through the layout of `country`, or returns `null`
  * when the codex has no layout for the country or the layout prints none of the parts.
  */
-export function renderAdminTail(country: string, parts: AdminTailParts): AdminTail | null {
+export function layoutAdminTail(country: string, parts: AdminTailParts): RenderedTail | null {
 	const components: ComponentDict = {}
 
 	for (const [tag, value] of Object.entries(parts) as Array<[keyof AdminTailParts, string | undefined]>) {
