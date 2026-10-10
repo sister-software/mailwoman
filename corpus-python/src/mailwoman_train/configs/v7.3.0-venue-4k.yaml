@@ -7,7 +7,8 @@
 # The corpus is 0.7.3-venue, the 0.7.2 corpus plus two train files from `mailwoman corpus slice venue`:
 # 532012 `spliced-venue-locality` rows and 474821 `fragment-venue-bare` rows over 27 countries.
 # The two sources share 5% of the run's draws (25600 of 512000) in proportion to their rows, and
-# each has a receipt at 90% of its expected draws over the 1,000,000-row audit epoch.
+# each has a receipt at 90% of its expected draws over the 1,000,000-row audit epoch. The inherited receipts
+# are the base's floors times 0.95, because the inherited sources share the remaining 95% of the draws.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue
@@ -313,7 +314,7 @@ data:
     fragment-venue-bare: 0.02543
   required_corpus_receipts:
     - name: us-city-state-postcode
-      min_draws: 500
+      min_draws: 475
       source: spliced-trailing-region-us
       country: US
       component_sequence:
@@ -321,27 +322,27 @@ data:
         - region
         - postcode
     - name: ca-region-code-tail
-      min_draws: 1000
+      min_draws: 950
       source: spliced-trailing-region-ca-bare
       country: CA
     - name: us-secondary-unit-current-generation
-      min_draws: 2000
+      min_draws: 1900
       source: spliced-unit-v30
       country: US
     - name: bare-postcode-czech
-      min_draws: 250
+      min_draws: 237
       source: codex-bare-postcode
       country: CZ
     - name: cz-postcode-first-current-generation
-      min_draws: 1000
+      min_draws: 950
       source: rendered-cz-pcfirst-preposition-v21
       country: CZ
     - name: fr-bare-street-current-generation
-      min_draws: 1000
+      min_draws: 950
       source: fragment-fr-bare-street-v22
       country: FR
     - name: ve-locality-postcode-region
-      min_draws: 200
+      min_draws: 190
       source: reviewed-postcode-tail
       country: VE
       component_sequence:
@@ -349,140 +350,140 @@ data:
         - postcode
         - region
     - name: sg-registers
-      min_draws: 1000
+      min_draws: 950
       source: rendered-sg-register
       country: SG
     - name: pk-house-line
-      min_draws: 1000
+      min_draws: 950
       source: rendered-pk-register
       country: PK
     - name: bd-trailing-postcode
-      min_draws: 500
+      min_draws: 475
       source: rendered-bd-register
       country: BD
     - name: es-trailing-region-local-surfaces
-      min_draws: 500
+      min_draws: 475
       source: spliced-trailing-region-es-v28
       country: ES
     - name: us-military-po-box
-      min_draws: 500
+      min_draws: 475
       source: invented-po-box-military
       country: US
     - name: pt-native-order
-      min_draws: 1000
+      min_draws: 950
       source: rendered-pt
       country: PT
     - name: ch-native-order
-      min_draws: 1000
+      min_draws: 950
       source: rendered-ch
       country: CH
     - name: hr-native-order
-      min_draws: 1000
+      min_draws: 950
       source: rendered-hr
       country: HR
     - name: sk-native-order
-      min_draws: 1000
+      min_draws: 950
       source: rendered-sk
       country: SK
     - name: lu-native-order
-      min_draws: 1000
+      min_draws: 950
       source: rendered-lu
       country: LU
     - name: br-overture-rooftops
-      min_draws: 1000
+      min_draws: 950
       source: overture-latam
       country: BR
     - name: mx-overture-rooftops
-      min_draws: 1000
+      min_draws: 950
       source: overture-latam
       country: MX
     - name: osm-ru-exposure
-      min_draws: 46780
+      min_draws: 44441
       source: osm-ru
       country: RU
     - name: osm-in-exposure
-      min_draws: 12070
+      min_draws: 11466
       source: osm-in
       country: IN
     - name: osm-id-exposure
-      min_draws: 12420
+      min_draws: 11799
       source: osm-id
       country: ID
     - name: osm-ng-exposure
-      min_draws: 3140
+      min_draws: 2983
       source: osm-ng
       country: NG
     - name: osm-vn-exposure
-      min_draws: 8020
+      min_draws: 7619
       source: osm-vn
       country: VN
     - name: osm-pk-exposure
-      min_draws: 9310
+      min_draws: 8844
       source: osm-pk
       country: PK
     - name: osm-bd-exposure
-      min_draws: 2600
+      min_draws: 2470
       source: osm-bd
       country: BD
     - name: ban-gp-exposure
-      min_draws: 2610
+      min_draws: 2479
       source: ban-gp
       country: GP
     - name: ban-mq-exposure
-      min_draws: 2180
+      min_draws: 2071
       source: ban-mq
       country: MQ
     - name: ban-re-exposure
-      min_draws: 2900
+      min_draws: 2755
       source: ban-re
       country: RE
     - name: ban-gf-exposure
-      min_draws: 1880
+      min_draws: 1786
       source: ban-gf
       country: GF
     - name: ban-yt-exposure
-      min_draws: 1590
+      min_draws: 1510
       source: ban-yt
       country: YT
     - name: ban-nc-exposure
-      min_draws: 1700
+      min_draws: 1615
       source: ban-nc
       country: NC
     - name: ban-pm-exposure
-      min_draws: 630
+      min_draws: 598
       source: ban-pm
       country: PM
     - name: ban-bl-exposure
-      min_draws: 650
+      min_draws: 617
       source: ban-bl
       country: BL
     - name: ban-mf-exposure
-      min_draws: 860
+      min_draws: 817
       source: ban-mf
       country: MF
     - name: ban-pf-exposure
-      min_draws: 610
+      min_draws: 579
       source: ban-pf
       country: PF
     - name: ro-retea-scolara-exposure
-      min_draws: 3730
+      min_draws: 3543
       source: ro-retea-scolara
       country: RO
     - name: lv-varis-exposure
-      min_draws: 5800
+      min_draws: 5510
       source: lv-varis
       country: LV
     - name: cordis-exposure
-      min_draws: 6770
+      min_draws: 6431
       source: cordis
     - name: fr-finess-overseas-exposure
-      min_draws: 1120
+      min_draws: 1064
       source: fr-finess-overseas
     - name: fr-annuaire-education-overseas-exposure
-      min_draws: 1300
+      min_draws: 1235
       source: fr-annuaire-education-overseas
     - name: gleif-lei-exposure
-      min_draws: 23770
+      min_draws: 22581
       source: gleif-lei
     - name: spliced-venue-locality-exposure
       min_draws: 23770
