@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { describe, expect, it } from "vitest"
 
 import { recipeSource } from "#recipes/sources"
@@ -19,6 +20,14 @@ describe("isBareVenueName", () => {
 		expect(isBareVenueName("Blackwell")).toBe(false)
 		expect(isBareVenueName("24 7")).toBe(false)
 		expect(isBareVenueName("A1 B2")).toBe(false)
+	})
+
+	it("admits a spaceless-script name that ends in a venue head the country's table holds", () => {
+		const heads = venueHeadLexicon("JP")
+
+		expect(isBareVenueName("国立西洋美術館", heads)).toBe(true)
+		expect(isBareVenueName("東京", heads)).toBe(false)
+		expect(isBareVenueName("国立西洋美術館")).toBe(false)
 	})
 })
 

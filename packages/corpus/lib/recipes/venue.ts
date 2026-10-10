@@ -25,6 +25,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"
@@ -98,14 +99,45 @@ const LOCALITY_PROVENANCE = {
 }
 
 /**
+ * A head lookup for one country, the shape `venueHeadLexicon` returns.
+ */
+export interface VenueHeadSuffixLookup {
+	suffix(word: string): number | null
+}
+
+const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
+
+/**
+ * Characters a spaceless-script name needs before it is written as a bare query.
+ *
+ * A two-character name such as `東京` is the length of a city name, and the head the table recognizes is
+ * the name's last character, so a name shorter than this is a head with one character of stem.
+ */
+export const MIN_SPACELESS_BARE_CHARACTERS = 3
+
+/**
  * Whether a name may be written as the whole query.
  *
- * Two or more words, and at least one word with a letter, so `24 7` and `A1` stay out.
+ * In a spaced script the name needs two or more words, and at least one word
+ * with a letter, so `24 7` and `A1` stay out.
+ * In a script written without spaces a name is one word, so it qualifies when it has three or more
+ * characters and ends in a venue head the table holds for the country, as `国立西洋美術館` ends in `館`.
+ *
+ * A spaceless name the table does not recognize is written beside a locality only.
  */
-export function isBareVenueName(name: string): boolean {
+export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): boolean {
 	const words = name.trim().split(/\s+/u)
 
-	return words.length >= 2 && words.some((word) => /\p{L}{2,}/u.test(word))
+	if (words.length >= 2) return words.some((word) => /\p{L}{2,}/u.test(word))
+
+	const word = words[0]!
+
+	return (
+		Boolean(heads) &&
+		[...word].length >= MIN_SPACELESS_BARE_CHARACTERS &&
+		SPACELESS_SCRIPT_RE.test(word) &&
+		heads!.suffix(word) !== null
+	)
 }
 
 /**
@@ -276,6 +308,7 @@ export const venueRecipe: CorpusRecipe = {
 
 		for (const [country, { tuples, localities }] of byCountry) {
 			const names = await readVenueNames(db, venueNames, country, perCountry, opts.seed)
+			const heads = venueHeadLexicon(country)
 
 			for (const name of names) {
 				read++
@@ -303,7 +336,7 @@ export const venueRecipe: CorpusRecipe = {
 					region: withRegion ? tuple.region : undefined,
 				})
 
-				if (isBareVenueName(name)) {
+				if (isBareVenueName(name, heads)) {
 					emit(context, name, { venue: name }, country, VenueTemplate.Bare, { name })
 				}
 			}

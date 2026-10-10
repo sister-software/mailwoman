@@ -78,6 +78,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
