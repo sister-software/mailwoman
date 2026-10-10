@@ -428,4 +428,19 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz",
         ),
     ),
+    "v732_venue_planet": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.7.3.2-venue-planet", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v7.3.2-venue-planet-4k.yaml",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/MANIFEST.json",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/spliced-venue-locality.train.parquet",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/fragment-venue-bare.train.parquet",
+            "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+            "output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz",
+        ),
+    ),
 }
