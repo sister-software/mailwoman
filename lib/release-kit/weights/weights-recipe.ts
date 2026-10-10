@@ -13,6 +13,8 @@
  *   silently resolve four of the seven artifact classes to nonexistent paths.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
@@ -67,10 +69,33 @@ export interface WeightsRecipe {
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
+	 * Whether the locale's package declares `mailwoman.baseWeights`.
+	 *
+	 * `resolveWeights` takes the declared base's graph over a file in the overlay directory,
+	 * so a `model.onnx` linked into such an overlay is never read and goes stale.
+	 * The recipe lists no graph or tokenizer for it.
+	 */
+	inheritsBase: (locale: string) => boolean
+	/**
 	 * Artifacts this recipe names for a locale that a build step must produce, reported
 	 * rather than silently skipped so a consumer can say which channels a directory will lack.
 	 */
 	buildableFor: (locale: string) => BuildableArtifact[]
+}
+
+/**
+ * Whether `packages/neural-weights-<locale>/package.json` declares `mailwoman.baseWeights`.
+ *
+ * A locale without a package directory under `repoRoot` is read as declaring no base.
+ */
+async function declaresBaseWeights(repoRoot: PathBuilder, locale: string): Promise<boolean> {
+	const manifest = repoRoot("packages", `neural-weights-${locale.toLowerCase()}`, "package.json")
+
+	if (!(await pathExists(manifest))) return false
+
+	const { mailwoman } = await readLocalJSONFile<{ mailwoman?: { baseWeights?: unknown } }>(manifest)
+
+	return typeof mailwoman?.baseWeights === "string" && mailwoman.baseWeights.length > 0
 }
 
 /**
@@ -96,11 +121,23 @@ export async function readWeightsRecipe(
 	const underDataRoot = (rel: string, base: PathBuilder = dataRoot): string =>
 		rel.startsWith("/") ? rel : resolvePath(base, rel)
 
+	const inheriting = new Set<string>()
+
+	for (const locale of config.locales) {
+		if (await declaresBaseWeights(repoRoot, locale)) {
+			inheriting.add(locale.toLowerCase())
+		}
+	}
+
+	const inheritsBase = (locale: string): boolean => inheriting.has(locale.toLowerCase())
+
 	const linkableFor = (locale: string): LinkableArtifact[] => {
-		const out: LinkableArtifact[] = [
-			{ shippedName: "model.onnx", sourcePath: model },
-			{ shippedName: "tokenizer.model", sourcePath: tokenizer },
-		]
+		const out: LinkableArtifact[] = inheritsBase(locale)
+			? []
+			: [
+					{ shippedName: "model.onnx", sourcePath: model },
+					{ shippedName: "tokenizer.model", sourcePath: tokenizer },
+				]
 
 		// Repo-relative: generated and committed, so they travel with the checkout.
 		for (const [shippedName, sourcePath] of repoCommittedSoftFeedSources(repoRoot, softFeed)) {
@@ -170,6 +207,7 @@ export async function readWeightsRecipe(
 		lineage: config.weights.lineage || null,
 		softFeed,
 		linkableFor,
+		inheritsBase,
 		buildableFor,
 	}
 }

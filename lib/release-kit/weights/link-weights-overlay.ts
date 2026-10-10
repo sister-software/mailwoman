@@ -113,6 +113,22 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			await copyFileTo(cardSource, resolvePath(dir, "model-card.json"))
 		}
 
+		// A graph linked into an overlay that declares a base is never read and goes stale.
+		// Remove one left by an earlier recipe, so the directory says what the resolver does.
+		if (recipe.inheritsBase(locale)) {
+			for (const stale of ["model.onnx", "tokenizer.model"]) {
+				const path = resolvePath(dir, stale)
+
+				if (await pathExists(path)) {
+					if (!plan) {
+						await removePathIfPresent(path)
+					}
+
+					log(`  ${plan ? "·" : "✓"} ${stale}  removed: the package inherits its graph through mailwoman.baseWeights`)
+				}
+			}
+		}
+
 		const artifacts: LinkableArtifact[] = recipe.linkableFor(locale)
 
 		for (const { shippedName, sourcePath } of artifacts) {

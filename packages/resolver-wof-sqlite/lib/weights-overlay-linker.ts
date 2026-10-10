@@ -636,6 +636,19 @@ const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
 	{ channel: "locality_surface", source: (name) => dataRootPath("gazetteer", name) },
 ]
 
+/**
+ * Whether the locale's workspace package declares `mailwoman.baseWeights`.
+ */
+async function declaresBaseWeights(locale: string): Promise<boolean> {
+	const path = workspacePathBuilder(`neural-weights-${locale}`, "package.json")
+
+	if (!(await pathExists(path))) return false
+
+	const { mailwoman } = await readLocalJSONFile<{ mailwoman?: { baseWeights?: unknown } }>(path)
+
+	return typeof mailwoman?.baseWeights === "string" && mailwoman.baseWeights.length > 0
+}
+
 async function readWeightsCard(workspace: string): Promise<WeightsCard | null> {
 	const path = workspacePathBuilder(workspace, "model-card.json")
 
@@ -794,7 +807,12 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 
 	await makeDirectories(destDir)
 
-	if (manifest.model?.kind === "inherit") {
+	// A package that declares `mailwoman.baseWeights` inherits its graph whatever the manifest says,
+	// because `resolveWeights` takes the base's graph over a file in the overlay directory.
+	const inherits =
+		manifest.model?.kind === "inherit" || (!manifest.model && (await declaresBaseWeights(manifest.locale)))
+
+	if (inherits) {
 		await removeIfPresent(destDir("model.onnx"))
 		await removeIfPresent(destDir("tokenizer.model"))
 	} else if (manifest.model?.kind === "link") {
