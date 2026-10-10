@@ -352,7 +352,8 @@ export function alignAndWrite(
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
-	if (!aligned.row) return false
+	// A quarantined result also has a `row`, the quarantine record, so the kind decides.
+	if (aligned.kind !== "labeled") return false
 
 	write(
 		stringifyJSON({

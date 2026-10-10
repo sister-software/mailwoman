@@ -119,14 +119,30 @@ export interface CountryTuples {
 }
 
 /**
+ * The ISO 3166-1 alpha-2 code of a tuple's country.
+ *
+ * `corpus tuples` writes the code under `cc` and the display name under `country`.
+ * Older tuples files write the code under `country`.
+ * A tuple with neither form returns `null`.
+ */
+export function tupleCountryCode(tuple: RecipeTuple): string | null {
+	for (const value of [tuple.cc, tuple.country]) {
+		if (typeof value === "string" && /^[A-Za-z]{2}$/u.test(value.trim())) return value.trim().toUpperCase()
+	}
+
+	return null
+}
+
+/**
  * Groups the admin tuples by country and keeps those with a locality.
  */
 export async function groupTuplesByCountry(input: PathBuilderLike): Promise<Map<string, CountryTuples>> {
 	const byCountry = new Map<string, CountryTuples>()
 
 	for await (const tuple of readTuples(input)) {
-		if (!tuple.country || !tuple.locality) continue
-		const country = tuple.country.toUpperCase()
+		const country = tupleCountryCode(tuple)
+
+		if (!country || !tuple.locality) continue
 		let entry = byCountry.get(country)
 
 		if (!entry) {

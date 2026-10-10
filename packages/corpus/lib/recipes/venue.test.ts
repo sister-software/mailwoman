@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest"
 
 import { recipeSource } from "#recipes/sources"
-import { isBareVenueName, venueNameKey, venueRecipe } from "#recipes/venue"
+import { isBareVenueName, tupleCountryCode, venueNameKey, venueRecipe } from "#recipes/venue"
 
 describe("isBareVenueName", () => {
 	it("admits a name of two or more words with a word of letters", () => {
@@ -26,6 +26,14 @@ describe("venueNameKey", () => {
 	it("folds case and whitespace, keeping diacritics", () => {
 		expect(venueNameKey("  Saint-Étienne ")).toBe("saint-étienne")
 		expect(venueNameKey("New  York")).toBe("new york")
+	})
+})
+
+describe("tupleCountryCode", () => {
+	it("reads the code from `cc` and then from a two-letter `country`", () => {
+		expect(tupleCountryCode({ country: "France", cc: "FR" })).toBe("FR")
+		expect(tupleCountryCode({ country: "gb" })).toBe("GB")
+		expect(tupleCountryCode({ country: "France" })).toBeNull()
 	})
 })
 
