@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/dossier",
-	"version": "10.2.1",
+	"version": "10.2.2",
 	"description": "Building opportunity dossiers: sourced identity, premises, network, access and demand claims over parcels, buildings, entrances and units, projected for an explicit as-of date with every unresolved question and the record that would resolve it.",
 	"keywords": [
 		"building",
