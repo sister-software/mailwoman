@@ -406,5 +406,62 @@
 			"rclone copy :s3:mailwoman-assets/corpus/v8-jp-shi-2026-09-06/ /data/corpus/versioned/v8-jp-shi-2026-09-06/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
 			"rclone copy :s3:mailwoman-assets/corpus/v8-cjk-shi-2026-09-06/ /data/corpus/versioned/v8-cjk-shi-2026-09-06/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
 		]
+	},
+	"sync_v730_venue": {
+		"check_paths": [
+			"/data/corpus-python/src/mailwoman_train/configs/v7.3.0-null-4k.yaml",
+			"/data/corpus-python/src/mailwoman_train/configs/v7.3.0-venue-4k.yaml",
+			"/data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+			"/data/corpus/versioned/v0.7.2-address-systems/corpus-v0.7.2-address-systems/MANIFEST.json",
+			"/data/corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/MANIFEST.json",
+			"/data/corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/train/fragment-venue-bare.train.parquet",
+			"/data/corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/train/spliced-venue-locality.train.parquet",
+			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model",
+			"/data/output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz"
+		],
+		"pycache_paths": [
+			"/data/corpus-python/src/mailwoman_train/__pycache__",
+			"/data/corpus-python/src/mailwoman_train/configs/__pycache__"
+		],
+		"rclone_commands": [
+			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.7.3-venue/ /data/corpus/versioned/v0.7.3-venue/corpus-v0.7.3-venue/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+		]
+	},
+	"sync_v731_venue_nr": {
+		"check_paths": [
+			"/data/corpus-python/src/mailwoman_train/configs/v7.3.1-venue-nr-4k.yaml",
+			"/data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+			"/data/corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/MANIFEST.json",
+			"/data/corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/train/fragment-venue-bare.train.parquet",
+			"/data/corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/train/spliced-venue-locality.train.parquet",
+			"/data/output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz"
+		],
+		"pycache_paths": [
+			"/data/corpus-python/src/mailwoman_train/__pycache__",
+			"/data/corpus-python/src/mailwoman_train/configs/__pycache__"
+		],
+		"rclone_commands": [
+			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.7.3.1-venue-nr/ /data/corpus/versioned/v0.7.3.1-venue-nr/corpus-v0.7.3.1-venue-nr/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+		]
+	},
+	"sync_v732_venue_planet": {
+		"check_paths": [
+			"/data/corpus-python/src/mailwoman_train/configs/v7.3.2-venue-planet-4k.yaml",
+			"/data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+			"/data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/MANIFEST.json",
+			"/data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/fragment-venue-bare.train.parquet",
+			"/data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/spliced-venue-locality.train.parquet",
+			"/data/output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz"
+		],
+		"pycache_paths": [
+			"/data/corpus-python/src/mailwoman_train/__pycache__",
+			"/data/corpus-python/src/mailwoman_train/configs/__pycache__"
+		],
+		"rclone_commands": [
+			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.7.3.2-venue-planet/ /data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+		]
 	}
 }
