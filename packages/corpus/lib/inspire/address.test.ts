@@ -113,8 +113,8 @@ describe("codelistValue", () => {
 	})
 
 	it("answers undefined for an absent or empty URI", () => {
-		expect(codelistValue(undefined)).toBeUndefined()
-		expect(codelistValue("")).toBeUndefined()
+		expect(codelistValue(null)).toBeNull()
+		expect(codelistValue("")).toBeNull()
 	})
 })
 
@@ -138,7 +138,7 @@ describe("designatorsByType", () => {
 		// The publisher wrote `<ad:designator/>`, which means "no extension" rather than void.
 		expect(byType.get("addressNumberExtension")).toEqual([""])
 		// `designator` skips it, because an empty string is not a house-number part.
-		expect(designator(byType, "addressNumberExtension")).toBeUndefined()
+		expect(designator(byType, "addressNumberExtension")).toBeNull()
 		expect(designator(byType, "addressNumber")).toBe("3")
 		expect(designator(byType, "postalDeliveryIdentifier")).toBe("9901AA")
 	})
@@ -148,7 +148,7 @@ describe("designatorsByType", () => {
 		const byType = designatorsByType(address!)
 
 		expect(designator(byType, "addressNumberExtension", "addressNumber")).toBe("3")
-		expect(designator(byType, "buildingIdentifier")).toBeUndefined()
+		expect(designator(byType, "buildingIdentifier")).toBeNull()
 	})
 
 	it("answers an empty map for an address with no locator", async () => {
@@ -171,7 +171,7 @@ describe("componentHrefs", () => {
 	it("skips an empty href, which Brussels writes on 9 addresses", async () => {
 		const [address] = await features(CZ, "ad:Address")
 
-		// The third component in the fixture carries `xlink:href=""`.
+		// The third component in the fixture has `xlink:href=""`.
 		expect(componentHrefs(address!)).toHaveLength(2)
 	})
 })
@@ -259,7 +259,7 @@ describe("componentJoinKey", () => {
 
 	it("joins an identifier URI on itself, dropping a fragment the identifier does not carry", () => {
 		// Flanders writes the identifier its component features publish, and writes a fragment
-		// on the vocabulary reference that the vocabulary's own term does not carry.
+		// on the vocabulary reference that the vocabulary's own term omits.
 		expect(componentJoinKey("https://data.vlaanderen.be/id/straatnaam/6301")).toBe(
 			"https://data.vlaanderen.be/id/straatnaam/6301"
 		)
@@ -270,10 +270,10 @@ describe("componentJoinKey", () => {
 	})
 
 	it("answers undefined for an href that is neither a fragment nor a URL", () => {
-		expect(componentJoinKey("not a url")).toBeUndefined()
-		expect(componentJoinKey("")).toBeUndefined()
-		expect(componentJoinKey("   ")).toBeUndefined()
-		expect(componentJoinKey("#")).toBeUndefined()
+		expect(componentJoinKey("not a url")).toBeNull()
+		expect(componentJoinKey("")).toBeNull()
+		expect(componentJoinKey("   ")).toBeNull()
+		expect(componentJoinKey("#")).toBeNull()
 	})
 })
 
@@ -295,7 +295,7 @@ describe("the name and code readers", () => {
 	it("answers undefined for a void name rather than an empty string", async () => {
 		const [, country] = await features(CZ, "ad:AdminUnitName")
 
-		expect(placeName(country!)).toBeUndefined()
+		expect(placeName(country!)).toBeNull()
 	})
 
 	it("returns a postcode as the publisher wrote it, including a stripped leading zero", async () => {
@@ -303,7 +303,7 @@ describe("the name and code readers", () => {
 
 		expect(postalDescriptorCode(czech!)).toBe("66701")
 		// The Spanish cadastre writes the element as an integer, so `02250` arrives as `2250`.
-		// Padding belongs to the caller that knows the jurisdiction's width.
+		// The caller pads, because it knows the jurisdiction's width.
 		expect(postalDescriptorCode(spanish!)).toBe("2250")
 	})
 })
@@ -326,14 +326,14 @@ describe("isVoid and voidReason", () => {
 		const element = childElement(address!, "ad:validFrom")
 
 		expect(isVoid(element)).toBe(true)
-		expect(voidReason(element)).toBeUndefined()
+		expect(voidReason(element)).toBeNull()
 	})
 
 	it("treats an absent element as not void, which a caller distinguishes from void", async () => {
 		const [address] = await features(NL, "ad:Address")
 
 		expect(isVoid(childElement(address!, "ad:nowhere"))).toBe(false)
-		expect(voidReason(childElement(address!, "ad:nowhere"))).toBeUndefined()
+		expect(voidReason(childElement(address!, "ad:nowhere"))).toBeNull()
 		expect(voidReason(childElement(address!, "ad:alternativeIdentifier"))).toBe("Unpopulated")
 	})
 })
@@ -374,8 +374,9 @@ const ES = `<gml:FeatureCollection xmlns:GN="urn:x-inspire:specification:gmlas:G
 /**
  * A Walloon thoroughfare feature, trimmed from the real file.
  *
- * The Service public de Wallonie writes three `gml:name` elements ahead of the `ad:name` that
- * holds the street, which is why the readers compare the prefix rather than the local name alone.
+ * The Service public de Wallonie writes three `gml:name` elements ahead of
+ * the `ad:name` that holds the street.
+ * The readers compare the prefix, because two namespaces reuse the local name.
  */
 const BE_WALLONIE = `<gml:FeatureCollection ${NS}>
 	<ad:ThoroughfareName gml:id="BE.WL.ICAR.ThoroughfareName.7700328">
@@ -396,7 +397,7 @@ describe("inspireNameIs", () => {
 	})
 
 	it("separates two namespaces that bind the same local name", () => {
-		// The prefix carries the namespace and the namespace carries the meaning.
+		// The prefix holds the namespace and the namespace holds the meaning.
 		expect(inspireNameIs("gml:name", "ad:name")).toBe(false)
 		expect(inspireNameIs("name", "ad:name")).toBe(false)
 	})
@@ -445,7 +446,10 @@ describe("componentLinks", () => {
 	it("returns a reference carrying no title without one", async () => {
 		const [address] = await features(ES, "AD:Address")
 
-		expect(componentLinks(address!)).toEqual([{ href: "#ES.SDGC.PD.55.101.51002" }, { href: "#ES.SDGC.TN.55.101.1" }])
+		expect(componentLinks(address!)).toEqual([
+			{ href: "#ES.SDGC.PD.55.101.51002", title: null },
+			{ href: "#ES.SDGC.TN.55.101.1", title: null },
+		])
 	})
 })
 

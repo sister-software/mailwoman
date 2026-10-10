@@ -199,7 +199,7 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 
 const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, host } }) => {
 	useEffect(() => {
-		let handle: ServerHandle | undefined
+		let handle: ServerHandle | null = null
 		let disposed = false
 
 		void (async () => {

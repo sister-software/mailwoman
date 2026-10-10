@@ -9,7 +9,14 @@ import { useCallback, useEffect, useEffectEvent, useState } from "react"
 
 import { useDebouncedValue } from "#common/useDebouncedValue"
 import { loadPOIRuntime } from "#poi/runtime"
-import type { LiveSearchState, LoadPOIRuntime, POIExplorerResult, POILiveSearch, POIRuntime } from "#poi/types"
+import type {
+	LiveSearchState,
+	LoadPOIRuntime,
+	POIExplorerResult,
+	POILiveSearch,
+	POILiveSearchRequest,
+	POIRuntime,
+} from "#poi/types"
 
 /**
  * Options for {@link usePOISearch}.
@@ -22,7 +29,8 @@ export interface UsePOISearchOptions {
 
 	/**
 	 * The loader that the hook calls once on mount.
-	 * It defaults to `loadPOIRuntime`.
+	 *
+	 * @defaultValue `loadPOIRuntime`
 	 */
 	loadRuntime?: LoadPOIRuntime
 
@@ -41,7 +49,8 @@ export interface UsePOISearchOptions {
 
 	/**
 	 * The delay in milliseconds before the text is classified.
-	 * Defaults to 250.
+	 *
+	 * @defaultValue `250`
 	 */
 	debounceMs?: number
 }
@@ -80,25 +89,26 @@ export interface UsePOISearch {
 
 function buildOverpass(
 	runtime: POIRuntime,
-	categoryID: string,
-	matchedPhrase: string,
-	remainder: string
-): { overpassQL?: string; overpassError?: string } {
+	categoryID: string
+): { overpassQL: string | null; overpassError: string | null } {
 	const category = runtime.lookup.getPOICategory(categoryID)
 
 	if (!category) {
-		return {}
+		return { overpassQL: null, overpassError: null }
 	}
 
 	const intent: OverpassIntentLike = {
-		subject: { kind: "category", categoryIDs: [categoryID], matched: matchedPhrase },
-		...(remainder ? { anchor: { text: remainder } } : {}),
+		subject: { kind: "category", categoryIDs: [categoryID] },
+		anchor: null,
 	}
 
 	try {
-		return { overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTags: [category.osmTag] } : {}) }
+		return {
+			overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTags: [category.osmTag] } : {}),
+			overpassError: null,
+		}
 	} catch (error) {
-		return { overpassError: error instanceof Error ? error.message : String(error) }
+		return { overpassQL: null, overpassError: error instanceof Error ? error.message : String(error) }
 	}
 }
 
@@ -155,10 +165,10 @@ export function usePOISearch({
 		runtime.classify(input, shape).then((kindResult) => {
 			if (cancelled) return
 
-			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, undefined, runtime.lexicon) : null
+			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, null, runtime.lexicon) : null
 
 			if (!matched) {
-				setStoredResult({ query: trimmed, value: { kindResult } })
+				setStoredResult({ query: trimmed, value: { kindResult, subject: null, overpassQL: null, overpassError: null } })
 
 				return
 			}
@@ -171,11 +181,13 @@ export function usePOISearch({
 						subject: {
 							kind: "brand",
 							name: matched.match.categoryID,
-							...(matched.match.wikidata ? { wikidata: matched.match.wikidata } : {}),
+							wikidata: matched.match.wikidata || null,
 							matchedPhrase: matched.match.matchedPhrase,
 							confidence: matched.match.confidence,
 							remainder: matched.remainder,
 						},
+						overpassQL: null,
+						overpassError: null,
 					},
 				})
 
@@ -185,7 +197,7 @@ export function usePOISearch({
 			const category = runtime.lookup.getPOICategory(matched.match.categoryID)
 
 			if (!category) {
-				setStoredResult({ query: trimmed, value: { kindResult } })
+				setStoredResult({ query: trimmed, value: { kindResult, subject: null, overpassQL: null, overpassError: null } })
 
 				return
 			}
@@ -202,7 +214,7 @@ export function usePOISearch({
 						remainder: matched.remainder,
 						buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
 					},
-					...buildOverpass(runtime, matched.match.categoryID, matched.match.matchedPhrase, matched.remainder),
+					...buildOverpass(runtime, matched.match.categoryID),
 				},
 			})
 		})
@@ -215,11 +227,10 @@ export function usePOISearch({
 	const result = storedResult?.query === trimmedText ? storedResult.value : null
 	const liveSearch: LiveSearchState = storedLive?.query === trimmedText ? storedLive.state : { status: "idle" }
 
-	const subject = result?.subject
+	const subject = result?.subject ?? null
 
 	const subjectLiveCapable =
-		subject !== undefined &&
-		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
+		subject !== null && (subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== null : !subject.buildLocal)
 
 	const canSearchLive = Boolean(
 		runLiveSearch && runtime && subject && subjectLiveCapable && subject.remainder.trim().length > 0
@@ -228,34 +239,37 @@ export function usePOISearch({
 	const searchLive = useCallback(async () => {
 		if (!runLiveSearch || !runtime || !subject || !subject.remainder.trim()) return
 
-		if (subject.kind === "category" ? subject.buildLocal : !(brandLiveSearch && subject.wikidata)) return
+		let request: POILiveSearchRequest
+
+		if (subject.kind === "brand") {
+			if (!brandLiveSearch || !subject.wikidata) return
+			request = { kind: "brand", brandName: subject.name, wikidata: subject.wikidata, anchor: subject.remainder }
+		} else {
+			if (subject.buildLocal) return
+
+			request = {
+				kind: "category",
+				categoryID: subject.category.id,
+				overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
+				anchor: subject.remainder,
+			}
+		}
 
 		setStoredLive({ query: trimmedText, state: { status: "loading" } })
 
 		try {
-			const outcome = await runLiveSearch(
-				subject.kind === "brand"
-					? {
-							categoryID: subject.name,
-							overtureCategoryIDs: [],
-							anchor: subject.remainder,
-							brandWikidata: subject.wikidata,
-						}
-					: {
-							categoryID: subject.category.id,
+			const response = await runLiveSearch(request)
 
-							overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
-							anchor: subject.remainder,
-						}
-			)
-
-			if (outcome.status === "success") {
+			if (response.status === "success") {
 				setStoredLive({
 					query: trimmedText,
-					state: { status: "success", hits: outcome.hits, centerName: outcome.centerName },
+					state: { status: "success", hits: response.hits, centerName: response.centerName },
 				})
-			} else if (outcome.status === "unplaced") {
-				setStoredLive({ query: trimmedText, state: { status: "error", message: `couldn't place "${outcome.anchor}"` } })
+			} else if (response.status === "unplaced") {
+				setStoredLive({
+					query: trimmedText,
+					state: { status: "error", message: `couldn't place "${response.anchor}"` },
+				})
 			} else {
 				setStoredLive({
 					query: trimmedText,

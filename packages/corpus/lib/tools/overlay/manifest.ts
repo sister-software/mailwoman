@@ -6,7 +6,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -90,10 +91,11 @@ export interface OverlayFile {
 	source: string
 	/**
 	 * The split that the file's rows belong to.
-	 * The default is `train`.
 	 *
 	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
 	 * so that the holdout policy chooses held-out rows.
+	 *
+	 * @defaultValue `train`
 	 */
 	split?: SplitName
 }

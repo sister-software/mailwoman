@@ -4,12 +4,13 @@
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, beforeAll, expect, test } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
-import { fetchStateHISchools } from "#tools"
+import { fetchStateHISchools } from "#us/tools/fetch/state/hi-schools"
 
 const HEADER = ["code", "name", "address", "city", "zip"]
 

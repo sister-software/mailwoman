@@ -9,9 +9,9 @@
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
-import { DEFAULT_LOCALE, runClassifyStage } from "mailwoman/browser-runtime/classify"
+import { DEFAULT_LOCALE, runClassifyStage, type SelectPairIndex } from "mailwoman/browser-runtime/classify"
 import { fetchWithRetry } from "mailwoman/browser-runtime/fetch"
-import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import { postcodeAnchorAssetsOf, type ReleaseInfo } from "mailwoman/browser-runtime/manifest"
 import { neuralClassifierLoadURLs } from "mailwoman/browser-runtime/resources"
 import type { MailwomanClassifierLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
@@ -37,27 +37,24 @@ export interface CompareProps {
 	 */
 	primaryVersion: string
 	/**
-	 * The selectable releases (for the compare release's `hasAnchor`).
+	 * The selectable releases (for the compare release's postcode-anchor assets).
 	 */
 	releases: ReleaseInfo[]
-	/**
-	 * Whether the CPU/wasm backend is forced.
-	 */
-	forceWASM: boolean
+}
+
+/**
+ * A loaded comparison classifier and the pair-index selector its load returned.
+ */
+interface CompareClassifier {
+	classifier: MailwomanClassifierLike
+	selectPairIndex: SelectPairIndex | null
 }
 
 /**
  * Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`.
  */
-export const Compare: React.FC<CompareProps> = ({
-	primary,
-	compareMode,
-	compareVersion,
-	primaryVersion,
-	releases,
-	forceWASM,
-}) => {
-	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareVersion, primaryVersion, releases }) => {
+	const [classifier, setClassifier] = useState<CompareClassifier | null>(null)
 	const [backend, setBackend] = useState<string>("")
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -90,10 +87,21 @@ export const Compare: React.FC<CompareProps> = ({
 
 				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
 
-				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs({
-					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM }),
+				const {
+					classifier: cls,
+					diagnostics,
+					selectPairIndexForText,
+				} = (await loadNeuralClassifierFromURLs({
+					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, {
+						postcodeAnchor: postcodeAnchorAssetsOf(release ?? null),
+						splitEmbeddings: release?.splitEmbeddings,
+					}),
 					fetchImpl: fetchWithRetry,
-				})
+				})) as {
+					classifier: unknown
+					diagnostics?: { backend: string; modelBytes: number } | null
+					selectPairIndexForText?: SelectPairIndex | null
+				}
 
 				if (cancelled) return
 
@@ -103,7 +111,10 @@ export const Compare: React.FC<CompareProps> = ({
 						: "unknown"
 				)
 
-				setClassifier(cls as MailwomanClassifierLike)
+				setClassifier({
+					classifier: cls as MailwomanClassifierLike,
+					selectPairIndex: selectPairIndexForText ?? null,
+				})
 			} catch (caught) {
 				if (cancelled) return
 				setError(caught instanceof Error ? caught.message : String(caught))
@@ -117,15 +128,15 @@ export const Compare: React.FC<CompareProps> = ({
 		return () => {
 			cancelled = true
 		}
-	}, [compareMode, compareVersion, releases, forceWASM])
+	}, [compareMode, compareVersion, releases])
 
 	// Re-parse the current input through the compare classifier whenever the primary result changes.
 	const primaryInput = primary?.input ?? null
 
 	useEffect(() => {
-		const cls = classifier
+		const loaded = classifier
 
-		if (!compareMode || !cls || !primaryInput) {
+		if (!compareMode || !loaded || !primaryInput) {
 			// oxlint-disable-next-line react/set-state-in-effect -- The prior result belongs to a classifier or input that is no longer active.
 			setCompareResult(null)
 
@@ -136,9 +147,12 @@ export const Compare: React.FC<CompareProps> = ({
 
 		void (async () => {
 			try {
-				// The shared classify front-half — the compare arm loads only a classifier, so the FST
-				// / street-morphology / pair-index deps stay unset and the stage parses as a bare load.
-				const { tree, nodes, kindResult, timing } = await runClassifyStage(primaryInput, { classifier: cls })
+				// The shared classify front-half — the compare arm loads a classifier
+				// and its pair indexes, so the FST and street-morphology deps stay unset.
+				const { tree, nodes, kindResult, timing } = await runClassifyStage(primaryInput, {
+					classifier: loaded.classifier,
+					selectPairIndex: loaded.selectPairIndex,
+				})
 
 				if (cancelled) return
 
@@ -150,7 +164,9 @@ export const Compare: React.FC<CompareProps> = ({
 					candidates: [],
 					kindResult,
 					fstActive: false,
-					timing,
+					fstProvenance: null,
+					timing: { ...timing, resolve: null },
+					dualRoles: null,
 				})
 			} catch (caught) {
 				if (cancelled) return

@@ -29,7 +29,7 @@ describe("version parsing + floor comparison", () => {
 
 	it("parses a bare runtime version", () => {
 		expect(parseVersion("24.18.2")).toEqual({ major: 24, minor: 18, patch: 2 })
-		expect(parseVersion("v24")).toBeUndefined()
+		expect(parseVersion("v24")).toBeNull()
 	})
 
 	it("Compares major → minor → patch", () => {
@@ -48,16 +48,23 @@ describe("weightsCheck (core)", () => {
 			resolved: { source: "package:@mailwoman/neural-weights-en-us", modelPath: "/m", tokenizerPath: "/t" },
 			modelSize: 35_800_000,
 			tokenizerSize: 800_000,
+			error: null,
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.core).toBe(true)
-		expect(c.fix).toBeUndefined()
+		expect(c.fix).toBeNull()
 		expect(c.detail).toContain("35.8 MB")
 	})
 
 	it("missing when resolution threw", () => {
-		const c = weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us\nInstall it via ..." })
+		const c = weightsCheck({
+			resolved: null,
+			modelSize: null,
+			tokenizerSize: null,
+			error: "Could not resolve @mailwoman/neural-weights-en-us\nInstall it via ...",
+		})
+
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("npm install @mailwoman/neural-weights-en-us")
 
@@ -69,6 +76,7 @@ describe("weightsCheck (core)", () => {
 			resolved: { source: "package:x", modelPath: "/m", tokenizerPath: "/t" },
 			modelSize: 0,
 			tokenizerSize: 800_000,
+			error: null,
 		})
 
 		expect(c.status).toBe(CheckStatus.Degraded)
@@ -87,11 +95,17 @@ describe("localeOverlayCheck (informational, never core)", () => {
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.core).toBe(false)
-		expect(c.fix).toBeUndefined()
+		expect(c.fix).toBeNull()
 	})
 
 	it("missing + install fix when absent", () => {
-		const c = localeOverlayCheck({ locale: "fr-fr", packageName: "@mailwoman/neural-weights-fr-fr", resolved: false })
+		const c = localeOverlayCheck({
+			locale: "fr-fr",
+			packageName: "@mailwoman/neural-weights-fr-fr",
+			resolved: false,
+			source: null,
+		})
+
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.core).toBe(false)
 		expect(c.fix).toBe("npm install @mailwoman/neural-weights-fr-fr")
@@ -123,6 +137,8 @@ describe("gazetteerCheck (optional)", () => {
 	it("ok on an env-resolved candidate.db", () => {
 		const c = gazetteerCheck({
 			envCandidate: { path: "/wof/candidate.db", sizeBytes: 1_400_000_000 },
+			conventionCandidate: null,
+			wofDatabase: null,
 			probed: ["/wof/candidate.db"],
 		})
 
@@ -133,26 +149,35 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("ok on a discovered WOF database", () => {
-		const c = gazetteerCheck({ wofDatabase: { path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
+		const c = gazetteerCheck({
+			envCandidate: null,
+			conventionCandidate: null,
+			wofDatabase: { path: "/wof/admin.db", sizeBytes: null },
+			probed: ["/wof/admin.db"],
+		})
+
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("WOF admin database")
 	})
 
 	it("ok on a convention-path candidate.db with no env set", () => {
 		const c = gazetteerCheck({
+			envCandidate: null,
 			conventionCandidate: "/data/wof/candidate.db",
+			wofDatabase: null,
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("/data/wof/candidate.db")
-		expect(c.fix).toBeUndefined()
+		expect(c.fix).toBeNull()
 	})
 
 	it("prefers a convention-path candidate.db over a WOF database, matching resolution precedence", () => {
 		const c = gazetteerCheck({
+			envCandidate: null,
 			conventionCandidate: "/data/wof/candidate.db",
-			wofDatabase: { path: "/data/wof/admin.db" },
+			wofDatabase: { path: "/data/wof/admin.db", sizeBytes: null },
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
 		})
 
@@ -162,7 +187,7 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("missing with the data-pull hint when nothing found", () => {
-		const c = gazetteerCheck({ probed: ["/a", "/b"] })
+		const c = gazetteerCheck({ envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: ["/a", "/b"] })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("mailwoman data pull candidate")
 		expect(c.detail).toContain("2 paths")
@@ -181,6 +206,7 @@ describe("checkPOI (optional)", () => {
 				license: "CDLA-Permissive-2.0",
 				attribution: "Overture Maps Foundation",
 			},
+			error: null,
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)
@@ -189,14 +215,20 @@ describe("checkPOI (optional)", () => {
 	})
 
 	it("missing with a build/download fix when absent", () => {
-		const c = checkPOI({ path: "/poi/poi.db", exists: false })
+		const c = checkPOI({ path: "/poi/poi.db", exists: false, manifest: null, error: null })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("mailwoman gazetteer build poi")
 		expect(c.fix).toContain("mailwoman data pull poi")
 	})
 
 	it("degraded when present but the manifest is unreadable", () => {
-		const c = checkPOI({ path: "/poi/poi.db", exists: true, error: "layer manifest: expected exactly 1 row, found 0" })
+		const c = checkPOI({
+			path: "/poi/poi.db",
+			exists: true,
+			manifest: null,
+			error: "layer manifest: expected exactly 1 row, found 0",
+		})
+
 		expect(c.status).toBe(CheckStatus.Degraded)
 		expect(c.detail).toContain("unreadable")
 	})
@@ -217,7 +249,7 @@ describe("runtime checks (core)", () => {
 	})
 
 	it("onnxRuntimeCheck ok when loadable", () => {
-		const c = onnxRuntimeCheck({ loadable: true })
+		const c = onnxRuntimeCheck({ loadable: true, error: null })
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.core).toBe(true)
 	})
@@ -231,15 +263,26 @@ describe("runtime checks (core)", () => {
 })
 
 describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
-	const ok = (id: string, core: boolean): DoctorCheck => ({ id, label: id, status: CheckStatus.OK, detail: "", core })
+	const ok = (id: string, core: boolean): DoctorCheck => ({
+		id,
+		label: id,
+		status: CheckStatus.OK,
+		detail: "",
+		consequence: null,
+		fix: null,
+		core,
+		license: null,
+	})
 
 	const bad = (id: string, core: boolean, status: CheckStatus): DoctorCheck => ({
 		id,
 		label: id,
 		status,
 		detail: "",
+		consequence: null,
 		fix: "x",
 		core,
+		license: null,
 	})
 
 	it("exits 0 when every core check is ok — optional gaps are ignored", () => {
@@ -268,25 +311,42 @@ describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 
 describe("Every failing check states its consequence", () => {
 	const failing: Array<[string, DoctorCheck]> = [
-		["weights absent", weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us" })],
+		[
+			"weights absent",
+			weightsCheck({
+				resolved: null,
+				modelSize: null,
+				tokenizerSize: null,
+				error: "Could not resolve @mailwoman/neural-weights-en-us",
+			}),
+		],
 		[
 			"weights empty",
 			weightsCheck({
 				resolved: { source: "package:x", modelPath: "/m", tokenizerPath: "/t" },
 				modelSize: 0,
 				tokenizerSize: 0,
+				error: null,
 			}),
 		],
 		["node below floor", nodeVersionCheck({ nodeVersion: "20.0.0", enginesFloor: ">=24.18.0" })],
 		["onnx unloadable", onnxRuntimeCheck({ loadable: false, error: "boom" })],
 		["data root absent", dataRootCheck({ path: "/nope", exists: false, writable: false, fromEnv: false })],
 		["data root read-only", dataRootCheck({ path: "/ro", exists: true, writable: false, fromEnv: true })],
-		["gazetteer absent", gazetteerCheck({ probed: ["/a", "/b"] })],
-		["poi absent", checkPOI({ path: "/poi.db", exists: false })],
-		["poi unreadable", checkPOI({ path: "/poi.db", exists: true, error: "not a database" })],
+		[
+			"gazetteer absent",
+			gazetteerCheck({ envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: ["/a", "/b"] }),
+		],
+		["poi absent", checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null })],
+		["poi unreadable", checkPOI({ path: "/poi.db", exists: true, manifest: null, error: "not a database" })],
 		[
 			"overlay absent",
-			localeOverlayCheck({ locale: "fr-fr", packageName: "@mailwoman/neural-weights-fr-fr", resolved: false }),
+			localeOverlayCheck({
+				locale: "fr-fr",
+				packageName: "@mailwoman/neural-weights-fr-fr",
+				resolved: false,
+				source: null,
+			}),
 		],
 	]
 
@@ -299,7 +359,7 @@ describe("Every failing check states its consequence", () => {
 	}
 
 	it("names the POI layer's consequence in product terms, verbatim from the ask", () => {
-		expect(checkPOI({ path: "/poi.db", exists: false }).consequence).toContain(
+		expect(checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null }).consequence).toContain(
 			"A Point of Interest (POI) database is necessary to geocode businesses and landmarks."
 		)
 	})
@@ -307,7 +367,7 @@ describe("Every failing check states its consequence", () => {
 	it("a passing check carries no consequence — there is nothing to lose", () => {
 		const c = nodeVersionCheck({ nodeVersion: "24.18.0", enginesFloor: ">=24.18.0" })
 		expect(c.status).toBe(CheckStatus.OK)
-		expect(c.consequence).toBeUndefined()
+		expect(c.consequence).toBeNull()
 	})
 })
 
@@ -317,6 +377,8 @@ describe("layerLicenseCheck", () => {
 			id: "soil",
 			label: "Soil capability (NRCS SSURGO)",
 			path: "/data/soil/soil.db",
+			manifest: null,
+			error: null,
 			alternates: ["soil-ia.db"],
 		})
 
@@ -336,13 +398,22 @@ describe("layerLicenseCheck", () => {
 			exists: true,
 		}
 
-		const ok = layerLicenseCheck({ id: "soil", label: "Soil", path: "/data/soil/soil.db", manifest: identity })
+		const ok = layerLicenseCheck({
+			id: "soil",
+			label: "Soil",
+			path: "/data/soil/soil.db",
+			manifest: identity,
+			error: null,
+			alternates: null,
+		})
 
 		const odd = layerLicenseCheck({
 			id: "soil",
 			label: "Soil",
 			path: "/data/soil/soil.db",
 			manifest: { ...identity, license: "PDDL-1.0-USGov-NRCS" },
+			error: null,
+			alternates: null,
 		})
 
 		expect(ok.status).toBe("ok")

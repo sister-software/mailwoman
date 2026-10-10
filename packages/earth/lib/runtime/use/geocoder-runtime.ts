@@ -28,6 +28,7 @@ import type {
 	ResolvedMapPlace,
 	Suggestion,
 } from "@mailwoman/react/map"
+import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
@@ -46,7 +47,7 @@ import {
 } from "mailwoman/browser-runtime/classify"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
-import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import {
 	assetURL,
@@ -57,10 +58,14 @@ import {
 	streetExtractURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+// The binary that `onnxruntime-web/wasm` instantiates.
+// Vite emits one file for this import and for the bundle's own reference.
+// The loader's early download is therefore the file the session would request.
+import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
-import { loadPolygonDB, type PlaceGeometry, type PolygonDB } from "#runtime/basemap"
+import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
@@ -85,15 +90,14 @@ interface StreetLookups {
 }
 
 interface CandidateExtras {
-	bbox?: ResolvedPlaceView["bbox"]
-	tier?: "address_point" | "interpolated"
-	uncertaintyM?: number
+	bbox: ResolvedPlaceView["bbox"] | null
+	tier: "address_point" | "interpolated" | null
+	uncertaintyM: number | null
 }
 
 export interface GeocoderRuntimeHandle {
 	runtime: GeocoderRuntime
 	releases: ReleaseInfo[]
-	forceWASM: boolean
 	geoBias: GeoBiasControl
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
@@ -123,20 +127,44 @@ function disposeAssets(assets: ReleaseAssets): Promise<void> {
 }
 
 /**
+ * The releases-manifest fetch the entry module starts before React mounts,
+ * taken by the first manifest load.
+ */
+let earlyManifest: Promise<ReleasesManifest | null> | null = null
+
+/**
+ * Start the releases-manifest fetch ahead of the first render, so the model download
+ * begins as soon as the manifest arrives rather than after the app has mounted.
+ *
+ * The first manifest load of {@link useGeocoderRuntime} takes this promise.
+ * Every later load fetches afresh.
+ */
+export function prefetchReleasesManifest(): void {
+	earlyManifest ??= fetchReleasesManifest()
+	// The hook awaits and reports a failure, so the early promise must not report it a second time.
+	earlyManifest.catch(() => {})
+}
+
+function takeReleasesManifest(): Promise<ReleasesManifest | null> {
+	const early = earlyManifest
+
+	earlyManifest = null
+
+	return early ?? fetchReleasesManifest()
+}
+
+/**
  * Build the real {@link GeocoderRuntime} by injecting the browser runtime's
  * loaders into `useReleaseRuntime`.
  */
 export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqliteRuntimeBaseURL } = config
 
-	const loadManifest = useCallback(
-		async (): Promise<ReleaseManifest<ReleaseInfo> | null> => fetchReleasesManifest(),
-		[]
-	)
+	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
 
 	const loadAssets = useCallback(
 		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
-			loadReleaseAssets(release, ctx, { gazetteer: { sqliteRuntimeBaseURL } }),
+			loadReleaseAssets(release, ctx, { gazetteer: { sqliteRuntimeBaseURL }, ortWASMURL }),
 		[sqliteRuntimeBaseURL]
 	)
 
@@ -255,7 +283,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
-			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+			const stateSlug = regionToStateSlug((stateNode?.value as string | undefined) ?? null)
 
 			const streetSlug =
 				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
@@ -272,10 +300,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 						streetResolution = await resolveStreet(
 							streetValue,
 							String(houseNumberNode.value),
-							postcodeNode?.value ? String(postcodeNode.value) : undefined,
-							localityNode?.value ? String(localityNode.value) : undefined,
+							postcodeNode?.value ? String(postcodeNode.value) : null,
+							localityNode?.value ? String(localityNode.value) : null,
 							street.situs,
-							street.interp,
+							street.interp ?? null,
 							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
 						)
 					}
@@ -305,7 +333,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					kindResult,
 					fstActive: assets?.fstMatcher != null,
 					fstProvenance: assets?.fstProvenance ?? null,
-					timing,
+					timing: { ...timing, resolve: null },
+					dualRoles: null,
 				}
 			}
 
@@ -361,7 +390,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
 			cascadeHits.forEach((c, i) => {
-				extrasRef.current.set(candidates[i]!, { bbox: c.bbox })
+				extrasRef.current.set(candidates[i]!, { bbox: c.bbox ?? null, tier: null, uncertaintyM: null })
 			})
 
 			// A street-level coordinate wins the pin; `id: 0` marks a non-WOF synthesized place,
@@ -375,11 +404,13 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					lat: streetResolution.lat,
 					lon: streetResolution.lon,
 					score: 1,
+					bbox: null,
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				}
 
 				extrasRef.current.set(streetCandidate, {
+					bbox: null,
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				})
@@ -437,13 +468,13 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
-			const extras = extrasRef.current.get(candidate) ?? {}
+			const extras = extrasRef.current.get(candidate) ?? null
 
 			const place: ResolvedMapPlace = {
 				...candidate,
-				bbox: extras.bbox,
-				tier: extras.tier,
-				uncertaintyM: extras.uncertaintyM,
+				bbox: extras?.bbox ?? null,
+				tier: extras?.tier ?? null,
+				uncertaintyM: extras?.uncertaintyM ?? null,
 			}
 
 			// Crisp admin polygon only for a real WOF place with no street tier, because
@@ -563,8 +594,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			selectedVersion: rt.selectedVersion ?? undefined,
 			selectVersion: rt.selectVersion,
 			activeBackend: rt.activeBackend,
-			forceWASM: rt.forceWASM,
-			setForceWASM: rt.setForceWASM,
 		}
 	}, [
 		mapStyle,
@@ -576,9 +605,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		rt.errorMessage,
 		rt.selectedVersion,
 		rt.activeBackend,
-		rt.forceWASM,
 		rt.selectVersion,
-		rt.setForceWASM,
 		initialCenter,
 		runParse,
 		runParseWithBias,
@@ -593,7 +620,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	return {
 		runtime,
 		releases: rt.manifest?.releases ?? [],
-		forceWASM: rt.forceWASM,
 		geoBias: { active: geoBias.active, error: geoBias.error, toggle: geoBias.toggle },
 		calibrator,
 		traceParse,

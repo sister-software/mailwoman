@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { clamp } from "@mailwoman/core/numeric"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
-import { Text, useApp, useInput, useStdout, type Key } from "ink"
+import { Text, useApp, useInput, useWindowSize, type Key } from "ink"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { outputLines } from "#cli/debug-view/output-lines"
@@ -13,7 +14,6 @@ import { resolveTilesPath } from "#cli/debug-view/tiles"
 import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "#cli/debug-view/view-policy"
 import { $public } from "#env"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
-import type { GeocodeResult } from "#geocode/result"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geocode/session"
 
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
@@ -175,9 +175,7 @@ function closeResources(resources: Resources | null): void {
 
 export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps): React.ReactElement | null {
 	const { exit } = useApp()
-	const { stdout } = useStdout()
-
-	const [size, setSize] = useState(() => ({ columns: stdout.columns || 80, rows: stdout.rows || 24 }))
+	const size = useWindowSize()
 	const [phase, setPhase] = useState<SessionPhase>("loading")
 	const [fatalError, setFatalError] = useState<unknown>(null)
 	const [resources, setResources] = useState<Resources | null>(null)
@@ -250,24 +248,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			closeResources(opened)
 		}
 	}, [])
-
-	useEffect(() => {
-		const onResize = (): void => {
-			setSize((prior) => {
-				const columns = stdout.columns || prior.columns
-				const rows = stdout.rows || prior.rows
-
-				// Same dimensions means the same object, so an unchanged resize costs no re-render.
-				return columns === prior.columns && rows === prior.rows ? prior : { columns, rows }
-			})
-		}
-
-		stdout.on("resize", onResize)
-
-		return () => {
-			stdout.off("resize", onResize)
-		}
-	}, [stdout])
 
 	// The effect passes the error through `waitUntilExit()` rather than rendering it: Ink restores
 	// the primary buffer and rejects `waitUntilExit()`, where `command.tsx` prints the message.

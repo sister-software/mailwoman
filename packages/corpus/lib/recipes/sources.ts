@@ -91,7 +91,7 @@ export interface RecipeSource {
 	/**
 	 * Why the producer's path does not fully explain the placement.
 	 */
-	note?: string
+	note: string | null
 }
 
 /**
@@ -107,7 +107,7 @@ function entries(
 		current: `${prefix}-${tail}`,
 		operation,
 		producer,
-		...(note ? { note } : {}),
+		note: note || null,
 	}))
 }
 
@@ -164,6 +164,7 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		current: "rendered-de",
 		operation: SourceOperation.Rendered,
 		producer: "de/recipes/locale.ts",
+		note: null,
 	},
 	// Three tails include the word `fragment` themselves.
 	// It folds into the prefix instead of repeating.
@@ -183,21 +184,33 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		current: "fragment-fr",
 		operation: SourceOperation.Fragment,
 		producer: "fr/recipes/fragment.ts",
+		note: null,
 	},
 	{
 		retired: "synth-no-fragment",
 		current: "fragment-no",
 		operation: SourceOperation.Fragment,
 		producer: "no/recipes/fragment.ts",
+		note: null,
 	},
 	...entries(SourceOperation.Fragment, "fragment", [
 		["fr-bare-street", "fr/recipes/bare-street.ts"],
 		["fr-bare-street-v20", "fr/recipes/bare-street.ts"],
 		["fr-bare-street-v21", "fr/recipes/bare-street.ts"],
 		["fr-bare-street-v22", "fr/recipes/bare-street.ts"],
+		[
+			"venue-bare",
+			"recipes/venue.ts",
+			"An Overture place name as the whole query. The retired spelling never reached a corpus: the recipe was written after the rename.",
+		],
 	]),
 	...entries(SourceOperation.Spliced, "spliced", [
 		["unit", "recipes/unit.ts", "The unit designator and number are drawn."],
+		[
+			"venue-locality",
+			"recipes/venue.ts",
+			"The locality is drawn from the country's admin tuples. The retired spelling never reached a corpus.",
+		],
 		["unit-v30", "recipes/unit.ts"],
 		["affix", "recipes/street/affix.ts"],
 		["suffix-boundary", "recipes/street/affix.ts"],
@@ -259,7 +272,7 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"gnaf",
 	"osm",
 	// One id per country for the 2026-10-02 Geofabrik extracts, written by `corpus run osm --source-name`.
-	// A country's OSM rows then carry their own weight, so admitting a country,
+	// A country's OSM rows then hold their own weight, so admitting a country,
 	// admitting its OSM rows and sampling them stay three settings.
 	// The September PK, VN and BD rows keep `osm`.
 	"osm-ru",

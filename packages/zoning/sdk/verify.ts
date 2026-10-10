@@ -29,7 +29,9 @@
  *   tolerance stricter and report a rendering difference as a conversion defect.
  */
 
+import type { OGCFeature } from "@mailwoman/core/api"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { OutsideCoverageRow } from "@mailwoman/core/layers"
 import {
 	nearestRingEdgeMetres,
 	pointInEncodedRings,
@@ -69,8 +71,8 @@ export interface AgreementRow {
 	 * is what this layer is for: two paths that agree on containment and disagree
 	 * on the code would be a silent vocabulary defect.
 	 */
-	serviceLocalCode?: string
-	outcome: "agree" | "disagree" | "boundary_tolerance"
+	serviceLocalCode: string | null
+	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
@@ -79,25 +81,9 @@ export interface AgreementRow {
 	 * rendering the same edge differently.
 	 *
 	 * A receipt without it forces a re-run.
-	 * `undefined` means the service returned no polygon at all near the point.
+	 * `null` means the service returned no polygon at all near the point.
 	 */
-	nearestEdgeMetres?: number
-}
-
-/**
- * The negative half: a point this product's publication does not reach.
- */
-export interface OutsideRow {
-	label: string
-	latitude: number
-	longitude: number
-	kind: string
-	designations: number
-	/**
-	 * True when the artifact answered `unknown` with no designation.
-	 * The only acceptable reading here.
-	 */
-	passed: boolean
+	nearestEdgeMetres: number | null
 }
 
 export interface VerifyZoningResult {
@@ -109,7 +95,7 @@ export interface VerifyZoningResult {
 	 * Points where both paths placed the location inside a zone and the local codes differed.
 	 */
 	codeMismatches: number
-	outside: OutsideRow[]
+	outside: OutsideCoverageRow[]
 	outsidePassed: number
 }
 
@@ -161,10 +147,7 @@ const BOUNDARY_TOLERANCE_METRES = 0.5
  * One feature as the service publishes it.
  * The only shape the comparison reads.
  */
-export interface ServiceFeature {
-	properties?: Record<string, unknown>
-	geometry?: { type: string; coordinates: unknown }
-}
+export type ServiceFeature = OGCFeature
 
 /**
  * The one call the verification makes against the service: the features it publishes near a point.
@@ -172,7 +155,7 @@ export interface ServiceFeature {
  * The function exposes only the service read.
  * This keeps the check's own logic testable.
  *
- * The comparison's value is that it decides which of three outcomes a point gets.
+ * The comparison's value is that it decides which of three results a point gets.
  *
  * An HTTP client would let tests observe these decisions only during a live run.
  * A scripted reader pins the decisions. {@link createServiceReader} builds the real reader.
@@ -217,7 +200,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 			const local = lookup.lookup(point.latitude, point.longitude)
 			const service = await readServiceContainment(options.readServiceFeatures, point.latitude, point.longitude)
 			const localInside = local.kind === ZoningReadingKind.Designated
-			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = service.nearestEdgeMetres !== null && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			agreement.push({
 				label: point.label,
@@ -225,15 +208,15 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 				longitude: point.longitude,
 				local,
 				serviceInside: service.inside,
-				...(service.localCode === undefined ? {} : { serviceLocalCode: service.localCode }),
-				outcome: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
+				serviceLocalCode: service.localCode,
+				result: localInside === service.inside ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
 		}
 
-		const outside: OutsideRow[] = []
+		const outside: OutsideCoverageRow[] = []
 
 		for (const point of options.outsidePoints ?? OUTSIDE_PUBLICATION_POINTS) {
 			const reading = lookup.lookup(point.latitude, point.longitude)
@@ -250,14 +233,14 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
 			codeMismatches: agreement.filter(
 				(row) =>
-					row.outcome === "agree" &&
+					row.result === "agree" &&
 					row.serviceInside &&
-					row.serviceLocalCode !== undefined &&
+					row.serviceLocalCode !== null &&
 					!row.local.designations.some((designation) => designation.localCode === row.serviceLocalCode)
 			).length,
 			outside,
@@ -277,12 +260,12 @@ async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,
 	latitude: number,
 	longitude: number
-): Promise<{ inside: boolean; localCode?: string; nearestEdgeMetres?: number }> {
+): Promise<{ inside: boolean; localCode: string | null; nearestEdgeMetres: number | null }> {
 	const features = await readServiceFeatures(latitude, longitude)
 
 	let nearest = Infinity
 	let inside = false
-	let localCode: string | undefined
+	let localCode: string | null = null
 
 	for (const feature of features) {
 		const geometry = feature.geometry
@@ -314,7 +297,7 @@ async function readServiceContainment(
 
 			const code = feature.properties?.ZONE_ORIG
 
-			if (typeof code === "string" && localCode === undefined) {
+			if (typeof code === "string" && !localCode) {
 				localCode = code
 			}
 		}
@@ -322,8 +305,8 @@ async function readServiceContainment(
 
 	return {
 		inside,
-		...(localCode === undefined ? {} : { localCode }),
-		...(Number.isFinite(nearest) ? { nearestEdgeMetres: nearest } : {}),
+		localCode,
+		nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null,
 	}
 }
 

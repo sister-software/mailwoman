@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { silentLogger } from "@mailwoman/core/logging"
@@ -87,12 +87,12 @@ function archiveBody(payload: string): Buffer {
 }
 
 /**
- * The scripted outcome for one archive request.
+ * The scripted result for one archive request.
  */
-function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
+function archiveResult(payload: string, lastModified?: string): StubResult {
 	return {
 		body: archiveBody(payload),
-		headers: lastModified === undefined ? {} : { "last-modified": lastModified },
+		headers: lastModified ? { "last-modified": lastModified } : {},
 	}
 }
 
@@ -101,10 +101,10 @@ function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
  *
  * The real client rather than a stubbed `fetch`, so the harvest's requests go through the
  * same adapter, error mapping and `responseType` handling they do against ČÚZK.
- * Pacing is left off: the interval is the caller's choice and {@linkcode harvestCzCuzk} sets none.
+ * This stub sets no interval, because the caller chooses it and {@linkcode harvestCzCuzk} sets none.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "cz-cuzk test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -225,8 +225,8 @@ describe("harvestCzCuzk", () => {
 
 		await using client = stubClient([
 			{ body: SERVICE_XML },
-			archiveOutcome("unkovice", "Thu, 04 Jun 2026 00:19:33 GMT"),
-			archiveOutcome("zidlochovice", "Tue, 22 Sep 2026 00:57:55 GMT"),
+			archiveResult("unkovice", "Thu, 04 Jun 2026 00:19:33 GMT"),
+			archiveResult("zidlochovice", "Tue, 22 Sep 2026 00:57:55 GMT"),
 		])
 
 		const summary = await harvestCzCuzk(client, { outputDir: scratch.path })
@@ -264,11 +264,11 @@ describe("harvestCzCuzk", () => {
 	it("makes no archive request on a re-run where the feed states the recorded modification time", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-cuzk-rerun-")
 
-		await using first = stubClient([{ body: SERVICE_XML }, archiveOutcome("unkovice"), archiveOutcome("zidlochovice")])
+		await using first = stubClient([{ body: SERVICE_XML }, archiveResult("unkovice"), archiveResult("zidlochovice")])
 
 		await harvestCzCuzk(first, { outputDir: scratch.path })
 
-		await using second = stubClient([{ body: SERVICE_XML }, archiveOutcome("must not be requested")])
+		await using second = stubClient([{ body: SERVICE_XML }, archiveResult("must not be requested")])
 
 		const summary = await harvestCzCuzk(second, { outputDir: scratch.path })
 
@@ -279,13 +279,13 @@ describe("harvestCzCuzk", () => {
 	it("re-fetches only the municipality whose stated modification time moved", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-cuzk-changed-")
 
-		await using first = stubClient([{ body: SERVICE_XML }, archiveOutcome("unkovice"), archiveOutcome("zidlochovice")])
+		await using first = stubClient([{ body: SERVICE_XML }, archiveResult("unkovice"), archiveResult("zidlochovice")])
 
 		await harvestCzCuzk(first, { outputDir: scratch.path })
 
 		const republished = SERVICE_XML.replace("2026-09-22T02:57:55+02:00", "2026-10-02T03:11:04+02:00")
 
-		await using second = stubClient([{ body: republished }, archiveOutcome("zidlochovice rebuilt")])
+		await using second = stubClient([{ body: republished }, archiveResult("zidlochovice rebuilt")])
 
 		const summary = await harvestCzCuzk(second, { outputDir: scratch.path })
 
@@ -306,7 +306,7 @@ describe("harvestCzCuzk", () => {
 	it("re-fetches an archive that is no longer on disk at its recorded length", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-cuzk-truncated-")
 
-		await using first = stubClient([{ body: SERVICE_XML }, archiveOutcome("unkovice"), archiveOutcome("zidlochovice")])
+		await using first = stubClient([{ body: SERVICE_XML }, archiveResult("unkovice"), archiveResult("zidlochovice")])
 
 		await harvestCzCuzk(first, { outputDir: scratch.path })
 
@@ -314,7 +314,7 @@ describe("harvestCzCuzk", () => {
 		// recorded byte count is what tells that file apart from the archive.
 		await writeLocalFile(archiveBody("short"), scratch.path("584061.zip"))
 
-		await using second = stubClient([{ body: SERVICE_XML }, archiveOutcome("unkovice")])
+		await using second = stubClient([{ body: SERVICE_XML }, archiveResult("unkovice")])
 
 		const summary = await harvestCzCuzk(second, { outputDir: scratch.path })
 
@@ -329,7 +329,7 @@ describe("harvestCzCuzk", () => {
 			{ body: SERVICE_XML },
 			// An html page under http 200 is what a host answers for a withdrawn file.
 			{ body: "<html><body>Chyba 404</body></html>", headers: { "content-type": "text/html" } },
-			archiveOutcome("zidlochovice"),
+			archiveResult("zidlochovice"),
 		])
 
 		const summary = await harvestCzCuzk(client, { outputDir: scratch.path })
@@ -345,7 +345,7 @@ describe("harvestCzCuzk", () => {
 
 	it("harvests a bounded subset, which is how the mechanism is proved without a national harvest", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-cuzk-limit-")
-		await using client = stubClient([{ body: SERVICE_XML }, archiveOutcome("unkovice")])
+		await using client = stubClient([{ body: SERVICE_XML }, archiveResult("unkovice")])
 
 		const summary = await harvestCzCuzk(client, { outputDir: scratch.path, limit: 1 })
 
@@ -355,7 +355,7 @@ describe("harvestCzCuzk", () => {
 
 	it("reports a named municipality the service document does not list rather than ignoring it", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-cuzk-unknown-")
-		await using client = stubClient([{ body: SERVICE_XML }, archiveOutcome("unkovice")])
+		await using client = stubClient([{ body: SERVICE_XML }, archiveResult("unkovice")])
 
 		const summary = await harvestCzCuzk(client, {
 			outputDir: scratch.path,
@@ -372,7 +372,7 @@ describe("harvestCzCuzk", () => {
 		await using client = stubClient([
 			{ body: SERVICE_XML },
 			{ body: datasetFeedXML("584061") },
-			archiveOutcome("unkovice"),
+			archiveResult("unkovice"),
 		])
 
 		const summary = await harvestCzCuzk(client, {

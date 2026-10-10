@@ -9,7 +9,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { ClassifierOpts, InputMode } from "@mailwoman/core/pipeline"
+import type { CaseNormalization, ClassifierOpts, InputMode } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
 import type { QueryShape } from "@mailwoman/query-shape"
 
@@ -36,7 +36,7 @@ export interface GeocodeClassifier {
 		text: string,
 		opts?: {
 			postcodeRepair?: boolean
-			normalizeCase?: boolean
+			caseNormalization?: CaseNormalization
 			queryShape?: QueryShape
 			inputMode?: InputMode
 			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
@@ -51,6 +51,11 @@ export interface GeocodeClassifier {
 			fstStreetMorphology?: ClassifierOpts["fstStreetMorphology"]
 			fstStreetMorphologyOpts?: ClassifierOpts["fstStreetMorphologyOpts"]
 			fstStreetContextPositiveScale?: number
+			/**
+			 * Venue-head lookups for the venue-head prior.
+			 */
+			venueHead?: import("@mailwoman/neural/venue/head-prior").VenueHeadLexiconLike
+			venueHeadOpts?: import("@mailwoman/neural/venue/head-prior").VenueHeadPriorOpts
 		}
 	): Promise<AddressTree>
 }

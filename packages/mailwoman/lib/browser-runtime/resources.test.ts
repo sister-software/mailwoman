@@ -4,7 +4,7 @@
 /**
  *   Pair-index asset URL construction.
  *
- *   The pair-index objects carry `immutable` Cache-Control, so a CDN keeps serving whatever bytes a URL
+ *   The pair-index objects hold `immutable` Cache-Control, so a CDN keeps serving whatever bytes a URL
  *   first returned. Each generation therefore lives under its own `pair-index/<PAIR_INDEX_VERSION>/`
  *   segment, and the site reads the version constant. These tests pin that scheme.
  */
@@ -13,7 +13,12 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, test } from "vitest"
 
-import { PAIR_INDEX_VERSION, pairIndexBaseURL, pairIndexURLs } from "#browser-runtime/resources"
+import {
+	neuralClassifierLoadURLs,
+	PAIR_INDEX_VERSION,
+	pairIndexBaseURL,
+	pairIndexURLs,
+} from "#browser-runtime/resources"
 
 describe("pair-index URL construction", () => {
 	test("a versioned base carries the generation segment", () => {
@@ -47,7 +52,23 @@ describe("the release loader owns no pair-index URL of its own", () => {
 		expect(source).not.toMatch(/"https:\/\/public\.sister\.software\/mailwoman\/pair-index/)
 	})
 
-	test("the loader derives its base from the shared helper + version constant", () => {
-		expect(source).toContain("pairIndexBaseURL(PAIR_INDEX_VERSION)")
+	test("the loader takes its pair-index URLs from the shared load configuration", () => {
+		expect(source).not.toContain("pairIndexURLs")
+		expect(source).toContain("neuralClassifierLoadURLs(")
+	})
+})
+
+describe("neuralClassifierLoadURLs — one configuration for the primary and comparison loads", () => {
+	test("requests every published pair index from the versioned base", () => {
+		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchor: "skip" })
+
+		expect(urls.pairIndexURLs).toEqual(pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION)))
+		expect(urls.postcodeBinaryURLs).toEqual([])
+	})
+
+	test("requests the postcode binaries only when the anchor assets load", () => {
+		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchor: "load" })
+
+		expect(urls.postcodeBinaryURLs).toHaveLength(3)
 	})
 })

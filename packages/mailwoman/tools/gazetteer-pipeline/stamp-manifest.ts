@@ -119,7 +119,7 @@ export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest 
 		schemaVersion: 1,
 		tier: input.tier,
 		license,
-		...(input.attribution === undefined ? {} : { attribution: input.attribution }),
+		attribution: input.attribution ?? null,
 		source: input.source,
 		sourceVintage: input.sourceVintage,
 		buildCmd: input.buildCmd,
@@ -127,7 +127,7 @@ export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest 
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: input.spineKeys,
 		createdAt: input.createdAt,
-		...(input.sourceRecords === undefined ? {} : { sourceRecords: input.sourceRecords }),
+		sourceRecords: input.sourceRecords ?? null,
 	}
 }
 

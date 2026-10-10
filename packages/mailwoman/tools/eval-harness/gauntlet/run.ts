@@ -22,10 +22,15 @@
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
 
 import { type AblationLayerOptions, runAblationLayer } from "#tools/eval-harness/gauntlet/ablation"
-import { describeResolverPins, type GauntletResolverPins } from "#tools/eval-harness/gauntlet/harness"
+import {
+	describeResolverPins,
+	type GauntletResolverPins,
+	PRODUCTION_RESOLVER_PINS,
+} from "#tools/eval-harness/gauntlet/harness"
 import { runHoldoutLayer } from "#tools/eval-harness/gauntlet/holdout"
 import { runMetamorphicLayer } from "#tools/eval-harness/gauntlet/metamorphic"
 import { type GauntletLayerOptions, runRegressionLayer } from "#tools/eval-harness/gauntlet/regression"
+import type { SwitchPin } from "#tools/eval-harness/switch-pin"
 
 /**
  * The Gauntlet layers.
@@ -75,59 +80,61 @@ export interface GauntletRunOptions {
 	/**
 	 * Held-out fresh-draw sample size.
 	 *
-	 * Default 300.
+	 * @defaultValue `300`
 	 */
 	n?: number
 	/**
-	 * Force `postcodeCountryCoherence` on or off for every layer.
-	 *
-	 * `undefined` grades the shipped configuration, where this option is on.
-	 * The off pin is the one that provides evidence.
+	 * Pin `postcodeCountryCoherence` for every layer.
+	 * @defaultValue `"production"`
 	 */
-	postcodeCountryCoherence?: boolean
+	postcodeCountryCoherence?: SwitchPin
 	/**
-	 * Feed the gazetteer FST prior to the parse.
-	 *
-	 * Production-default `undefined` enables the prior.
-	 * `false` withholds it.
-	 *
-	 * A truthy-only forward would silently discard the off flag.
+	 * Pin the gazetteer FST prior for every layer.
+	 * @defaultValue `"production"`
 	 */
-	gazetteerPrior?: boolean
+	gazetteerPrior?: SwitchPin
 	/**
-	 * The admin-containment re-rank.
-	 *
-	 * `undefined` grades the production default (off).
-	 * `true` is the evidence pin.
-	 *
-	 * `false` pins the default explicitly so a log labeled off records an off run.
+	 * Pin the admin-containment re-rank for every layer.
+	 * @defaultValue `"production"`
 	 */
-	adminContainmentRerank?: boolean
+	adminContainmentRerank?: SwitchPin
 	/**
-	 * A span-rescore sub-span may drop context but must retain every word of the name.
-	 *
-	 * `undefined` grades the production default (off).
-	 * `true` is the evidence pin.
-	 *
-	 * `false` pins the default explicitly so a log labeled off records the remainder requirement as off.
+	 * Pin the span-rescore requirement that a sub-span keep every word of the name.
+	 * @defaultValue `"production"`
 	 */
-	spanRescoreRequireContextRemainder?: boolean
+	spanRescoreRequireContextRemainder?: SwitchPin
 	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and have no off spelling.
-	 * `undefined` is the production default.
-	 * It takes a `placeID` at face value.
+	 * @defaultValue `"production"` which takes a `placeID` at face value.
 	 */
-	spanRescoreWeakResolution?: WeakResolutionReading
+	spanRescoreWeakResolution?: "production" | WeakResolutionReading
+	/**
+	 * Pin the POI venue tier for every layer.
+	 * @defaultValue `"production"`
+	 */
+	poiVenueTier?: SwitchPin
+	/**
+	 * Pin the venue-head emission prior for every layer.
+	 * @defaultValue `"production"`
+	 */
+	venueHeadPrior?: SwitchPin
+	/**
+	 * Multiplier on the venue-head table's biases.
+	 * @defaultValue the session default
+	 */
+	venueHeadBiasScale?: number
 	/**
 	 * Ablation: where the map artifacts land.
 	 *
-	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
+	 * @defaultValue `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	out?: string
 	/**
-	 * Ablation: restrict which components get deleted (default: all of `ABLATABLE_COMPONENTS`).
+	 * Ablation: restrict which components get deleted.
+	 *
+	 * @defaultValue all of `ABLATABLE_COMPONENTS`
 	 */
 	components?: readonly string[]
 	/**
@@ -151,29 +158,23 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * Describes a run's resolver options, or returns undefined when no option is pinned.
+ * The resolver pins a run's options describe.
  *
  * The function is pure and exported because tests can cheaply check the pin-to-layer mapping.
  * Otherwise a dropped pin could be discovered only from two identical pin logs.
  */
-export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
-	const pins: GauntletResolverPins = {
-		...(options.postcodeCountryCoherence === undefined
-			? {}
-			: { postcodeCountryCoherence: options.postcodeCountryCoherence }),
-		...(options.gazetteerPrior === undefined ? {} : { gazetteerPrior: options.gazetteerPrior }),
-		...(options.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: options.adminContainmentRerank }),
-		...(options.spanRescoreRequireContextRemainder === undefined
-			? {}
-			: { spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder }),
-		...(options.spanRescoreWeakResolution === undefined
-			? {}
-			: { spanRescoreWeakResolution: options.spanRescoreWeakResolution }),
+export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins {
+	return {
+		...PRODUCTION_RESOLVER_PINS,
+		postcodeCountryCoherence: options.postcodeCountryCoherence ?? "production",
+		gazetteerPrior: options.gazetteerPrior ?? "production",
+		adminContainmentRerank: options.adminContainmentRerank ?? "production",
+		spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder ?? "production",
+		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
+		poiVenueTier: options.poiVenueTier ?? "production",
+		venueHeadPrior: options.venueHeadPrior ?? "production",
+		venueHeadBiasScale: options.venueHeadBiasScale ?? "production",
 	}
-
-	// Absent rather than empty: `undefined` is what `describeResolverPins` prints as
-	// "production defaults", and an empty object would read as "pinned to no option".
-	return Object.keys(pins).length ? pins : undefined
 }
 
 /**
@@ -181,14 +182,12 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
  * exported for the same reason as {@linkcode runResolverPins}.
  */
 export function runLayerOptions(options: GauntletRunOptions): GauntletLayerOptions {
-	const pins = runResolverPins(options)
-
 	return {
 		model: options.candidate,
 		tokenizer: options.tokenizer,
 		card: options.card,
 		weightsCacheRoot: options.weightsCacheRoot,
-		...(pins ? { pins } : {}),
+		pins: runResolverPins(options),
 	}
 }
 

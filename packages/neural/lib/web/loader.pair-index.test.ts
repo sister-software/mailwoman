@@ -4,7 +4,7 @@ import type { PairIndexHeaderInput } from "#pair"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -49,7 +49,8 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 const { PairIndexResolver, serializePairIndex } = await import("#pair")
-const { loadNeuralClassifierFromURLs, resolvePairIndexCountry } = await import("#web/loader")
+const { loadNeuralClassifierFromURLs } = await import("#web/loader")
+const { resolvePairIndexCountry } = await import("#web/pair-index")
 
 const SEQ = 128
 
@@ -93,13 +94,13 @@ function nzIndexBytes(): Uint8Array {
 function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch {
 	return async (input) => {
 		const url = String(input)
-		const outcome = respond(url)
+		const response = respond(url)
 
-		if (typeof outcome === "number") {
-			return new Response(null, { status: outcome, statusText: outcome === 404 ? "Not Found" : "Server Error" })
+		if (typeof response === "number") {
+			return new Response(null, { status: response, statusText: response === 404 ? "Not Found" : "Server Error" })
 		}
 
-		return new Response(outcome.slice().buffer)
+		return new Response(response.slice().buffer)
 	}
 }
 
@@ -108,13 +109,13 @@ function baseOpts(fetchImpl: typeof fetch, pairIndexURLs: readonly string[], cou
 		modelURL: MODEL_URL,
 		tokenizerURL: TOKENIZER_URL,
 
-		gazetteerLexiconURL: null,
-		countryLexiconURL: null,
-		streetTypeLexiconURL: null,
-		localitySurfaceLexiconURL: null,
+		gazetteerLexicon: "none" as const,
+		countryLexicon: "none" as const,
+		streetTypeLexicon: "none" as const,
+		localitySurfaceLexicon: "none" as const,
 		pairIndexURLs,
-		...(country !== undefined ? { country } : {}),
-		runner: { useWebGPU: false },
+		postcodeBinaryURLs: [],
+		...(country ? { country } : {}),
 		fetchImpl,
 	}
 }
@@ -128,7 +129,7 @@ beforeEach(() => {
 
 describe("resolvePairIndexCountry", () => {
 	test("mirrors the node localeCountry derivation, widened to accept a bare country code", () => {
-		expect(resolvePairIndexCountry(undefined)).toBe("us")
+		expect(resolvePairIndexCountry(null)).toBe("us")
 		expect(resolvePairIndexCountry("en-gb")).toBe("gb")
 		expect(resolvePairIndexCountry("EN-GB")).toBe("gb")
 		expect(resolvePairIndexCountry("gb")).toBe("gb")
@@ -268,12 +269,12 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 
 		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toEqual({ index: gbResolver })
 
-		expect(result.selectPairIndexForText("350 5th Ave, New York, NY 10118")).toBeUndefined()
+		expect(result.selectPairIndexForText("350 5th Ave, New York, NY 10118")).toBeNull()
 
 		expect(result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })).toEqual({ index: gbResolver })
 	})
 
-	test("Neither pairIndexURLs at all → empty exposure nor placetypePair config; selectPairIndexForText yields undefined", async () => {
+	test("Neither pairIndexURLs at all → empty exposure nor placetypePair config; selectPairIndexForText yields null", async () => {
 		const fetchImpl = makeFetch(() => dummyBytes)
 
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, []))
@@ -281,6 +282,6 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 		expect(result.classifier).toBeDefined()
 		expect(result.pairIndexes).toEqual([])
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toBeUndefined()
+		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toBeNull()
 	})
 })

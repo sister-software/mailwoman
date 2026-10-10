@@ -308,6 +308,10 @@ const STATE_ABBR_TO_NAME: Record<string, string> = Object.fromEntries(
  * Expand state abbreviation to full name.
  */
 export const stateExpand: Augmentation = (row) => {
+	// country-branch: the state, directional, street-suffix, unit and ZIP+4
+	// augmentations below read US vocabulary tables.
+	// Per-country abbreviation tables in the codex would let
+	// `defaultAugmentationsForCountry` serve every country.
 	if (row.country !== "US") return null
 	const region = row.components.region
 
@@ -329,6 +333,7 @@ export const stateExpand: Augmentation = (row) => {
  * Abbreviate full state name to alpha-2.
  */
 export const stateAbbreviate: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const region = row.components.region
 
@@ -364,6 +369,7 @@ const DIRECTIONAL_ABBR_TO_FULL: Record<string, string> = Object.fromEntries(
  * Expand directional abbreviations.
  */
 export const directionalExpand: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const tagsToCheck: ComponentTag[] = ["street", "street_suffix", "street_prefix"]
 	let changed = false
@@ -392,6 +398,7 @@ export const directionalExpand: Augmentation = (row) => {
  * Abbreviate directional words.
  */
 export const directionalAbbreviate: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const tagsToCheck: ComponentTag[] = ["street", "street_suffix", "street_prefix"]
 	let changed = false
@@ -424,6 +431,7 @@ export const directionalAbbreviate: Augmentation = (row) => {
  * Abbreviate trailing US street suffix.
  */
 export const streetSuffixAbbreviate: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const street = row.components.street
 
@@ -453,6 +461,7 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
  * Expand trailing US street suffix.
  */
 export const streetSuffixExpand: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const street = row.components.street
 
@@ -481,6 +490,7 @@ export const streetSuffixExpand: Augmentation = (row) => {
  * Abbreviate leading US unit designator.
  */
 export const unitDesignatorAbbreviate: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const unit = row.components.unit
 
@@ -510,6 +520,7 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
  * Expand leading US unit designator.
  */
 export const unitDesignatorExpand: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const unit = row.components.unit
 
@@ -538,6 +549,7 @@ export const unitDesignatorExpand: Augmentation = (row) => {
  * Drop dash from ZIP+4.
  */
 export const zipPlus4DashDrop: Augmentation = (row) => {
+	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const postcode = row.components.postcode
 
@@ -556,6 +568,8 @@ export const zipPlus4DashDrop: Augmentation = (row) => {
  * Drop French street particle.
  */
 export const particleStrip: Augmentation = (row) => {
+	// country-branch: the particle list is French.
+	// A per-language particle table in the codex would replace this.
 	if (row.country !== "FR") return null
 	const particle = row.components.street_prefix_particle
 
@@ -603,6 +617,7 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
 	const universal = [caseUpper, caseLower, dropCommas, doubleSpace]
 
 	switch (country) {
+		// country-branch: the US and FR augmentation lists exist because the two tier-1 locales have vocabulary tables. See `stateExpand`.
 		case "US":
 			return [
 				...universal,
@@ -616,6 +631,7 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
 				unitDesignatorExpand,
 				zipPlus4DashDrop,
 			]
+		// country-branch: see the US case above.
 		case "FR":
 			return [...universal, accentStrip, particleStrip]
 		default:
@@ -730,7 +746,8 @@ export interface ComposeAdversarialOptions {
 
 	/**
 	 * Separator between venue and address raw.
-	 * Default `", "`.
+	 *
+	 * @defaultValue `", "`
 	 */
 	separator?: string
 
@@ -798,7 +815,7 @@ export function composeAdversarialRow(
 	// Shift address spans by venue + separator and prepend one venue span.
 	const { span_starts: addrStarts, span_ends: addrEnds, span_tags: addrTags } = addressAligned.row
 
-	if (addrStarts === undefined || addrEnds === undefined || addrTags === undefined) {
+	if (!addrStarts || !addrEnds || !addrTags) {
 		throw new Error(
 			`composeAdversarialRow: alignRow returned a labeled row without the span triple ` +
 				`(source=${address.source}, source_id=${address.source_id}) — alignment interface violation`

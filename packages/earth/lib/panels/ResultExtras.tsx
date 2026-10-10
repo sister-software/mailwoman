@@ -48,7 +48,7 @@ function XMLView({ tree }: { tree: unknown }) {
 	const [shown, setShown] = useState(false)
 
 	const onToggle = useCallback(async () => {
-		if (xml === null) {
+		if (!xml) {
 			const { decodeAsXML } = await import("@mailwoman/core/decoder")
 
 			setXml(decodeAsXML(tree as Parameters<typeof decodeAsXML>[0]))
@@ -62,7 +62,7 @@ function XMLView({ tree }: { tree: unknown }) {
 			<button type="button" className={demoStyles.exampleBtn} onClick={onToggle}>
 				{shown ? "Hide XML" : "Show XML"}
 			</button>
-			{shown && xml !== null ? (
+			{shown && xml ? (
 				<pre className={demoStyles.xml}>
 					<code>{xml}</code>
 				</pre>

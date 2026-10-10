@@ -1,4 +1,4 @@
-"""The JP board's per-register breakdown must partition the same outcomes as the overall score.
+"""The JP board's per-register breakdown must partition the same results as the overall score.
 
 The breakdown must preserve the ``acceptable / rows`` check. A board without a ``register`` column must score the same when the breakdown is absent.
 """

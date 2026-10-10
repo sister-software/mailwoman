@@ -73,10 +73,6 @@ export interface PipelinePanels {
 	 */
 	versionControl?: ReactNode
 	/**
-	 * Backend indicator + wasm toggle.
-	 */
-	backendControl?: ReactNode
-	/**
 	 * One-line release blurb.
 	 */
 	releaseInfo?: ReactNode

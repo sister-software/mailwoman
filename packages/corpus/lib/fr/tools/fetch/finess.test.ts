@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -50,8 +50,8 @@ const DATASET: DataGouvDataset = {
 	],
 }
 
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "fr-finess test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

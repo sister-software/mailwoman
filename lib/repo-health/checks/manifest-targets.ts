@@ -12,7 +12,8 @@
  *   compile no TypeScript.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
@@ -103,7 +104,7 @@ async function readCompileScope(repoRoot: string, workspace: string): Promise<Co
 	return scope
 }
 
-function* targetStrings(value: ExportValue | undefined): Generator<string> {
+function* targetStrings(value: ExportValue | null): Generator<string> {
 	if (typeof value === "string") {
 		yield value
 	} else if (Array.isArray(value)) {
@@ -231,6 +232,8 @@ function judgeTarget(
 			message: under.length
 				? `${field}["${subpath}"] → ${target}: ${workspace}/tsconfig.json compiles none of the ${under.length} tracked files under ${directory}, so nothing emits the target`
 				: `${field}["${subpath}"] → ${target}: no tracked file under ${directory}`,
+			line: null,
+			details: null,
 		}
 	}
 
@@ -242,6 +245,8 @@ function judgeTarget(
 			severity: DiagnosticSeverity.Error,
 			file,
 			message: `${field}["${subpath}"] → ${target}: none of ${candidates.join(", ")} is tracked`,
+			line: null,
+			details: null,
 		}
 	}
 
@@ -251,6 +256,8 @@ function judgeTarget(
 		severity: DiagnosticSeverity.Error,
 		file,
 		message: `${field}["${subpath}"] → ${target}: ${source} is tracked, but ${workspace}/tsconfig.json does not compile it (include/exclude), so nothing emits the target`,
+		line: null,
+		details: null,
 	}
 }
 

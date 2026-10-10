@@ -5,7 +5,7 @@
  *   The `partial` share cannot choose between candidate resolutions, so each is reported by candidates per cell and by the polyfill-only zero-cell count.
  */
 
-import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+import type { ResolutionMeasurementOptions, ResolutionMeasurementReport } from "@mailwoman/core/layers"
 import { classifyFeatureCells } from "@mailwoman/spatial"
 
 import { polyfillFindsNothing, ZoningCellIndex, type CellIndexMeasurement } from "#sdk/cells"
@@ -19,16 +19,6 @@ export interface MeasureResolutionsOptions extends ZoningIngestOptions, Resoluti
 	measurePolyfill?: boolean
 }
 
-export interface ResolutionMeasurementReport {
-	features: number
-	/**
-	 * The count the source declares for itself.
-	 * A run whose streamed total differs read a truncated file.
-	 */
-	declaredFeatureCount: number
-	measurements: CellIndexMeasurement[]
-}
-
 const DEFAULT_PROGRESS_EVERY = 5000
 
 /**
@@ -38,7 +28,7 @@ const DEFAULT_PROGRESS_EVERY = 5000
  */
 export async function measureZoningCellResolutions(
 	options: MeasureResolutionsOptions
-): Promise<ResolutionMeasurementReport> {
+): Promise<ResolutionMeasurementReport<CellIndexMeasurement>> {
 	const identity = await readZoningSourceIdentity(options)
 	const indexes = options.resolutions.map((resolution) => new ZoningCellIndex(resolution))
 	const progressEvery = options.progressEvery ?? DEFAULT_PROGRESS_EVERY
@@ -79,5 +69,3 @@ export async function measureZoningCellResolutions(
 		measurements: indexes.map((index) => index.finish()),
 	}
 }
-
-export { formatResolutionRows } from "#sdk/cells"

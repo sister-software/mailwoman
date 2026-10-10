@@ -147,7 +147,7 @@ export function workspaceOfPath(dirsByName: ReadonlyMap<string, string>, path: s
 	let best: { name: string; length: number } | null = null
 
 	for (const [name, dir] of dirsByName) {
-		if ((path === dir || path.startsWith(`${dir}/`)) && (best === null || dir.length > best.length)) {
+		if ((path === dir || path.startsWith(`${dir}/`)) && (!best || dir.length > best.length)) {
 			best = { name, length: dir.length }
 		}
 	}

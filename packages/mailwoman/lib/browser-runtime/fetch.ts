@@ -87,7 +87,7 @@ async function drainWithProgress(response: Response, onBytes: BytesReceived): Pr
 	return bytes
 }
 
-function pause(ms: number, signal: AbortSignal | null | undefined): Promise<void> {
+function pause(ms: number, signal: AbortSignal | null): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const timer = setTimeout(() => {
 			signal?.removeEventListener("abort", onAbort)
@@ -122,7 +122,7 @@ export async function fetchWithRetry(
 		} catch (error) {
 			if (attempt >= ATTEMPTS || !isNetworkFailure(error) || init?.signal?.aborted) throw error
 
-			await pause(FIRST_RETRY_DELAY_MS * 2 ** (attempt - 1), init?.signal)
+			await pause(FIRST_RETRY_DELAY_MS * 2 ** (attempt - 1), init?.signal ?? null)
 
 			attempt++
 		}
@@ -136,8 +136,42 @@ export async function fetchWithRetry(
  */
 export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {
 	return (input, init) => {
-		const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url
+		const url = requestURL(input)
 
 		return fetchWithRetry(input, init, shouldReport(url) ? onBytes : undefined)
+	}
+}
+
+function requestURL(input: Parameters<typeof fetch>[0]): string {
+	return typeof input === "string" ? input : input instanceof URL ? input.href : input.url
+}
+
+/**
+ * Start a GET for each of `urls` through `fetchImpl` now.
+ *
+ * The returned `fetch` answers the first request for each URL with its started response.
+ * Any other request goes to `fetchImpl` unchanged, a repeat request included.
+ *
+ * A failed prefetch rejects, with its own error, at the request that reads it.
+ * It is not unhandled before then.
+ */
+export function prefetchingFetch(fetchImpl: typeof fetch, urls: readonly string[]): typeof fetch {
+	const started = new Map<string, Promise<Response>>()
+
+	for (const url of urls) {
+		const response = fetchImpl(url)
+		response.catch(() => {})
+		started.set(url, response)
+	}
+
+	return (input, init) => {
+		const url = requestURL(input)
+		const response = init ? undefined : started.get(url)
+
+		if (!response) return fetchImpl(input, init)
+
+		started.delete(url)
+
+		return response
 	}
 }

@@ -39,7 +39,7 @@ try:
     import sentencepiece as spm
 except ImportError:
     sys.stderr.write("pip install sentencepiece\n")
-    raise SystemExit(2)
+    raise SystemExit(2) from None
 
 
 # Curated inputs covering: ascii baseline, multi-word, numerics, hyphenation,
@@ -72,7 +72,7 @@ def sample_from_parquet(path: Path, sample_size: int, seed: int) -> list[str]:
         import pyarrow.parquet as pq
     except ImportError:
         sys.stderr.write("pip install pyarrow\n")
-        raise SystemExit(2)
+        raise SystemExit(2) from None
 
     rng = random.Random(seed)
     reservoir: list[str] = []
@@ -83,9 +83,7 @@ def sample_from_parquet(path: Path, sample_size: int, seed: int) -> list[str]:
         for raw in batch.column(0).to_pylist():
             if not isinstance(raw, str):
                 actual = "null" if raw is None else type(raw).__name__
-                raise TypeError(
-                    f"{path}: raw row index {rows_read} is {actual}; expected a string"
-                )
+                raise TypeError(f"{path}: raw row index {rows_read} is {actual}; expected a string")
 
             rows_read += 1
             if len(reservoir) < sample_size:
@@ -108,13 +106,9 @@ def positive_int(value: str) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument(
-        "--model", required=True, type=Path, help="tokenizer.model path"
-    )
+    parser.add_argument("--model", required=True, type=Path, help="tokenizer.model path")
     parser.add_argument("--out", required=True, type=Path, help="output JSON path")
     parser.add_argument(
         "--from-parquet",
@@ -140,9 +134,7 @@ def main() -> int:
 
     if args.from_parquet:
         inputs = sample_from_parquet(args.from_parquet, args.sample, args.seed)
-        sys.stderr.write(
-            f"sampled {len(inputs)} raws from {args.from_parquet} (seed={args.seed})\n"
-        )
+        sys.stderr.write(f"sampled {len(inputs)} raws from {args.from_parquet} (seed={args.seed})\n")
     else:
         inputs = CURATED_INPUTS
         sys.stderr.write(f"using {len(inputs)} curated inputs\n")
@@ -154,9 +146,7 @@ def main() -> int:
     ]
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(
-        json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    args.out.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     sys.stderr.write(f"wrote {len(out)} fixture entries to {args.out}\n")
     return 0
 

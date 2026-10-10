@@ -2,12 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { StageSource } from "@mailwoman/core/pipeline"
 
 import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
-import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier"
+import { NeuralAddressClassifier } from "#classifier"
+import {
+	addressSystemConventionsFor,
+	type ConventionsSetting,
+	type DeclaredModelBehavior,
+	gazetteerSuppressionFor,
+	type ModelCardToggle,
+	type NeuralAddressClassifierConfig,
+	punctuationBridgingFor,
+} from "#classifier/options"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
+import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import type { PairIndexResolver } from "#pair/index/resolver"
@@ -16,16 +27,6 @@ import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 import { MailwomanTokenizer } from "#tokenizer"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
 import { loadPairIndexes, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
-
-/**
- * Re-exports the runner diagnostics type, because {@link LoadResult.diagnostics} exposes it.
- */
-export { type WebONNXRunnerDiagnostics } from "#web/onnx-runner"
-/**
- * Re-exports the pair-index selection helpers so browser callers can choose
- * from {@link LoadResult.pairIndexes}.
- */
-export { detectPairIndexCountry, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 
 const HTTP_NOT_FOUND = 404
 
@@ -79,17 +80,17 @@ export interface LoadResult {
 	/**
 	 * Every pair index that fetched and parsed.
 	 *
-	 * It is empty when `pairIndexURLs` was omitted or every fetch failed.
+	 * It is empty when `pairIndexURLs` was empty or every fetch failed.
 	 */
 	pairIndexes: readonly LoadedPairIndex[]
 
 	/**
 	 * Returns a `placetypePair` option for the loaded index whose country matches the
-	 * country detected from `text`, or `undefined` when none matches.
+	 * country detected from `text`, or `null` when none matches.
 	 *
 	 * A locale or country code in `opts.country` skips detection for that call.
 	 */
-	selectPairIndexForText: (text: string, opts?: { country?: string }) => PlacetypePairPriorOpts | undefined
+	selectPairIndexForText: (text: string, opts?: { country?: string }) => PlacetypePairPriorOpts | null
 }
 
 /**
@@ -102,6 +103,13 @@ export interface LoadFromURLsOptions {
 	 * The URL of the ONNX model file.
 	 */
 	modelURL: string
+
+	/**
+	 * The embedding row files of a split release, whose `modelURL` names `encoder.onnx`.
+	 *
+	 * The loader fetches `hotURL` whole and reads each other row from `rowsURL` by HTTP range on first use.
+	 */
+	embeddings?: { hotURL: string; rowsURL: string }
 
 	/**
 	 * The URL of the SentencePiece tokenizer model.
@@ -128,7 +136,7 @@ export interface LoadFromURLsOptions {
 	modelCardURL?: string
 
 	/**
-	 * Runner options include the WebGPU toggle, fixed sequence length and wasm path.
+	 * Runner options include the fixed sequence length and wasm path.
 	 */
 	runner?: WebONNXRunnerOpts
 
@@ -138,8 +146,9 @@ export interface LoadFromURLsOptions {
 	 * The loader merges them into the anchor lookup required by anchor-trained models.
 	 *
 	 * A binary that fails to load is skipped with a warning.
+	 * Pass `[]` to load none.
 	 */
-	postcodeBinaryURLs?: readonly string[]
+	postcodeBinaryURLs: readonly string[]
 
 	/**
 	 * URLs of PIX1 pair indexes.
@@ -147,8 +156,9 @@ export interface LoadFromURLsOptions {
 	 * The loader reads each index so {@link LoadResult.selectPairIndexForText} can pick one per parse.
 	 *
 	 * An index that fails to fetch or parse is skipped with a warning.
+	 * Pass `[]` to load none.
 	 */
-	pairIndexURLs?: readonly string[]
+	pairIndexURLs: readonly string[]
 
 	/**
 	 * A locale or country code.
@@ -162,81 +172,96 @@ export interface LoadFromURLsOptions {
 	/**
 	 * The URL of the gazetteer lexicon.
 	 *
-	 * By default, the loader uses `anchor-lexicon-v1.json` beside `modelURL`.
-	 *
-	 * The value `null` skips the fetch.
+	 * `"auto"` (the default) uses `anchor-lexicon-v1.json` beside `modelURL`,
+	 * `"none"` skips the fetch and `{ url }` names the file.
 	 * A failed fetch does not throw.
 	 *
 	 * A model trained with this channel then runs on zero-filled features.
 	 * The loader logs an error.
 	 */
-	gazetteerLexiconURL?: string | null
+	gazetteerLexicon?: LexiconSource
 
 	/**
 	 * The URL of the country-surface lexicon.
 	 *
-	 * By default, the loader uses `country-surface-lexicon-v1.json` beside `modelURL`.
-	 *
-	 * The value `null` skips the fetch.
+	 * `"auto"` (the default) uses `country-surface-lexicon-v1.json` beside `modelURL`,
+	 * `"none"` skips the fetch and `{ url }` names the file.
 	 * A failed fetch does not throw.
 	 *
 	 * A model trained with this channel then runs without it.
 	 * The loader logs an error.
 	 */
-	countryLexiconURL?: string | null
+	countryLexicon?: LexiconSource
 
 	/**
 	 * The URL of the street-type evidence lexicon.
 	 *
-	 * By default, the loader uses the card's declared file beside `modelURL`.
-	 *
-	 * The value `null` skips the fetch.
+	 * `"auto"` (the default) uses the card's declared file beside `modelURL`,
+	 * `"none"` skips the fetch and `{ url }` names the file.
 	 * A failed fetch does not throw.
 	 *
 	 * A model trained with this channel then runs without it.
 	 * The loader logs an error.
 	 */
-	streetTypeLexiconURL?: string | null
+	streetTypeLexicon?: LexiconSource
 
 	/**
 	 * The URL of the locality-surface evidence lexicon.
 	 *
-	 * Its defaults and failure behavior match {@link streetTypeLexiconURL}.
+	 * Its defaults and failure behavior match {@link streetTypeLexicon}.
 	 */
-	localitySurfaceLexiconURL?: string | null
+	localitySurfaceLexicon?: LexiconSource
 
 	/**
 	 * Whether to zero the gazetteer channel next to postcode-anchor hits.
-	 * The default is `true`.
+	 *
+	 * The default `"declared"` follows the model card (see {@link gazetteerSuppressionFor}).
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: ModelCardToggle
 
 	/**
 	 * The address-system conventions mode.
-	 * The default is `"auto"`.
 	 *
-	 * A `SystemCode` pins the system.
-	 * `null` disables conventions.
+	 * The default `"declared"` follows the model card (see {@link addressSystemConventionsFor}).
 	 */
-	addressSystemConventions?: NeuralAddressClassifierConfig["addressSystemConventions"] | null
+	addressSystemConventions?: ConventionsSetting
 
 	/**
 	 * Whether to merge same-tag spans split by punctuation, as in `P.O. Box`.
-	 * It defaults to `true`.
+	 *
+	 * The default `"declared"` follows the model card (see {@link punctuationBridgingFor}).
 	 */
-	bridgePunctuationGaps?: boolean
+	bridgePunctuationGaps?: ModelCardToggle
 
 	/**
 	 * The fetch implementation.
-	 * The default is `globalThis.fetch`.
+	 *
+	 * @defaultValue `globalThis.fetch`
 	 */
 	fetchImpl?: typeof fetch
+}
+
+/**
+ * Where the loader fetches an evidence lexicon from.
+ *
+ * - `"auto"` uses the default file beside `modelURL`.
+ * - `"none"` skips the fetch.
+ * - `{ url }` names the file.
+ */
+export type LexiconSource = StageSource<{ url: string }>
+
+function lexiconURLFor(source: LexiconSource | undefined, defaultURL: () => string): string | null {
+	const resolved = source ?? "auto"
+
+	if (resolved === "none") return null
+
+	return resolved === "auto" ? defaultURL() : resolved.url
 }
 
 async function loadPostcodeAnchorLookup(
 	urls: readonly string[],
 	fetchImpl: typeof fetch
-): Promise<AnchorLookup | undefined> {
+): Promise<AnchorLookup | null> {
 	const settled = await Promise.all(
 		urls.map(async (url): Promise<AnchorLookup | null> => {
 			try {
@@ -255,7 +280,7 @@ async function loadPostcodeAnchorLookup(
 
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
-	return lookups.length ? mergeAnchorLookups(lookups) : undefined
+	return lookups.length ? mergeAnchorLookups(lookups) : null
 }
 
 /**
@@ -276,19 +301,19 @@ export function defaultCountryLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "country-surface-lexicon-v1.json")
 }
 
-function defaultStreetTypeLexiconURL(modelURL: string, declaredName?: string): string {
+function defaultStreetTypeLexiconURL(modelURL: string, declaredName: string | null): string {
 	return siblingURL(modelURL, declaredName ?? "street-type-lexicon-v3.json")
 }
 
-function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName?: string): string {
+function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName: string | null): string {
 	return siblingURL(modelURL, declaredName ?? "locality-surface-lexicon-v6.json")
 }
 
-function declaredLexiconName(card: Record<string, unknown> | null, channel: string): string | undefined {
+function declaredLexiconName(card: Record<string, unknown> | null, channel: string): string | null {
 	const requires = card?.requires as Record<string, { lexicon?: unknown }> | undefined
 	const name = requires?.[channel]?.lexicon
 
-	return typeof name === "string" && name.length ? name : undefined
+	return typeof name === "string" && name ? name : null
 }
 
 /**
@@ -304,61 +329,80 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
 	}
 
+	// The model, embedding and tokenizer URLs are known before the card is read.
+	// Their fetches start beside it.
+	// The card is still awaited first, so its error is the one a caller sees when both fail.
+	const modelBytesLoad = startEarly(fetchBytes(opts.modelURL, fetchImpl))
+
+	const embeddingsLoad = startEarly(
+		opts.embeddings ? loadEmbeddingTable(opts.embeddings, fetchImpl) : Promise.resolve(null)
+	)
+
+	const tokenizerBytesLoad = opts.tokenizerURL ? startEarly(fetchBytes(opts.tokenizerURL, fetchImpl)) : null
+
 	const modelCard = opts.modelCardURL ? await fetchModelCardJSON(opts.modelCardURL, fetchImpl) : null
 	const labels = modelCard ? labelsFromModelCard(modelCard, opts.modelCardURL!) : null
-	const encoder = encoderDescriptorFromCard(modelCard ?? undefined, opts.modelCardURL ?? "(no card)")
+	const encoder = encoderDescriptorFromCard(modelCard, opts.modelCardURL ?? "(no card)")
 
 	if (encoder.kind === "char") {
-		return loadCharClassifierFromURLs(opts, encoder, labels, fetchImpl)
+		return loadCharClassifierFromURLs(opts, modelCard, encoder, labels, fetchImpl, modelBytesLoad)
 	}
 
 	if (!opts.tokenizerURL) {
 		throw new Error("loadNeuralClassifierFromURLs: the card declares no char encoder, so tokenizerURL is required")
 	}
 
-	const gazetteerLexiconURL =
-		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
+	const gazetteerLexiconURL = lexiconURLFor(opts.gazetteerLexicon, () => defaultGazetteerLexiconURL(opts.modelURL))
+	const countryLexiconURL = lexiconURLFor(opts.countryLexicon, () => defaultCountryLexiconURL(opts.modelURL))
 
-	const countryLexiconURL =
-		opts.countryLexiconURL === null ? null : (opts.countryLexiconURL ?? defaultCountryLexiconURL(opts.modelURL))
+	const streetTypeLexiconURL = lexiconURLFor(opts.streetTypeLexicon, () =>
+		defaultStreetTypeLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "street_type"))
+	)
 
-	const streetTypeLexiconURL =
-		opts.streetTypeLexiconURL === null
-			? null
-			: (opts.streetTypeLexiconURL ??
-				defaultStreetTypeLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "street_type")))
+	const localitySurfaceLexiconURL = lexiconURLFor(opts.localitySurfaceLexicon, () =>
+		defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface"))
+	)
 
-	const localitySurfaceLexiconURL =
-		opts.localitySurfaceLexiconURL === null
-			? null
-			: (opts.localitySurfaceLexiconURL ??
-				defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface")))
+	// The postcode binaries and pair indexes are independent of the model group.
+	// Their fetches start beside it.
+	// Both loaders skip a failed file and resolve, so the model group's await meets no unhandled rejection.
+	const postcodeAnchorLookupLoad = opts.postcodeBinaryURLs.length
+		? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
+		: Promise.resolve<AnchorLookup | null>(null)
 
-	const [modelBytes, tokenizerBytes, gazetteerLexicon, countryLexicon, streetTypeLexicon, localitySurfaceLexicon] =
-		await Promise.all([
-			fetchBytes(opts.modelURL, fetchImpl),
-			fetchBytes(opts.tokenizerURL, fetchImpl),
-			gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
-			countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
+	const pairIndexesLoad = opts.pairIndexURLs.length
+		? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
+		: Promise.resolve<LoadedPairIndex[]>([])
 
-			streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
-			localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
-		])
+	const [
+		modelBytes,
+		embeddings,
+		tokenizerBytes,
+		gazetteerLexicon,
+		countryLexicon,
+		streetTypeLexicon,
+		localitySurfaceLexicon,
+	] = await Promise.all([
+		modelBytesLoad,
+		embeddingsLoad,
+		tokenizerBytesLoad ?? fetchBytes(opts.tokenizerURL, fetchImpl),
+		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
+		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
+
+		streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
+		localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
+	])
 
 	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
-		WebONNXRunner.fromBytes(modelBytes, opts.runner),
-		opts.postcodeBinaryURLs?.length
-			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
-			: Promise.resolve<AnchorLookup | undefined>(undefined),
-		opts.pairIndexURLs?.length
-			? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
-			: Promise.resolve<LoadedPairIndex[]>([]),
+		WebONNXRunner.fromBytes(modelBytes, { ...opts.runner, ...(embeddings ? { embeddings } : {}) }),
+		postcodeAnchorLookupLoad,
+		pairIndexesLoad,
 	])
 
-	let configPairIndex: PairIndexResolver | undefined
+	let configPairIndex: PairIndexResolver | null = null
 
-	if (opts.country != null && pairIndexes.length) {
+	if (opts.country && pairIndexes.length) {
 		const pinnedCountry = resolvePairIndexCountry(opts.country)
 		const pinned = pairIndexes.find((index) => index.country === pinnedCountry)
 
@@ -373,9 +417,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		}
 	}
 
-	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
-
-	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : undefined
+	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : null
 
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
@@ -388,9 +430,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
-		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
-		...(conventions ? { addressSystemConventions: conventions } : {}),
-		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
+		...declaredBehavior(opts, modelCard),
 	})
 
 	await runner.infer([0])
@@ -429,7 +469,7 @@ function warnOnUnfedTrainedChannels(
 		streetTypeLexiconURL: string | null
 		localitySurfaceLexicon: GazetteerLexicon | null
 		localitySurfaceLexiconURL: string | null
-		postcodeAnchorLookup: AnchorLookup | undefined
+		postcodeAnchorLookup: AnchorLookup | null
 	}
 ): void {
 	const inputNames = runner.inputNames
@@ -509,7 +549,7 @@ function warnOnUnfedTrainedChannels(
 			fed: !!fed.postcodeAnchorLookup,
 			message:
 				"[@mailwoman/neural/web/loader] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
-				"but no `postcodeBinaryURLs` were provided (postcode-<cc>.bin). " +
+				"but `postcodeBinaryURLs` is empty (postcode-<cc>.bin). " +
 				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config.",
 		},
 	]
@@ -551,6 +591,18 @@ async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promis
 	)
 }
 
+/**
+ * Mark a fetch started ahead of the await that reads it as handled, and return it unchanged.
+ *
+ * A rejection still reaches the later await.
+ * Before that await, or when the result goes unused, it is not unhandled.
+ */
+function startEarly<T>(load: Promise<T>): Promise<T> {
+	load.catch(() => {})
+
+	return load
+}
+
 async function fetchModelCardJSON(url: string, fetchImpl: typeof fetch): Promise<Record<string, unknown> | null> {
 	const res = await fetchImpl(url)
 
@@ -577,6 +629,16 @@ function labelsFromModelCard(card: Record<string, unknown>, url: string): readon
 	return Object.freeze(labels.slice())
 }
 
+async function loadEmbeddingTable(
+	urls: NonNullable<LoadFromURLsOptions["embeddings"]>,
+	fetchImpl: typeof fetch
+): Promise<EmbeddingTable> {
+	return EmbeddingTable.fromBytes(
+		await fetchBytes(urls.hotURL, fetchImpl),
+		httpEmbeddingRangeReader(urls.rowsURL, fetchImpl)
+	)
+}
+
 function toBase64(bytes: Uint8Array): string {
 	const chunkSize = 0x80_00
 	let binary = ""
@@ -591,16 +653,38 @@ function toBase64(bytes: Uint8Array): string {
 	return Buffer.from(binary, "binary").toString("base64")
 }
 
+/**
+ * The model-card-declared behaviors both browser load paths configure,
+ * each resolved by the helper the Node loader and the scorer use.
+ */
+function declaredBehavior(
+	opts: LoadFromURLsOptions,
+	modelCard: Record<string, unknown> | null
+): Pick<
+	NeuralAddressClassifierConfig,
+	"suppressGazetteerNearPostcode" | "addressSystemConventions" | "bridgePunctuationGaps"
+> {
+	const declared = (modelCard?.requires ?? null) as DeclaredModelBehavior | null
+
+	return {
+		suppressGazetteerNearPostcode: gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode ?? "declared", declared),
+		addressSystemConventions: addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared),
+		bridgePunctuationGaps: punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared),
+	}
+}
+
 async function loadCharClassifierFromURLs(
 	opts: LoadFromURLsOptions,
+	modelCard: Record<string, unknown> | null,
 	encoder: Extract<EncoderDescriptor, { kind: "char" }>,
 	labels: readonly string[] | null,
-	fetchImpl: typeof fetch
+	fetchImpl: typeof fetch,
+	modelBytesLoad: Promise<Uint8Array>
 ): Promise<LoadResult> {
 	const charVocabURL = opts.charVocabURL ?? new URL(encoder.charVocab, opts.modelURL).toString()
 
 	const [modelBytes, vocabularyJSON] = await Promise.all([
-		fetchBytes(opts.modelURL, fetchImpl),
+		modelBytesLoad,
 		fetchImpl(charVocabURL).then(async (response) => {
 			if (!response.ok) {
 				throw new Error(`failed to fetch char vocabulary ${charVocabURL}: HTTP ${response.status}`)
@@ -619,6 +703,7 @@ async function loadCharClassifierFromURLs(
 		},
 		runner,
 		...(labels ? { labels } : {}),
+		...declaredBehavior(opts, modelCard),
 	})
 
 	return {
@@ -627,7 +712,7 @@ async function loadCharClassifierFromURLs(
 		labels,
 		pairIndexes: [],
 
-		selectPairIndexForText: () => undefined,
+		selectPairIndexForText: () => null,
 
 		release: () => runner.release(),
 	}

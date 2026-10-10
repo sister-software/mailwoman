@@ -7,7 +7,7 @@
  *   designation rather than the authority's Zone 1.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import { rectangleRing } from "@mailwoman/spatial"
@@ -166,7 +166,7 @@ describe("scenario scoping", () => {
 		const underNFI = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, NFI)
 		const underSMP = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, SMP)
 
-		expect(underNFI.designations[0]!.policy).toBeUndefined()
+		expect(underNFI.designations[0]!.policy).toBeNull()
 		expect(underSMP.designations[0]!.policy?.mediumTermInterpretation).toBe("Erosion restricted")
 	})
 

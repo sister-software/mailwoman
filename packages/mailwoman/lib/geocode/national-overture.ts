@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -129,8 +129,8 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
  * A caller that needs an expression to record uses {@link licenseForOvertureCountry},
  * which refuses one that is unsettled.
  */
-export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | undefined {
-	return COUNTRY_LICENSES.get(countryCode.toLowerCase())
+export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | null {
+	return COUNTRY_LICENSES.get(countryCode.toLowerCase()) ?? null
 }
 
 /**

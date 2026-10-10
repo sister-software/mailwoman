@@ -11,7 +11,7 @@
 
 import { resolvePath } from "path-ts"
 
-import { pathExists } from "#fs/readers"
+import { pathExists } from "#fs/readers/stat"
 
 /**
  * Absolute path to `data/<filename>`, probed from `moduleDir` — the source-tree

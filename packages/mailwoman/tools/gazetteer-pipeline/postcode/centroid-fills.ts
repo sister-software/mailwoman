@@ -20,7 +20,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -37,8 +37,9 @@ export interface CentroidFillOptions {
 	 * The combined `allCountries-postal.txt`, consulted when {@link geonamesDir}
 	 * has no `<CC>.txt` for a country.
 	 *
-	 * Default `<data-root>/geonames/allCountries-postal.txt`.
 	 * The only place the US dump exists.
+	 *
+	 * @defaultValue `<data-root>/geonames/allCountries-postal.txt`
 	 */
 	geonamesCombined?: PathBuilderLike
 	/**
@@ -347,10 +348,10 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: PathB
 
 		if (!dataDir) continue
 
-		let hierarchy: Record<string, number> | undefined
+		let hierarchy: Record<string, number> | null
 
 		try {
-			hierarchy = (await readWOFFeature(row.id, [dataDir]))?.properties?.["wof:hierarchy"]?.[0]
+			hierarchy = (await readWOFFeature(row.id, [dataDir]))?.properties?.["wof:hierarchy"]?.[0] ?? null
 		} catch {
 			continue // file missing or unreadable — leave unplaced
 		}

@@ -41,11 +41,11 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > **F7, the possessive qualifier (#1754), 4/13.** `St Mary's, Oxford` still decodes to one component and
 > answers Georgia, 6,739 km; the London neighbourhoods parse and miss the point by 3.5–8 km (the F3 shape);
 > `King's Lynn, Norfolk`, `Bishop's Stortford, Hertfordshire`, `Lee's Summit, Missouri` and `St. John's,
-Newfoundland and Labrador` pass.
+> Newfoundland and Labrador` pass.
 >
 > **F9, Commonwealth and military po_box (#517), 14/16.** `GPO Box`, `Locked Bag`, `Private Bag`, `PSC … Box`
 > and `CMR … Box` all pass on the shipped model, so the "last 0% class" is now two rows: `Unit 2050 Box 4190,
-DPO AP 96278` tags `Box 4190` alone, dropping the `Unit 2050` head of the unit line.
+> DPO AP 96278` tags `Box 4190` alone, dropping the `Unit 2050` head of the unit line.
 
 ### `sg-register-board:2026-09-09`
 
@@ -55,7 +55,7 @@ DPO AP 96278` tags `Box 4190` alone, dropping the `Unit 2050` head of the unit l
 > a seeded draw of Overture-SG rooftop rows, 60 in each of the four typed forms the `sg-register` corpus recipe
 > renders — the HDB block line with a `#NN-NN` unit (`Blk 533A Upper Cross St #27-40 Singapore 051533`), the
 > bracketed postcode (`17 Tanglin Rise S(247998)`), the building-led line (`Oue Downtown, 6A Shenton Way,
-Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). `expectComponents` is what the
+> Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). `expectComponents` is what the
 > recipe tags (`Blk` and `S(` `)` untagged; the floor-unit is `unit`; `Singapore` is the locality); the point is
 > the register row's rooftop at the postcode's tolerance (1 km: one six-digit code is one building).
 >
@@ -63,7 +63,7 @@ Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). 
 > model (`neural-weights-en-us`, md5 `98a49b5c`) did on that day: block 0/60, bracket_postcode 0/60, building_led
 > 12/60, official 38/60. The 50 passes are regression pins; the 190 `improvement_target` rows are the reason the
 > recipe exists. The block rows fail because the street span runs through the unit (`street "Bedok Reservoir Rd
-#04-51"`) and `Blk` reads as a locality; the bracketed-postcode rows because `S(560123)` yields no postcode and
+> #04-51"`) and `Blk` reads as a locality; the bracketed-postcode rows because `S(560123)` yields no postcode and
 > the line resolves to a foreign namesake 11,300 km away; the building-led rows because the lead name reads as a
 > locality rather than a venue. Re-grade with the builder after a model that trained on the recipe, and promote
 > the rows that flip.
@@ -334,7 +334,7 @@ Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). 
 > instrument, added before any fix.
 >
 > The measured diagnosis: `Building 43, Googleplex` already parses correctly while `Terminal 5,
-Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the airport DROPPED. The
+> Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the airport DROPPED. The
 > asymmetry traces to the designator lexicon the span proposer reads (`neural/span-proposer-lexicon.ts`
 > over `codex/us/unit-designator.ts`), which is USPS Publication 28 — a MAIL DELIVERY standard. It
 > stocks BUILDING, HANGAR, PIER and LOBBY because mail is delivered there, and omits TERMINAL, CHECK,

@@ -14,7 +14,6 @@
 
 import { Spinner } from "@inkjs/ui"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
@@ -33,6 +32,7 @@ import {
 	isLocaleTag,
 	type OptionsOf,
 	type ParsedCommandComponent,
+	requireCommandWOFPath,
 	useCommandTask,
 } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
@@ -88,11 +88,13 @@ export const DEFAULT_MAPPING: ColumnMapping = {
 }
 
 /**
- * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
+ * Resolve --mapping (a file path or inline JSON) and merge it over `base`.
+ *
+ * @param base [{@linkcode DEFAULT_MAPPING}] The mapping the provided one overrides.
  */
 export async function loadMapping(
-	option: string | undefined,
-	source: string | undefined,
+	option: string | null,
+	source: string | null,
 	base: ColumnMapping = DEFAULT_MAPPING
 ): Promise<ColumnMapping> {
 	let provided: Partial<ColumnMapping> = {}
@@ -109,16 +111,6 @@ export async function loadMapping(
 	}
 
 	return { ...base, ...provided, ...(source ? { source } : {}) }
-}
-
-async function resolveWOFPath(options: Options): Promise<string> {
-	const { requireWOFPath } = await import("#resolver-backend")
-
-	try {
-		return await requireWOFPath(options.resolveDB)
-	} catch (error) {
-		throw new CommandError(errorMessage(error), { cause: error })
-	}
 }
 
 /**
@@ -139,9 +131,9 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	])
 
 	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
+	const { createResolverBackend } = await import("#resolver-backend")
 
-	const wofPath = await resolveWOFPath(options)
+	const wofPath = await requireCommandWOFPath(options)
 
 	let classifier: NeuralAddressClassifier
 
@@ -166,7 +158,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
-	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
+	const defaultCountry = resolverDefaultCountry(options)
 	const resolver = createWOFResolver(lookup)
 
 	const geocodeForIngest = geocodeAddressVia({
@@ -176,11 +168,11 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 				classifier,
 				resolver,
 				databases,
-				defaultCountry,
+				...(defaultCountry ? { defaultCountry } : {}),
 				interpCalibration: INTERP_RADIUS_CALIBRATION,
-				...(options.placeCountry ? {} : { placeCountry: false }),
+				...(options.placeCountry ? {} : { placeCountry: "none" }),
 			}),
-		country: defaultCountry,
+		country: defaultCountry?.country,
 	})
 
 	return {
@@ -199,19 +191,19 @@ export interface EvalGeocoderFlags {
 	/**
 	 * WOF admin SQLite path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`
 	 */
 	wof?: string
 	/**
 	 * Per-state database root.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT`
 	 */
 	dataRoot?: string
 	/**
 	 * Weights locale.
 	 *
-	 * Default en-US.
+	 * @defaultValue `"en-US"`
 	 */
 	locale?: string
 	/**
@@ -225,8 +217,9 @@ export interface EvalGeocoderFlags {
 }
 
 /**
- * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take,
- * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: false`,
+ * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools`
+ * record-matcher tools take, pinned to a plain `WOFSQLitePlaceLookup`,
+ * `defaultCountry: { country: "US", source: "caller" }`, `placeCountry: "none"`,
  * and `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
@@ -261,9 +254,9 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 				classifier,
 				resolver,
 				databases: regionDatabaseProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
+				defaultCountry: { country: "US", source: "caller" },
+				placeCountry: "none",
+				...(init?.caseNormalization ? { caseNormalization: init.caseNormalization } : {}),
 			})
 
 		const geocodeForIngest = geocodeAddressVia({
@@ -447,7 +440,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 		const written = await writeOutputs(geojson, options)
 
-		return written === null ? report : `${report}\n\n${written}`
+		return written ? `${report}\n\n${written}` : report
 	}
 
 	const geojson = toGeoJSON(result.entities)
@@ -462,7 +455,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
+	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
@@ -477,7 +470,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
-	const mapping = await loadMapping(options.mapping, options.source, base)
+	const mapping = await loadMapping(options.mapping ?? null, options.source ?? null, base)
 	using geocoder = await buildGeocoder(options)
 	const { geocodeAddress: geocodeForIngest } = geocoder
 
@@ -500,7 +493,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
+	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
@@ -513,7 +506,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 
 		const csv = args?.[0]
 
-		if (!csv || !csv.trim().length) {
+		if (!csv || !csv.trim()) {
 			throw new CommandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
 					"e.g. mailwoman registry contacts.csv --out entities.geojson"

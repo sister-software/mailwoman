@@ -47,9 +47,9 @@ describe("normalizeCSV", () => {
 		expect(row0.id).toBe("c1")
 		expect(row0.name?.family).toBe("Smith")
 		expect(row0.organization).toBeTruthy()
-		expect(row0.address).toBeUndefined()
+		expect(row0.address).toBeNull()
 		expect(row0.raw).toMatchObject({ addr: "123 Main St", state: "OR" })
-		expect(row1.organization).toBeUndefined()
+		expect(row1.organization).toBeNull()
 	})
 
 	it("falls back to the row index for a missing id", async () => {

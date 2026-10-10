@@ -34,7 +34,7 @@ no output is a mechanism bug** — the R6 lesson, now applied rather than redisc
 - **B-R9.3 (positive side).** 60 sampled pairs in German address shape: **60/60 emit, 60/60
   tag-correct.**
 - **D-R9.4 (disclosure).** A fusion fix worth naming: without the index, `Venloer Str. 300,
-Ehrenfeld, 50823 Köln` fused the locality as `"Ehrenfeld Köln"` — a wrong span rather than merely a
+  Ehrenfeld, 50823 Köln` fused the locality as `"Ehrenfeld Köln"` — a wrong span rather than merely a
   missing one. With it, the two split correctly.
 
 ## The carrier package

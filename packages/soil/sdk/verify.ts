@@ -33,14 +33,14 @@ export interface SoilAgreementRow {
 	 * The map unit Soil Data Access puts here.
 	 */
 	serviceMukey: string | null
-	outcome: "agree" | "disagree" | "boundary_tolerance"
+	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Meters from the point to the nearest edge of the delineation the artifact matched.
 	 *
 	 * Included on every row because it separates a real defect from two channels
 	 * rendering the same edge differently.
 	 */
-	nearestEdgeMetres?: number
+	nearestEdgeMetres: number | null
 }
 
 /**
@@ -124,14 +124,14 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 			const local = localDelineationAt(database, resolutions, indexResolution, point.latitude, point.longitude)
 			const serviceMukey = (await options.client.mukeyAtPoint(point.latitude, point.longitude)) ?? null
 
-			const nearEdge = local.nearestEdgeMetres !== undefined && local.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = local.nearestEdgeMetres !== null && local.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			agreement.push({
 				...point,
 				localMukey: local.mukey,
 				serviceMukey,
-				outcome: local.mukey === serviceMukey ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(local.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: local.nearestEdgeMetres }),
+				result: local.mukey === serviceMukey ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				nearestEdgeMetres: local.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
@@ -147,9 +147,9 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
 			outside,
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
@@ -211,7 +211,7 @@ function localDelineationAt(
 	indexResolution: number,
 	latitude: number,
 	longitude: number
-): { mukey: string | null; nearestEdgeMetres?: number } {
+): { mukey: string | null; nearestEdgeMetres: number | null } {
 	const candidates = candidateDelineations(database, resolutions, indexResolution, latitude, longitude)
 
 	let mukey: string | null = null
@@ -224,12 +224,12 @@ function localDelineationAt(
 			nearest = distance
 		}
 
-		if (mukey === null && pointInEncodedRings(candidate.rings, longitude, latitude)) {
+		if (!mukey && pointInEncodedRings(candidate.rings, longitude, latitude)) {
 			mukey = candidate.mukey
 		}
 	}
 
-	return Number.isFinite(nearest) ? { mukey, nearestEdgeMetres: nearest } : { mukey }
+	return { mukey, nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null }
 }
 
 /**

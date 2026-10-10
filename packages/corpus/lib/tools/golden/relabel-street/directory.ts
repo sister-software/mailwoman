@@ -5,7 +5,8 @@
  * @file Rewrites a golden-set directory and renders its review deck.
  */
 
-import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
 	makeDirectories,
 	writeLocalFile,
@@ -65,13 +66,13 @@ export interface RelabelGoldenOptions {
 	/**
 	 * Review-deck jsonl path.
 	 *
-	 * Default `<output>/review-deck.jsonl`.
+	 * @defaultValue `<output>/review-deck.jsonl`
 	 */
 	deck?: string
 	/**
 	 * Parent version label recorded in the manifest.
 	 *
-	 * Default: the input dir's basename.
+	 * @defaultValue the input dir's basename.
 	 */
 	parentLabel?: string
 	/**
@@ -81,13 +82,13 @@ export interface RelabelGoldenOptions {
 	/**
 	 * Passed through to {@linkcode relabelGoldenStreetRow}.
 	 *
-	 * Default true.
+	 * @defaultValue `true`
 	 */
 	splitPrefix?: boolean
 }
 
 /**
- * Aggregate outcome for a whole golden version.
+ * Aggregate result for a whole golden version.
  */
 export interface RelabelGoldenReport {
 	files: Record<
@@ -251,7 +252,7 @@ export async function relabelGoldenDirectory(
 		parent: options.parentLabel ?? basename(input),
 		generated_at: new Date().toISOString(),
 		tool: "corpus/src/tools/golden-relabel-street.ts (mailwoman corpus golden-relabel)",
-		...(options.commit ? { commit: options.commit } : {}),
+		commit: options.commit || null,
 		convention: {
 			street_convention: { US: "split", "*": "folded" },
 			declared:

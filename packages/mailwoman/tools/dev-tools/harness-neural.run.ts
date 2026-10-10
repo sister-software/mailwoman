@@ -36,6 +36,12 @@ import {
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 } from "@mailwoman/neural"
+import {
+	type AddressSystemConventions,
+	DEFAULT_TOGGLE,
+	parseAddressSystemConventions,
+	type Toggle,
+} from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -58,8 +64,8 @@ interface Args {
 	modelCardPath?: string
 	gazetteerLexiconPath?: string
 	anchorLookupPath?: string
-	conventions?: string
-	bridgeGaps?: boolean
+	conventions: AddressSystemConventions
+	bridgePunctuationGaps: Toggle
 	adminFSTPath?: string
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
@@ -84,6 +90,8 @@ function parseArgs(): Args {
 		postcodeRepair: false,
 		unitRepair: false,
 		assembled: false,
+		conventions: "off",
+		bridgePunctuationGaps: DEFAULT_TOGGLE,
 	}
 
 	const { values } = parseArguments({
@@ -108,47 +116,47 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["tests"] != null) {
+	if (values["tests"]) {
 		out.testsDir = values["tests"] as string
 	}
 
-	if (values["out-json"] != null) {
+	if (values["out-json"]) {
 		out.outJSON = values["out-json"] as string
 	}
 
-	if (values["model"] != null) {
+	if (values["model"]) {
 		out.modelPath = values["model"] as string
 	}
 
-	if (values["tokenizer"] != null) {
+	if (values["tokenizer"]) {
 		out.tokenizerPath = values["tokenizer"] as string
 	}
 
-	if (values["model-card"] != null) {
+	if (values["model-card"]) {
 		out.modelCardPath = values["model-card"] as string
 	}
 
-	if (values["gazetteer-lexicon"] != null) {
+	if (values["gazetteer-lexicon"]) {
 		out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
 	}
 
-	if (values["anchor-lookup"] != null) {
+	if (values["anchor-lookup"]) {
 		out.anchorLookupPath = values["anchor-lookup"] as string
 	}
 
-	if (values["conventions"] != null) {
-		out.conventions = values["conventions"] as string
+	if (values["conventions"]) {
+		out.conventions = parseAddressSystemConventions(values["conventions"] as string)
 	}
 
 	if (values["bridge-gaps"] != null) {
-		out.bridgeGaps = true
+		out.bridgePunctuationGaps = "on"
 	}
 
-	if (values["admin-fst"] != null) {
+	if (values["admin-fst"]) {
 		out.adminFSTPath = values["admin-fst"] as string
 	}
 
-	if (values["morphology-fst"] != null) {
+	if (values["morphology-fst"]) {
 		out.morphologyBinPath = values["morphology-fst"] as string
 	}
 
@@ -156,7 +164,7 @@ function parseArgs(): Args {
 		out.morphologyEnabled = false
 	}
 
-	if (values["falsehoods"] != null) {
+	if (values["falsehoods"]) {
 		out.falsehoodsDir = values["falsehoods"] as string
 	}
 
@@ -473,8 +481,8 @@ interface AssertionResult {
 	/**
 	 * The assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded like neural.
 	 */
-	assembled_pass?: boolean
-	assembled_actual?: ClassificationRecord
+	assembled_pass: boolean | null
+	assembled_actual: ClassificationRecord | null
 }
 
 async function runAssertion(
@@ -496,8 +504,8 @@ async function runAssertion(
 	// with the same loose top-1 semantics and tree→visible-record conversion as neural.
 	// Off unless `--assembled` wired the pipeline.
 	// An assembled-pipeline regression is invisible against raw-neural F1.
-	let assembledPass: boolean | undefined
-	let assembledRecord: ClassificationRecord | undefined
+	let assembledPass: boolean | null = null
+	let assembledRecord: ClassificationRecord | null = null
 
 	if (pipeline) {
 		const { tree: assembledTree } = await pipeline(a.input)
@@ -620,7 +628,7 @@ function printReport(results: AssertionResult[]): void {
 
 	// Assembled-pipeline arm (only when --assembled): what the assembled pipeline
 	// (grouper + reconcile + fast-path) gains or loses against raw neural on the same assertions.
-	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
+	const hasAssembled = results.some((r) => r.assembled_pass !== null)
 
 	if (hasAssembled) {
 		const asmPass = results.filter((r) => r.assembled_pass).length
@@ -717,13 +725,13 @@ async function main(): Promise<void> {
 		// lookup with near-postcode suppression.
 		// Zero-filled clues depress country recall and fake an affix crash
 		// (the ship config. See CONTRIBUTING_MODEL_WORK eval invariants).
-		let gazetteerLexicon: GazetteerLexicon | undefined
+		let gazetteerLexicon: GazetteerLexicon | null = null
 
 		if (args.gazetteerLexiconPath) {
 			gazetteerLexicon = parseGazetteerLexicon(await readLocalJSONFile(args.gazetteerLexiconPath))
 		}
 
-		let postcodeAnchorLookup: AnchorLookup | undefined
+		let postcodeAnchorLookup: AnchorLookup | null = null
 
 		if (args.anchorLookupPath) {
 			postcodeAnchorLookup = parseAnchorLookup(await readLocalJSONFile(args.anchorLookupPath))
@@ -733,17 +741,17 @@ async function main(): Promise<void> {
 			tokenizer,
 			runner,
 			labels,
-			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: true } : {}),
+			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: "on" } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			// `--conventions auto|<system>` enables the address-system conventions mask.
-			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
-			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
+			addressSystemConventions: args.conventions,
+			bridgePunctuationGaps: args.bridgePunctuationGaps,
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
 
-	let adminFST: ReturnType<typeof deserializeFST> | undefined
+	let adminFST: ReturnType<typeof deserializeFST> | null = null
 
 	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
@@ -751,7 +759,7 @@ async function main(): Promise<void> {
 		adminFST = deserializeFST(await readLocalBuffer(args.adminFSTPath))
 	}
 
-	let morphologyFST: ReturnType<typeof deserializeFST> | undefined
+	let morphologyFST: ReturnType<typeof deserializeFST> | null = null
 
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {

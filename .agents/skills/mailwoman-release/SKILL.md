@@ -33,7 +33,7 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 3. **The model release version is the NEXT UNIFIED number — verify, don't assume.** A _code-only_
    release bumps the packages but not the card (the card version tracks the model). So the card can
    lag the package version (e.g. card 4.11.0 while npm is at 4.12.0). **Run `npm view mailwoman
-version` AND `git tag -l 'v4.*'` and take the next number after the LATEST published** rather than card+1.
+   version` AND `git tag -l 'v4.*'` and take the next number after the LATEST published** rather than card+1.
 4. **The CI workflow FETCHES weights from HF** at `en-us/v<cardVersion>/`. A model release has a hard
    prerequisite: stage the weights to HF FIRST (Step 2). A code-only release skips this (the card
    version is unchanged → CI re-fetches the existing model).
@@ -263,5 +263,5 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
   it's an OPERATOR decision — do not loosen a protection rule to ship.
 - **Release PRs need their `test` check dispatched explicitly** — GITHUB_TOKEN-created PRs never
   trigger `on: pull_request` (anti-recursion), so mode=prepare runs `gh workflow run test.yml --ref
-release/v<target>` itself. If an auto-merge ever hangs with "expected — waiting", check whether
+  release/v<target>` itself. If an auto-merge ever hangs with "expected — waiting", check whether
   that dispatch failed and re-run it; do not merge past the check.

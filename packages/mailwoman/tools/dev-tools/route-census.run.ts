@@ -29,7 +29,8 @@
  *     node packages/mailwoman/tools/dev-tools/route-census.run.ts [--checking-only] [--out-json <path>]
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -124,19 +125,16 @@ async function emittableTags(): Promise<Map<string, ReadonlySet<string>>> {
 }
 
 /**
- * Returns the only family that can emit every expected tag, or `undefined` when zero or several can.
+ * Returns the only family that can emit every expected tag, or `null` when zero or several can.
  *
- * Most rows return `undefined` and need a human label.
+ * Most rows return `null` and need a human label.
  */
-function familyByExpectedTags(
-	expected: readonly string[],
-	emittable: Map<string, ReadonlySet<string>>
-): string | undefined {
-	if (!expected.length) return undefined
+function familyByExpectedTags(expected: readonly string[], emittable: Map<string, ReadonlySet<string>>): string | null {
+	if (!expected.length) return null
 
 	const capable = [...emittable].filter(([, tags]) => expected.every((tag) => tags.has(tag))).map(([family]) => family)
 
-	return capable.length === 1 ? capable[0] : undefined
+	return capable.length === 1 ? (capable[0] ?? null) : null
 }
 
 /**

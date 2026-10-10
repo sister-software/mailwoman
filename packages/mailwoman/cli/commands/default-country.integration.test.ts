@@ -1,11 +1,12 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
+import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test, vi } from "vitest"
 
 import { parseCommand } from "#cli/native/spec"
+import { localeToCountry, resolverDefaultCountry } from "#country-scope"
 import { $public } from "#env"
 import { mailwomanCLIPath } from "#metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
@@ -26,9 +27,9 @@ describe("localeToCountry", () => {
 	})
 
 	test("ignores script subtags and language-only tags (no guessing)", () => {
-		expect(localeToCountry("en")).toBeUndefined()
-		expect(localeToCountry("zh-Hant")).toBeUndefined()
-		expect(localeToCountry(undefined)).toBeUndefined()
+		expect(localeToCountry("en")).toBeNull()
+		expect(localeToCountry("zh-Hant")).toBeNull()
+		expect(localeToCountry(null)).toBeNull()
 	})
 
 	test("reads the trailing region of a multi-subtag tag", () => {
@@ -38,40 +39,44 @@ describe("localeToCountry", () => {
 
 describe("resolverDefaultCountry", () => {
 	test("explicit --default-country wins over the locale", () => {
-		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US" })).toBe("FR")
+		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US" })).toEqual({
+			country: "FR",
+			source: "caller",
+		})
 	})
 
 	test("falls back to the locale's country when unset", () => {
-		expect(resolverDefaultCountry({ locale: "de-DE" })).toBe("DE")
+		expect(resolverDefaultCountry({ locale: "de-DE" })).toEqual({ country: "DE", source: "inferred" })
 	})
 
 	test("'none' disables the filter", () => {
-		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US" })).toBeUndefined()
+		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US" })).toBeNull()
 	})
 })
 
 describe("--country-scope separates country policy from the resolver backend", () => {
-	test("'auto' passes locale country on both backends", () => {
-		expect(resolverDefaultCountry({ locale: "en-US" }, false)).toBe("US")
-		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBe("US")
+	test("'auto' passes the locale country as an inferred scope", () => {
+		expect(resolverDefaultCountry({ locale: "en-US" })).toEqual({ country: "US", source: "inferred" })
 	})
 
-	test("'locale' scopes on either backend", () => {
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, false)).toBe("US")
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, true)).toBe("US")
+	test("'locale' scopes by the inferred locale country", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" })).toEqual({
+			country: "US",
+			source: "inferred",
+		})
 	})
 
-	test("'none' scopes on neither backend", () => {
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, false)).toBeUndefined()
-		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, true)).toBeUndefined()
+	test("'none' disables the locale scope", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" })).toBeNull()
 	})
 
 	test("an explicit --default-country outranks every scope", () => {
-		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" }, true)).toBe("FR")
+		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" })).toEqual({
+			country: "FR",
+			source: "caller",
+		})
 
-		expect(
-			resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" }, false)
-		).toBeUndefined()
+		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" })).toBeNull()
 	})
 
 	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {

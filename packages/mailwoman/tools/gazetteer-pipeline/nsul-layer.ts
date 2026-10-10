@@ -28,7 +28,8 @@
  * polygon the builder cannot tell empty moorland from Northern Ireland or open sea.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
@@ -410,21 +411,22 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * Acquisition directory holding the archive, its `.md5` sidecar and `item.json`.
 	 *
-	 * Default: the newest vintage directory under `<data-root>/db/nsul/` that holds
+	 * @defaultValue the newest vintage directory under `<data-root>/db/nsul/` that holds
 	 * an archive ({@link resolveLatestNSULSourceDir}).
 	 */
 	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/db/nsul/nsul.db`.
 	 * Built to a staging path and atomically swapped into place.
+	 *
+	 * @defaultValue `<data-root>/db/nsul/nsul.db`
 	 */
 	out?: PathBuilderLike
 	/**
 	 * The `uprn.db` whose coordinates are joined in.
 	 *
-	 * Default `<data-root>/db/uprn/uprn.db`.
+	 * @defaultValue `<data-root>/db/uprn/uprn.db`
 	 */
 	uprnDatabasePath?: PathBuilderLike
 	/**
@@ -437,7 +439,8 @@ export interface BuildNSULLayerOptions {
 	 * ISO-8601 `layer_manifest.created_at`.
 	 *
 	 * Caller-supplied per the layer interface.
-	 * Defaults to `now`.
+	 *
+	 * @defaultValue `now`
 	 */
 	createdAt?: string
 	/**
@@ -448,7 +451,7 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * Truncation-guard floor.
 	 *
-	 * Default {@link NSUL_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
+	 * @defaultValue {@linkcode NSUL_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
 	 */
 	minimumPlausibleRows?: number
 	/**
@@ -560,9 +563,9 @@ export interface NSULIngestCounts {
 interface IngestNSULSourcesOptions {
 	sources: NSULRegionSource[]
 	/**
-	 * `uprn.db`'s point for a uprn, or `undefined` when it holds none.
+	 * `uprn.db`'s point for a uprn, or `null` when it holds none.
 	 */
-	coordinateOf: (uprn: number) => NSULCoordinateRow | undefined
+	coordinateOf: (uprn: number) => NSULCoordinateRow | null
 	/**
 	 * Write one row; `false` when the uprn was already written (the `insert or ignore` duplicate path).
 	 */
@@ -609,7 +612,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 			if (!headerSeen) {
 				const drift = nsulHeaderDrift(rawLine)
 
-				if (drift !== null) {
+				if (drift) {
 					throw new Error(
 						`buildNSULLayer: header drift in ${source.label} — expected ${stringifyJSON(NSUL_HEADER)}, found ${stringifyJSON(drift)}`
 					)
@@ -830,7 +833,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	try {
 		counts = await ingestNSULSources({
 			sources,
-			coordinateOf: (uprn) => coordinateProbe.get(uprn) as NSULCoordinateRow | undefined,
+			coordinateOf: (uprn) => (coordinateProbe.get(uprn) as NSULCoordinateRow | undefined) ?? null,
 			write: (line, point) =>
 				Number(
 					insert.run(line.uprn, line.pcds, compactPostcode(line.pcds), point.lat, point.lon, point.h3_cell).changes
@@ -903,6 +906,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: UPRN_H3_RESOLUTION } },
 		createdAt: options.createdAt ?? now.toISOString(),
+		sourceRecords: null,
 	})
 
 	phase("meta")

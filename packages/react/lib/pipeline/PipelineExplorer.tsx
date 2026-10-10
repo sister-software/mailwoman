@@ -31,11 +31,15 @@ export interface PipelineExplorerProps {
 	 */
 	runtime: PipelineRuntime
 	/**
-	 * Address to pre-fill. @default the White House
+	 * Address to pre-fill.
+	 *
+	 * @defaultValue the White House
 	 */
 	defaultAddress?: string
 	/**
-	 * Example chips. @default the built-in address presets
+	 * Example chips.
+	 *
+	 * @defaultValue the built-in address presets
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
@@ -61,7 +65,6 @@ function PipelineExplorerInner({ runtime, defaultAddress, presets, panels }: Pip
 			{panels.header}
 			{panels.releaseInfo}
 			{panels.versionControl}
-			{panels.backendControl}
 
 			<QueryForm
 				value={text}

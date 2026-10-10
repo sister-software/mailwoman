@@ -62,7 +62,7 @@ export interface AgreementRow {
 	 * let it agree with an artifact that answers Zone 1 by absence.
 	 */
 	service: string | null
-	outcome: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
+	result: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
 	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
@@ -78,9 +78,9 @@ export interface AgreementRow {
 	 * rendering the same edge differently.
 	 *
 	 * A receipt without the distance forces a re-run.
-	 * `undefined` means the service returned no polygon at all near the point.
+	 * `null` means the service returned no polygon at all near the point.
 	 */
-	nearestEdgeMetres?: number
+	nearestEdgeMetres: number | null
 }
 
 /**
@@ -165,7 +165,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const localZone = local.kind === FloodReadingKind.Designated ? (local.zoneCode ?? null) : null
 
-			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
+			const nearEdge = service.nearestEdgeMetres !== null && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			// Every row includes the distance.
 			// Readers can inspect it when a disagreement appears without rerunning the check.
@@ -173,14 +173,14 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 				...point,
 				local,
 				service: service.zone,
-				outcome: service.insideUnlabelled
+				result: service.insideUnlabelled
 					? "service_unlabelled"
 					: localZone === service.zone
 						? "agree"
 						: nearEdge
 							? "boundary_tolerance"
 							: "disagree",
-				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
+				nearestEdgeMetres: service.nearestEdgeMetres,
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
@@ -196,10 +196,10 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 		return {
 			agreement,
-			agreed: agreement.filter((row) => row.outcome === "agree").length,
-			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
-			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
-			serviceUnlabelled: agreement.filter((row) => row.outcome === "service_unlabelled").length,
+			agreed: agreement.filter((row) => row.result === "agree").length,
+			disagreed: agreement.filter((row) => row.result === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.result === "boundary_tolerance").length,
+			serviceUnlabelled: agreement.filter((row) => row.result === "service_unlabelled").length,
 			outside,
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
@@ -221,7 +221,7 @@ async function readServiceZone(
 	readServiceFeatures: ServiceFeatureReader,
 	latitude: number,
 	longitude: number
-): Promise<{ zone: string | null; insideUnlabelled: boolean; nearestEdgeMetres?: number }> {
+): Promise<{ zone: string | null; insideUnlabelled: boolean; nearestEdgeMetres: number | null }> {
 	const features = await readServiceFeatures(latitude, longitude)
 
 	let nearest = Infinity
@@ -239,10 +239,10 @@ async function readServiceZone(
 			nearest = distance
 		}
 
-		if (zone === null && geometryContains(geometry, longitude, latitude)) {
+		if (!zone && geometryContains(geometry, longitude, latitude)) {
 			const label = feature.properties?.flood_zone
 
-			if (typeof label === "string" && label.length) {
+			if (typeof label === "string" && label) {
 				zone = label
 				insideUnlabelled = false
 			} else {
@@ -251,5 +251,5 @@ async function readServiceZone(
 		}
 	}
 
-	return Number.isFinite(nearest) ? { zone, insideUnlabelled, nearestEdgeMetres: nearest } : { zone, insideUnlabelled }
+	return { zone, insideUnlabelled, nearestEdgeMetres: Number.isFinite(nearest) ? nearest : null }
 }

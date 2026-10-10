@@ -13,14 +13,9 @@
 
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { FSTAcceptedMatch } from "@mailwoman/neural/fst-prior"
-import type { QueryShape } from "@mailwoman/query-shape"
+import type { CharRange, QueryShape } from "@mailwoman/query-shape"
 
 import type { CensusSpan } from "#tools/eval-harness/grammar/census"
-
-export interface CensusPiece {
-	start: number
-	end: number
-}
 
 export interface PhraseBoundaryReceipt {
 	kind: PhraseProposal["kindHypothesis"]
@@ -69,7 +64,7 @@ export interface C4BoundaryReceipt {
 }
 
 function fstEdgesAtBoundary(
-	matches: ReadonlyArray<FSTAcceptedMatch> | undefined,
+	matches: ReadonlyArray<FSTAcceptedMatch> | null,
 	boundary: number
 ): FSTEdgeReceipt[] | null {
 	if (!matches) return null
@@ -108,7 +103,7 @@ function tokenClassAt(shape: QueryShape, character: number) {
  */
 export function observeC4Boundaries(
 	spans: ReadonlyArray<CensusSpan>,
-	pieces: ReadonlyArray<CensusPiece>,
+	pieces: ReadonlyArray<CharRange>,
 	phraseProposals: ReadonlyArray<PhraseProposal>,
 	shape: QueryShape,
 	registryMatches?: ReadonlyArray<FSTAcceptedMatch>,
@@ -184,8 +179,8 @@ export function observeC4Boundaries(
 			delimiterSegmentEdges,
 			characterClassChange,
 			knownFormatEdges,
-			streetAffixEdges: fstEdgesAtBoundary(streetAffixMatches, boundaryPiece),
-			registryFSTEdges: fstEdgesAtBoundary(registryMatches, boundaryPiece),
+			streetAffixEdges: fstEdgesAtBoundary(streetAffixMatches ?? null, boundaryPiece),
+			registryFSTEdges: fstEdgesAtBoundary(registryMatches ?? null, boundaryPiece),
 		})
 	}
 
@@ -232,8 +227,8 @@ export function summarizeC4FeatureVectors(
 			`segment=${boundary.delimiterSegmentEdges.length ? "yes" : "no"}`,
 			`char_class=${boundary.characterClassChange ? `${boundary.characterClassChange.from}>${boundary.characterClassChange.to}` : "no"}`,
 			`known_format=${boundary.knownFormatEdges.length ? "yes" : "no"}`,
-			`street_affix=${boundary.streetAffixEdges === null ? "unavailable" : boundary.streetAffixEdges.length ? "yes" : "no"}`,
-			`registry_fst=${boundary.registryFSTEdges === null ? "unavailable" : boundary.registryFSTEdges.length ? "yes" : "no"}`,
+			`street_affix=${boundary.streetAffixEdges ? (boundary.streetAffixEdges.length ? "yes" : "no") : "unavailable"}`,
+			`registry_fst=${boundary.registryFSTEdges ? (boundary.registryFSTEdges.length ? "yes" : "no") : "unavailable"}`,
 		].join(";")
 
 		const count = counts.get(featureVector) ?? {

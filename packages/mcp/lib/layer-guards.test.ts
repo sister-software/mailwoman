@@ -26,11 +26,11 @@ import {
 	openPlausibilityPOIDeps,
 } from "#layer-guards"
 
-let scratch: TemporaryDirectory | undefined
+let scratch: TemporaryDirectory | null = null
 
 afterEach(async () => {
 	await scratch?.[Symbol.asyncDispose]()
-	scratch = undefined
+	scratch = null
 })
 
 /**
@@ -64,12 +64,12 @@ async function poiFixtureFile(name: string): Promise<PathBuilder> {
 }
 
 describe("openBDCDatabaseIfPresent", () => {
-	it("returns undefined when databasePath is undefined", async () => {
-		expect(await openBDCDatabaseIfPresent(undefined)).toBeUndefined()
+	it("returns null when databasePath is undefined", async () => {
+		expect(await openBDCDatabaseIfPresent(undefined)).toBeNull()
 	})
 
-	it("returns undefined when the file is missing", async () => {
-		expect(await openBDCDatabaseIfPresent("/nonexistent/path/bdc.db")).toBeUndefined()
+	it("returns null when the file is missing", async () => {
+		expect(await openBDCDatabaseIfPresent("/nonexistent/path/bdc.db")).toBeNull()
 	})
 
 	it("opens the database when the file is present", async () => {
@@ -116,12 +116,12 @@ describe("assertBDCDatabaseExists", () => {
 })
 
 describe("openFilerDatabaseIfPresent", () => {
-	it("returns undefined when databasePath is undefined", async () => {
-		expect(await openFilerDatabaseIfPresent(undefined)).toBeUndefined()
+	it("returns null when databasePath is undefined", async () => {
+		expect(await openFilerDatabaseIfPresent(undefined)).toBeNull()
 	})
 
-	it("returns undefined when the file is missing", async () => {
-		expect(await openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).toBeUndefined()
+	it("returns null when the file is missing", async () => {
+		expect(await openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).toBeNull()
 	})
 
 	it("opens the database when the file is present", async () => {

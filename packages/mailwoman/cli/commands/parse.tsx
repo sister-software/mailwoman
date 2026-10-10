@@ -4,12 +4,11 @@
 import { Spinner } from "@inkjs/ui"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
-import type { Resolver } from "@mailwoman/core/resolver"
+import { RESOLVE_SWITCH_DEFAULTS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
 import type { Section } from "@mailwoman/core/types"
@@ -25,22 +24,13 @@ import {
 	loadClassifierTolerant,
 	type ParsedCommandComponent,
 	reportToStderr,
+	requireCommandWOFPath,
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
-import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import { WeightsGuard, type WeightsResult } from "#cli-kit/weights-guard"
 import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
-
-/**
- * Re-exports the country-scope helpers so tests can check the `--locale` to
- * default-country mapping through the command module.
- */
-export { localeToCountry, resolverDefaultCountry } from "#country-scope"
-/**
- * Re-exports the country-scope type alongside its helpers.
- */
-export type { CountryScope } from "#country-scope"
 
 const POLICY_MODES: readonly PolicyMode[] = ["neural_only", "both"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -83,12 +73,24 @@ export const spec = {
 			default: "auto",
 			description: "Locale country-scoping policy",
 		},
-		"admin-coherence": { type: "boolean", default: true, description: "Joint admin consistency" },
-		"postcode-country-coherence": { type: "boolean", default: true, description: "Postcode country consistency" },
-		"postcode-shape-coherence": { type: "boolean", default: false, description: "Postcode shape consistency" },
+		"admin-coherence": {
+			type: "boolean",
+			default: RESOLVE_SWITCH_DEFAULTS.adminCoherence,
+			description: "Joint admin consistency",
+		},
+		"postcode-country-coherence": {
+			type: "boolean",
+			default: RESOLVE_SWITCH_DEFAULTS.postcodeCountryCoherence,
+			description: "Postcode country consistency",
+		},
+		"postcode-shape-coherence": {
+			type: "boolean",
+			default: RESOLVE_SWITCH_DEFAULTS.postcodeShapeCoherence,
+			description: "Postcode shape consistency",
+		},
 		"postcode-containment-coherence": {
 			type: "boolean",
-			default: false,
+			default: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 			description: "Postcode containment reranking",
 		},
 		neural: { type: "boolean", default: false, description: "Use neural-only path" },
@@ -137,6 +139,25 @@ interface ParseOptions {
 	benchmark?: number
 }
 
+/**
+ * The resolver switches set by the `parse` flags, passed through as stated.
+ *
+ * The flag defaults are {@link RESOLVE_SWITCH_DEFAULTS}, so an unstated flag means the resolver default.
+ */
+function cliResolveSwitches(
+	options: Pick<
+		ParseOptions,
+		"adminCoherence" | "postcodeCountryCoherence" | "postcodeShapeCoherence" | "postcodeContainmentCoherence"
+	>
+): ResolveOpts {
+	return {
+		adminCoherence: options.adminCoherence,
+		postcodeCountryCoherence: options.postcodeCountryCoherence,
+		postcodeShapeCoherence: options.postcodeShapeCoherence,
+		postcodeContainmentCoherence: options.postcodeContainmentCoherence,
+	}
+}
+
 interface PolicyOverride {
 	component: ComponentTag
 	mode: PolicyMode
@@ -174,12 +195,12 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 	if (guardEligible) {
 		return (
 			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
-				{(outcome) => <ParseTask options={options} args={args} weightsOutcome={outcome} />}
+				{(result) => <ParseTask options={options} args={args} weightsResult={result} />}
 			</WeightsGuard>
 		)
 	}
 
-	return <ParseTask options={options} args={args} weightsOutcome={options.degraded ? "declined" : "neural"} />
+	return <ParseTask options={options} args={args} weightsResult={options.degraded ? "declined" : "neural"} />
 }
 
 /**
@@ -188,11 +209,11 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 function ParseTask({
 	options,
 	args,
-	weightsOutcome,
+	weightsResult,
 }: {
 	options: ParseOptions
 	args: string[]
-	weightsOutcome: WeightsOutcome
+	weightsResult: WeightsResult
 }): React.ReactElement | null {
 	const state = useCommandTask(async () => {
 		const input = args[0]!
@@ -221,8 +242,8 @@ function ParseTask({
 			return runNeural(input, options, [])
 		}
 
-		// An `unavailable` outcome falls through to `runPipeline`, which attempts the load itself.
-		if (weightsOutcome === "declined") {
+		// An `unavailable` result falls through to `runPipeline`, which attempts the load itself.
+		if (weightsResult === "declined") {
 			return runDegraded(input, options)
 		}
 
@@ -235,30 +256,20 @@ function ParseTask({
 	return writeRawStdout(state.result)
 }
 
-async function resolveWOFPath(options: ParseOptions): Promise<string> {
-	const { requireWOFPath } = await import("#resolver-backend")
-
-	try {
-		return await requireWOFPath(options.resolveDB)
-	} catch (error) {
-		throw new CommandError(errorMessage(error), { cause: error })
-	}
-}
-
-async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
+async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | null> {
 	const { $public } = await import("#env")
 	const dbPath = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
-	if (!dbPath) return undefined
+	if (!dbPath) return null
 
 	try {
-		if (!(await pathExists(dbPath))) return undefined
+		if (!(await pathExists(dbPath))) return null
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst")
 		const { matcher } = await buildFSTFromWOF({ dbPath })
 
 		return matcher
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -273,47 +284,16 @@ async function resolveWithCandidates(
 	options: ParseOptions,
 	routedAway = false
 ): Promise<AddressTree> {
-	const opts: {
-		candidatesPerLookup?: number
-		defaultCountry?: string
-		adminCoherence?: boolean
-		postcodeCountryCoherence?: boolean
-		postcodeShapeCoherence?: boolean
-		postcodeContainmentCoherence?: boolean
-	} = {}
+	const opts: ResolveOpts = cliResolveSwitches(options)
 
 	if (options.candidates !== undefined) {
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
-	// The resolver enables postcode-country coherence by default, so only the opt-out is passed.
-	if (options.postcodeCountryCoherence === false) {
-		opts.postcodeCountryCoherence = false
-	}
+	const scope = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options)
 
-	// The resolver disables shape and containment coherence by default, so only the opt-in is passed.
-	if (options.postcodeShapeCoherence === true) {
-		opts.postcodeShapeCoherence = true
-	}
-
-	if (options.postcodeContainmentCoherence === true) {
-		opts.postcodeContainmentCoherence = true
-	}
-
-	const { resolveCandidateDBPath } = await import("#resolver-backend")
-
-	const dc =
-		routedAway && !options.defaultCountry
-			? undefined
-			: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
-
-	if (dc) {
-		opts.defaultCountry = dc
-	}
-
-	// The resolver enables admin coherence by default, so only the opt-out is passed.
-	if (options.adminCoherence === false) {
-		opts.adminCoherence = false
+	if (scope) {
+		opts.defaultCountry = scope
 	}
 
 	return resolver.resolveTree(tree, opts)
@@ -337,7 +317,7 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 
 	// A configured candidate database needs no WOF admin path.
 	const lookup = await createResolverBackend(mod, {
-		wofPaths: (await resolveCandidateDBPath()) ? "" : await resolveWOFPath(options),
+		wofPaths: (await resolveCandidateDBPath()) ? "" : await requireCommandWOFPath(options),
 	})
 
 	try {
@@ -404,7 +384,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  */
 async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
-	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
+	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
 	const result = await pipeline(input, { locale: options.locale })
 	emitFaultWarnings(result)
 
@@ -439,82 +419,45 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	const wantAlternatives = options.candidates !== undefined
 
-	const resolveOpts: {
-		candidatesPerLookup?: number
-		defaultCountry?: string
-		postcodeCountryCoherence?: boolean
-		postcodeShapeCoherence?: boolean
-		postcodeContainmentCoherence?: boolean
-	} = {}
+	const resolveOpts: ResolveOpts = cliResolveSwitches(options)
 
 	if (wantAlternatives) {
 		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
 	}
 
-	// The resolver enables postcode-country coherence by default, so only the opt-out is passed.
-	if (options.resolve && options.postcodeCountryCoherence === false) {
-		resolveOpts.postcodeCountryCoherence = false
-	}
-
-	// The resolver disables shape and containment coherence by default, so only the opt-in is passed.
-	if (options.resolve && options.postcodeShapeCoherence === true) {
-		resolveOpts.postcodeShapeCoherence = true
-	}
-
-	if (options.resolve && options.postcodeContainmentCoherence === true) {
-		resolveOpts.postcodeContainmentCoherence = true
-	}
-
 	// The default country keeps a bare region abbreviation such as `NY` from resolving to a foreign homonym.
 	if (options.resolve) {
-		const { resolveCandidateDBPath } = await import("#resolver-backend")
 		// An input routed to another script family's classifier does not inherit the locale's country.
 		// An explicit `--default-country` still applies.
 		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
 
-		const dc =
-			routedAway && !options.defaultCountry
-				? undefined
-				: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
+		const scope = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options)
 
-		if (dc) {
-			resolveOpts.defaultCountry = dc
+		if (scope) {
+			resolveOpts.defaultCountry = scope
 		}
 	}
 
-	const pipelineOpts: {
-		locale?: string
-		resolveOpts?: {
-			candidatesPerLookup?: number
-			defaultCountry?: string
-			postcodeCountryCoherence?: boolean
-			postcodeShapeCoherence?: boolean
-			postcodeContainmentCoherence?: boolean
-		}
-	} = {
-		locale: options.locale,
-	}
-
-	if (
-		resolveOpts.candidatesPerLookup !== undefined ||
-		resolveOpts.defaultCountry !== undefined ||
-		resolveOpts.postcodeCountryCoherence !== undefined ||
-		resolveOpts.postcodeShapeCoherence !== undefined ||
-		resolveOpts.postcodeContainmentCoherence !== undefined
-	) {
-		pipelineOpts.resolveOpts = resolveOpts
-	}
+	const pipelineOpts: { locale: string; resolveOpts: ResolveOpts } = { locale: options.locale, resolveOpts }
 
 	// The `undefined` value keeps the pipeline's default street-evidence rerank.
 	// A `false` value disables it.
-	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
+	const streetEvidence = options.streetEvidenceRerank ? "auto" : "none"
 
 	const { createRuntimePipeline } = await import("#index")
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
-			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
+
+			const pipeline = createRuntimePipeline({
+				classifier: classifier ?? undefined,
+				resolver,
+				fst: fst ?? "auto",
+				streetEvidence,
+				poiQueryKind: options.poi ? "extract" : "none",
+			})
+
 			const result = await pipeline(input, pipelineOpts)
 			emitFaultWarnings(result)
 
@@ -525,7 +468,14 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	}
 
 	const fst = await tryBuildFST(options)
-	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence, poiQueryKind: options.poi })
+
+	const pipeline = createRuntimePipeline({
+		classifier: classifier ?? undefined,
+		fst: fst ?? "auto",
+		streetEvidence,
+		poiQueryKind: options.poi ? "extract" : "none",
+	})
+
 	const result = await pipeline(input, pipelineOpts)
 	emitFaultWarnings(result)
 
@@ -613,9 +563,17 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>
-				collect(createRuntimePipeline({ classifier, resolver, poiQueryKind: options.poi }))
+				collect(
+					createRuntimePipeline({
+						classifier: classifier ?? undefined,
+						resolver,
+						poiQueryKind: options.poi ? "extract" : "none",
+					})
+				)
 			)
-		: await collect(createRuntimePipeline({ classifier, poiQueryKind: options.poi }))
+		: await collect(
+				createRuntimePipeline({ classifier: classifier ?? undefined, poiQueryKind: options.poi ? "extract" : "none" })
+			)
 
 	const lines: string[] = [
 		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,
@@ -674,9 +632,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
  *
  * Load warnings go to stderr, so stdout stays parseable.
  */
-async function tryLoadNeural(
-	options: ParseOptions
-): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
+async function tryLoadNeural(options: ParseOptions): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | null> {
 	return loadClassifierTolerant(options.locale, {
 		modelPath: options.model,
 		tokenizerPath: options.tokenizer,

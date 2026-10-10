@@ -1,12 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- * @file Org-name similarity primitives for the NPPES benchmark's org-name entity truth.
- */
-
-export { orgTokens } from "#tools/shared"
-
 /**
  * Jaccard floor at or above which two {@linkcode orgTokens} sets count as the
  * same organization — the gold-set threshold.

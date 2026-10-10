@@ -8,7 +8,7 @@
  *   artifact back through the production reader.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readLayerCoverage, readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
@@ -184,7 +184,7 @@ describe("buildUPRNLayer (fixture)", () => {
 
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(surveyed?.completeness).toBe(1)
-		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 2)).toBeNull()
 	})
 
 	it("fails loudly on header drift", async () => {

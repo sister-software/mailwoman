@@ -7,7 +7,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
@@ -90,19 +90,19 @@ interface AssembledCorpusManifest {
 }
 
 /**
- * The assembled corpus manifest's `total_rows`, or `undefined` when no manifest sits at `path`.
+ * The assembled corpus manifest's `total_rows`, or `null` when no manifest sits at `path`.
  *
  * A build without a corpus manifest and a flat-layout entry without one both read
  * `undefined`. {@linkcode refuseShareAlike} then skips the overlay comparison
  * rather than reading a missing file as a corpus with no overlay rows.
  */
-async function assembledRowCount(path: PathBuilderLike): Promise<number | undefined> {
+async function assembledRowCount(path: PathBuilderLike): Promise<number | null> {
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
 	try {
-		return (await readLocalJSONFile<AssembledCorpusManifest>(path)).total_rows
+		return (await readLocalJSONFile<AssembledCorpusManifest>(path)).total_rows ?? null
 	} catch {
-		return undefined
+		return null
 	}
 }
 
@@ -118,7 +118,7 @@ async function assembledRowCount(path: PathBuilderLike): Promise<number | undefi
  * An unreadable or absent `MANIFEST.json` throws as well.
  * A corpus whose license set cannot be read is an unanswered question rather than a clean one.
  *
- * `corpusRows` is the assembled corpus manifest's own `total_rows`, or `undefined`
+ * `corpusRows` is the assembled corpus manifest's own `total_rows`, or `null`
  * when the upload found no nested corpus directory to read one from.
  * It decides whether the license set answers for every row.
  */
@@ -126,7 +126,7 @@ async function refuseShareAlike(
 	version: string,
 	manifestPath: PathBuilderLike,
 	allow: boolean,
-	corpusRows: number | undefined
+	corpusRows: number | null
 ): Promise<void> {
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 	const { stringifyJSON } = await import("@mailwoman/core/json")

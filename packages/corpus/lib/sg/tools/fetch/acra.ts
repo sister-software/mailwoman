@@ -7,7 +7,7 @@
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -59,7 +59,7 @@ async function readJSON<T>(url: string): Promise<T> {
  *
  * The function returns `undefined` when polling runs out of attempts.
  */
-async function signedURLFor(datasetID: string): Promise<string | undefined> {
+async function signedURLFor(datasetID: string): Promise<string | null> {
 	await readJSON(`${DOWNLOAD_API}/${datasetID}/initiate-download`)
 
 	for (let attempt = 0; attempt < POLL_ATTEMPTS; attempt++) {
@@ -69,7 +69,7 @@ async function signedURLFor(datasetID: string): Promise<string | undefined> {
 		if (poll.data?.status === "DOWNLOAD_SUCCESS" && poll.data.url) return poll.data.url
 	}
 
-	return undefined
+	return null
 }
 
 function filenameFor(name: string, datasetID: string): string {

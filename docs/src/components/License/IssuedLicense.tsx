@@ -6,13 +6,13 @@
  *   `.env` fragment and install commands. Every answer the worker returns lives only in the DOM.
  */
 
+import type { IssuedClaim } from "@mailwoman/license-worker/claim-interface"
 import {
 	CLAIM_INTERVAL_MS,
 	fetchClaim,
 	initialClaimState,
 	nextClaimState,
 	type ClaimState,
-	type IssuedClaim,
 } from "@mailwoman/license-worker/client/claim"
 import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "@mailwoman/license-worker/client/constants"
 import { useClipboard } from "@mailwoman/react"
@@ -143,7 +143,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 		if (!sessionID || state.phase !== "polling") return undefined
 
 		const controller = new AbortController()
-		let timer: ReturnType<typeof setTimeout> | undefined
+		let timer: ReturnType<typeof setTimeout> | null = null
 
 		const poll = async () => {
 			const event = await fetchClaim(sessionID, controller.signal)
@@ -159,7 +159,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 		return () => {
 			controller.abort()
 
-			if (timer !== undefined) {
+			if (timer) {
 				clearTimeout(timer)
 			}
 		}

@@ -84,8 +84,8 @@ export async function readPackageManifests(context: RepoContext): Promise<Packag
  * The manifest whose directory contains `file`, taking the deepest one
  * so a nested workspace wins over its parent.
  */
-function owningManifest(manifests: readonly PackageManifest[], file: string): PackageManifest | undefined {
-	let owner: PackageManifest | undefined
+function owningManifest(manifests: readonly PackageManifest[], file: string): PackageManifest | null {
+	let owner: PackageManifest | null = null
 
 	for (const manifest of manifests) {
 		if (!file.startsWith(`${manifest.dir}/`)) continue

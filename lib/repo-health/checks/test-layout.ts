@@ -5,7 +5,7 @@
  * @file Enforce that each test sits beside the module it covers.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, relative, resolvePath, sep } from "path-ts"
 
@@ -64,6 +64,8 @@ export const testLayoutCheck: RepoCheck = {
 							severity: DiagnosticSeverity.Error,
 							message: "a test belongs beside the module it covers; this directory holds no module",
 							file,
+							line: null,
+							details: null,
 						})
 					}
 
@@ -80,6 +82,8 @@ export const testLayoutCheck: RepoCheck = {
 								? "a Playwright spec belongs under test/{browser,build,e2e}/"
 								: "a .spec.ts file needs a playwright.config.ts in its workspace; a Vitest file is named .test.ts",
 							file,
+							line: null,
+							details: null,
 						})
 					}
 				}

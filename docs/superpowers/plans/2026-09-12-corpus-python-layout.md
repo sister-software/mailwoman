@@ -22,11 +22,11 @@
 ## Global Constraints
 
 - Every command runs from `corpus-python/` unless the step says otherwise.
-- Run tests with `uv run --extra dev --extra train pytest tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task is not done below 983.
+- Run tests with `uv run --extra dev --extra train pytest corpus-python/tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task is not done below 983.
 - Never launch a training run. No step in this plan calls `modal run` against a GPU function.
 - Source lives under `src/mailwoman_train/`, and tests mirror it under `tests/mailwoman_train/`.
 - Acronyms capitalize as whole components in identifiers: `parseJSON` rather than `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter` rather than `OnnxExporter`.
-- Run `uvx ruff@0.16.5 check --fix .` and `uvx ruff@0.16.5 format .` after every move. Ruff's `I` rule re-sorts imports, and CI fails if they are left unsorted.
+- Run `uv run --extra dev ruff check --fix corpus-python` and `uv run --extra dev ruff format corpus-python` after every move. Ruff's `I` rule re-sorts imports, and CI fails if they are left unsorted.
 - A comment states an invariant, a constraint, or why an obvious implementation is unsafe. Move history to the commit message. When moving a docstring that carries a measured number, the number travels with it.
 - No module in `src/mailwoman_train/` exceeds 500 lines, and no function exceeds 120.
 - Commit after every task. Use `--no-verify` only when the pre-commit hook's Node half is unavailable in the worktree.
@@ -192,7 +192,7 @@ def test_piece_span_is_declared_in_types() -> None:
 - [ ] **Step 3: Run it to confirm it fails**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
 Expected: both tests fail. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598, and no other sites. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
@@ -249,8 +249,8 @@ Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 56
 - [ ] **Step 7: Run the new test and the full suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_import_hygiene.py -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
 Expected: the hygiene test passes, and the suite reports at least **984 passed** (983 plus the two new tests, minus none).
@@ -258,7 +258,7 @@ Expected: the hygiene test passes, and the suite reports at least **984 passed**
 - [ ] **Step 8: Lint, type-check, commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "refactor(train): move PieceSpan to types.py and remove the deferred imports"
@@ -337,7 +337,7 @@ def test_builder_machinery_answers_from_corpora() -> None:
 - [ ] **Step 2: Run it to confirm it fails**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_text_normalize.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_text_normalize.py -q
 ```
 
 Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.text'`.
@@ -383,7 +383,7 @@ Rewrite each to name `.text.kana`, `.text.normalize` or `.corpora.builder` per t
 - [ ] **Step 7: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
 Expected: at least **989 passed** (984 from Task 1 plus the five new tests).
@@ -391,7 +391,7 @@ Expected: at least **989 passed** (984 from Task 1 plus the five new tests).
 - [ ] **Step 8: Lint, type-check, commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "refactor(train): give the shared CJK text helpers and row machinery a home"
@@ -479,7 +479,7 @@ Rewrite each hit to the new dotted path. A module that moved down one level need
 - [ ] **Step 3: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
 Expected: at least **989 passed**. A failure here points to exactly one import that still uses the old path. Fix it and re-run before moving the next group.
@@ -487,7 +487,7 @@ Expected: at least **989 passed**. A failure here points to exactly one import t
 - [ ] **Step 4: Lint and commit the group**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 git add -A
 git commit -m "refactor(train): move <group> into its role directory"
 ```
@@ -542,7 +542,7 @@ Add `encode_with_features` to `__all__` if the module declares one.
 - [ ] **Step 4: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/tokenizer/__init__.py src/mailwoman_train/tokenizer/features.py
 ```
 
@@ -551,7 +551,7 @@ Expected: at least 989 passed, and both files under 500 lines.
 - [ ] **Step 5: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 git add -A
 git commit -m "refactor(tokenizer): split the feature-channel encode path out of the package index"
 ```
@@ -623,7 +623,7 @@ If `load_config(None, strict=False)` does not yield a usable default, read `conf
 - [ ] **Step 2: Run it and record the baseline**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_encoder_split_parity.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_encoder_split_parity.py -q
 ```
 
 Expected: pass before any split. Save the logits to a file the split can diff against:
@@ -685,7 +685,7 @@ Same treatment for the 415-line `forward`: one private method per stage (embed, 
 - [ ] **Step 7: Verify the tensors are identical**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_encoder_split_parity.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_encoder_split_parity.py -q
 uv run python - <<'PY' > /tmp/encoder-after.txt
 import torch
 from tests.mailwoman_train.test_encoder_split_parity import _tiny_model
@@ -703,7 +703,7 @@ Expected: `IDENTICAL`. A diff here means a sub-builder changed an initialization
 - [ ] **Step 8: Run the suite and check sizes**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/nn/*.py
 ```
 
@@ -712,7 +712,7 @@ Expected: at least 990 passed; every `nn/` module under 500 lines.
 - [ ] **Step 9: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "refactor(nn): split the encoder into blocks, char CNN, heads and serialization"
@@ -764,7 +764,7 @@ Each hit imports a now-public name from a new module. `test_resume_lr_restamp.py
 - [ ] **Step 5: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/train/trainer.py
 ```
 
@@ -773,7 +773,7 @@ Expected: at least 990 passed. `trainer.py` should now be near 400 lines, holdin
 - [ ] **Step 6: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "refactor(train): move schedules, noise, metrics and checkpointing out of the loop"
@@ -826,7 +826,7 @@ def test_train_callback_protocol_declares_the_expected_members() -> None:
 - [ ] **Step 2: Run it to confirm it fails**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_protocols.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_protocols.py -q
 ```
 
 Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.protocols'`.
@@ -892,8 +892,8 @@ class TrainCallback(Protocol):
 - [ ] **Step 4: Run the test and the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_protocols.py -q
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_protocols.py -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
 Expected: pass; at least 992 passed overall.
@@ -901,7 +901,7 @@ Expected: pass; at least 992 passed overall.
 - [ ] **Step 5: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "feat(train): declare the country, corpus-builder and callback interfaces"
@@ -971,7 +971,7 @@ def test_every_shipped_callback_satisfies_the_protocol() -> None:
 - [ ] **Step 2: Run it to confirm it fails**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_train_callbacks.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_train_callbacks.py -q
 ```
 
 Expected: fail with `ImportError: cannot import name 'callbacks'`.
@@ -1013,7 +1013,7 @@ Replace the inline logging, eval, checkpoint and trackio blocks with hook calls 
 - [ ] **Step 5: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/train/trainer.py
 ```
 
@@ -1030,7 +1030,7 @@ If `cmd_smoke` (former `cli.py:270`) offers a CPU-only smoke path, run it. This 
 - [ ] **Step 7: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "feat(train): drive logging, eval, checkpointing and trackio through callbacks"
@@ -1087,7 +1087,7 @@ def test_an_unknown_code_names_the_known_ones() -> None:
 - [ ] **Step 2: Run it to confirm it fails**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_country_registry.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_country_registry.py -q
 ```
 
 Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.countries'`.
@@ -1193,7 +1193,7 @@ grep -rn 'build_jp_slice\|build_kr_slice\|build_tw_slice\|build_cjk_overlay\|jp_
 - [ ] **Step 7: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
 Expected: at least 997 passed.
@@ -1201,7 +1201,7 @@ Expected: at least 997 passed.
 - [ ] **Step 8: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "refactor(train): key per-country code by country under countries/"
@@ -1266,7 +1266,7 @@ def test_each_subcommand_accepts_help(name: str) -> None:
 - [ ] **Step 2: Run it to confirm it fails**
 
 ```bash
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_cli_commands.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_cli_commands.py -q
 ```
 
 Expected: fail with `ImportError: cannot import name 'build_parser' from 'mailwoman_train.cli'`.
@@ -1297,7 +1297,7 @@ Expected: both print help and exit 0.
 - [ ] **Step 6: Run the suite**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ls scripts/
 ```
 
@@ -1314,7 +1314,7 @@ Expected: exit 0, run with the system `python3` and no `uv`. This is the check t
 - [ ] **Step 8: Commit**
 
 ```bash
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
 git commit -m "refactor(cli): one file per subcommand, absorbing the one-off scripts"
@@ -1535,7 +1535,7 @@ Transcribe each into a `CorpusVersion`. Read every one, because the generator pr
 - [ ] **Step 4: Run the parity test**
 
 ```bash
-uv run --extra dev --extra train pytest tests/launch/test_sync_table_parity.py -q
+uv run --extra dev --extra train pytest corpus-python/tests/launch/test_sync_table_parity.py -q
 ```
 
 Expected: pass. On failure, the output reports the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
@@ -1560,8 +1560,8 @@ Step 4 currently reads "Add a `sync_v0XX` to `train_remote.py`, mirroring `sync_
 - [ ] **Step 8: Run everything and commit**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
-uvx ruff@0.16.5 check --fix . && uvx ruff@0.16.5 format .
+uv run --extra dev --extra train pytest corpus-python/tests -q
+uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 git add -A
 git commit -m "refactor(launch): drive corpus sync from a table instead of 57 clones"
 ```
@@ -1575,7 +1575,7 @@ git commit -m "refactor(launch): drive corpus sync from a table instead of 57 cl
 - Move: 74 files under `tests/mailwoman_train/`
 - Create: `src/mailwoman_train/py.typed`, `packages/repo-health/lib/checks/python-prefix-directories.ts`
 - Delete: `src/mailwoman_corpus/`
-- Modify: `corpus-python/pyproject.toml`, `packages/repo-health/lib/registry.ts`
+- Modify: `pyproject.toml` (now at the repository root), `packages/repo-health/lib/registry.ts`
 
 **Interfaces:**
 
@@ -1589,7 +1589,7 @@ Move each test beside the module it covers: `test_crf.py` to `tests/mailwoman_tr
 - [ ] **Step 2: Run the suite from the new tree**
 
 ```bash
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
 Expected: the same count as after Task 13. A drop means a test file was moved without its fixture.
@@ -1636,14 +1636,12 @@ Expected: zero groups.
 - [ ] **Step 7: Run the full acceptance set**
 
 ```bash
-cd corpus-python
-uv run --extra dev --extra train pytest tests -q
+uv run --extra dev --extra train pytest corpus-python/tests -q
 uv run mypy
-uvx ruff@0.16.5 check corpus-python
-uvx ruff@0.16.5 format --check corpus-python
-uv run bandit -c pyproject.toml -r src
-python3 scripts/verify_toolchain.py
-cd ..
+uv run --extra dev ruff check corpus-python
+uv run --extra dev ruff format --check corpus-python
+uv run --extra dev bandit -c pyproject.toml -r corpus-python/src
+uv run python corpus-python/scripts/verify_toolchain.py
 yarn health
 yarn test
 ```
@@ -1653,9 +1651,8 @@ Every one must pass. `yarn health` and `yarn test` need `node_modules` in the wo
 - [ ] **Step 8: Verify the size and hygiene criteria**
 
 ```bash
-cd corpus-python
-find src/mailwoman_train -name '*.py' -exec wc -l {} + | sort -rn | head -5
-uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
+find corpus-python/src/mailwoman_train -name '*.py' -exec wc -l {} + | sort -rn | head -5
+uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
 Expected: no module over 500 lines; the hygiene test passes.

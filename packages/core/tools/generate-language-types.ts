@@ -24,7 +24,7 @@
 import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
-import { open } from "#fs/readers"
+import { open } from "#fs/readers/stat"
 import { stringifyJSON } from "#json"
 import { resourceDictionaryPath, workspacePath } from "#paths"
 
@@ -35,7 +35,7 @@ export interface GenerateLanguageTypesOptions {
 	/**
 	 * Output path override.
 	 *
-	 * Default: `core/resources/languages/types.gen.ts` (the committed types).
+	 * @defaultValue `core/resources/languages/types.gen.ts` (the committed types).
 	 */
 	out?: string
 }
@@ -74,7 +74,7 @@ export async function generateLanguageTypes(
 		const labelsConcatenated = columns[2] as string
 		// The two 639-2 forms agree for 163 languages.
 		// The 20 languages with differing forms receive a distinct code.
-		const alpha3t = (columns[3] as string | undefined) ?? ""
+		const alpha3t = (columns[3] as string | null) ?? ""
 
 		const labels = labelsConcatenated.split("; ")
 

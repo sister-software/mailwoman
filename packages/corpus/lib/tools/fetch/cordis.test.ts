@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -26,8 +26,8 @@ import { writeManifest } from "#tools/fetch/download"
 /**
  * An `APIClient` over a scripted transport, with the dispatched URLs recorded on `calls`.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "cordis test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -133,7 +133,7 @@ describe("isCORDISArchiveCurrent", () => {
 		expect(await isCORDISArchiveCurrent(recorded, { lastModified: null, contentLength: null }, path, false)).toBe(false)
 
 		expect(
-			await isCORDISArchiveCurrent(undefined, { lastModified: recorded.last_modified, contentLength: 10 }, path, false)
+			await isCORDISArchiveCurrent(null, { lastModified: recorded.last_modified, contentLength: 10 }, path, false)
 		).toBe(false)
 	})
 
@@ -177,7 +177,7 @@ describe("downloadCORDIS", () => {
 		const summary = await downloadCORDIS(client, { outputDir: scratch.path, programmes: ["h2020"] })
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
-		// The HEAD alone.
+		// Only the HEAD.
 		expect(client.calls).toHaveLength(1)
 		expect(await readLocalTextFile(path)).toBe("PK archive")
 	})

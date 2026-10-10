@@ -1,16 +1,16 @@
 """Address phenomena measured over corpus rows: unary predicates over one row, relational ones over a pair.
 
 The phenomenon ids are ``ConventionClaimID`` values from ``packages/codex/lib/address/convention-claims.ts``.
-That module records what a published layout *says* (a convention observation). This module records
+That module records what a published layout *states* (a convention observation). This module records
 what a corpus row *contains* (a corpus observation). The two share ids so a report can place them side
 by side. Each is evidence about its own layer only. What a trained model does with either is a decoder
-observation, which the contrast board measures.
+observation. The contrast board measures that.
 
-A row is read as a list of ``(tag, start, end)`` spans over its ``raw`` text. A built corpus row carries
-those spans (``span_starts``, ``span_ends``, ``span_tags``). A canonical adapter row carries a component
+A row is read as a list of ``(tag, start, end)`` spans over its ``raw`` text. A built corpus row holds
+those spans (``span_starts``, ``span_ends``, ``span_tags``). A canonical adapter row holds a component
 dict instead, and :func:`spans_from_components` locates each value in ``raw``.
 
-Every unary predicate returns ``None`` when the row does not carry the components the phenomenon is
+Every unary predicate returns ``None`` when the row does not hold the components the phenomenon is
 about, and a short string stating which form the row exercises when it does. The string is the
 observation. A caller counting rows counts each form, so a row exercising the opposite order is
 counted under its own form.
@@ -168,7 +168,7 @@ def streetless_premise_identity(row: Row) -> str | None:
 
 
 def premise_subdivision_present(row: Row) -> str | None:
-    """The sorted, ``+``-joined subdivision tags the row carries, such as ``unit`` or ``entrance+unit``."""
+    """The sorted, ``+``-joined subdivision tags the row holds, such as ``unit`` or ``entrance+unit``."""
     present = sorted({span.tag for span in row.spans if span.tag in PREMISE_SUBDIVISION_TAGS})
     return "+".join(present) if present else None
 
@@ -187,7 +187,7 @@ def fixed_width_numeric_postcode(row: Row) -> str | None:
 
 
 def planning_word_names_locality(row: Row) -> str | None:
-    """The lowercased planning term inside the first locality or dependent-locality span that carries one."""
+    """The lowercased planning term inside the first locality or dependent-locality span that holds one."""
     for span in row.spans:
         if span.tag in ("locality", "dependent_locality"):
             match = _PLANNING.search(row.text(span))
@@ -223,8 +223,8 @@ def row_phenomena(row: Row) -> dict[str, str]:
 def reordered_pairs(first: Sequence[str], second: Sequence[str]) -> list[tuple[str, str]]:
     """The component pairs whose relative order differs between two tag sequences.
 
-    The same rule as ``reorderedPairs`` in ``convention-claims.ts``: only tags both sequences carry are
-    compared, and a single moved component is an ordering change.
+    The same rule as ``reorderedPairs`` in ``convention-claims.ts``: only tags present in both sequences
+    are compared, and a single moved component is an ordering change.
     """
     shared = [tag for i, tag in enumerate(first) if tag in second and first.index(tag) == i]
     return [
@@ -243,7 +243,7 @@ def tag_order(row: Row) -> list[str]:
 def ordering_reverses_with_script(a: Row, b: Row) -> str | None:
     """For two renderings of one address: ``reordered`` or ``same-order``, or None when the pair does not qualify.
 
-    The pair qualifies when both rows carry the same set of component tags and their raw text is in
+    The pair qualifies when both rows hold the same set of component tags and their raw text is in
     different scripts. The caller pairs renderings of the same address, and this function compares
     their order.
     """
@@ -255,7 +255,7 @@ def ordering_reverses_with_script(a: Row, b: Row) -> str | None:
 
 
 def numeric_shape_across_contexts(a: Row, b: Row) -> str | None:
-    """``<n>-digit:<A>/<B>`` when both rows carry an all-digit postcode of one width from two jurisdictions.
+    """``<n>-digit:<A>/<B>`` when both rows hold an all-digit postcode of one width from two jurisdictions.
 
     The phenomenon is the same numeric shape under different surrounding grammar. A pair is material
     for a decoder test. Whether the decoder labels both rows correctly is the test's result.

@@ -7,8 +7,8 @@
  * An `ad:Address` states its street, its postcode and its place names by reference, and states the
  * parts of its number as typed designators. Both forms can hold a value the reader asked for and
  * could not read: a reference whose target the service never served, and a designator the publisher
- * marked `xsi:nil`. Turning either into an empty component would publish an address the publisher
- * did not state, so each raises and names what it could not read.
+ * marked `xsi:nil`. An empty component for either would publish an address the publisher did not
+ * state, so each raises and names what it could not read.
  *
  * The errors live beside {@linkcode "#inspire/address"} because every publisher of this theme writes
  * both forms, so an adapter for the next one reports the same two conditions in the same words.
@@ -26,7 +26,7 @@
  * unresolved reference and an absent one are the same observation.
  */
 export class UnresolvedComponentReferenceError extends Error {
-	constructor(adapterID: string, addressID: string | undefined, href: string) {
+	constructor(adapterID: string, addressID: string | null, href: string) {
 		super(
 			`${adapterID} adapter: address ${addressID ?? "(no gml:id)"} carries ad:component xlink:href="${href}", which resolves to no feature`
 		)
@@ -43,7 +43,7 @@ export class UnresolvedComponentReferenceError extends Error {
  * `voidDesignatorTypes` separates them, and this error reports the first case.
  */
 export class VoidDesignatorError extends Error {
-	constructor(adapterID: string, addressID: string | undefined, type: string) {
+	constructor(adapterID: string, addressID: string | null, type: string) {
 		super(`${adapterID} adapter: address ${addressID ?? "(no gml:id)"} marks its ${type} designator void`)
 
 		this.name = "VoidDesignatorError"
@@ -54,11 +54,12 @@ export class VoidDesignatorError extends Error {
  * Raised when a publication's archive cannot answer what the adapter asked it for.
  *
  * An archive holding no component feature is not a smaller publication.
- * Every address references a fixed set of components, so an empty index turns
- * each row into a row with no street rather than into fewer rows, which is the
- * absence the repository's partial-read rule refuses.
+ * Every address references a fixed set of components, so an empty index turns each
+ * row into a row with no street rather than into fewer rows.
  *
- * The adapter id carries which publisher failed, so one class serves every
+ * That is the absence the repository's partial-read rule refuses.
+ *
+ * The adapter id records which publisher failed, so one class serves every
  * publisher that ships its theme as one archive.
  */
 export class InspireArchiveError extends Error {

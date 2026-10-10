@@ -11,7 +11,7 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePath, movePath } from "@mailwoman/core/fs/writers"
 

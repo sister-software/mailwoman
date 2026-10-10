@@ -277,7 +277,7 @@ async function runFix(
 	io: DispatchIO
 ): Promise<number> {
 	const id = targets[0]
-	const fix = id ? findFix(id) : undefined
+	const fix = id ? findFix(id) : null
 
 	if (!fix) {
 		io.stderr(
@@ -407,7 +407,7 @@ async function runLiteralRepair(ref: string, dryRun: boolean, io: DispatchIO): P
 type MoveFile = ModuleMove[] | { moves: ModuleMove[]; manifests?: Array<{ file: string; from: string }> }
 
 /**
- * `mwops health move` — move modules named on the command line or in a JSON file of `{from, to}`
+ * `mwops health move` — move the modules listed on the command line or in a JSON file of `{from, to}`
  * pairs, rewriting every specifier, manifest target and path literal the move invalidates.
  *
  * The plan is proven before anything is written, as with `health fix`.
@@ -491,7 +491,7 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 
 	if (id === "comments") return runComments(rest.slice(1), options, io)
 
-	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== undefined)
+	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== null)
 
 	if (id === "all" && !checks.length) {
 		io.stdout(options.json === true ? "[]\n" : "no health checks registered yet\n")

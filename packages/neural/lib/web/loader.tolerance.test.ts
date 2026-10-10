@@ -25,7 +25,7 @@ import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -134,12 +134,12 @@ function baseOpts(fetchImpl: typeof fetch, postcodeBinaryURLs: readonly string[]
 		modelURL: MODEL_URL,
 		tokenizerURL: TOKENIZER_URL,
 		// Skip the sibling-lexicon fetches — irrelevant to the postcode-tolerance path under test.
-		gazetteerLexiconURL: null,
-		countryLexiconURL: null,
-		streetTypeLexiconURL: null,
-		localitySurfaceLexiconURL: null,
+		gazetteerLexicon: "none" as const,
+		countryLexicon: "none" as const,
+		streetTypeLexicon: "none" as const,
+		localitySurfaceLexicon: "none" as const,
 		postcodeBinaryURLs,
-		runner: { useWebGPU: false },
+		pairIndexURLs: [],
 		fetchImpl,
 	}
 }

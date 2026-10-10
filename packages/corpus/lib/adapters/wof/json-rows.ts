@@ -108,8 +108,9 @@ export interface NameSlotOptions {
 	/**
 	 * Canonical surface for the record's own `"default"` slot.
 	 *
-	 * Default `rec.name` verbatim.
 	 * The admin adapter substitutes the OpenCage-canonical {@link COUNTRY_DISPLAY_NAME} for country records.
+	 *
+	 * @defaultValue `rec.name` verbatim.
 	 */
 	canonicalName?: (rec: WOFRecord) => string
 }

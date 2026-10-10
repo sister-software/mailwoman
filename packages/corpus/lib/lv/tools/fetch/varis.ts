@@ -15,7 +15,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -88,7 +88,8 @@ export interface DownloadVarisOptions {
 	outputDir: PathBuilderLike
 	/**
 	 * The tables to download.
-	 * Defaults to every table the adapter reads.
+	 *
+	 * @defaultValue every table the adapter reads.
 	 */
 	tables?: readonly VarisTable[]
 	force?: boolean

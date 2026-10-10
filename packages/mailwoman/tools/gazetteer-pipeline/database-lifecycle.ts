@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

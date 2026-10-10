@@ -139,7 +139,7 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 				tag: `${pn.tag} → ${cn.tag}`,
 				primaryNode: pn,
 				compareNode: cn,
-				delta: diffConfidence(cn.confidence, pn.confidence),
+				delta: diffConfidence(cn.confidence ?? null, pn.confidence ?? null),
 				diffKind: "tag-changed",
 			})
 
@@ -150,7 +150,7 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 			tag: pn.tag,
 			primaryNode: pn,
 			compareNode: cn,
-			delta: diffConfidence(cn.confidence, pn.confidence),
+			delta: diffConfidence(cn.confidence ?? null, pn.confidence ?? null),
 			diffKind: "match",
 		})
 	}
@@ -182,7 +182,7 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 	return rows
 }
 
-function diffConfidence(c: number | undefined, p: number | undefined): number | null {
+function diffConfidence(c: number | null, p: number | null): number | null {
 	if (c == null || p == null) return null
 
 	return Number.parseFloat((c - p).toFixed(3))

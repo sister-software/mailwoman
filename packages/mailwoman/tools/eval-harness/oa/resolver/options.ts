@@ -5,8 +5,11 @@
  * @file The flag interface for the OpenAddresses real-point resolver eval.
  */
 
+import type { CaseNormalization } from "@mailwoman/core/pipeline"
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
 import type { PathBuilderLike } from "path-ts"
+
+import type { SwitchPin } from "#tools/eval-harness/switch-pin"
 
 /**
  * Options for {@linkcode oaResolverEval}.
@@ -14,7 +17,7 @@ import type { PathBuilderLike } from "path-ts"
  * Keys mirror the command's kebab flags (`--out-md` → `outMd`).
  * Booleans default off.
  *
- * Tri-states are paired on/off flags that eval legs pin (`adminCoherence`/`noAdminCoherence`).
+ * A switch an eval leg pins either way takes a {@link SwitchPin}.
  */
 export interface OAResolverEvalOptions {
 	/**
@@ -26,13 +29,14 @@ export interface OAResolverEvalOptions {
 	 */
 	addressPoints?: string
 	/**
-	 * Tri-state pin: force `adminCoherence` on.
+	 * Pins `adminCoherence`.
+	 * @defaultValue `"production"`
 	 */
-	adminCoherence?: boolean
+	adminCoherence?: SwitchPin
 	/**
 	 * Minimum anchor confidence to trust the anchor coordinate.
 	 *
-	 * Default 0.5.
+	 * @defaultValue `0.5`
 	 */
 	anchorMinConf?: number
 	/**
@@ -67,13 +71,13 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Database root for `cascade`.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT`
 	 */
 	dataRoot?: string
 	/**
 	 * Hard country filter for admin lookups (`none` disables).
 	 *
-	 * Default `US`.
+	 * @defaultValue `US`
 	 */
 	defaultCountry?: string
 	/**
@@ -83,7 +87,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Eval jsonl.
 	 *
-	 * Default `data/eval/external/openaddresses-us-sample.jsonl`.
+	 * @defaultValue `data/eval/external/openaddresses-us-sample.jsonl`
 	 */
 	eval?: string
 	/**
@@ -111,24 +115,16 @@ export interface OAResolverEvalOptions {
 	 */
 	modelCard?: string
 	/**
-	 * Tri-state pin: force `adminCoherence` off.
-	 */
-	noAdminCoherence?: boolean
-	/**
-	 * Tri-state pin: force `postcodeCountryCoherence` off, the leg that measures whether a
-	 * coherent (postcode, locality) pair overriding `defaultCountry` is byte-flat on a US panel.
-	 */
-	noPostcodeCountryCoherence?: boolean
-	/**
-	 * Tri-state pin: force `postcodeConsistency` off.
+	 * Pins `postcodeConsistency`.
+	 * @defaultValue `"production"`
 	 *
-	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices the cap without a sweep,
+	 * Paired with {@link postcodeConsistencyMaxMoveKm}, `"off"` prices the cap without a sweep,
 	 * because the rows whose answer differs from the shipped arm are exactly the ones the
 	 * pass touched and the coordinate distance is how far its fallback moved each.
 	 */
-	noPostcodeConsistency?: boolean
+	postcodeConsistency?: SwitchPin
 	/**
-	 * How far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point.
+	 * How far the {@link postcodeConsistency} pass may move a coordinate onto the postcode point.
 	 * Unset is the library default.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
@@ -146,16 +142,19 @@ export interface OAResolverEvalOptions {
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
-	 * Tri-state pin: force `normalizeCase` on.
-	 */
-	normalizeCase?: boolean
-	/**
-	 * Tri-state pin: force `postcodeCountryCoherence` on.
+	 * Pins the classifier's `caseNormalization`.
 	 *
-	 * The library default is on, so this is a no-op restatement kept because a check
-	 * leg saying what it graded is the point of a tri-state.
+	 * Unset leaves the library default.
 	 */
-	postcodeCountryCoherence?: boolean
+	caseNormalization?: CaseNormalization
+	/**
+	 * Pins `postcodeCountryCoherence`.
+	 * @defaultValue `"production"`
+	 *
+	 * `"off"` is the leg that measures whether a coherent (postcode, locality) pair
+	 * overriding `defaultCountry` is byte-flat on a US panel.
+	 */
+	postcodeCountryCoherence?: SwitchPin
 	/**
 	 * Write the aggregate JSON dump here.
 	 */
@@ -169,7 +168,7 @@ export interface OAResolverEvalOptions {
 	 */
 	outResolved?: string
 	/**
-	 * Per-row neural-vs-v0 outcome dump (every row).
+	 * Per-row neural-vs-v0 result dump (every row).
 	 */
 	outRows?: string
 	/**
@@ -214,17 +213,13 @@ export interface OAResolverEvalOptions {
 	 */
 	profileJSON?: string
 	/**
-	 * Tri-state pin: force `normalizeCase` off.
-	 */
-	rawCase?: boolean
-	/**
 	 * Candidate tokenizer.
 	 */
 	tokenizer?: PathBuilderLike
 	/**
 	 * WOF database list (comma-separated).
 	 *
-	 * Default admin + postcode-locality-intl.
+	 * @defaultValue admin + postcode-locality-intl.
 	 */
 	wof?: string
 }

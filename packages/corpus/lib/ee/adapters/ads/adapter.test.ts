@@ -15,9 +15,9 @@ const scratch = useScratchDir("ads")
  * Ten `AD.Address` features as the service's `application/json` writer emitted them on
  * 2026-10-02, one per line with the `FeatureCollection` envelope dropped.
  *
- * Three are street addresses in a settlement unit, two are street addresses in a town
- * whose settlement slot is `unpopulated`, two reference an address area rather than a
- * thoroughfare, and three carry a named site and no thoroughfare at all.
+ * Three are street addresses in a settlement unit, two are street addresses in
+ * a town whose settlement slot is `unpopulated`, two reference an address area
+ * rather than a thoroughfare, and three hold a site name and no thoroughfare at all.
  */
 const fixtureJSONL = workspacePath("corpus", "fixtures", "ads", "sample.jsonl")
 
@@ -51,7 +51,7 @@ describe("ads adapter against fixture sample.jsonl", () => {
 		const rows = await readCanonicalRows(scratch.path, ADS_ADAPTER_ID)
 		const pargi = rows.find((r) => r.components.street === "Pargi tn")
 
-		// The feature behind this row carries designator `7_1DOW` and locator name `2b`.
+		// The feature behind this row holds designator `7_1DOW` and locator name `2b`.
 		expect(pargi?.components.house_number).toBe("2b")
 		expect(pargi?.raw).toBe("Pargi tn 2b, 76607 Keila linn Harju maakond")
 	})
@@ -81,7 +81,7 @@ describe("ads adapter against fixture sample.jsonl", () => {
 			expect(emitted.has(designator)).toBe(false)
 		}
 
-		// The shape of an ADS code, so a designator this fixture does not carry fails too.
+		// The shape of an ADS code, so a designator absent from this fixture fails too.
 		const codeShape = /^\d_[0-9A-Z]{3,4}$/u
 
 		for (const row of rows) {
@@ -98,8 +98,8 @@ describe("ads adapter against fixture sample.jsonl", () => {
 
 		expect(streetless).toHaveLength(3)
 
-		// The named site becomes the venue rather than a house number, because
-		// `Jüri` is a farm name and not a number.
+		// The site name becomes the venue rather than a house number, because `Jüri`
+		// is a farm name and not a number.
 		expect(streetless.map((r) => r.raw).toSorted()).toEqual([
 			"Jüri, Raugi küla, 94759 Muhu vald Saare maakond",
 			"Pärna, Paasiku küla, 74314 Anija vald Harju maakond",

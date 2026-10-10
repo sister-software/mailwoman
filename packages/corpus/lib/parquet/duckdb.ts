@@ -31,7 +31,6 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
  * A `COUNT(DISTINCT …)` over `v0.6.0-register-surface`'s 697,675,170 train rows did
  * that twice on 2026-09-28, with a second corpus tool running beside it.
  *
- * The default is a quarter because it has to bound the host rather than one query.
  * Two instances at half the host exceed it together.
  *
  * That case took the machine down.
@@ -43,6 +42,8 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
  * That is the failure to prefer.
  *
  * A caller that knows it holds the host by itself passes a larger `memoryLimitBytes`.
+ *
+ * @defaultValue a quarter because it has to bound the host rather than one query.
  */
 export const DUCKDB_MEMORY_SHARE = 0.25
 
@@ -52,26 +53,28 @@ export const DUCKDB_MEMORY_SHARE = 0.25
 export interface DuckDBLimits {
 	/**
 	 * Bytes one instance may hold before it spills.
-	 * Defaults to {@linkcode DUCKDB_MEMORY_SHARE} of host memory.
+	 * @defaultValue {@linkcode DUCKDB_MEMORY_SHARE} of host memory.
 	 */
 	memoryLimitBytes?: number
 
 	/**
 	 * Worker threads.
-	 * Defaults to DuckDB's own choice.
 	 *
 	 * A build phase that runs DuckDB beside other work sets this, because each thread
 	 * holds its own share of the memory limit and the default takes every core.
+	 *
+	 * @defaultValue DuckDB's own choice.
 	 */
 	threads?: number
 
 	/**
 	 * Where a spill is written.
-	 * Defaults to the data root's `tmp/duckdb`.
 	 *
 	 * The default sits under the data root rather than in the system temporary directory,
 	 * because a spill from a corpus-sized query is tens of gigabytes and `/tmp` is commonly a
 	 * memory-backed filesystem, where spilling to it consumes the memory the spill exists to release.
+	 *
+	 * @defaultValue the data root's `tmp/duckdb`.
 	 */
 	temporaryDirectory?: string
 }

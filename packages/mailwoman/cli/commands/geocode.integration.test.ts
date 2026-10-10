@@ -5,7 +5,7 @@
  *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus DB-conditional integration tests that run only when live database files are present.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
@@ -61,7 +61,7 @@ describe("geocode argument validation", () => {
 
 		let threw = false
 		let output = ""
-		let status: number | undefined
+		let status: number | null = null
 
 		try {
 			await withCLISpawnLockAsync(() =>
@@ -77,7 +77,7 @@ describe("geocode argument validation", () => {
 			const execErr = error as { stdout?: string; stderr?: string; code?: number }
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 			// The promisified spawn stores the exit code in `.code`.
-			status = execErr.code
+			status = execErr.code ?? null
 		}
 
 		expect(threw).toBe(true)

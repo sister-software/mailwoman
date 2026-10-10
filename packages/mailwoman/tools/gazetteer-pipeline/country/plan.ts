@@ -9,7 +9,7 @@
  *   present.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -115,7 +115,7 @@ export interface CountryPlan {
 	/**
 	 * The repositories the move would clone, with estimated checkout sizes.
 	 */
-	repos: Array<{ name: string; packedKB?: number; checkoutKB?: number }>
+	repos: Array<{ name: string; packedKB: number | null; checkoutKB: number | null }>
 	/**
 	 * The reasons the move cannot proceed.
 	 * The array is empty when it can.
@@ -203,7 +203,8 @@ export function planCountryMove(options: {
 		edits,
 		repos: options.repos.map((r) => ({
 			name: r.name,
-			...(r.packedKB === undefined ? {} : { packedKB: r.packedKB, checkoutKB: r.packedKB * CHECKOUT_SIZE_RATIO }),
+			packedKB: r.packedKB ?? null,
+			checkoutKB: r.packedKB === undefined ? null : r.packedKB * CHECKOUT_SIZE_RATIO,
 		})),
 		blockers,
 	}

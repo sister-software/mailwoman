@@ -4,7 +4,7 @@
 /**
  *   Reports which fields distinguish the rows an adapter's dedup key collapses onto one another.
  *
- *   A build's `MANIFEST.json` reports `deduped` per adapter and never says what the key dropped.
+ *   A build's `MANIFEST.json` reports `deduped` per adapter and never records what the key dropped.
  *   `canonicalDedupKey` keys a row on `country`, the normalized `raw` line and the `components`
  *   dictionary, so two records that render the same line collapse however much else the publisher
  *   distinguished them by. This census names that else.
@@ -12,9 +12,9 @@
  *   It complements `dedup-census.run.ts`, which reads a built `canonical.jsonl` and splits the
  *   duplicates still in that file by whether the runner's capped dedup set held their key. That
  *   question is about the runner's key capacity. This one is about the key's resolution, and it needs
- *   the rows the runner refused, which a `canonical.jsonl` written by a run that deduplicated
- *   completely no longer holds. So the default row source is the adapter itself, re-run over the same
- *   input the build read.
+ *   the rows the runner refused. A `canonical.jsonl` written by a run that deduplicated
+ *   completely no longer holds them. So the default row source is the adapter itself, re-run over
+ *   the same input the build read.
  *
  *   Two reports come out of it.
  *
@@ -31,7 +31,7 @@
  *   where `--id-prefix` defaults to `<adapter>-`. An adapter that composes `source_id` some other way
  *   needs its own prefix. The tool reports how many source records joined and refuses a run where
  *   none did, so a wrong prefix shows up as an error rather than as an empty answer. Beside each
- *   column's group count it reports how many records of the whole file carry a non-empty value there,
+ *   column's group count it reports how many records of the whole file hold a non-empty value there,
  *   because a column that differs in no group may be constant within every group or empty throughout.
  *
  *   **Hashes rather than keys.** The distinct-key count of a national register exceeds what a V8
@@ -53,11 +53,11 @@
  *         packages/mailwoman/tools/dev-tools/corpus/dedup/cause-census.run.ts \
  *         --canonical <build>/intermediate/<adapter>/canonical.jsonl
  *
- *   `--limit` caps the rows the adapter emits, which makes the run a prefix of the file rather than a
- *   sample of it: a group whose members straddle the cap is reported with the members below it.
+ *   `--limit` caps the rows the adapter emits, so the run is a prefix of the file rather than a
+ *   sample. A group whose members straddle the cap is reported with the members below it.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { md5Bytes } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -109,8 +109,9 @@ const { values } = parseArguments({
  *
  * The digest comes from `md5Bytes`, the same hash `FingerprintSet` fingerprints a dedup
  * key with, so the census and the runner agree on what makes two keys the same value.
- * A per-character FNV-1a in `BigInt` arithmetic allocates a `BigInt` per character
- * of every key, which dominates the pass.
+ * A per-character FNV-1a in `BigInt` arithmetic allocates a `BigInt` per character of every key.
+ *
+ * That allocation dominates the pass.
  * This allocates two per key.
  */
 function hash64(value: string): bigint {
@@ -394,7 +395,7 @@ async function censusCanonicalFields(plan: CensusPlan, index: GroupIndex): Promi
 		for (let field = 0; field < TRACKED_FIELDS.length; field++) {
 			const at = slot * TRACKED_FIELDS.length + field
 			const value = row[TRACKED_FIELDS[field]!]
-			const valueHash = hash32(value === undefined || value === null ? "\u0000absent" : String(value))
+			const valueHash = hash32(value ? String(value) : "\u0000absent")
 
 			if (first) {
 				fieldHashes[at] = valueHash
@@ -500,8 +501,8 @@ function buildJoinIndex(census: FieldCensus): JoinIndex {
 }
 
 function csvRecords(plan: CensusPlan): AsyncIterable<Record<string, string>> {
-	// `normalizeKeys: false` keeps the publisher's own column spelling, which is what
-	// `--id-column` names, and is the setting every CSV adapter reads its source under.
+	// `normalizeKeys: false` keeps the publisher's own column spelling, the spelling `--id-column` expects.
+	// Every CSV adapter reads its source under this setting.
 	return CSVSpliterator.fromAsync<Record<string, string>>(PathBuilder.from(plan.sourceCSVPath!), {
 		normalizeKeys: false,
 		columnDelimiter: plan.columnDelimiter,
@@ -509,9 +510,9 @@ function csvRecords(plan: CensusPlan): AsyncIterable<Record<string, string>> {
 }
 
 async function readColumns(plan: CensusPlan): Promise<readonly string[]> {
-	// Every record carries the header's columns, so the first one answers this and the rest are left unread.
-	// The iterator is taken directly rather than through a loop that returns on its
-	// first pass, which reads as an iteration and is not one.
+	// Every record holds the header's columns, so the first one answers this and the rest are left unread.
+	// The iterator is taken directly rather than through a loop that returns on its first pass.
+	// The loop form would read as a full iteration and is not one.
 	const records = csvRecords(plan)[Symbol.asyncIterator]()
 	const first = await records.next()
 
@@ -548,8 +549,8 @@ async function reportSourceColumns(plan: CensusPlan, index: GroupIndex, census: 
 	const columnWords = Math.ceil(columns.length / 32)
 	const columnHashes = new Uint32Array(groups * columns.length)
 	const columnDiffered = new Uint32Array(groups * columnWords)
-	// A column that differs in no group is either constant within every group or empty throughout the file,
-	// and those are different findings, so the population count is read beside the difference count.
+	// A column that differs in no group is either constant within every group or empty throughout the file.
+	// Those are different findings, so the population count is read beside the difference count.
 	const columnPopulated = new Float64Array(columns.length)
 	const joinedPerSlot = new Uint32Array(groups)
 	const exampleSlots: number[] = []

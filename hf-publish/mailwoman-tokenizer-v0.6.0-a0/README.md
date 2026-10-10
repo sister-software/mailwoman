@@ -70,6 +70,7 @@ Measured on 12 hard multi-script address examples:
 
 ```python
 import sentencepiece as spm
+
 tokenizer = spm.SentencePieceProcessor()
 tokenizer.load("tokenizer.model")
 

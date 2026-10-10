@@ -18,7 +18,7 @@ import ADMZip from "adm-zip"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "#tools"
+import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "#tools/fetch/geonames/dump"
 
 let server: Server
 let baseURL: string

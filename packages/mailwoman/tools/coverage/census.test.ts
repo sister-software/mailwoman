@@ -7,7 +7,8 @@
  *   Every failure this file pins is silent: an answer that is wrong and confident rather than thrown.
  */
 
-import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -330,8 +331,8 @@ describe("readConfiguredCorpusVersion", () => {
 				// "Cannot check" is not "they match", so a plausible default would manufacture agreement.
 				await using scratch = await config("data:\n  max_length: 128\n")
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeUndefined()
-		expect(await readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeUndefined()
+		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeNull()
+		expect(await readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeNull()
 	})
 
 	it("falls back to the trailing directory when the path is not /versioned/-shaped", async () => {

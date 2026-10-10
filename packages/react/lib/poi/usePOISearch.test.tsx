@@ -20,7 +20,7 @@ import { renderComponent } from "../../test/render.tsx"
 const loadRuntime = async () => makePOIRuntime()
 const loadBrandRuntime = async () => makeBrandPOIRuntime()
 
-function subjectLabel(subject: POISubject | undefined): string {
+function subjectLabel(subject: POISubject | null): string {
 	if (!subject) return "no-subject"
 
 	return subject.kind === "brand" ? subject.name : subject.category.label
@@ -47,7 +47,7 @@ function Harness({
 
 	return (
 		<div>
-			<span className="subject">{subjectLabel(result?.subject)}</span>
+			<span className="subject">{subjectLabel(result?.subject ?? null)}</span>
 			<span className="live">{liveSearch.status}</span>
 			<span className="hit">{liveSearch.status === "success" ? (liveSearch.hits[0]?.name ?? "") : ""}</span>
 			<button type="button" onClick={searchLive} disabled={!canSearchLive}>
@@ -105,6 +105,6 @@ test("a brand subject with a brand-capable probe threads the QID into the live s
 	await userEvent.click(button)
 	await vi.waitFor(() => expect(container.querySelector(".live")?.textContent).toBe("success"))
 	// The mock probe echoes the QID it received.
-	// This shows that `usePOISearch` passed `brandWikidata`.
+	// This shows that `usePOISearch` sent a brand request carrying the QID.
 	expect(container.querySelector(".hit")?.textContent).toContain("Q319642")
 })

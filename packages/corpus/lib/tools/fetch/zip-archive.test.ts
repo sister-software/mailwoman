@@ -7,8 +7,8 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { silentLogger } from "@mailwoman/core/logging"
@@ -20,8 +20,8 @@ const ARCHIVE_URL = "https://example.invalid/AD.zip"
 
 const BODY = Buffer.concat([Buffer.from("PK\u0003\u0004", "latin1"), Buffer.from("member", "utf8")])
 
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "zip archive test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -34,8 +34,8 @@ describe("downloadZipArchive", () => {
 		await using client = stubClient([
 			{
 				body: BODY,
-				// The claimed length disagrees with the delivered body, which is how an INSPIRE
-				// feed's own `length` attribute behaves on several services.
+				// The claimed length disagrees with the delivered body.
+				// Several INSPIRE feeds behave this way through their own `length` attribute.
 				headers: { "last-modified": "Tue, 14 Apr 2026 10:08:19 GMT", "content-length": "34987" },
 			},
 		])

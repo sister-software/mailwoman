@@ -16,7 +16,7 @@ import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -76,8 +76,8 @@ const MAX_QUERY_LEN = 512
 
 const BINARY_NAME = "mailwoman-nominatim"
 
-function joinNonEmpty(...parts: Array<string | undefined>): string {
-	return parts.filter((part) => part !== undefined && part.length).join(", ")
+function joinNonEmpty(...parts: Array<string | null | undefined>): string {
+	return parts.filter((part) => part != null && part.length).join(", ")
 }
 
 async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
@@ -98,7 +98,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"] ?? null)
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
@@ -162,7 +162,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolver,
 				databases: extracts.for,
 				nationalDatabases: banExtracts.for,
-				defaultCountry: userCountry,
+				...(userCountry ? { defaultCountry: { country: userCountry, source: "caller" } } : {}),
 			})
 
 			if (result.lat == null || result.lon == null) return []
@@ -193,7 +193,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// The country tag is not always in the hierarchy, since US admin results omit it.
 			// Backfill from the US-centric-data default so the address, display name,
 			// flag, currency and calling code agree.
-			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
+			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback ?? null
 			const country = matchCountry(countryName)
 
 			if (country) {
@@ -296,7 +296,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 			// The terms come from the same `layer_manifest` rows the `/status` payload includes,
 			// so the operator reads them at boot rather than by querying the endpoint they just started.
-			for (const line of rightsBannerLines(status.mailwoman ?? { artifacts: [] })) {
+			for (const line of rightsBannerLines({ dataUpdated: null, artifacts: status.mailwoman?.artifacts ?? [] })) {
 				console.error(line)
 			}
 

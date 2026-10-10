@@ -14,7 +14,7 @@
  *   That error would cover ground the source did not map.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,
@@ -91,12 +91,14 @@ export type BuildCoastalInput =
 				geodatabasePath: string
 				/**
 				 * Scenarios to build.
-				 * Defaults to all of them.
+				 *
+				 * @defaultValue all of them.
 				 */
 				scenarioKeys?: ReadonlyArray<string>
 				/**
 				 * Feature IDs per chunk.
-				 * Defaults to {@link DEFAULT_CHUNK_SIZE}.
+				 *
+				 * @defaultValue {@linkcode DEFAULT_CHUNK_SIZE}
 				 */
 				chunkSize?: number
 				/**
@@ -230,7 +232,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			await createLayerCoverageTable(kdb)
 		},
 		ingest: async (kdb) => {
-			if (!source) return undefined
+			if (!source) return null
 
 			return aggregateChunks([
 				await ingestCoastalChunk(kdb, {

@@ -5,12 +5,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import {
-	type BuildCandidateResult,
-	buildCandidateTable,
-	type PlaceAttrs,
-	stageCountryDisplayNames,
-} from "#build/candidate"
+import { type BuildCandidateResult, buildCandidateTable } from "#build/candidate"
+import { stageCountryDisplayNames } from "#candidate/country-display-names"
+import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
 import { ALIAS_SEPARATOR } from "#fts"
 import type { WOFDatabase } from "#schema"
@@ -185,8 +182,8 @@ afterEach(async () => {
 	await scratch[Symbol.asyncDispose]()
 })
 
-let adminOnlyScratch: TemporaryDirectory | undefined
-let adminOnlyBuild: Promise<{ output: PathBuilder; result: BuildCandidateResult }> | undefined
+let adminOnlyScratch: TemporaryDirectory | null = null
+let adminOnlyBuild: Promise<{ output: PathBuilder; result: BuildCandidateResult }> | null = null
 
 /**
  * The candidate table built from the unmodified admin fixture with no other source.
@@ -587,8 +584,8 @@ describe("buildCandidateTable", () => {
 		test("without a score source the column exists and is empty — and the result says so", async () => {
 			const { output, result } = await adminOnlyCandidate()
 
-			expect(result.importanceScored).toBeUndefined()
-			expect(result.importanceFiltered).toBeUndefined()
+			expect(result.importanceScored).toBeNull()
+			expect(result.importanceFiltered).toBeNull()
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 

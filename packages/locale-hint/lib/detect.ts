@@ -58,6 +58,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "caller",
 			script: scripts,
+			evidence: null,
 		}
 	}
 
@@ -68,7 +69,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "environment",
 			script: scripts,
-			evidence: { environmentLocale: opts.environmentLocale },
+			evidence: { intlLocale: null, timeZone: null, environmentLocale: opts.environmentLocale },
 		}
 	}
 
@@ -87,7 +88,8 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 			script: scripts,
 			evidence: {
 				intlLocale: machineLocale,
-				...(opts.machinePreferences?.timeZone ? { timeZone: opts.machinePreferences.timeZone } : {}),
+				timeZone: opts.machinePreferences?.timeZone || null,
+				environmentLocale: null,
 			},
 		}
 	}
@@ -98,5 +100,6 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 		alternatives: deduped.slice(1).map((c) => ({ locale: c.locale, confidence: c.confidence })),
 		source: "detected",
 		script: scripts,
+		evidence: null,
 	}
 }

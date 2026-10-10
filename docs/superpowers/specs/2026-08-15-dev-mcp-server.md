@@ -345,7 +345,7 @@ unless the fingerprint is itself the declared variable (§6).
 
 - **Start.** `mwdevd` is started on demand by the MCP shim, or explicitly. It binds a Unix domain
   socket under `$XDG_RUNTIME_DIR` (falling back to the data root), one socket per `(dataRoot, repo
-path)` pair so two checkouts do not share a daemon. It holds **no** engine at startup; the first
+  path)` pair so two checkouts do not share a daemon. It holds **no** engine at startup; the first
   tool call that needs one builds it. This matches the lazy loading in `packages/mcp/lib/cli.ts:14-17`,
   for the same reason: an agent may connect, list tools, and never call one.
 - **Idle.** Engines are evicted after a configurable idle interval, and the daemon exits after a longer

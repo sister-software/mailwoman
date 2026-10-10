@@ -24,7 +24,7 @@ import iconv from "iconv-lite"
 import { resolvePath, dirname, basename, type PathBuilderLike } from "path-ts"
 import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-promise"
 
-import { tryStat } from "#fs/readers"
+import { tryStat } from "#fs/readers/stat"
 import { openWriteStream } from "#fs/streams"
 import { makeDirectories } from "#fs/writers"
 import { once } from "#utils/events"

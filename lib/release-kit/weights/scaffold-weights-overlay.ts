@@ -14,7 +14,8 @@
  *     yarn mwops release scaffold-weights-overlay --locale es-ES --artifact pair-index-es.bin
  */
 
-import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
@@ -29,7 +30,7 @@ export interface ScaffoldWeightsOverlayOptions {
 	/**
 	 * The one artifact the overlay adds.
 	 *
-	 * Defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
+	 * @defaultValue `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
 	/**

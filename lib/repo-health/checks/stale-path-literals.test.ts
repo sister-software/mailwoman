@@ -9,7 +9,7 @@
  *   planted directory with no history cannot exercise the test that makes the check usable.
  */
 
-import { realPath } from "@mailwoman/core/fs/readers"
+import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { git } from "@mailwoman/core/git"

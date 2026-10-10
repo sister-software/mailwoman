@@ -60,24 +60,24 @@ for (const c of cases) {
 			: null
 
 	const graded = classifyRescueRow({
-		...(c.expectLat === undefined ? {} : { expectLat: c.expectLat }),
-		...(c.expectLon === undefined ? {} : { expectLon: c.expectLon }),
-		...(c.expectToleranceM === undefined ? {} : { expectToleranceM: c.expectToleranceM }),
+		expectLat: c.expectLat ?? null,
+		expectLon: c.expectLon ?? null,
+		expectToleranceM: c.expectToleranceM ?? null,
 		lat: result.lat,
 		lon: result.lon,
 		entityFired: result.entity !== undefined,
-		...(hit ? { unconditionalEntityHit: { lat: hit.latitude, lon: hit.longitude } } : {}),
+		unconditionalEntityHit: hit ? { lat: hit.latitude, lon: hit.longitude } : null,
 		alternateCandidates: result.candidates.slice(1).map((cand) => ({ lat: cand.lat, lon: cand.lon })),
 	})
 
 	reports.push({
 		id: c.id,
 		input: c.input,
-		...(c.country ? { country: c.country } : {}),
+		country: c.country || null,
 		markers,
 		classification: graded.classification,
-		...(graded.deliveredKm === undefined ? {} : { deliveredKm: Number(graded.deliveredKm.toFixed(3)) }),
-		...(graded.rescueRank === undefined ? {} : { rescueRank: graded.rescueRank }),
+		deliveredKm: graded.deliveredKm === null ? null : Number(graded.deliveredKm.toFixed(3)),
+		rescueRank: graded.rescueRank,
 		checkProtects: graded.checkProtects,
 	})
 }

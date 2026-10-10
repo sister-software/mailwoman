@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
+import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -35,7 +35,7 @@ export interface CopyWeightsOptions {
 	/**
 	 * The directory that receives the weights workspaces, such as a preflight staging tree.
 	 *
-	 * It defaults to `repoRoot` and changes only the destinations.
+	 * @defaultValue `repoRoot`. The option changes only the destinations.
 	 */
 	destRoot?: string
 	log: (line: string) => void

@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { PostcodePlace } from "@mailwoman/core/resolver"
+
 import type { AnchorLookup } from "#anchor-inference"
-import type { PostcodePlace } from "#postcode/anchor"
 
 const MAGIC = 0x31_42_43_50
 

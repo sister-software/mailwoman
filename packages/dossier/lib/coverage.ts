@@ -3,23 +3,33 @@
 
 /**
  *   A reading of one spatial layer over one extent. Zero records means absence only when the layer's
- *   coverage basis supports an exclusion. A `source_present` layer that found no record says the source
- *   looked, and absence stays unknown. A positive reading beside an empty one is a conflict to show.
+ *   coverage basis supports an exclusion. A `source_present` layer that found no record reports that the
+ *   source looked, and absence stays unknown. A positive reading beside an empty one is a conflict to
+ *   show.
  */
 
 import { type CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 
+import type { EntityID } from "#identifiers"
 import type { Evidence } from "#links"
 import type { ISODate } from "#time"
 
 export interface LayerReading {
 	layer: string
 	/**
-	 * The surveyed extent as the layer states it, such as an H3 cell or a named area.
+	 * The surveyed extent as the layer states it, such as an H3 cell or a specific area.
 	 */
 	extent: string
+	/**
+	 * The building the reading belongs to.
+	 * It must be a building the dossier's records supply.
+	 *
+	 * A reading without a subject attaches to each building that an admitted membership
+	 * places in its extent, and to no building otherwise.
+	 */
+	subject: EntityID | null
 	basis: CoverageBasis | null
-	surveyedAt?: ISODate
+	surveyedAt: ISODate | null
 	/**
 	 * `null` when the layer has no survey for the extent.
 	 */

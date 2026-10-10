@@ -42,7 +42,7 @@ export async function collectProposals(
  */
 export function filterByPolicy(
 	proposals: readonly ClassificationProposal[],
-	policy: PolicyRegistry | undefined,
+	policy: PolicyRegistry | null,
 	locale: string | undefined
 ): ClassificationProposal[] {
 	if (!policy) return [...proposals]

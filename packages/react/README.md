@@ -24,6 +24,7 @@ units (`QueryInput`, `SubjectPanel`, `OverpassBlock`, `LiveResultsBlock`, `Compo
 
 ```tsx
 import { POIExplorer, PipelineExplorer } from "@mailwoman/react"
+
 import "@mailwoman/react/styles.css"
 ```
 

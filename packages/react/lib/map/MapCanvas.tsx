@@ -61,7 +61,9 @@ export interface MapCanvasProps {
 	 */
 	onMove?: (event: ViewStateChangeEvent) => void
 	/**
-	 * Map projection. @default "globe" (matches the docs `DashboardMap`).
+	 * Map projection.
+	 *
+	 * @defaultValue `"globe"` (matches the docs `DashboardMap`).
 	 */
 	projection?: MapProps["projection"]
 	/**

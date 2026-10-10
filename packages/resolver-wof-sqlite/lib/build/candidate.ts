@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -28,19 +28,6 @@ import type { CapitalPoint } from "#capitals"
 import { resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
-
-/**
- * Re-exports the country display-name staging pass from the candidate build's public module.
- */
-export { stageCountryDisplayNames } from "#candidate/country-display-names"
-/**
- * Re-exports the gloss detector's excluded placetypes and default key-count threshold.
- */
-export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-roles"
-/**
- * Re-exports the per-place record that every candidate staging pass writes its rows from.
- */
-export type { PlaceAttrs } from "#candidate/place-attrs"
 
 /**
  * Options for {@link buildCandidateTable}.
@@ -108,7 +95,8 @@ export interface BuildCandidateOptions {
 
 		/**
 		 * The deprecated placetypes eligible for restoration.
-		 * The default is `locality`.
+		 *
+		 * @defaultValue `locality`
 		 */
 		deadPlacetypes?: readonly string[]
 	}
@@ -120,9 +108,10 @@ export interface BuildCandidateOptions {
 
 	/**
 	 * The key-count threshold for the gloss anomaly detector.
-	 * The default is {@link GLOSS_KEY_THRESHOLD}.
 	 *
 	 * Tests override it with a value sized for fixtures.
+	 *
+	 * @defaultValue {@linkcode GLOSS_KEY_THRESHOLD}
 	 */
 	glossKeyThreshold?: number
 }
@@ -175,9 +164,9 @@ export interface BuildCandidateResult {
 	/**
 	 * The count of places that received an `importance` score.
 	 *
-	 * It is `undefined` when no score source was given.
+	 * It is `null` when no score source was given.
 	 */
-	importanceScored?: number
+	importanceScored: number | null
 
 	/**
 	 * The count of places that matched a scored group by name key, country and placetype
@@ -185,7 +174,7 @@ export interface BuildCandidateResult {
 	 *
 	 * A large change between rebuilds means the score source and the admin source have diverged.
 	 */
-	importanceFiltered?: number
+	importanceFiltered: number | null
 
 	/**
 	 * The count of alias rows the gloss anomaly detector stamped `name_role = 'gloss'`.
@@ -254,7 +243,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		return id
 	}
 
-	let importance: ReturnType<typeof loadImportanceIndex> | undefined
+	let importance: ReturnType<typeof loadImportanceIndex> | null = null
 
 	if (opts.importance) {
 		progress("importance", `loading place_importance from ${opts.importance}`)
@@ -600,6 +589,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		ancestorPlaces: sidecar.ancestorPlaces + nLocalityScoped,
 		intervalPlaces: sidecar.intervalPlaces,
 		...roles,
-		...(importance ? { importanceScored: importance.matched, importanceFiltered: importance.refused } : {}),
+		importanceScored: importance ? importance.matched : null,
+		importanceFiltered: importance ? importance.refused : null,
 	}
 }

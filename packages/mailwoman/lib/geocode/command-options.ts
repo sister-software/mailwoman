@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import type { PathBuilderLike } from "path-ts"
+
+import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import type { CapitalTier } from "#resolver-backend"
 
 export interface GeocodeCommandOptions {
 	locale: string
@@ -17,6 +22,15 @@ export interface GeocodeCommandOptions {
 	interpCalibration?: number
 	localeCountryPrior: boolean
 	gazetteerPrior: boolean
+	/**
+	 * Venue-head prior (`--venue-head-prior`).
+	 * Off by default.
+	 */
+	venueHeadPrior: boolean
+	/**
+	 * Multiplier on the venue-head table's biases (`--venue-head-bias-scale`).
+	 */
+	venueHeadBiasScale: number
 	placeCountry: boolean
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
@@ -30,21 +44,13 @@ export interface GeocodeCommandOptions {
 	 */
 	adminContainmentRerank: boolean
 	/**
-	 * Capital-status ranking axis.
-	 *
-	 * Deliberately tri-state with no entry in {@link createGeocodeCommandOptions}:
-	 * unstated flows through as absent so the session default applies.
-	 * `--capital-tier` requires the reference and reports a clear error when it is missing.
-	 * `--no-capital-tier` opts out.
+	 * Capital-status ranking axis (`--capital-tier auto|required|off`).
 	 */
-	capitalTier?: boolean
+	capitalTier: CapitalTier
 	/**
-	 * Own-name variant-alias exemption.
-	 *
-	 * Tri-state for the same reason.
-	 * `--no-variant-alias-exemption` opts out.
+	 * Own-name variant-alias exemption (`--variant-alias-exemption applied|not_applied`).
 	 */
-	variantAliasExemption?: boolean
+	variantAliasExemption: VariantAliasExemption
 	placeCountryThreshold: number
 	format: "json" | "text" | "jsonld"
 	json: boolean
@@ -63,13 +69,17 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		countryScope: "auto",
 		dataRoot: dataRootPath(),
 		localeCountryPrior: false,
-		gazetteerPrior: true,
+		gazetteerPrior: GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
+		venueHeadPrior: GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
+		venueHeadBiasScale: 1,
 		placeCountry: true,
-		postcodeCountryCoherence: true,
+		postcodeCountryCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence,
 		forkEntity: true,
-		postcodeShapeCoherence: false,
-		postcodeContainmentCoherence: false,
-		adminContainmentRerank: true,
+		postcodeShapeCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeShapeCoherence,
+		postcodeContainmentCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
+		adminContainmentRerank: GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
+		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
+		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,
 		format: "json",
 		json: false,

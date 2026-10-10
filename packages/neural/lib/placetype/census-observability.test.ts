@@ -64,7 +64,7 @@ function mockPairIndex(entries: Record<string, PairEdge>, delta = 5): PairIndexL
 	return {
 		delta,
 		country: "gb",
-		probe: (child, parent) => entries[`${child}|${parent}`],
+		probe: (child, parent) => entries[`${child}|${parent}`] ?? null,
 	}
 }
 
@@ -210,12 +210,12 @@ const resolved = await (async () => {
 	try {
 		return await resolveWeights({ locale: "en-us" })
 	} catch {
-		return undefined
+		return null
 	}
 })()
 
 const havePackage =
-	resolved !== undefined && resolved.artifacts.some((a) => a.name === "pair-index-us.bin" && a.path !== null)
+	resolved !== null && resolved.artifacts.some((a) => a.name === "pair-index-us.bin" && a.path !== null)
 
 describe("census observability — end-to-end through loadFromWeights", () => {
 	test.skipIf(!havePackage)(
@@ -246,7 +246,7 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 
 			const text = "brooklyn, new york, ny"
 			const withCensus = await cls.traceParse(text)
-			const withoutCensus = await cls.traceParse(text, { placetypeCensus: false })
+			const withoutCensus = await cls.traceParse(text, { placetypeCensus: "off" })
 
 			expect(withCensus.emissions).toEqual(withoutCensus.emissions)
 			expect(withCensus.path).toEqual(withoutCensus.path)
@@ -261,6 +261,9 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 			expect(withoutCensus.priors.find((p) => p.kind === "placetypeCensus")).toEqual({
 				kind: "placetypeCensus",
 				applied: false,
+				probePath: null,
+				census: null,
+				censusProbedParents: null,
 			})
 		},
 		120_000

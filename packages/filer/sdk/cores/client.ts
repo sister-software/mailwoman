@@ -58,10 +58,6 @@ function assertCORESHost(url: URL): void {
 	})
 }
 
-export { parseCORESRegistration, recaseUniform, type CORESRegistration } from "#sdk/cores/registration"
-
-export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from "#sdk/cores/document"
-
 /**
  * Options for {@linkcode createCORESClient}.
  */
@@ -79,7 +75,8 @@ export interface CreateCORESClientOptions {
 	clock?: ClockLike
 	/**
 	 * Disk cache directory.
-	 * The default is `fcc/cores/cache` under the data root.
+	 *
+	 * @defaultValue `fcc/cores/cache` under the data root.
 	 */
 	cacheDir?: string
 	cacheTTLMs?: number

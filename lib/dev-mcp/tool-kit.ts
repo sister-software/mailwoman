@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
+import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { z } from "zod"
 
 import type { Engine, EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -32,11 +34,11 @@ export interface Provenance {
 		n: number
 		sha256: string
 		selection: string
-		population_n?: number
-		why?: string
+		population_n: number | null
+		why: string | null
 		not_covered: string[]
 		has_truth: ResolvedInputSet["hasTruth"]
-		corpus_hash?: string
+		corpus_hash: string | null
 		notes: string[]
 	}
 }
@@ -50,11 +52,11 @@ export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set
 		n: set.n,
 		sha256: set.sha256,
 		selection: set.selection,
-		...(set.populationN === undefined ? {} : { population_n: set.populationN }),
-		...(set.why === undefined ? {} : { why: set.why }),
+		population_n: set.populationN,
+		why: set.why,
 		not_covered: set.notCovered,
 		has_truth: set.hasTruth,
-		...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
+		corpus_hash: set.corpusHash,
 		notes: set.notes,
 	}
 }
@@ -174,8 +176,7 @@ export const INPUT_SET_SCHEMA = z
 /**
  * Validates engine configuration pins, using the CLI's key names.
  *
- * An unset key keeps the production default.
- * It never turns the feature off.
+ * A switch takes `"production"`, `"on"` or `"off"`, and an unset switch is `"production"`.
  */
 export const ENGINE_CONFIG_SCHEMA = z
 	.object({
@@ -196,21 +197,25 @@ export const ENGINE_CONFIG_SCHEMA = z
 					"REFUSED, not silently replaced by the shipped weights — the resolution ladder falls through, so an " +
 					"unchecked typo would grade the default model under the candidate's name."
 			),
-		gazetteer_prior: z.boolean().optional(),
-		place_country: z.boolean().optional(),
+		gazetteer_prior: SwitchPinSchema.optional(),
+		venue_head_prior: SwitchPinSchema.optional(),
+		venue_head_bias_scale: z.number().optional(),
+		place_country: SwitchPinSchema.optional(),
 		place_country_threshold: z.number().optional(),
-		postcode_country_coherence: z.boolean().optional(),
-		fork_entity: z.boolean().optional(),
-		locale_country_prior: z.boolean().optional(),
-		postcode_shape_coherence: z.boolean().optional(),
-		postcode_containment_coherence: z.boolean().optional(),
-		admin_containment_rerank: z.boolean().optional(),
-		poi_venue_tier: z.boolean().optional(),
-		capital_tier: z.boolean().optional(),
-		variant_alias_exemption: z.boolean().optional(),
+		postcode_country_coherence: SwitchPinSchema.optional(),
+		fork_entity: SwitchPinSchema.optional(),
+		locale_country_prior: SwitchPinSchema.optional(),
+		postcode_shape_coherence: SwitchPinSchema.optional(),
+		postcode_containment_coherence: SwitchPinSchema.optional(),
+		admin_containment_rerank: SwitchPinSchema.optional(),
+		poi_venue_tier: SwitchPinSchema.optional(),
+		capital_tier: z.enum(["auto", "required", "off"]).optional(),
+		variant_alias_exemption: VariantAliasExemptionSchema.optional(),
 	})
 	.strict()
-	.describe("Every pin, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
+	.describe(
+		'Every pin, in the CLI\'s vocabulary. A switch takes "production", "on" or "off"; unset means "production".'
+	)
 
 /**
  * The shared services that each dev MCP tool factory receives.
@@ -295,14 +300,14 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 	void logits
 	void emissions
 
-	const channel = (c: { confidence?: unknown } | undefined): unknown =>
+	const channel = (c: { confidence?: unknown } | null): unknown =>
 		c && typeof c === "object" ? { confidence: c.confidence } : c
 
 	return {
 		...rest,
-		anchor: channel(anchor),
-		gazetteer: channel(gazetteer),
-		country: channel(country),
+		anchor: channel(anchor ?? null),
+		gazetteer: channel(gazetteer ?? null),
+		country: channel(country ?? null),
 		matrices_omitted:
 			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
 			"full_parse_trace: true for the raw numbers.",
@@ -399,21 +404,20 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 		const query = [
 			record.placetype,
 			record.query.country ? `country=${record.query.country}` : null,
-			record.query.parentID !== undefined ? `parent=${record.query.parentID}` : null,
+			record.query.parentID != null ? `parent=${record.query.parentID}` : null,
 			record.query.regionQualifier ? `qualifier=${stringifyJSON(record.query.regionQualifier)}` : null,
 			`limit=${record.query.limit}`,
 		]
 			.filter((part) => part !== null)
 			.join(" ")
 
-		const reach =
-			record.reachableIn === undefined
-				? ""
-				: record.reachableIn.length
-					? `\n    UNREACHABLE, not absent — the key lives in ${record.reachableIn
-							.map((b) => `${b.placetype}×${b.n}`)
-							.join(", ")}. The band was chosen by the parse tag, so this is a mislabel, not missing data.`
-					: "\n    absent — every admin band was probed and none holds this key. COVERAGE, not reachability."
+		const reach = record.reachableIn
+			? record.reachableIn.length
+				? `\n    UNREACHABLE, not absent — the key lives in ${record.reachableIn
+						.map((b) => `${b.placetype}×${b.n}`)
+						.join(", ")}. The band was chosen by the parse tag, so this is a mislabel, not missing data.`
+				: "\n    absent — every admin band was probed and none holds this key. COVERAGE, not reachability."
+			: ""
 
 		const rows = record.candidates.map((c) => {
 			const ranks = Object.entries(c.ranks)
@@ -423,10 +427,10 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 			const picked = record.picked && record.picked.id === c.id ? " ◀ PICKED" : ""
 
 			return `    ${c.name} (${c.country} ${c.placetype} id=${c.id}) score=${c.score}${
-				c.prominence !== undefined ? ` prom=${c.prominence.toFixed(2)}` : ""
-			}${c.importance !== undefined ? ` imp=${c.importance.toFixed(2)}` : ""}${
-				c.population !== undefined ? ` pop=${c.population}` : ""
-			}${c.containedByQualifier !== undefined ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`
+				c.prominence != null ? ` prom=${c.prominence.toFixed(2)}` : ""
+			}${c.importance != null ? ` imp=${c.importance.toFixed(2)}` : ""}${
+				c.population != null ? ` pop=${c.population}` : ""
+			}${c.containedByQualifier != null ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`
 		})
 
 		const head =
@@ -445,7 +449,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 }
 
 /**
- * Counts, for each arm, the rows on which each opt-in mechanism fired, whether or not the outcome changed.
+ * Counts, for each arm, the rows on which each opt-in mechanism fired, whether or not the result changed.
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
@@ -455,7 +459,7 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 		Boolean((row[arm] as { capital_promotion?: string }).capital_promotion)
 
 	const exempted = (row: ComparedRow, arm: "a" | "b"): boolean =>
-		(row[arm] as { variant_alias_exemption?: true }).variant_alias_exemption === true
+		(row[arm] as { variant_alias_exemption?: string }).variant_alias_exemption === "applied"
 
 	return {
 		postcode_country_scope: {
@@ -481,9 +485,9 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 export interface ComparedRow {
 	id: string
 	input: string
-	country?: string
-	address_kind?: string
-	status?: string
+	country: string | null
+	address_kind: string | null
+	status: string | null
 	differed: boolean
 	grade: RowGrade
 	a: unknown
@@ -493,15 +497,15 @@ export interface ComparedRow {
 
 	/**
 	 * True when the place ID chains differ.
-	 * It is present only when both arms report `place_ids`.
+	 * It is `null` unless both arms report `place_ids`.
 	 */
-	identity_differed?: boolean
+	identity_differed: boolean | null
 
 	/**
 	 * True when the result tiers differ.
-	 * It is present only when both arms report a tier.
+	 * It is `null` unless both arms report a tier.
 	 */
-	tier_differed?: boolean
+	tier_differed: boolean | null
 }
 
 /**

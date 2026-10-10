@@ -2,14 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
-import {
-	pathExists,
-	readLocalJSONFile,
-	readLocalTextFile,
-	statPath,
-	readLocalBuffer,
-	statLink,
-} from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath, statLink } from "@mailwoman/core/fs/readers/stat"
 import {
 	createSymbolicLink,
 	makeDirectories,
@@ -137,24 +131,27 @@ export interface PairIndexOverlay {
 
 	/**
 	 * The source files whose MD5s the build records, in the order that `gazetteer pair-index` records them.
-	 * The default is the WOF admin database.
 	 *
 	 * The freshness check compares each MD5 with the header.
 	 * An empty list makes the check compare the magnitudes only.
+	 *
+	 * @defaultValue the WOF admin database.
 	 */
 	sources?: PathBuilder[]
 
 	/**
 	 * Files that must exist before a build runs.
 	 *
-	 * The default is `sources`.
 	 * A missing file prints a warning and skips the build.
+	 *
+	 * @defaultValue `sources`
 	 */
 	inputs?: PathBuilder[]
 
 	/**
 	 * Extra CLI arguments that pass the build's sources.
-	 * The default is `--borough-db <admin db>`.
+	 *
+	 * @defaultValue `--borough-db <admin db>`
 	 */
 	extraArgs?: PathBuilderLike[]
 
@@ -265,10 +262,7 @@ export interface PairIndexCalibration {
  *
  * The caller checks the source MD5s because only the caller knows its sources.
  */
-export function pairIndexStaleReason(
-	header: PairIndexHeaderFields,
-	expected: PairIndexCalibration
-): string | undefined {
+export function pairIndexStaleReason(header: PairIndexHeaderFields, expected: PairIndexCalibration): string | null {
 	if (header.schemaVersion !== REQUIRED_PAIR_INDEX_SCHEMA) {
 		return `schemaVersion ${header.schemaVersion} → ${REQUIRED_PAIR_INDEX_SCHEMA}`
 	}
@@ -283,7 +277,7 @@ export function pairIndexStaleReason(
 		return `parentDelta ${header.parentDelta ?? "(absent)"} → ${expected.parentDelta ?? "(absent)"}`
 	}
 
-	return undefined
+	return null
 }
 
 /**
@@ -515,15 +509,15 @@ export interface SoftFeedLink {
 export async function committedSoftFeedLinks(): Promise<{
 	anchor: SoftFeedLink
 	country: SoftFeedLink
-	streetType?: SoftFeedLink
+	streetType: SoftFeedLink | null
 }> {
 	const config = await readReleaseConfig()
 	const sources = repoCommittedSoftFeedSources(repoRootPath(), config.softFeed ?? {})
 
-	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | undefined => {
+	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | null => {
 		const source = sources.get(name)
 
-		return source ? { source, name, consequenceIfMissing } : undefined
+		return source ? { source, name, consequenceIfMissing } : null
 	}
 
 	const anchor = link("anchor-lexicon-v1.json", "gazetteer channel will resolve OFF in this worktree.")
@@ -537,7 +531,7 @@ export async function committedSoftFeedLinks(): Promise<{
 
 	const streetType = link("street-type-lexicon-v3.json", "the street_type channel will resolve OFF in this worktree.")
 
-	return { anchor, country, ...(streetType ? { streetType } : {}) }
+	return { anchor, country, streetType }
 }
 
 /**
@@ -628,7 +622,7 @@ export interface DevOverlayManifest {
 export interface DevOverlay {
 	destDir: PathBuilder
 	cli: PathBuilder
-	card: WeightsCard | undefined
+	card: WeightsCard | null
 }
 
 const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
@@ -639,10 +633,23 @@ const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
 	{ channel: "locality_surface", source: (name) => dataRootPath("gazetteer", name) },
 ]
 
-async function readWeightsCard(workspace: string): Promise<WeightsCard | undefined> {
+/**
+ * Whether the locale's workspace package declares `mailwoman.baseWeights`.
+ */
+async function declaresBaseWeights(locale: string): Promise<boolean> {
+	const path = workspacePathBuilder(`neural-weights-${locale}`, "package.json")
+
+	if (!(await pathExists(path))) return false
+
+	const { mailwoman } = await readLocalJSONFile<{ mailwoman?: { baseWeights?: unknown } }>(path)
+
+	return typeof mailwoman?.baseWeights === "string" && mailwoman.baseWeights.length > 0
+}
+
+async function readWeightsCard(workspace: string): Promise<WeightsCard | null> {
 	const path = workspacePathBuilder(workspace, "model-card.json")
 
-	if (!(await pathExists(path))) return undefined
+	if (!(await pathExists(path))) return null
 
 	return readLocalJSONFile<WeightsCard>(path)
 }
@@ -677,7 +684,7 @@ async function linkCharModel(destDir: PathBuilder, family: string): Promise<void
 	await removeIfPresent(destDir("tokenizer.model"))
 }
 
-async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | undefined): Promise<void> {
+async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null): Promise<void> {
 	const recipe = await readReleaseConfig()
 
 	const dataRoot = dataRootPath()
@@ -797,11 +804,16 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 
 	await makeDirectories(destDir)
 
-	if (manifest.model?.kind === "inherit") {
+	// A package that declares `mailwoman.baseWeights` inherits its graph whatever the manifest says,
+	// because `resolveWeights` takes the base's graph over a file in the overlay directory.
+	const inherits =
+		manifest.model?.kind === "inherit" || (!manifest.model && (await declaresBaseWeights(manifest.locale)))
+
+	if (inherits) {
 		await removeIfPresent(destDir("model.onnx"))
 		await removeIfPresent(destDir("tokenizer.model"))
 	} else if (manifest.model?.kind === "link") {
-		await linkBaseModelPair(destDir, manifest.model.digestCard)
+		await linkBaseModelPair(destDir, manifest.model.digestCard ?? null)
 	} else if (manifest.model?.kind === "char") {
 		await linkCharModel(destDir, manifest.model.family)
 	}

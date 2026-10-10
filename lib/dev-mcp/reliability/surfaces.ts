@@ -7,7 +7,7 @@
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { componentMatches } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
@@ -159,7 +159,7 @@ export async function decodeReliabilitySample(
 
 			const expected = truth[tag]
 
-			if (expected === undefined && unassertedPolicy === UnassertedPolicy.Exclude) {
+			if (!expected && unassertedPolicy === UnassertedPolicy.Exclude) {
 				unassertedConfidences.push(confidence)
 
 				unassertedByTag[tag] = (unassertedByTag[tag] ?? 0) + 1

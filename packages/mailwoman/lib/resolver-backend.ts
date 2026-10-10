@@ -1,5 +1,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type {
@@ -28,22 +30,22 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPa
  * Resolves the candidate gazetteer path from an explicit option, then
  * `$MAILWOMAN_CANDIDATE_DB`, then the default path.
  *
- * An explicit or environment path that does not exist yields `undefined` without trying the default path.
+ * An explicit or environment path that does not exist yields `null` without trying the default path.
  * The value `none` selects the FTS backend.
  */
 export async function resolveCandidateDBPath(
-	explicit?: string,
+	explicit?: string | null,
 	dataRoot: PathBuilderLike = dataRootPath()
-): Promise<string | undefined> {
+): Promise<string | null> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
-	if (pinned === "none") return undefined
+	if (pinned === "none") return null
 
-	if (pinned) return (await pathExists(pinned)) ? pinned : undefined
+	if (pinned) return (await pathExists(pinned)) ? pinned : null
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return (await pathExists(convention)) ? convention : undefined
+	return (await pathExists(convention)) ? convention : null
 }
 
 /**
@@ -67,13 +69,13 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
  * Resolves the postal-city alias database path from an explicit option,
  * then `$MAILWOMAN_POSTAL_CITY_ALIAS_DB`.
  *
- * It returns `undefined` when neither is set or the file is missing.
+ * It returns `null` when neither is set or the file is missing.
  * Only the FTS backend uses this database, because the candidate backend folds aliases in at build time.
  */
-export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | undefined> {
+export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | null> {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
 
-	return p && (await pathExists(p)) ? p : undefined
+	return p && (await pathExists(p)) ? p : null
 }
 
 /**
@@ -116,12 +118,14 @@ interface ResolverLookupModule {
 export async function createResolverBackend(
 	mod: ResolverLookupModule,
 	opts: {
-		candidateDB?: string
+		candidateDB?: string | null
 		dataRoot?: PathBuilderLike
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
-
-		variantAliasExemption?: boolean
+		/**
+		 * The candidate backend's variant-alias exemption, defaulting to the backend's own default.
+		 */
+		variantAliasExemption?: VariantAliasExemption
 	}
 ): Promise<PlaceLookup> {
 	const candidate = await resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
@@ -131,7 +135,7 @@ export async function createResolverBackend(
 
 		return new mod.WOFCandidateTableLookup({
 			databasePath: candidate,
-			...(opts.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
+			...(opts.variantAliasExemption ? { variantAliasExemption: opts.variantAliasExemption } : {}),
 		})
 	}
 
@@ -157,17 +161,40 @@ export function conventionCapitalsPath(): PathBuilder {
 }
 
 /**
+ * How a geocode treats the national-capital promotion among same-name bare-toponym candidates.
+ *
+ * - `"auto"` promotes when the capitals reference exists and degrades to no
+ *   promotion (one stderr line) when it does not.
+ * - `"required"` promotes and throws when the reference is missing.
+ * - `"off"` never promotes.
+ */
+export type CapitalTier = "auto" | "required" | "off"
+
+/**
+ * Loads the capital index a {@link CapitalTier} asks for, or `null` when the tier is off
+ * or the reference is missing under `"auto"`.
+ */
+export async function capitalIndexFor(
+	tier: CapitalTier,
+	candidateDB: PathBuilderLike | null
+): Promise<CapitalIndex | null> {
+	if (tier === "off") return null
+
+	return loadCapitalIndex({ candidateDB, missing: tier === "required" ? "throw" : "degrade" })
+}
+
+/**
  * Loads the capital-status reference into a {@link CapitalIndex}.
  *
  * The candidate gazetteer's `capital` table takes precedence over the repository file.
- * When neither exists, `missing: "degrade"` returns `undefined` and the default mode throws.
+ * When neither exists, `missing: "degrade"` returns `null` and the default mode throws.
  * A malformed repository file throws in both modes.
  */
 export async function loadCapitalIndex(opts: {
-	candidateDB?: PathBuilderLike
+	candidateDB?: PathBuilderLike | null
 	path?: PathBuilderLike
 	missing?: "throw" | "degrade"
-}): Promise<CapitalIndex | undefined> {
+}): Promise<CapitalIndex | null> {
 	if (opts.candidateDB && (await pathExists(opts.candidateDB))) {
 		using db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
@@ -188,7 +215,7 @@ export async function loadCapitalIndex(opts: {
 				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
 			)
 
-			return undefined
+			return null
 		}
 
 		throw new Error(
@@ -235,7 +262,7 @@ export async function existingWOFDatabasePaths(explicit?: readonly string[]): Pr
 export async function resolvePOIResolverPaths(options: {
 	candidateDB?: string
 	resolveDB?: string
-}): Promise<{ candidateDB: string | undefined; wofPaths: string[] }> {
+}): Promise<{ candidateDB: string | null; wofPaths: string[] }> {
 	const candidateDB = await resolveCandidateDBPath(options.candidateDB)
 
 	if (candidateDB) return { candidateDB, wofPaths: [] }

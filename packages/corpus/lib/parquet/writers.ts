@@ -31,7 +31,8 @@
  *   the head of the next. A reader must therefore take a file's sources from all of its rows.
  */
 
-import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -200,7 +201,7 @@ export interface WriteParquetSplitsOptions {
 	/**
 	 * Max rows per `.parquet` file.
 	 *
-	 * Default 1,000,000.
+	 * @defaultValue `1,000,000`
 	 */
 	rowsPerFile?: number
 

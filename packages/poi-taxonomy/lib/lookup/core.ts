@@ -35,7 +35,7 @@ export interface POITaxonomyLookup {
 	lookupPOICategory(text: string, locale?: string): CategoryMatch[]
 	lookupPOICategoryLocaleNormalized(text: string, locale?: string): CategoryMatch[]
 	lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[]
-	getPOICategory(id: string): CategoryRecord | undefined
+	getPOICategory(id: string): CategoryRecord | null
 	getAllCategories(): ReadonlyArray<CategoryRecord>
 	requiresBuildLocalLayer(category: CategoryRecord): boolean
 	resolveOvertureCategories(seedID: string): string[]
@@ -249,8 +249,8 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	/**
 	 * Fetch a category by id.
 	 */
-	function getPOICategory(id: string): CategoryRecord | undefined {
-		return byID.get(id)
+	function getPOICategory(id: string): CategoryRecord | null {
+		return byID.get(id) ?? null
 	}
 
 	/**

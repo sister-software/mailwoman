@@ -13,7 +13,8 @@
  * cause the silent eval drift that the eval discipline catches.
  */
 
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -126,7 +127,7 @@ export async function readEvalReport(outDir: PathBuilderLike, stdout: string, st
 	} else {
 		notes.push(
 			`No verdict.json at ${verdictPath}. The run did not reach the verdict assembler — read the log. This is not a ` +
-				"FAIL; a check that never graded and a check that graded FAIL are different outcomes."
+				"FAIL; a check that never graded and a check that graded FAIL are different results."
 		)
 	}
 

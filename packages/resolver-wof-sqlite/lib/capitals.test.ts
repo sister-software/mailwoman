@@ -37,7 +37,7 @@ describe("CapitalIndex.levelOfPlace", () => {
 	it("answers none — never throws — for a missing name, coordinate, or unknown country", () => {
 		expect(index.levelOfPlace(null, "CR", 9.95, -84.1)).toBe(CAPITAL_LEVEL.none)
 		expect(index.levelOfPlace("San José", "CR", null, -84.1)).toBe(CAPITAL_LEVEL.none)
-		expect(index.levelOfPlace("San José", undefined, 9.95, -84.1)).toBe(CAPITAL_LEVEL.none)
+		expect(index.levelOfPlace("San José", null, 9.95, -84.1)).toBe(CAPITAL_LEVEL.none)
 		expect(index.levelOfPlace("San José", "ZZ", 9.95, -84.1)).toBe(CAPITAL_LEVEL.none)
 	})
 

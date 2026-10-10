@@ -6,7 +6,8 @@
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
@@ -188,7 +189,7 @@ export interface PhraseCollisionCensus {
 	censusID: "activity-phrase-collision-census"
 	generatedAt: string
 	lexicon: { lexiconID: string; version: string; declaredPhrases: number }
-	poiDatabase: { path: string; layerManifest?: LayerManifest; layerManifestNote?: string }
+	poiDatabase: { path: string; layerManifest: LayerManifest | null; layerManifestNote: string | null }
 	probes: {
 		distinct: number
 		byFamily: Record<ProbeFamily, number>
@@ -248,7 +249,8 @@ export interface PhraseCollisionCensusOptions {
 	lexicon?: ActivityPhraseLexicon
 	/**
 	 * Checkout that holds the committed inputs.
-	 * It defaults to the current repository root.
+	 *
+	 * @defaultValue the current repository root.
 	 */
 	repositoryRoot?: PathBuilderLike
 }
@@ -307,7 +309,7 @@ export function classifyVenueName(name: string, probe: string): VenueNameVerdict
 export function candidateSubjects(input: string): string[] {
 	const asked: string[] = []
 
-	matchPOISubject(input, undefined, (phrase) => {
+	matchPOISubject(input, null, (phrase) => {
 		asked.push(phrase)
 
 		return []
@@ -431,7 +433,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 
 		const probeTokens = tokenize(probe)
 		const seen = new Set<string>()
-		let claimed: boolean | undefined
+		let claimed: boolean | null = null
 
 		for (const { venue, tokens } of tokenized) {
 			if (!venue.name || seen.has(venue.name)) continue
@@ -480,8 +482,8 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 		},
 		poiDatabase: {
 			path: options.databasePath.toString(),
-			...(manifest ? { layerManifest: manifest } : {}),
-			...(manifest ? {} : { layerManifestNote: error ?? "no layer_manifest row" }),
+			layerManifest: manifest ?? null,
+			layerManifestNote: manifest ? null : (error ?? "no layer_manifest row"),
 		},
 		probes: {
 			distinct: probes.length,
@@ -535,7 +537,7 @@ export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void 
 
 	for (const collision of census.categoryLexicon.collisions) {
 		console.log(
-			`  ${stringifyJSON(collision.probe)} [${collision.locale ?? "no locale"}] → ${collision.match.kind ?? "category"} ${collision.match.categoryID} (${collision.match.matchedPhrase})`
+			`  ${stringifyJSON(collision.probe)} [${collision.locale ?? "no locale"}] → ${collision.match.kind} ${collision.match.categoryID} (${collision.match.matchedPhrase})`
 		)
 	}
 

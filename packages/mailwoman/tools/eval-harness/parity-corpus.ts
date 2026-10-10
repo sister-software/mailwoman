@@ -16,6 +16,9 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { pinnedSwitch, type SwitchPin } from "#tools/eval-harness/switch-pin"
+
 /**
  * Maximum number of spurious-emission examples printed per label.
  */
@@ -97,10 +100,10 @@ export interface ParityEvalOptions {
 	 */
 	streetMorphology?: boolean
 	/**
-	 * Whether to apply the gazetteer FST emission prior.
-	 * It is on unless set to `false`.
+	 * Pins the gazetteer FST emission prior.
+	 * @defaultValue `"production"` the geocode session's default.
 	 */
-	gazetteerPrior?: boolean
+	gazetteerPrior?: SwitchPin
 	/**
 	 * Whether to apply word-consistency healing.
 	 * It follows the production default unless set to `false`.
@@ -115,7 +118,7 @@ export interface ParityEvalOptions {
 /**
  * Exit code of a parity eval run.
  */
-export interface ParityEvalOutcome {
+export interface ParityEvalResult {
 	exitCode: number
 }
 
@@ -128,7 +131,7 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
  *
  * It prints per-label and per-country precision tables with the floor verdict.
  */
-export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
+export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalResult> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)
 
@@ -140,9 +143,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		cacheRoot: options.weightsCacheRoot,
 	})
 
-	let fstGazetteer: FSTMatcher | undefined
+	let fstGazetteer: FSTMatcher | null = null
 
-	if (options.gazetteerPrior !== false) {
+	if (pinnedSwitch(options.gazetteerPrior ?? "production", GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) {
 		// The runtime loads the FST that sits beside the classifier's weights, so the eval does too.
 		const fstPath = (classifier as { fstPath?: PathBuilderLike }).fstPath
 
@@ -160,7 +163,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		}
 	}
 
-	let fstStreetMorphology: FSTMatcher | undefined
+	let fstStreetMorphology: FSTMatcher | null = null
 
 	if (options.streetMorphology) {
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street")
@@ -186,9 +189,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
 				queryShape: computeQueryShape(fixture.input),
-				fstStreetMorphology,
+				...(fstStreetMorphology ? { fstStreetMorphology } : {}),
 				...(fstGazetteer ? { fst: fstGazetteer } : {}),
-				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
+				enforceWordConsistency: options.wordConsistency === false ? "off" : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
 

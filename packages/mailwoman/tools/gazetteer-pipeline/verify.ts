@@ -8,7 +8,7 @@ import type { PathBuilderLike } from "path-ts"
 import { DEFAULT_VERIFY_BASELINE } from "#gazetteer/verify/baseline"
 
 /**
- * Records the outcome of one identified gazetteer verification check.
+ * Records the result of one identified gazetteer verification check.
  */
 export interface VerifyCheckResult {
 	check: string
@@ -102,7 +102,7 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		const vt = tableExists(db, "place_abbr")
 			? (db
 					.prepare("SELECT s.name FROM place_abbr a JOIN spr s ON s.id = a.id WHERE a.abbr = 'VT' AND s.country = 'US'")
-					.get() as { name: string } | undefined)
+					.get() as { name: string } | null)
 			: undefined
 
 		const ok = abbrCount > 0 && vt?.name === "Vermont"

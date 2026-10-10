@@ -207,10 +207,21 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 	return exitCode
 }
 
-async function lint(surface: Surface, narrowing: readonly string[]) {
+async function stagedPaths(): Promise<string[]> {
+	const result = await runFile("git", ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"], {
+		cwd: repoRootPathBuilder,
+	})
+
+	return result.stdout.split("\0").filter((path) => path.length > 0)
+}
+
+async function lint(surface: Surface, narrowing: readonly string[], staged: boolean) {
 	const resolvedPathSpecs = await pathspecsFor(surface)
 	const tracked = await workingTreeFiles(resolvedPathSpecs)
-	const readsOutsideGit = surface !== "code" && (narrowing.length > 0 || UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT)
+
+	const readsOutsideGit =
+		surface !== "code" && ((narrowing.length > 0 && !staged) || UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT)
+
 	// A clone whose ignore rules do not cover these directories lists them twice,
 	// so the union is taken by key rather than by concatenation.
 	const listedFiles = [...new Set(readsOutsideGit ? [...tracked, ...(await documentsOutsideGit())] : tracked)]
@@ -227,7 +238,9 @@ async function lint(surface: Surface, narrowing: readonly string[]) {
 
 	const filteredSurfaceFiles = narrowTo(surfaceFiles, narrowing)
 
-	if (narrowing.length) {
+	if (staged && !filteredSurfaceFiles.length) return 0
+
+	if (narrowing.length && !staged) {
 		const unmatched = await describeUnmatched(narrowing, filteredSurfaceFiles, surface)
 
 		if (unmatched.length) {
@@ -281,6 +294,7 @@ async function main(): Promise<number> {
 				short: "s",
 				multiple: true,
 			},
+			staged: { type: "boolean" },
 		},
 		allowPositionals: true,
 	})
@@ -290,6 +304,14 @@ async function main(): Promise<number> {
 
 		return 1
 	}
+
+	if (options.staged && narrowing.length) {
+		throw new Error("--staged reads the Git index and cannot be combined with path arguments")
+	}
+
+	const selectedPaths = options.staged ? await stagedPaths() : narrowing
+
+	if (options.staged && !selectedPaths.length) return 0
 
 	const surfaces: Surface[] = []
 
@@ -301,7 +323,7 @@ async function main(): Promise<number> {
 	let exitCode = 0
 
 	for (const surface of surfaces) {
-		exitCode = await lint(surface, narrowing)
+		exitCode = await lint(surface, selectedPaths, options.staged === true)
 
 		if (exitCode !== 0) {
 			return exitCode

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { afterAll, describe, expect, it } from "vitest"

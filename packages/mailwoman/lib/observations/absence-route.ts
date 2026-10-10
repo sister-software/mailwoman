@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { type CoverageCell, type LayerManifest, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIQueryResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import type {
@@ -67,7 +67,7 @@ export interface AbsenceObservation {
 			version: string
 			tier: string
 			license: string
-			attribution?: string
+			attribution: string | null
 			source: string
 			sourceVintage: string
 			buildCmd: string
@@ -145,7 +145,7 @@ export interface AbsenceRouteIdentity {
 }
 
 /**
- * An open absence route decides whether each POI outcome records an absence
+ * An open absence route decides whether each POI result records an absence
  * observation or an explicit refusal.
  * Route disposal closes the coverage database.
  */
@@ -153,9 +153,9 @@ export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
 
 	/**
-	 * Decides one answered query without changing the outcome.
+	 * Decides one answered query without changing the result.
 	 */
-	observe: (outcome: POIIntentOutcome | undefined) => Promise<AbsenceDecision>
+	observe: (answer: POIQueryResult | null) => Promise<AbsenceDecision>
 }
 
 /**
@@ -276,7 +276,7 @@ export async function createAbsenceObservationRoute(
 
 		return {
 			identity,
-			observe: (outcome) => decide(outcome, { affording, model, db, identity }),
+			observe: (answer) => decide(answer, { affording, model, db, identity }),
 			[Symbol.dispose]: () => db[Symbol.dispose](),
 		}
 	} catch (error) {
@@ -293,10 +293,10 @@ interface DecisionContext {
 	identity: AbsenceRouteIdentity
 }
 
-async function decide(outcome: POIIntentOutcome | undefined, context: DecisionContext): Promise<AbsenceDecision> {
-	if (!outcome || outcome.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
+async function decide(answer: POIQueryResult | null, context: DecisionContext): Promise<AbsenceDecision> {
+	if (!answer || answer.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
 
-	const { intent, results } = outcome
+	const { intent, results } = answer
 
 	if (!results) return { fired: false, refusal: "executor_did_not_run" }
 
@@ -320,7 +320,7 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 	const resolution = context.identity.coverageResolution
 	const cellIndex = latLngToCell(searchCenter.latitude, searchCenter.longitude, resolution) as H3Cell
 	const h3Cell = Number(BigInt(`0x${cellIndex.slice(2)}`))
-	const cell: CoverageCell | undefined = await readLayerCoverage(context.db, h3Cell)
+	const cell: CoverageCell | null = await readLayerCoverage(context.db, h3Cell)
 
 	if (!cell) return { fired: false, refusal: "cell_unsurveyed" }
 
@@ -371,7 +371,7 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 					version: layer.version,
 					tier: layer.tier,
 					license: layer.license,
-					...(layer.attribution ? { attribution: layer.attribution } : {}),
+					attribution: layer.attribution || null,
 					source: layer.source,
 					sourceVintage: layer.sourceVintage,
 					buildCmd: layer.buildCmd,

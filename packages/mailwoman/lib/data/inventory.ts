@@ -5,7 +5,8 @@
  *   Inventories databases in the data root and reports their provenance and symlink targets.
  */
 
-import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
+import type { Dirent } from "@mailwoman/core/fs/readers"
+import { pathExists, readLink, isSymbolicLink, statPath } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
@@ -146,7 +147,7 @@ export interface InventoryReport {
  * and a reader that opened one read-write would fail on exactly the artifacts it most needs to describe.
  */
 export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest; error?: string } {
-	let db: DatabaseClient<layerschemadatabase> | undefined
+	let db: DatabaseClient<layerschemadatabase> | null = null
 
 	try {
 		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })

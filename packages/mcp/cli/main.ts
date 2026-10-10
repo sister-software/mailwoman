@@ -5,7 +5,7 @@
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import type { PipelineResult } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -39,7 +39,7 @@ const { values } = parseArguments({
 	allowPositionals: true,
 })
 
-const poiDatabasePath = values["poi-db"]
+const poiDatabasePath = values["poi-db"] ?? null
 
 let corePromise:
 	| Promise<{
@@ -107,7 +107,7 @@ function loadCore(): Promise<{
 
 type Pipeline = (raw: string) => Promise<PipelineResult>
 
-let plainPipeline: Pipeline | undefined
+let plainPipeline: Pipeline | null = null
 
 const poiPipelines = new Map<string, Pipeline>()
 
@@ -121,7 +121,7 @@ async function getPlainPipeline(): Promise<Pipeline> {
 	return plainPipeline
 }
 
-async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
+async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
 	const key = dbPath ?? ""
 	const cached = poiPipelines.get(key)
 
@@ -131,7 +131,7 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 	const pipeline = createRuntimePipeline({
 		classifier,
 		resolver,
-		poiQueryKind: dbPath ? { poiDatabasePath: dbPath } : true,
+		poiQueryKind: dbPath ? { poiDatabasePath: dbPath } : "extract",
 	})
 
 	poiPipelines.set(key, pipeline)
@@ -166,17 +166,17 @@ const deps: MCPToolDeps = {
 	async overpassExport(query) {
 		const pipeline = await getPoiPipeline(poiDatabasePath)
 		const result = await pipeline(query)
-		const outcome = result.poiIntent
+		const poiIntent = result.poiIntent
 
-		if (!outcome || outcome.type !== "intent") {
-			const reason = outcome?.type === "abstain" ? `: ${outcome.reason}` : ""
+		if (!poiIntent || poiIntent.type !== "intent") {
+			const reason = poiIntent?.type === "abstain" ? `: ${poiIntent.reason}` : ""
 
 			throw new Error(
-				`mailwoman_overpass_export: query is not POI-shaped (${outcome?.type ?? "no poi intent"}${reason})`
+				`mailwoman_overpass_export: query is not POI-shaped (${poiIntent?.type ?? "no poi intent"}${reason})`
 			)
 		}
 
-		const { subject } = outcome.intent
+		const { subject } = poiIntent.intent
 
 		const osmTags =
 			subject.kind === "category"
@@ -184,7 +184,7 @@ const deps: MCPToolDeps = {
 				: []
 
 		return emitOverpassQL(
-			outcome.intent,
+			poiIntent.intent,
 			subject.kind === "category" && osmTags.length === subject.categoryIDs.length ? { osmTags } : {}
 		)
 	},
@@ -240,9 +240,9 @@ const deps: MCPToolDeps = {
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
 
-		let frn: FRN | undefined
+		let frn: FRN | null = null
 
-		if (q.frn !== undefined) {
+		if (q.frn) {
 			const parsed = toFRN(q.frn)
 
 			if (!parsed) {

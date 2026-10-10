@@ -5,7 +5,8 @@
  * @file The autocomplete ladder over two arms — parse→resolve and FST. Every rung runs under the row's country. The runner refuses a row with no country.
  */
 
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { percentile } from "@mailwoman/core/stats"
 import { autocomplete, deserializeFST, type FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -162,7 +163,7 @@ export interface RowArmReading {
 export function readRow(rungs: readonly RungReading[], inputLength: number): RowArmReading {
 	const firstIndex = rungs.findIndex((rung) => rung.hit)
 	const first = firstIndex === -1 ? null : rungs[firstIndex]!
-	const churn = first === null ? null : rungs.slice(firstIndex + 1).filter((rung) => !rung.hit).length
+	const churn = first ? rungs.slice(firstIndex + 1).filter((rung) => !rung.hit).length : null
 	const shortOnes = rungs.filter((rung) => rung.chars <= ABSTAIN_EXPECTED_MAX_CHARS)
 
 	return {
@@ -251,7 +252,7 @@ export interface AutocompleteLadderOptions extends GauntletDepsOptions {
 	/**
 	 * Directory of per-locale FST binaries (`fst-<locale>.bin`).
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale`
 	 */
 	fstDir?: string
 	/**

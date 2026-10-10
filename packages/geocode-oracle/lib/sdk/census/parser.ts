@@ -7,7 +7,7 @@
 
 import { createPostalAddressID } from "@mailwoman/address-id"
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import type { ComponentDict } from "@mailwoman/codex/address/format"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import { type AddressGeocode, toPostalAddress, withGeocode } from "@mailwoman/record"
 
 import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "#result"
@@ -39,13 +39,13 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  */
 const HOUSE_NUMBER_PREFIX = /^(\d+)\s+\S/
 
-function joinParts(...parts: Array<string | undefined>): string | undefined {
+function joinParts(...parts: Array<string | undefined>): string | null {
 	const joined = parts
 		.map((part) => part?.trim())
 		.filter((part): part is string => Boolean(part))
 		.join(" ")
 
-	return joined || undefined
+	return joined || null
 }
 
 /**
@@ -140,6 +140,9 @@ export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match:
 		coordinate,
 		tier: CENSUS_RESOLUTION_TIER,
 		uncertaintyMeters: null,
+		hierarchy: null,
+		poBox: null,
+		multiUnit: null,
 	}
 
 	const address = withGeocode(toPostalAddress(components, { country: "US", raw: match.matchedAddress }), geocode)
@@ -150,7 +153,7 @@ export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match:
 		addressID: createPostalAddressID({
 			coordinate,
 			address: match.matchedAddress,
-			state: regionPrefix(components.region),
+			state: regionPrefix(components.region) ?? undefined,
 		}),
 		// The Census geocoder has no partial-match signal: a match is either present in `addressMatches`
 		// or absent, so a caller wanting its quality reads `raw.tigerLine` and the address range instead.

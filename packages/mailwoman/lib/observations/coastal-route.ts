@@ -41,7 +41,7 @@ export interface CoastalErosionObservation {
 	/**
 	 * Its basis is `source_present`, which supports presence and no other claim.
 	 */
-	coverage?: ObservationCoverageRecord
+	coverage: ObservationCoverageRecord | null
 	indexCellIndex: string
 	limits: ReadonlyArray<string>
 	/**
@@ -80,7 +80,7 @@ export interface CoastalErosionRoute extends Disposable {
 	/**
 	 * Read the layer for one coordinate, or return a reasoned refusal for missing coordinates.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
+	observe: (latitude: number | null, longitude: number | null) => CoastalDecision
 }
 
 export interface CoastalErosionRouteOptions {
@@ -109,7 +109,7 @@ export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): 
 	return {
 		...createDesignationRoute(lookup, {
 			read: (latitude, longitude) => lookup.lookup(latitude, longitude, scenarioKey),
-			refusalFor: (reading) => (reading.kind !== CoastalReadingKind.Designated ? "no_designation_here" : undefined),
+			refusalFor: (reading) => (reading.kind !== CoastalReadingKind.Designated ? "no_designation_here" : null),
 			toObservation: (reading, latitude, longitude) =>
 				toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 		}),
@@ -137,7 +137,7 @@ function toObservation(
 		},
 		designations: reading.designations,
 		containment: reading.containment,
-		...observationCoverageRecord(reading.coverage),
+		coverage: observationCoverageRecord(reading.coverage),
 		indexCellIndex: reading.indexCellIndex,
 		limits: reading.limits,
 		coverageLimit: reading.coverageLimit,

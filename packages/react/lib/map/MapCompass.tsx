@@ -30,7 +30,9 @@ export interface MapCompassProps {
 	 */
 	onResetNorth: () => void
 	/**
-	 * The control's accessible name. @default "Reset bearing to north"
+	 * The control's accessible name.
+	 *
+	 * @defaultValue `"Reset bearing to north"`
 	 */
 	label?: string
 	className?: string

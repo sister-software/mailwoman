@@ -18,24 +18,12 @@ import { representativePoint } from "#sdk/representative-point"
 import { tagAlias } from "#sdk/tag-columns"
 
 /**
- * This module re-exports the sub-venue tag rules and SQL helpers for callers that customize rules.
- */
-export {
-	buildSubVenueSQL,
-	distinctSubVenueTagKeys,
-	matchSubVenueTagRule,
-	type SubVenueTagRule,
-	SubVenueTier,
-	SUBVENUE_TAG_RULES,
-} from "#sdk/extract/subvenue/rules"
-
-/**
  * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object.
  * The parser returns an empty object for missing input.
  *
  * The parser scans quoted strings because OSM values such as names often contain commas.
  */
-export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
+export function parseOSMHstore(text: string | null): Record<string, string> {
 	const out: Record<string, string> = {}
 
 	if (!text) return out
@@ -83,11 +71,11 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 	while (i < text.length) {
 		const key = readQuoted()
 
-		if (key === null) break
+		if (!key) break
 
 		const value = readQuoted()
 
-		if (value === null) break
+		if (!value) break
 		out[key] = value
 	}
 
@@ -200,14 +188,14 @@ export function toSubVenueSourceRow(
 
 	if (!rule) return null
 
-	const pt = representativePoint(feature.geometry)
+	const pt = representativePoint(feature.geometry ?? null)
 
 	if (!pt) return null
 
 	const rawName = p["name"] ?? tags["name"]
 	const rawRef = p["ref"] ?? tags["ref"]
-	const name = rawName != null && rawName !== "" ? String(rawName) : null
-	const ref = rawRef != null && rawRef !== "" ? String(rawRef) : null
+	const name = rawName && rawName !== "" ? String(rawName) : null
+	const ref = rawRef && rawRef !== "" ? String(rawRef) : null
 	const localizedNames = harvestLocalizedNames(tags)
 
 	if (!name && !ref && !Object.keys(localizedNames).length) return null

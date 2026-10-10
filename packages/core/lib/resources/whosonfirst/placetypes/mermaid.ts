@@ -49,7 +49,8 @@ export type InterpolateColorCallback = (t: number) => string
 export interface GenerateMermaidMarkupOptions {
 	/**
 	 * Restrict descendants to the given roles.
-	 * Defaults to all roles.
+	 *
+	 * @defaultValue all roles.
 	 */
 	roles?: Iterable<PlacetypeRole>
 	/**
@@ -78,7 +79,7 @@ const HAND_TUNED_PALETTE: Record<PlacetypeRole, RolePalette> = Object.fromEntrie
  * Walk the filtered subtree once to find the deepest reachable descendant, mirroring the emit-walk in
  * {@linkcode generateMermaidMarkup} so its depths line up with the edges that will be emitted.
  */
-function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undefined): number {
+function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | null): number {
 	let maxDepth = 0
 	const visited = new Set<string>()
 
@@ -129,7 +130,7 @@ export function generateMermaidMarkup(placetype: Placetype, options: GenerateMer
 	]
 
 	// Pre-compute max depth once so every edge's `t` is consistent across the second pass.
-	const maxDepth = measureMaxDepth(placetype, roles)
+	const maxDepth = measureMaxDepth(placetype, roles ?? null)
 
 	const visited = new Set<string>()
 	let edgeIdx = 0

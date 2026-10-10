@@ -19,7 +19,7 @@ import {
 } from "#dev-mcp/counterfactual"
 import { resolveConfig } from "#dev-mcp/engine/registry"
 
-async function flipFor(setting: CounterfactualSetting, locale: string, country: string | undefined) {
+async function flipFor(setting: CounterfactualSetting, locale: string, country: string | null) {
 	return (await enumerateFlips(resolveConfig({ locale }), country)).flips.find((flip) => flip.setting === setting)
 }
 
@@ -30,6 +30,15 @@ describe("enumerateFlips — one setting at a time", () => {
 		for (const flip of flips) {
 			expect(Object.keys(flip.patch)).toHaveLength(1)
 		}
+	})
+
+	it("patches a switch with the pin opposite to its effective value", async () => {
+		const effective = resolveConfig({})
+		const { flips } = await enumerateFlips(effective, "US")
+		const prior = flips.find((flip) => flip.setting === "gazetteer_prior")!
+
+		expect(prior.patch).toEqual({ gazetteer_prior: effective.gazetteerPrior ? "off" : "on" })
+		expect(resolveConfig(prior.patch).gazetteerPrior).toBe(!effective.gazetteerPrior)
 	})
 
 	it("offers every setting in the fixed space where it applies", async () => {
@@ -47,7 +56,7 @@ describe("enumerateFlips — one setting at a time", () => {
 	})
 
 	it("skips the locale setting with a stated reason rather than omitting it", async () => {
-		const noCountry = await enumerateFlips(resolveConfig({}), undefined)
+		const noCountry = await enumerateFlips(resolveConfig({}), null)
 		const noOverlay = await enumerateFlips(resolveConfig({}), "JP")
 
 		expect(noCountry.flips.some((flip) => flip.setting === "locale")).toBe(false)

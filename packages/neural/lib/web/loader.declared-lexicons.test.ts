@@ -12,7 +12,7 @@ import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -56,7 +56,7 @@ function makeRecordingFetch(card: object | null, requested: string[]): typeof fe
 		requested.push(url)
 
 		if (url.endsWith("model-card.json")) {
-			if (card === null) return new Response(null, { status: 404, statusText: "Not Found" })
+			if (!card) return new Response(null, { status: 404, statusText: "Not Found" })
 
 			return new Response(stringifyJSON(card), { headers: { "content-type": "application/json" } })
 		}
@@ -83,6 +83,8 @@ async function loadWithCard(card: object | null): Promise<string[]> {
 	const requested: string[] = []
 
 	await loadNeuralClassifierFromURLs({
+		postcodeBinaryURLs: [],
+		pairIndexURLs: [],
 		modelURL: `${BASE}/model.onnx`,
 		tokenizerURL: `${BASE}/tokenizer.model`,
 		modelCardURL: `${BASE}/model-card.json`,
@@ -127,10 +129,12 @@ describe("card-declared lexicon generations", () => {
 		const requested: string[] = []
 
 		await loadNeuralClassifierFromURLs({
+			postcodeBinaryURLs: [],
+			pairIndexURLs: [],
 			modelURL: `${BASE}/model.onnx`,
 			tokenizerURL: `${BASE}/tokenizer.model`,
 			modelCardURL: `${BASE}/model-card.json`,
-			localitySurfaceLexiconURL: "https://elsewhere.example/custom-lexicon.json",
+			localitySurfaceLexicon: { url: "https://elsewhere.example/custom-lexicon.json" },
 			fetchImpl: makeRecordingFetch(
 				{ requires: { locality_surface: { lexicon: "locality-surface-lexicon-v7.json" } } },
 				requested

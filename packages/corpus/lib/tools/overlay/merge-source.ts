@@ -32,7 +32,8 @@ export interface MergeSourceOptions {
 	output: PathBuilderLike
 	/**
 	 * The number of rows held in memory while shuffling.
-	 * It defaults to the corpus writer's window.
+	 *
+	 * @defaultValue the corpus writer's window.
 	 */
 	windowSize?: number
 	/**

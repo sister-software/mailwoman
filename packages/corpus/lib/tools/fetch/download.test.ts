@@ -1,7 +1,8 @@
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"

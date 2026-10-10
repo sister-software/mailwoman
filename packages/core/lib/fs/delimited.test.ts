@@ -2,7 +2,13 @@ import type { PathBuilder } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { readUnquotedTSV, readUnquotedTSVChecked, readUnquotedTSVText } from "#fs/delimited"
+import {
+	checkRecordCount,
+	headerColumnIndex,
+	readUnquotedTSV,
+	readUnquotedTSVChecked,
+	readUnquotedTSVText,
+} from "#fs/delimited"
 import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
 import { writeLocalTextFile } from "#fs/writers"
 
@@ -116,5 +122,34 @@ describe("the checked read", () => {
 		// A read that cannot happen at all must not answer with an empty array.
 		// That would hide the read failure as an empty result.
 		await expect(readUnquotedTSVChecked(missing)).rejects.toThrow(/Cannot read from the provided source/)
+	})
+})
+
+describe("the header index", () => {
+	it("maps each label to its column", () => {
+		expect([...headerColumnIndex("example.csv", ["uprn", "postcode", "lot_id"])]).toEqual([
+			["uprn", 0],
+			["postcode", 1],
+			["lot_id", 2],
+		])
+	})
+
+	it("throws on a repeated label, naming the file and the label", () => {
+		expect(() => headerColumnIndex("example.csv", ["uprn", "lot_id", "lot_id"])).toThrow(
+			'example.csv repeats the header column "lot_id".'
+		)
+	})
+})
+
+describe("the record count check", () => {
+	// The line count skips the blank line, so the text holds two data lines.
+	const text = "uprn,postcode\n1,CR0 5BX\n\n2,CR0 5BY\n"
+
+	it("accepts a record count equal to the count of non-empty lines after the header", () => {
+		expect(() => checkRecordCount("example.csv", text, 2)).not.toThrow()
+	})
+
+	it("throws on a short read, naming the file and both counts", () => {
+		expect(() => checkRecordCount("example.csv", text, 1)).toThrow("example.csv: read 1 records from 2 data lines.")
 	})
 })

@@ -23,6 +23,8 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 
 			return tree
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return { resolver, seen }
@@ -42,8 +44,8 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
-			defaultCountry: "FR",
+			placeCountry: "none",
+			defaultCountry: { country: "FR", source: "caller" },
 			nationalDatabases: frRegister,
 			osmDatabases: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
 		})
@@ -59,8 +61,8 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("Hauptstraße 5, Berlin", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
-			defaultCountry: "DE",
+			placeCountry: "none",
+			defaultCountry: { country: "DE", source: "caller" },
 			nationalDatabases: frRegister,
 			osmDatabases: (c) => (c === "de" ? { addressPoints: osmLookup } : {}),
 		})
@@ -77,8 +79,8 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("350 5th Ave, New York, NY 10118", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
-			defaultCountry: "US",
+			placeCountry: "none",
+			defaultCountry: { country: "US", source: "caller" },
 			nationalDatabases,
 		})
 
@@ -93,14 +95,14 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("Place Bellecour, Lyon", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
-			defaultCountry: "FR",
+			placeCountry: "none",
+			defaultCountry: { country: "FR", source: "caller" },
 			nationalDatabases: (c) => (c === "fr" ? { streetCentroids: streetLookup } : {}),
 		})
 
 		expect(typeof seen[0]?.streetCentroids).toBe("function")
 		expect(seen[0]?.streetCentroids?.("fr")).toBe(streetLookup)
-		expect(seen[0]?.streetCentroids?.("de")).toBeUndefined()
+		expect(seen[0]?.streetCentroids?.("de")).toBeNull()
 
 		expect(seen[0]?.streetCountryHints).toContain("fr")
 	})
@@ -111,8 +113,8 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("Place Bellecour, Lyon", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
-			defaultCountry: "FR",
+			placeCountry: "none",
+			defaultCountry: { country: "FR", source: "caller" },
 		})
 
 		expect(seen[0]?.streetCentroids).toBeUndefined()
@@ -125,8 +127,8 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
-			defaultCountry: "FR",
+			placeCountry: "none",
+			defaultCountry: { country: "FR", source: "caller" },
 			osmDatabases: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
 		})
 

@@ -7,7 +7,8 @@
  *   The publishing step runs this check before upload.
  */
 
-import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { sha256File } from "@mailwoman/core/hash"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { resolvePath } from "path-ts"
@@ -23,7 +24,7 @@ import { PlanetaryBuildManifestSchema } from "#schema/manifest"
  * Answers one line per output.
  * Throws naming the first difference.
  */
-export async function verifyBody(body: BuildableBodyID, out: string | undefined): Promise<string[]> {
+export async function verifyBody(body: BuildableBodyID, out: string | null): Promise<string[]> {
 	const directory = buildDirectory(body, out)
 	const manifestPath = resolvePath(directory, buildOutputs(body).manifest)
 	const manifest = PlanetaryBuildManifestSchema.parse(await readLocalJSONFile(manifestPath))

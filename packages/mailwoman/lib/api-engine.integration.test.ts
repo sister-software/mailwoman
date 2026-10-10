@@ -11,7 +11,7 @@
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
@@ -223,7 +223,7 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
 		const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${handle.port}/v1/resolve` })
-		const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
+		const resolved = await remote.resolveTree(tree, { defaultCountry: { country: "US", source: "caller" } })
 
 		const flat: Array<(typeof resolved.roots)[number]> = []
 

@@ -92,6 +92,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Locale \`${locale}\` is claimed by ${families.length} families (${families.join(", ")}). ` +
 						"A locale decodes through one graph. Remove it from every family but the one that owns it.",
 					file: "packages/neural/lib/weights/families.ts",
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -114,6 +116,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Language \`${language}\` is claimed by ${families.length} families (${families.join(", ")}), so ` +
 						"every unpackaged locale in it resolves to whichever is declared first.",
 					file: "packages/neural/lib/weights/families.ts",
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -132,6 +136,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Family \`${owner}\` claims language \`${language}\`, and \`${entry.family}\` packages a locale in ` +
 						"that language. The packaged lookup wins, so the language claim would cover nothing.",
 					file: "packages/neural/lib/weights/families.ts",
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -153,6 +159,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Script \`${script}\` routes to ${families.length} families (${families.join(", ")}), so the ` +
 						"router's declaration order would decide which graph reads it.",
 					file: "packages/neural/lib/weights/families.ts",
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -167,6 +175,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Family \`${family.family}\` names graph package \`${family.graphPackage}\`, and no ` +
 						`\`packages/neural-weights-${family.family}/package.json\` is tracked.`,
 					file: "packages/neural/lib/weights/families.ts",
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -179,6 +189,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Family \`${family.family}\` names \`${family.graphPackage}\`, and that directory's manifest ` +
 						`declares \`${manifest.name}\`.`,
 					file: `packages/neural-weights-${family.family}/package.json`,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -189,6 +201,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Family \`${family.family}\`'s graph package declares no \`model.onnx\` in \`files\`. A family ` +
 						"is a graph; a package with no graph is an overlay and belongs in some family's `locales`.",
 					file: `packages/neural-weights-${family.family}/package.json`,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -201,6 +215,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`Family \`${family.family}\` declares encoder \`${family.encoder}\`, which reads ` +
 						`\`${vocabulary}\`, and its graph package does not publish that file.`,
 					file: `packages/neural-weights-${family.family}/package.json`,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -216,6 +232,8 @@ export const weightsFamilyCheck: RepoCheck = {
 						`\`${manifest.name}\` ships and no family names locale \`${locale}\`, so no file states which ` +
 						"graph decodes its rows. Add it to the family whose graph it inherits.",
 					file: `packages/neural-weights-${locale}/package.json`,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -237,13 +255,15 @@ export const weightsFamilyCheck: RepoCheck = {
 						`\`${manifest.name}\` inherits \`${base ?? "no base"}\` through \`mailwoman.baseWeights\`, and ` +
 						`family \`${family.family}\` says its graph is \`${family.graphPackage}\`.`,
 					file: `packages/neural-weights-${locale}/package.json`,
+					line: null,
+					details: null,
 				})
 			}
 		}
 
 		return diagnostics.map((diagnostic) => ({
 			...diagnostic,
-			...(diagnostic.file ? { file: relative(repoRoot, resolvePath(repoRoot, diagnostic.file)) } : {}),
+			file: diagnostic.file ? relative(repoRoot, resolvePath(repoRoot, diagnostic.file)) : diagnostic.file,
 		}))
 	},
 }

@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { extractRecords } from "./extract.ts"
+import { extractRecords, isIndexedRoute } from "./extract.ts"
 
 function page(article: string, head = ""): string {
 	return `<html><head>${head}</head><body>
@@ -92,5 +92,67 @@ describe("extractRecords", () => {
 	test("yields zero records for a noindex page and for a page without an article", () => {
 		expect(extractRecords(page(`<h1>A</h1>`, `<meta name="robots" content="noindex, nofollow">`), "/a")).toEqual([])
 		expect(extractRecords(`<html><body><h1>A</h1></body></html>`, "/a")).toEqual([])
+	})
+
+	test("drops a heading's hash link and its zero-width space from the heading text", () => {
+		const records = extractRecords(
+			page(
+				`<h1>A</h1><h2 class="anchor" id="scope">Scope<a href="#scope" class="hash-link" aria-label="Direct link to Scope">​</a></h2>`
+			),
+			"/docs/a"
+		)
+
+		expect(records[1]?.hierarchy[2]).toBe("Scope")
+		expect(records.flatMap((record) => [...record.hierarchy, record.content]).join("")).not.toMatch(/​/)
+	})
+
+	test("reads a glossary term once and leaves its tooltip definition out", () => {
+		const records = extractRecords(
+			page(
+				`<h1>A</h1><p>A <span class="glossary-term-wrapper"><span><a class="glossaryTerm" href="/glossary#locale">locale</a><span role="tooltip"><strong>locale</strong>The combination of language and country.</span></span></span> is chosen.</p>`
+			),
+			"/docs/a"
+		)
+
+		expect(records[0]?.content).toBe("A locale is chosen.")
+	})
+
+	test("joins a table row keyed by a number to the section instead of making it a record", () => {
+		const records = extractRecords(
+			page(`<h1>Tiers</h1><h2 id="tiers">Tiers</h2><table><tbody>
+				<tr><td>1</td><td>Trained, with a regression bar.</td></tr>
+				<tr><td>Norway</td><td>Elected</td></tr></tbody></table>`),
+			"/docs/tiers"
+		)
+
+		expect(records.filter((record) => record.level === 5).map((record) => record.hierarchy[5])).toEqual(["Norway"])
+		expect(records[1]?.content).toBe("1 Trained, with a regression bar.")
+	})
+
+	test("yields no record for a Related, See also or Next link list", () => {
+		const records = extractRecords(
+			page(`<h1>Deploy</h1><p>Run it.</p>
+				<h2 id="related">Related</h2><ul><li><a href="/a">Docker</a></li></ul>
+				<h2 id="see-also">See also</h2><ul><li><a href="/b">Footprints</a></li></ul>
+				<h2 id="next">Next</h2><ul><li><a href="/c">Pricing</a></li></ul>`),
+			"/docs/deploy"
+		)
+
+		expect(records.map((record) => record.anchor)).toEqual([""])
+		expect(records[0]?.content).toBe("Run it.")
+	})
+})
+
+describe("isIndexedRoute", () => {
+	test("admits pages and refuses the research listings and the 404 page", () => {
+		expect(
+			["/", "/docs/developers/reference/cli", "/research/2026/05/27/fst-ships-to-browser"].map(isIndexedRoute)
+		).toEqual([true, true, true])
+
+		expect(
+			["/404", "/404.html", "/research/archive", "/research/tags", "/research/tags/hybrid", "/research/page/2"].map(
+				isIndexedRoute
+			)
+		).toEqual([false, false, false, false, false, false])
 	})
 })

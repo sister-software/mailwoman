@@ -19,9 +19,10 @@
  *   rather than being absorbed into a NULL.
  */
 
+import type { OGRLayerSchema } from "@mailwoman/spatial/tools/ogr"
 import { describe, expect, it } from "vitest"
 
-import { readCoastalScenarioFeatures, type CoastalLayerIdentity } from "#sdk/ingest"
+import { readCoastalScenarioFeatures } from "#sdk/ingest"
 import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 /**
@@ -45,7 +46,7 @@ const FULL_SMP_FIELDS = [
 	"shape_area",
 ]
 
-function identityFor(layer: string, fields: readonly string[]): CoastalLayerIdentity {
+function identityFor(layer: string, fields: readonly string[]): OGRLayerSchema {
 	return { epsg: 27_700, featureCount: 1, layer, fields: new Set(fields) }
 }
 
@@ -55,7 +56,7 @@ function identityFor(layer: string, fields: readonly string[]): CoastalLayerIden
  *
  * On a machine without a geodatabase at the given path, that produces a different failure.
  */
-async function selectFailure(scenarioKey: string, identity: CoastalLayerIdentity): Promise<string | null> {
+async function selectFailure(scenarioKey: string, identity: OGRLayerSchema): Promise<string | null> {
 	const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)!
 
 	try {

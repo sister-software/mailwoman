@@ -128,13 +128,14 @@ export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 export interface CoarsePlacerOpts {
 	/**
 	 * The minimum confidence for a prediction.
-	 * The default is `0.5`.
+	 *
+	 * @defaultValue `0.5`
 	 */
 	abstainBelow?: number
 	/**
 	 * Abstains on the total probability of in-map classes and otherwise returns the top in-map class.
 	 *
-	 * The default is `false`, which abstains on the top-class probability.
+	 * @defaultValue `false`, which abstains on the top-class probability.
 	 */
 	openSet?: boolean
 }
@@ -302,7 +303,7 @@ export function inMapPosterior(
 		epsilonFloor?: number
 	}
 ): Record<string, number> | null {
-	if (prediction.country === null || prediction.country === "OTHER") return null
+	if (!prediction.country || prediction.country === "OTHER") return null
 	const floor = opts?.epsilonFloor ?? 0
 	const posterior: Record<string, number> = {}
 

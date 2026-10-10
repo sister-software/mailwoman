@@ -57,7 +57,7 @@ export const OnWithStatus: Story = {
 			onCompareModeChange={() => {}}
 			compareVersion="v6.4.0"
 			onCompareVersionChange={() => {}}
-			status={<span>Backend: webgpu (26 MB int8)</span>}
+			status={<span>Backend: wasm (26 MB int8)</span>}
 		/>
 	),
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/address-id",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "Turn a canonicalized + geocoded address into a stable, parseable primary key (`<state>.<H3-cell>.<hash>`) for deterministic record joins / dedup — the exact-match complement to the fuzzy matcher.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -51,6 +51,6 @@
 		"h3-js": "^4.5.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.1"
+		"@types/node": "^26.6.4"
 	}
 }

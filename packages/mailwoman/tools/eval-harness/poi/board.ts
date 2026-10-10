@@ -6,26 +6,12 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { PipelineOpts, PipelineResult, POIQueryResult } from "@mailwoman/core/pipeline"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
 import type { POIBoardExpect } from "#tools/eval-harness/poi/board/expectations"
 import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
-
-export {
-	createPOIBoardPipeline,
-	type POIBoardOptions,
-	type POIBoardPipelineHandle,
-	type POIBoardResolverBackend,
-} from "#tools/eval-harness/poi/board/runtime"
-
-export {
-	type POIBoardAbstainExpect,
-	type POIBoardAddressExpect,
-	type POIBoardExpect,
-	type POIBoardResultsExpect,
-} from "#tools/eval-harness/poi/board/expectations"
 
 /**
  * Repository-relative path of the POI board fixtures.
@@ -53,7 +39,8 @@ export interface POIBoardFixture {
 	expect: POIBoardExpect
 	/**
 	 * Row status.
-	 * Defaults to `pass`.
+	 *
+	 * @defaultValue `pass`
 	 */
 	status?: POIBoardStatus
 	/**
@@ -124,7 +111,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 
 		const counted = isCountedFixture(fixture)
 
-		if (counted && fixture.bugRef !== undefined) {
+		if (counted && fixture.bugRef) {
 			problems.push(
 				`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
 					`"${fixtureStatus(fixture)}" — a counted row that names a defect asserts the defect is repaired.`
@@ -145,9 +132,9 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 /**
  * Pipeline result fields that grading reads.
  */
-export interface POIBoardOutcome {
+export interface POIBoardResult {
 	path: PipelineResult["path"]
-	poiIntent?: POIIntentOutcome
+	poiIntent: POIQueryResult | null
 }
 
 /**
@@ -163,16 +150,16 @@ export interface CaseGrade {
 	 * Distance in kilometers from the fixture's `anchorGold` to the nearest result.
 	 * Only `results` rows with at least one result set it.
 	 */
-	nearestKm?: number
-	resultCount?: number
+	nearestKm: number | null
+	resultCount: number | null
 }
 
 /**
- * Grades one row from its pipeline outcome.
+ * Grades one row from its pipeline result.
  * It performs no I/O.
  */
-export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): CaseGrade {
-	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent !== undefined
+export function gradeCase(fixture: POIBoardFixture, boardResult: POIBoardResult): CaseGrade {
+	const tookPoiPath = boardResult.path === "poi" && boardResult.poiIntent != null
 	const expect = fixture.expect
 
 	if (expect.kind === "address") {
@@ -182,7 +169,9 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 					query: fixture.query,
 					expectKind: "address",
 					pass: false,
-					detail: `expected the address path, but the poi branch claimed it (${outcome.poiIntent?.type})`,
+					detail: `expected the address path, but the poi branch claimed it (${boardResult.poiIntent?.type})`,
+					nearestKm: null,
+					resultCount: null,
 				}
 			: {
 					id: fixture.id,
@@ -190,6 +179,8 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 					expectKind: "address",
 					pass: true,
 					detail: "address path (no poi claim)",
+					nearestKm: null,
+					resultCount: null,
 				}
 	}
 
@@ -199,24 +190,28 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			query: fixture.query,
 			expectKind: expect.kind,
 			pass: false,
-			detail: `expected a poi outcome (${expect.kind}), got path=${outcome.path} (no poi intent)`,
+			detail: `expected a poi result (${expect.kind}), got path=${boardResult.path} (no poi intent)`,
+			nearestKm: null,
+			resultCount: null,
 		}
 	}
 
-	const poiOutcome = outcome.poiIntent!
+	const poiResult = boardResult.poiIntent!
 
 	if (expect.kind === "abstain") {
-		if (poiOutcome.type !== "abstain") {
+		if (poiResult.type !== "abstain") {
 			return {
 				id: fixture.id,
 				query: fixture.query,
 				expectKind: "abstain",
 				pass: false,
-				detail: `expected abstain(${expect.reason}), got type=intent (${poiOutcome.results?.length ?? 0} results)`,
+				detail: `expected abstain(${expect.reason}), got type=intent (${poiResult.results?.length ?? 0} results)`,
+				nearestKm: null,
+				resultCount: null,
 			}
 		}
 
-		const pass = poiOutcome.reason === expect.reason
+		const pass = poiResult.reason === expect.reason
 
 		return {
 			id: fixture.id,
@@ -224,26 +219,31 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			expectKind: "abstain",
 			pass,
 			detail: pass
-				? `abstain: ${poiOutcome.reason}`
-				: `expected abstain(${expect.reason}), got abstain(${poiOutcome.reason})`,
+				? `abstain: ${poiResult.reason}`
+				: `expected abstain(${expect.reason}), got abstain(${poiResult.reason})`,
+			nearestKm: null,
+			resultCount: null,
 		}
 	}
 
 	// A `results` expectation sets either `brandWikidata` or `categoryID`.
-	const expectedLabel =
-		expect.brandWikidata !== undefined ? `brandWikidata=${expect.brandWikidata}` : `categoryID=${expect.categoryID}`
+	const expectedLabel = expect.brandWikidata
+		? `brandWikidata=${expect.brandWikidata}`
+		: `categoryID=${expect.categoryID}`
 
-	if (poiOutcome.type !== "intent") {
+	if (poiResult.type !== "intent") {
 		return {
 			id: fixture.id,
 			query: fixture.query,
 			expectKind: "results",
 			pass: false,
-			detail: `expected results (${expectedLabel}), got abstain(${poiOutcome.reason})`,
+			detail: `expected results (${expectedLabel}), got abstain(${poiResult.reason})`,
+			nearestKm: null,
+			resultCount: null,
 		}
 	}
 
-	const results = poiOutcome.results ?? []
+	const results = poiResult.results ?? []
 
 	if (!results.length) {
 		return {
@@ -252,6 +252,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 			expectKind: "results",
 			pass: false,
 			detail: `expected ≥1 result (${expectedLabel}), got 0`,
+			nearestKm: null,
 			resultCount: 0,
 		}
 	}
@@ -266,16 +267,15 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 	const topCategoryID = results[0]!.categoryID
 	const topBrandWikidata = results[0]!.brandWikidata
 
-	const topMatches =
-		expect.brandWikidata !== undefined ? topBrandWikidata === expect.brandWikidata : topCategoryID === expect.categoryID
+	const topMatches = expect.brandWikidata
+		? topBrandWikidata === expect.brandWikidata
+		: topCategoryID === expect.categoryID
 
-	const topSummary =
-		expect.brandWikidata !== undefined ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
+	const topSummary = expect.brandWikidata ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
 
-	const mismatchDetail =
-		expect.brandWikidata !== undefined
-			? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
-			: `top category ${topCategoryID} !== expected ${expect.categoryID}`
+	const mismatchDetail = expect.brandWikidata
+		? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
+		: `top category ${topCategoryID} !== expected ${expect.categoryID}`
 
 	const pass = withinRange && topMatches
 
@@ -309,8 +309,8 @@ export interface TrackedCase {
 	 * Issue that holds the row's diagnosis. {@linkcode auditFixtures} rejects a tracked row without one.
 	 */
 	bugRef: string
-	rowRef?: string
-	note?: string
+	rowRef: string | null
+	note: string | null
 	/**
 	 * Whether the tracked row passed.
 	 * The report tells the reader to promote such rows.
@@ -354,8 +354,8 @@ export function partitionCases(fixtures: readonly POIBoardFixture[], grades: rea
 			grade,
 			status: fixtureStatus(fixture),
 			bugRef: fixture.bugRef ?? "",
-			...(fixture.rowRef ? { rowRef: fixture.rowRef } : {}),
-			...(fixture.note ? { note: fixture.note } : {}),
+			rowRef: fixture.rowRef || null,
+			note: fixture.note || null,
 			holding: grade.pass,
 		})
 	}
@@ -584,11 +584,11 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 	for (const fixture of fixtures) {
 		const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 		const result = await pipeline(fixture.query, runOpts)
-		const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
-		const grade = gradeCase(fixture, outcome)
+		const boardResult: POIBoardResult = { path: result.path, poiIntent: result.poiIntent ?? null }
+		const grade = gradeCase(fixture, boardResult)
 		cases.push(grade)
 
-		if (grade.nearestKm !== undefined) {
+		if (grade.nearestKm !== null) {
 			nearestKms.push(grade.nearestKm)
 		}
 
@@ -596,7 +596,7 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 			for (const r of result.poiIntent.results) {
 				resultRowCount++
 
-				if (r.gersID !== null) {
+				if (r.gersID) {
 					gersIDPresent++
 				}
 

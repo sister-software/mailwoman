@@ -8,8 +8,6 @@
 import {
 	type ActivityPhraseEntry,
 	type ActivityPhraseLexicon,
-	type ActivityPhraseLocaleMatch,
-	type ActivityPhraseLocaleScope,
 	auditActivityLexicon,
 	normalizeActivityPhrase,
 	readActivityLexicon,
@@ -25,6 +23,7 @@ import type {
 	SourceProvenance,
 } from "@mailwoman/geographic-model"
 import type { POIPhraseLookup, POIPhraseMatch } from "@mailwoman/kind-classifier"
+import type { LocaleScope, LocaleScopeMatch } from "@mailwoman/variant-aliases"
 
 import { localeToCountry } from "#country-scope"
 import { readCommittedModel } from "#observations/committed-model"
@@ -64,7 +63,7 @@ export interface SemanticObservation {
 	/**
 	 * How the entry's locale scope matched the query's locale.
 	 */
-	localeScope: ActivityPhraseLocaleScope
+	localeScope: LocaleScope
 	/**
 	 * The locale tags that the entry declares, or `null` when the entry is unscoped.
 	 */
@@ -297,7 +296,7 @@ export async function createSemanticObservationRoute(
 	const claim = (
 		declared: ResolvedPhrase,
 		candidate: string,
-		localeMatch: ActivityPhraseLocaleMatch,
+		localeMatch: LocaleScopeMatch,
 		localeCountry: string | null,
 		admitted: ReachedKind[]
 	): POIPhraseMatch[] => {
@@ -338,14 +337,15 @@ export async function createSemanticObservationRoute(
 				kind: "category",
 				categoryID: String(mapping.externalID),
 				matchedPhrase: declared.entry.phrase,
+				mechanism: null,
+				inputPhrase: candidate,
+				wikidata: null,
 				// The confidence selects a query kind and never orders candidates: 1 for an unscoped
 				// phrase or an exact locale match, half that when only the language matches.
 				confidence: localeMatch.confidence,
-				searchAsSet: true,
+				reading: "set",
 				// The intent stage applies the country scope after it parses the anchor.
-				...(assertion.countries?.length
-					? { countryScope: assertion.countries.map((scoped) => scoped.toUpperCase()) }
-					: {}),
+				countryScope: assertion.countries?.length ? assertion.countries.map((scoped) => scoped.toUpperCase()) : null,
 			})
 		}
 
@@ -357,7 +357,7 @@ export async function createSemanticObservationRoute(
 
 		if (!candidate) return []
 
-		const country = localeToCountry(locale)
+		const country = localeToCountry(locale ?? null)
 
 		// The locale check runs inside the loop, so a longer phrase that the locale
 		// rejects cannot hide a shorter phrase that it admits.

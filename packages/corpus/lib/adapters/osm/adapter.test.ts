@@ -187,7 +187,7 @@ describe("componentsForOSMRow", () => {
 			dependent_locality: "Ивановка",
 		})
 
-		// A suburb maps to `dependent_locality`, so it carries the identity as `addr:place` does.
+		// A suburb maps to `dependent_locality`, so it keeps the identity as `addr:place` does.
 		expect(componentsForOSMRow({ number: "21", suburb: "Rajajinagar" }, { dropped })).toEqual({
 			house_number: "21",
 			dependent_locality: "Rajajinagar",

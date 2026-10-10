@@ -9,7 +9,7 @@
  *   reader.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
@@ -192,6 +192,7 @@ async function writeFixtureUPRNDatabase(dir: PathBuilder): Promise<PathBuilder> 
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: "2026-09-03T00:00:00.000Z",
+		sourceRecords: null,
 	})
 
 	await writeLayerCoverage(kdb, [{ h3Cell: 1, completeness: 1, basis: CoverageBasis.Designated, observedRows: 3 }])
@@ -314,7 +315,7 @@ describe("buildNSULLayer (fixture)", () => {
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(surveyed?.completeness).toBe(1)
 		expect(surveyed?.observedRows).toBe(2)
-		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 2)).toBeNull()
 	})
 
 	it("fails loudly on header drift in any region file", async () => {

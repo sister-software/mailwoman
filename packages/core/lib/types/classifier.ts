@@ -79,7 +79,7 @@ export interface ClassificationProposal {
 	 *
 	 * Never consulted by the solver.
 	 */
-	metadata?: Record<string, unknown>
+	metadata: Record<string, unknown> | null
 }
 
 /**

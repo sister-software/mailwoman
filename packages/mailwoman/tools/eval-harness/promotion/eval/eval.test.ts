@@ -5,7 +5,7 @@
  *   Tests the promotion eval's spec resolution, spec packaging and paired weights-cache guards.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
@@ -40,7 +40,7 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 				return false
 			}
 
-			if (segment === undefined) return p === parts.length
+			if (!segment) return p === parts.length
 
 			if (p >= parts.length || !segmentMatches(segment, parts[p]!)) return false
 		}

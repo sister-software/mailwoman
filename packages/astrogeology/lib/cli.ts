@@ -9,8 +9,7 @@
  *   `--help` is handled before the command runs.
  */
 
-import { cliArguments, parseArguments } from "@mailwoman/core/scripting/arguments"
-import { optionPropertyName } from "@mailwoman/core/scripting/utils"
+import { cliArguments, parseArguments, optionPropertyName } from "@mailwoman/core/scripting/arguments"
 import { type CommandSpec, renderInkCommand, runNativeCommand } from "mailwoman/cli/kit"
 import { type ComponentType, createElement } from "react"
 
@@ -49,17 +48,17 @@ const USAGE = [
 	"Each command answers --help with its options.",
 ].join("\n")
 
-function isCommandName(value: string | undefined): value is CommandName {
+function isCommandName(value: string | null): value is CommandName {
 	return (COMMAND_NAMES as readonly string[]).includes(value ?? "")
 }
 
 async function main(): Promise<number> {
-	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]
+	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0] ?? null
 
 	if (!isCommandName(command)) {
 		process.stdout.write(`${USAGE}\n`)
 
-		return command === undefined ? 0 : 2
+		return command ? 2 : 0
 	}
 
 	const raw = cliArguments()

@@ -4,6 +4,7 @@
 export * from "#resources/debugging"
 export * from "#resources/git"
 export * from "#resources/languages"
+export * from "#resources/languages/types.gen"
 export * from "#resources/libpostal"
 export * from "#resources/locale"
 export * from "#resources/set"

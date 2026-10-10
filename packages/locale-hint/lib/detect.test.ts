@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { detectLocale } from "#detect"
 
 function shape(opts: Partial<QueryShapeLike> = {}): QueryShapeLike {
-	return { knownFormats: [], ...opts }
+	return { ...EMPTY_QUERY_SHAPE_VIEW, ...opts }
 }
 
 describe("detectLocale — caller hint precedence", () => {
@@ -48,6 +49,7 @@ describe("detectLocale — postcode-format detection", () => {
 	it("US ZIP+4 unambiguously → en-US", () => {
 		const r = detectLocale(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip4", span: { start: 0, end: 10 }, confidence: 0.95 }],
 				characterClass: "alphanumeric",
 			})
@@ -60,6 +62,7 @@ describe("detectLocale — postcode-format detection", () => {
 	it("UK postcode → en-GB", () => {
 		const r = detectLocale(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "uk_postcode", span: { start: 0, end: 8 }, confidence: 0.9 }],
 				characterClass: "alphanumeric",
 			})
@@ -71,6 +74,7 @@ describe("detectLocale — postcode-format detection", () => {
 	it("CA postcode → en-CA", () => {
 		const r = detectLocale(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "ca_postcode", span: { start: 0, end: 7 }, confidence: 0.9 }],
 				characterClass: "alphanumeric",
 			})
@@ -82,6 +86,7 @@ describe("detectLocale — postcode-format detection", () => {
 	it("JP postcode → ja-JP", () => {
 		const r = detectLocale(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "jp_postcode", span: { start: 0, end: 8 }, confidence: 0.95 }],
 				characterClass: "alphanumeric",
 			})
@@ -93,6 +98,7 @@ describe("detectLocale — postcode-format detection", () => {
 	it("ambiguous 5-digit → en-US at low confidence with alternatives present", () => {
 		const r = detectLocale(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [
 					{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 },
 					{ format: "fr_postcode", span: { start: 0, end: 5 }, confidence: 0.6 },
@@ -135,7 +141,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 		})
 
 		expect(r).toMatchObject({ locale: "en-US", confidence: 0.3, source: "detected" })
-		expect(r.evidence).toBeUndefined()
+		expect(r.evidence).toBeNull()
 	})
 
 	it("does not let machine preferences outrank script evidence", () => {
@@ -177,6 +183,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 	it("no duplicate locales in alternatives", () => {
 		const r = detectLocale(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
 				characterClass: "numeric",
 			})

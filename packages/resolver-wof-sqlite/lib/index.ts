@@ -16,7 +16,8 @@ export type {
 	WOFDatabase,
 } from "#schema"
 
-export { WOFSQLitePlaceLookup, type RankingWeights, type WOFSQLitePlaceLookupOpts } from "#lookup"
+export { WOFSQLitePlaceLookup, type WOFSQLitePlaceLookupOpts } from "#lookup"
+export { type RankingWeights } from "#ranking-weights"
 
 export {
 	CANDIDATE_ANCESTOR_COLUMNS,
@@ -95,7 +96,7 @@ export {
 
 export { SqliteConventionSource } from "#sqlite/convention-source"
 
-export { WOFPostcodeLookup, type PostcodePlace } from "#postcode-point-lookup"
+export { WOFPostcodeLookup } from "#postcode-point-lookup"
 
 export {
 	PLACE_BBOX_TABLE,

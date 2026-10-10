@@ -39,7 +39,7 @@
 // byte-identical transcript to the pre-fix-wave run. state that: this fixture just doesn't happen to
 // exercise the exact shapes the definition changes target (no row here has a critical tag hallucinated
 // from nothing, and the tightened Saint-prefix guard doesn't change any of this suite's own abbreviation-
-// swap outcomes — gb-banbury and gb-stockton-saint-prefix still resolve the same way). The definitions are
+// swap results — gb-banbury and gb-stockton-saint-prefix still resolve the same way). The definitions are
 // still real fixes (each has a dedicated unit-test RED→GREEN in transforms.test.ts / compare.test.ts /
 // runner.test.ts reproducing the reviewer's exact cases) — they simply don't move this fixture's aggregate
 // numbers. A future fixture row exercising a hallucinated critical tag would be a legitimate suite addition.

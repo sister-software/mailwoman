@@ -34,7 +34,8 @@
  */
 
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
-import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runPipeline } from "@mailwoman/core/pipeline"
@@ -73,13 +74,13 @@ export interface DemoCascadeSmokeOptions {
 	card?: string
 	fst?: string
 	/**
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**
 	 * Smoke rows jsonl.
 	 *
-	 * Default `data/eval/external/demo-cascade-smoke.jsonl`.
+	 * @defaultValue `data/eval/external/demo-cascade-smoke.jsonl`
 	 */
 	file?: string
 	/**
@@ -113,9 +114,9 @@ export interface DemoCascadeSmokeResult {
 interface RowResult {
 	input: string
 	expected: SmokeRow["expect"]
-	actual: { id: number; name: string; placetype: string; anchorCentroid?: boolean } | null
+	actual: { id: number; name: string; placetype: string; anchorCentroid: boolean } | null
 	pass: boolean
-	note?: string
+	note: string | null
 }
 
 /**
@@ -220,9 +221,9 @@ export async function demoCascadeSmoke(
 		labels: card.labels,
 		...(anchorLookup ? { postcodeAnchorLookup: anchorLookup } : {}),
 		gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(GAZ)),
-		suppressGazetteerNearPostcode: true,
+		suppressGazetteerNearPostcode: "on",
 		addressSystemConventions: "auto",
-		bridgePunctuationGaps: true,
+		bridgePunctuationGaps: "on",
 	})
 
 	const fst = deserializeFST(await readLocalBuffer(FST))
@@ -271,13 +272,13 @@ export async function demoCascadeSmoke(
 		const top = hits[0]
 
 		const actual = top
-			? { id: top.id, name: top.name, placetype: String(top.placetype) }
+			? { id: top.id, name: top.name, placetype: String(top.placetype), anchorCentroid: false }
 			: anchorCentroid
 				? { id: 0, name: `${postcodeNode?.value} (anchor centroid)`, placetype: "postcode", anchorCentroid: true }
 				: null
 
 		const pass = row.expect.anchor_centroid === true ? anchorCentroid : top?.id === row.expect.id
-		results.push({ input: row.input, expected: row.expect, actual, pass, ...(row.note ? { note: row.note } : {}) })
+		results.push({ input: row.input, expected: row.expect, actual, pass, note: row.note })
 
 		if (EXPLAIN) {
 			reportError(`\n-- ${stringifyJSON(row.input)}`)

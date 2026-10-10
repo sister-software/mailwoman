@@ -18,7 +18,9 @@ export interface DebugControlBaseOptions {
 	 */
 	className?: string
 	/**
-	 * Where MapLibre docks the control. @default "bottom-left"
+	 * Where MapLibre docks the control.
+	 *
+	 * @defaultValue `"bottom-left"`
 	 */
 	position?: ControlPosition
 }

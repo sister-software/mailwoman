@@ -6,15 +6,15 @@ head tag 16 in ``stage3-cn`` and head tag 23 in ``stage3-cjk``. The tag's *seman
 entry here, and it is the same in both.
 
 Script and locale choose a family, a tokenizer and priors. They do not choose what a tag means. A
-romanized Japanese address and its kanji rendering carry the same concepts: ``Tokyo`` and ``東京都`` are
+romanized Japanese address and its kanji rendering hold the same concepts: ``Tokyo`` and ``東京都`` are
 both ``prefecture`` (``docs/engineering/reference/SCHEMA.mdx`` gives both as examples). A family whose
-head lacks ``prefecture`` emits the concept the schema says it refines, ``region``, and a family with
+head lacks ``prefecture`` emits the concept the schema records it refines, ``region``. A family with
 no documented equivalent reports the concept as unrepresentable rather than writing ``O``.
 
 Rules for this module:
 
 - ``SEMANTIC_TAGS`` is append-only. A tag's global id is its index and never changes.
-- ``REFINES`` maps a fine tag to the shared tag that carries the same concept at coarser grain, and
+- ``REFINES`` maps a fine tag to the shared tag that holds the same concept at coarser grain, and
   only where SCHEMA.mdx states the relation. A tag with no documented coarser equivalent is absent,
   so a family without it reports the tag instead of guessing.
 - ``SEMANTIC_TAG_REGISTRY_VERSION`` increments whenever ``SEMANTIC_TAGS`` or ``REFINES`` changes, and
@@ -59,7 +59,7 @@ REFINES: Final[dict[str, str]] = {
     "prefecture": "region",
     # "JP city/ward (市区町村)": the city is `locality`.
     "municipality": "locality",
-    # "JP district (大字)": the named area below the city is `dependent_locality`.
+    # "JP district (大字)": the area below the city is `dependent_locality`.
     "district": "dependent_locality",
     # Encoder-design rule D4: the compact number `2-3-16` is one `house_number` span, and
     # `block`/`sub_block`/`building_number` label the parts of the same number in its long form.
@@ -69,8 +69,8 @@ REFINES: Final[dict[str, str]] = {
 }
 
 # Tags with no documented coarser equivalent, recorded so the omission from REFINES is a statement.
-# `locality_unit`: SCHEMA.mdx says "the universal tags cannot represent" the CN organizational ladder.
-# `building_name`: SCHEMA.mdx defines a JP named building without stating its Latin-head equivalent.
+# `locality_unit`: SCHEMA.mdx records that "the universal tags cannot represent" the CN organizational ladder.
+# `building_name`: SCHEMA.mdx defines a JP building name without stating its Latin-head equivalent.
 # The STAGE4 secondary-address tags and the two JS-only tags: no schema statement maps them onto STAGE3.
 UNREFINED: Final[frozenset[str]] = frozenset({"locality_unit", "building_name", *STAGE4_FINE_TAGS, *JS_ONLY_TAGS})
 
@@ -78,7 +78,7 @@ UNREFINED: Final[frozenset[str]] = frozenset({"locality_unit", "building_name", 
 def head_mapping(label_set: LabelSet) -> tuple[int, ...]:
     """The global semantic id of each head tag, in head order.
 
-    Raises when the label set carries a tag the registry does not know, which is how a new tag that
+    Raises when the label set holds a tag the registry does not know. That is how a new tag that
     skipped registration is caught.
     """
     unknown = [tag for tag in label_set.tags if tag not in SEMANTIC_TAG_ID]
@@ -101,8 +101,8 @@ def label_set_contract(name: str) -> dict[str, object]:
 def project_tag(tag: str, label_set: LabelSet) -> str | None:
     """The tag ``label_set`` emits for the concept ``tag``, or None when the family cannot represent it.
 
-    A tag the head carries is returned unchanged. A refined tag the head lacks walks ``REFINES`` to
-    the first ancestor the head carries.
+    A tag the head holds is returned unchanged. A refined tag the head lacks walks ``REFINES`` to
+    the first ancestor the head holds.
     """
     current: str | None = tag
     while current is not None:
@@ -143,8 +143,8 @@ class ProjectionLedger:
         """Project a row's labels, merging adjacent spans that refine the same target into one span.
 
         ``2丁目3番16号`` is three spans (``block``, ``sub_block``, ``building_number``) on a head that has
-        them and one ``house_number`` span on a head that does not, which is how rule D4 labels the
-        compact form ``2-3-16``. A span that projects to the target it already carries is never merged
+        them and one ``house_number`` span on a head that does not. That is how rule D4 labels the
+        compact form ``2-3-16``. A span that projects to the target it already holds is never merged
         with its neighbor, so two adjacent ``street`` spans stay two.
         """
         out: list[str] = []

@@ -299,6 +299,8 @@ export const vocabCensusCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `the positive control ${POSITIVE_CONTROL} classified no hits, so this run measured nothing — its count is not an absence`,
 					file: POSITIVE_CONTROL,
+					line: null,
+					details: null,
 				},
 			]
 		}
@@ -311,6 +313,7 @@ export const vocabCensusCheck: RepoCheck = {
 			message: `${stringifyJSON(hit.word)} (${wordFamily(hit.word)}) needs the ${hit.remedy} remedy${hit.modifier ? `; modifier ${stringifyJSON(hit.modifier)}` : ""}`,
 			file: hit.path,
 			line: hit.line,
+			details: null,
 		}))
 
 		return diagnostics

@@ -11,7 +11,7 @@
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { tryStat } from "#fs/readers"
+import { tryStat } from "#fs/readers/stat"
 import { stringifyJSON } from "#json"
 import { readPackageJSON } from "#module/resolve-from"
 
@@ -26,7 +26,7 @@ export interface ReadWorkspaceDirectoriesOptions {
 	 * Skip a literal entry whose directory has no manifest instead of failing,
 	 * for reading a checkout at an older ref that predates a workspace the field names.
 	 *
-	 * @default false
+	 * @defaultValue `false`
 	 */
 	tolerateMissing?: boolean
 }

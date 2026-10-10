@@ -3,7 +3,7 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
@@ -60,7 +60,7 @@ export interface GeonamesIngestProgress {
 	 *
 	 * It distinguishes a sparse source from aliases that the fold discarded.
 	 */
-	aliasesRefused?: number
+	aliasesRefused: number | null
 }
 
 /**
@@ -208,7 +208,7 @@ export async function ingestGeonamesAliases(
 		const file = resolvePathBuilder(geonamesDir, `${cc}.txt`)
 
 		if (!(await pathExists(file))) {
-			report({ country: cc, places: 0, skipped: true }, file)
+			report({ country: cc, places: 0, skipped: true, aliasesRefused: null }, file)
 
 			continue
 		}

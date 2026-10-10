@@ -246,7 +246,7 @@ async function main(): Promise<void> {
 		for (const [, [child, parent]] of expected) {
 			const edge = resolver.probe(child, parent)
 
-			if (edge === undefined) {
+			if (!edge) {
 				misses++
 			} else if (edge.tag !== "locality") {
 				wrongTag++
@@ -268,7 +268,7 @@ async function main(): Promise<void> {
 
 		for (const probe of namedProbes) {
 			const edge = resolver.probe(normalizeFSTToken(probe.child), normalizeFSTToken(probe.parent))
-			const present = edge !== undefined
+			const present = edge !== null
 			const ok = probe.expect === "present" ? present : !present
 
 			const line = `("${probe.child}", "${probe.parent}") → ${

@@ -1,17 +1,18 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
+
 import type { AddressTree } from "#decoder/types"
 import type {
 	LocaleHint,
-	NormalizedInputLite,
 	PhraseProposal,
 	PipelineTiming,
 	PipelineFaultStage,
 	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
-	POIIntentOutcome,
+	POIQueryResult,
 } from "#pipeline/types"
 
 /**
@@ -54,9 +55,9 @@ export interface PipelineResult {
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
 	/**
-	 * Present only when the poi-intent stage produced an outcome.
+	 * The poi-intent stage's result, or `null` when it produced none.
 	 */
-	poiIntent?: POIIntentOutcome
+	poiIntent: POIQueryResult | null
 	timing: PipelineTiming
 	/**
 	 * Every stage crash the coordinator caught and degraded past, in order.

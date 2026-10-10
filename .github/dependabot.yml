@@ -1,13 +1,21 @@
-# Dependabot version-update config (grouped weekly, all three ecosystems).
+# Dependabot version-update config.
 #
-# Security updates are a separate GitHub feature (repo settings) and are not
-# affected by the `ignore` blocks below — ignores only mute *version* PRs;
-# security alerts and their PRs still fire for ignored packages.
+# Quick summary:
+# - Runs weekly.
+# - Covers 3 ecosystems: npm, uv (Python), and GitHub Actions.
+# - Minor + patch updates are grouped.
+#
+# Important:
+# - Security updates are handled separately in GitHub repo settings.
+# - `ignore` only suppresses *version-update PRs*.
+# - Security alerts / security PRs still appear, even for ignored packages.
 version: 2
 updates:
-  # Yarn 4 workspaces — the single root lockfile covers every workspace, so
-  # one npm block at "/" updates all of them. Minor + patch land as one
-  # grouped weekly PR. majors arrive as separate PRs.
+  # npm (Yarn 4 workspaces)
+  # - One root lockfile covers all workspaces.
+  # - Using directory "/" updates everything.
+  # - Minor + patch updates are grouped weekly.
+  # - Major updates come as separate PRs.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -21,22 +29,28 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # onnxruntime bumps change inference output. They go through the eval
-      # check as deliberate operator moves (the browser runtime in @mailwoman/neural
-      # additionally pins an exact ORT dev build), never as bot PRs.
+      # onnxruntime packages:
+      # - Bumps can change inference output.
+      # - These are handled manually with eval checks.
+      # - In @mailwoman/neural, browser runtime also pins an exact ORT dev build.
+      # - So: never via Dependabot PRs.
       - dependency-name: "onnxruntime-node"
       - dependency-name: "onnxruntime-web"
-      # release-it is pinned to ^19.x: @release-it-plugins/workspaces (the
-      # multi-workspace publish plugin that runs the entire release) caps its
-      # release-it peer at "^17 || ^18 || ^19" — no version supports 20/21 yet.
-      # Ignore majors until the plugin catches up; #1327 bumped to 21 and would
-      # have broken the release train.
+      # release-it:
+      # - Intentionally pinned to ^19.x.
+      # - @release-it-plugins/workspaces (used for multi-workspace publish)
+      #   only supports release-it peer: "^17 || ^18 || ^19".
+      # - No support for 20/21 yet.
+      # - Ignore major bumps until plugin support catches up.
+      # - Context: #1327 bumped to 21 and would have broken releases.
       - dependency-name: "release-it"
         update-types: ["version-update:semver-major"]
 
-  # corpus-python (pyproject.toml + uv.lock).
+  # Python (uv)
+  # - Dependency files: root pyproject.toml + uv.lock.
+  # - Source code location: corpus-python/.
   - package-ecosystem: "uv"
-    directory: "/corpus-python"
+    directory: "/"
     schedule:
       interval: "weekly"
     commit-message:
@@ -48,19 +62,25 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # Exact pins guarding the int8 / mobile-Safari WebGPU invariant — read
-      # the pin comment in corpus-python/pyproject.toml before bumping. The
-      # list mirrors verify_toolchain.py's INVARIANT_DEPS: a bump to any of
-      # these must land in pyproject and the Modal image together, through
-      # the export-verification discipline, so bot PRs (which touch only
-      # pyproject) always fail the verify-toolchain CI check.
+      # Exact pins for the int8 / mobile-Safari WebGPU invariant.
+      # Before bumping, read the pin note in root pyproject.toml.
+      #
+      # This list mirrors verify_toolchain.py -> INVARIANT_DEPS.
+      # If any of these change, updates must be coordinated together:
+      # - pyproject
+      # - Modal image
+      # - export-verification flow
+      #
+      # Dependabot PRs only touch pyproject, so they fail verify-toolchain CI.
       - dependency-name: "torch"
       - dependency-name: "transformers"
       - dependency-name: "onnx"
       - dependency-name: "onnxruntime"
 
-  # Workflow actions — handles both tag pins (@v7) and SHA pins (updates the
-  # SHA and the trailing `# vX` comment). All updates in one grouped PR.
+  # GitHub Actions
+  # - Handles tag pins (e.g., @v7).
+  # - Handles SHA pins (updates SHA + trailing `# vX` comment).
+  # - All action updates are grouped into one PR.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

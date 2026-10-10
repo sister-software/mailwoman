@@ -24,7 +24,7 @@
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -83,14 +83,14 @@ async function listBulkDatasets(): Promise<Dataset[]> {
 /**
  * The `/od/file?oid=…` link a dataset's detail page hands its download dialog.
  */
-async function fileURLFor(dataset: Dataset): Promise<string | undefined> {
+async function fileURLFor(dataset: Dataset): Promise<string | null> {
 	const res = await fetch(`${PORTAL}${dataset.detailPath}`, { headers: { accept: "text/html" } })
 
-	if (!res.ok) return undefined
+	if (!res.ok) return null
 	const html = await res.text()
 	const path = /showDialog\('(\/od\/file\?oid=[^']+)'\)/.exec(html)?.[1]
 
-	return path ? `${PORTAL}${path}` : undefined
+	return path ? `${PORTAL}${path}` : null
 }
 
 export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: string) => void): Promise<FetchSummary> {

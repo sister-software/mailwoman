@@ -15,7 +15,8 @@
  *   `build.test.ts` compares four output digests across two builds over one intermediate directory.
  */
 
-import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -72,7 +73,7 @@ export interface AlignCheckpoint {
 	license_counts: Record<string, number>
 	refused_by_kind: Record<string, number>
 	/**
-	 * Rows the license policy refused, counted per `source`, so a resumed build carries the tally
+	 * Rows the license policy refused, counted per `source`, so a resumed build keeps the tally
 	 * rather than restarting it at zero and understating the refusal in its manifest.
 	 */
 	refused_by_source: Record<string, number>

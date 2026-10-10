@@ -12,21 +12,6 @@ import type {
 	StreetCentroidLookup,
 } from "#resolver/lookup-types"
 
-export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "#resolver/coverage-facts"
-export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
-
-export type {
-	AddressPointHit,
-	AddressPointLookup,
-	InterpolatedPointHit,
-	InterpolationLookup,
-	PostcodePrefixAncestor,
-	PostcodePrefixIndexLike,
-	PostcodePrefixNode,
-	StreetCentroidHit,
-	StreetCentroidLookup,
-} from "#resolver/lookup-types"
-
 export interface ResolvedPlace {
 	/**
 	 * Resolver-specific place identifier.
@@ -43,7 +28,7 @@ export interface ResolvedPlace {
 	/**
 	 * ISO 3166-1 alpha-2 country code, if known.
 	 */
-	country?: string
+	country: string | null
 	/**
 	 * Centroid latitude.
 	 */
@@ -55,7 +40,7 @@ export interface ResolvedPlace {
 	/**
 	 * Parent place id, if any.
 	 */
-	parent_id?: number | string
+	parent_id: number | string | null
 	/**
 	 * Resolver-defined ranking score.
 	 */
@@ -63,48 +48,62 @@ export interface ResolvedPlace {
 	/**
 	 * Optional backend prominence score.
 	 */
-	prominence?: number
+	prominence: number | null
 	/**
 	 * Optional raw population.
 	 */
-	population?: number
+	population: number | null
 	/**
 	 * Optional referential likelihood in [0, 1].
 	 */
-	referential?: number
+	referential: number | null
 	/**
 	 * Optional strict encyclopedia importance in [0, 1].
 	 */
-	encyclopedic?: number
+	encyclopedic: number | null
 	/**
 	 * Optional blended global toponym prior in [0, 1].
 	 */
-	importance?: number
+	importance: number | null
 	/**
 	 * Optional exact name/alias match marker.
 	 */
-	exactMatch?: boolean
+	exactMatch: boolean | null
 	/**
 	 * Optional postcode/locality mismatch marker.
 	 */
-	mismatch?: boolean
+	mismatch?: boolean | null
 	/**
 	 * Optional fallback-quality marker.
 	 */
-	resolutionQuality?: "fallback"
+	resolutionQuality?: "fallback" | null
 	/**
 	 * Optional admin-containment verdict.
 	 */
-	containedByQualifier?: boolean
+	containedByQualifier?: boolean | null
 	/**
 	 * Optional marker for a miss under parent scope.
 	 */
-	regionScopeMiss?: boolean
+	regionScopeMiss?: boolean | null
 	/**
 	 * Optional marker for variant-alias exemption.
 	 */
-	variantAliasExempted?: true
+	variantAliasExempted?: true | null
 }
+
+/**
+ * The nullable {@link ResolvedPlace} signals, each `null`, spread first into a place literal.
+ */
+export const EMPTY_PLACE_FIELDS = Object.freeze({
+	country: null,
+	parent_id: null,
+	prominence: null,
+	population: null,
+	referential: null,
+	encyclopedic: null,
+	importance: null,
+	exactMatch: null,
+}) satisfies Partial<ResolvedPlace>
 
 export interface ResolverBackend {
 	findPlace(query: {
@@ -153,7 +152,7 @@ export interface ResolverBackend {
 	/**
 	 * Optional artifact coverage facts.
 	 */
-	artifactCoverage?: GazetteerArtifactCoverage
+	artifactCoverage?: GazetteerArtifactCoverage | null
 }
 
 export interface BackendCapabilityGap {
@@ -205,6 +204,84 @@ export interface CoincidentLocality extends ResolvedPlace {
  */
 export type WeakResolutionReading = "score" | "containment" | "either"
 
+/**
+ * Who chose a default country scope.
+ *
+ * - `"caller"`: the caller asked for the country.
+ * - `"inferred"`: the locale supplied it.
+ *   `country` lookups ignore an inferred scope, and stronger evidence in the input can override it.
+ */
+export type DefaultCountrySource = "caller" | "inferred"
+
+/**
+ * A default top-level country scope for resolution.
+ */
+export interface DefaultCountry {
+	/**
+	 * ISO 3166-1 alpha-2 code.
+	 */
+	country: string
+	source: DefaultCountrySource
+}
+
+/**
+ * The on/off resolver passes and tiers, every one resolved against {@link RESOLVE_SWITCH_DEFAULTS}.
+ *
+ * Each is an optional {@link ResolveOpts} key.
+ * The resolver reads them only through {@link resolveSwitches}, so a default lives in exactly one place.
+ */
+export interface ResolveSwitches {
+	parentFallback: boolean
+	addressPointBboxFallback: boolean
+	spanRescore: boolean
+	spanRescoreRequireContextRemainder: boolean
+	postalCompoundRecovery: boolean
+	postcodeConsistency: boolean
+	postcodeCountryCoherence: boolean
+	postcodeShapeCoherence: boolean
+	postcodeContainmentCoherence: boolean
+	postcodePrefixPrior: boolean
+	adminCoherence: boolean
+	hierarchyCompletion: boolean
+	includeAncestors: boolean
+	adminContainmentRerank: boolean
+	diagnoseUnreachable: boolean
+}
+
+/**
+ * The default of every {@link ResolveSwitches} key.
+ */
+export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
+	parentFallback: true,
+	addressPointBboxFallback: false,
+	spanRescore: true,
+	spanRescoreRequireContextRemainder: false,
+	postalCompoundRecovery: true,
+	postcodeConsistency: true,
+	postcodeCountryCoherence: true,
+	postcodeShapeCoherence: false,
+	postcodeContainmentCoherence: false,
+	postcodePrefixPrior: false,
+	adminCoherence: true,
+	hierarchyCompletion: true,
+	includeAncestors: false,
+	adminContainmentRerank: true,
+	diagnoseUnreachable: false,
+}
+
+/**
+ * Fills each unset switch from {@link RESOLVE_SWITCH_DEFAULTS}.
+ */
+export function resolveSwitches(opts: Partial<ResolveSwitches>): ResolveSwitches {
+	const switches = { ...RESOLVE_SWITCH_DEFAULTS }
+
+	for (const key of Object.keys(RESOLVE_SWITCH_DEFAULTS) as (keyof ResolveSwitches)[]) {
+		switches[key] = opts[key] ?? RESOLVE_SWITCH_DEFAULTS[key]
+	}
+
+	return switches
+}
+
 export interface ResolveOpts {
 	/**
 	 * Max backend lookups per tree.
@@ -219,13 +296,9 @@ export interface ResolveOpts {
 	 */
 	candidatesPerLookup?: number
 	/**
-	 * Default top-level country scope.
+	 * Default top-level country scope, and who chose it.
 	 */
-	defaultCountry?: string
-	/**
-	 * True if defaultCountry is locale-inferred.
-	 */
-	defaultCountryIsInferred?: boolean
+	defaultCountry?: DefaultCountry
 	/**
 	 * Country scope for fuzzy matching only.
 	 */
@@ -236,6 +309,8 @@ export interface ResolveOpts {
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * Retry without parent constraint on scoped miss.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	parentFallback?: boolean
 	/**
@@ -265,7 +340,7 @@ export interface ResolveOpts {
 	/**
 	 * Optional capital-level callback.
 	 */
-	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
+	capitalLevel?: (place: { name: string; country: string | null; lat: number; lon: number }) => number
 	/**
 	 * Optional hard country filter from coarse placer.
 	 */
@@ -276,6 +351,7 @@ export interface ResolveOpts {
 	addressPoints?: AddressPointLookup
 	/**
 	 * Enables locality-bbox fallback in address-point lookup.
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	addressPointBboxFallback?: boolean
 	/**
@@ -289,13 +365,15 @@ export interface ResolveOpts {
 	/**
 	 * Optional street-centroid provider by country.
 	 */
-	streetCentroids?: (country: string) => StreetCentroidLookup | undefined
+	streetCentroids?: ((country: string) => StreetCentroidLookup | null) | null
 	/**
 	 * Optional pre-resolution country hints for street-centroid tier.
 	 */
 	streetCountryHints?: readonly string[]
 	/**
 	 * Enables span-rescore recovery tier.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	spanRescore?: boolean
 	/**
@@ -304,6 +382,8 @@ export interface ResolveOpts {
 	spanRescoreThresholdKm?: number
 	/**
 	 * Require contextual remainder for span-rescore sub-spans.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
@@ -312,10 +392,14 @@ export interface ResolveOpts {
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * Enables postal-compound recovery in span-rescore tier.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postalCompoundRecovery?: boolean
 	/**
 	 * Enables postcode-based locality disambiguation.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeConsistency?: boolean
 	/**
@@ -328,6 +412,8 @@ export interface ResolveOpts {
 	postcodeConsistencyMaxMoveKm?: number
 	/**
 	 * Enables postcode-country coherence pass.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -336,14 +422,20 @@ export interface ResolveOpts {
 	postcodeCountryCoherenceThresholdKm?: number
 	/**
 	 * Enables postcode-shape coherence pass.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeShapeCoherence?: boolean
 	/**
 	 * Enables postcode-containment coherence pass.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**
 	 * Enables postcode-prefix prior tier.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	postcodePrefixPrior?: boolean
 	/**
@@ -356,18 +448,28 @@ export interface ResolveOpts {
 	postcodePrefixIndex?: PostcodePrefixIndexLike
 	/**
 	 * Enables admin descendant-consistency correction.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	adminCoherence?: boolean
 	/**
 	 * Enables dual-role hierarchy completion.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	hierarchyCompletion?: boolean
 	/**
 	 * Attach ancestor lineage to resolved nodes.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	includeAncestors?: boolean
 	/**
-	 * Enables admin-containment rerank for locality candidates.
+	 * Reranks locality candidates by containment in a parsed region qualifier.
+	 *
+	 * It stands down under a caller-supplied `defaultCountry`.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	adminContainmentRerank?: boolean
 	/**
@@ -376,6 +478,8 @@ export interface ResolveOpts {
 	traceSink?: (record: ResolveNodeTrace) => void
 	/**
 	 * Diagnose unresolved value reachability across placetypes.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	diagnoseUnreachable?: boolean
 }
@@ -389,14 +493,14 @@ export interface ResolveCandidateTrace {
 	/**
 	 * Optional country code.
 	 */
-	country?: string
+	country: string | null
 	placetype: string
 	score: number
-	prominence?: number
-	importance?: number
-	population?: number
-	exactMatch?: boolean
-	containedByQualifier?: boolean
+	prominence: number | null
+	importance: number | null
+	population: number | null
+	exactMatch: boolean | null
+	containedByQualifier: boolean | null
 	ranks: Record<string, number>
 }
 
@@ -408,17 +512,17 @@ export interface ResolveNodeTrace {
 	value: string
 	placetype: string
 	query: {
-		country?: string
-		parentID?: string | number
-		postcode?: string
-		regionQualifier?: string
+		country: string | null
+		parentID: string | number | null
+		postcode: string | null
+		regionQualifier: string | null
 		limit: number
 	}
 	checks: string[]
 	/**
 	 * Other placetypes where the value was reachable, if probed.
 	 */
-	reachableIn?: Array<{ placetype: string; n: number }>
+	reachableIn: Array<{ placetype: string; n: number }> | null
 	candidates: ResolveCandidateTrace[]
 	candidatesTruncated: number
 	picked: {
@@ -448,9 +552,9 @@ export interface Resolver {
 	/**
 	 * Optional artifact coverage facts passthrough.
 	 */
-	artifactCoverage?: GazetteerArtifactCoverage
+	artifactCoverage: GazetteerArtifactCoverage | null
 	/**
 	 * Optional list of missing backend capabilities.
 	 */
-	capabilityGaps?: readonly BackendCapabilityGap[]
+	capabilityGaps: readonly BackendCapabilityGap[] | null
 }

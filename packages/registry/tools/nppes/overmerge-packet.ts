@@ -84,7 +84,7 @@ export async function writeOvermergePacket(path: PathBuilderLike, input: Overmer
 				const src = rowByID.get(rec.id)
 
 				out.push(
-					`  - npi=${rec.id} · name="${formatPersonName(rec.name, "short")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
+					`  - npi=${rec.id} · name="${formatPersonName(rec.name ?? null, "short")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
 				)
 			}
 		}

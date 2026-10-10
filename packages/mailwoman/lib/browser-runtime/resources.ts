@@ -286,7 +286,7 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
  * Converts a US state name or two-letter code to its extract slug.
  * Any two-letter input passes through unchanged.
  */
-export function regionToStateSlug(region: string | undefined): string | null {
+export function regionToStateSlug(region: string | null): string | null {
 	if (!region) return null
 	const r = region.trim().toLowerCase()
 
@@ -296,30 +296,52 @@ export function regionToStateSlug(region: string | undefined): string | null {
 }
 
 /**
+ * Whether a classifier load fetches the release's postcode-anchor binaries.
+ */
+export type PostcodeAnchorAssets = "load" | "skip"
+
+/**
  * Returns the loader URL configuration shared by the primary and comparison classifiers.
+ *
+ * Both load every published pair index.
+ * The loader keeps each live and `selectPairIndexForText` picks per parse.
+ *
+ * A missing binary is skipped, so it means no prior, never a failed load.
  */
 export function neuralClassifierLoadURLs(
 	locale: string,
 	version: string,
-	opts: { hasAnchor?: boolean; forceWASM: boolean }
+	opts: { postcodeAnchor: PostcodeAnchorAssets; splitEmbeddings?: boolean }
 ) {
 	return {
-		modelURL: assetURL(locale, version, "model.onnx"),
+		// A split release loads the encoder and reads the embedding rows separately.
+		// Its directory still holds `model.onnx` for runtimes that predate the split.
+		...(opts.splitEmbeddings
+			? {
+					modelURL: assetURL(locale, version, "encoder.onnx"),
+					embeddings: {
+						hotURL: assetURL(locale, version, "embeddings-hot.bin"),
+						rowsURL: assetURL(locale, version, "embeddings.rows"),
+					},
+				}
+			: { modelURL: assetURL(locale, version, "model.onnx") }),
 		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
 		modelCardURL: assetURL(locale, version, "model-card.json"),
 		// Gazetteer-trained bundles require the lexicon.
 		// Older releases may not include it.
-		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
-		runner: { useWebGPU: !opts.forceWASM },
-		...(opts.hasAnchor
-			? {
-					postcodeBinaryURLs: [
+		gazetteerLexicon: { url: assetURL(locale, version, "anchor-lexicon-v1.json") },
+		postcodeBinaryURLs:
+			opts.postcodeAnchor === "load"
+				? [
 						assetURL(locale, version, "postcode-us.bin"),
 						assetURL(locale, version, "postcode-de.bin"),
 						assetURL(locale, version, "postcode-fr.bin"),
-					],
-				}
-			: {}),
+					]
+				: [],
+		// The pair indexes live on the public bucket beside every other model asset,
+		// under a dated generation: the objects ship an immutable Cache-Control,
+		// so a rebuilt index is readable only from a fresh path.
+		pairIndexURLs: pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION)),
 	}
 }
 
@@ -361,7 +383,7 @@ export function pairIndexURLs(baseURL: string): string[] {
 export async function loadFSTGazetteer(
 	locale: string,
 	version: string
-): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenance }> {
+): Promise<{ matcher: FSTMatcherLike; provenance: FSTProvenance | null }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web"),
 		fetchWithRetry(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
@@ -372,10 +394,10 @@ export async function loadFSTGazetteer(
 	])
 
 	const matcher = fstModule.deserializeFSTWeb(fstBinary) as FSTMatcherLike
-	let provenance: FSTProvenance | undefined
+	let provenance: FSTProvenance | null = null
 
 	try {
-		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenance | undefined
+		provenance = (fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenance | undefined) ?? null
 	} catch {
 		// Version 2 binaries have no provenance section.
 	}

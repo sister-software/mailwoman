@@ -1,21 +1,30 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
+import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
+import { z } from "zod"
 
 import type { AddressSystemTable } from "#address-system"
 import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
 import { NeuralAddressClassifier } from "#classifier"
+import {
+	addressSystemConventionsFor,
+	type ConventionsSetting,
+	gazetteerSuppressionFor,
+	type ModelCardToggle,
+	punctuationBridgingFor,
+} from "#classifier/options"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
+import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import { MailwomanTokenizer } from "#tokenizer"
 import { resolveWeights, type ResolvedWeights } from "#weights"
 import {
-	inferRequiredChannelsFromInputs,
 	loadAnchorLookup,
 	lookupTagCapability,
 	readAddressSystemsFromModelCard,
@@ -25,6 +34,14 @@ import {
 	type RequiredChannels,
 } from "#weights/channels"
 import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
+
+/**
+ * A scorer's channel override: `"declared"` (the default) feeds the channel and enforces
+ * the card's requirement, and `"off"` ablates it even when the card requires it.
+ */
+export const ScorerChannelSchema = z.enum(["declared", "off"])
+
+export type ScorerChannel = z.infer<typeof ScorerChannelSchema>
 
 /**
  * The largest F1 drop (`maskOffF1 − maskOnF1`) a conventions mask may cause on a
@@ -50,29 +67,29 @@ export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
  */
 export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
-function createWeightsMemo(locale: string | undefined): () => Promise<ResolvedWeights | null> {
-	let memo: Promise<ResolvedWeights | null> | undefined
+function createWeightsMemo(locale: string | null | undefined): () => Promise<ResolvedWeights | null> {
+	let memo: Promise<ResolvedWeights | null> | null = null
 
-	return () => (memo ??= resolveWeights({ locale }).catch(() => null))
+	return () => (memo ??= resolveWeights(locale ? { locale } : {}).catch(() => null))
 }
 
 async function resolveDefaultLexicon(
 	weightsOnce: () => Promise<ResolvedWeights | null>,
-	repoCandidate: string | undefined,
+	repoCandidate: string | null,
 	pick: (weights: ResolvedWeights) => string | undefined
-): Promise<string | undefined> {
+): Promise<string | null> {
 	if (repoCandidate && (await pathExists(repoCandidate))) return repoCandidate
 
 	const resolved = await weightsOnce()
 
-	return resolved ? pick(resolved) : undefined
+	return resolved ? (pick(resolved) ?? null) : null
 }
 
 async function resolveAnchorSource(
-	pinned: PathBuilderLike | undefined,
+	pinned: PathBuilderLike | null | undefined,
 	weightsOnce: () => Promise<ResolvedWeights | null>,
-	spanMode: AnchorSpanMode | undefined
-): Promise<{ path: PathBuilderLike; binary: boolean } | undefined> {
+	spanMode: AnchorSpanMode | null
+): Promise<{ path: PathBuilderLike; binary: boolean } | null> {
 	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
 
 	if (spanMode !== "shaped" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
@@ -83,14 +100,14 @@ async function resolveAnchorSource(
 
 	if (resolved) return resolved.anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 
-	return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
+	return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : null
 }
 
 function streetTypeRepoCandidate(declared: RequiredChannels): string {
 	return `data/gazetteer/${declared.street_type?.lexicon ?? EVIDENCE_LEXICON_FAMILIES.street_type.legacy}`
 }
 
-function fstPathEntry(fstPath: PathBuilderLike | undefined): { fstPath?: PathBuilderLike } {
+function fstPathEntry(fstPath: PathBuilderLike | null | undefined): { fstPath?: PathBuilderLike } {
 	return fstPath ? { fstPath } : {}
 }
 
@@ -100,17 +117,17 @@ async function addressSystemsEntry(modelCardPath: PathBuilderLike): Promise<{ ad
 	return addressSystems ? { addressSystems } : {}
 }
 
-function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | undefined {
-	return declared.anchor?.span_mode
+function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | null {
+	return declared.anchor?.span_mode ?? null
 }
 
 function assertShapedKeyerObligation(
-	lookup: AnchorLookup | undefined,
-	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: PathBuilderLike | undefined,
+	lookup: AnchorLookup | null,
+	spanMode: AnchorSpanMode | null,
+	anchorSourcePath: PathBuilderLike | null | undefined,
 	strict: boolean
 ): void {
-	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)
+	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath ?? null)
 
 	if (violation) {
 		fail(strict, violation)
@@ -124,44 +141,46 @@ function assertShapedKeyerObligation(
  */
 export interface ScorerOverrides {
 	/**
-	 * Set `false` to disable the postcode anchor channel even when the card requires it.
+	 * The postcode anchor channel.
 	 */
-	anchor?: boolean
+	anchor?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the gazetteer channel even when the card requires it.
+	 * The gazetteer channel.
 	 */
-	gazetteer?: boolean
+	gazetteer?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the street-type evidence channel even when the card requires it.
+	 * The street-type evidence channel.
 	 */
-	streetType?: boolean
+	streetType?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the locality-surface evidence channel even when the card requires it.
+	 * The locality-surface evidence channel.
 	 */
-	localitySurface?: boolean
+	localitySurface?: ScorerChannel
 
 	/**
-	 * Set `false` to disable the country channel even when the card requires it.
+	 * The country channel.
 	 */
-	country?: boolean
+	country?: ScorerChannel
 
 	/**
-	 * Replaces the card's conventions mode with `"auto"` or a system code; `false` disables conventions.
+	 * The conventions mode: `"declared"` (the default) follows the card, `"off"` disables
+	 * conventions, and `"auto"` or a system code replaces the card's mode.
 	 */
-	conventions?: "auto" | string | false
+	conventions?: ConventionsSetting
 
 	/**
-	 * Replaces the card's `bridge` declaration for punctuation-gap bridging.
+	 * Punctuation-gap bridging: `"declared"` (the default) follows the card's `bridge` declaration.
 	 */
-	bridge?: boolean
+	bridge?: ModelCardToggle
 
 	/**
-	 * Replaces the card's `suppress_gazetteer_near_postcode` declaration.
+	 * Gazetteer suppression near postcodes: `"declared"` (the default) follows the
+	 * card's `suppress_gazetteer_near_postcode` declaration.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: ModelCardToggle
 }
 
 /**
@@ -189,7 +208,7 @@ export interface CreateScorerOpts {
 	/**
 	 * The postcode anchor lookup, read as a PCB1 binary when the path ends in `.bin` and as JSON otherwise.
 	 *
-	 * It defaults to {@link DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup,
+	 * @defaultValue {@linkcode DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup,
 	 * except that a card declaring `span_mode: "shaped"` tries the weights package first.
 	 */
 	anchorLookupPath?: PathBuilderLike
@@ -197,28 +216,29 @@ export interface CreateScorerOpts {
 	/**
 	 * The gazetteer lexicon.
 	 *
-	 * The default is {@link DEFAULT_GAZETTEER_LEXICON} when present, followed by the weights package's copy.
+	 * @defaultValue {@linkcode DEFAULT_GAZETTEER_LEXICON} when present, followed by the weights package's copy.
 	 */
 	gazetteerLexiconPath?: PathBuilderLike
 
 	/**
 	 * The street-type evidence lexicon.
 	 *
-	 * The default is the file listed on the card under `data/gazetteer/`,
+	 * @defaultValue the file listed on the card under `data/gazetteer/`,
 	 * followed by the weights package's copy.
 	 */
 	streetTypeLexiconPath?: string
 
 	/**
 	 * The locality-surface evidence lexicon.
-	 * The default is the weights package's copy.
+	 *
+	 * @defaultValue the weights package's copy.
 	 */
 	localitySurfaceLexiconPath?: string
 
 	/**
 	 * The country-surface lexicon.
 	 *
-	 * The default is {@link DEFAULT_COUNTRY_LEXICON} when present, followed by the weights package's copy.
+	 * @defaultValue {@linkcode DEFAULT_COUNTRY_LEXICON} when present, followed by the weights package's copy.
 	 */
 	countryLexiconPath?: string
 
@@ -349,18 +369,18 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const anchorSource = await resolveAnchorSource(opts.anchorLookupPath, weightsOnce, declaredSpanMode)
 
 	const anchorRequired = declared.anchor?.required ?? false
-	let postcodeAnchorLookup: AnchorLookup | undefined
+	let postcodeAnchorLookup: AnchorLookup | null = null
 
-	if (overrides.anchor === false) {
+	if (overrides.anchor === "off") {
 		if (anchorRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: anchor channel ABLATED (override anchor:false) but the model-card ` +
+				`[createScorer] OVERRIDE: anchor channel ABLATED (override anchor:"off") but the model-card ` +
 					`declares it REQUIRED. Deliberate OOD — the model was TRAINED with the anchor channel.`
 			)
 		}
 	} else {
 		postcodeAnchorLookup =
-			anchorSource && (await pathExists(anchorSource.path)) ? await loadAnchorLookup(anchorSource) : undefined
+			anchorSource && (await pathExists(anchorSource.path)) ? await loadAnchorLookup(anchorSource) : null
 
 		if (anchorRequired && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
 			const reason = postcodeAnchorLookup
@@ -370,7 +390,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			fail(
 				strict,
 				`anchor channel is declared REQUIRED by the model-card but cannot be fed: ${reason}. ` +
-					`Provide a valid --anchor-lookup, or pass overrides.anchor=false for a deliberate ablation.`
+					`Provide a valid --anchor-lookup, or pass overrides.anchor="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -380,12 +400,12 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		(await resolveDefaultLexicon(weightsOnce, DEFAULT_GAZETTEER_LEXICON, (weights) => weights.gazetteerLexiconPath))
 
 	const gazetteerRequired = declared.gazetteer?.required ?? false
-	let gazetteerLexicon: GazetteerLexicon | undefined
+	let gazetteerLexicon: GazetteerLexicon | null = null
 
-	if (overrides.gazetteer === false) {
+	if (overrides.gazetteer === "off") {
 		if (gazetteerRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: gazetteer channel ABLATED (override gazetteer:false) but the ` +
+				`[createScorer] OVERRIDE: gazetteer channel ABLATED (override gazetteer:"off") but the ` +
 					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the gazetteer clue.`
 			)
 		}
@@ -393,14 +413,14 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		gazetteerLexicon =
 			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
-				: undefined
+				: null
 
 		if (gazetteerRequired && !gazetteerLexicon) {
 			fail(
 				strict,
 				`gazetteer channel is declared REQUIRED by the model-card but the lexicon file was not found ` +
 					`at ${gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON}. Provide a valid --gazetteer-lexicon, or pass ` +
-					`overrides.gazetteer=false for a deliberate ablation.`
+					`overrides.gazetteer="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -410,12 +430,12 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		(await resolveDefaultLexicon(weightsOnce, DEFAULT_COUNTRY_LEXICON, (weights) => weights.countryLexiconPath))
 
 	const countryRequired = declared.country?.required ?? false
-	let countryLexicon: CountryLexicon | undefined
+	let countryLexicon: CountryLexicon | null = null
 
-	if (overrides.country === false) {
+	if (overrides.country === "off") {
 		if (countryRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: country channel ABLATED (override country:false) but the ` +
+				`[createScorer] OVERRIDE: country channel ABLATED (override country:"off") but the ` +
 					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the country clue.`
 			)
 		}
@@ -423,14 +443,14 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		countryLexicon =
 			countryLexiconPath && (await pathExists(countryLexiconPath))
 				? parseCountryLexicon(await readLocalJSONFile(countryLexiconPath))
-				: undefined
+				: null
 
 		if (countryRequired && !countryLexicon) {
 			fail(
 				strict,
 				`country channel is declared REQUIRED by the model-card but the lexicon file was not found ` +
 					`at ${countryLexiconPath ?? DEFAULT_COUNTRY_LEXICON}. Provide a valid --country-lexicon, or pass ` +
-					`overrides.country=false for a deliberate ablation.`
+					`overrides.country="off" for a deliberate ablation.`
 			)
 		}
 	}
@@ -444,12 +464,12 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		))
 
 	const streetTypeRequired = declared.street_type?.required ?? false
-	let streetTypeLexicon: GazetteerLexicon | undefined
+	let streetTypeLexicon: GazetteerLexicon | null = null
 
-	if (overrides.streetType === false) {
+	if (overrides.streetType === "off") {
 		if (streetTypeRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: street_type channel ABLATED (override streetType:false) but the ` +
+				`[createScorer] OVERRIDE: street_type channel ABLATED (override streetType:"off") but the ` +
 					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the bundle.`
 			)
 		}
@@ -457,29 +477,29 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		streetTypeLexicon =
 			streetTypeLexiconPath && (await pathExists(streetTypeLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(streetTypeLexiconPath))
-				: undefined
+				: null
 
 		if (streetTypeRequired && !streetTypeLexicon) {
 			fail(
 				strict,
 				`street_type channel is declared REQUIRED by the model-card but the lexicon was not found ` +
 					`at ${streetTypeLexiconPath ?? "(unresolved)"}. Provide streetTypeLexiconPath, or pass ` +
-					`overrides.streetType=false for a deliberate ablation.`
+					`overrides.streetType="off" for a deliberate ablation.`
 			)
 		}
 	}
 
 	const localitySurfaceLexiconPath =
 		opts.localitySurfaceLexiconPath ??
-		(await resolveDefaultLexicon(weightsOnce, undefined, (weights) => weights.localitySurfaceLexiconPath))
+		(await resolveDefaultLexicon(weightsOnce, null, (weights) => weights.localitySurfaceLexiconPath))
 
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
-	let localitySurfaceLexicon: GazetteerLexicon | undefined
+	let localitySurfaceLexicon: GazetteerLexicon | null = null
 
-	if (overrides.localitySurface === false) {
+	if (overrides.localitySurface === "off") {
 		if (localitySurfaceRequired) {
 			console.error(
-				`[createScorer] OVERRIDE: locality_surface channel ABLATED (override localitySurface:false) but ` +
+				`[createScorer] OVERRIDE: locality_surface channel ABLATED (override localitySurface:"off") but ` +
 					`the model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the bundle.`
 			)
 		}
@@ -487,54 +507,43 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		localitySurfaceLexicon =
 			localitySurfaceLexiconPath && (await pathExists(localitySurfaceLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(localitySurfaceLexiconPath))
-				: undefined
+				: null
 
 		if (localitySurfaceRequired && !localitySurfaceLexicon) {
 			fail(
 				strict,
 				`locality_surface channel is declared REQUIRED by the model-card but the lexicon was not found ` +
 					`at ${localitySurfaceLexiconPath ?? "(unresolved)"}. Provide localitySurfaceLexiconPath, or pass ` +
-					`overrides.localitySurface=false for a deliberate ablation.`
+					`overrides.localitySurface="off" for a deliberate ablation.`
 			)
 		}
 	}
 
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
-	let addressSystemConventions: "auto" | string | undefined
+	const conventionsOverride = overrides.conventions ?? "declared"
 
-	if (overrides.conventions !== undefined) {
-		if (overrides.conventions === false) {
-			addressSystemConventions = undefined
-
-			if (conventionsRequired) {
-				console.error(
-					`[createScorer] OVERRIDE: conventions DISABLED (override conventions:false) but the ` +
-						`model-card declares them REQUIRED (mode "${declaredConventionsMode}").`
-				)
-			}
-		} else {
-			addressSystemConventions = overrides.conventions
-
-			if (overrides.conventions !== declaredConventionsMode) {
-				console.error(
-					`[createScorer] OVERRIDE: conventions mode set to "${overrides.conventions}" (model-card ` +
-						`declares "${declaredConventionsMode}").`
-				)
-			}
+	if (conventionsOverride === "off") {
+		if (conventionsRequired) {
+			console.error(
+				`[createScorer] OVERRIDE: conventions DISABLED (override conventions:"off") but the ` +
+					`model-card declares them REQUIRED (mode "${declaredConventionsMode}").`
+			)
 		}
-	} else {
-		addressSystemConventions = conventionsRequired ? declaredConventionsMode : undefined
-
-		if (conventionsRequired && !addressSystemConventions) {
-			fail(strict, `conventions are declared REQUIRED by the model-card but no mode could be resolved.`)
-		}
+	} else if (conventionsOverride !== "declared" && conventionsOverride !== declaredConventionsMode) {
+		console.error(
+			`[createScorer] OVERRIDE: conventions mode set to "${conventionsOverride}" (model-card ` +
+				`declares "${declaredConventionsMode}").`
+		)
 	}
 
-	const bridgePunctuationGaps = overrides.bridge ?? declared.bridge?.required ?? false
+	const addressSystemConventions = addressSystemConventionsFor(conventionsOverride, declared)
+	const bridgePunctuationGaps = punctuationBridgingFor(overrides.bridge ?? "declared", declared)
 
-	const suppressGazetteerNearPostcode =
-		overrides.suppressGazetteerNearPostcode ?? declared.suppress_gazetteer_near_postcode ?? false
+	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(
+		overrides.suppressGazetteerNearPostcode ?? "declared",
+		declared
+	)
 
 	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 
@@ -552,7 +561,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		suppressGazetteerNearPostcode,
 
-		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
+		addressSystemConventions,
 		bridgePunctuationGaps,
 	})
 }

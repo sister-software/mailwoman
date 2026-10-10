@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { tryStat, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { createHash, md5File } from "@mailwoman/core/hash"
@@ -201,7 +202,7 @@ export interface DownloadOpenUPRNOptions {
 
 	/**
 	 * Whether to reuse an archive on disk that matches the published MD5.
-	 * Defaults to `true`.
+	 * @defaultValue `true`
 	 *
 	 * The sidecars are rewritten on reuse as well.
 	 */
@@ -395,15 +396,16 @@ export interface BuildUPRNLayerOptions {
 	/**
 	 * The acquisition directory that holds the archive and its `extracted/` tree.
 	 *
-	 * Defaults to `<data-root>/os-uprn/<date>`.
+	 * @defaultValue `<data-root>/os-uprn/<date>`
 	 */
 	sourceDir?: PathBuilderLike
 
 	/**
 	 * The output database path.
-	 * Defaults to `<data-root>/db/uprn/uprn.db`.
 	 *
 	 * The build writes a staging file and swaps it into place.
+	 *
+	 * @defaultValue `<data-root>/db/uprn/uprn.db`
 	 */
 	out?: PathBuilderLike
 
@@ -421,7 +423,8 @@ export interface BuildUPRNLayerOptions {
 
 	/**
 	 * The ISO-8601 timestamp for `layer_manifest.created_at`.
-	 * Defaults to `now`.
+	 *
+	 * @defaultValue `now`
 	 */
 	createdAt?: string
 
@@ -433,7 +436,7 @@ export interface BuildUPRNLayerOptions {
 	/**
 	 * The row count below which the build reports a truncation mismatch.
 	 *
-	 * Defaults to {@link OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS}.
+	 * @defaultValue {@linkcode OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS}
 	 */
 	minimumPlausibleRows?: number
 
@@ -723,6 +726,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: options.createdAt ?? now.toISOString(),
+		sourceRecords: null,
 	})
 
 	phase("meta")

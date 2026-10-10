@@ -18,7 +18,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { limitedFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
-import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
+import { readOGRLayerIdentity, type OGRLayerSchema } from "@mailwoman/spatial/tools/ogr"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 
 import {
@@ -93,8 +93,9 @@ export interface CoastalIngestOptions {
 	/**
 	 * The WGS84 extent that every reprojected vertex must fall inside.
 	 *
-	 * The default is the erosion collections' declared box.
 	 * It contains both ground-instability boxes.
+	 *
+	 * @defaultValue the erosion collections' declared box.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
@@ -108,22 +109,6 @@ export interface CoastalIngestOptions {
 	 */
 	objectIDFrom?: number
 	objectIDTo?: number
-}
-
-/**
- * A layer's EPSG code, feature count and attribute field names.
- */
-export interface CoastalLayerIdentity {
-	epsg: number
-	featureCount: number
-	layer: string
-	/**
-	 * The layer's attribute field names.
-	 *
-	 * The fourteen layers use different schemas. ogr2ogr rejects a `select` that asks for a missing column.
-	 * The query builders therefore use this set.
-	 */
-	fields: ReadonlySet<string>
 }
 
 /**
@@ -147,10 +132,7 @@ const BBOX_MARGIN_DEGREES = 0.01
  *
  * @throws {Error} When the layer is missing, or its declared EPSG code is not `expectEPSG`.
  */
-export async function readCoastalSourceIdentity(
-	layer: string,
-	options: CoastalIngestOptions
-): Promise<CoastalLayerIdentity> {
+export async function readCoastalSourceIdentity(layer: string, options: CoastalIngestOptions): Promise<OGRLayerSchema> {
 	const identity = await readOGRLayerIdentity({
 		path: options.geodatabasePath,
 		layer,
@@ -209,11 +191,7 @@ const OPTIONAL_SCENARIO_FIELDS: ReadonlyArray<string> = [
 /**
  * Builds the erosion-zone query for one scenario from the layer's field list.
  */
-function scenarioSelectSQL(
-	scenario: CoastalScenario,
-	identity: CoastalLayerIdentity,
-	options: CoastalIngestOptions
-): string {
+function scenarioSelectSQL(scenario: CoastalScenario, identity: OGRLayerSchema, options: CoastalIngestOptions): string {
 	// Policy columns must match the management scenario.
 	// A mismatch means the source schema changed.
 	const carriesPolicy = identity.fields.has("mt_smp")
@@ -267,7 +245,7 @@ const OPTIONAL_INSTABILITY_FIELDS: ReadonlyArray<string> = [
 /**
  * Builds the ground-instability query from the layer's field list.
  */
-function instabilitySelectSQL(layer: string, identity: CoastalLayerIdentity, options: CoastalIngestOptions): string {
+function instabilitySelectSQL(layer: string, identity: OGRLayerSchema, options: CoastalIngestOptions): string {
 	const attributes = OPTIONAL_INSTABILITY_FIELDS.map((field) =>
 		identity.fields.has(field) ? field : `NULL AS ${field}`
 	).join(", ")
@@ -351,7 +329,7 @@ function numberOf(value: number | string | null | undefined): number | null {
 export async function* readCoastalScenarioFeatures(
 	scenario: CoastalScenario,
 	options: CoastalIngestOptions,
-	identity?: CoastalLayerIdentity
+	identity?: OGRLayerSchema
 ): AsyncGenerator<CoastalSourceFeature> {
 	const layerIdentity = identity ?? (await readCoastalSourceIdentity(scenario.layer, options))
 	const sql = scenarioSelectSQL(scenario, layerIdentity, options)
@@ -465,7 +443,8 @@ export interface CoastalFeatureSource {
 export interface GeodatabaseSourceOptions extends CoastalIngestOptions {
 	/**
 	 * The scenario keys to read.
-	 * The default is all twelve scenarios.
+	 *
+	 * @defaultValue all twelve scenarios.
 	 */
 	scenarioKeys?: ReadonlyArray<string>
 	/**
@@ -511,14 +490,14 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 	let epsg = NCERM_SOURCE_EPSG
 
 	// Scenario streams reuse these identities, so each layer costs one `ogrinfo` call.
-	const identities = new Map<string, CoastalLayerIdentity>()
+	const identities = new Map<string, OGRLayerSchema>()
 
 	for (const layer of [...scenarios.map((scenario) => scenario.layer), ...instability.map((entry) => entry.layer)]) {
 		const identity = await readCoastalSourceIdentity(layer, options)
 
 		identities.set(layer, identity)
 
-		declared += limitedFeatureCount(identity.featureCount, options.limit)
+		declared += limitedFeatureCount(identity.featureCount, options.limit ?? null)
 		epsg = identity.epsg
 	}
 

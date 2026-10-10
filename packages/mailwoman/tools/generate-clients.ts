@@ -1,4 +1,4 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
 	copyFileTo,
 	makeDirectories,
@@ -79,7 +79,7 @@ export interface GenerateClientsOptions {
 	/**
 	 * The output root.
 	 *
-	 * The default is the gitignored `clients-build/` at the repo root.
+	 * @defaultValue the gitignored `clients-build/` at the repo root.
 	 */
 	outDir?: PathBuilderLike
 
@@ -92,7 +92,7 @@ export interface GenerateClientsOptions {
 }
 
 /**
- * The outcome of {@link generateClients}: one check per pipeline step, stopping at
+ * The result of {@link generateClients}: one check per pipeline step, stopping at
  * the first failure, plus a receipt of what was written.
  */
 export interface GenerateClientsResult {

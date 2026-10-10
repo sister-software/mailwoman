@@ -1,0 +1,33 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { describe, expect, it } from "vitest"
+
+import { layoutAdminTail } from "#synthesizers/tail"
+
+describe("layoutAdminTail", () => {
+	const parts = { locality: "Oxford", region: "Oxfordshire", postcode: "OX1 4AA" }
+
+	it("renders each country's order and keeps only the parts the layout prints", () => {
+		expect(layoutAdminTail("US", parts)).toEqual({ raw: "Oxford, Oxfordshire OX1 4AA", components: parts })
+
+		expect(layoutAdminTail("FR", parts)).toEqual({
+			raw: "OX1 4AA Oxford",
+			components: { postcode: "OX1 4AA", locality: "Oxford" },
+		})
+
+		expect(layoutAdminTail("GB", parts)?.raw).toBe("Oxford, OX1 4AA")
+		expect(layoutAdminTail("VE", parts)?.raw).toBe("Oxford OX1 4AA, Oxfordshire")
+	})
+
+	it("appends a country the caller supplies and skips an empty part", () => {
+		const tail = layoutAdminTail("US", { ...parts, postcode: "", country: "USA" })
+
+		expect(tail?.raw).toBe("Oxford, Oxfordshire, USA")
+		expect(tail?.components.postcode).toBeUndefined()
+	})
+
+	it("returns null when the codex has no layout for the country", () => {
+		expect(layoutAdminTail("ZZ", parts)).toBeNull()
+	})
+})

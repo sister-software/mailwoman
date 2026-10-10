@@ -10,6 +10,7 @@
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../ancestrie" },
 		{ "path": "../core" },
 		{ "path": "../codex" },
 		{ "path": "../locale-hint" },

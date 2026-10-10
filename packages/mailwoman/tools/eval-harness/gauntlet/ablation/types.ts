@@ -5,7 +5,7 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { percentile } from "@mailwoman/core/stats"
 
-import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#ablation/expectation"
+import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#ablation/grades"
 
 /**
  * The component classes this runner deletes.
@@ -129,7 +129,7 @@ export interface AblationCell {
 /**
  * One row × one deleted component: the per-case record behind a cell.
  */
-export interface AblationRowOutcome {
+export interface AblationRowResult {
 	caseID: string
 	component: AblatableComponent
 	locale: string
@@ -155,7 +155,7 @@ export interface AblationRowOutcome {
 	broken: boolean | null
 	tierDrop: boolean
 	unresolved: boolean
-	slot: SlotOutcome
+	slot: SlotResult
 	/**
 	 * What the ablated arm put in the deleted component's slot (`null` = left empty).
 	 */
@@ -208,7 +208,7 @@ export interface AblationRowOutcome {
 /**
  * What happened to the deleted component's slot in the ablated arm.
  */
-export type SlotOutcome = "absent" | "recovered" | "substituted"
+export type SlotResult = "absent" | "recovered" | "substituted"
 
 /**
  * A component the row asserts but this runner refused to delete, reported per reason
@@ -255,7 +255,7 @@ export interface AblationComponentAggregate {
  */
 export function aggregateAblationComponents(
 	cells: readonly AblationCell[],
-	rows: readonly AblationRowOutcome[]
+	rows: readonly AblationRowResult[]
 ): AblationComponentAggregate[] {
 	const aggregates: AblationComponentAggregate[] = []
 

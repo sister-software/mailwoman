@@ -10,13 +10,15 @@
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { checkCompiledFreshness } from "@mailwoman/core/module/compiled-freshness"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -81,18 +83,19 @@ export interface PromotionEvalOptions {
 	/**
 	 * Tokenizer path.
 	 *
-	 * Defaults to the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
 	 * Model-card JSON.
-	 * Defaults to `neural-weights-en-us/model-card.json`.
+	 *
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	card?: string
 	/**
 	 * Gazetteer lexicon JSON.
 	 *
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**
@@ -111,7 +114,7 @@ export interface PromotionEvalOptions {
 	/**
 	 * Battery output dir.
 	 *
-	 * Defaults to `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
+	 * @defaultValue `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -441,28 +444,17 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	if (guardExit !== null) return guardExit
 
-	const channelOptions: Pick<
+	const CONV_MODE = check.requires_conventions ? parseAddressSystemConventions(check.requires_conventions) : null
+
+	const channelOptions = {
+		...(check.requires_gazetteer_lexicon === true ? { gazetteerLexicon: GAZ } : {}),
+		suppressGazetteerNearPostcode: check.requires_gazetteer_lexicon === true ? "on" : "off",
+		conventions: CONV_MODE ?? "off",
+		bridgePunctuationGaps: check.requires_bridge === true ? "on" : "off",
+	} as const satisfies Pick<
 		ScoreAffixOptions,
-		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
-	> = {}
-
-	if (check.requires_gazetteer_lexicon === true) {
-		channelOptions.gazetteerLexicon = GAZ
-		channelOptions.suppressGazNearPostcode = true
-	}
-
-	const CONV_MODE = check.requires_conventions ?? ""
-
-	if (CONV_MODE) {
-		channelOptions.conventions = CONV_MODE
-	}
-
-	let BRIDGE_MODE = ""
-
-	if (check.requires_bridge === true) {
-		channelOptions.bridgeGaps = true
-		BRIDGE_MODE = "1"
-	}
+		"gazetteerLexicon" | "suppressGazetteerNearPostcode" | "conventions" | "bridgePunctuationGaps"
+	>
 
 	if (check.golden_dir) {
 		console.log(`golden dir: ${check.golden_dir} (spec-declared)`)
@@ -497,9 +489,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 					// per-locale-f1 uses `gazetteerLexiconPath` (not `gazetteerLexicon`).
 					...(check.golden_dir ? { goldenDir: check.golden_dir } : {}),
 					...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
-					...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
-					...(channelOptions.conventions ? { conventions: channelOptions.conventions } : {}),
-					...(channelOptions.bridgeGaps ? { bridgeGaps: true } : {}),
+					suppressGazetteerNearPostcode: channelOptions.suppressGazetteerNearPostcode,
+					conventions: channelOptions.conventions,
+					bridgePunctuationGaps: channelOptions.bridgePunctuationGaps,
 					outJSON: `${OUT_DIR}/${tag}-per-locale.json`,
 				},
 				(line) => perLocaleLines.push(line)
@@ -532,7 +524,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				{
 					...probeOptions,
 					...channelOptions,
-					suppressGazNearPostcode: true,
+					suppressGazetteerNearPostcode: "on",
 					json: `${OUT_DIR}/${tag}-country.json`,
 				},
 				(line) => countryLines.push(line)
@@ -601,16 +593,14 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const presetLines: string[] = []
 
 	try {
-		await profile.time("presets", undefined, () =>
-			presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line))
-		)
+		await profile.time("presets", null, () => presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line)))
 	} catch (error) {
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}
 
 	await writeLocalTextFile(presetLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/presets.md`)
 
-	await profile.time("demo-cascade", undefined, () =>
+	await profile.time("demo-cascade", null, () =>
 		runDemoCascadeLeg({
 			outDir: OUT_DIR,
 			shipModel,
@@ -627,7 +617,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		let arenaFailed = false
 
 		try {
-			await profile.time("arena", undefined, () =>
+			await profile.time("arena", null, () =>
 				externalArenas(
 					{
 						model: shipModel,
@@ -637,7 +627,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						anchorLookup: LK,
 						outDir: `${OUT_DIR}/arenas`,
 						...(CONV_MODE ? { conventions: CONV_MODE } : {}),
-						...(BRIDGE_MODE ? { bridgeGaps: true } : {}),
+						bridgePunctuationGaps: channelOptions.bridgePunctuationGaps,
 					},
 					(line) => arenaOut.push(line),
 					(line) => arenaErr.push(line)
@@ -665,7 +655,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		let barePassed: boolean
 
 		try {
-			const bare = await profile.time("fr-bare-street", undefined, () =>
+			const bare = await profile.time("fr-bare-street", null, () =>
 				frParseRecall(
 					{
 						model: shipModel,
@@ -709,7 +699,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const maskLines: string[] = []
 
 		try {
-			const mask = await profile.time("mask-regression", undefined, () =>
+			const mask = await profile.time("mask-regression", null, () =>
 				maskRegressionCheck(
 					{
 						model: shipModel,

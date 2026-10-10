@@ -29,7 +29,7 @@
  */
 
 import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import {
@@ -75,19 +75,19 @@ export interface GNAFRooftopOptions {
 	/**
 	 * The extracted `Standard/` PSV directory.
 	 *
-	 * Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
+	 * @defaultValue `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`
 	 */
 	standardDir?: string
 	/**
 	 * Output database path.
 	 *
-	 * Default: `<data-root>/db/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
+	 * @defaultValue `<data-root>/db/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**
 	 * Restrict to these state prefixes (e.g. `["ACT"]`) — the smoke rung.
 	 *
-	 * Default: every state present.
+	 * @defaultValue every state present.
 	 */
 	states?: string[]
 	/**
@@ -359,6 +359,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
 			createdAt: options.createdAt,
+			sourceRecords: null,
 		})
 
 		kdb.exec("ANALYZE")

@@ -54,7 +54,7 @@ input   1275 PENNSYLVANIA AVE NW, WASHINGTON, DC 20004
   off   region="DC" locality="WASHINGTON" street="PENNSYLVANIA AVE NW" house_number="1275" postcode="20004"
 ```
 
-`on` is the default. `off` is `classifier.parse(raw, { normalizeCase: false })`, and it shows what the
+`on` is the default. `off` is `classifier.parse(raw, { caseNormalization: "preserve" })`, and it shows what the
 model does with the input casing unchanged.
 
 Look at the all-lowercase row. With case normalization off, `pennsylvania ave nw` splits into two

@@ -4,7 +4,16 @@
 /**
  *   The fictional Example House, Example Annex and Example Parcel that every scenario in the spec uses.
  *   Dates are chosen so that an `asOf` of 2022-06-30 admits the permit and the first inspection and
- *   excludes the later manager statement.
+ *   excludes the later manager statement. The permit states the parcel's lot number and each building's
+ *   identification number, so each identifier cites the permit.
+ *
+ *   The cable check on Example House fails at a source-present empty reading, and the operator's log
+ *   records one investigation of it with its result.
+ *
+ *   The survey places Example House in cell-1, and the permit places both buildings in district-1. No
+ *   record places a building in cell-3, so the survey's cable reading there attaches to no building. Every
+ *   position is synthetic: its coordinates lie in the open South Atlantic, where no building stands. The
+ *   permit and the survey state two different positions for Example Annex.
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -19,9 +28,11 @@ import {
 	type OrganizationRelation,
 	OrganizationRole,
 } from "#events"
+import { type AvailabilityCheck, ExplanationKind, type OperatorDisposition } from "#explanations"
 import type { FilingRow } from "#filings"
 import { entityID } from "#identifiers"
-import { type Alias, type Containment, ContainmentRelation } from "#links"
+import { type Alias, type Containment, ContainmentRelation, type Evidence } from "#links"
+import type { BuildingPosition, ExtentMembership } from "#placement"
 import type { SourceRecord } from "#sources"
 import type { DossierRecords } from "#validate"
 
@@ -39,6 +50,7 @@ export const SOURCES: SourceRecord[] = [
 		observedAt: "2021-05-10",
 		availableAt: "2021-05-12",
 		retrievedAt: "2026-10-04",
+		url: null,
 	},
 	{
 		id: "inspection-2022",
@@ -47,6 +59,7 @@ export const SOURCES: SourceRecord[] = [
 		observedAt: "2022-04-01",
 		availableAt: "2022-04-03",
 		retrievedAt: "2026-10-04",
+		url: null,
 	},
 	{
 		id: "manager-2023",
@@ -55,6 +68,7 @@ export const SOURCES: SourceRecord[] = [
 		observedAt: "2023-02-01",
 		availableAt: "2023-02-01",
 		retrievedAt: "2026-10-04",
+		url: null,
 	},
 	{
 		id: "survey-2022",
@@ -63,14 +77,52 @@ export const SOURCES: SourceRecord[] = [
 		observedAt: "2022-03-15",
 		availableAt: "2022-03-20",
 		retrievedAt: "2026-10-04",
+		url: null,
 	},
-	{ id: "undated-listing", publisher: "Example Listings", title: "Rental listing", retrievedAt: "2026-10-04" },
+	{
+		id: "undated-listing",
+		publisher: "Example Listings",
+		title: "Rental listing",
+		retrievedAt: "2026-10-04",
+		url: null,
+		observedAt: null,
+		availableAt: null,
+	},
+	{
+		id: "operator-log-2022",
+		publisher: "Example Operator",
+		title: "Investigation log",
+		observedAt: "2022-06-20",
+		availableAt: "2022-06-25",
+		retrievedAt: "2026-10-04",
+		url: null,
+	},
 ]
 
+/**
+ * The permit's statement of an identifier.
+ */
+const permitEvidence: Evidence = { source: "permit-2021", observedAt: "2021-05-10", validFrom: null, validTo: null }
+
 export const ENTITIES: Entity[] = [
-	{ id: PARCEL, kind: "parcel", externalIDs: [{ namespace: "example:lot", value: "12-34" }], label: "Example Parcel" },
-	{ id: HOUSE, kind: "building", externalIDs: [{ namespace: "example:bin", value: "1001" }], label: "Example House" },
-	{ id: ANNEX, kind: "building", externalIDs: [{ namespace: "example:bin", value: "1002" }], label: "Example Annex" },
+	{
+		id: PARCEL,
+		kind: "parcel",
+		externalIDs: [{ namespace: "example:lot", value: "12-34", evidence: permitEvidence }],
+		label: "Example Parcel",
+	},
+	{
+		id: HOUSE,
+		kind: "building",
+		externalIDs: [{ namespace: "example:bin", value: "1001", evidence: permitEvidence }],
+		label: "Example House",
+	},
+	{
+		id: ANNEX,
+		kind: "building",
+		externalIDs: [{ namespace: "example:bin", value: "1002", evidence: permitEvidence }],
+		label: "Example Annex",
+	},
 	{ id: NORTH, kind: "entrance", externalIDs: [], label: "North entrance" },
 	{ id: SOUTH, kind: "entrance", externalIDs: [], label: "South entrance" },
 ]
@@ -78,11 +130,17 @@ export const ENTITIES: Entity[] = [
 export const ALIASES: Alias[] = [
 	{
 		text: "North entrance, Example House",
-		candidates: [{ entity: NORTH, evidence: { source: "survey-2022", observedAt: "2022-03-15" } }],
+		candidates: [
+			{ entity: NORTH, evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null } },
+		],
+		address: null,
 	},
 	{
 		text: "South entrance, Example House",
-		candidates: [{ entity: SOUTH, evidence: { source: "survey-2022", observedAt: "2022-03-15" } }],
+		candidates: [
+			{ entity: SOUTH, evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null } },
+		],
+		address: null,
 	},
 ]
 
@@ -91,25 +149,25 @@ export const CONTAINMENT: Containment[] = [
 		child: NORTH,
 		parent: HOUSE,
 		relation: ContainmentRelation.EntranceOf,
-		evidence: { source: "survey-2022", observedAt: "2022-03-15" },
+		evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
 	},
 	{
 		child: SOUTH,
 		parent: HOUSE,
 		relation: ContainmentRelation.EntranceOf,
-		evidence: { source: "survey-2022", observedAt: "2022-03-15" },
+		evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
 	},
 	{
 		child: HOUSE,
 		parent: PARCEL,
 		relation: ContainmentRelation.BuildingOn,
-		evidence: { source: "permit-2021", observedAt: "2021-05-10" },
+		evidence: { source: "permit-2021", observedAt: "2021-05-10", validFrom: null, validTo: null },
 	},
 	{
 		child: ANNEX,
 		parent: PARCEL,
 		relation: ContainmentRelation.BuildingOn,
-		evidence: { source: "permit-2021", observedAt: "2021-05-10" },
+		evidence: { source: "permit-2021", observedAt: "2021-05-10", validFrom: null, validTo: null },
 	},
 ]
 
@@ -121,7 +179,7 @@ const CLAIMS: Claim[] = [
 		predicate: "storeys",
 		value: 13,
 		status: "observed",
-		evidence: { source: "permit-2021", observedAt: "2021-05-10" },
+		evidence: { source: "permit-2021", observedAt: "2021-05-10", validFrom: null, validTo: null },
 	},
 	{
 		id: "c2",
@@ -132,7 +190,7 @@ const CLAIMS: Claim[] = [
 		status: "inferred",
 		derivedFrom: ["c1"],
 		explanation: "A cabinet within 40 m is an observation of proximity, and connection requires its own record.",
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 	},
 ]
 
@@ -143,7 +201,7 @@ export const PLANNED: UnitCount = {
 	count: 24,
 	at: "2021-05-10",
 	membership: "example-house:all",
-	evidence: { source: "permit-2021" },
+	evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
 }
 
 export const COMPLETED20: UnitCount = {
@@ -153,7 +211,7 @@ export const COMPLETED20: UnitCount = {
 	count: 20,
 	at: "2022-04-01",
 	membership: "example-house:all",
-	evidence: { source: "inspection-2022", observedAt: "2022-04-01" },
+	evidence: { source: "inspection-2022", observedAt: "2022-04-01", validFrom: null, validTo: null },
 }
 
 export const COMPLETED22: UnitCount = {
@@ -163,7 +221,7 @@ export const COMPLETED22: UnitCount = {
 	count: 22,
 	at: "2022-04-01",
 	membership: "example-house:all",
-	evidence: { source: "undated-listing" },
+	evidence: { source: "undated-listing", observedAt: null, validFrom: null, validTo: null },
 }
 
 export const OCCUPIED: UnitCount = {
@@ -173,7 +231,7 @@ export const OCCUPIED: UnitCount = {
 	count: 18,
 	at: "2023-02-01",
 	membership: "example-house:all",
-	evidence: { source: "manager-2023" },
+	evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
 }
 
 const COUNTS: UnitCount[] = [PLANNED, COMPLETED20, COMPLETED22, OCCUPIED]
@@ -185,7 +243,7 @@ export const EVENTS: CommercialEvent[] = [
 		parties: [{ name: "Household A", role: "resident" }],
 		scope: [HOUSE],
 		date: "2022-05-01",
-		evidence: { source: "manager-2023" },
+		evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
 	},
 	{
 		id: "e2",
@@ -193,7 +251,7 @@ export const EVENTS: CommercialEvent[] = [
 		parties: [{ name: "Household B", role: "resident" }],
 		scope: [HOUSE],
 		date: "2022-05-02",
-		evidence: { source: "manager-2023" },
+		evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
 	},
 	{
 		id: "e3",
@@ -201,7 +259,7 @@ export const EVENTS: CommercialEvent[] = [
 		parties: [{ name: "Household C", role: "resident" }],
 		scope: [HOUSE],
 		date: "2022-05-03",
-		evidence: { source: "manager-2023" },
+		evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
 	},
 	{
 		id: "e4",
@@ -209,14 +267,15 @@ export const EVENTS: CommercialEvent[] = [
 		parties: [{ name: "Example Management Co", role: "manager" }],
 		scope: [NORTH],
 		date: "2022-05-10",
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 	},
 	{
 		id: "e5",
 		kind: CommercialEventKind.ActiveSubscription,
 		parties: [{ name: "Household D", role: "resident" }],
 		scope: [HOUSE],
-		evidence: { source: "undated-listing" },
+		evidence: { source: "undated-listing", observedAt: null, validFrom: null, validTo: null },
+		date: null,
 	},
 ]
 
@@ -226,19 +285,25 @@ export const RELATIONS: OrganizationRelation[] = [
 		role: OrganizationRole.Owner,
 		subject: HOUSE,
 		signingAuthority: "unknown",
-		evidence: { source: "permit-2021" },
+		evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
 	},
 	{
 		organization: "Example Management Co",
 		role: OrganizationRole.Manager,
 		subject: HOUSE,
 		signingAuthority: "unknown",
-		evidence: { source: "manager-2023" },
+		evidence: { source: "manager-2023", observedAt: null, validFrom: null, validTo: null },
 	},
 ]
 
 const WINDOWS: ConstructionWindow[] = [
-	{ subject: HOUSE, start: "2021-06-01", stage: "permit issued", evidence: { source: "permit-2021" } },
+	{
+		subject: HOUSE,
+		start: "2021-06-01",
+		stage: "permit issued",
+		evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+		end: null,
+	},
 ]
 
 export const AVAILABILITY: ProviderAvailability[] = [
@@ -248,11 +313,12 @@ export const AVAILABILITY: ProviderAvailability[] = [
 		product: "1 Gbps",
 		from: "2022-03-01",
 		to: "2022-09-30",
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
+		extent: null,
 	},
 ]
 
-const surveyEvidence = { source: "survey-2022" }
+const surveyEvidence: Evidence = { source: "survey-2022", observedAt: null, validFrom: null, validTo: null }
 
 export const MISSING_READING: LayerReading = {
 	layer: "ducts",
@@ -260,6 +326,8 @@ export const MISSING_READING: LayerReading = {
 	basis: null,
 	records: null,
 	evidence: surveyEvidence,
+	subject: null,
+	surveyedAt: null,
 }
 
 export const SURVEYED_EMPTY_READING: LayerReading = {
@@ -269,6 +337,7 @@ export const SURVEYED_EMPTY_READING: LayerReading = {
 	surveyedAt: "2022-03-15",
 	records: 0,
 	evidence: surveyEvidence,
+	subject: null,
 }
 
 export const SOURCE_PRESENT_EMPTY_READING: LayerReading = {
@@ -277,6 +346,8 @@ export const SOURCE_PRESENT_EMPTY_READING: LayerReading = {
 	basis: "source_present",
 	records: 0,
 	evidence: surveyEvidence,
+	subject: null,
+	surveyedAt: null,
 }
 
 export const POSITIVE_READING: LayerReading = {
@@ -284,7 +355,49 @@ export const POSITIVE_READING: LayerReading = {
 	extent: "cell-1",
 	basis: "source_present",
 	records: 1,
-	evidence: { source: "undated-listing" },
+	evidence: { source: "undated-listing", observedAt: null, validFrom: null, validTo: null },
+	subject: null,
+	surveyedAt: null,
+}
+
+/**
+ * The cable reading that fails {@link CABLE_CHECK}: the source looked at cell-1 and found no record.
+ */
+const CABLE_EMPTY_READING: LayerReading = {
+	layer: "cable",
+	extent: "cell-1",
+	basis: "source_present",
+	surveyedAt: "2022-03-15",
+	records: 0,
+	evidence: surveyEvidence,
+	subject: null,
+}
+
+/**
+ * Cable records in the surrounding district on the same survey.
+ */
+const CABLE_DISTRICT_READING: LayerReading = {
+	layer: "cable",
+	extent: "district-1",
+	basis: "source_present",
+	surveyedAt: "2022-03-15",
+	records: 4,
+	evidence: surveyEvidence,
+	subject: null,
+}
+
+/**
+ * Cable records over cell-3 on the same survey.
+ * No membership places a building in cell-3.
+ */
+const CABLE_CELL3_READING: LayerReading = {
+	layer: "cable",
+	extent: "cell-3",
+	basis: "source_present",
+	surveyedAt: "2022-03-15",
+	records: 2,
+	evidence: surveyEvidence,
+	subject: null,
 }
 
 const READINGS: LayerReading[] = [
@@ -292,7 +405,73 @@ const READINGS: LayerReading[] = [
 	SURVEYED_EMPTY_READING,
 	SOURCE_PRESENT_EMPTY_READING,
 	POSITIVE_READING,
+	CABLE_EMPTY_READING,
+	CABLE_DISTRICT_READING,
+	CABLE_CELL3_READING,
 ]
+
+const MEMBERSHIPS: ExtentMembership[] = [
+	{
+		subject: HOUSE,
+		extent: "cell-1",
+		evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
+	},
+	{
+		subject: HOUSE,
+		extent: "district-1",
+		evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+	},
+	{
+		subject: ANNEX,
+		extent: "district-1",
+		evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+	},
+]
+
+export const HOUSE_POSITION: BuildingPosition = {
+	subject: HOUSE,
+	latitude: -30.00012,
+	longitude: -20.00034,
+	synthetic: true,
+	evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
+}
+
+export const ANNEX_PERMIT_POSITION: BuildingPosition = {
+	subject: ANNEX,
+	latitude: -30.00021,
+	longitude: -20.00032,
+	synthetic: true,
+	evidence: { source: "permit-2021", observedAt: null, validFrom: null, validTo: null },
+}
+
+export const ANNEX_SURVEY_POSITION: BuildingPosition = {
+	subject: ANNEX,
+	latitude: -30.00025,
+	longitude: -20.00041,
+	synthetic: true,
+	evidence: { source: "survey-2022", observedAt: "2022-03-15", validFrom: null, validTo: null },
+}
+
+/**
+ * Whether the cable layer's source holds service at cell-1, where it keys Example House.
+ */
+export const CABLE_CHECK: AvailabilityCheck = { id: "house-cable", subject: HOUSE, layer: "cable", extent: "cell-1" }
+
+export const ACCESS_DISPOSITION: OperatorDisposition = {
+	id: "d1",
+	check: CABLE_CHECK.id,
+	investigated: ExplanationKind.Access,
+	decision: "Ask Example Management Co whether the provider holds permission for the south entrance",
+	decidedAt: "2022-06-01",
+	evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
+	result: {
+		held: true,
+		at: "2022-06-20",
+		minutesSpent: 30,
+		baselineMinutes: 90,
+		evidence: { source: "operator-log-2022", observedAt: null, validFrom: null, validTo: null },
+	},
+}
 
 export const FILING_ROWS: FilingRow[] = [
 	{
@@ -300,14 +479,14 @@ export const FILING_ROWS: FilingRow[] = [
 		provider: "Example Cable",
 		technology: "cable",
 		speedTier: "100/20",
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 	},
 	{
 		block: "360470001001000",
 		provider: "Example Cable",
 		technology: "cable",
 		speedTier: "1000/35",
-		evidence: { source: "survey-2022" },
+		evidence: { source: "survey-2022", observedAt: null, validFrom: null, validTo: null },
 	},
 ]
 
@@ -324,6 +503,23 @@ export const EXAMPLE_RECORDS: DossierRecords = {
 	availability: AVAILABILITY,
 	readings: READINGS,
 	filings: FILING_ROWS,
+	memberships: MEMBERSHIPS,
+	positions: [HOUSE_POSITION, ANNEX_PERMIT_POSITION, ANNEX_SURVEY_POSITION],
+	checks: [CABLE_CHECK],
+	dispositions: [ACCESS_DISPOSITION],
+}
+
+/**
+ * The example records with each external identifier stripped of its evidence.
+ *
+ * The tests of an identifier whose source is unstated read these records.
+ */
+export const UNSTATED_IDENTIFIER_RECORDS: DossierRecords = {
+	...EXAMPLE_RECORDS,
+	entities: ENTITIES.map((entity) => ({
+		...entity,
+		externalIDs: entity.externalIDs.map(({ namespace, value }) => ({ namespace, value, evidence: null })),
+	})),
 }
 
 export const EMPTY_RECORDS: DossierRecords = {

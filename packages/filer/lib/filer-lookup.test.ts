@@ -5,7 +5,7 @@
  * Tests {@linkcode filerLookup}, {@linkcode pickPrimaryFRN} and the `filer.db` acceptance criteria.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -41,7 +41,8 @@ import {
 	type FilerFamilyTable,
 	type FilerManifestTable,
 } from "#schema"
-import { buildFilerDatabase, type EdgarSubsidiaryRow } from "#sdk/build/filer"
+import type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
+import { buildFilerDatabase } from "#sdk/build/filer"
 import { clusterAuthoritativeComponents } from "#sdk/cluster-filers"
 import { mintFamilyID } from "#sdk/family-id"
 import type { Form499Row } from "#sdk/form499"
@@ -114,6 +115,8 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 		dcAgentTelephone: "",
 		dcAgentEmailAddress: "",
 		dcAgentAddress: "",
+		lifecycle: null,
+		operatingStates: null,
 		...overrides,
 	}
 }
@@ -746,7 +749,7 @@ describe("§7-3a criteria", () => {
 			expect(result.primary_frn?.frn).toBe("0003333333")
 		})
 
-		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, checks the outcome", async () => {
+		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, checks the result", async () => {
 			using db = openMemory()
 			await seedClosedVsInForce(db)
 
@@ -1581,7 +1584,7 @@ describe("§7-3b criteria", () => {
 			const CIK_PARENT = "0001234567"
 
 			const edgarRows: EdgarSubsidiaryRow[] = [
-				{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", filingDate: "2026-04-01" },
+				{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", jurisdiction: null, filingDate: "2026-04-01" },
 			]
 
 			await buildFilerDatabase({

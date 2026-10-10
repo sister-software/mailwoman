@@ -59,8 +59,9 @@ export interface WorkerHostOptions {
 	/**
 	 * Where the child's stdout/stderr are drained.
 	 *
-	 * The default is the host process's stderr.
 	 * On the shim, stdout contains the MCP channel.
+	 *
+	 * @defaultValue the host process's stderr.
 	 */
 	log?: NodeJS.WritableStream
 }
@@ -111,7 +112,7 @@ export interface RestartReport {
 	 * because "no job was running" and "I could not find out" are different facts.
 	 */
 	killed_jobs: KilledJob[]
-	killed_jobs_note?: string
+	killed_jobs_note: string | null
 }
 
 /**
@@ -260,7 +261,7 @@ export class WorkerHost implements AsyncDisposable {
 			tools_changed: stringifyJSON(this.tools) !== previousTools,
 			aborted_calls: aborted,
 			killed_jobs: killedJobs,
-			...(killedJobsNote ? { killed_jobs_note: killedJobsNote } : {}),
+			killed_jobs_note: killedJobsNote,
 		}
 	}
 
@@ -270,7 +271,7 @@ export class WorkerHost implements AsyncDisposable {
 	 * Every failure answers with a note rather than an empty list, because reporting a worker
 	 * that cannot be asked as "no jobs were running" would make a relaunch look unnecessary.
 	 */
-	async #runningJobs(): Promise<{ jobs: KilledJob[]; note?: string }> {
+	async #runningJobs(): Promise<{ jobs: KilledJob[]; note: string | null }> {
 		if (!this.#child?.connected) return { jobs: [], note: "the worker was not running, so its jobs could not be read" }
 
 		if (this.#degraded) {
@@ -293,6 +294,7 @@ export class WorkerHost implements AsyncDisposable {
 						elapsed_s: job.elapsed_s,
 						command: job.command,
 					})),
+				note: null,
 			}
 		} catch (error) {
 			return { jobs: [], note: `the job list could not be read: ${error instanceof Error ? error.message : error}` }
@@ -363,7 +365,7 @@ export class WorkerHost implements AsyncDisposable {
 
 			const grace = setTimeout(() => child.kill("SIGKILL"), TERM_GRACE_MS)
 
-			if (child.exitCode === null && child.signalCode === null) {
+			if (child.exitCode === null && !child.signalCode) {
 				await once(child, "exit")
 			}
 

@@ -31,7 +31,7 @@ export interface EdgarSubsidiaryRow {
 	 * Jurisdiction of incorporation for provenance only.
 	 * No code in this builder writes it to a column.
 	 */
-	jurisdiction?: string
+	jurisdiction: string | null
 	/**
 	 * ISO `yyyy-MM-DD` filing date of the 10-K this Exhibit 21 came from.
 	 *

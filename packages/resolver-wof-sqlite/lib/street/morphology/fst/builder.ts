@@ -23,7 +23,8 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { isDirectory, isFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isDirectory, isFile } from "@mailwoman/core/fs/readers/stat"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -51,13 +52,11 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Optional locale filter — only ingest these locale subfolders.
 	 *
-	 * Defaults to all that have a `street_types.txt`.
+	 * @defaultValue all that have a `street_types.txt`.
 	 */
 	locales?: string[]
 	/**
 	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie.
-	 *
-	 * Defaults to 3.
 	 *
 	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
 	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time,
@@ -68,6 +67,8 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * abbreviations as `street_suffix`.
 	 *
 	 * A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
+	 *
+	 * @defaultValue `3`
 	 */
 	minVariantLength?: number
 	/**
@@ -96,7 +97,7 @@ export interface BuildStreetMorphologyFSTResult {
 function parseLine(line: string): { canonical: string; variants: string[] } | null {
 	const trimmed = line.trim()
 
-	if (!trimmed.length || trimmed.startsWith("#")) return null
+	if (!trimmed || trimmed.startsWith("#")) return null
 
 	const parts = TextSpliterator.from(trimmed, { delimiter: "|" }).toArray()
 
@@ -222,11 +223,12 @@ export async function buildStreetMorphologyFST(
 			// (Avenue is almost never anything but street-typing).
 			// The morphology prior caps bias separately.
 			// This value just feeds the cap formula `referential * cap`.
-			// No encyclopedic field — a street affix is not a place and has no article.
-			// Absence here is the correct statement.
+			// No encyclopedic score — a street affix is not a place and has no article.
 			referential: 1,
+			encyclopedic: null,
 			lat: 0,
 			lon: 0,
+			crossCountryBranches: null,
 		}
 
 		for (const variant of variants) {
@@ -259,7 +261,14 @@ export async function buildStreetMorphologyFST(
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: 0, // No importance scoring for morphology — fixed at 1.0.
+		encyclopedicMatches: null,
+		importanceSource: null,
 		sourceDB: dictionariesDir.toString(),
+		sourceDBMD5: null,
+		sourceDBBytes: null,
+		modelCardVersion: null,
+		exclusionPolicy: null,
+		excludedInsertions: null,
 	}
 
 	return {

@@ -5,8 +5,8 @@
  *   Provenance for an addressing convention, recorded as a claim with one observation per source.
  *
  *   A convention has several sources and they answer different questions. A designated postal operator states
- *   what its own addresses are. UPU S42 states what a conforming address looks like, which an operator may not
- *   follow. libaddressinput states what a global input system believes a user must supply. The OpenCage
+ *   what its own addresses are. UPU S42 states what a conforming address looks like. An operator may not
+ *   follow it. libaddressinput states what a global input system believes a user must supply. The OpenCage
  *   address-formatting templates state what a global geocoder has learned it needs in order to render. Each is
  *   evidence about a different thing, so a single field naming one of them as the basis answers the question by
  *   discarding the rest.
@@ -32,7 +32,8 @@ export const ConventionSource = {
 	 */
 	NationalPostalAuthority: "national-postal-authority",
 	/**
-	 * UPU's Postal Addressing Systems compendium, which describes a member country's system.
+	 * UPU's Postal Addressing Systems compendium.
+	 * It describes a member country's system.
 	 *
 	 * A third party collected the description rather than the country publishing it,
 	 * so it can lag the rules it describes.
@@ -47,7 +48,7 @@ export const ConventionSource = {
 	 * representative address forms, and has the country approve it before publication.
 	 *
 	 * So a template is an approved crosswalk of national semantics rather than a formatting
-	 * recommendation, and it carries that weight even where the country routes no mail by S42.
+	 * recommendation, and it has that weight even where the country routes no mail by S42.
 	 * `#address/s42-templates` records which 72 jurisdictions have one.
 	 */
 	PostalStandardS42: "upu-s42",
@@ -73,7 +74,8 @@ export const ConventionSource = {
 export type ConventionSource = (typeof ConventionSource)[keyof typeof ConventionSource]
 
 /**
- * What kind of authority an observation carries, which decides what a reader may conclude from it.
+ * What kind of authority an observation has.
+ * It decides what a reader may conclude from it.
  */
 export const ObservationKind = {
 	/**
@@ -81,8 +83,9 @@ export const ObservationKind = {
 	 */
 	Authoritative: "authoritative",
 	/**
-	 * A mapping of one country's address semantics into a shared vocabulary,
-	 * which that country's representative built and the country approved.
+	 * A mapping of one country's address semantics into a shared vocabulary.
+	 *
+	 * That country's representative built it and the country approved it.
 	 *
 	 * Stronger than a recommendation, because the country agreed to it.
 	 * Weaker than the native authority, because it states the shared vocabulary's terms
@@ -90,7 +93,8 @@ export const ObservationKind = {
 	 */
 	ApprovedCrosswalk: "approved-crosswalk",
 	/**
-	 * A third party's account of an authority's system, which can lag the rules it describes.
+	 * A third party's account of an authority's system.
+	 * It can lag the rules it describes.
 	 */
 	Description: "description",
 	/**
@@ -113,7 +117,7 @@ export const ObservationKind = {
 export type ObservationKind = (typeof ObservationKind)[keyof typeof ObservationKind]
 
 /**
- * The kind each source's statements carry.
+ * The kind each source's statements have.
  *
  * The mapping is fixed by what the source is, so an observation records its source
  * and reads its kind from here rather than restating it.
@@ -133,8 +137,9 @@ export const KIND_BY_SOURCE: Readonly<Record<ConventionSource, ObservationKind>>
  * Three of the four values distinguish states that a two-valued field would merge.
  * `Silent` means the source was read and addresses something else.
  *
- * `Unread` means a statement exists on record and nobody here has retrieved it,
- * which is what tells a reader there is a document to go and read.
+ * `Unread` means a statement exists on record and this repository has not retrieved it.
+ * That state tells a reader there is a document to go and read.
+ *
  * A source with no statement at all contributes no observation, so it cannot be mistaken for either.
  */
 export const ObservationStance = {
@@ -192,13 +197,14 @@ export const ConventionClaimID = {
 	 */
 	OrderingReversesWithScript: "ordering-reverses-with-script",
 	/**
-	 * A premise is numbered without a street: a house number belongs to a locality or a named place.
+	 * A premise is numbered without a street: a house number belongs to a locality
+	 * or a place with its own name.
 	 *
 	 * The predicate is a house number present, a street absent, and a locality or dependent locality present.
 	 * A row carrying only a locality describes a locality and falls outside the predicate.
 	 *
-	 * A premise identified by a named compound or building without any number is
-	 * a different shape and needs its own claim.
+	 * A premise identified by a compound or building name without any number is a
+	 * different shape and needs its own claim.
 	 * A reader trained where street plus number dominates has little evidence for this one.
 	 */
 	StreetlessPremiseIdentity: "streetless-premise-identity",
@@ -214,16 +220,18 @@ export const ConventionClaimID = {
 	 * The jurisdiction's postcode is a fixed-width run of digits.
 	 *
 	 * This measures exposure to the shape only.
-	 * Six digits is a postcode in India, in China and in Russia, so whether a reader labels
-	 * a six-digit token by its surrounding grammar rather than by its shape is a contrast
-	 * between contexts, which the contrast board tests and this claim does not.
+	 * Six digits is a postcode in India, in China and in Russia, so whether a reader labels a six-digit
+	 * token by its surrounding grammar rather than by its shape is a contrast between contexts.
+	 *
+	 * The contrast board tests that.
+	 * This claim does not.
 	 */
 	FixedWidthNumericPostcode: "fixed-width-numeric-postcode",
 	/**
 	 * A planning word such as block, sector or phase is part of a locality's name rather than a premise part.
 	 *
 	 * `Sector 12` can be a planning locality while `12 Sector Road` is a street name,
-	 * and `Block B` can be a premise subdivision, a named locality or a planning block.
+	 * and `Block B` can be a premise subdivision, a locality name, or a planning block.
 	 * The surface is the same and the component differs.
 	 */
 	PlanningWordNamesLocality: "planning-word-names-locality",
@@ -306,9 +314,10 @@ export interface ConventionClaim {
  * Whether the observations disagree: at least one supports the claim and at least one contradicts it.
  *
  * The function reports the disagreement and does not resolve it.
- * A caller that needs one answer decides which {@link ObservationKind} it trusts
- * for its purpose, which is a different decision per purpose: a validator wants the
- * implementation's belief and a renderer wants the renderer's.
+ * A caller that needs one answer decides which {@link ObservationKind} it trusts for its purpose.
+ *
+ * That choice differs per purpose: a validator wants the implementation's belief
+ * and a renderer wants the renderer's.
  */
 export function observationsDisagree(claim: ConventionClaim): boolean {
 	const supports = claim.observations.some((entry) => entry.stance === ObservationStance.Supports)
@@ -320,8 +329,10 @@ export function observationsDisagree(claim: ConventionClaim): boolean {
 /**
  * Builds one observation, reading its kind from {@link KIND_BY_SOURCE}.
  *
- * Named for its return type because `@mailwoman/evidence` exports an `observation` of its own,
- * which records a value a source reported at a vintage rather than a stance on a claim.
+ * The function name matches its return type.
+ * `@mailwoman/evidence` exports an `observation` of its own.
+ *
+ * That one records a value a source reported at a vintage rather than a stance on a claim.
  */
 export function conventionObservation(
 	source: ConventionSource,
@@ -374,17 +385,17 @@ export function stanceFromLayout(
 		}
 
 		default: {
-			// A layout is one rendering in one script, so it answers a claim about the order
-			// or the presence of components within itself.
-			// The remaining four claims each need evidence a layout does not carry, and they
-			// read as unexamined rather than as agreement until a source carrying it is read.
+			// A layout is one rendering in one script, so it answers a claim about
+			// component order or presence within itself.
+			// The remaining four claims need evidence a layout does not contain.
+			// They read as unexamined rather than as agreement until such a source is read.
 			//
-			// `ordering-reverses-with-script` compares two layouts of one jurisdiction,
-			// which `conventionClaimForCountry` holds and this function does not.
-			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its
-			// place in a line, which `@mailwoman/codex/postcode/shapes` answers.
+			// `ordering-reverses-with-script` compares two layouts of one jurisdiction.
+			// `conventionClaimForCountry` holds those and this function does not.
+			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its place in a line.
+			// `@mailwoman/codex/postcode/shapes` answers that.
 			// `premise-subdivision-present` and `planning-word-names-locality` are propositions
-			// about what a row carries, and a rendering table states no row's content.
+			// about what a row contains, and a rendering table states no row's content.
 			void layout
 
 			return ObservationStance.Silent

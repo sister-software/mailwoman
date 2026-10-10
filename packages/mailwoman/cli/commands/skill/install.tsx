@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyPath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -39,12 +39,12 @@ async function resolveSkillSourceDir(): Promise<string> {
 	)
 }
 
-interface InstallOutcome {
+interface InstallResult {
 	ok: boolean
 	checks: Check[]
 }
 
-async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
+async function installSkill(dest: string | null): Promise<InstallResult> {
 	const checks: Check[] = []
 
 	try {
@@ -71,7 +71,7 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 
 const SkillInstall: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
-		async () => installSkill(options.dest),
+		async () => installSkill(options.dest ?? null),
 		(result) => (result.ok ? 0 : 1)
 	)
 

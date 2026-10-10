@@ -62,6 +62,7 @@ export const BrandNoQID: Story = {
 		subject: {
 			kind: "brand",
 			name: "Chevron",
+			wikidata: null,
 			matchedPhrase: "chevron",
 			confidence: 1,
 			remainder: "Houston",

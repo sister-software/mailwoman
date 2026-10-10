@@ -163,7 +163,7 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 export function rowToParquet(row: LabeledRow): ParquetRow {
 	const { span_starts, span_ends, span_tags } = row
 
-	if (span_starts === undefined || span_ends === undefined || span_tags === undefined) {
+	if (!span_starts || !span_ends || !span_tags) {
 		throw new Error(
 			`rowToParquet: row is missing the char-offset span triple (#519) — ` +
 				`span_starts=${span_starts !== undefined} span_ends=${span_ends !== undefined} span_tags=${span_tags !== undefined} ` +

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phase-0: golden `/v1/parse` outcomes from the current (rules-backed) serve engine, captured at
+ *   Phase-0: golden `/v1/parse` responses from the current (rules-backed) serve engine, captured at
  *   the engine layer (`createServeEngine().engine.parse`) — the semantic content of the endpoint.
  *   The route/wire wrapper is exercised by `@mailwoman/api`'s own tests. The v7 swap changes
  *   the wire shape by design, so the check built on this artifact compares components rather than bytes.
@@ -39,7 +39,7 @@ if (!engine.parse) throw new Error("serve engine has no parse handler")
 const rows: unknown[] = []
 
 for (const input of inputs) {
-	rows.push({ input, outcome: await engine.parse(input, { debug: false }) })
+	rows.push({ input, response: await engine.parse(input, { debug: false, inputMode: "auto" }) })
 }
 
 {
@@ -50,4 +50,4 @@ for (const input of inputs) {
 	}
 }
 
-console.error(`captured ${rows.length} /v1/parse outcomes`)
+console.error(`captured ${rows.length} /v1/parse responses`)

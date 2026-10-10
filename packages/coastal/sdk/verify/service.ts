@@ -5,7 +5,7 @@
  * @file Reads nearby coastal-zone features from the Environment Agency service.
  */
 
-import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
+import { createOGCFeaturesBBoxReader, type OGCFeature } from "@mailwoman/core/api"
 import { stringifyJSON } from "@mailwoman/core/json"
 
 import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "#sdk/client"
@@ -30,17 +30,14 @@ const SERVICE_FEATURE_LIMIT = 200
  * One feature as the service publishes it.
  * The only shape the comparison reads.
  */
-export interface ServiceFeature {
-	properties?: Record<string, unknown>
-	geometry?: { type: string; coordinates: unknown }
-}
+export type ServiceFeature = OGCFeature
 
 /**
  * The one call the verification makes against the service: the features it publishes
  * near a point, in one scenario's collection.
  *
  * A function lets tests exercise the check's own logic.
- * The comparison decides which of three outcomes applies to a point.
+ * The comparison decides which of three results applies to a point.
  *
  * A test cannot observe these decisions through a live HTTP client.
  * A scripted reader lets the test pin them. {@link createEAServiceReader} builds the real reader.

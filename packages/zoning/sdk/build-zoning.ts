@@ -5,7 +5,7 @@
  * Build `zoning-ireland.db`, the sealed two-tier polygon layer. Its coverage basis and license tier can each refuse publication.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,
@@ -253,7 +253,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 			await createLayerCoverageTable(kdb)
 		},
 		ingest: async (kdb) => {
-			if (!source) return undefined
+			if (!source) return null
 
 			return aggregateChunks([
 				await ingestZoningChunk(kdb, {
@@ -528,7 +528,7 @@ function assertAreaAgreement(
 	// This build's own reading would make the receipt print "0.000% apart" for a check that never ran.
 	const reading = areaAgreementFrom(
 		{ nestedM2: streamed.area.nestedM2, allExteriorM2: streamed.area.allExteriorM2 },
-		expectedSourceAreaM2
+		expectedSourceAreaM2 ?? null
 	)
 
 	const area: BuildZoningResult["area"] = { ...reading, signedKM2 }

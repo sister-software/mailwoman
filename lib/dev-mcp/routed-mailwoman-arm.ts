@@ -6,7 +6,7 @@
  * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
-import { realPath } from "@mailwoman/core/fs/readers"
+import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { sha256File } from "@mailwoman/core/hash"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
 import {
@@ -15,6 +15,7 @@ import {
 	type GauntletDeps,
 	type GauntletDepsOptions,
 	type GauntletResult,
+	PRODUCTION_RESOLVER_PINS,
 } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { overlayLocale } from "mailwoman/tools/eval-harness/gauntlet/routing"
 import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
@@ -32,6 +33,8 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"capital_tier",
 	"variant_alias_exemption",
 	"poi_venue_tier",
+	"venue_head_prior",
+	"venue_head_bias_scale",
 ])
 
 /**
@@ -39,13 +42,13 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
  *
  * `resolveWeights` reports a name, a path and an origin.
  * Two arms can resolve one name from one origin and read different bytes, so a comparison
- * of names alone cannot establish that the arms were fed the same artifact.
+ * of names by itself cannot establish that the arms were fed the same artifact.
  * The digest is what settles it.
  *
- * `digest` is `null` only when the artifact resolved to no path, which states that
- * this arm fed no such artifact rather than that its bytes are unknown.
+ * The routed arm writes `digest` as `null` only when the artifact resolved to no path.
+ * That states this arm fed no such artifact rather than that its bytes are unknown.
  */
-interface RoutedArtifactRecord {
+export interface RoutedArtifactRecord {
 	name: string
 	path: string | null
 	origin: string | null
@@ -181,7 +184,7 @@ async function preflightLocale(
 
 async function resolveLocale(
 	locale: string,
-	cacheRoot: string | undefined,
+	cacheRoot: string | null,
 	deps: RoutedMailwomanArmDeps,
 	digests: Map<string, Promise<string>>
 ) {
@@ -213,7 +216,7 @@ export async function buildRoutedMailwomanArm(
 	using resources = new DisposableStack()
 	assertSupportedConfig(config)
 
-	const cacheRoot = config.weights_cache
+	const cacheRoot = config.weights_cache ?? null
 
 	const routes = Object.fromEntries(
 		inputs.flatMap((input) => {
@@ -242,18 +245,15 @@ export async function buildRoutedMailwomanArm(
 			...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
 			...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 			pins: {
-				...(config.postcode_country_coherence === undefined
-					? {}
-					: { postcodeCountryCoherence: config.postcode_country_coherence }),
-				...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
-				...(config.admin_containment_rerank === undefined
-					? {}
-					: { adminContainmentRerank: config.admin_containment_rerank }),
-				...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
-				...(config.variant_alias_exemption === undefined
-					? {}
-					: { variantAliasExemption: config.variant_alias_exemption }),
-				...(config.poi_venue_tier === undefined ? {} : { poiVenueTier: config.poi_venue_tier }),
+				...PRODUCTION_RESOLVER_PINS,
+				postcodeCountryCoherence: config.postcode_country_coherence ?? "production",
+				gazetteerPrior: config.gazetteer_prior ?? "production",
+				adminContainmentRerank: config.admin_containment_rerank ?? "production",
+				capitalTier: config.capital_tier ?? "production",
+				variantAliasExemption: config.variant_alias_exemption ?? "production",
+				poiVenueTier: config.poi_venue_tier ?? "production",
+				venueHeadPrior: config.venue_head_prior ?? "production",
+				venueHeadBiasScale: config.venue_head_bias_scale ?? "production",
 			},
 		})
 	)

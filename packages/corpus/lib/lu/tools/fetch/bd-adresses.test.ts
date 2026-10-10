@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -35,8 +35,9 @@ const EDITION_BYTES = 28_186_970
 /**
  * The UTF-8 byte-order mark the published file opens with.
  *
- * Built from its code point rather than written into a string literal, because the character is
- * invisible in source and a reader cannot tell a fixture that carries it from one that does not.
+ * Built from its code point rather than written into a string literal.
+ * The character is invisible in source, so a reader cannot tell a fixture
+ * that has it from one that does not.
  */
 const BYTE_ORDER_MARK = String.fromCodePoint(0xfe_ff)
 
@@ -62,8 +63,8 @@ function datasetRecord(overrides: Record<string, unknown> = {}) {
 	}
 }
 
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "bd-adresses test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

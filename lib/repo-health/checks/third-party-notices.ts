@@ -98,6 +98,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${path} is ${audience} and could not be read, so what it claims about third-party terms is unknown`,
 					file: path,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -110,6 +112,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${path} is ${audience} and does not reproduce the MIT permission notice, which the license requires accompany a copy — a link to it is not an inclusion of it`,
 					file: path,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -125,6 +129,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `${referencePath} names no MIT-derived module by path. A notice that describes them in prose alone cannot be checked against the tree, and a rename would leave it silently wrong`,
 				file: referencePath,
+				line: null,
+				details: null,
 			})
 
 			return diagnostics
@@ -139,6 +145,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${path} omits ${missing.join(", ")}, which ${referencePath} records as MIT-derived — the two copies describe different obligations`,
 					file: path,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -147,6 +155,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${path} names ${extra.join(", ")} as MIT-derived and ${referencePath} does not — one of them claims an obligation the other does not`,
 					file: path,
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -162,6 +172,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${referencePath} records ${module} as MIT-derived and no file exists at ${modulePath} — a moved or deleted module leaves the notice pointing at nothing`,
 					file: referencePath,
+					line: null,
+					details: null,
 				})
 
 				continue
@@ -173,6 +185,8 @@ export const thirdPartyNoticesCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Error,
 				message: `${modulePath} is recorded as MIT-derived in ${referencePath} and its header does not say so — a reader of the file sees an AGPL header alone`,
 				file: modulePath,
+				line: null,
+				details: null,
 			})
 		}
 

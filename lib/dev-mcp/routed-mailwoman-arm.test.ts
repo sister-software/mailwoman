@@ -1,8 +1,13 @@
 import type { ResolvedWeights } from "@mailwoman/neural/weights"
-import type { GauntletDeps, GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import {
+	type GauntletDeps,
+	type GauntletResult,
+	PRODUCTION_RESOLVER_PINS,
+} from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
+import { resolvedInput } from "#dev-mcp/input-sets"
 import { buildRoutedMailwomanArm, type RoutedMailwomanArmDeps } from "#dev-mcp/routed-mailwoman-arm"
 
 // `tier` has a real value because `toGauntletResult` passes `resolution_tier`
@@ -23,7 +28,10 @@ const EMPTY_RESULT = {
 	dependent_locality: null,
 	unit: null,
 	postcode_country_scope: null,
+	capital_promotion: null,
+	variant_alias_exemption: "not_applied",
 	hierarchy: [],
+	admin_coherence: null,
 } as GauntletResult
 
 function resolved(
@@ -85,9 +93,9 @@ describe("buildRoutedMailwomanArm", () => {
 		const arm = await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate" },
 			[
-				{ id: "gb", input: "SW1A 1AA", country: "GB" },
-				{ id: "de", input: "99423 Weimar", country: "DE" },
-				{ id: "us", input: "90210", country: "US" },
+				resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" }),
+				resolvedInput({ id: "de", input: "99423 Weimar", country: "DE" }),
+				resolvedInput({ id: "us", input: "90210", country: "US" }),
 			],
 			deps
 		)
@@ -105,7 +113,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 		const arm = await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate" },
-			[{ id: "us", input: "90210", country: "US" }],
+			[resolvedInput({ id: "us", input: "90210", country: "US" })],
 			deps
 		)
 
@@ -132,9 +140,9 @@ describe("buildRoutedMailwomanArm", () => {
 		await buildRoutedMailwomanArm(
 			{ weights_cache: "/candidate" },
 			[
-				{ id: "gb", input: "SW1A 1AA", country: "GB" },
-				{ id: "de", input: "99423 Weimar", country: "DE" },
-				{ id: "us", input: "90210", country: "US" },
+				resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" }),
+				resolvedInput({ id: "de", input: "99423 Weimar", country: "DE" }),
+				resolvedInput({ id: "us", input: "90210", country: "US" }),
 			],
 			deps
 		)
@@ -146,16 +154,16 @@ describe("buildRoutedMailwomanArm", () => {
 		const deps = fakeDeps()
 
 		const arm = await buildRoutedMailwomanArm(
-			{ weights_cache: "/candidate", default_country: "US", gazetteer_prior: false },
-			[{ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" }],
+			{ weights_cache: "/candidate", default_country: "US", gazetteer_prior: "off" },
+			[resolvedInput({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" })],
 			deps
 		)
 
-		await arm.geocode({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" })
+		await arm.geocode(resolvedInput({ id: "gb", input: "10 Downing Street, London SW1A 2AA", country: "gb" }))
 
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
-			pins: { gazetteerPrior: false },
+			pins: { ...PRODUCTION_RESOLVER_PINS, gazetteerPrior: "off" },
 		})
 
 		expect(deps.runOne).toHaveBeenCalledWith("10 Downing Street, London SW1A 2AA", expect.anything(), {
@@ -171,13 +179,13 @@ describe("buildRoutedMailwomanArm", () => {
 			{
 				weights_cache: "/candidate",
 				candidate_db: "/staging/candidate-variant.db",
-				postcode_country_coherence: false,
-				gazetteer_prior: false,
-				admin_containment_rerank: true,
-				capital_tier: true,
-				variant_alias_exemption: true,
+				postcode_country_coherence: "off",
+				gazetteer_prior: "off",
+				admin_containment_rerank: "on",
+				capital_tier: "required",
+				variant_alias_exemption: "applied",
 			},
-			[{ id: "us", input: "1 Main St", country: "us" }],
+			[resolvedInput({ id: "us", input: "1 Main St", country: "us" })],
 			deps
 		)
 
@@ -185,18 +193,19 @@ describe("buildRoutedMailwomanArm", () => {
 			weightsCacheRoot: "/candidate",
 			candidateDB: "/staging/candidate-variant.db",
 			pins: {
-				postcodeCountryCoherence: false,
-				gazetteerPrior: false,
-				adminContainmentRerank: true,
-				capitalTier: true,
-				variantAliasExemption: true,
+				...PRODUCTION_RESOLVER_PINS,
+				postcodeCountryCoherence: "off",
+				gazetteerPrior: "off",
+				adminContainmentRerank: "on",
+				capitalTier: "required",
+				variantAliasExemption: "applied",
 			},
 		})
 	})
 
 	it("prefers the board's runtime route over its truth country", async () => {
 		const deps = fakeDeps()
-		const row = { id: "route", input: "Douglas, Isle of Man", country: "GB", routeCountry: "IM" }
+		const row = resolvedInput({ id: "route", input: "Douglas, Isle of Man", country: "GB", routeCountry: "IM" })
 		const arm = await buildRoutedMailwomanArm({ weights_cache: "/candidate" }, [row], deps)
 
 		await arm.geocode(row)
@@ -220,7 +229,11 @@ describe("buildRoutedMailwomanArm", () => {
 		})
 
 		await expect(
-			buildRoutedMailwomanArm({ weights_cache: "/candidate" }, [{ id: "gb", input: "SW1A 1AA", country: "GB" }], deps)
+			buildRoutedMailwomanArm(
+				{ weights_cache: "/candidate" },
+				[resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" })],
+				deps
+			)
 		).rejects.toThrow(/outside weights_cache/)
 	})
 
@@ -233,7 +246,11 @@ describe("buildRoutedMailwomanArm", () => {
 		})
 
 		await expect(
-			buildRoutedMailwomanArm({ weights_cache: "/candidate" }, [{ id: "gb", input: "SW1A 1AA", country: "GB" }], deps)
+			buildRoutedMailwomanArm(
+				{ weights_cache: "/candidate" },
+				[resolvedInput({ id: "gb", input: "SW1A 1AA", country: "GB" })],
+				deps
+			)
 		).rejects.toThrow(/must share the en-US model/)
 	})
 })

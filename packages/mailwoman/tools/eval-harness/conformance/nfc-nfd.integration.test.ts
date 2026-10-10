@@ -4,7 +4,7 @@
 /**
  *   The canonical-form law against the live pipeline — the leg that actually geocodes.
  *
- *   This test belongs in the integration suite, which the `mailwoman-data` runner executes with
+ *   This test belongs in the integration suite. The `mailwoman-data` runner executes it with
  *   `MAILWOMAN_DATA_ROOT` set and weights materialized. The fast suite remains portable without those artifacts.
  *   This data-dependent suite uses the resolver-based `weightsPresent()` guard shared by integration tests.
  *   The guard asks the resolver for the model path the loader will open. It checks the actual resolution path.
@@ -21,7 +21,7 @@
  *   The suite path is pinned so this file runs the canonical-form leg. A default run covers every committed law.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"

@@ -1,12 +1,8 @@
 import { parseJSONStrict } from "@mailwoman/core/json"
+import type { PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import {
-	PostcodePrefixIndexResolver,
-	serializePostcodePrefixIndex,
-	type PostcodePrefixHeader,
-	type PostcodePrefixNode,
-} from "#postcode"
+import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#postcode"
 
 const header: PostcodePrefixHeader = {
 	country: "gb",
@@ -29,7 +25,7 @@ const nodes: PostcodePrefixNode[] = [
 	{ prefix: "SW1A", ancestors: [uk, england], lat: 51.501, lon: -0.1416, radiusP95Km: 1.23, unitCount: 232 },
 	{ prefix: "M1", ancestors: [uk, england], lat: 53.4808, lon: -2.2426, radiusP95Km: 2.5, unitCount: 1040 },
 
-	{ prefix: "BT9", ancestors: [uk, northernIreland], unitCount: 121 },
+	{ prefix: "BT9", ancestors: [uk, northernIreland], lat: null, lon: null, radiusP95Km: null, unitCount: 121 },
 
 	{ prefix: "TD1", ancestors: [uk], lat: 55.6, lon: -2.8, radiusP95Km: 4.75, unitCount: 300 },
 ]
@@ -59,9 +55,9 @@ describe("PFX1 postcode-prefix index", () => {
 		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
 		const bt9 = resolver.probe("BT9")!
 
-		expect(bt9.lat).toBeUndefined()
-		expect(bt9.lon).toBeUndefined()
-		expect(bt9.radiusP95Km).toBeUndefined()
+		expect(bt9.lat).toBeNull()
+		expect(bt9.lon).toBeNull()
+		expect(bt9.radiusP95Km).toBeNull()
 		expect(bt9.unitCount).toBe(121)
 		expect(bt9.ancestors.map((a) => a.name)).toEqual(["United Kingdom", "Northern Ireland"])
 	})
@@ -81,20 +77,24 @@ describe("PFX1 postcode-prefix index", () => {
 
 	it("refuses a coordinate without its radiusP95Km", () => {
 		expect(() =>
-			serializePostcodePrefixIndex(header, [{ prefix: "SW1A", ancestors: [uk], lat: 51.5, lon: -0.14, unitCount: 1 }])
+			serializePostcodePrefixIndex(header, [
+				{ prefix: "SW1A", ancestors: [uk], lat: 51.5, lon: -0.14, radiusP95Km: null, unitCount: 1 },
+			])
 		).toThrow(/radiusP95Km/)
 	})
 
 	it("refuses a radiusP95Km without a coordinate", () => {
 		expect(() =>
-			serializePostcodePrefixIndex(header, [{ prefix: "BT9", ancestors: [uk], radiusP95Km: 3.2, unitCount: 1 }])
+			serializePostcodePrefixIndex(header, [
+				{ prefix: "BT9", ancestors: [uk], radiusP95Km: 3.2, lat: null, lon: null, unitCount: 1 },
+			])
 		).toThrow(/no coordinate/)
 	})
 
 	it("refuses half a coordinate", () => {
 		expect(() =>
 			serializePostcodePrefixIndex(header, [
-				{ prefix: "BT9", ancestors: [uk], lat: 54.5, radiusP95Km: 3.2, unitCount: 1 },
+				{ prefix: "BT9", ancestors: [uk], lat: 54.5, radiusP95Km: 3.2, lon: null, unitCount: 1 },
 			])
 		).toThrow(/half a coordinate/)
 	})
@@ -102,8 +102,8 @@ describe("PFX1 postcode-prefix index", () => {
 	it("Refuses duplicate prefixes rather than keeping one", () => {
 		expect(() =>
 			serializePostcodePrefixIndex(header, [
-				{ prefix: "M1", ancestors: [uk], unitCount: 10 },
-				{ prefix: "M1", ancestors: [uk], unitCount: 20 },
+				{ prefix: "M1", ancestors: [uk], lat: null, lon: null, radiusP95Km: null, unitCount: 10 },
+				{ prefix: "M1", ancestors: [uk], lat: null, lon: null, radiusP95Km: null, unitCount: 20 },
 			])
 		).toThrow(/duplicate prefix/)
 	})
@@ -215,7 +215,9 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 			{ prefix: "AA1", ancestors: [uk], lat: 51, lon: 0, radiusP95Km: 1, unitCount: 1 },
 		])
 
-		const withoutCoordinate = serializePostcodePrefixIndex(header, [{ prefix: "AA1", ancestors: [uk], unitCount: 1 }])
+		const withoutCoordinate = serializePostcodePrefixIndex(header, [
+			{ prefix: "AA1", ancestors: [uk], lat: null, lon: null, radiusP95Km: null, unitCount: 1 },
+		])
 
 		expect(withCoordinate.length - withoutCoordinate.length).toBe(8)
 	})

@@ -2,34 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo, readServedDocumentInfo } from "@mailwoman/api-kit"
-import type { EngineStamp } from "@mailwoman/core/license"
+import {
+	attachOpenAPIDocs,
+	type CompatibilityAppOptions,
+	engineHeaders,
+	type OpenAPIDocInfo,
+	readServedDocumentInfo,
+} from "@mailwoman/api-kit"
 import { cors } from "hono/cors"
 
 import type { NominatimEngine } from "#engine"
 import { registerNominatimRoutes } from "#routes"
-
-/**
- * Options for {@link createNominatimApp}.
- */
-export interface NominatimAppOptions {
-	/**
-	 * Whether every response includes `Access-Control-Allow-Origin: *` and preflight requests
-	 * are answered, defaulting to `true` so browser clients can call cross-origin.
-	 *
-	 * Set it to `false` when a reverse proxy already sets the CORS headers.
-	 */
-	cors?: boolean
-
-	/**
-	 * The engine stamp is added to each JSON result and GeoJSON collection.
-	 *
-	 * It also appears in the `Server` and `Link: rel="license"` headers.
-	 *
-	 * An embedding application may omit it, but the `nominatim` CLI always passes one.
-	 */
-	engine?: EngineStamp
-}
 
 /**
  * Supplies the OpenAPI document info shared by the served `/openapi.json` route
@@ -59,7 +42,7 @@ export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 /**
  * Build the Nominatim-compatible app around an injected {@link NominatimEngine}.
  */
-export function createNominatimApp(engine: NominatimEngine, options: NominatimAppOptions = {}): OpenAPIHono {
+export function createNominatimApp(engine: NominatimEngine, options: CompatibilityAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
 	if (options.cors !== false) {

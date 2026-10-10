@@ -11,7 +11,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { afterAll, describe, expect, it } from "vitest"
@@ -34,7 +34,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		// while a checkout without them rejects outright.
 		// Both are in-interface, so this pin asserts that whatever the ladder answers is never a path
 		// inside the process env data root's weights overlay when the session was given a different root.
-		const outcome = await createGeocodeSession(
+		const session = await createGeocodeSession(
 			// The production defaults factory rather than a hand-built literal, the same lockstep factory the
 			// dev-mcp registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
@@ -45,26 +45,26 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 				candidateDB: REAL_CANDIDATE_DB.toString(),
 			})
 		).then(
-			(session) => ({ session }),
+			(created) => ({ session: created }),
 			(error: unknown) => ({ error })
 		)
 
-		if ("error" in outcome) {
-			expect(String(outcome.error)).toMatch(/neural weights/)
+		if ("error" in session) {
+			expect(String(session.error)).toMatch(/neural weights/)
 
 			return
 		}
 
 		try {
-			const fstPath = outcome.session.artifacts.fstPath
+			const fstPath = session.session.artifacts.fstPath
 
-			if (fstPath !== undefined) {
+			if (fstPath) {
 				const envOverlay = dataRootPath("weights")
 
 				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)
 			}
 		} finally {
-			outcome.session[Symbol.dispose]()
+			session.session[Symbol.dispose]()
 		}
 	}, 60_000)
 })

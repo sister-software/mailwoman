@@ -1,6 +1,6 @@
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -62,7 +62,7 @@ describe.skipIf(!haveAll)("CreateScorer capability delta check", () => {
 			forbiddenTags: ["street_prefix"],
 		}
 
-		await expect(createScorer({ ...baseOpts, tier: "pocket", overrides: { gazetteer: false } })).rejects.toThrow(
+		await expect(createScorer({ ...baseOpts, tier: "pocket", overrides: { gazetteer: "off" } })).rejects.toThrow(
 			/tier `pocket`.*maskOff F1 \d/s
 		)
 	})

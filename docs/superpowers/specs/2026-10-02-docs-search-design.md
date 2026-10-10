@@ -239,7 +239,7 @@ types live in `@mailwoman/react/search/types`, and the docs code imports them wi
   stale-response ordering, the loading announcement, and the live region.
 - `docs/test/e2e/search.spec.ts`, the Playwright `search` project, opens the modal on the built site,
   types a query, and asserts a hit. The docs-build workflow runs it with `yarn workspace @mailwoman/docs
-test:search` after the acceptance queries, and the Playwright config serves `docs/build` on port 7770.
+  test:search` after the acceptance queries, and the Playwright config serves `docs/build` on port 7770.
 
 ## Acceptance list
 

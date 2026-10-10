@@ -88,7 +88,12 @@ for await (const row of CSVSpliterator.fromAsync("customers.csv")) {
 	}
 
 	const query = [row.street, row.city, row.state, row.postal_code].filter(Boolean).join(", ")
-	const result = await geocodeAddress(query, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
+	const result = await geocodeAddress(query, {
+		classifier,
+		resolver,
+		databases: extracts.for,
+		defaultCountry: { country: "US", source: "caller" },
+	})
 	// hierarchy[].name is what the gazetteer matched; row.city is what you sent. Compare them.
 	const matched = result.hierarchy.find((node) => node.tag === "locality")
 

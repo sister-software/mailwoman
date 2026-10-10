@@ -380,11 +380,11 @@ export function readConfigView(text: string): EffectiveConfigView {
 
 		const indent = /^[\t ]*/.exec(raw)![0].length
 
-		if (field !== null && indent <= fieldIndent) {
+		if (field && indent <= fieldIndent) {
 			field = null
 		}
 
-		if (field === null) {
+		if (!field) {
 			const opener = /^([\t ]*)(source_weights|augment_exclude_sources):\s*(#.*)?$/.exec(raw)
 
 			if (opener) {
@@ -627,7 +627,7 @@ export function provenanceRefusals(input: {
 		)
 	}
 
-	if (input.declared === null) {
+	if (!input.declared) {
 		refusals.push(
 			`${input.packageName}: whether its declared provenance equals the ${input.manifest.trainingSources.length} ` +
 				`source(s) the audited epoch drew from is unmeasured. The model card states its attribution as prose ` +

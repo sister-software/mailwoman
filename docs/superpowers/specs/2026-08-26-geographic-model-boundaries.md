@@ -254,7 +254,7 @@ Each line constrains the increment as follows:
   owns. #1683 may later fit statistics against it, and this record does not.
 - **external vocabulary** — the mapping target is the category with id **`pharmacy`** (a
   `POICategoryID`), record `{ id: "pharmacy", label: "Pharmacy", hierarchy: ["health_and_medical",
-"pharmacy"], basicLabel: "Pharmacy", osmTag: "amenity=pharmacy", source: "overture" }`, authored in
+  "pharmacy"], basicLabel: "Pharmacy", osmTag: "amenity=pharmacy", source: "overture" }`, authored in
   `packages/poi-taxonomy/data/curated-overlay.json` and emitted into
   `packages/poi-taxonomy/data/taxonomy.json`. The category declares no `overtureCategories`, so
   `resolveOvertureCategories("pharmacy")` is the identity `["pharmacy"]`.
@@ -639,8 +639,8 @@ This section lets a reader re-run the measurements rather than trust them.
 - **Layer counts and coverage** (§2.3, §5.3): one read-only `node:sqlite` pass over the shipped
   `poi.db` at `dataRootPath("poi", "poi.db")`, joining `poi.category_id` through
   `poi_category_codes`, plus `select basis, count(*), min(completeness), max(completeness) from
-layer_coverage group by basis` and the single-row `layer_manifest`. One `group by category_id,
-country` scan produces every category figure at once. The artifact is sealed and read-only, so the
+  layer_coverage group by basis` and the single-row `layer_manifest`. One `group by category_id,
+  country` scan produces every category figure at once. The artifact is sealed and read-only, so the
   measurement cannot modify it.
 
 Re-measure before reusing any figure here. `poi.db` is a rebuilt, sealed artifact, and its manifest

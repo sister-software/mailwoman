@@ -41,7 +41,7 @@ export interface OverlaySpec {
 	source: SourceSpecification
 	layers: LayerSpecification[]
 	/**
-	 * @default true
+	 * @defaultValue `true`
 	 */
 	visible?: boolean
 	label?: string
@@ -79,11 +79,6 @@ export interface VersionOption {
 	 */
 	label?: string
 }
-
-/**
- * Which neural backend the geocoder is currently running on.
- */
-export type InferenceBackend = "webgpu" | "wasm"
 
 /**
  * The injected geocoder runtime extends {@link PipelineRuntime} with the map.
@@ -147,17 +142,9 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 */
 	selectVersion?: (version: string) => void
 	/**
-	 * The backend the neural runtime resolved to (e.g. `webgpu (28 MB int8)`); free-form for the label.
+	 * The neural runtime's backend and model size (e.g. `wasm (28 MB int8)`); free-form for the label.
 	 */
 	activeBackend?: string
-	/**
-	 * Whether the CPU/wasm backend is currently forced (the controlled value for the backend toggle).
-	 */
-	forceWASM?: boolean
-	/**
-	 * Force the wasm backend (opt out of WebGPU), for the backend toggle.
-	 */
-	setForceWASM?: (forceWASM: boolean) => void
 }
 
 /**

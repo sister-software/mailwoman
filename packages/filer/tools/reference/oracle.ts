@@ -57,7 +57,7 @@ type StatName =
 
 export interface ReferenceSubsidiary {
 	name: string
-	jurisdiction?: string
+	jurisdiction: string | null
 }
 
 export interface ReferenceAnalysis {
@@ -275,7 +275,7 @@ function classifyTable(
 					continue
 				}
 
-				subsidiaries.push(jurisdiction ? { name: nameCell.text, jurisdiction } : { name: nameCell.text })
+				subsidiaries.push({ name: nameCell.text, jurisdiction: jurisdiction || null })
 
 				continue
 			}
@@ -294,7 +294,7 @@ function classifyTable(
 		}
 
 		if (values.length === 1) {
-			subsidiaries.push({ name: values[0]! })
+			subsidiaries.push({ name: values[0]!, jurisdiction: null })
 
 			continue
 		}
@@ -387,7 +387,7 @@ function fromLines(lines: readonly string[], stats: Stats): ReferenceSubsidiary[
 			continue
 		}
 
-		subsidiaries.push({ name: candidate })
+		subsidiaries.push({ name: candidate, jurisdiction: null })
 	}
 
 	return subsidiaries

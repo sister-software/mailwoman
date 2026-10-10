@@ -25,7 +25,7 @@ so the condition attaches to that hosting, which is why this file is committed.
 > 3.1. This agreement does not impose any restriction or obligations with respect to the use,
 > modification, or sharing of Results.
 
-> 5.4. "Results" means any outcome obtained by computational analysis of Data, including for example
+> 5.4. "Results" means any result obtained by computational analysis of Data, including for example
 > machine learning models and models' insights.
 
 Read together, the agreement states that a machine-learning model is a Result and that it carries no

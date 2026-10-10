@@ -3,7 +3,7 @@
 	"version": "1.1.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/1967",
 	"program": "Geographic world model — facts and derivations for learned resolution (#1916), phase 2",
-	"authorizedOutcome": "PROCEED-AS-AUTHORIZED means the supported OPT-IN surface the integration record (#1966, docs/superpowers/specs/2026-08-27-semantic-route-integration-decision.md) authorizes, and nothing beyond it: `createRuntimePipeline`'s `poiSemanticLookup` option, default OFF, presence as the switch, `mailwoman` → `@mailwoman/geographic-model` as the dependency direction. That record states in §4.1 that a default change is not authorized by it and cannot be authorized by #1967 alone, and its §5 bar is recorded separately in `defaultChangeBar` below with what each row reads today.",
+	"authorizedResult": "PROCEED-AS-AUTHORIZED means the supported OPT-IN surface the integration record (#1966, docs/superpowers/specs/2026-08-27-semantic-route-integration-decision.md) authorizes, and nothing beyond it: `createRuntimePipeline`'s `poiSemanticLookup` option, default OFF, presence as the switch, `mailwoman` → `@mailwoman/geographic-model` as the dependency direction. That record states in §4.1 that a default change is not authorized by it and cannot be authorized by #1967 alone, and its §5 bar is recorded separately in `defaultChangeBar` below with what each row reads today.",
 	"scopeNote": "This ruler measures the end state of phase 2 across four registered lanes. Three are measurable now; mapping breadth is blocked by #1980 and is registered, described and NOT scored — `auditPhase2Definition` refuses a check that names it, and every verdict carries `coverage: partial` plus the blocked lane in its reasons. A ruler that scored the blocked lane would report a number about nothing; one that omitted it would report full coverage over three quarters of the phase.",
 	"baselineNote": "Every phase-2 implementation issue closed before this pre-registration was written (#1962/PR #1977, #1963/PR #1981, #1965/PR #1976, #1972/PR #1979, #1966/PR #1971, #1960/PR #1969), so no arm of this ruler ran before the measured code merged. The issue's own text governs that case: where a lane merged first, the recorded per-PR receipts are the baseline and the ruler says so explicitly. Each check therefore carries `baseline.source: merged-pr-receipt` naming the PR that recorded the number, or `committed-artifact` where the number is read out of a file in this repository. The run reproduces every one of them.",
 	"artifactPins": {
@@ -16,8 +16,8 @@
 		"phraseLexiconID": "mailwoman-activity-phrases",
 		"phraseLexiconVersion": "1.0.0",
 		"declaredPhrases": 11,
-		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
-		"absenceDefinitionSHA256": "6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856",
+		"semanticUtilityDefinitionSHA256": "2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8",
+		"absenceDefinitionSHA256": "48d7889672f5bb64829482209ed8b79d0ba94b243d9d939befc5fcd364bca56d",
 		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
 		"coverageLayerVersion": "260627"
 	},
@@ -48,7 +48,7 @@
 				{
 					"id": "brd-p-01",
 					"measures": "Board row `sem-act-us-03` (`where can i pick up a prescription near Coalinga CA`) answers `pharmacy`-or-`drugstore` within 25 km and is promoted from `improvement_target` to a COUNTED `pass`.",
-					"todayReads": "Tracked and failing as registered: `expected a poi outcome (results), got path=full (no poi intent)`. At that anchor `pharmacy near Coalinga CA` returns zero rows while `drugstore near Coalinga CA` returns two, at 0.77 km and 1.71 km."
+					"todayReads": "Tracked and failing as registered: `expected a poi result (results), got path=full (no poi intent)`. At that anchor `pharmacy near Coalinga CA` returns zero rows while `drugstore near Coalinga CA` returns two, at 0.77 km and 1.71 km."
 				},
 				{
 					"id": "brd-p-02",
@@ -195,7 +195,7 @@
 				"source": "committed-artifact",
 				"reference": "packages/mailwoman/eval-harness/semantic-utility/probe-freeze.json",
 				"value": 1,
-				"note": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c, unmoved across PRs #1969, #1977, #1979 and #1981."
+				"note": "2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8, unmoved across PRs #1969, #1977, #1979 and #1981."
 			},
 			"bar": { "kind": "at_least", "value": 1 },
 			"guards": "The phase-1 ruler moving underneath this one. Its loader already refuses a moved hash, so this check is what makes the refusal a recorded measurement rather than an exception nobody sees in the receipt."
@@ -337,7 +337,7 @@
 			"role": "target",
 			"tier": "evidence",
 			"measurement": "absence_probe.rows_holding",
-			"numerator": "Registered rows producing the outcome registered for them — the observation on a target, one named refusal on a control.",
+			"numerator": "Registered rows producing the result registered for them — the observation on a target, one named refusal on a control.",
 			"denominator": 11,
 			"baseline": {
 				"source": "merged-pr-receipt",
@@ -392,7 +392,7 @@
 				"source": "committed-artifact",
 				"reference": "packages/mailwoman/eval-harness/absence-observation/probe-freeze.json",
 				"value": 1,
-				"note": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1 through PRs #1979 and #1981; moved to 6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856 (absence probe v1.1.0) when #1998 registered the searched set per row and re-registered abs-c-02 as category_not_surveyed under the anchor country binding (#1999). This definition moved to 1.1.0 for that pin and nothing else."
+				"note": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1 through PRs #1979 and #1981; moved to 48d7889672f5bb64829482209ed8b79d0ba94b243d9d939befc5fcd364bca56d (absence probe v1.1.0) when #1998 registered the searched set per row and re-registered abs-c-02 as category_not_surveyed under the anchor country binding (#1999). This definition moved to 1.1.0 for that pin and nothing else."
 			},
 			"bar": { "kind": "at_least", "value": 1 },
 			"guards": "The absence ruler moving underneath this one — the same reason `rec-c-04` exists for the phase-1 ruler."
@@ -524,7 +524,7 @@
 				"note": "PR #1979 shipped the carrier with 36 tests over it and printed no count of its own, so this check is the first receipt to state the number. A marker never changes which answer wins; its `evidence` carries the assertion with its modality and provenance, the mapping with its own, and both scopes."
 			},
 			"bar": { "kind": "at_least", "value": 1 },
-			"guards": "An opt-in surface that serves a category with no authority attached — the one thing this program exists to avoid. Before the carrier, observations existed only inside the eval harness and `POIIntentOutcome` had no field for them."
+			"guards": "An opt-in surface that serves a category with no authority attached — the one thing this program exists to avoid. Before the carrier, observations existed only inside the eval harness and `POIIntentResult` had no field for them."
 		}
 	],
 	"thresholds": {
@@ -533,7 +533,7 @@
 		"minimumEvidenceChecks": 6,
 		"requiredMeasurableLanes": 3
 	},
-	"thresholdsNote": "Zero control tolerance, and both target tiers at their full registered counts. The two tiers are not two ways to reach one outcome: `resolution` is the recognition capability graded on assembled answers, `evidence` is the observation surface — the phrase attestations, the coverage-qualified absence rows and the marker that carries an observation to a caller. #1966 §7 names the second half exactly as what a diagnostic-strength result would justify on its own, which is what makes EVIDENCE-ONLY a real outcome rather than a softer word for the same one. PROCEED-AS-AUTHORIZED needs BOTH, because the surface that record authorizes serves a category together with the authority that chose it.",
+	"thresholdsNote": "Zero control tolerance, and both target tiers at their full registered counts. The two tiers are not two ways to reach one result: `resolution` is the recognition capability graded on assembled answers, `evidence` is the observation surface — the phrase attestations, the coverage-qualified absence rows and the marker that carries an observation to a caller. #1966 §7 names the second half exactly as what a diagnostic-strength result would justify on its own, which is what makes EVIDENCE-ONLY a real result rather than a softer word for the same one. PROCEED-AS-AUTHORIZED needs BOTH, because the surface that record authorizes serves a category together with the authority that chose it.",
 	"defaultChangeBar": [
 		{
 			"row": 1,
@@ -604,8 +604,8 @@
 		"Checked in this order, and the order is required.",
 		"1. Control misses. More than `controlRegressionTolerance` control checks missing their bar records STOP-REDESIGN under every other reading. A capability bought by moving something that already worked is not a result this program can act on.",
 		"2. Lanes reporting. Fewer than `requiredMeasurableLanes` lanes producing checks records STOP-REDESIGN. An instrument that could not run leaves a lane unreported, and an unreported lane is not a passing one.",
-		"3. PROCEED-AS-AUTHORIZED — at least `minimumResolutionChecks` resolution-tier checks AND at least `minimumEvidenceChecks` evidence-tier checks hold. Authorizes the opt-in surface named in `authorizedOutcome` and nothing beyond it.",
-		"4. EVIDENCE-ONLY — the evidence bar holds and the resolution bar does not. This is #1966 §7's outcome: the observation surface without the recognition change.",
+		"3. PROCEED-AS-AUTHORIZED — at least `minimumResolutionChecks` resolution-tier checks AND at least `minimumEvidenceChecks` evidence-tier checks hold. Authorizes the opt-in surface named in `authorizedResult` and nothing beyond it.",
+		"4. EVIDENCE-ONLY — the evidence bar holds and the resolution bar does not. This is #1966 §7's result: the observation surface without the recognition change.",
 		"5. STOP-REDESIGN — the evidence bar does not hold. Per §7 that ends the opt-in surface too, not merely a default change; the route reverts to experiment implementation behind a frozen pre-registration, and the compiled artifact with its conformance instruments is retained as the durable product of the phase.",
 		"A blocked lane changes no arithmetic. It sets `coverage: partial` and is named in the reasons on every run, so no decision this ruler produces can be read as covering the whole phase.",
 		"Artifact pin deviations change no arithmetic either. They set `comparability: deviated` and are named: a decision measured on other artifacts is still a decision, about those artifacts."

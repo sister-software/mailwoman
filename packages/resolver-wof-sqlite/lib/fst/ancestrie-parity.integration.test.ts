@@ -8,7 +8,8 @@
  * by updating the frozen copy in the same commit.
  */
 
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
@@ -120,7 +121,7 @@ function addSuggestion(
 		name: entry.name,
 		placetype: entry.placetype,
 		referential: entry.referential,
-		...(entry.encyclopedic === undefined ? {} : { encyclopedic: entry.encyclopedic }),
+		encyclopedic: entry.encyclopedic,
 		wofID: entry.wofID,
 		parentChain: entry.parentChain,
 		matchDepth,
@@ -180,6 +181,8 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 		parentChain: [],
 		lat: referential * 10,
 		lon: -referential * 10,
+		encyclopedic: null,
+		crossCountryBranches: null,
 		...extra,
 	})
 

@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Run `findPostcodeCountryScope` over a whole (postcode, locality) panel and report the outcome
+ *   Run `findPostcodeCountryScope` over a whole (postcode, locality) panel and report the result
  *   by regime, because the two backends disagree about `exactMatch`: the FTS tier does not fold
  *   `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and not on FTS.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
@@ -144,7 +144,7 @@ async function leg(defaultCountry: string): Promise<LegTally> {
 			tally.rescued++
 		} else {
 			tally.falsePositives.push(
-				`${pair.postcode} / ${pair.locality} → ${scope.country} via ${scope.evidence}${scope.distanceKm === undefined ? "" : ` at ${scope.distanceKm.toFixed(2)} km`} (default ${defaultCountry})`
+				`${pair.postcode} / ${pair.locality} → ${scope.country} via ${scope.evidence}${scope.distanceKm === null ? "" : ` at ${scope.distanceKm.toFixed(2)} km`} (default ${defaultCountry})`
 			)
 		}
 	}

@@ -20,7 +20,7 @@
  *   `docs/articles/developers/get-started/ten-minute-trial.mdx`.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -96,7 +96,7 @@ export interface SmokeGetStartedOptions {
 	/**
 	 * A persistent data root for the heavy leg, so the ~2.88 GB pull is not repeated.
 	 *
-	 * Default: a scratch directory.
+	 * @defaultValue a scratch directory.
 	 */
 	dataRoot?: string
 }

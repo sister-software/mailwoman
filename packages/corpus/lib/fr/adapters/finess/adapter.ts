@@ -20,7 +20,7 @@
  *
  * ## Which rows are read
  *
- * `departement` carries a two-character code, and the overseas ones are `9A` Guadeloupe, `9B`
+ * `departement` holds a two-character code, and the overseas ones are `9A` Guadeloupe, `9B`
  * Martinique, `9C` Guyane, `9D` La Réunion, `9E` Saint-Pierre-et-Miquelon, `9F` Mayotte and `9J`
  * Wallis-et-Futuna. Saint-Barthélemy and Saint-Martin have no code of their own: their
  * establishments sit under `9A`, and the postcodes 97133 and 97150 separate them, so the adapter
@@ -50,7 +50,7 @@
  *
  * `compvoie` is one of `B`, `T`, `Q` or `C`. The first three are bis, ter and quater. `C` is
  * refused under {@linkcode FinessRefusal.RepetitionIndexAmbiguous}: INSEE's coding reads it as
- * quinquies, and the national extract carries 133 `C` against 31 `Q`, which is not the ratio of a
+ * quinquies, and the national extract holds 133 `C` against 31 `Q`, which is not the ratio of a
  * fifth repetition to a fourth and reads as a letter suffix entered in the index field.
  *
  * A digit in `voie` is refused under {@linkcode FinessRefusal.StreetDigitUnplaced} unless the digits
@@ -69,8 +69,8 @@
  * under {@linkcode FinessTrim.LieuDitPremiseDescriptor}, because the row stays an address without it.
  *
  * `ligneacheminement` is La Poste's routing line, `97100 BASSE TERRE` or `97331 CAYENNE CEDEX`. It
- * gives the postcode, the locality as La Poste routes it and the `cedex` phrase, which the codex
- * layouts of every jurisdiction this adapter emits except French Polynesia print after the locality.
+ * gives the postcode, the locality as La Poste routes it and the `cedex` phrase. Every codex layout
+ * this adapter emits prints that phrase after the locality. French Polynesia is the exception.
  *
  * ## Identity and license
  *
@@ -80,11 +80,11 @@
  * data.gouv.fr publishes the dataset under the license whose id is `fr-lo`, titled `Licence Ouverte /
  * Open Licence`, and links its text at
  * `https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf`. That is version 1.0
- * of October 2011, which grants the reuser the right to « Adapter, modifier, extraire et
+ * of October 2011. It grants the reuser the right to « Adapter, modifier, extraire et
  * transformer à partir de « l'Information », notamment pour créer des « Informations dérivées » »,
  * « Sous réserve de : Mentionner la paternité de « l'Information » : sa source (a minima le nom du
  * « Producteur ») et la date de sa dernière mise à jour. » Every row records that license, and
- * {@linkcode FR_FINESS_ATTRIBUTION} is the credit, which the model card completes with the
+ * {@linkcode FR_FINESS_ATTRIBUTION} is the credit. The model card completes it with the
  * extraction date the fetch manifest records.
  *
  * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts every refusal
@@ -137,7 +137,7 @@ export const FR_FINESS_ATTRIBUTION =
 /**
  * The jurisdiction each overseas `departement` code belongs to.
  *
- * `9A` also holds Saint-Barthélemy and Saint-Martin, which {@linkcode FINESS_COUNTRY_BY_POSTCODE} separates.
+ * `9A` also holds Saint-Barthélemy and Saint-Martin. {@linkcode FINESS_COUNTRY_BY_POSTCODE} separates them.
  */
 export const FINESS_COUNTRY_BY_DEPARTEMENT: Readonly<Record<string, string>> = {
 	"9A": "GP",
@@ -173,14 +173,15 @@ export const FINESS_FAMILY_PLACEMENT_CATEGORIES: ReadonlySet<string> = new Set([
 /**
  * An establishment name that states family placement, for one filed under another category.
  *
- * Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` is filed under `377`,
- * Etablissement expérimental pour enfance handicapée, so the category list alone admits it.
+ * Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` is filed under `377`, Etablissement
+ * expérimental pour enfance handicapée, so the category list would admit it without the name check.
  */
 const FAMILY_PLACEMENT_NAME = /\b(?:accueil|placement) famil|\blieux? de vie\b/iu
 
 /**
- * The positions, counted from 0, of the columns this adapter reads, each named by
- * what it holds with the publisher's column name beside it.
+ * The positions, counted from 0, of the columns this adapter reads.
+ *
+ * Each entry gives the publisher's column name and what the column holds.
  */
 export const FinessColumn = {
 	/**
@@ -264,7 +265,7 @@ export const FinessRefusal = {
 	 */
 	RepetitionIndexAmbiguous: "row:repetition-index-ambiguous",
 	/**
-	 * A house number with no street name to carry it.
+	 * A house number with no street name.
 	 */
 	NumberWithoutStreet: "row:number-without-street",
 	/**
@@ -284,7 +285,7 @@ export const FinessRefusal = {
 	 */
 	DeliveryLineAbsent: "row:delivery-line-absent",
 	/**
-	 * The jurisdiction's layout does not print every component the row carries.
+	 * The jurisdiction's layout does not print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
 	/**
@@ -386,8 +387,8 @@ function readStreet(
 
 	if (word === undefined) return { refused: FinessRefusal.VoieTypeUnknown }
 
-	// With no code, or a code that adds no word, the name carries whatever type word it has.
-	if (word === null) {
+	// With no code, or a code that adds no word, the name holds whatever type word it has.
+	if (!word) {
 		const split = splitFrenchStreetType(name)
 
 		if (split?.street) {

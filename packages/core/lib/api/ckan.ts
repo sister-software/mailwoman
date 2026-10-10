@@ -65,7 +65,8 @@ export interface ReadCKANPackageRecordOptions {
 	context: string
 	/**
 	 * The catalogue API base URL.
-	 * The default is {@link CKAN_CATALOGUE_API_BASE_URL}.
+	 *
+	 * @defaultValue {@linkcode CKAN_CATALOGUE_API_BASE_URL}
 	 */
 	baseURL?: string
 }

@@ -2,7 +2,8 @@
  * Prevents task handoff while a tracked pull request has unresolved CI.
  */
 
-import { pathExists, readLocalJSONFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isProcessError, runFile, type ProcessOutput } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"

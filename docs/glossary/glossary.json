@@ -50,7 +50,7 @@
 			"definition": "The process of decomposing a free-text postal address string into structured components — house number, street name, locality, region, postcode, and country — so a geocoder can resolve them to coordinates.",
 			"tags": ["domain"],
 			"aliases": ["parse", "parsing"],
-			"relatedTerms": ["sequence labeling", "BIO tagging", "token classification", "geocoding"]
+			"relatedTerms": ["sequence labeling", "BIO tagging", "geocoding"]
 		},
 		{
 			"term": "admin FST",
@@ -185,7 +185,7 @@
 			"definition": "A token-level labeling scheme where each token is tagged as B-X (beginning of an entity of type X), I-X (inside an entity of type X), or O (outside any entity). Mailwoman uses BIO over SentencePiece tokens to annotate address components.",
 			"tags": ["neural"],
 			"aliases": ["BIO labels", "BIO encoding"],
-			"relatedTerms": ["sequence labeling", "token classification", "CRF"]
+			"relatedTerms": ["sequence labeling", "CRF"]
 		},
 		{
 			"term": "bitter lesson",
@@ -215,7 +215,7 @@
 			"term": "boundary instability",
 			"definition": "A class of parser errors where the model wobbles on where one address component ends and the next begins — a street suffix swallowed into the street name, a French house number that trails instead of leads. Mailwoman's #1 weakness as of v1.5.0.",
 			"tags": ["evals", "neural"],
-			"relatedTerms": ["parity campaign", "boundary stress extract", "phrase grouper"]
+			"relatedTerms": ["parity campaign", "synthetic extract", "phrase grouper"]
 		},
 		{
 			"term": "byte fallback",
@@ -235,7 +235,7 @@
 			"definition": "A deterministic, normalized string representation of an address produced by @mailwoman/codex. Lowercase, abbreviation-expanded, punctuation-stripped — so '123 Main St' and '123 MAIN STREET' produce the same key. Used for blocking in the matcher.",
 			"tags": ["record-matching"],
 			"aliases": ["match key"],
-			"relatedTerms": ["formatter", "blocking", "address ID"]
+			"relatedTerms": ["canonicalization", "blocking", "address ID"]
 		},
 		{
 			"term": "canonicalization",
@@ -316,7 +316,7 @@
 			"term": "clustering",
 			"definition": "The final stage of entity resolution: resolve non-transitive pairwise match decisions (A↔B, B↔C, but not A↔C) into canonical entities via union-find with path compression. Each cluster of records becomes one resolved entity.",
 			"tags": ["record-matching"],
-			"relatedTerms": ["record matching", "blocking", "scoring"]
+			"relatedTerms": ["record matching", "blocking", "Fellegi-Sunter"]
 		},
 		{
 			"term": "coarse-placer",
@@ -348,7 +348,7 @@
 			"definition": "One of the 25 labels in Mailwoman's address schema — street, locality, region, postcode, house_number, unit, po_box, country, venue, intersection, and others. Each parsed span carries exactly one component tag.",
 			"tags": ["architecture"],
 			"aliases": ["ComponentTag", "label"],
-			"relatedTerms": ["span", "BIO tagging", "classification"]
+			"relatedTerms": ["span", "BIO tagging", "sequence labeling"]
 		},
 		{
 			"term": "composition window",
@@ -414,7 +414,7 @@
 			"term": "corpus",
 			"definition": "The BIO-labeled training data used to train Mailwoman's neural classifier. Assembled from real sources (OpenAddresses, National Address Database) and synthetic extracts (boundary stress, order variants, negative space). Managed by @mailwoman/corpus.",
 			"tags": ["corpus"],
-			"relatedTerms": ["BIO tagging", "synthetic extract", "expand golden"]
+			"relatedTerms": ["BIO tagging", "synthetic extract", "golden set"]
 		},
 		{
 			"term": "country",
@@ -424,9 +424,9 @@
 		},
 		{
 			"term": "country posterior",
-			"definition": "A country → probability map (derived from postcodes or the coarse-placer) that re-ranks resolver candidates as a soft prior, never a hard filter.",
+			"definition": "A per-country probability map — e.g. {GB: 0.8, FR: 0.06} — expressing how likely an input belongs to each country, produced by a model (the coarse placer's softmax, or a postcode anchor's lookup) AFTER seeing the input (hence 'posterior', from Bayesian usage: the updated belief). The resolver consumes it as a soft ranking boost (anchorPosterior): each candidate's score gains weight × posterior[candidate.country]. Values lie in [0, 1] and need not sum to 1 (in-map marginals exclude the OTHER class).",
 			"tags": ["resolver", "country"],
-			"aliases": ["anchorPosterior"],
+			"aliases": ["anchorPosterior", "in-map posterior"],
 			"relatedTerms": ["coarse-placer", "soft prior", "soft signal"]
 		},
 		{
@@ -613,7 +613,7 @@
 			"definition": "A small cutoff (ε) below which per-country posterior entries are dropped before the resolver sees them, so implausible tail probabilities cannot influence ranking. Domain: [0, 1]; 0 disables it (the full distribution passes through — the shipped default); higher values keep only stronger beliefs, at the extreme leaving just the argmax (a one-hot). Mailwoman defaults to 0 because no nonzero value has measured benefit on the misroute battery (the 2026-07-03 floor sweep was null at 0.05–0.30); the knob exists for distribution-mode experiments (--posterior-floor).",
 			"tags": ["resolver"],
 			"aliases": ["posterior floor", "ε-floor"],
-			"relatedTerms": ["posterior (country posterior)"]
+			"relatedTerms": ["country posterior"]
 		},
 		{
 			"term": "eval",
@@ -701,7 +701,7 @@
 			"definition": "A probabilistic record linkage model that computes match probability from agreement-level log-likelihood ratios: log₂(m/u) where m is the probability of agreement given a true match and u is the probability of agreement by chance. Mailwoman learns m and u label-free via expectation-maximization.",
 			"tags": ["record-matching"],
 			"aliases": ["FS model", "Fellegi-Sunter model"],
-			"relatedTerms": ["record matching", "scoring", "EM estimation"]
+			"relatedTerms": ["record matching", "training"]
 		},
 		{
 			"term": "fertility",
@@ -826,7 +826,7 @@
 			"definition": "A non-linear machine learning model that combines many weak decision trees into a strong predictor. Mailwoman uses a GBT as an optional learned scorer for single-dataset dedup, improving F1 by 5–7 percentage points over the Fellegi-Sunter baseline.",
 			"tags": ["record-matching"],
 			"aliases": ["GBM", "gradient boosting"],
-			"relatedTerms": ["record matching", "scoring", "Fellegi-Sunter"]
+			"relatedTerms": ["record matching", "Fellegi-Sunter"]
 		},
 		{
 			"term": "generalization",
@@ -920,7 +920,7 @@
 			"definition": "Uber's hexagonal hierarchical geospatial indexing system. Mailwoman uses H3 cells at resolution 9 (~0.03 km²) for geo-first blocking in the matcher and for stable address primary keys in @mailwoman/address-id.",
 			"tags": ["geocoding", "infrastructure"],
 			"aliases": ["H3 cell"],
-			"relatedTerms": ["blocking", "address ID", "spatial"]
+			"relatedTerms": ["blocking", "address ID", "geocoding"]
 		},
 		{
 			"term": "harness pass rate",
@@ -967,7 +967,7 @@
 			"term": "honest eval",
 			"definition": "Mailwoman's evaluation discipline: grade the assembled pipeline output (resolved coordinate) against real-world ground truth, not raw neural label-F1 in isolation. A model can win on labels while resolving to the wrong city.",
 			"tags": ["evals"],
-			"relatedTerms": ["parity campaign", "coord metric", "eval discipline"]
+			"relatedTerms": ["parity campaign", "coord metric", "eval"]
 		},
 		{
 			"term": "house number",
@@ -1183,7 +1183,7 @@
 			"term": "locale check",
 			"definition": "Stage 2 of the runtime pipeline: rule-based locale detection from the query shape's script and known-format signals. Returns a LocaleHint with the top candidate and alternatives, surfacing disagreement with an explicit --locale flag.",
 			"tags": ["staged-pipeline"],
-			"relatedTerms": ["staged pipeline", "query shape", "locale tag"]
+			"relatedTerms": ["staged pipeline", "query shape", "locale"]
 		},
 		{
 			"term": "locality",
@@ -1259,7 +1259,7 @@
 			"term": "model card",
 			"definition": "A JSON metadata file (model-card.json) shipped with each weights bundle. It declares the model version, lineage, label set, required inference channels (anchor, gazetteer), calibration data, and training provenance.",
 			"tags": ["training", "infrastructure"],
-			"relatedTerms": ["model weights", "weights bundle", "production scorer"]
+			"relatedTerms": ["model weights", "production scorer"]
 		},
 		{
 			"term": "model weights",
@@ -1343,7 +1343,7 @@
 			"term": "neural classifier",
 			"definition": "The machine learning model at the core of Mailwoman's parser — a transformer encoder (~30M parameters) trained from scratch to do BIO token classification over addresses. It learns the 'grammar' of address formats; the gazetteer supplies the 'atlas.'",
 			"tags": ["neural"],
-			"aliases": ["model", "transformer"],
+			"aliases": ["model"],
 			"relatedTerms": ["sequence labeling", "gazetteer", "anchor inference", "model weights"]
 		},
 		{
@@ -1582,7 +1582,7 @@
 			"term": "placetype",
 			"definition": "The Who's On First hierarchical classification of places: planet → continent → country → region → county → locality → neighborhood. The resolver uses placetype to rank candidates — an exact locality match outranks a county-level match.",
 			"tags": ["resolver"],
-			"relatedTerms": ["WOF", "resolver", "locality resolution"]
+			"relatedTerms": ["WOF", "resolver", "locality"]
 		},
 		{
 			"term": "PO box",
@@ -1625,13 +1625,6 @@
 			"tags": ["domain", "international", "postcode"],
 			"aliases": ["UK postcode database"],
 			"relatedTerms": ["Address Management System", "postcode", "dependent street"]
-		},
-		{
-			"term": "posterior (country posterior)",
-			"definition": "A per-country probability map — e.g. {GB: 0.8, FR: 0.06} — expressing how likely an input belongs to each country, produced by a model (the coarse placer's softmax, or a postcode anchor's lookup) AFTER seeing the input (hence 'posterior', from Bayesian usage: the updated belief). The resolver consumes it as a soft ranking boost (anchorPosterior): each candidate's score gains weight × posterior[candidate.country]. Values lie in [0, 1] and need not sum to 1 (in-map marginals exclude the OTHER class).",
-			"tags": ["resolver", "country"],
-			"aliases": ["anchorPosterior", "in-map posterior", "country posterior"],
-			"relatedTerms": ["coarse placer"]
 		},
 		{
 			"term": "pre-registration",
@@ -1744,7 +1737,7 @@
 			"term": "resolver",
 			"definition": "The component that converts parsed address components (locality, region, postcode) into coordinates by looking them up in the gazetteer. The resolver ranks candidates by name match, population, and proximity, and returns the best-matching place with its centroid or polygon.",
 			"tags": ["resolver"],
-			"relatedTerms": ["gazetteer", "geocoding", "WOF", "locality resolution"]
+			"relatedTerms": ["gazetteer", "geocoding", "WOF", "locality"]
 		},
 		{
 			"term": "retry rider",
@@ -1842,7 +1835,7 @@
 			"term": "soft features",
 			"definition": "Auxiliary input signals fed to the neural classifier that inform but never override the model's decisions. Mailwoman's soft features include the postcode anchor (a coordinate centroid for recognized postcodes) and gazetteer lexicon hits (known place names).",
 			"tags": ["neural", "hybrid"],
-			"relatedTerms": ["anchor inference", "gazetteer inference"]
+			"relatedTerms": ["anchor inference", "gazetteer"]
 		},
 		{
 			"term": "soft prior",
@@ -2030,7 +2023,7 @@
 			"term": "tree projection",
 			"definition": "The process of converting a flat list of labeled spans into a nested tree representation — street contains street_prefix and street_suffix, locality contains region. Enables hierarchical address operations like containment checks.",
 			"tags": ["architecture"],
-			"relatedTerms": ["span", "decoder", "containment"]
+			"relatedTerms": ["span", "decoder", "component tag"]
 		},
 		{
 			"term": "truncation",

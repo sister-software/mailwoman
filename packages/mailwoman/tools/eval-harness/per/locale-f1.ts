@@ -29,16 +29,19 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { type CaseNormalization, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import {
 	NeuralAddressClassifier,
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 	parseWordConsistencyEnv,
 } from "@mailwoman/neural"
+import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -78,7 +81,8 @@ export interface PerLocaleF1Options {
 	goldenDir?: string
 	/**
 	 * Per-locale files inside {@linkcode PerLocaleF1Options.goldenDir}.
-	 * Default `["us.jsonl", "fr.jsonl", "adversarial.jsonl"]`.
+	 *
+	 * @defaultValue `["us.jsonl", "fr.jsonl", "adversarial.jsonl"]`
 	 */
 	files?: string[]
 	weightsCache?: string
@@ -88,21 +92,33 @@ export interface PerLocaleF1Options {
 	modelAnchorLookupPath?: PathBuilderLike
 	gazetteerLexiconPath?: string
 	noAnchor?: boolean
-	suppressGazNearPostcode?: boolean
-	conventions?: string
-	bridgeGaps?: boolean
+	/**
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
+	 */
+	suppressGazetteerNearPostcode?: Toggle
+	/**
+	 * `auto` | `<system>` enables the address-system conventions mask.
+	 * @defaultValue `"off"`
+	 */
+	conventions?: AddressSystemConventions
+	/**
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
+	 */
+	bridgePunctuationGaps?: Toggle
 	outJSON?: string
 	/**
-	 * Disable the all-caps title-case shim (`normalizeCase: false`), the all-caps read.
-	 * Default false.
+	 * The all-caps case handling; `"preserve"` disables the title-case shim for the all-caps read.
+	 *
+	 * @defaultValue the library default, `"title-case"`.
 	 */
-	rawCase?: boolean
+	caseNormalization?: CaseNormalization
 	/**
 	 * Parse each row with the register returned by `deriveGeocodeRegister`.
 	 * The geocode path uses the same register.
 	 *
-	 * Default false parses every row with no `inputMode`, which the classifier reads
+	 * @defaultValue `false`, which parses every row with no `inputMode`, which the classifier reads
 	 * as `fragmented` and so feeds both evidence lexicons to every row, including the
+	 *
 	 * 1,896 of 2,660 `us.jsonl` rows production withholds them from.
 	 */
 	productionRegister?: boolean
@@ -358,7 +374,7 @@ export async function perLocaleF1(
 		...options,
 		goldenDir: options.goldenDir ?? "data/eval/golden/v0.1.2/dev",
 		files: options.files ?? ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
-		rawCase: options.rawCase ?? false,
+		caseNormalization: options.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 		productionRegister: options.productionRegister ?? false,
 	}
 
@@ -377,7 +393,7 @@ export async function perLocaleF1(
 		`Street convention: ${splitCountries.length ? `SPLIT for ${splitCountries.join(", ")} (unfolded scoring)` : "folded (no answer-key declaration)"}`
 	)
 
-	const foldStreetFor = (country: string | undefined): boolean => {
+	const foldStreetFor = (country: string | null): boolean => {
 		const mode = streetConvention[(country ?? "").toUpperCase()] ?? streetConvention["*"] ?? "folded"
 
 		return mode !== "split"
@@ -443,10 +459,9 @@ export async function perLocaleF1(
 			labels: card.labels,
 			postcodeAnchorLookup,
 			gazetteerLexicon,
-			suppressGazetteerNearPostcode: !!args.suppressGazNearPostcode,
-			// `--conventions auto|<system>` enables the address-system conventions mask.
-			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
-			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
+			suppressGazetteerNearPostcode: args.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
+			addressSystemConventions: args.conventions ?? "off",
+			bridgePunctuationGaps: args.bridgePunctuationGaps ?? DEFAULT_TOGGLE,
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
@@ -481,7 +496,7 @@ export async function perLocaleF1(
 		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
-			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
+			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null)
 
 			// Production parses feed the query-shape prior + `postcodeRepair` on every path,
 			// so this battery must too or it scores a config production does not run.
@@ -495,12 +510,12 @@ export async function perLocaleF1(
 				// Production feeds them only where the kind verdict requires them.
 				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
-				// `--raw-case` disables the all-caps title-case shim.
+				// `--case-normalization preserve` disables the all-caps title-case shim.
 				// The shim would hide the model's own case handling from this measurement.
-				...(args.rawCase ? { normalizeCase: false } : {}),
+				caseNormalization: args.caseNormalization,
 			})
 
-			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country))
+			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country ?? null))
 			preds.push(pred)
 
 			if (dumpTag) {

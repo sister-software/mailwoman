@@ -5,7 +5,8 @@
  * @file Reading a coordinate eval set as a panel and writing a row through its country's layout.
  */
 
-import { type ComponentDict, formatAddress } from "@mailwoman/codex/address/format"
+import { formatAddress } from "@mailwoman/codex/address/format"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import { US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street/suffix"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -112,7 +113,7 @@ export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): st
  * The place's last word when it is a USPS suffix, membership drawn from the whole
  * `US_STREET_SUFFIX_LOOKUP` table because which bucket a row lands in is a property of that word list.
  */
-export function suffixTail(locality: string): string | undefined {
+export function suffixTail(locality: string): string | null {
 	const last = locality
 		.trim()
 		.split(/\s+/)
@@ -120,5 +121,5 @@ export function suffixTail(locality: string): string | undefined {
 		?.toLowerCase()
 		.replaceAll(/[^a-z]/g, "")
 
-	return last && US_STREET_SUFFIX_LOOKUP.has(last) ? last : undefined
+	return last && US_STREET_SUFFIX_LOOKUP.has(last) ? last : null
 }

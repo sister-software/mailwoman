@@ -14,8 +14,6 @@
 import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-interface"
 import { LICENSE_WORKER_URL } from "#client/constants"
 
-export type { ClaimResponse, IssuedClaim } from "#claim-interface"
-
 export type ClaimState =
 	| { phase: "polling"; attempts: number; startedAt?: number }
 	| { phase: "issued"; claim: IssuedClaim }
@@ -96,7 +94,7 @@ export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState
 /**
  * One poll.
  *
- * Never throws: every outcome is an event the reducer knows.
+ * Never throws: every result is an event the reducer knows.
  */
 export async function fetchClaim(sessionID: string, signal?: AbortSignal): Promise<ClaimEvent> {
 	const now = Date.now()

@@ -11,7 +11,7 @@
  *   `meta` table.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 
 import {
 	type CommandSpec,
@@ -69,7 +69,7 @@ const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options
 		]
 	})
 
-	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	// Progress streams to stderr, leaving stdout for the summary.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

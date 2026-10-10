@@ -1,11 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export interface SpanRange {
-	start: number
-	end: number
-	body: string
-}
+import type { SpanRange } from "@mailwoman/query-shape"
 
 /**
  * A single normalization step, as recorded on `NormalizedInput.transforms`.
@@ -52,7 +48,7 @@ export interface NormalizedInput {
 	/**
 	 * The locale used for case-folding + abbreviation rules.
 	 */
-	appliedLocale?: string
+	appliedLocale: string | null
 }
 
 export interface NormalizeOpts {
@@ -64,14 +60,14 @@ export interface NormalizeOpts {
 	/**
 	 * Apply locale-aware lowercasing.
 	 *
-	 * Default: false (preserve case for downstream consumers).
+	 * @defaultValue `false` (preserve case for downstream consumers)
 	 */
 	caseFold?: boolean
 
 	/**
 	 * Expand known abbreviations (`St` → `Street`, `NW` → `Northwest`, etc.).
 	 *
-	 * Default: false.
+	 * @defaultValue `false`
 	 */
 	expandAbbreviations?: boolean
 

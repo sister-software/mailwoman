@@ -6,13 +6,16 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { AdminCoherenceReport, GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import type { ModelCardToggle } from "@mailwoman/neural/classifier/options"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
@@ -20,13 +23,13 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AdminCoherenceReport } from "#admin-coherence"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import type { GeocodeResult } from "#geocode/result"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
-import { createResolverBackend, loadCapitalIndex, resolveCandidateDBPath } from "#resolver-backend"
+import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
+import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/switch-pin"
 
 export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
@@ -57,7 +60,7 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * Overlays load lazily on the first row of their country, so ask after grading that row.
 	 */
-	gradedBaseOnly(caseCountry?: string): boolean
+	gradedBaseOnly(caseCountry: string | null): boolean
 }
 
 /**
@@ -86,12 +89,12 @@ export interface GauntletDepsOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * Override the card's near-postcode gazetteer choreography for this run.
+	 * The near-postcode gazetteer choreography for this run, `"declared"` (the card's) by default.
 	 *
-	 * A declared ablation that pairs with the train-time half, so serving a model trained
-	 * with it under `false` is a deliberate mismatch and never a shipping configuration.
+	 * Any other value is a declared ablation that pairs with the train-time half, so serving a model
+	 * trained with it under `"off"` is a deliberate mismatch and never a shipping configuration.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: ModelCardToggle
 	/**
 	 * Replace the kind classifier's top verdict on every input this deps object geocodes —
 	 * a declared ablation, never a shipping configuration.
@@ -102,6 +105,8 @@ export interface GauntletDepsOptions {
 	forceQueryKind?: QueryKind
 	/**
 	 * Resolver-side pins applied to every geocode this deps object performs.
+	 *
+	 * @defaultValue {@linkcode PRODUCTION_RESOLVER_PINS}
 	 */
 	pins?: GauntletResolverPins
 }
@@ -111,91 +116,105 @@ export interface GauntletDepsOptions {
  * `modelPath`/`tokenizerPath` swaps.
  *
  * The `eval oa-resolver` idiom treats a pin as a default override rather than a new mechanism:
- * Every field maps 1:1 onto a {@linkcode geocodeAddress} dependency of the same name.
- * An absent field leaves the production default in force.
- * `undefined` also means the production default.
+ * every field maps 1:1 onto a {@linkcode geocodeAddress} dependency or session setting
+ * of the same name, and `"production"` leaves the production default in force.
  */
 export interface GauntletResolverPins {
 	/**
 	 * Postcode-country coherence — a (postcode, locality) pair coherent in exactly
 	 * one country overrides a wrong `defaultCountry`.
-	 *
-	 * The default is on.
-	 * `false` grades the off arm.
 	 */
-	postcodeCountryCoherence?: boolean
+	postcodeCountryCoherence: SwitchPin
 	/**
 	 * Feed the gazetteer FST prior to the parse.
 	 *
-	 * Unlike the boolean pins this one selects an artifact, so the harness loads it
-	 * rather than `resolverPinDeps`, and only an explicit `false` withholds it.
+	 * Unlike the switch pins this one selects an artifact, so the harness loads it
+	 * rather than `resolverPinDeps`, and only `"off"` withholds it.
 	 */
-	gazetteerPrior?: boolean
+	gazetteerPrior: SwitchPin
 	/**
 	 * The admin-containment re-rank: a parsed region qualifier participates in
-	 * locality-candidate selection through the candidate gazetteer's ancestors
-	 * sidecar. default off, so `true` enables the evidence.
+	 * locality-candidate selection through the candidate gazetteer's ancestors sidecar.
 	 */
-	adminContainmentRerank?: boolean
+	adminContainmentRerank: SwitchPin
 	/**
-	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym class,
-	 * carrying an artifact (the candidate `capital` table with a repo-file fallback) that
-	 * the harness loads rather than `resolverPinDeps`; default on, `false` pins the off arm.
+	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
+	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
+	 * that the harness loads rather than `resolverPinDeps`.
+	 */
+	capitalTier: "production" | CapitalTier
+	/**
+	 * Whether own-name `variant` aliases are exempt from the cross-country primary-preference penalty.
 	 *
-	 * An unset value uses the default and degrades on a reference-less artifact.
+	 * The stamp lives in the candidate build's own-name detector, so against a
+	 * candidate.db without it the exemption matches no row.
 	 */
-	capitalTier?: boolean
+	variantAliasExemption: "production" | VariantAliasExemption
 	/**
-	 * Exempt own-name `variant` aliases from the cross-country primary-preference
-	 * penalty. the stamp lives in the candidate build's own-name detector,
-	 * so against a candidate.db without it the exemption matches no row.
-	 */
-	variantAliasExemption?: boolean
-	/**
-	 * The opt-in venue tier: upgrade a venue-led address's admin or street answer to
-	 * the poi.db entity with the venue's name near the resolved anchor.
+	 * The venue tier: upgrade a venue-led address's admin or street answer to the
+	 * poi.db entity with the venue's name near the resolved anchor.
 	 *
-	 * The default is off.
-	 * `true` degrades to the incumbent answer on a machine without poi.db.
+	 * `"on"` degrades to the incumbent answer on a machine without poi.db.
 	 */
-	poiVenueTier?: boolean
+	poiVenueTier: SwitchPin
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name. default off,
-	 * so `true` enables the evidence.
+	 * The venue-head emission prior, read from the head-word table for each row's route country.
+	 *
+	 * This pin selects an artifact, so the harness loads it rather than `resolverPinDeps`.
 	 */
-	spanRescoreRequireContextRemainder?: boolean
+	venueHeadPrior: SwitchPin
 	/**
-	 * Which reading of a weak resolution lifts the span-rescore brake. three readings exist
-	 * and the shipped brake is the absence of all of them, so `undefined` is the
-	 * production arm and there is no off pin.
+	 * Multiplier on the venue-head table's biases.
+	 * `"production"` takes the session default.
 	 */
-	spanRescoreWeakResolution?: WeakResolutionReading
+	venueHeadBiasScale: "production" | number
+	/**
+	 * A span-rescore sub-span may drop context but never a word of the name.
+	 */
+	spanRescoreRequireContextRemainder: SwitchPin
+	/**
+	 * Which reading of a weak resolution lifts the span-rescore brake.
+	 *
+	 * Three readings exist and the shipped brake is the absence of all of them, so there is no off pin.
+	 */
+	spanRescoreWeakResolution: "production" | WeakResolutionReading
+}
+
+/**
+ * The pin set that grades production everywhere.
+ */
+export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
+	postcodeCountryCoherence: "production",
+	gazetteerPrior: "production",
+	adminContainmentRerank: "production",
+	capitalTier: "production",
+	variantAliasExemption: "production",
+	poiVenueTier: "production",
+	venueHeadPrior: "production",
+	venueHeadBiasScale: "production",
+	spanRescoreRequireContextRemainder: "production",
+	spanRescoreWeakResolution: "production",
 }
 
 /**
  * The geocode deps a pin set turns into, spread into every {@linkcode geocodeAddress} call the run makes.
  *
+ * A `"production"` pin contributes no dep, so the geocode's own defaults table decides.
  * Pure and exported so the pin-reaches-the-pipeline interface is testable without the full database set.
  */
-export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
+export function resolverPinDeps(pins: GauntletResolverPins): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 	poiVenueTier?: boolean
 	spanRescoreRequireContextRemainder?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
 } {
-	if (!pins) return {}
-
-	// A key is emitted only when the runner set it: an `undefined` value would still
-	// be an own property and reads as an explicit pin.
 	return {
-		...(pins.postcodeCountryCoherence === undefined ? {} : { postcodeCountryCoherence: pins.postcodeCountryCoherence }),
-		...(pins.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: pins.adminContainmentRerank }),
-		...(pins.poiVenueTier === undefined ? {} : { poiVenueTier: pins.poiVenueTier }),
-		...(pins.spanRescoreRequireContextRemainder === undefined
-			? {}
-			: { spanRescoreRequireContextRemainder: pins.spanRescoreRequireContextRemainder }),
-		...(pins.spanRescoreWeakResolution === undefined
+		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
+		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
+		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
+		...switchPinEntry("spanRescoreRequireContextRemainder", pins.spanRescoreRequireContextRemainder),
+		...(pins.spanRescoreWeakResolution === "production"
 			? {}
 			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),
 	}
@@ -206,8 +225,9 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
  *
  * It prints on the unpinned run too, so two gauntlet logs can be told apart,
  * because an off/on pair whose logs are indistinguishable is not evidence about the pin.
+ * Only pins away from `"production"` are listed.
  */
-export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
+export function describeResolverPins(pins: GauntletResolverPins): string {
 	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
 	// so this list includes every pin rather than only the boolean ones.
 	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
@@ -215,18 +235,24 @@ export function describeResolverPins(pins: GauntletResolverPins | undefined): st
 		typeof v === "boolean" ? `${k}=${v ? "ON" : "OFF"}` : `${k}=${v}`
 	)
 
-	// Printed only when pinned away from the production default.
-	// An unset pin prints no line, so "no flag" reads as "grade whatever production does".
-	if (pins?.gazetteerPrior !== undefined) {
-		entries.push(`gazetteerPrior=${pins.gazetteerPrior ? "ON" : "OFF"}`)
+	if (pins.gazetteerPrior !== "production") {
+		entries.push(`gazetteerPrior=${pins.gazetteerPrior.toUpperCase()}`)
 	}
 
-	if (pins?.capitalTier !== undefined) {
-		entries.push(`capitalTier=${pins.capitalTier ? "ON" : "OFF"}`)
+	if (pins.capitalTier !== "production") {
+		entries.push(`capitalTier=${pins.capitalTier}`)
 	}
 
-	if (pins?.variantAliasExemption !== undefined) {
-		entries.push(`variantAliasExemption=${pins.variantAliasExemption ? "ON" : "OFF"}`)
+	if (pins.variantAliasExemption !== "production") {
+		entries.push(`variantAliasExemption=${pins.variantAliasExemption === "applied" ? "ON" : "OFF"}`)
+	}
+
+	if (pins.venueHeadPrior !== "production") {
+		entries.push(`venueHeadPrior=${pins.venueHeadPrior.toUpperCase()}`)
+	}
+
+	if (pins.venueHeadBiasScale !== "production") {
+		entries.push(`venueHeadBiasScale=${pins.venueHeadBiasScale}`)
 	}
 
 	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
@@ -310,10 +336,10 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 	const missing: string[] = []
 
 	for (const locale of locales) {
-		let packageDir: PathBuilder | undefined
+		let packageDir: PathBuilder | null
 
 		try {
-			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir
+			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir ?? null
 		} catch {
 			continue
 		}
@@ -351,6 +377,7 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
  */
 export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+	const pins = opts.pins ?? PRODUCTION_RESOLVER_PINS
 
 	// A package-shaped candidate weights dir.
 	// Prefer this over `modelPath` when the vocab differs, because `loadFromWeights({cacheRoot})`
@@ -378,10 +405,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		}
 	}
 
-	const ablation =
-		opts.suppressGazetteerNearPostcode === undefined
-			? {}
-			: { suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode }
+	const ablation = { suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? "declared" }
 
 	const classifier = opts.weightsCacheRoot
 		? await NeuralAddressClassifier.loadFromWeights({
@@ -473,6 +497,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			locale: "en-US",
 			confidence: 1,
 			alternatives: [],
+			script: [],
+			evidence: null,
 			source: "caller",
 		})
 
@@ -497,25 +523,22 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		await createResolverBackend(resolverMod, {
 			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			...(opts.pins?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
+			variantAliasExemption:
+				pins.variantAliasExemption === "production"
+					? GEOCODE_SESSION_DEFAULTS.variantAliasExemption
+					: pins.variantAliasExemption,
 		})
 	)
 
 	// The reference loads here and becomes the per-candidate `capitalLevel` closure,
 	// matching `createGeocodeSession`.
-	// `false` pins the off arm.
-	// Explicit `true` requires the reference.
-	// An unset value uses the default (on) and degrades on a reference-less artifact.
-	const capitalIndex =
-		opts.pins?.capitalTier === false
-			? undefined
-			: await loadCapitalIndex({
-					candidateDB: await resolveCandidateDBPath(opts.candidateDB),
-					missing: opts.pins?.capitalTier === true ? "throw" : "degrade",
-				})
+	const capitalIndex = await capitalIndexFor(
+		pins.capitalTier === "production" ? GEOCODE_SESSION_DEFAULTS.capitalTier : pins.capitalTier,
+		await resolveCandidateDBPath(opts.candidateDB)
+	)
 
 	const capitalLevel = capitalIndex
-		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
@@ -530,7 +553,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banProvider = await BANRegionDatabaseProvider.create(dataRootPath)
 
-	const pinDeps = resolverPinDeps(opts.pins)
+	const pinDeps = resolverPinDeps(pins)
 
 	// This pin selects an artifact rather than a boolean value.
 	// The artifact is PER classifier.
@@ -547,8 +570,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		forClassifier: typeof classifier,
 		label: string
 	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
-		// Default-on: only an explicit `false` withholds the prior.
-		if (opts.pins?.gazetteerPrior === false) return {}
+		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
 
 		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
 		const fstPath = (forClassifier as { fstPath?: PathBuilderLike }).fstPath?.toString()
@@ -594,7 +616,34 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return deps
 	}
 
-	console.error(`[gauntlet] ${describeResolverPins(opts.pins)}`)
+	// The venue-head prior reads one lexicon per route country, the lookup the session builds from its locale.
+	// The lexicon is cached per country.
+	const venueHeadByCountry = new Map<string, Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">>()
+
+	async function venueHeadDepsFor(
+		caseCountry: string | undefined
+	): Promise<Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">> {
+		if (!pinnedSwitch(pins.venueHeadPrior, GEOCODE_SESSION_DEFAULTS.venueHeadPrior)) return {}
+
+		const country = (caseCountry ?? "").toUpperCase()
+		const cached = venueHeadByCountry.get(country)
+
+		if (cached) return cached
+
+		const { venueHeadLexicon } = await import("@mailwoman/poi-taxonomy/venue-heads")
+
+		// An unpinned scale leaves `venueHeadOpts` unset, so the prior applies its own default.
+		const deps: Pick<GeocodeDeps, "venueHead" | "venueHeadOpts"> = {
+			venueHead: venueHeadLexicon(country),
+			...(pins.venueHeadBiasScale === "production" ? {} : { venueHeadOpts: { biasScale: pins.venueHeadBiasScale } }),
+		}
+
+		venueHeadByCountry.set(country, deps)
+
+		return deps
+	}
+
+	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every
 	// optional artifact and mirroring the CLI's wiring so the board grades what production runs.
@@ -621,10 +670,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	 */
 	const runGeocode = async (
 		input: string,
-		geoOpts: GauntletGeocodeOpts | undefined,
+		geoOpts: GauntletGeocodeOpts | null,
 		extra: Pick<GeocodeDeps, "resolveTraceSink">
 	): Promise<GeocodeResult> => {
-		const { caseCountry, ...forwarded } = geoOpts ?? {}
+		const { caseCountry, defaultCountry, ...forwarded } = geoOpts ?? {}
 		const caseClassifier = await classifierFor(caseCountry)
 
 		return geocodeAddress(input, {
@@ -632,7 +681,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// Same lexicon-aware kind classifier the CLI session wires, so the harness grades the user's path.
 			classifyKind: poiKindClassifier,
 			// Unset on every shipping path, so the register comes from the verdict as production derives it.
-			...(opts.forceQueryKind ? { inputMode: deriveInputMode(opts.forceQueryKind) } : {}),
+			...(opts.forceQueryKind ? { inputMode: deriveInputMode("auto", opts.forceQueryKind) } : {}),
 			resolver,
 			databases: regionDatabaseProvider.for,
 			nationalDatabases: banProvider.for,
@@ -640,8 +689,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			...pinDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
+			...(await venueHeadDepsFor(caseCountry)),
 			...forkEntityDeps,
 			...forwarded,
+			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
 			...extra,
 		})
 	}
@@ -650,7 +701,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		diagnoseParse: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry } = geoOpts ?? {}
 			const caseClassifier = await classifierFor(caseCountry)
-			const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+
+			const priorDeps = {
+				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
+				...(await venueHeadDepsFor(caseCountry)),
+			}
+
 			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)
 
 			return {
@@ -658,12 +714,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},
-		gradedBaseOnly: (caseCountry?: string) => gradedBaseOnly(caseCountry, baseOnlyLocales),
-		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts, {}),
+		gradedBaseOnly: (caseCountry: string | null) => gradedBaseOnly(caseCountry, baseOnlyLocales),
+		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts ?? null, {}),
 		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const resolverTrace: ResolveNodeTrace[] = []
 
-			const result = await runGeocode(input, geoOpts, {
+			const result = await runGeocode(input, geoOpts ?? null, {
 				resolveTraceSink: (record) => resolverTrace.push(record),
 			})
 
@@ -713,15 +769,15 @@ export interface GauntletResult {
 	postcode_country_scope: string | null
 	/**
 	 * The capital promotion's firing receipt, projected verbatim: the promoted candidate's
-	 * country, present only when the promotion changed some node's leading candidate,
+	 * country, or null unless the promotion changed some node's leading candidate,
 	 * carrying the same firing-count posture as {@linkcode postcode_country_scope}.
 	 */
-	capital_promotion?: string
+	capital_promotion: string | null
 	/**
-	 * The variant-exemption firing receipt, projected verbatim and present (`true`) only when the
-	 * winning candidate reached the top because the exemption spared it the cross-country alias penalty.
+	 * The variant-exemption firing receipt, projected verbatim: `applied` when the exemption
+	 * spared the winning candidate the cross-country alias penalty, and `not_applied` otherwise.
 	 */
-	variant_alias_exemption?: true
+	variant_alias_exemption: VariantAliasExemption
 	/**
 	 * The resolved admin chain, locality → country, verbatim from
 	 * {@linkcode GeocodeResult.hierarchy}; Cases do not assert this value.
@@ -729,15 +785,15 @@ export interface GauntletResult {
 	 * The ablation layer's degradation ladder is synthesized from the gazetteer `placeID`s.
 	 * An empty array means the run resolved no admin-grade entry.
 	 */
-	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
+	hierarchy: Array<{ tag: string; name: string; placeID: string | null; lat: number | null; lon: number | null }>
 	/**
 	 * The stage-1 admin-coherence verdicts, verbatim from {@linkcode GeocodeResult.admin_coherence};
 	 * Cases do not assert these flag-only measurements.
 	 *
 	 * A dev-mcp row can count verdicts per component across a board run.
-	 * The field is absent when the geocode resolved no winner to check.
+	 * The field is null when the geocode resolved no winner to check.
 	 */
-	admin_coherence?: AdminCoherenceReport
+	admin_coherence: AdminCoherenceReport | null
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -766,14 +822,15 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
-		...(g.capital_promotion === undefined ? {} : { capital_promotion: g.capital_promotion }),
-		...(g.variant_alias_exemption === true ? { variant_alias_exemption: true as const } : {}),
-		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
+		capital_promotion: g.capital_promotion ?? null,
+		variant_alias_exemption: g.variant_alias_exemption,
+		admin_coherence: g.admin_coherence ?? null,
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,
 			name: h.name,
-			...(h.placeID ? { placeID: h.placeID } : {}),
-			...(h.lat != null ? { lat: h.lat, lon: h.lon! } : {}),
+			placeID: h.placeID || null,
+			lat: h.lat ?? null,
+			lon: h.lon ?? null,
 		})),
 	}
 }

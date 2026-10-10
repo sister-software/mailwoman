@@ -45,14 +45,6 @@ import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
 
-export {
-	GENERATED_ADDRESS_LAYOUTS,
-	GENERATED_LATIN_ADDRESS_LAYOUTS,
-	GENERATED_LOCAL_ADDRESS_LAYOUTS,
-} from "#address/layouts/generated"
-
-export { S42_ADDRESS_LAYOUTS, S42_LAYOUT_RECORDS, S42_READ_LAYOUTS, type S42LayoutRecord } from "#address/layouts/s42"
-
 /**
  * Which script an address is written in when a country writes two different orders:
  * `local` is the country's own script. libaddressinput's `fmt` states that order.
@@ -116,7 +108,7 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
  * Every country carrying a distinct Latin order writes it smallest-first,
  * read off the layout rather than encoded as a rule.
  */
-export function isLargestFirstSystem(countryCode: string | null | undefined, script?: AddressScript): boolean {
+export function isLargestFirstSystem(countryCode: string | null, script?: AddressScript): boolean {
 	if (!countryCode) return false
 
 	const code = countryCode.trim().toUpperCase()
@@ -147,6 +139,28 @@ export function layoutPrintsLargestFirst(layout: AddressLayout): boolean | null 
 	if (regionAt === -1 || streetAt === -1) return null
 
 	return regionAt < streetAt
+}
+
+/**
+ * Whether a layout prints the component, so a row that omits it is still a complete row
+ * of that country: the FR layout prints no `region`, and a FR row without one is whole.
+ */
+export function layoutPrintsTag(layout: AddressLayout, tag: ComponentTag): boolean {
+	return printedTags(layout).includes(tag)
+}
+
+/**
+ * Whether the layout prints the postcode before the locality, as FR and DE do,
+ * or `null` when the layout prints one of the two and not the other.
+ */
+export function layoutPrintsPostcodeBeforeLocality(layout: AddressLayout): boolean | null {
+	const tags = printedTags(layout)
+	const postcodeAt = tags.indexOf("postcode")
+	const localityAt = tags.indexOf("locality")
+
+	if (postcodeAt === -1 || localityAt === -1) return null
+
+	return postcodeAt < localityAt
 }
 
 /**
@@ -316,7 +330,7 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * Hand-authored entries take precedence because tests check them against real addresses.
  * `null` is the result for 55 of the 252 shipped records with no usable `fmt`.
  */
-export function layoutForCountry(countryCode: string | null | undefined, script?: AddressScript): AddressLayout | null {
+export function layoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
 
 	const code = countryCode.trim().toUpperCase()
@@ -338,7 +352,7 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 	}
 
 	// A SAFD entry is last because it exists only where libaddressinput states `fmt: null`.
-	// Reading it ahead of a generated skeleton would replace a stated order with a second reading of one.
+	// A SAFD entry read ahead of a generated skeleton would replace a stated order with a second reading.
 	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code] ?? null
 }
 
@@ -353,15 +367,16 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
  * and a board entry states what real addresses do.
  *
  * A jurisdiction in UPU's S42 template inventory contributes an `upu-s42` observation
- * whose stance is `unread`, because an approved crosswalk of its address semantics exists
- * and nobody here has retrieved it.
- * A jurisdiction outside that inventory contributes none, which states that no
- * crosswalk exists rather than that one went unread.
+ * whose stance is `unread`: an approved crosswalk of its address semantics exists,
+ * and this repository has not retrieved it.
+ * A jurisdiction outside that inventory contributes none.
+ *
+ * That states that no crosswalk exists, rather than that one went unread.
  *
  * `national-postal-authority` and `upu-pas` contribute no observation for any jurisdiction yet.
  *
- * An absent observation reads as unexamined rather than as agreement, which is what
- * {@linkcode ObservationStance.Silent} exists to separate.
+ * An absent observation reads as unexamined rather than as agreement.
+ * {@linkcode ObservationStance.Silent} exists to separate the two.
  */
 export function conventionClaimForCountry(
 	claim: ConventionClaimID,
@@ -387,8 +402,8 @@ export function conventionClaimForCountry(
 	// libaddressinput settles which components print and in what order,
 	// so its `fmt` answers a line-order claim.
 	// Its `lfmt` is a second statement by the same source about the Latin order.
-	// A hand-authored country appears in no rendering table, so its `fmt` comes from the
-	// skeleton table, which exists for this comparison rather than for printing.
+	// A hand-authored country appears in no rendering table, so its `fmt` comes from the skeleton table.
+	// That table exists for this comparison rather than for printing.
 	for (const [layout, readFrom] of [
 		[local ?? generated ?? HAND_AUTHORED_FORMAT_SKELETONS[code], READ_FROM.generated],
 		[latin, READ_FROM.latin],
@@ -463,7 +478,7 @@ export function conventionClaimForCountry(
 
 	// A country in UPU's template inventory has an approved crosswalk of its address semantics.
 	// A retrieved template states an order and therefore answers the claim.
-	// `Unread` on the rest says a document exists to go and read.
+	// `Unread` on the rest records that a document exists to go and read.
 	// That separates these 72 from the jurisdictions with no crosswalk to read at all.
 	const cohort = s42CohortForJurisdiction(code)
 
@@ -492,7 +507,7 @@ export function conventionClaimForCountry(
  * CJK joins apply only to the local script.
  * A single script keeps line order and separator tied to one system.
  */
-export function lineJoinForCountry(countryCode: string | null | undefined, script?: AddressScript): string {
+export function lineJoinForCountry(countryCode: string | null, script?: AddressScript): string {
 	if (!countryCode) return ", "
 
 	const code = countryCode.trim().toUpperCase()

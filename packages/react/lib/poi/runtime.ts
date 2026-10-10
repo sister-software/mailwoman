@@ -31,6 +31,11 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 				categoryID: match.category.id,
 				matchedPhrase: match.matchedPhrase,
 				confidence: match.confidence,
+				mechanism: "exact",
+				inputPhrase: phrase,
+				wikidata: null,
+				reading: "preference",
+				countryScope: null,
 			}))
 		}
 
@@ -40,6 +45,10 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 			wikidata: match.brand.wikidata,
 			matchedPhrase: match.matchedPhrase,
 			confidence: match.confidence,
+			mechanism: "exact",
+			inputPhrase: phrase,
+			reading: "preference",
+			countryScope: null,
 		}))
 	}
 

@@ -78,8 +78,10 @@ describe("byte-identity of the measured record vs the code constants (the fallba
 		const derived = hardCountrySafelistFromCoverage(MEASURED_COUNTRY_COVERAGE)
 
 		for (const fact of MEASURED_COUNTRY_COVERAGE) {
-			expect(hardCountryFor(fact.country, 1, {}, true, derived)).toBe(
-				hardCountryFor(fact.country, 1, {}, true, undefined)
+			const placed = { country: fact.country, confidence: 1 }
+
+			expect(hardCountryFor(placed, {}, { use: "filter", safelist: derived })).toBe(
+				hardCountryFor(placed, {}, { use: "filter", safelist: null })
 			)
 		}
 	})
@@ -115,7 +117,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		const au = manifest!.countryCoverage.get("AU")
 		expect(au?.hardFilterSafe).toBe(true)
-		expect(au?.hardResolveRate).toBeUndefined()
+		expect(au?.hardResolveRate).toBeNull()
 
 		expect(manifest!.countryBBoxes.size).toBe(Object.keys(COUNTRY_BBOX).length)
 		const us = manifest!.countryBBoxes.get("US")
@@ -156,15 +158,15 @@ describe("emit → read round-trip through a real candidate build", () => {
 		)
 	})
 
-	test("a legacy candidate DB (no manifest tables) reads undefined — the constant-fallback signal", async () => {
+	test("a legacy candidate DB (no manifest tables) reads null — the constant-fallback signal", async () => {
 		const candidateDB = await buildFixtureCandidate()
 
 		using db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
-		expect(readGazetteerCoverageManifest(db)).toBeUndefined()
+		expect(readGazetteerCoverageManifest(db)).toBeNull()
 
 		using lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 
-		expect(lookup.artifactCoverage).toBeUndefined()
+		expect(lookup.artifactCoverage).toBeNull()
 	})
 })

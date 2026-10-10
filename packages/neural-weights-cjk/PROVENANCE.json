@@ -32,7 +32,8 @@
 			}
 		],
 		"text_emitting_output": false,
-		"summary": "The model accepts tokenized text and emits logits float32[1, sequence, 49]. It has no supported text-generating output."
+		"summary": "The model accepts tokenized text and emits logits float32[1, sequence, 49]. It has no supported text-generating output.",
+		"unreadable": null
 	},
 	"training_attribution": {
 		"status": "recorded",

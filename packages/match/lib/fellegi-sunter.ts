@@ -105,13 +105,13 @@ export interface TermFrequencyAdjustment<R> {
 	/**
 	 * Scale the adjustment in [0, 1].
 	 *
-	 * Default 1.
+	 * @defaultValue `1`
 	 */
 	weight?: number
 	/**
 	 * Floor for the looked-up frequency, bounding the boost on ultra-rare values.
 	 *
-	 * Default 1e-4.
+	 * @defaultValue `1e-4`
 	 */
 	minimumFrequency?: number
 }
@@ -128,7 +128,7 @@ export interface FellegiSunterModel<R> {
 }
 
 /**
- * The scored outcome for one record pair.
+ * The scored result for one record pair.
  */
 export interface PairScore {
 	/**
@@ -189,7 +189,7 @@ export function similarityComparison<R>(config: {
 	name: string
 	extract: (record: R) => string | null | undefined
 	/**
-	 * Defaults to {@link nameSimilarity}.
+	 * @defaultValue {@link nameSimilarity}
 	 */
 	similarity?: (a: string, b: string) => number
 	levels: ComparisonLevel[]

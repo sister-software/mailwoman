@@ -20,7 +20,7 @@ function isFinitePair(lon: unknown, lat: unknown): lon is number {
  *
  * The average is an intentionally cheap venue/rooftop-tier coordinate rather than a polygon centroid.
  */
-export function representativePoint(geom: OSMGeometryLike | null | undefined): [number, number] | null {
+export function representativePoint(geom: OSMGeometryLike | null): [number, number] | null {
 	if (!geom) return null
 
 	if (geom.type === "Point") {

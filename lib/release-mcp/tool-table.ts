@@ -54,8 +54,9 @@ export interface ReleaseToolTableOptions {
 	/**
 	 * Register the `external-write` operations too.
 	 *
-	 * Defaults to off.
 	 * The CLI exposes it as an explicit flag.
+	 *
+	 * @defaultValue `off`
 	 */
 	allowExternalWrite?: boolean
 }

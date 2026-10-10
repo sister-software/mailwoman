@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/photon",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "Photon drop-in — a Photon-compatible autocomplete/type-ahead geocoding API (GeoJSON FeatureCollection over /api + /reverse) on the Mailwoman engine. Run it with `npx @mailwoman/photon serve`.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -67,8 +67,8 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"hono": "^4.13.7",
+		"hono": "^4.13.13",
 		"mailwoman": "workspace:*",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }

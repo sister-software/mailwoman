@@ -256,10 +256,10 @@ successfully through SDA:
 - `mapunit.farmlndcl` — Farmland Classification. **23 distinct values plus NULL (11,486 map units).**
   The top values are `Not prime farmland` (192,120), `All areas are prime farmland` (48,253),
   `Farmland of statewide importance` (46,754), `Prime farmland if drained` (15,253), `Prime farmland if
-irrigated` (10,833), `Farmland of local importance` (5,481). **The vocabulary is conditional**. A
+  irrigated` (10,833), `Farmland of local importance` (5,481). **The vocabulary is conditional**. A
   long tail reads `Prime farmland if drained and either protected from flooding or not frequently
-flooded during the growing season`, `Prime farmland if irrigated and reclaimed of excess salts and
-sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting soil layer`. A boolean
+  flooded during the growing season`, `Prime farmland if irrigated and reclaimed of excess salts and
+  sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting soil layer`. A boolean
   `arable` column would be this record's invention rather than the authority's statement.
 - `component.nirrcapcl` / `component.nirrcapscl` — nonirrigated Land Capability Class (`"1"`…`"8"`) and
   subclass (`c`, `e`, `s`, `w`). **NULL on 220,013 of 1,288,808 components (17.1%).**
@@ -362,15 +362,15 @@ web-service host does not.
 
   **Every data-returning operation fails server-side.** The paper's own example call returns HTTP 500
   with `Cannot run program "D:/CDL/CDLUtlis_win/gdal_getvalue.exe" (in directory "D:\CDL\var\tmp"):
-CreateProcess error=267, The directory name is invalid`. All seven were exercised. Each fails on a
+  CreateProcess error=267, The directory name is invalid`. All seven were exercised. Each fails on a
   missing Windows-side executable (`gdal_getvalue.exe`, `C:/GDAL/ogrinfo.exe`,
   `C:/GnuWin32/bin/bat/wget.bat`), except `GetCDLPDF`, which fails schema validation. The service
   dispatches, validates schemas, and enforces its own year range before the process launch fails. A
   blocked port cannot produce a `CreateProcess` fault string, so **the failure is in the backend rather
   than this network**. The year range is a separate limit. Out-of-range years are rejected with
   `"Error: The year must be between 1997 and 2019."`, which is **six crop years behind the shipped 2025
-  CDL** even if the backend were repaired. The WSDL's own SOAP binding address uses port 80, which
-  redirects to the dead 443, so the only working entry is the explicit `:8080`.
+  CDL** even if the backend were repaired. The WSDL's own SOAP binding address uses port 80.
+  That port redirects to the dead 443. The only working entry is the explicit `:8080`.
 
   **Treat the CropScape API as unavailable for data retrieval.** It can be reached, but it answers and
   then fails. NASS publishes no decommissioning statement. This absence was checked: the FAQ, last
@@ -685,7 +685,7 @@ builder must read them before the CDL becomes an observation of anything.
 From its FGDC metadata (`metadata_Crop-Frequency-Layers-2025_FGDC-STD-001-1998.htm`), the value domain
 runs `"1" Planted 1 time in 18 years` … `"18" Planted 18 times in 18 years`, and then
 **`"255" Planted 0 times in 18 years`**, while **`"0"` is No Data / Background**. A reader that takes 0
-as "never planted" gets the answer backwards: it reads _we have no data here_ as _nothing was ever grown
+as "never planted" gets the answer backwards: it reads _we have no data here_ as _no crop was ever grown
 here_. This repository's meaning-of-zero rule exists to prevent that failure, and here the source's own
 encoding builds it in. Whoever ingests that product must map 255 and 0 before anything else.
 

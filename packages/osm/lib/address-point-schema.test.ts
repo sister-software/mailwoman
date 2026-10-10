@@ -59,11 +59,12 @@ describe("OSM address-point layer schema", () => {
 			freshnessPolicy: "sealed",
 			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
 			createdAt: "2026-08-09T00:00:00.000Z",
+			sourceRecords: null,
 		})
 
 		const manifest = await readLayerManifest(db)
 		expect(manifest.spineKeys).toEqual({ h3: { column: "h3_cell", resolution: 9 } })
-		expect(await readLayerCoverage(db, 123_456)).toBeUndefined()
+		expect(await readLayerCoverage(db, 123_456)).toBeNull()
 
 		const columns = db.prepare("PRAGMA table_info(address_point)").all() as Array<{ name: string; notnull: number }>
 		expect(columns.find((column) => column.name === "h3_cell")?.notnull).toBe(1)
@@ -102,7 +103,7 @@ describe("OSM address-point layer schema", () => {
 
 			using lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
 
-			expect(lookup.find({ street, number: "2", postcode: "75001" })).toMatchObject({
+			expect(lookup.find({ street, number: "2", postcode: "75001", bbox: null })).toMatchObject({
 				lat: 48.8566,
 				lon: 2.3522,
 				source: "openstreetmap:fr",

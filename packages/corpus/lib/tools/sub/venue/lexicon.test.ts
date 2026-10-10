@@ -8,23 +8,13 @@
 
 import { expect, test } from "vitest"
 
+import { classifyIdentifier, extractAttestedPhrases } from "#subvenue/harvest"
 import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
-import {
-	applyPromotions,
-	buildSubVenueLexicon,
-	buildSurfaceIndex,
-	classifyIdentifier,
-	CONCEPT_QIDS,
-	deriveHeadNounSurfaces,
-	extractAttestedPhrases,
-	nameContainsSurfaces,
-	normalizeSurface,
-	SHIPPED_DESIGNATOR_SEED,
-	SHIPPED_MODIFIER_SEED,
-	serializeSubVenueLexicon,
-	type SubVenueSurface,
-	surfacesFromWikidata,
-} from "#tools/sub/venue/lexicon"
+import { buildSurfaceIndex, nameContainsSurfaces, normalizeSurface } from "#subvenue/surfaces"
+import { CONCEPT_QIDS, SHIPPED_DESIGNATOR_SEED, SHIPPED_MODIFIER_SEED, type SubVenueSurface } from "#subvenue/table"
+import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
+import { applyPromotions, buildSubVenueLexicon, serializeSubVenueLexicon } from "#tools/sub/venue/lexicon"
+import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
 
 /**
  * A minimal sparql envelope in the exact shape wdqs serves.
@@ -92,7 +82,7 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 	}
 }
 
-test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
+test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue/structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
 	// The drift pin: `@mailwoman/corpus` does not depend on `@mailwoman/neural`,
 	// so this list is a copy and the copy is what this test exists to catch.
 	expect(SHIPPED_DESIGNATOR_SEED.map((d) => d.id).toSorted()).toEqual([

@@ -14,13 +14,19 @@
  *   sealed read-only afterwards.
  */
 
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode"
-import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import type { PostcodePrefixLevel } from "#gazetteer/postcode/prefix"
 
 /**
@@ -194,8 +200,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]
 		const readUnits = readNodes.reduce((sum, node) => sum + node.unitCount, 0)
-		const readRadii = readNodes.flatMap((node) => (node.radiusP95Km === undefined ? [] : [node.radiusP95Km]))
-		const withCoordinate = readNodes.filter((node) => node.lat !== undefined).length
+		const readRadii = readNodes.flatMap((node) => (node.radiusP95Km === null ? [] : [node.radiusP95Km]))
+		const withCoordinate = readNodes.filter((node) => node.lat !== null).length
 		const readMedianRadius = median(readRadii)
 
 		if (resolver.size !== built.nodes.length) {
@@ -214,7 +220,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			const ancestry = node.ancestors.map((a) => `${a.name}(${a.placetype} ${a.wofID})`).join(" › ")
 
 			const place =
-				node.lat === undefined
+				node.lat === null
 					? "no coordinate (ancestry-only)"
 					: `${node.lat.toFixed(4)},${node.lon!.toFixed(4)} ±p95 ${node.radiusP95Km!.toFixed(2)} km`
 
@@ -252,16 +258,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

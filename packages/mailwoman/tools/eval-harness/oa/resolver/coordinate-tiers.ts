@@ -187,10 +187,10 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
  * The postcode anchor's country posterior for a raw address (highest-confidence placed anchor),
  * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior`.
  */
-export function anchorCountryPosteriorFor(input: string, sources: AnchorSources): Record<string, number> | undefined {
+export function anchorCountryPosteriorFor(input: string, sources: AnchorSources): Record<string, number> | null {
 	const { postcodeLookup, extractAnchors } = sources
 
-	if (!postcodeLookup || !extractAnchors) return undefined
+	if (!postcodeLookup || !extractAnchors) return null
 	let best: { posterior: Record<string, number>; conf: number } | null = null
 
 	for (const a of extractAnchors(input, postcodeLookup)) {
@@ -201,5 +201,5 @@ export function anchorCountryPosteriorFor(input: string, sources: AnchorSources)
 		}
 	}
 
-	return best?.posterior
+	return best?.posterior ?? null
 }

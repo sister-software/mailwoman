@@ -7,7 +7,7 @@
  *   against.
  *
  *   The bodies are the shapes `apli.bizkaia.eus` and `geo.bizkaia.eus` serve, reduced to the
- *   elements this harvest reads. The service document's entries carry a `rel="enclosure"` link and
+ *   elements this harvest reads. The service document's entries hold a `rel="enclosure"` link and
  *   repeat one `<updated>`, and the WFS's feature pages state `numberMatched="unknown"` with the
  *   delivered count in `numberReturned`, which is why the count is read from a separate
  *   `RESULTTYPE=hits` request.
@@ -18,8 +18,9 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"
@@ -39,16 +40,17 @@ import { feedChunks, readAtomFeed } from "#tools/fetch/atom"
 import { readManifest } from "#tools/fetch/download"
 
 /**
- * The one `<updated>` every entry of this service repeats, which is the feed document's
- * own modification time and the harvest's whole freshness signal.
+ * The one `<updated>` every entry of this service repeats.
+ *
+ * That value is the feed document's own modification time and the harvest's whole freshness signal.
  */
 const FEED_UPDATED = "2026-10-01T02:40:20Z"
 
 /**
  * One municipality's entry, as the service document writes it.
  *
- * `code` is the five-digit municipality code the title opens with, and `stem` is
- * the three-digit tail the archive's name carries.
+ * `code` is the five-digit municipality code the title opens with, and `stem`
+ * is the three-digit tail in the archive's name.
  */
 function entryXML(code: string, name: string, stem: string, updated = FEED_UPDATED): string {
 	return (
@@ -89,7 +91,7 @@ function archiveBody(payload: string): Buffer {
 }
 
 /**
- * The `RESULTTYPE=hits` response, which is the only place this service states a count.
+ * The `RESULTTYPE=hits` response, the only place this service states a count.
  */
 function hitsXML(count: number): string {
 	return (
@@ -125,8 +127,8 @@ function featuresXML(type: string, count: number, firstID = 1): string {
 /**
  * The real client over a stubbed transport, so the requests take the production path.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "bizkaia test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -135,7 +137,7 @@ function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 /**
  * The hits and feature responses for every component type, with one feature each.
  */
-function componentOutcomes(): StubOutcome[] {
+function componentResults(): StubResult[] {
 	return ES_BIZKAIA_COMPONENT_TYPES.flatMap((type) => [{ body: hitsXML(1) }, { body: featuresXML(type, 1) }])
 }
 
@@ -167,7 +169,7 @@ describe("readESBizkaiaServiceFeed", async () => {
 			filename: "ES.BFA.AD.001.zip",
 		})
 
-		// The identifier carries only the three-digit tail of the municipality code.
+		// The identifier holds only the three-digit tail of the municipality code.
 		expect(datasets[1]!.code).toBe("48915")
 		expect(datasets[1]!.filename).toBe("ES.BFA.AD.915.zip")
 	})
@@ -261,7 +263,7 @@ describe("harvestESBizkaia", () => {
 			{ body: SERVICE_XML },
 			{ body: archiveBody("abadino"), headers: { "last-modified": "Thu, 01 Oct 2026 00:01:15 GMT" } },
 			{ body: archiveBody("ziortza"), headers: { "last-modified": "Thu, 01 Oct 2026 00:01:15 GMT" } },
-			...componentOutcomes(),
+			...componentResults(),
 		])
 
 		const summary = await harvestESBizkaia(client, { outputDir: temporary.path })
@@ -299,12 +301,12 @@ describe("harvestESBizkaia", () => {
 			{ body: SERVICE_XML },
 			{ body: archiveBody("abadino") },
 			{ body: archiveBody("ziortza") },
-			...componentOutcomes(),
+			...componentResults(),
 		])
 
 		await harvestESBizkaia(first, { outputDir: temporary.path })
 
-		const second = stubClient([{ body: SERVICE_XML }, ...componentOutcomes()])
+		const second = stubClient([{ body: SERVICE_XML }, ...componentResults()])
 		const summary = await harvestESBizkaia(second, { outputDir: temporary.path })
 
 		expect(summary.skipped).toBe(2)
@@ -315,7 +317,7 @@ describe("harvestESBizkaia", () => {
 
 	it("reports a municipality code the service document does not list as a failure", async () => {
 		await using temporary = await temporaryDirectory("mailwoman-bizkaia-unknown-")
-		const client = stubClient([{ body: SERVICE_XML }, ...componentOutcomes()])
+		const client = stubClient([{ body: SERVICE_XML }, ...componentResults()])
 
 		const summary = await harvestESBizkaia(client, {
 			outputDir: temporary.path,
@@ -346,7 +348,7 @@ describe("harvestESBizkaia", () => {
 		const client = stubClient([
 			{ body: SERVICE_XML },
 			{ body: "<html><body>Service unavailable</body></html>" },
-			...componentOutcomes(),
+			...componentResults(),
 		])
 
 		const summary = await harvestESBizkaia(client, { outputDir: temporary.path, limit: 1 })

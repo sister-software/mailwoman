@@ -13,6 +13,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { buildLocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 import type { LookupCensus } from "#tools/eval-harness/oa/resolver/profile"
+import { switchPinEntry } from "#tools/eval-harness/switch-pin"
 
 /**
  * Assembles the scorer, gazetteer-backed resolver and per-call option bags used
@@ -48,15 +49,15 @@ export async function buildParseRig(
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = options.modelAnchorLookup || ""
 	const ablateToAnchor = options.ablateToAnchor ?? false
-	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor=false` through
+	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor="off"` through
 	// createScorer (a loud warning rather than a throw).
 	// Replaces the old empty-anchor.json idiom.
 	// The fail-closed check refuses it (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
-		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
-		...(anchorOff ? { anchor: false } : {}),
+		...(ablateToAnchor ? { gazetteer: "off", conventions: "off" } : {}),
+		...(anchorOff ? { anchor: "off" } : {}),
 	}
 
 	const neural = await createScorer({
@@ -81,7 +82,7 @@ export async function buildParseRig(
 	)
 
 	if (anchorOff) {
-		reportError("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
+		reportError('[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor="off", #887 declared ablation)')
 	}
 
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range
@@ -170,14 +171,12 @@ export async function buildParseRig(
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
-	// normalizeCase is tri-state so an eval leg can pin either side of the library default.
-	// `--normalize-case` pins it on, `--raw-case` pins it off, neither = the library default.
+	// `--case-normalization` pins case handling.
+	// Without it, the library default applies.
 	// Pin explicitly in pre-registered legs.
-	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
-
 	const parseOpts = {
 		postcodeRepair: true,
-		...(normalizeCase !== undefined ? { normalizeCase } : {}),
+		...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
 	} as Parameters<typeof neural.parse>[1]
 
 	// `defaultCountry` is the hard country filter applied to admin lookups
@@ -213,32 +212,18 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 	// `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
 
-	// adminCoherence is on by default in the resolver, so the pin is tri-state for check legs:
-	// `--admin-coherence` pins it on, `--no-admin-coherence` pins it off, neither = the library default.
-	const adminCoherence =
-		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
-
-	// postcodeCountryCoherence is on by default in the resolver, so the pin is a full
-	// tri-state like adminCoherence's: `--postcode-country-coherence` pins it on,
-	// `--postcode-country-coherence-off` pins it off, neither = the library default.
-	const postcodeCountryCoherence =
-		(options.postcodeCountryCoherence ?? false)
-			? true
-			: (options.noPostcodeCountryCoherence ?? false)
-				? false
-				: undefined
-
 	return {
 		...(defaultCountry && defaultCountry.toLowerCase() !== "none" ? { defaultCountry } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
-		...(adminCoherence !== undefined ? { adminCoherence } : {}),
-		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
+		// A `"production"` pin passes no option, so the resolver's defaults table decides.
+		...switchPinEntry("adminCoherence", options.adminCoherence ?? "production"),
+		...switchPinEntry("postcodeCountryCoherence", options.postcodeCountryCoherence ?? "production"),
 		// The pass is on by default and the cap is unbounded by default, so neither
 		// pin set leaves this eval byte-identical.
 		// The cap is passed through at zero as well as at a distance.
 		// Zero rejects every fall.
 		// This arm separates the pass's re-pick behavior from its coordinate fallback.
-		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
+		...switchPinEntry("postcodeConsistency", options.postcodeConsistency ?? "production"),
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
 			: {}),

@@ -27,8 +27,6 @@ import {
 } from "#api/retry"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
-export { type IRuntimeLogger } from "#logging"
-
 const MS_PER_MINUTE = 60_000
 
 /**
@@ -50,7 +48,8 @@ export interface APIClientConfig {
 
 	/**
 	 * This option transfers cache storage ownership to the client.
-	 * The default is false.
+	 *
+	 * @defaultValue `false`
 	 */
 	disposeCacheStorage?: boolean
 
@@ -92,7 +91,7 @@ export interface APIClientConfig {
 	/**
 	 * Time source for the pacer, cooldown timer and retry backoff.
 	 *
-	 * Defaults to {@linkcode systemClock}.
+	 * @defaultValue {@linkcode systemClock}
 	 * Tests inject a fake clock to make timing deterministic and instant.
 	 */
 	clock?: ClockLike
@@ -139,7 +138,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.config = config
 		this.logger = config.logger ?? ConsoleLogger.prefix(config.displayName)
 		this.#clock = config.clock ?? systemClock
-		this.#retryPolicy = resolveRetryPolicy(config.retry)
+		this.#retryPolicy = resolveRetryPolicy(config.retry ?? null)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null
 
 		// The pacing limit lives IN the adapter rather than in `fetch()`: `axios-cache-interceptor`

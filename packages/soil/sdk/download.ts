@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { streamToDisk } from "@mailwoman/core/utils"

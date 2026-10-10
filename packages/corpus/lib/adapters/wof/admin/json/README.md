@@ -116,7 +116,7 @@ rows look like `Paris, Île-de-France, France`.
 ## Known quirks
 
 - The adapter holds an in-memory ancestry index (`Map<id, [parent, grandparent,
-...]>`) keyed by every record it sees. For the full US admin distro
+  ...]>`) keyed by every record it sees. For the full US admin distro
   (~270 k recognized records) this peaks at ~50 MB. The fully streaming
   alternative would require resolving parents lazily, which is more code
   for no real memory-budget win at corpus-build scale.

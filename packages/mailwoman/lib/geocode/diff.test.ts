@@ -125,7 +125,7 @@ describe("diffGeocode", () => {
 		)
 
 		expect(diff.attribution).toBe("coordinate-appeared-or-vanished")
-		expect(diff.movedKm).toBeUndefined()
+		expect(diff.movedKm).toBeNull()
 		expect(renderGeocodeDiff(diff)).toContain("LOST its coordinate")
 	})
 

@@ -10,12 +10,12 @@
  *   that feed's entries point at files, and both are `<entry>` with `<link>` children.
  *
  *   Parsed with `@mailwoman/core/html/elements` rather than matched with a pattern, because a feed
- *   needs the two things a pattern handles badly. An entry's open tag carries attributes
+ *   needs the two things a pattern handles badly. An entry's open tag holds attributes
  *   (`xml:lang`), and an href escapes the ampersand between its query parameters, so a reader has to
  *   keep attributes and decode entities. XML mode is required: a feed's links self-close, and HTML
  *   mode leaves them open.
  *
- *   Feed-level links are told from entry-level links by the parser rather than by position. Asking
+ *   Feed-level links are told from entry-level links by the parser rather than by position. One request
  *   for `link` and `entry` together yields a `link` only where it is not already inside an `entry`,
  *   because capture runs to the outermost requested element's close.
  */
@@ -86,7 +86,8 @@ export interface AtomEntry {
  */
 export interface AtomFeed {
 	/**
-	 * The feed's own links, which are the ones not inside an entry.
+	 * The feed's own links.
+	 * These sit outside every entry.
 	 */
 	links: readonly AtomLink[]
 	entries: readonly AtomEntry[]
@@ -100,7 +101,7 @@ function atomLinkOf(element: MarkupElement): AtomLink {
 		rel: (element.attributes.rel ?? "").toLowerCase(),
 		type: element.attributes.type ?? null,
 		title: element.attributes.title ?? null,
-		length: length !== undefined && /^\d+$/u.test(length) ? Number(length) : null,
+		length: length && /^\d+$/u.test(length) ? Number(length) : null,
 	}
 }
 
@@ -118,8 +119,7 @@ function atomEntryOf(element: MarkupElement): AtomEntry {
 /**
  * Read a feed's links and entries out of its markup.
  *
- * Streaming rather than whole-document, because a service document may be large:
- * ČÚZK's lists one entry per municipality in 8,373,817 bytes, measured 2026-10-02.
+ * The reader streams because a service document may be large: ČÚZK's lists one entry per municipality.
  *
  * @param chunks The feed's bytes or text, in order.
  * A Node `Readable` satisfies this.
@@ -154,11 +154,11 @@ export async function* feedChunks(text: string): AsyncIterable<string> {
 }
 
 /**
- * The first link carrying `rel`, or `undefined` where the collection holds none.
+ * The first link carrying `rel`, or `null` where the collection holds none.
  *
- * A feed's entry commonly carries several: ČÚZK writes a `describedby` link to its ISO 19139
+ * A feed's entry commonly holds several: ČÚZK writes a `describedby` link to its ISO 19139
  * record beside the `alternate` link that is the data, and either would download as a dataset.
  */
-export function linkWithRel(links: readonly AtomLink[], rel: string): AtomLink | undefined {
-	return links.find((link) => link.rel === rel.toLowerCase())
+export function linkWithRel(links: readonly AtomLink[], rel: string): AtomLink | null {
+	return links.find((link) => link.rel === rel.toLowerCase()) ?? null
 }

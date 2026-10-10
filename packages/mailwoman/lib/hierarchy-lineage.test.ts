@@ -17,7 +17,13 @@ import {
 } from "#hierarchy-lineage"
 
 function entry(placeID?: string): HierarchyLineageEntry {
-	return placeID ? { placeID } : {}
+	return { placeID: placeID ?? null, in_winner_lineage: null }
+}
+
+function sourceNode(
+	node: Pick<HierarchySourceNode, "tag" | "value"> & Partial<HierarchySourceNode>
+): HierarchySourceNode {
+	return { lat: null, lon: null, placeID: null, metadata: null, ...node }
 }
 
 describe("annotateHierarchyLineage (#1731)", () => {
@@ -54,25 +60,25 @@ describe("annotateHierarchyLineage (#1731)", () => {
 		annotateHierarchyLineage([locality, region], { placeID: "wof:85803821", metadata: {} })
 
 		expect(locality.in_winner_lineage).toBe(true)
-		expect(region.in_winner_lineage).toBeUndefined()
+		expect(region.in_winner_lineage).toBeNull()
 	})
 
 	it("leaves everything ABSENT with no anchor or a place-less anchor", () => {
 		const a = entry("wof:1")
 		const b = entry("wof:2")
 
-		annotateHierarchyLineage([a, b], undefined)
-		annotateHierarchyLineage([a, b], { metadata: { ancestors: [{ id: 1 }] } })
+		annotateHierarchyLineage([a, b], null)
+		annotateHierarchyLineage([a, b], { placeID: null, metadata: { ancestors: [{ id: 1 }] } })
 
-		expect(a.in_winner_lineage).toBeUndefined()
-		expect(b.in_winner_lineage).toBeUndefined()
+		expect(a.in_winner_lineage).toBeNull()
+		expect(b.in_winner_lineage).toBeNull()
 	})
 
 	it("anchors at the DEEPEST resolved admin node — a descendant is never flagged by its ancestor's chain", () => {
 		const { lineageAnchorNode } = HIERARCHY_LINEAGE
 		// Tree order resolves the region first (the 1600-Pennsylvania shape), so the locality must anchor.
-		const region = { tag: "region", value: "DC", placeID: "wof:85688741" }
-		const locality = { tag: "locality", value: "Washington", placeID: "wof:85931779" }
+		const region = sourceNode({ tag: "region", value: "DC", placeID: "wof:85688741" })
+		const locality = sourceNode({ tag: "locality", value: "Washington", placeID: "wof:85931779" })
 
 		expect(lineageAnchorNode([region, locality])?.placeID).toBe("wof:85931779")
 
@@ -99,7 +105,7 @@ describe("annotateHierarchyLineage (#1731)", () => {
 			metadata: { ancestors: [{ id: 85_688_543 }] },
 		})
 
-		expect(registerLocality.in_winner_lineage).toBeUndefined()
+		expect(registerLocality.in_winner_lineage).toBeNull()
 		expect(region.in_winner_lineage).toBe(true)
 	})
 })
@@ -115,7 +121,7 @@ describe("assembleHierarchy — the JP tiers", () => {
 				placeID: "wof:85672707",
 				metadata: { resolver_name: "Miyazaki" },
 			},
-			{ tag: "district", value: "下長飯町", lat: 31.7, lon: 131.1, placeID: "wof:1" },
+			sourceNode({ tag: "district", value: "下長飯町", lat: 31.7, lon: 131.1, placeID: "wof:1" }),
 			{
 				tag: "municipality",
 				value: "都城市",
@@ -124,10 +130,10 @@ describe("assembleHierarchy — the JP tiers", () => {
 				placeID: "wof:102031529",
 				metadata: { resolver_name: "Miyakonojō" },
 			},
-			{ tag: "house_number", value: "1867-2" },
+			sourceNode({ tag: "house_number", value: "1867-2" }),
 		]
 
-		const hierarchy = assembleHierarchy(nodes, null, undefined)
+		const hierarchy = assembleHierarchy(nodes, null, null)
 
 		expect(hierarchy.map((h) => [h.tag, h.name])).toEqual([
 			["municipality", "Miyakonojō"],

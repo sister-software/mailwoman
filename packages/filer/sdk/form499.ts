@@ -88,17 +88,17 @@ export interface Form499Row {
 	/**
 	 * Lifecycle parsed from workbook notes.
 	 *
-	 * The TSV has no notes, so TSV rows leave this `undefined`.
+	 * The TSV has no notes, so TSV rows leave this `null`.
 	 * A workbook row without notes has an empty lifecycle.
 	 */
-	lifecycle?: Form499Lifecycle
+	lifecycle: Form499Lifecycle | null
 	/**
 	 * Sorted USPS codes for the jurisdictions marked in the workbook.
 	 *
 	 * An empty array means the workbook marked none.
-	 * TSV rows leave this `undefined`.
+	 * TSV rows leave this `null`.
 	 */
-	operatingStates?: string[]
+	operatingStates: string[] | null
 }
 
 /**
@@ -184,6 +184,8 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 		dcAgentTelephone: raw.dcAgentTelephone,
 		dcAgentEmailAddress: raw.dcAgentEmailAddress,
 		dcAgentAddress: raw.dcAgentAddress,
+		lifecycle: null,
+		operatingStates: null,
 	}
 }
 

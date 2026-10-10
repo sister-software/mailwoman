@@ -9,7 +9,7 @@
  *   deliberate step (releasing.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 
 import {
 	type CommandSpec,
@@ -37,7 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const csv = (raw: string | undefined): string[] | undefined => (raw ? splitCountryCodes(raw) : undefined)
+const csv = (raw: string | null | undefined): string[] | undefined => (raw ? splitCountryCodes(raw) : undefined)
 
 const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -62,7 +62,8 @@ const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	// Progress streams to stderr until the summary lands.
+	// `CommandTaskResult` renders that summary.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

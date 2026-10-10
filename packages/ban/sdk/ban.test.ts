@@ -80,7 +80,7 @@ test("cleanLieuDit: passes through a clean, distinct lieu-dit name", () => {
 })
 
 test("cleanLieuDit: null/empty/whitespace-only input", () => {
-	expect(cleanLieuDit(undefined, "Altier")).toBeNull()
+	expect(cleanLieuDit(null, "Altier")).toBeNull()
 	expect(cleanLieuDit("", "Altier")).toBeNull()
 	expect(cleanLieuDit("   ", "Altier")).toBeNull()
 })

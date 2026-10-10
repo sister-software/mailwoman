@@ -5,7 +5,7 @@
  *   Resolves the evidence lexicon files of a weights package against the lexicon versions its model card declares.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -82,14 +82,14 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
 export async function resolveEvidenceLexicon(
 	channel: EvidenceLexiconChannel,
 	packageDir: PathBuilder,
-	modelCardPath: string | undefined
-): Promise<string | undefined> {
+	modelCardPath: string | null
+): Promise<string | null> {
 	const { prefix, legacy } = EVIDENCE_LEXICON_FAMILIES[channel]
 	const declared = (await readRequiredChannels(modelCardPath))?.[channel]?.lexicon
 
 	if (!declared) {
 		const candidate = resolvePath(packageDir, legacy)
-		const found = (await pathExists(candidate)) ? candidate : undefined
+		const found = (await pathExists(candidate)) ? candidate : null
 
 		const warnKey = `${channel}:${modelCardPath ?? "(no card)"}`
 
@@ -116,7 +116,7 @@ export async function resolveEvidenceLexicon(
 	const shipped = await shippedLexiconGenerations(packageDir, prefix)
 
 	// A package with no file of this family simply lacks the channel.
-	if (!shipped.length) return undefined
+	if (!shipped.length) return null
 
 	throw new LexiconVersionMismatchError(
 		`[resolveWeights] ${channel} lexicon MISMATCH between the model-card and the weights package. The card ` +

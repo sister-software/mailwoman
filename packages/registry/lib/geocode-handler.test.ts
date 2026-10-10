@@ -7,7 +7,17 @@ import { makeGeocodeHandler } from "#geocode-handler"
 import type { GeocodeAddress } from "#ingest"
 import type { SourceRecord } from "#types"
 
-const rec = (raw: Record<string, string>): SourceRecord => ({ id: "x", raw }) as SourceRecord
+const rec = (raw: Record<string, string>): SourceRecord => ({
+	id: "x",
+	source: null,
+	name: null,
+	organization: null,
+	address: null,
+	phone: null,
+	email: null,
+	attributes: null,
+	raw,
+})
 
 describe("makeGeocodeHandler", () => {
 	it("recomputes the address from raw+mapping and attaches the geocode", async () => {
@@ -15,6 +25,8 @@ describe("makeGeocodeHandler", () => {
 			components: {},
 			canonicalKey: "",
 			formatted: raw.toUpperCase(),
+			geocode: null,
+			raw: null,
 		})
 
 		const handle = makeGeocodeHandler(geocodeForIngest, { address: ["addr", "city", "state"] })
@@ -37,7 +49,7 @@ describe("makeGeocodeHandler", () => {
 
 		const out = await handle(rec({ addr: "" }))
 
-		expect(out.address).toBeUndefined()
+		expect(out.address).toBeNull()
 		expect(calls).toBe(0)
 	})
 
@@ -45,6 +57,6 @@ describe("makeGeocodeHandler", () => {
 		const geocodeForIngest: GeocodeAddress = async () => null
 		const handle = makeGeocodeHandler(geocodeForIngest, { address: ["addr"] })
 
-		expect((await handle(rec({ addr: "nowhere" }))).address).toBeUndefined()
+		expect((await handle(rec({ addr: "nowhere" }))).address).toBeNull()
 	})
 })

@@ -73,12 +73,12 @@ afterEach(() => {
 describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
 		using db = buildFixtureDB()
-		let doneDetail: string | undefined
+		let doneDetail: string | null = null
 
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") {
-					doneDetail = detail
+					doneDetail = detail ?? null
 				}
 			},
 		})
@@ -95,7 +95,7 @@ describe("findPlace — population boost", () => {
 		expect(springfieldMA?.population).toBe(153_672)
 
 		const springfieldSC = candidates.find((c) => c.id === 1004)
-		expect(springfieldSC?.population).toBeUndefined()
+		expect(springfieldSC?.population).toBeNull()
 	})
 
 	test("orders Springfields by population — MO (172k) > MA (153k) > IL (112k) > SC (no pop)", async () => {
@@ -140,7 +140,7 @@ describe("findPlace — population boost", () => {
 		expect(springfields).toHaveLength(4)
 
 		for (const c of springfields) {
-			expect(c.population).toBeUndefined()
+			expect(c.population).toBeNull()
 		}
 
 		const scores = new Set(springfields.map((c) => c.score.toFixed(6)))

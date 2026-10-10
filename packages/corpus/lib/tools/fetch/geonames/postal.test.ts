@@ -18,7 +18,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { fetchGeonamesPostal } from "#tools"
+import { fetchGeonamesPostal } from "#tools/fetch/geonames/postal"
 
 const fixtures = new AsyncDisposableStack()
 

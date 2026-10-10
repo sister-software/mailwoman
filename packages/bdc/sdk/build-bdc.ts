@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { pathExists, readFileRange } from "@mailwoman/core/fs/readers"
+import { readFileRange } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
@@ -17,17 +18,15 @@ import {
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { FRN } from "@mailwoman/filer/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { blockCentroidCells } from "#filing/landscape"
 import {
-	BDC_COVERAGE_H3_RESOLUTION,
 	BDC_H3_RESOLUTION,
 	createBDCAvailabilityTable,
 	createBDCGeoidIndex,
@@ -37,12 +36,6 @@ import {
 } from "#schema"
 import type { ProviderID } from "#sdk/common"
 import { readAvailabilityRows, type BDCAvailabilityRow } from "#sdk/parsing"
-
-/**
- * Re-exports the TIGER block centroid helpers that callers use to supply
- * {@link BuildBDCOptions.blockCentroids}, since the geometry module has no package entry point of its own.
- */
-export { createTIGERBlockCentroidLookup, geometryCentroid } from "#sdk/geometry"
 
 const STAGE_BATCH_SIZE = 10_000
 
@@ -88,11 +81,12 @@ export interface BuildBDCOptions {
 
 	/**
 	 * Whether to populate `bdc_availability.location_id`.
-	 * Defaults to false.
 	 *
 	 * The column is an opaque join key.
 	 * When it is off, rows with the same block and service collapse into one,
 	 * so `BuildBDCResult.rows` counts those tuples instead of locations.
+	 *
+	 * @defaultValue `false`
 	 */
 	includeLocationIDs?: boolean
 
@@ -102,7 +96,7 @@ export interface BuildBDCOptions {
 	 * It returns `undefined` for an unknown GEOID.
 	 * The build then skips the row and counts it in `unknownGeoids`.
 	 */
-	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
+	blockCentroids: (geoid: string) => { lat: number; lon: number } | null
 	onProgress?: (message: string) => void
 
 	/**
@@ -119,7 +113,8 @@ export interface BuildBDCOptions {
 
 	/**
 	 * The date for the primary-FRN filing query.
-	 * Defaults to `asOfDate`.
+	 *
+	 * @defaultValue `asOfDate`
 	 */
 	primaryFRNAsOf?: string
 }
@@ -180,7 +175,7 @@ interface BDCStageRow {
 	geoid: string
 	provider_id: number
 	technology_code: number
-	location_id?: string
+	location_id: string
 	max_advertised_download_speed: number
 	max_advertised_upload_speed: number
 	low_latency: 0 | 1
@@ -262,13 +257,13 @@ async function groupProviderListRows(
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>,
-	filerDB: DatabaseClient<FilerDatabase> | undefined,
+	filerDB: DatabaseClient<FilerDatabase> | null,
 	asOf: string
 ): Promise<number> {
 	const byProviderID = await groupProviderListRows(providers)
 	const insertRows: Insertable<BDCProviderTable>[] = []
 
-	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | undefined
+	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | null = null
 
 	for (const [providerID, rows] of byProviderID) {
 		const distinctFRNs = [...new Set(rows.map((row) => row.frn))]
@@ -447,16 +442,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			if (resolved === undefined) {
 				const centroid = options.blockCentroids(row.geoid)
 
-				resolved = centroid
-					? (() => {
-							const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
-
-							return {
-								h3Cell: shortCellToInt(fullRes9Cell),
-								coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
-							}
-						})()
-					: null
+				resolved = centroid ? blockCentroidCells(centroid) : null
 
 				centroidCache.set(row.geoid, resolved)
 			}
@@ -523,6 +509,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION }, wofID: "wof_id" },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		let providersPopulated = 0
@@ -533,7 +520,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			providersPopulated = await populateBDCProviderTable(
 				db,
 				options.providers,
-				options.filerDB,
+				options.filerDB ?? null,
 				options.primaryFRNAsOf ?? options.asOfDate
 			)
 

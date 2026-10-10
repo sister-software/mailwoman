@@ -11,7 +11,8 @@ import { env } from "cloudflare:workers"
 import { describe, expect, it, test } from "vitest"
 
 import { cloudflareEmailProvider } from "#email/cloudflare"
-import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
+import { licenseEmailSubject } from "#email/content"
+import { renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import { readEnv } from "#env"
 
 test("the Cloudflare provider sends the shared message through the binding and answers its id", async () => {
@@ -67,7 +68,7 @@ describe("the license message", () => {
 		refreshSecret: "s".repeat(43),
 	}
 
-	const renewal = { ...first, refreshSecret: undefined, issued: "2026-11-01", expires: "2026-12-15" }
+	const renewal = { ...first, refreshSecret: null, issued: "2026-11-01", expires: "2026-12-15" }
 	const site = "https://mailwoman.ai"
 
 	it("walks the buyer from the key to what comes after it, in text and in HTML alike", () => {

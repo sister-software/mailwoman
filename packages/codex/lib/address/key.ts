@@ -11,7 +11,7 @@
  *   explainable.
  */
 
-import type { ComponentDict } from "#address/format"
+import type { ComponentDict } from "#address/render"
 import type { ComponentTag } from "#component"
 
 /**
@@ -46,7 +46,7 @@ export interface CanonicalKeyOptions {
 	/**
 	 * Field separator in the emitted key.
 	 *
-	 * Default `"|"` — preserves field boundaries for blocking.
+	 * @defaultValue `"|"` — preserves field boundaries for blocking.
 	 */
 	separator?: string
 }

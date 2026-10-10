@@ -25,7 +25,7 @@ land in the right component. The misses in those rows are elsewhere in the addre
    is a specific, learnable convention (slash between unit and street-number in AU/NZ/UK).
 
 2. **Comma-less `City STATE` segmentation — the #694 family.** `North Sydney NSW 2060`, `Sydney NSW
-2000`: with no comma, neural keeps `North Sydney NSW` as one locality and drops the region. This is
+   2000`: with no comma, neural keeps `North Sydney NSW` as one locality and drops the region. This is
    the same delimiter-stripping failure root-caused on #694 (concatenated input loses segmentation) —
    delimited input fixes it.
 

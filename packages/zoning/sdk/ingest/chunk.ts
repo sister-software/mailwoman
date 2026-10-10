@@ -195,7 +195,7 @@ export async function ingestZoningChunk(
 				feature.localDescription,
 				feature.localCodeURL,
 				feature.crosswalkCode,
-				feature.crosswalkCode === null ? null : GZT_CROSSWALK_SCHEME,
+				feature.crosswalkCode ? GZT_CROSSWALK_SCHEME : null,
 				feature.crosswalkDescription,
 				feature.crosswalkRollup,
 				// One grade per claim: every row of this artifact is `authoritative`,
@@ -265,7 +265,7 @@ export async function ingestZoningChunk(
 			// The local vocabulary is per authority, because codes collide across them.
 			observe(localSchemeFor(feature.authorityCode), feature.localCode, feature.localDescription ?? feature.localCode)
 
-			if (feature.crosswalkCode !== null) {
+			if (feature.crosswalkCode) {
 				observe(GZT_CROSSWALK_SCHEME, feature.crosswalkCode, feature.crosswalkDescription ?? feature.crosswalkCode)
 
 				const key = `${feature.authorityCode}\u0000${feature.localCode}`
@@ -282,7 +282,7 @@ export async function ingestZoningChunk(
 				}
 			}
 
-			if (feature.crosswalkRollup !== null) {
+			if (feature.crosswalkRollup) {
 				observe(GZT_ROLLUP_SCHEME, feature.crosswalkRollup, feature.crosswalkRollup)
 			}
 

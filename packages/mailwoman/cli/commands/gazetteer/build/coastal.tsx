@@ -18,7 +18,7 @@
  *   projection and the seal. Fixtures cannot exercise those source-dependent checks.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
@@ -272,7 +272,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 					describeRow: (row) =>
 						`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind} via ` +
 						`${row.local.containment}, service ${row.serviceInside ? "inside" : "outside"}, ` +
-						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
+						`${row.nearestEdgeMetres === null ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
 				})
 			)
 		}
@@ -280,7 +280,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	// Progress streams to stderr, leaving stdout for the summary.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

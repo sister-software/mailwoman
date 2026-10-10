@@ -3,25 +3,79 @@
 
 /**
  *   Reads one built docs page into search records. A heading starts a record, a table row is a level-5
- *   record named by its first cell, and paragraph and list text joins the record of the heading above it.
+ *   record whose text is its first cell, and paragraph and list text joins the record of the heading above it.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
 import { HIERARCHY_DEPTH, type SearchRecord } from "@mailwoman/react/search/types"
-import type { Document, Element } from "domhandler"
-import { findAll, findOne, getAttributeValue, textContent } from "domutils"
+import { type AnyNode, type Document, type Element, isTag, isText } from "domhandler"
+import { findAll, findOne, getAttributeValue } from "domutils"
 import { parseDocument } from "htmlparser2"
 
 const DEFAULT_CATEGORY = "Documentation"
 const HEADING = /^h([1-6])$/
 const TABLE_ROW_LEVEL = 5
 
-function cleanText(element: Element): string {
-	return textContent(element).replaceAll(/\s+/g, " ").trim()
+/**
+ * Headings whose section is a list of links to other pages.
+ *
+ * Each linked page is indexed under its own title, so the list yields no record.
+ */
+const LINK_LIST_HEADINGS = new Set(["related", "see also", "next"])
+
+/**
+ * Whether a route is a page of its own rather than a listing of other pages.
+ *
+ * The research archive, its tag pages and its pagination repeat the posts' titles and excerpts.
+ */
+export function isIndexedRoute(route: string): boolean {
+	return !(
+		route === "/404" ||
+		route === "/404.html" ||
+		route === "/research/archive" ||
+		route === "/research/tags" ||
+		route.startsWith("/research/tags/") ||
+		/^\/research\/page\/\d+$/.test(route)
+	)
 }
+
+/**
+ * Zero-width and byte-order characters.
+ * Docusaurus's heading anchors hold one as their text.
+ */
+const ZERO_WIDTH = /​|‌|‍|﻿/g
 
 function hasClass(element: Element, name: string): boolean {
 	return (getAttributeValue(element, "class") ?? "").split(/\s+/).includes(name)
+}
+
+/**
+ * Whether an element's text belongs to a control or a popup rather than to the page.
+ *
+ * A glossary term's tooltip repeats the definition beside the term.
+ * A heading's hash link holds only a zero-width space.
+ */
+function isAside(element: Element): boolean {
+	return getAttributeValue(element, "role") === "tooltip" || hasClass(element, "hash-link")
+}
+
+function visibleText(node: AnyNode): string {
+	if (isText(node)) return node.data
+
+	if (!isTag(node) || isAside(node)) return ""
+
+	return node.children.map(visibleText).join("")
+}
+
+function cleanText(element: Element): string {
+	return visibleText(element).replaceAll(ZERO_WIDTH, "").replaceAll(/\s+/g, " ").trim()
+}
+
+/**
+ * A row becomes its own record only when its first cell holds a name rather than a number or a mark.
+ */
+function namesRow(firstCell: string): boolean {
+	return /\p{L}/u.test(firstCell)
 }
 
 function insideTableRow(element: Element): boolean {
@@ -71,7 +125,7 @@ export function extractRecords(html: string, url: string): SearchRecord[] {
 
 	const drafts: Draft[] = []
 	let anchor = ""
-	let section: Draft | undefined
+	let section: Draft | null = null
 
 	const elements = findAll(
 		(element) => HEADING.test(element.name) || element.name === "tr" || element.name === "p" || element.name === "li",
@@ -83,10 +137,18 @@ export function extractRecords(html: string, url: string): SearchRecord[] {
 
 		if (heading) {
 			const level = Number(heading[1])
+			const name = cleanText(element)
 
-			hierarchy[level] = cleanText(element)
+			hierarchy[level] = name
 			hierarchy.fill(null, level + 1)
 			anchor = level === 1 ? "" : (getAttributeValue(element, "id") ?? anchor)
+
+			if (level > 1 && LINK_LIST_HEADINGS.has(name.toLowerCase())) {
+				section = null
+
+				continue
+			}
+
 			section = { anchor, hierarchy: [...hierarchy], level, parts: [] }
 			drafts.push(section)
 		} else if (element.name === "tr") {
@@ -94,11 +156,27 @@ export function extractRecords(html: string, url: string): SearchRecord[] {
 			const first = cells[0]
 			const last = cells.at(-1)
 
-			if (!first || !last || cleanText(first) === "") continue
+			if (!first || !last) continue
+
+			const name = cleanText(first)
+
+			// A row keyed by a number or a mark joins the section's text instead of standing as a hit.
+			if (!namesRow(name)) {
+				const text = cells
+					.map(cleanText)
+					.filter((cell) => cell !== "")
+					.join(" ")
+
+				if (section && text !== "") {
+					section.parts.push(text)
+				}
+
+				continue
+			}
 
 			const rowHierarchy = [...hierarchy]
 
-			rowHierarchy[TABLE_ROW_LEVEL] = cleanText(first)
+			rowHierarchy[TABLE_ROW_LEVEL] = name
 			rowHierarchy.fill(null, TABLE_ROW_LEVEL + 1)
 
 			drafts.push({

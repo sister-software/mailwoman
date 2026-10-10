@@ -35,7 +35,7 @@ interface SceneProps {
 	/**
 	 * Whether to move the camera to the place.
 	 *
-	 * @default false
+	 * @defaultValue `false`
 	 */
 	applyCamera?: boolean
 }

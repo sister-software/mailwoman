@@ -83,11 +83,11 @@ export function configSourceNames(text: string): ConfigSourceName[] {
 		const indent = /^[\t ]*/.exec(raw)![0].length
 		const opener = /^[\t ]*([A-Za-z_]+):\s*(#.*)?$/.exec(raw)
 
-		if (field !== null && indent <= fieldIndent) {
+		if (field && indent <= fieldIndent) {
 			field = null
 		}
 
-		if (field === null) {
+		if (!field) {
 			if (opener && (KEYED_FIELDS.has(opener[1]!) || opener[1] === LISTED_FIELD || opener[1] === RECEIPTS_FIELD)) {
 				field = opener[1]!
 				fieldIndent = indent
@@ -177,6 +177,7 @@ export const wireIdentifiersCheck: RepoCheck = {
 						`\`${name}\` in \`${field}\` is not a source any adapter, recipe or carried overlay emits. ` +
 						"A source id is the string stored on every row of a built corpus, so a config keys on the spelling its corpus stores. " +
 						"If a sweep renamed it, restore the stored spelling. If it is new, add it to RECIPE_SOURCES or CARRIED_SOURCES in packages/corpus/lib/recipes/sources.ts.",
+					details: null,
 				})
 			}
 		}

@@ -4,7 +4,7 @@
 /**
  *   The two-path comparison's own logic runs against a scripted service reader.
  *
- *   The check assigns one of three outcomes to each point. A live run can only be watched making that decision.
+ *   The check assigns one of three results to each point. A live run can only be watched making that decision.
  *   A scripted function makes the decision testable. Points the service places inside agree. Points far from
  *   every service edge disagree. Points within a few centimeters of an edge receive `boundary_tolerance` because
  *   the two channels round the same edge differently.
@@ -124,7 +124,7 @@ describe("the positive half", () => {
 
 		expect(verified.disagreed).toBe(1)
 		// No polygon appears near the point, so the result omits an edge distance instead of reporting zero.
-		expect(verified.agreement[0]!.nearestEdgeMetres).toBeUndefined()
+		expect(verified.agreement[0]!.nearestEdgeMetres).toBeNull()
 	})
 
 	it("tolerates a point a few centimeters outside the service's rendering of the same edge", async () => {
@@ -160,7 +160,7 @@ describe("the positive half", () => {
 			points: [justInside],
 		})
 
-		expect(verified.agreement[0]!.outcome).toBe("boundary_tolerance")
+		expect(verified.agreement[0]!.result).toBe("boundary_tolerance")
 		expect(verified.agreement[0]!.nearestEdgeMetres).toBeLessThan(0.5)
 	})
 

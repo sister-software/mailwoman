@@ -40,7 +40,7 @@ export const spec = {
 
 const CorpusGoldenExpand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { expandGolden } = await import("@mailwoman/corpus/tools")
+		const { expandGolden } = await import("@mailwoman/corpus/tools/golden/expand")
 
 		return expandGolden(
 			{

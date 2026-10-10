@@ -72,7 +72,7 @@ export interface CLIArgument {
 export interface CLICommand {
 	path: string
 	synopsis: string
-	description?: string
+	description: string
 	args: CLIArgument[]
 	flags: CLIFlag[]
 }
@@ -272,7 +272,7 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 		}
 
 		if (node.component) {
-			collectCommands({ ...node, commands: undefined }, [], commands)
+			collectCommands({ ...node, commands: null }, [], commands)
 		}
 
 		commands.sort((a, b) => a.path.localeCompare(b.path, "en"))

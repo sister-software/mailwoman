@@ -28,7 +28,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
@@ -56,7 +56,8 @@ export function cordisArchiveURL(programme: string): string {
 }
 
 /**
- * The file name one programme's archive is kept under, which is the URL's own last segment.
+ * The file name one programme's archive is kept under.
+ * It is the URL's own last segment.
  */
 export function cordisArchiveFilename(programme: string): string {
 	return `cordis-${programme}projects-csv.zip`
@@ -68,7 +69,8 @@ export function cordisArchiveFilename(programme: string): string {
 export const CORDIS_LEGAL_NOTICE_URL = "https://cordis.europa.eu/about/legal"
 
 /**
- * The directory the archives are written under, which is the adapter's `inputPath`.
+ * The directory the archives are written under.
+ * It is the adapter's `inputPath`.
  */
 const SLUG = CORDIS_ADAPTER_ID
 
@@ -109,7 +111,7 @@ export async function readCORDISArchiveHead(
 
 	return {
 		lastModified: headers?.["last-modified"] ?? null,
-		contentLength: length !== undefined && /^\d+$/u.test(length) ? Number(length) : null,
+		contentLength: length && /^\d+$/u.test(length) ? Number(length) : null,
 	}
 }
 
@@ -119,16 +121,16 @@ export async function readCORDISArchiveHead(
  * The `HEAD` decides first, then the file's own length, then, when asked, its digest.
  */
 export async function isCORDISArchiveCurrent(
-	recorded: CORDISArchiveManifest | undefined,
+	recorded: CORDISArchiveManifest | null,
 	head: CORDISArchiveHead,
 	path: PathBuilderLike,
 	verifyDigest: boolean
 ): Promise<boolean> {
 	if (!recorded) return false
 
-	if (head.lastModified === null && head.contentLength === null) return false
+	if (!head.lastModified && head.contentLength === null) return false
 
-	if (head.lastModified !== null && head.lastModified !== recorded.last_modified) return false
+	if (head.lastModified && head.lastModified !== recorded.last_modified) return false
 
 	if (head.contentLength !== null && head.contentLength !== recorded.bytes) return false
 
@@ -149,7 +151,7 @@ export interface DownloadCORDISOptions {
 	outputDir: PathBuilderLike
 	/**
 	 * Which programmes to fetch.
-	 * Defaults to {@linkcode CORDIS_PROGRAMMES}.
+	 * @defaultValue {@linkcode CORDIS_PROGRAMMES}
 	 */
 	programmes?: readonly string[]
 	/**
@@ -224,7 +226,7 @@ export async function downloadCORDIS(
 
 		const current =
 			!options.force &&
-			(await isCORDISArchiveCurrent(recorded.get(filename), head, archivePath, options.verifyDigest ?? false))
+			(await isCORDISArchiveCurrent(recorded.get(filename) ?? null, head, archivePath, options.verifyDigest ?? false))
 
 		if (current) {
 			report?.(`  ✓ ${programme} already current — no download.`)

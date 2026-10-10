@@ -62,7 +62,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
 5. **Run the sync:** `modal run -m launch.train_remote::sync --version <key>`. It raises naming anything
    that did not land, so a clean exit is the confirmation.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
-mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
+   mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
    set; a new tokenizer is a separate, intended change.
 7. **Launch the GPU train (the real spend).** Through the detached launcher, never from a shell: a
    `modal run` is a local client whose death cancels the remote input, so a harness that kills the

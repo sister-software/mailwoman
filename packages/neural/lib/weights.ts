@@ -2,19 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { scriptFamilyBase } from "#char-encoder"
+import type { EncoderDescriptor } from "#char-encoder"
 import { PlacetypeCensusResolver } from "#placetype/census"
-import {
-	type EncoderDescriptor,
-	packageHasBinaries,
-	readEncoderFromModelCard,
-	resolveCharVocab,
-} from "#weights/channels"
+import { packageHasBinaries, readEncoderFromModelCard, resolveCharVocab } from "#weights/channels"
 import { resolveEvidenceLexicon } from "#weights/lexicon"
 
 /**
@@ -63,7 +60,8 @@ export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: stri
 export interface ResolveWeightsOpts {
 	/**
 	 * The locale tag that selects the weights package.
-	 * The default is `en-us`.
+	 *
+	 * @defaultValue `en-us`
 	 */
 	locale?: string
 
@@ -84,7 +82,8 @@ export interface ResolveWeightsOpts {
 
 	/**
 	 * An explicit `model-card.json` path used with explicit model paths.
-	 * It defaults to a card beside `modelPath`.
+	 *
+	 * @defaultValue a card beside `modelPath`.
 	 */
 	modelCardPath?: PathBuilderLike
 
@@ -96,9 +95,10 @@ export interface ResolveWeightsOpts {
 
 	/**
 	 * The serving tier.
-	 * The default is `server`.
 	 *
 	 * The `pocket` tier omits every lexicon and keeps only the postcode anchor.
+	 *
+	 * @defaultValue `server`
 	 */
 	tier?: "server" | "pocket"
 
@@ -258,7 +258,7 @@ export interface ResolvedWeights {
 }
 
 function originOf(
-	path: PathBuilderLike | null | undefined,
+	path: PathBuilderLike | null,
 	dirs: Partial<Record<WeightsOrigin, PathBuilderLike | undefined | null>>
 ): WeightsOrigin | null {
 	if (!path) return null
@@ -280,7 +280,7 @@ function buildArtifactReport(
 	entries: ReadonlyArray<readonly [name: string, path: PathBuilderLike | null | undefined]>,
 	dirs: Partial<Record<WeightsOrigin, PathBuilderLike | null | undefined>>
 ): WeightsArtifactReport[] {
-	return entries.map(([name, path]) => ({ name, path: path ?? null, origin: originOf(path, dirs) }))
+	return entries.map(([name, path]) => ({ name, path: path ?? null, origin: originOf(path ?? null, dirs) }))
 }
 
 type ExplicitPathOpts = Omit<ResolveWeightsOpts, "modelPath" | "tokenizerPath" | "charVocabPath" | "modelCardPath"> & {
@@ -323,7 +323,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 
 		const coLocatedCard = resolvePath(dirname(opts.modelPath), "model-card.json")
 		const modelCardPath = opts.modelCardPath ?? ((await pathExists(coLocatedCard)) ? coLocatedCard : undefined)
-		const encoder = await readEncoderFromModelCard(modelCardPath)
+		const encoder = await readEncoderFromModelCard(modelCardPath ?? null)
 
 		if (encoder.kind === "char" ? !opts.charVocabPath : !opts.tokenizerPath) {
 			throw new Error(
@@ -375,7 +375,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
-	let emptyPackageDir: PathBuilder | undefined
+	let emptyPackageDir: PathBuilder | null = null
 
 	const installedDir = opts.installedPackageRoot
 		? weightsCachePackageDir(opts.installedPackageRoot, locale)
@@ -455,11 +455,11 @@ async function resolveFromPackageDir(
 	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : undefined
 
 	const encoder = await readEncoderFromModelCard(
-		(await pathExists(modelCardCandidate)) ? modelCardCandidate : baseModelCardCandidate
+		(await pathExists(modelCardCandidate)) ? modelCardCandidate : (baseModelCardCandidate ?? null)
 	)
 
 	const charVocabPath =
-		encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir ?? undefined, encoder.charVocab) : undefined
+		encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir, encoder.charVocab) : undefined
 
 	tried.push(modelPath, charVocabPath ?? tokenizerPath)
 
@@ -507,10 +507,12 @@ async function resolveFromPackageDir(
 		opts.tier === "pocket" ? undefined : (await pathExists(countryCandidate)) ? countryCandidate : undefined
 
 	const streetTypeLexiconPath =
-		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("street_type", packageDir, modelCardPath)
+		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("street_type", packageDir, modelCardPath ?? null)
 
 	const localitySurfaceLexiconPath =
-		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("locality_surface", packageDir, modelCardPath)
+		opts.tier === "pocket"
+			? undefined
+			: await resolveEvidenceLexicon("locality_surface", packageDir, modelCardPath ?? null)
 
 	const pairIndexPath = await resolvePairIndexSibling(packageDir, country)
 
@@ -580,7 +582,7 @@ async function resolveFromPackageDir(
 async function resolveAnchorLookupSibling(
 	packageDir: PathBuilderLike,
 	country: string
-): Promise<{ path: string; binary: boolean } | undefined> {
+): Promise<{ path: string; binary: boolean } | null> {
 	if (country) {
 		const binary = resolvePath(packageDir, `postcode-${country}.bin`)
 
@@ -591,7 +593,7 @@ async function resolveAnchorLookupSibling(
 
 	if (await pathExists(json)) return { path: json, binary: false }
 
-	return undefined
+	return null
 }
 
 async function resolvePairIndexSibling(packageDir: PathBuilder, country: string): Promise<string | null> {

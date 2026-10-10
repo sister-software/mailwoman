@@ -7,7 +7,8 @@
  */
 
 import { gunzip } from "@mailwoman/core/fs/compression"
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -32,17 +33,20 @@ const ACCEPTANCE: [query: string, url: string][] = [
 	["mcp server", "/docs/developers/how-to/use-the-mcp-server"],
 	["parse in the browser", "/docs/developers/tutorials/parse-in-the-browser"],
 	["vitrebi", "/docs/developers/knowledge-base/address-intelligence/decoding-and-viterbi"],
+	["cli", "/docs/developers/reference/cli"],
+	["docker", "/docs/developers/how-to/deploy-docker"],
+	["reverse geocoding", "/docs/developers/how-to/reverse-geocode"],
 ]
 
 // The acceptance suite needs a docs build.
 // CI has one in the docs-build job and refuses its absence.
-// A local checkout without a build skips and says so.
+// A local checkout without a build skips and reports that.
 const indexAbsent = !(await pathExists(INDEX_FILE))
 // oxlint-disable-next-line sister-software/no-process-globals -- the runner's `CI` flag is not a project setting
 const skipSuite = indexAbsent && !process.env.CI
 
-let scratch: TemporaryDirectory | undefined
-let client: DatabaseClient<SearchIndexDatabase> | undefined
+let scratch: TemporaryDirectory | null = null
+let client: DatabaseClient<SearchIndexDatabase> | null = null
 let db: SearchDatabase
 
 beforeAll(async () => {

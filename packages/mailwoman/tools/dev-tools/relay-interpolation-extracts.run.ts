@@ -17,7 +17,7 @@
  *   [--source <dir>] [--state <slug>]
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -74,7 +74,7 @@ export async function relayInterpolationExtract(
 		await createStreetSegmentTable(db, STREET_SEGMENT_STAGE_TABLE)
 		db.exec(`ATTACH ${sqlText(String(sourcePath))} AS source`)
 
-		// Staging in source rowid order preserves the order the readers break span ties by.
+		// Source rowid order preserves the order the readers break span ties by.
 		db.exec(
 			`INSERT INTO ${STREET_SEGMENT_STAGE_TABLE} (${columns}) SELECT ${columns} FROM source.street_segment ORDER BY rowid`
 		)

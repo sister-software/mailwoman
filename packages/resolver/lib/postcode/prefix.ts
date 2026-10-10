@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
@@ -39,7 +40,7 @@ export function derivePostcodePrefix(code: string, country?: string): string | n
 }
 
 /**
- * The outcome of a successful prefix probe.
+ * The result of a successful prefix probe.
  */
 export interface PostcodePrefixProbeResult {
 	/**
@@ -87,12 +88,13 @@ export function postcodePrefixResolvedPlace(
 	index: PostcodePrefixIndexLike
 ): CoordinateOptionalPlace {
 	return {
+		...EMPTY_PLACE_FIELDS,
 		id: 0,
 		name: prefix,
 		placetype: "postalcode",
 
 		country: index.country?.toUpperCase() ?? "",
-		...(node.lat !== undefined && node.lon !== undefined ? { lat: node.lat, lon: node.lon } : {}),
+		...(node.lat != null && node.lon != null ? { lat: node.lat, lon: node.lon } : {}),
 		score: 0,
 		exactMatch: false,
 	}

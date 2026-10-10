@@ -5,7 +5,7 @@
  *   Builds and seals the `poi.db` layer from Overture Places or OSM rows.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	type CoverageCell,
@@ -17,6 +17,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
+import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import {
 	POI_H3_RESOLUTION,
 	createPOIBrandIndex,
@@ -35,43 +36,9 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
-/**
- * Re-exports the Overture Places ingest so the POI build command can import ingest
- * and build from one module.
- */
-export {
-	chooseCategoryColumn,
-	chooseCountryExpression,
-	hasBrandColumn,
-	ingestPlaces,
-	type CountryExpression,
-	type DescribeColumn,
-	type IngestPlacesOptions,
-	type IngestPlacesResult,
-} from "#gazetteer/poi/build/overture"
-
-/**
- * Re-exports the pinned Overture release that the POI ingest uses by default.
- */
-export { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
-
 const COVERAGE_H3_RESOLUTION = 6
 
 const STAGE_BATCH_SIZE = 10_000
-
-/**
- * One POI row in the flat shape that {@link buildPOIDatabase} loads.
- */
-export interface POISourceRow {
-	name: string | null
-	category: string | null
-	brandWikidata: string | null
-	latitude: number
-	longitude: number
-	country: string
-	confidence: number
-	gersID: string | null
-}
 
 async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<POISourceRow> {
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -206,15 +173,17 @@ export interface BuildPOIOptions {
 
 	/**
 	 * The manifest's `version`.
-	 * Defaults to `release`.
+	 *
+	 * @defaultValue `release`
 	 */
 	version?: string
 
 	/**
 	 * The ISO-8601 manifest timestamp.
 	 *
-	 * Defaults to the current time.
 	 * Pass it for reproducible builds.
+	 *
+	 * @defaultValue the current time.
 	 */
 	createdAt?: string
 
@@ -222,16 +191,16 @@ export interface BuildPOIOptions {
 	 * The manifest source.
 	 *
 	 * It selects the license and attribution.
-	 * Defaults to `"overture-places"`.
+	 * @defaultValue `"overture-places"`
 	 */
 	source?: "overture-places" | "osm"
 
 	/**
 	 * The manifest distribution tier.
 	 *
-	 * Defaults to {@link LayerTier.BuildLocal} for OSM and {@link LayerTier.Shipped} otherwise.
-	 *
 	 * An OSM build cannot be {@link LayerTier.Shipped} because ODbL is share-alike.
+	 *
+	 * @defaultValue {@link LayerTier.BuildLocal} for OSM and {@link LayerTier.Shipped} otherwise.
 	 */
 	tier?: LayerTier
 
@@ -444,6 +413,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			freshnessPolicy: "sealed",
 			spineKeys: { h3: { column: "h3_cell", resolution: POI_H3_RESOLUTION } },
 			createdAt: opts.createdAt ?? new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		coverageCells = opts.coverageCellsOverride

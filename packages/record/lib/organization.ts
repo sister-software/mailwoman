@@ -28,7 +28,7 @@ export interface OrganizationName {
 	/**
 	 * The `doing business as` / trade-name clause, canonicalized, when one was present.
 	 */
-	dba?: string
+	dba: string | null
 }
 
 /**
@@ -51,7 +51,7 @@ export interface CanonicalizeOptions {
 	 * The comparison ignores case.
 	 * Unknown codes add no pack.
 	 */
-	jurisdiction?: string
+	jurisdiction?: string | null
 	/**
 	 * Ingest domain that keeps domain-specific abbreviations in organization names.
 	 *
@@ -217,7 +217,7 @@ function canonicalizeFragment(
  * between jurisdiction and domain rules.
  */
 export function canonicalizeOrganizationName(
-	input: string | null | undefined,
+	input: string | null,
 	options?: CanonicalizeOptions
 ): OrganizationName | null {
 	if (typeof input !== "string" || !input.trim()) return null
@@ -228,15 +228,7 @@ export function canonicalizeOrganizationName(
 
 	const { canonical, designations } = canonicalizeFragment(legalPart ?? "", designationSet)
 
-	const result: OrganizationName = { raw, canonical, designations }
+	const dba = dbaParts.length ? canonicalizeFragment(dbaParts.join(" "), designationSet).canonical : null
 
-	if (dbaParts.length) {
-		const dba = canonicalizeFragment(dbaParts.join(" "), designationSet).canonical
-
-		if (dba) {
-			result.dba = dba
-		}
-	}
-
-	return result
+	return { raw, canonical, designations, dba: dba || null }
 }

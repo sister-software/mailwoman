@@ -98,8 +98,15 @@ describe("C6 census aggregation", () => {
 
 		expect(
 			summarizeC6([
-				{ id: "a", input: "A B", fstAvailable: true, violations: [violation] },
-				{ id: "b", input: "C", fstAvailable: false, violations: [] },
+				{
+					id: "a",
+					input: "A B",
+					fstAvailable: true,
+					violations: [violation],
+					completeSpanRegistry: null,
+					sourceGazetteer: null,
+				},
+				{ id: "b", input: "C", fstAvailable: false, violations: [], completeSpanRegistry: null, sourceGazetteer: null },
 			])
 		).toEqual({
 			rows: 2,

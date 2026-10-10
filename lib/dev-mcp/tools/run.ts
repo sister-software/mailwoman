@@ -79,8 +79,8 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 			),
 	}),
 	handler: async (args) => {
-		const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
-		const config = (args["config"] as EngineConfig | undefined) ?? {}
+		const ref = (args["inputs"] as InputSetRef | null) ?? { kind: "board" }
+		const config = (args["config"] as EngineConfig | null) ?? {}
 		const limit = args["limit"] as number | undefined
 		const fields = args["fields"] as RunRowField[] | undefined
 		const keep = fields ? new Set<RunRowField>(fields) : undefined
@@ -109,10 +109,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					lat: run.result.lat,
 					lon: run.result.lon,
 					km:
-						item.truthLat === undefined ||
-						item.truthLon === undefined ||
-						run.result.lat === null ||
-						run.result.lon === null
+						item.truthLat === null || item.truthLon === null || run.result.lat === null || run.result.lon === null
 							? null
 							: haversineKm(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
 					tier: run.result.resolution_tier,
@@ -143,7 +140,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 			n: rows.length,
 			selection: set.selection,
 			eventLabel: "resolved to a coordinate",
-			...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+			populationN: set.populationN,
 		})
 
 		return {

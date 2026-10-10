@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { type Ancestor, type GazetteerArtifactCoverage, referentialFromPopulation } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
@@ -28,9 +29,6 @@ import { hasColumn, hasTable } from "#sqlite-utils"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#street/normalize"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
-export { rankByPrimaryPreference } from "#primary-preference"
-export type { RankedRow } from "#primary-preference"
-
 /**
  * Where a {@link WOFCandidateTableLookup} reads from
  * (a read-only `candidate.db` or a caller-held connection) and how it ranks.
@@ -38,9 +36,13 @@ export type { RankedRow } from "#primary-preference"
 export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<CandidateDatabase> {
 	/**
 	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference penalty.
-	 * No-ops without the role column and is off by default.
+	 *
+	 * - No-ops without the role column.
+	 * - `"not_applied"` penalizes variant aliases like any other.
+	 *
+	 * @defaultValue `"applied"`.
 	 */
-	variantAliasExemption?: boolean
+	variantAliasExemption?: VariantAliasExemption
 }
 
 type CandidateRow = Pick<
@@ -103,7 +105,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 
-	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
+	readonly artifactCoverage: GazetteerArtifactCoverage | null
 
 	readonly #importanceSelect: string
 
@@ -155,7 +157,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		// Optional columns are detected once here for hot-path reads.
 		this.#importanceSelect = hasColumn(this.database, "candidate", "importance") ? ", importance" : ""
 		this.#hasNameRole = hasColumn(this.database, "candidate", "name_role")
-		this.#variantAliasExemption = opts.variantAliasExemption === true
+		this.#variantAliasExemption = (opts.variantAliasExemption ?? "applied") === "applied"
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
 		if (hasTable(this.database, CANDIDATE_ANCESTOR_TABLE)) {
@@ -224,7 +226,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		return label
 	}
 
-	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
+	#qualifierRegionIDs(qualifier: string, country: string | null): Set<number> {
 		const ids = new Set<number>()
 
 		if (!this.#qualifierProbe) return ids
@@ -261,7 +263,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
 		qualifier: string,
-		country: string | undefined,
+		country: string | null,
 		opts: {
 			nameKey: NameKey
 			strippedKey: NameKey
@@ -422,8 +424,20 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 						country: query.country?.toUpperCase() ?? "",
 						lat: Number(hit.latitude),
 						lon: Number(hit.longitude),
+						parent_id: null,
 						score: 1,
+						distanceKm: null,
 						exactMatch: true,
+						prominence: null,
+						population: null,
+						referential: null,
+						encyclopedic: null,
+						importance: null,
+						bbox: null,
+						mismatch: null,
+						containedByQualifier: null,
+						regionScopeMiss: null,
+						variantAliasExempted: null,
 					},
 				]
 			}
@@ -479,13 +493,13 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		filterParams.push(...shapeParams)
 
 		// Region scope is optional (`region_id = parentID`); the fallback stays unscoped.
-		const regionParentID = query.parentID || undefined
+		const regionParentID = query.parentID || null
 
-		const probe = (nk: string, regionID: number | undefined, countryID?: number): Array<RankedRow<CandidateRow>> => {
+		const probe = (nk: string, regionID: number | null, countryID?: number): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]
 			const params: Array<string | number> = [nk, ...filterParams]
 
-			if (regionID !== undefined) {
+			if (regionID !== null) {
 				conds.push("region_id = ?")
 				params.push(regionID)
 			}
@@ -505,7 +519,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
 
-		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
+		const cascade = (regionID: number | null): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
 			if (!rows.length) {
@@ -564,8 +578,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		let regionScopeMiss = false
 
-		if (!rows.length && regionParentID !== undefined) {
-			rows = cascade(undefined)
+		if (!rows.length && regionParentID !== null) {
+			rows = cascade(null)
 			regionScopeMiss = rows.length > 0
 		}
 
@@ -601,7 +615,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		// Admin-containment re-rank runs last.
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
-			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country, {
+			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country ?? null, {
 				nameKey,
 				strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
 				shapeFilters,
@@ -613,6 +627,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		const candidates = rows.map((row): PlaceCandidate => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 			const parent = this.#ancestorLineage(Number(row.spr_id))[0]
+			const hasPopulation = row.population !== null && row.population > 0
 
 			return {
 				id: Number(row.spr_id),
@@ -623,37 +638,35 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
 
-				...(parent ? { parent_id: Number(parent.id) } : {}),
+				parent_id: parent ? Number(parent.id) : null,
 
 				score: -Number(row.neg_rank),
+				distanceKm: null,
 
 				prominence: -Number(row.effectiveNegRank),
 
 				exactMatch: !row.demoted && !row.fuzzy,
 
-				...(regionScopeMiss ? { regionScopeMiss: true } : {}),
+				regionScopeMiss: regionScopeMiss ? true : null,
 
-				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
+				containedByQualifier: row.containedByQualifier ?? null,
 
-				...(row.variantExempted ? { variantAliasExempted: true as const } : {}),
+				variantAliasExempted: row.variantExempted ? true : null,
 
-				...(row.population === null || row.population <= 0
-					? {}
-					: { population: row.population, referential: referentialFromPopulation(row.population) }),
+				population: hasPopulation ? row.population : null,
+				referential: hasPopulation ? referentialFromPopulation(row.population) : null,
+				encyclopedic: null,
 
-				...(typeof row.importance === "number" && Number.isFinite(row.importance)
-					? { importance: row.importance }
-					: {}),
-				...(hasBbox
+				importance: typeof row.importance === "number" && Number.isFinite(row.importance) ? row.importance : null,
+				bbox: hasBbox
 					? {
-							bbox: {
-								minLat: Number(row.min_lat),
-								maxLat: Number(row.max_lat),
-								minLon: Number(row.min_lon),
-								maxLon: Number(row.max_lon),
-							},
+							minLat: Number(row.min_lat),
+							maxLat: Number(row.max_lat),
+							minLon: Number(row.min_lon),
+							maxLon: Number(row.max_lon),
 						}
-					: {}),
+					: null,
+				mismatch: null,
 			}
 		})
 

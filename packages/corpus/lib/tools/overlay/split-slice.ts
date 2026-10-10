@@ -63,7 +63,7 @@ export function holdoutComponents(row: SpannedRow, index: number, input: string)
 	const components: Record<string, string> = {}
 
 	for (const [span, tag] of tags.entries()) {
-		if (!HOLDOUT_TAGS.has(tag) || components[tag] !== undefined) continue
+		if (!HOLDOUT_TAGS.has(tag) || components[tag]) continue
 
 		components[tag] = raw.slice(starts[span]!, ends[span]!)
 	}
@@ -83,7 +83,7 @@ export interface SplitSliceOptions {
 	 */
 	outputDir: PathBuilderLike
 	/**
-	 * Defaults to `defaultHoldouts()`, which is the policy the base build applies.
+	 * @defaultValue `defaultHoldouts()`, which is the policy the base build applies.
 	 */
 	holdouts?: Record<string, CountryHoldout>
 }

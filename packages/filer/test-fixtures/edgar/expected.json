@@ -21,10 +21,12 @@
 		"anterix-2025.htm": {
 			"subsidiaries": [
 				{
-					"name": "PDV Spectrum Holdings Company, LLC"
+					"name": "PDV Spectrum Holdings Company, LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Kleine License Holdings, LLC"
+					"name": "Kleine License Holdings, LLC",
+					"jurisdiction": null
 				}
 			]
 		},
@@ -439,55 +441,72 @@
 		"shentel-2025.htm": {
 			"subsidiaries": [
 				{
-					"name": "Shenandoah Cable Television LLC"
+					"name": "Shenandoah Cable Television LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shentel Management Company"
+					"name": "Shentel Management Company",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shenandoah Mobile LLC"
+					"name": "Shenandoah Mobile LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shenandoah Personal Communications LLC"
+					"name": "Shenandoah Personal Communications LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shenandoah Telephone Company"
+					"name": "Shenandoah Telephone Company",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shentel Broadband Operations LLC"
+					"name": "Shentel Broadband Operations LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shentel Broadband Holding LLC"
+					"name": "Shentel Broadband Holding LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shentel Issuer LLC"
+					"name": "Shentel Issuer LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shentel Asset Entity I LLC"
+					"name": "Shentel Asset Entity I LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Shentel Asset Entity II LLC"
+					"name": "Shentel Asset Entity II LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Horizon Acquisition Parent LLC"
+					"name": "Horizon Acquisition Parent LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Horizon Telcom Inc."
+					"name": "Horizon Telcom Inc.",
+					"jurisdiction": null
 				},
 				{
-					"name": "The Chillicothe Telephone Company"
+					"name": "The Chillicothe Telephone Company",
+					"jurisdiction": null
 				},
 				{
-					"name": "Horizon Services, Inc."
+					"name": "Horizon Services, Inc.",
+					"jurisdiction": null
 				},
 				{
-					"name": "Horizon Technology, Inc."
+					"name": "Horizon Technology, Inc.",
+					"jurisdiction": null
 				},
 				{
-					"name": "Urban Systems LLC"
+					"name": "Urban Systems LLC",
+					"jurisdiction": null
 				},
 				{
-					"name": "Infinity Fiber LLC"
+					"name": "Infinity Fiber LLC",
+					"jurisdiction": null
 				}
 			]
 		},

@@ -24,7 +24,7 @@
  */
 
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -38,8 +38,8 @@ import type { PathBuilderLike } from "path-ts"
  */
 export async function openBDCDatabaseIfPresent(
 	databasePath: PathBuilderLike | undefined
-): Promise<DatabaseClient<BDCDatabase> | undefined> {
-	if (!databasePath || !(await pathExists(databasePath))) return undefined
+): Promise<DatabaseClient<BDCDatabase> | null> {
+	if (!databasePath || !(await pathExists(databasePath))) return null
 
 	return new DatabaseClient<BDCDatabase>(databasePath, { readOnly: true })
 }
@@ -96,8 +96,8 @@ export async function assertBDCDatabaseExists(toolName: string, databasePath: Pa
  */
 export async function openFilerDatabaseIfPresent(
 	databasePath: PathBuilderLike | undefined
-): Promise<DatabaseClient<FilerDatabase> | undefined> {
-	if (!databasePath || !(await pathExists(databasePath))) return undefined
+): Promise<DatabaseClient<FilerDatabase> | null> {
+	if (!databasePath || !(await pathExists(databasePath))) return null
 
 	return new DatabaseClient<FilerDatabase>(databasePath, { readOnly: true })
 }

@@ -67,7 +67,7 @@ function padL(s: string, w: number): string {
 }
 
 function pyStr(v: unknown): string {
-	return v === undefined || v === null ? "None" : String(v)
+	return v == null ? "None" : String(v)
 }
 
 function pct(num: number, den: number): string {
@@ -106,8 +106,8 @@ async function main(): Promise<number> {
 	})
 
 	const src: string | null = positionals[0] ?? null
-	const labelArg: string | null = (values.label as string | undefined) ?? null
-	const jsonOut: string | null = (values.json as string | undefined) ?? null
+	const labelArg: string | null = (values.label as string | null) ?? null
+	const jsonOut: string | null = (values.json as string | null) ?? null
 
 	if (!src) {
 		console.error("usage: pip-containment.ts <resolved.json> [--label NAME] [--json OUT]")

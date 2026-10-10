@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig } from "@mailwoman/core/release-config"
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -36,13 +37,14 @@ export interface FetchHFWeightsOptions {
 	/**
 	 * The model-card version that selects the bucket directory.
 	 *
-	 * It defaults to the version in the base package's model card.
+	 * @defaultValue the version in the base package's model card.
 	 */
 	version?: string
 
 	/**
 	 * Receives progress lines.
-	 * It defaults to stderr.
+	 *
+	 * @defaultValue stderr.
 	 */
 	log?: (line: string) => void
 }

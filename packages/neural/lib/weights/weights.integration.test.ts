@@ -1,5 +1,6 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { isFile, pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
@@ -59,9 +60,9 @@ function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: str
 	return pieces.findIndex((p) => p.piece.replace(/^▁/, "").toLowerCase().startsWith(needle))
 }
 
-const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => undefined }
+const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => null }
 
-let enGBLoad: Promise<NeuralAddressClassifier> | undefined
+let enGBLoad: Promise<NeuralAddressClassifier> | null = null
 
 /**
  * The en-gb classifier, loaded once by the first test that asks for it after linking the dev weights.
@@ -249,7 +250,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 	)
 
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
+		"en-gb: explicit `placetypePair: off` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
@@ -258,11 +259,14 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			const wiredTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			expect(wiredTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
 
-			const disabledTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, { placetypePair: false })
+			const disabledTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, { placetypePair: "off" })
 
 			expect(disabledTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 				kind: "placetypePair",
 				applied: false,
+				probePath: null,
+				census: null,
+				censusProbedParents: null,
 			})
 
 			const bDepLocCol = disabledTrace.labels.indexOf("B-dependent_locality")

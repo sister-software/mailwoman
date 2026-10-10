@@ -16,13 +16,13 @@ export interface PackageCommand {
 }
 
 /**
- * Resolves a named executable through a package's `bin` field.
+ * Resolves an executable through a package's `bin` field.
  *
  * The base URL identifies the caller whose dependencies should be searched.
  * Node launchers run through the current Node executable, including extensionless files with a Node shebang.
  *
  * A bin entry need not be an exported module subpath.
- * Missing packages, bin entries, or executable files raise errors before a process starts.
+ * A missing package, bin entry, or executable file raises an error before a process starts.
  */
 export async function resolvePackageCommand(
 	base: string,

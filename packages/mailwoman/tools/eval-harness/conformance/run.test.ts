@@ -5,11 +5,11 @@
  *   The test would turn the strongest available nondeterminism check into a tautology if it derived the identity law's second side from the first. It observes both sides independently.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import type { GeocodeResult } from "#geocode"
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	type ConformanceObserver,
@@ -26,8 +26,14 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		law: "case-folding-invariance",
 		base: "10 Downing Street, London",
 		variant: "10 DOWNING STREET, LONDON",
-		outcomeComparator: "component_map",
+		context: null,
+		resultComparator: "component_map",
 		expect: "equivalent",
+		status: null,
+		bugRef: null,
+		rowRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -60,9 +66,12 @@ function tableObserver(table: Record<string, Record<string, string>>): {
 				dependent_locality: null,
 				unit: null,
 				postcode_country_scope: null,
+				capital_promotion: null,
+				variant_alias_exemption: "not_applied",
+				admin_coherence: null,
 				hierarchy: [],
 			},
-		} satisfies ConformanceOutcome
+		} satisfies ConformanceResult
 	}
 
 	return { observe, calls }
@@ -236,12 +245,12 @@ describe("formatConformanceFinding", () => {
 
 	it("carries the mechanism-account vocabulary into the line when the observer supplied one", async () => {
 		const shaped: ConformanceObserver = async (query) => ({
-			result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
+			result: (await tableObserver(HELD_TABLE).observe(query, null)).result,
 			mechanismShapes: query.startsWith("10 D") ? ["clean"] : ["retrieval_empty"],
 		})
 
 		const { findings } = await runConformanceFixtures(
-			[fixture({ outcomeComparator: "mechanism_shape", base: "10 Downing", variant: "somewhere else" })],
+			[fixture({ resultComparator: "mechanism_shape", base: "10 Downing", variant: "somewhere else" })],
 			shaped
 		)
 
@@ -273,22 +282,47 @@ describe("gauntletObserver", () => {
 			dependent_locality: null,
 			unit: null,
 			hierarchy: [
-				{ tag: "locality", value: "London", name: "London", placeID: "wof:101750367" },
-				{ tag: "country", value: "United Kingdom", name: "United Kingdom", placeID: "wof:85633159" },
+				{
+					tag: "locality",
+					value: "London",
+					name: "London",
+					placeID: "wof:101750367",
+					lat: null,
+					lon: null,
+					in_winner_lineage: null,
+				},
+				{
+					tag: "country",
+					value: "United Kingdom",
+					name: "United Kingdom",
+					placeID: "wof:85633159",
+					lat: null,
+					lon: null,
+					in_winner_lineage: null,
+				},
 			],
 			candidates: [],
 			postcode_country_scope: null,
+			rooftop: null,
+			capital_promotion: null,
+			dropped_components: null,
+			unfollowed_components: null,
+			derivation: null,
+			entity: null,
+			variant_alias_exemption: "not_applied",
+			admin_coherence: null,
+			authoritative: null,
 		})
 
-		const outcome = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
+		const observed = await gauntletObserver(geocode)("10 Downing Street, London", { caseCountry: "GB" })
 
-		expect(outcome.result.tier).toBe("address_point")
-		expect(outcome.result.country).toBe("United Kingdom")
-		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
+		expect(observed.result.tier).toBe("address_point")
+		expect(observed.result.country).toBe("United Kingdom")
+		expect(observed.result.hierarchy[0]?.placeID).toBe("wof:101750367")
 		// The observer supplies no shape vocabulary, so `mechanismShapes` and `candidates`
 		// are absent rather than empty — the distinction `candidate_admissibility` reads.
-		expect(outcome.mechanismShapes).toBeUndefined()
-		expect(outcome.candidates).toBeUndefined()
+		expect(observed.mechanismShapes).toBeUndefined()
+		expect(observed.candidates).toBeUndefined()
 	})
 })
 
@@ -315,13 +349,22 @@ describe("tracedGauntletObserver", () => {
 			hierarchy: [],
 			candidates: [],
 			postcode_country_scope: null,
+			rooftop: null,
+			capital_promotion: null,
+			dropped_components: null,
+			unfollowed_components: null,
+			derivation: null,
+			entity: null,
+			variant_alias_exemption: "not_applied",
+			admin_coherence: null,
+			authoritative: null,
 		},
 		resolver: [
 			{
 				tag: "locality",
 				value: "Springfield",
 				placetype: "locality",
-				query: { limit: 5 },
+				query: { limit: 5, country: null, parentID: null, postcode: null, regionQualifier: null },
 				checks: ["bare_race"],
 				candidates: [
 					{
@@ -331,21 +374,27 @@ describe("tracedGauntletObserver", () => {
 						placetype: "locality",
 						score: 5,
 						ranks: { initial: 1 },
+						prominence: null,
+						importance: null,
+						population: null,
+						exactMatch: null,
+						containedByQualifier: null,
 					},
 				],
 				candidatesTruncated: 0,
 				picked: { id: 85_940_429, name: "Springfield", source: "ranked" },
+				reachableIn: null,
 			},
 		],
 	})
 
 	it("attaches the resolver's own records, projecting the result through the same mapping", async () => {
-		const outcome = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
+		const observed = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
 
-		expect(outcome.result.locality).toBe("Springfield")
-		expect(outcome.candidates).toHaveLength(1)
-		expect(outcome.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
-		expect(outcome.candidates![0]!.query.limit).toBe(5)
+		expect(observed.result.locality).toBe("Springfield")
+		expect(observed.candidates).toHaveLength(1)
+		expect(observed.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
+		expect(observed.candidates![0]!.query.limit).toBe(5)
 	})
 
 	it("reads a refinement pair end to end, through the closed comparator set", async () => {
@@ -356,7 +405,7 @@ describe("tracedGauntletObserver", () => {
 					law: "refinement-monotonicity",
 					base: "Springfield",
 					variant: "Springfield",
-					outcomeComparator: "candidate_admissibility",
+					resultComparator: "candidate_admissibility",
 					expect: "refines",
 				}),
 			],
@@ -375,23 +424,68 @@ describe("the unmeasured verdict bucket", () => {
 	 * at its window with a base candidate missing.
 	 */
 	const unmeasuredObserver: ConformanceObserver = async (query) => ({
-		result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
+		result: (await tableObserver(HELD_TABLE).observe(query, null)).result,
 		candidates: [
 			{
 				tag: "locality",
 				value: "Springfield",
 				placetype: "locality",
-				query: { limit: query === "Springfield" ? 5 : 1 },
+				query: {
+					limit: query === "Springfield" ? 5 : 1,
+					country: null,
+					parentID: null,
+					postcode: null,
+					regionQualifier: null,
+				},
 				checks: [],
 				candidates:
 					query === "Springfield"
 						? [
-								{ id: 1, name: "a", country: "US", placetype: "locality", score: 1, ranks: {} },
-								{ id: 2, name: "b", country: "US", placetype: "locality", score: 1, ranks: {} },
+								{
+									id: 1,
+									name: "a",
+									country: "US",
+									placetype: "locality",
+									score: 1,
+									ranks: {},
+									prominence: null,
+									importance: null,
+									population: null,
+									exactMatch: null,
+									containedByQualifier: null,
+								},
+								{
+									id: 2,
+									name: "b",
+									country: "US",
+									placetype: "locality",
+									score: 1,
+									ranks: {},
+									prominence: null,
+									importance: null,
+									population: null,
+									exactMatch: null,
+									containedByQualifier: null,
+								},
 							]
-						: [{ id: 1, name: "a", country: "US", placetype: "locality", score: 1, ranks: {} }],
+						: [
+								{
+									id: 1,
+									name: "a",
+									country: "US",
+									placetype: "locality",
+									score: 1,
+									ranks: {},
+									prominence: null,
+									importance: null,
+									population: null,
+									exactMatch: null,
+									containedByQualifier: null,
+								},
+							],
 				candidatesTruncated: 0,
 				picked: null,
+				reachableIn: null,
 			},
 		],
 	})
@@ -400,7 +494,7 @@ describe("the unmeasured verdict bucket", () => {
 		law: "refinement-monotonicity",
 		base: "Springfield",
 		variant: "Springfield, IL",
-		outcomeComparator: "candidate_admissibility",
+		resultComparator: "candidate_admissibility",
 		expect: "refines",
 	})
 

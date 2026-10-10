@@ -24,8 +24,8 @@ describe("matchExpression", () => {
 		expect(matchExpression(['say"hi'])).toBe('"say""hi"*')
 	})
 
-	test("returns undefined for zero tokens", () => {
-		expect(matchExpression([])).toBeUndefined()
+	test("returns null for zero tokens", () => {
+		expect(matchExpression([])).toBeNull()
 	})
 })
 
@@ -34,6 +34,10 @@ describe("lexicalRows", () => {
 		const rows = await lexicalRows(db, ["viterbi"])
 
 		expect(rows.map((row) => row.id)).toEqual(["viterbi-top", "viterbi-section"])
+	})
+
+	test("ranks a page whose heading matches above a table row whose name matches", async () => {
+		expect((await lexicalRows(db, ["norway"])).map((row) => row.id)).toEqual(["norway-page", "row"])
 	})
 
 	test("matches the last token as a prefix", async () => {

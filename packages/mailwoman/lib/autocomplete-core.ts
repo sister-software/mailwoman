@@ -5,7 +5,8 @@
  * Framework-free FST autocomplete shared by CLI and library-facing adapters.
  */
 
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
@@ -74,7 +75,7 @@ export async function runAutocomplete(
 		placetype: suggestion.placetype,
 		wofID: suggestion.wofID,
 		referential: suggestion.referential,
-		...(suggestion.encyclopedic === undefined ? {} : { encyclopedic: suggestion.encyclopedic }),
+		...(suggestion.encyclopedic === null ? {} : { encyclopedic: suggestion.encyclopedic }),
 		completionTokens: suggestion.completionTokens,
 	}))
 }

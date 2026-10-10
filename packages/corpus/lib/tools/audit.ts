@@ -14,7 +14,8 @@
  *   Emits warnings to stderr and the audit table to stdout. never throws on an empty corpus.
  */
 
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { basename, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -42,11 +43,12 @@ export interface AuditOpts {
 	/**
 	 * Sample at most N parquet files per split when counting sources.
 	 *
-	 * Default 100 for speed.
 	 * Bump to read the full set on a slow run.
 	 *
 	 * The first row of each file determines its source — corpus-v0.2.0+ files are 100%
 	 * source-segregated, so a one-row read is authoritative.
+	 *
+	 * @defaultValue `100` for speed
 	 */
 	sampleFileCount?: number
 }
@@ -133,7 +135,7 @@ function inferSourceFromFilename(filename: string): string {
 	// Return "<unknown>" so the caller flags this case.
 	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
 
-	if (m && m[1] !== undefined) return m[1]
+	if (m && m[1]) return m[1]
 
 	return "<unknown>"
 }
@@ -302,7 +304,7 @@ function formatPct(v: number | "—"): string {
 
 function printReport(
 	corpusDir: PathBuilderLike,
-	configPath: PathBuilderLike | undefined,
+	configPath: PathBuilderLike | null,
 	stats: FileCountStats,
 	rows: AuditRow[]
 ): void {
@@ -394,5 +396,5 @@ export async function audit(opts: AuditOpts): Promise<void> {
 
 	const trainStats = stats.bySplit["train"] ?? {}
 	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})
-	printReport(opts.corpusDir, opts.configPath, stats, rows)
+	printReport(opts.corpusDir, opts.configPath ?? null, stats, rows)
 }

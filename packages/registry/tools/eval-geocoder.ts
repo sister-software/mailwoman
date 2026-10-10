@@ -9,6 +9,8 @@
  *   `mailwoman/geocode-core` (see `mailwoman/commands/registry/run.tsx`).
  */
 
+import type { CaseNormalization } from "@mailwoman/core/pipeline"
+
 import type { ColumnMapping, GeocodeAddress, SourceRecord } from "#index"
 
 /**
@@ -49,10 +51,11 @@ export interface EvalGeocoderInit {
 	/**
 	 * All-caps case normalization.
 	 *
-	 * Default on.
-	 * `nppes-benchmark --legacy-join` turns it off for the A/B.
+	 * `nppes-benchmark --legacy-join` passes `"preserve"` for the A/B.
+	 *
+	 * @defaultValue `"title-case"`
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 }
 
 /**

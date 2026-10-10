@@ -3,7 +3,18 @@ import { expect, test } from "vitest"
 import { cameraToViewState, computeMapPlaceRenderSpec, type ResolvedMapPlace } from "#map/place-render"
 
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
-	return { id: 1, name: "Somewhere", placetype: "locality", lat: 40, lon: -74, score: 1, ...overrides }
+	return {
+		id: 1,
+		name: "Somewhere",
+		placetype: "locality",
+		lat: 40,
+		lon: -74,
+		score: 1,
+		bbox: null,
+		tier: null,
+		uncertaintyM: null,
+		...overrides,
+	}
 }
 
 test("Street address_point tier → exact-radius circle + fly to zoom 17", () => {

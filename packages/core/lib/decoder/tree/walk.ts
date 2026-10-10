@@ -119,6 +119,6 @@ export function slotNodes(roots: readonly AddressNode[]): AddressNode[] {
 export function firstNodeWhere(
 	roots: readonly AddressNode[],
 	predicate: (node: AddressNode) => unknown
-): AddressNode | undefined {
-	return walkNodes(roots).find(predicate)
+): AddressNode | null {
+	return walkNodes(roots).find(predicate) ?? null
 }

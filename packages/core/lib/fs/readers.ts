@@ -15,8 +15,6 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { open } from "#fs/readers/stat"
 import { parseJSONStrict } from "#json"
 
-export * from "#fs/readers/stat"
-
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"
 
@@ -26,8 +24,7 @@ export type { FileHandle } from "node:fs/promises"
  * Read the first `byteSize` bytes of a file, or the whole file if it is smaller.
  *
  * @param path The file to read.
- * @param byteSize How many bytes to read.
- * Defaults to 65,536 bytes.
+ * @param byteSize [65536] How many bytes to read.
  * That size is enough to sniff a file's format.
  *
  * @returns The bytes read, as a UTF-8 string.

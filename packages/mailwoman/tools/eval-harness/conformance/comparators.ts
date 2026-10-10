@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The six outcome comparators own no equality of their own and keep their axes disjoint. An identity law therefore never falls back to distance.
+ *   The six result comparators own no equality of their own and keep their axes disjoint. An identity law therefore never falls back to distance.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -13,7 +13,7 @@ import { accountRefinement } from "#tools/eval-harness/conformance/candidate-adm
 import type {
 	ConformanceFixture,
 	ConformanceRelation,
-	OutcomeComparatorName,
+	ResultComparatorName,
 } from "#tools/eval-harness/conformance/fixture"
 import { componentMatches, DEFAULT_TOL_M } from "#tools/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"
@@ -22,7 +22,7 @@ import { compareComponents } from "#tools/eval-harness/invariance/compare"
 /**
  * One side of a law: the assembled result, plus whatever mechanism account the observer was able to attach.
  */
-export interface ConformanceOutcome {
+export interface ConformanceResult {
 	/**
 	 * The assembled result, projected through the Gauntlet's own `toGauntletResult`
 	 * so this comparator set and the board's grader agree on which field a component lives in.
@@ -47,10 +47,10 @@ export interface ConformanceOutcome {
 export type ObservedRelation = ConformanceRelation | "undecidable" | "unmeasured"
 
 /**
- * One comparator's reading of a pair of outcomes.
+ * One comparator's reading of a pair of results.
  */
 export interface ComparatorReading {
-	comparator: OutcomeComparatorName
+	comparator: ResultComparatorName
 	observed: ObservedRelation
 	/**
 	 * What the comparator actually read on each side, stated whatever the verdict
@@ -112,7 +112,7 @@ function extendsChain(inner: readonly string[], outer: readonly string[]): boole
 	return inner.every((key, index) => outer[index + offset] === key)
 }
 
-function compareResolutionIdentity(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
+function compareResolutionIdentity(base: ConformanceResult, variant: ConformanceResult): ComparatorReading {
 	const a = identityChain(base.result)
 	const b = identityChain(variant.result)
 
@@ -125,9 +125,7 @@ function compareResolutionIdentity(base: ConformanceOutcome, variant: Conformanc
 			comparator: "resolution_identity",
 			observed: "undecidable",
 			basis,
-			differences: [
-				"neither outcome carries a stable place identity — nothing to compare, and a coordinate is not one",
-			],
+			differences: ["neither result carries a stable place identity — nothing to compare, and a coordinate is not one"],
 		}
 	}
 
@@ -160,8 +158,8 @@ function compareResolutionIdentity(base: ConformanceOutcome, variant: Conformanc
 
 function compareAssembledCoordinate(
 	fixture: ConformanceFixture,
-	base: ConformanceOutcome,
-	variant: ConformanceOutcome
+	base: ConformanceResult,
+	variant: ConformanceResult
 ): ComparatorReading {
 	const toleranceM = fixture.toleranceM ?? DEFAULT_TOL_M
 	const a = base.result
@@ -224,7 +222,7 @@ function compareAssembledCoordinate(
 
 // #region parse_whole_strict
 
-function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
+function compareParseWholeStrict(base: ConformanceResult, variant: ConformanceResult): ComparatorReading {
 	const a = populatedComponents(base.result)
 	const b = populatedComponents(variant.result)
 	const aKeys = Object.keys(a).toSorted()
@@ -236,7 +234,7 @@ function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceO
 			comparator: "parse_whole_strict",
 			observed: "undecidable",
 			basis,
-			differences: ["neither outcome produced a component — two empty parses agree about nothing"],
+			differences: ["neither result produced a component — two empty parses agree about nothing"],
 		}
 	}
 
@@ -246,9 +244,9 @@ function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceO
 		const before = a[tag]
 		const after = b[tag]
 
-		if (before === undefined) {
+		if (!before) {
 			differences.push(`${tag}: ∅ → "${after}"`)
-		} else if (after === undefined) {
+		} else if (!after) {
 			differences.push(`${tag}: "${before}" → ∅`)
 		} else if (!componentMatches(after, before)) {
 			differences.push(`${tag}: "${before}" → "${after}"`)
@@ -272,7 +270,7 @@ function containsAll(inner: Record<string, string>, outer: Record<string, string
 	})
 }
 
-function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
+function compareComponentMap(base: ConformanceResult, variant: ConformanceResult): ComparatorReading {
 	const a = populatedComponents(base.result)
 	const b = populatedComponents(variant.result)
 	const aKeys = Object.keys(a)
@@ -283,7 +281,7 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 			comparator: "component_map",
 			observed: "undecidable",
 			basis: "base {empty} · variant {empty}",
-			differences: ["neither outcome produced a component — two empty parses agree about nothing"],
+			differences: ["neither result produced a component — two empty parses agree about nothing"],
 		}
 	}
 
@@ -316,7 +314,7 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 
 // #region mechanism_shape
 
-function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
+function compareMechanismShape(base: ConformanceResult, variant: ConformanceResult): ComparatorReading {
 	const a = base.mechanismShapes
 	const b = variant.mechanismShapes
 
@@ -364,7 +362,7 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 
 // #region candidate_admissibility
 
-function compareCandidateAdmissibility(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
+function compareCandidateAdmissibility(base: ConformanceResult, variant: ConformanceResult): ComparatorReading {
 	const a = base.candidates
 	const b = variant.candidates
 
@@ -395,17 +393,17 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
 // #endregion
 
 /**
- * Reads a pair of outcomes on the axis specified by the fixture.
+ * Reads a pair of results on the axis specified by the fixture.
  *
  * @throws When a comparator name falls outside the closed set.
  * Only a hand-built fixture that skipped the loader can supply one.
  */
-export function compareOutcomes(
+export function compareResults(
 	fixture: ConformanceFixture,
-	base: ConformanceOutcome,
-	variant: ConformanceOutcome
+	base: ConformanceResult,
+	variant: ConformanceResult
 ): ComparatorReading {
-	switch (fixture.outcomeComparator) {
+	switch (fixture.resultComparator) {
 		case "resolution_identity":
 			return compareResolutionIdentity(base, variant)
 		case "assembled_coordinate":
@@ -419,9 +417,9 @@ export function compareOutcomes(
 		case "candidate_admissibility":
 			return compareCandidateAdmissibility(base, variant)
 		default: {
-			const unknown: never = fixture.outcomeComparator
+			const unknown: never = fixture.resultComparator
 
-			throw new Error(`fixture "${fixture.id}": unknown outcomeComparator ${stringifyJSON(unknown)}`)
+			throw new Error(`fixture "${fixture.id}": unknown resultComparator ${stringifyJSON(unknown)}`)
 		}
 	}
 }

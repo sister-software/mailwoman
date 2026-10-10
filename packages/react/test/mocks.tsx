@@ -29,9 +29,21 @@ export function makePOIRuntime(): POIRuntime {
 		lookup,
 		lexicon: (phrase) =>
 			phrase.trim().toLowerCase() === "drinking fountain"
-				? [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 0.9 }]
+				? [
+						{
+							kind: "category",
+							categoryID: "drinking_water",
+							matchedPhrase: "drinking fountain",
+							confidence: 0.9,
+							wikidata: null,
+							mechanism: "exact",
+							inputPhrase: "drinking fountain",
+							reading: "preference",
+							countryScope: null,
+						},
+					]
 				: [],
-		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [] }),
+		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -43,7 +55,7 @@ export function makePOIRuntime(): POIRuntime {
  */
 export function makeBrandPOIRuntime(): POIRuntime {
 	const lookup = {
-		getPOICategory: () => undefined,
+		getPOICategory: () => null,
 		requiresBuildLocalLayer: () => false,
 		resolveOvertureCategories: (id: string) => [id],
 		lookupPOICategory: () => [],
@@ -56,9 +68,21 @@ export function makeBrandPOIRuntime(): POIRuntime {
 		lookup,
 		lexicon: (phrase) =>
 			phrase.trim().toLowerCase() === "chevron"
-				? [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1 }]
+				? [
+						{
+							kind: "brand",
+							categoryID: "Chevron",
+							wikidata: "Q319642",
+							matchedPhrase: "chevron",
+							confidence: 1,
+							mechanism: "exact",
+							inputPhrase: "chevron",
+							reading: "preference",
+							countryScope: null,
+						},
+					]
 				: [],
-		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [] }),
+		classify: async () => ({ kind: "poi_query", confidence: 0.9, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -76,14 +100,14 @@ export const mockLiveSearchSuccess: POILiveSearch = async () => ({
 
 /**
  * A live-search probe that echoes the brand QID it received back through the hits,
- * so tests can assert the brand path threaded `brandWikidata` (a category probe never sets it).
+ * so tests can assert the brand path sent a `kind: "brand"` request carrying the QID.
  */
-export const mockBrandLiveSearchSuccess: POILiveSearch = async ({ brandWikidata }) => ({
+export const mockBrandLiveSearchSuccess: POILiveSearch = async (request) => ({
 	status: "success",
 	centerName: "Houston, TX",
 	hits: [
 		{
-			name: `Chevron (${brandWikidata ?? "no-qid"})`,
+			name: `Chevron (${request.kind === "brand" ? request.wikidata : "no-qid"})`,
 			lat: 29.76,
 			lon: -95.37,
 			distanceM: 210,

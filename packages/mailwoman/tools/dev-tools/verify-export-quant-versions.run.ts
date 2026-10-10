@@ -5,12 +5,13 @@
  * Checks the local export and quantization packages against the training-image pins before local quantization.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { $public } from "#env"
 
-const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
+const PYTHON = $public.PYTHON ?? ".venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/launch/app.py"
 
 if (!(await pathExists(PYTHON))) {

@@ -14,7 +14,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest, type layerschemahandle } from "@mailwoman/core/layers"
 import type { Evidence } from "@mailwoman/evidence"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
@@ -44,7 +44,7 @@ const FIXED_WIRELESS_CODES = BroadbandTechnologyCategoryToCodeSet[BroadbandTechn
  */
 export interface PlausibilityClaim {
 	address?: string
-	point?: PointLiteral
+	point?: PointLiteral | null
 	geoid?: string
 	technologyCode: number
 	claimedDownloadMbps: number
@@ -133,15 +133,6 @@ export interface PlausibilityBundle {
 }
 
 /**
- * The geocode fields this module reads.
- * It avoids a circular dependency on the `mailwoman` package.
- */
-export interface GeocodeLike {
-	lat: number | null
-	lon: number | null
-}
-
-/**
  * Open POI lookup and its layer database.
  * The caller owns and closes both handles.
  */
@@ -155,9 +146,18 @@ export interface PlausibilityPOIDeps {
  * A missing layer produces an abstention.
  */
 export interface PlausibilityDeps {
-	bdcDB?: DatabaseClient<BDCDatabase>
-	poi?: PlausibilityPOIDeps
-	geocode?: (address: string) => Promise<GeocodeLike>
+	bdcDB?: DatabaseClient<BDCDatabase> | null
+	poi?: PlausibilityPOIDeps | null
+	geocode?: (address: string) => Promise<NullableLatLon>
+	/**
+	 * Resolves a claim's GEOID to its res-9 short cell when the block has no filing rows of
+	 * its own, so a covered block with zero filings reads as surveyed rather than unknown.
+	 *
+	 * `geoidCellResolver` builds one from a block-centroid lookup.
+	 *
+	 * Without it, a zero-row GEOID keeps the documented safe result: unknown.
+	 */
+	bdcGeoidCell?: (geoid: string) => number | null
 }
 
 /**
@@ -266,7 +266,7 @@ async function assertLayerSpineResolution(
  * The result has no "implausible" verdict, because missing evidence does not disprove a claim.
  */
 export async function plausibilityCheck(claim: PlausibilityClaim, deps: PlausibilityDeps): Promise<PlausibilityBundle> {
-	let point: PointLiteral | undefined = claim.point
+	let point: PointLiteral | null = claim.point ?? null
 
 	if (!point && claim.address) {
 		if (!deps.geocode) {
@@ -310,7 +310,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		// A claim without a geoid has a point, so `pointCell` is defined here.
 		const landscape =
 			blockResolution === "geoid"
-				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!] })
+				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!], resolveGeoidCell: deps.bdcGeoidCell })
 				: await filingLandscape(deps.bdcDB, { h3Cells: [pointCell!] })
 
 		vintage = landscape.vintage

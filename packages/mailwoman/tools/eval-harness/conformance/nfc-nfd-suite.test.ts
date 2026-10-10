@@ -1,4 +1,5 @@
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { normalize } from "@mailwoman/normalize"
 import { beforeAll, describe, expect, it } from "vitest"
 
@@ -106,9 +107,9 @@ describe("the committed canonical-form suite", () => {
 		for (const fixture of fixtures) {
 			const seedCase = corpus.get(splitRowRef(fixture.rowRef!).caseID)!
 
-			const coordinate = fixture.outcomeComparator === "assembled_coordinate"
+			const coordinate = fixture.resultComparator === "assembled_coordinate"
 
-			expect(fixture.toleranceM, `${fixture.id}: toleranceM`).toBe(coordinate ? seedCase.expectToleranceM : undefined)
+			expect(fixture.toleranceM, `${fixture.id}: toleranceM`).toBe(coordinate ? seedCase.expectToleranceM : null)
 		}
 	})
 
@@ -159,14 +160,14 @@ describe("the committed canonical-form suite", () => {
 	})
 
 	it("measures more than one comparator and more than one country", () => {
-		expect(new Set(fixtures.map((fixture) => fixture.outcomeComparator)).size).toBeGreaterThan(1)
+		expect(new Set(fixtures.map((fixture) => fixture.resultComparator)).size).toBeGreaterThan(1)
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 
 	it("gives every tracked row a reference and a note, and every blocking row no reference", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a blocking row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a blocking row must not name a defect`).toBeNull()
 
 				continue
 			}

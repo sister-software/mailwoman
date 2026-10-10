@@ -28,13 +28,13 @@ export interface SQLiteStreetNameLookupOpts {
 	/**
 	 * ISO-2 (upper-case) countries this index answers for.
 	 *
-	 * Default `["FR"]` (the BAN street-centroids instance).
+	 * @defaultValue `["FR"]` (the BAN street-centroids instance).
 	 */
 	countries?: Iterable<string>
 	/**
 	 * Table name.
 	 *
-	 * Default `street_centroid`.
+	 * @defaultValue `street_centroid`
 	 */
 	table?: string
 }
@@ -87,15 +87,11 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 		// Scoped lookups tighten precision when the hypothesis includes a locality/postcode.
 		// A scoped miss falls back to the unscoped probe.
 		// The scope column may be incomplete, so a miss there does not establish absence.
-		if (
-			scope?.locality &&
-			this.#byNameLocality &&
-			this.#byNameLocality.get(norm, foldStreetSurface(scope.locality)) !== undefined
-		) {
+		if (scope?.locality && this.#byNameLocality && this.#byNameLocality.get(norm, foldStreetSurface(scope.locality))) {
 			return true
 		}
 
-		if (scope?.postcode && this.#byNamePostcode && this.#byNamePostcode.get(norm, scope.postcode) !== undefined) {
+		if (scope?.postcode && this.#byNamePostcode && this.#byNamePostcode.get(norm, scope.postcode)) {
 			return true
 		}
 

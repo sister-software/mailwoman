@@ -27,6 +27,7 @@ export type {
 	POICategorySubject,
 	POIExplorerResult,
 	POILiveSearch,
+	POILiveSearchRequest,
 	POILiveSearchResult,
 	POIRuntime,
 	POISearchHit,

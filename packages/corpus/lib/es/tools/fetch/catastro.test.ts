@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves how the Catastro harvest reads a two-level ATOM service, which entries it leaves to
- *   another publisher, and what it does where a feed states less than it needs.
+ *   Proves how the Catastro harvest reads a two-level ATOM service. It states which entries
+ *   belong to another publisher, and what it does where a feed states less than it needs.
  *
- *   The bodies are the shapes `catastro.hacienda.gob.es` served on 2026-10-03, reduced to the
- *   elements this harvest reads. The province feed is built as ISO-8859-1 bytes, which is what that
- *   level declares and writes, because decoding it as UTF-8 is the failure that turns A Coruña's
- *   archive URL into an html error page.
+ *   The bodies are the shapes `catastro.hacienda.gob.es` serves, reduced to the elements this
+ *   harvest reads. The province feed holds ISO-8859-1 bytes because that level declares and
+ *   writes them. A UTF-8 reading turns A Coruña's archive URL into an html error page.
  *
  *   `./catastro.integration.test.ts` reads the live service. This suite stubs the transport and
  *   runs the real `APIClient` over it, so the requests go through the same adapter and error
@@ -16,8 +15,8 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { silentLogger } from "@mailwoman/core/logging"
@@ -54,7 +53,8 @@ function officeXML(code: string, name: string, updated = PUBLICATION): string {
 }
 
 /**
- * The entry of a foral cadastre, which publishes through this feed under its own terms.
+ * The entry of a foral cadastre.
+ * It publishes through this feed under its own terms.
  */
 const BIZKAIA_XML =
 	`<entry><title>Provincial Council of Bizkaia</title>` +
@@ -62,7 +62,8 @@ const BIZKAIA_XML =
 	`<id>https://web.bizkaia.eus/inspire/AD/ES.BFA.AD.atom.xml</id><updated>${PUBLICATION}</updated></entry>`
 
 /**
- * The national service document, which declares UTF-8 and writes it.
+ * The national service document.
+ * It declares UTF-8 and writes it.
  */
 function serviceXML(entries = officeXML("55", "Ceuta") + officeXML("15", "Coruña") + BIZKAIA_XML): string {
 	return (
@@ -91,7 +92,8 @@ function municipalityXML(province: string, code: string, name: string, updated =
 }
 
 /**
- * A province feed's bytes, which declare ISO-8859-1.
+ * A province feed's bytes.
+ * They declare ISO-8859-1.
  *
  * Encoded with `latin1` rather than with the default UTF-8, because the one byte
  * that distinguishes the two encodings is what the harvest has to read correctly:
@@ -131,18 +133,18 @@ function archiveBody(payload: string): Buffer {
 	return Buffer.concat([Buffer.from("PK\u0003\u0004", "latin1"), Buffer.from(payload, "utf8")])
 }
 
-function archiveOutcome(payload: string, lastModified?: string): StubOutcome {
+function archiveResult(payload: string, lastModified?: string): StubResult {
 	return {
 		body: archiveBody(payload),
-		headers: lastModified === undefined ? {} : { "last-modified": lastModified },
+		headers: lastModified ? { "last-modified": lastModified } : {},
 	}
 }
 
 /**
  * The real client over a scripted transport, with the dispatched URLs recorded on `calls`.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "es-catastro test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -151,11 +153,11 @@ function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
 /**
  * The service document, then the one province feed, then its one archive.
  */
-function ceutaOnlyOutcomes(payload = "ceuta"): StubOutcome[] {
+function ceutaOnlyResults(payload = "ceuta"): StubResult[] {
 	return [
 		{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 		{ body: CEUTA_FEED },
-		archiveOutcome(payload),
+		archiveResult(payload),
 	]
 }
 
@@ -202,8 +204,9 @@ describe("readESCatastroServiceFeed", () => {
 		const entries = officeXML("02", "Albacete") + officeXML("03", "Alicante") + BIZKAIA_XML
 		const feed = await readAtomFeed(feedChunks(serviceXML(entries)))
 
-		// The publisher adds and merges offices, so the invariant is that the selection holds
-		// exactly the entries whose title matches an office, which is every entry here but one.
+		// The publisher adds and merges offices, so the selection must hold exactly
+		// the entries whose title matches an office.
+		// Every entry here matches but one.
 		expect(readESCatastroServiceFeed(feed)).toHaveLength(feed.entries.length - 1)
 	})
 
@@ -326,16 +329,17 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta") + officeXML("15", "Coruña")), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("ceuta", "Fri, 21 Aug 2026 19:41:45 GMT"),
+			archiveResult("ceuta", "Fri, 21 Aug 2026 19:41:45 GMT"),
 			{ body: CORUNA_FEED },
-			archiveOutcome("coruna"),
+			archiveResult("coruna"),
 		])
 
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 2, skipped: 0, failed: 0 })
 
-		// The accented archive is requested percent-encoded, which is the URL that serves it.
+		// The accented archive is requested percent-encoded.
+		// That is the URL that serves it.
 		expect(client.calls).toEqual([
 			ES_CATASTRO_SERVICE_FEED_URL,
 			CEUTA_FEED_URL,
@@ -371,14 +375,14 @@ describe("harvestESCatastro", () => {
 
 	it("makes no archive request on a re-run where the province feed states the recorded date", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-catastro-rerun-")
-		await using first = stubClient(ceutaOnlyOutcomes())
+		await using first = stubClient(ceutaOnlyResults())
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
 
 		await using second = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("must not be requested"),
+			archiveResult("must not be requested"),
 		])
 
 		const summary = await harvestESCatastro(second, { outputDir: scratch.path })
@@ -389,14 +393,14 @@ describe("harvestESCatastro", () => {
 
 	it("re-fetches the municipality whose stated publication date moved", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-catastro-republished-")
-		await using first = stubClient(ceutaOnlyOutcomes())
+		await using first = stubClient(ceutaOnlyResults())
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
 
 		await using second = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: provinceFeedBytes(municipalityXML("55", "55101", "CEUTA", "2026-11-20T00:00:00Z")) },
-			archiveOutcome("ceuta rebuilt"),
+			archiveResult("ceuta rebuilt"),
 		])
 
 		const summary = await harvestESCatastro(second, { outputDir: scratch.path })
@@ -416,7 +420,7 @@ describe("harvestESCatastro", () => {
 		await using first = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: undated },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
@@ -424,7 +428,7 @@ describe("harvestESCatastro", () => {
 		await using second = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: undated },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		// Both sides read an empty string, so an equality test would hold and keep an
@@ -437,7 +441,7 @@ describe("harvestESCatastro", () => {
 
 	it("re-fetches an archive that is no longer on disk at its recorded length", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-catastro-truncated-")
-		await using first = stubClient(ceutaOnlyOutcomes())
+		await using first = stubClient(ceutaOnlyResults())
 
 		await harvestESCatastro(first, { outputDir: scratch.path })
 
@@ -445,7 +449,7 @@ describe("harvestESCatastro", () => {
 		// recorded byte count is what tells that file apart from the archive.
 		await writeLocalFile(archiveBody("truncated"), scratch.path("A.ES.SDGC.AD.55101.zip"))
 
-		await using second = stubClient(ceutaOnlyOutcomes())
+		await using second = stubClient(ceutaOnlyResults())
 		const summary = await harvestESCatastro(second, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 1, skipped: 0 })
@@ -474,7 +478,7 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path, provinces: ["55"], limit: 1 })
@@ -491,7 +495,7 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(), "utf8") },
 			{ body: CEUTA_FEED },
-			archiveOutcome("ceuta"),
+			archiveResult("ceuta"),
 		])
 
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path, provinces: ["55", "99"] })

@@ -64,13 +64,13 @@ interface RungReading {
 	 * This field therefore states what the run said about its answer.
 	 * The reason a component on this rung is absent lies elsewhere, in the parse or the resolver walk.
 	 */
-	advisories?: string
+	advisories: string | null
 	/**
 	 * Null on step 0, where there is no previous rung — a different fact from a
 	 * delta whose every list is empty.
 	 */
 	delta: RungDelta | null
-	error?: string
+	error: string | null
 }
 
 interface LadderReading {
@@ -90,7 +90,7 @@ function componentsOf(result: { components?: Record<string, string | undefined> 
 	const out: Record<string, string> = {}
 
 	for (const [tag, value] of Object.entries(result.components ?? {})) {
-		if (typeof value === "string" && value.length) {
+		if (typeof value === "string" && value) {
 			out[tag] = value
 		}
 	}
@@ -119,7 +119,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields record it.
+	// A null coordinate on either side is not distance zero: abstention is its own result and the tier fields record it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)
@@ -237,7 +237,8 @@ export async function runMinimalPairs(
 					// `code` is the stable identifier the marker declares.
 					// `kind` is the query kind that produced it, so reading `kind` here printed
 					// `locality_only` where a reader expected the advisory's own name.
-					...(markers?.length ? { advisories: markers.map((marker) => marker.code).join(", ") } : {}),
+					advisories: markers?.length ? markers.map((marker) => marker.code).join(", ") : null,
+					error: null,
 				})
 
 				evaluated++
@@ -249,6 +250,7 @@ export async function runMinimalPairs(
 					lat: null,
 					lon: null,
 					tier: "error",
+					advisories: null,
 					delta: null,
 					error: (error as Error).message,
 				})

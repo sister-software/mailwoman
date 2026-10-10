@@ -64,13 +64,15 @@ export interface WOFSQLitePlaceLookupOpts {
 	/**
 	 * When true, build the FTS5 `place_search` virtual table on construction if
 	 * it is missing, on the main extract only.
-	 * Default false.
+	 *
+	 * @defaultValue `false`
 	 */
 	buildFTS?: boolean
 	/**
 	 * Geographic Rule Engine convention source, either a ready `ConventionSource`
 	 * or a `{ wofID: Convention }` seed map.
-	 * Default empty resolves every query to `WORLD_DEFAULT`.
+	 *
+	 * @defaultValue `[]`. An empty list resolves every query to `WORLD_DEFAULT`.
 	 */
 	conventions?: ConventionSource | Record<number, Convention>
 	/**
@@ -306,7 +308,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		// The first non-null result wins and unknown strategy names are skipped.
 		const convention = this.#conventionFor(query)
 
-		let outcome: PlaceCandidate[] = []
+		let found: PlaceCandidate[] = []
 
 		for (const name of convention.candidateStrategies) {
 			const strategy = this.#strategies.get(name)
@@ -319,14 +321,14 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 			const result = await strategy(query, convention)
 
-			if (result !== null) {
-				outcome = result
+			if (result) {
+				found = result
 
 				break
 			}
 		}
 
-		if (outcome.length) return outcome
+		if (found.length) return found
 
 		// On a postcode-typed NL-shape miss, retry with the whitespace-joined form then the 4-digit stem,
 		// restricted to NL so the same shape elsewhere cannot coarsen to another system's code.
@@ -349,7 +351,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			if (stem !== trimmed) return this.findPlace({ ...query, text: stem })
 		}
 
-		return outcome
+		return found
 	}
 
 	/**
@@ -477,7 +479,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		const extract =
 			forceExtract ??
-			pickExtractForPlacetype(this.#extracts, firstPlacetype, {
+			pickExtractForPlacetype(this.#extracts, firstPlacetype ?? null, {
 				country: query.country,
 				countriesBySchema: this.#extractCountries,
 			})
@@ -644,7 +646,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 				: wofAliases
 
 			const sName = softNameScore(query.text, cand.name, aliases)
-			const sPop = populationScaleTerm(cand.population, this.#weights)
+			const sPop = populationScaleTerm(cand.population ?? null, this.#weights)
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
 		}
 
@@ -702,22 +704,28 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		)
 
 		return rows.map((row) => {
-			const c: PlaceCandidate = {
+			return {
 				id: row.id,
 				name: row.name,
 				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
 				lat: row.lat ?? 0,
 				lon: row.lon ?? 0,
-				parent_id: row.parent_id ?? undefined,
+				parent_id: row.parent_id ?? null,
 				score: 0,
-			}
-
-			if (row.population !== null && row.population > 0) {
-				c.population = row.population
-			}
-
-			return c
+				population: row.population !== null && row.population > 0 ? row.population : null,
+				distanceKm: null,
+				exactMatch: null,
+				prominence: null,
+				referential: null,
+				encyclopedic: null,
+				importance: null,
+				bbox: null,
+				mismatch: null,
+				containedByQualifier: null,
+				regionScopeMiss: null,
+				variantAliasExempted: null,
+			} satisfies PlaceCandidate
 		})
 	}
 
@@ -736,5 +744,3 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		}
 	}
 }
-
-export type { RankingWeights } from "#ranking-weights"

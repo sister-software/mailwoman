@@ -237,7 +237,7 @@ will arrive, use a postal carrier's address-verification service.
   when the country is unknown.
 - **Codex holds no existence tables.** It has neither a ZIP-to-state cross-check nor a street registry.
   The `ZipCodePrefixAbbreviationMap` it ships maps a ZIP Code's first digit to a band of states. It is
-  a hint, not a lookup.
+  a coarse hint based on the ZIP Code's first digit.
 - **A raw confidence near 0.9 does not mean 90% correct.** The scores on this page are uncalibrated,
   and their spread on clean input is narrow. Read
   [Tune confidence thresholds](./tune-confidence-thresholds.mdx) before you pick `MIN_CONFIDENCE` for

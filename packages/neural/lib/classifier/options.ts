@@ -1,10 +1,17 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { SystemCode } from "@mailwoman/codex"
+import { SYSTEM_CODES, type SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
-import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import type {
+	CaseNormalization,
+	PlacetypePairSelection,
+	SpanProposerLexicon,
+	StageSource,
+	WordConsistencySetting,
+} from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
+import { z } from "zod"
 
 import type { AddressSystemTable } from "#address-system"
 import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
@@ -20,7 +27,7 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
-import type { WordConsistencyOpts } from "#word-consistency"
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "#venue/head-prior"
 
 /**
  * Configures a neural address classifier.
@@ -141,14 +148,19 @@ export interface NeuralAddressClassifierConfig {
 	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit,
 	 * needing both `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a
 	 * model trained with the matching `data.gazetteer_choreography`.
+	 *
+	 * @defaultValue `"off"`; loaders resolve it with {@link gazetteerSuppressionFor}.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: Toggle
 
 	/**
 	 * The default address-system conventions mode.
-	 * See `ParseOpts.addressSystemConventions`.
+	 *
+	 * See {@link AddressSystemConventions}.
+	 *
+	 * @defaultValue `"off"`
 	 */
-	addressSystemConventions?: "auto" | SystemCode
+	addressSystemConventions?: AddressSystemConventions
 
 	/**
 	 * The model's address-system ids, from its card's `address_systems` field.
@@ -161,16 +173,20 @@ export interface NeuralAddressClassifierConfig {
 	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
 	 *
 	 * The model splits these spans because the corpus label format cannot mark punctuation inside a span.
+	 *
+	 * @defaultValue `"off"`; loaders resolve it with {@link punctuationBridgingFor}.
 	 */
-	bridgePunctuationGaps?: boolean
+	bridgePunctuationGaps?: Toggle
 
 	/**
-	 * The span proposer configuration, omitted meaning a default built from the
-	 * codex lexicon and `false` disabling it.
+	 * The span proposer.
+	 *
+	 * `"auto"` (the default) builds one from the codex lexicon, `"none"` disables it,
+	 * and a config object replaces it.
 	 *
 	 * Its proposals add emission priors and annotation and quoted spans block punctuation-bridge merges.
 	 */
-	spanProposer?: SpanProposerConfig | false
+	spanProposer?: StageSource<SpanProposerConfig>
 
 	/**
 	 * The default placetype-pair prior options, overridden per parse by `ParseOpts.placetypePair`
@@ -190,8 +206,36 @@ export interface NeuralAddressClassifierConfig {
 	 * tag by a confidence-weighted vote, defaulting to `WORD_CONSISTENCY_SHIP_DEFAULT`
 	 * and never running on the character path.
 	 */
-	enforceWordConsistency?: boolean | WordConsistencyOpts
+	enforceWordConsistency?: WordConsistencySetting
 }
+
+/**
+ * Which address-system conventions a parse enforces.
+ *
+ * - `"off"` applies no conventions.
+ * - `"auto"` detects the system from the model's locale head at a probability of 0.8 or higher.
+ * - A `SystemCode` pins the system.
+ */
+export type AddressSystemConventions = "off" | "auto" | SystemCode
+
+/**
+ * The span proposer for one parse.
+ *
+ * - `"inherit"` uses the config's `spanProposer`.
+ * - `"auto"` uses the default codex proposer, even when the config disabled it.
+ * - `"none"` disables the proposer.
+ * - A config object replaces the config's proposer.
+ */
+export type SpanProposerSelection = "inherit" | StageSource<SpanProposerConfig>
+
+/**
+ * The placetype census for one parse.
+ *
+ * - `"inherit"` uses the config's `placetypeCensus`.
+ * - `"off"` disables the census.
+ * - A census replaces the config's.
+ */
+export type PlacetypeCensusSelection = "inherit" | "off" | PlacetypeCensusLike
 
 /**
  * Configures the span proposer.
@@ -236,7 +280,7 @@ export interface ParseOpts {
 	/**
 	 * The FST gazetteer matcher whose matches add emission biases.
 	 */
-	fst?: FSTMatcherLike
+	fst?: FSTMatcherLike | null
 
 	/**
 	 * The bias magnitude for FST gazetteer matches, defaulting to 1.
@@ -282,16 +326,29 @@ export interface ParseOpts {
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 
 	/**
+	 * Venue-head lookups for the session's locale.
+	 *
+	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
+	 * Absent, the prior does not run.
+	 */
+	venueHead?: VenueHeadLexiconLike
+
+	/**
+	 * Overrides for the venue-head prior's bias magnitudes and extension.
+	 */
+	venueHeadOpts?: VenueHeadPriorOpts
+
+	/**
 	 * Whether to snap or add postcode spans matching a known shape after decoding,
 	 * also run whenever the detected address system declares a postcode shape.
 	 */
 	postcodeRepair?: boolean
 
 	/**
-	 * A per-parse override of the config's `enforceWordConsistency`, where an options
-	 * object sets the vote thresholds and `true` runs the unthresholded vote.
+	 * A per-parse override of the config's `enforceWordConsistency`, where an options object
+	 * sets the vote thresholds, `{}` runs the unthresholded vote and `"off"` skips it.
 	 */
-	enforceWordConsistency?: boolean | WordConsistencyOpts
+	enforceWordConsistency?: WordConsistencySetting
 
 	/**
 	 * Whether to snap or add secondary-unit spans such as "Apt 4B", "Ste 12"
@@ -300,10 +357,11 @@ export interface ParseOpts {
 	unitRepair?: boolean
 
 	/**
-	 * Whether to title-case all-caps ASCII input before inference, defaulting to true,
-	 * since the model trains on mixed-case text and mixed-case input is left unchanged.
+	 * How to treat letter case before inference, defaulting to `"title-case"`,
+	 * which title-cases all-caps ASCII input since the model trains on mixed-case text.
+	 * Mixed-case input is left unchanged.
 	 */
-	normalizeCase?: boolean
+	caseNormalization?: CaseNormalization
 
 	/**
 	 * A calibrator that maps each decoded span's confidence to a calibrated probability
@@ -312,21 +370,27 @@ export interface ParseOpts {
 	calibrate?: Calibrator
 
 	/**
-	 * A per-parse override of the config's `bridgePunctuationGaps`.
+	 * Punctuation-gap bridging for this parse.
+	 *
+	 * The default `"inherit"` uses the config's `bridgePunctuationGaps`.
 	 */
-	bridgePunctuationGaps?: boolean
+	bridgePunctuationGaps?: ToggleSelection
 
 	/**
-	 * Whether to run the configured span proposer for this parse, defaulting to true,
-	 * though `true` cannot enable a proposer the config disabled.
+	 * The span proposer for this parse.
+	 *
+	 * The default `"inherit"` uses the config's.
+	 * See {@link SpanProposerSelection}.
 	 */
-	spanProposer?: boolean
+	spanProposer?: SpanProposerSelection
 
 	/**
-	 * The address-system conventions to enforce, `auto` detecting the system from the model's
-	 * locale head at a probability of 0.8 or higher and a `SystemCode` pinning it.
+	 * The address-system conventions to enforce for this parse.
+	 *
+	 * The default `"inherit"` uses the config's.
+	 * See {@link AddressSystemConventions}.
 	 */
-	addressSystemConventions?: "auto" | SystemCode
+	addressSystemConventions?: "inherit" | AddressSystemConventions
 
 	/**
 	 * The ISO 3166-1 alpha-2 country the caller expects the address to be in,
@@ -338,18 +402,148 @@ export interface ParseOpts {
 	localeHint?: string
 
 	/**
-	 * Per-parse override of the config's `placetypePair`.
+	 * Per-parse selection of the placetype-pair prior.
 	 *
-	 * Set it to `false` to disable the prior.
+	 * The default `"inherit"` uses the config's `placetypePair`, `"off"` disables the prior,
+	 * and an options object replaces the config's.
+	 *
 	 * The prior biases a place name toward the tag the pair index recorded beside another input name.
 	 */
-	placetypePair?: PlacetypePairPriorOpts | false
+	placetypePair?: PlacetypePairSelection<PlacetypePairPriorOpts>
 
 	/**
-	 * Per-parse override of the config's `placetypeCensus`.
+	 * The placetype census for this parse.
 	 *
-	 * Set it to `false` to disable the census.
+	 * The default `"inherit"` uses the config's.
 	 * This changes only what `traceParse` records.
 	 */
-	placetypeCensus?: PlacetypeCensusLike | false
+	placetypeCensus?: PlacetypeCensusSelection
+}
+
+/**
+ * Schema for {@link AddressSystemConventions}.
+ */
+export const AddressSystemConventionsSchema = z.union([
+	z.enum(["off", "auto"]),
+	z.enum(SYSTEM_CODES as [SystemCode, ...SystemCode[]]),
+])
+
+/**
+ * Reads an address-system conventions mode from a command-line or card string.
+ *
+ * @throws When the value is not `"off"`, `"auto"` or a known system code.
+ */
+export function parseAddressSystemConventions(value: string): AddressSystemConventions {
+	const result = AddressSystemConventionsSchema.safeParse(value)
+
+	if (!result.success) {
+		throw new Error(
+			`unknown address-system conventions mode "${value}": expected "off", "auto" or one of ${SYSTEM_CODES.join(", ")}`
+		)
+	}
+
+	return result.data
+}
+
+/**
+ * How a loader sets a behavior that the model card declares.
+ *
+ * - `"declared"` (the default) follows the card, and a card that does not
+ *   declare the behavior leaves it off.
+ * - `"on"` and `"off"` replace the card's declaration, a deliberate departure from how the model trained.
+ */
+export const ModelCardToggleSchema = z.enum(["declared", "on", "off"])
+
+export type ModelCardToggle = z.infer<typeof ModelCardToggleSchema>
+
+/**
+ * How a loader sets the address-system conventions: `"declared"` (the default) follows
+ * the card, and any {@link AddressSystemConventions} mode replaces it.
+ */
+export const ConventionsSettingSchema = z.union([z.literal("declared"), AddressSystemConventionsSchema])
+
+export type ConventionsSetting = z.infer<typeof ConventionsSettingSchema>
+
+/**
+ * The model-card `requires` fields that the loaders resolve through this module.
+ */
+export interface DeclaredModelBehavior {
+	suppress_gazetteer_near_postcode?: boolean
+	bridge?: { required: boolean }
+	conventions?: { required: boolean; mode?: string }
+}
+
+/**
+ * A resolved on/off behavior of a classifier.
+ */
+export const ToggleSchema = z.enum(["on", "off"])
+
+export type Toggle = z.infer<typeof ToggleSchema>
+
+/**
+ * The value of a classifier {@link Toggle} its config leaves unset.
+ */
+export const DEFAULT_TOGGLE: Toggle = "off"
+
+/**
+ * A per-parse override: `"inherit"` (the default) uses the config's value.
+ */
+export type ToggleSelection = "inherit" | Toggle
+
+function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): Toggle {
+	if (setting !== "declared") return setting
+
+	return declared ? "on" : "off"
+}
+
+/**
+ * Whether a loader zeroes the gazetteer channel next to postcode-anchor hits.
+ *
+ * Inference must match training, so the model card's `requires.suppress_gazetteer_near_postcode` decides.
+ * A model whose card does not declare it was trained without the choreography, so it is off.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ */
+export function gazetteerSuppressionFor(
+	setting: ModelCardToggle,
+	declared: DeclaredModelBehavior | null | undefined
+): Toggle {
+	return toggleFor(setting, declared?.suppress_gazetteer_near_postcode)
+}
+
+/**
+ * Whether a loader merges same-tag spans split by short punctuation.
+ *
+ * The model card's `requires.bridge` decides, and a card that does not declare it leaves bridging off.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ */
+export function punctuationBridgingFor(
+	setting: ModelCardToggle,
+	declared: DeclaredModelBehavior | null | undefined
+): Toggle {
+	return toggleFor(setting, declared?.bridge?.required)
+}
+
+/**
+ * The address-system conventions mode a loader configures.
+ *
+ * A card that requires conventions supplies its `mode`, defaulting to `"auto"`.
+ * A card that does not require them leaves conventions `"off"`.
+ *
+ * Every loader (Node, scorer, browser) resolves the setting here.
+ *
+ * @throws When the card declares a mode that is not a known conventions mode.
+ */
+export function addressSystemConventionsFor(
+	setting: ConventionsSetting,
+	declared: DeclaredModelBehavior | null | undefined
+): AddressSystemConventions {
+	if (setting !== "declared") return setting
+
+	const conventions = declared?.conventions
+
+	if (!conventions?.required) return "off"
+
+	return parseAddressSystemConventions(conventions.mode ?? "auto")
 }

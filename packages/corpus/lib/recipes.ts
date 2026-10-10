@@ -38,6 +38,7 @@ import { streetBareRecipe } from "#recipes/street/bare"
 import { subVenueRecipe } from "#recipes/sub/venue"
 import { trailingRegionRecipe } from "#recipes/trailing-region"
 import { unitRecipe } from "#recipes/unit"
+import { venueRecipe } from "#recipes/venue"
 import { sgRegisterRecipe } from "#sg/recipes/register"
 import { siBareVillageRecipe } from "#si/recipes/bare-village"
 import { bdRegisterRecipe, pkRegisterRecipe } from "#south-asia/recipes/register"
@@ -83,6 +84,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	boundaryStressRecipe,
 	anchorAbsorptionRecipe,
 	subVenueRecipe,
+	venueRecipe,
 ]
 
 /**
@@ -93,8 +95,8 @@ export const RECIPES_BY_NAME: ReadonlyMap<string, CorpusRecipe> = new Map(RECIPE
 /**
  * Look up a recipe by its `<recipe>` name.
  */
-export function getRecipe(name: string): CorpusRecipe | undefined {
-	return RECIPES_BY_NAME.get(name)
+export function getRecipe(name: string): CorpusRecipe | null {
+	return RECIPES_BY_NAME.get(name) ?? null
 }
 
 /**

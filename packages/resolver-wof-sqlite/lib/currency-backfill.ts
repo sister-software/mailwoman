@@ -5,7 +5,7 @@
  *   Restores deprecated WOF localities only when an independent source attests them.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -26,7 +26,7 @@ const CURRENCY_BACKFILL_POP_FLOOR = 1000
  * Restore a deprecated locality only when no nearby live namesake exists and GeoNames
  * attests the same folded name above {@link CURRENCY_BACKFILL_POP_FLOOR}.
  */
-export interface CurrencyBackfillOutcomes {
+export interface CurrencyBackfillResults {
 	judged: number
 	blocked: number
 	unattested: number
@@ -35,14 +35,14 @@ export interface CurrencyBackfillOutcomes {
 }
 
 /**
- * One country's read of the check — every dead name judged, by outcome and by the dead
+ * One country's read of the check — every dead name judged, by result and by the dead
  * row's placetype — so a census can say what a wider query admits.
  */
-export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes {
+export interface CurrencyBackfillCountryReport extends CurrencyBackfillResults {
 	country: string
 	deadPlacetypes: readonly string[]
 	dumpPresent: boolean
-	byDeadPlacetype: Record<string, CurrencyBackfillOutcomes>
+	byDeadPlacetype: Record<string, CurrencyBackfillResults>
 	/**
 	 * The first resurrected names, `placetype:name`, capped because the report is a receipt and not the table.
 	 */
@@ -56,7 +56,7 @@ const REPORT_SAMPLE_SIZE = 25
  */
 export const DEFAULT_DEAD_PLACETYPES: readonly string[] = ["locality"]
 
-function emptyOutcomes(): CurrencyBackfillOutcomes {
+function emptyResults(): CurrencyBackfillResults {
 	return { judged: 0, blocked: 0, unattested: 0, floored: 0, resurrected: 0 }
 }
 
@@ -72,7 +72,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	ccID: (code: string | null) => number
 	ptID: (pt: string | null) => number
 	regionOf: Map<number, number>
-	importance: ReturnType<typeof loadImportanceIndex> | undefined
+	importance: ReturnType<typeof loadImportanceIndex> | null
 	stageRow: StageRow
 	progress: (phase: string, message: string) => void
 
@@ -82,7 +82,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	 */
 	dryRun?: boolean
 	/**
-	 * Receives one report per country judged (a country with no dump or no dead rows reports zero outcomes).
+	 * Receives one report per country judged (a country with no dump or no dead rows reports zero results).
 	 */
 	onCountry?: (report: CurrencyBackfillCountryReport) => void
 }): Promise<number> {
@@ -116,7 +116,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			country: cc,
 			deadPlacetypes,
 			dumpPresent: await pathExists(dumpPath),
-			...emptyOutcomes(),
+			...emptyResults(),
 			byDeadPlacetype: {},
 			sample: [],
 		}
@@ -179,11 +179,11 @@ export async function resurrectCurrencyHoles(ctx: {
 
 		const seen = new Set<string>()
 
-		const count = (deadPlacetype: string, outcome: keyof CurrencyBackfillOutcomes): void => {
-			report[outcome] += 1
-			const bucket = (report.byDeadPlacetype[deadPlacetype] ??= emptyOutcomes())
+		const count = (deadPlacetype: string, result: keyof CurrencyBackfillResults): void => {
+			report[result] += 1
+			const bucket = (report.byDeadPlacetype[deadPlacetype] ??= emptyResults())
 
-			bucket[outcome] += 1
+			bucket[result] += 1
 		}
 
 		if (!dryRun) {

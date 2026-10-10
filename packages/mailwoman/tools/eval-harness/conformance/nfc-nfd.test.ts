@@ -27,7 +27,7 @@ import { normalize } from "@mailwoman/normalize"
 import { describe, expect, it } from "vitest"
 
 import { classifyCaseTransformation } from "#tools/eval-harness/conformance/case-folding"
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	auditCanonicalFormSuite,
@@ -95,9 +95,13 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		base: DE_NIPPES,
 		variant: decompose(DE_NIPPES),
 		context: { caseCountry: "DE" },
-		outcomeComparator: "parse_whole_strict",
+		resultComparator: "parse_whole_strict",
 		expect: "equivalent",
 		rowRef: "cases/de/regression.jsonl#de-r9-nippes-koeln",
+		status: null,
+		bugRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -284,11 +288,11 @@ describe("auditCanonicalFormSuite", () => {
 	})
 
 	it("rejects a row with no country — an unrouted row grades against a locale that is not its own", () => {
-		expect(auditCanonicalFormSuite([fixture({ context: undefined })])[0]).toContain("no context.caseCountry")
+		expect(auditCanonicalFormSuite([fixture({ context: null })])[0]).toContain("no context.caseCountry")
 	})
 
 	it("rejects a row with no committed source", () => {
-		expect(auditCanonicalFormSuite([fixture({ rowRef: undefined })])[0]).toContain("no rowRef")
+		expect(auditCanonicalFormSuite([fixture({ rowRef: null })])[0]).toContain("no rowRef")
 	})
 
 	it("rejects a relation other than equivalent", () => {
@@ -372,9 +376,12 @@ describe("a seeded normalization regression", () => {
 					dependent_locality: "Nippes",
 					unit: null,
 					postcode_country_scope: null,
+					capital_promotion: null,
+					variant_alias_exemption: "not_applied",
+					admin_coherence: null,
 					hierarchy: [],
 				},
-			} satisfies ConformanceOutcome
+			} satisfies ConformanceResult
 		}
 	}
 

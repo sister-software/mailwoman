@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { AncestrieMatch } from "@mailwoman/ancestrie"
+
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
@@ -21,17 +23,6 @@ function hasWordContent(piece: string): boolean {
 	if (BYTE_FALLBACK_RE.test(literal)) return false
 
 	return /[\p{L}\p{N}]/u.test(piece)
-}
-
-/**
- * A state reached by walking tokens through a gazetteer FST.
- *
- * `accepted` is true when the walked tokens form a complete indexed name.
- */
-export interface FSTMatchLike {
-	stateID: number
-	accepted: boolean
-	depth: number
 }
 
 /**
@@ -56,8 +47,8 @@ export interface FSTPlaceEntryLike {
  * It keeps this package independent of any FST implementation.
  */
 export interface FSTMatcherLike {
-	walk(tokens: string[]): FSTMatchLike | null
-	walkFrom(prev: FSTMatchLike, token: string): FSTMatchLike | null
+	walk(tokens: string[]): AncestrieMatch | null
+	walkFrom(prev: AncestrieMatch, token: string): AncestrieMatch | null
 	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
@@ -254,7 +245,8 @@ export interface StreetContextRequirementOpts {
 
 	/**
 	 * The multiplier on the positive bias when the check fires.
-	 * The default is 0.25.
+	 *
+	 * @defaultValue `0.25`
 	 */
 	positiveScale?: number
 }
@@ -267,16 +259,18 @@ export interface FSTPriorOpts {
 
 	/**
 	 * The maximum bias magnitude in logits.
-	 * The default is 3.
 	 *
 	 * The cap keeps a high-population place from overriding the model.
+	 *
+	 * @defaultValue `3`
 	 */
 	maxBias?: number
 	suppressionScale?: number
 
 	/**
 	 * How match length scales the bias.
-	 * The default is `suppression`.
+	 *
+	 * @defaultValue `suppression`
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 
@@ -317,7 +311,7 @@ export function buildFSTEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	const streetContext = opts.streetContext
+	const streetContext = opts.streetContext ?? null
 
 	const streetTypeFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => g.fstToken !== "" && isStreetAffix(streetContext.fst, g.fstToken))
@@ -447,10 +441,14 @@ export function normalizeFSTToken(s: string): string {
 		.toLowerCase()
 		.replaceAll(/[\p{P}\p{S}]/gu, "")
 
-	return cleaned.length ? cleaned : ""
+	return cleaned ?? ""
 }
 
-function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
+/**
+ * Whether the street-morphology FST accepts `token`, in {@linkcode normalizeFSTToken}
+ * form, as a street-type affix.
+ */
+export function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
 	const match = fst.walk([token])
 
 	if (!match?.accepted) return false
@@ -470,7 +468,7 @@ function streetContextScale(
 	groups: WordGroup[],
 	startIdx: number,
 	endIdx: number,
-	streetContext: StreetContextRequirementOpts | undefined,
+	streetContext: StreetContextRequirementOpts | null,
 	streetTypeFlags: boolean[] | null,
 	houseNumberFlags: boolean[] | null
 ): number {

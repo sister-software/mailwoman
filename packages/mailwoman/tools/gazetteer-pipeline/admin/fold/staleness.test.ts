@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer/admin"
+import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer/admin/fold/staleness"
 
 describe("foldSourceAdminPath", () => {
 	it("names the admin database a fold output was made from", () => {

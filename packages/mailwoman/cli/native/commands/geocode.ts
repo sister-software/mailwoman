@@ -5,6 +5,7 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
+import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
@@ -19,10 +20,8 @@ import {
 	renderInkCommand,
 	runNativeCommand,
 	stringValue,
-	triStateValue,
 } from "#cli/native/spec"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
-import type { GeocodeResult } from "#geocode/result"
 
 const debugSizePattern = /^\d+x\d+$/u
 
@@ -94,6 +93,18 @@ export const spec = {
 			default: true,
 			description: "Feed the gazetteer FST prior to the parse; --no-gazetteer-prior disables it.",
 		},
+		"venue-head-prior": {
+			type: "boolean",
+			default: true,
+			description:
+				"Feed the venue-head prior, from @mailwoman/poi-taxonomy's head-word table, to the parse; --no-venue-head-prior disables it.",
+		},
+		"venue-head-bias-scale": {
+			type: "number",
+			default: 1,
+			hint: "multiplier",
+			description: "Multiplier on the venue-head table's biases.",
+		},
 		"place-country": {
 			type: "boolean",
 			default: true,
@@ -126,13 +137,18 @@ export const spec = {
 				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
 		},
 		"capital-tier": {
-			type: "boolean",
-			description: "Bounded national-capital promotion on bare city names (default on); --no-capital-tier disables it.",
+			type: "string",
+			default: "auto",
+			choices: ["auto", "required", "off"],
+			description:
+				"Bounded national-capital promotion on bare city names: auto (skip when the capitals reference is missing), required (fail when it is missing), or off.",
 		},
 		"variant-alias-exemption": {
-			type: "boolean",
+			type: "string",
+			default: "applied",
+			choices: VariantAliasExemptionSchema.options,
 			description:
-				"Own-name variant aliases keep their holder's rank in cross-country contests (default on); --no-variant-alias-exemption disables it.",
+				"Whether own-name variant aliases keep their holder's rank in cross-country contests: applied or not_applied.",
 		},
 		"place-country-threshold": {
 			type: "number",
@@ -180,32 +196,32 @@ type GeocodeOptions = GeocodeCommandOptions
 
 async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
 	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/data-root")).dataRootPath()
-	const capitalTier = triStateValue(values, "capital-tier")
-	const variantAliasExemption = triStateValue(values, "variant-alias-exemption")
 
 	return {
 		locale: stringValue(values, "locale")!,
-		...(stringValue(values, "bias") ? { bias: stringValue(values, "bias") } : {}),
-		...(stringValue(values, "default-country") ? { defaultCountry: stringValue(values, "default-country") } : {}),
+		...(stringValue(values, "bias") ? { bias: stringValue(values, "bias")! } : {}),
+		...(stringValue(values, "default-country") ? { defaultCountry: stringValue(values, "default-country")! } : {}),
 		countryScope: stringValue(values, "country-scope") as GeocodeOptions["countryScope"],
-		...(stringValue(values, "resolve-db") ? { resolveDB: stringValue(values, "resolve-db") } : {}),
-		...(stringValue(values, "candidate-db") ? { candidateDB: stringValue(values, "candidate-db") } : {}),
+		...(stringValue(values, "resolve-db") ? { resolveDB: stringValue(values, "resolve-db")! } : {}),
+		...(stringValue(values, "candidate-db") ? { candidateDB: stringValue(values, "candidate-db")! } : {}),
 		dataRoot,
-		...(stringValue(values, "address-points-db") ? { addressPointsDB: stringValue(values, "address-points-db") } : {}),
-		...(stringValue(values, "interpolation-db") ? { interpolationDB: stringValue(values, "interpolation-db") } : {}),
-		...(numberValue(values, "interp-calibration") !== undefined
-			? { interpCalibration: numberValue(values, "interp-calibration") }
+		...(stringValue(values, "address-points-db") ? { addressPointsDB: stringValue(values, "address-points-db")! } : {}),
+		...(stringValue(values, "interpolation-db") ? { interpolationDB: stringValue(values, "interpolation-db")! } : {}),
+		...(numberValue(values, "interp-calibration") !== null
+			? { interpCalibration: numberValue(values, "interp-calibration")! }
 			: {}),
 		localeCountryPrior: booleanValue(values, "locale-country-prior"),
 		gazetteerPrior: booleanValue(values, "gazetteer-prior"),
+		venueHeadPrior: booleanValue(values, "venue-head-prior"),
+		venueHeadBiasScale: numberValue(values, "venue-head-bias-scale")!,
 		placeCountry: booleanValue(values, "place-country"),
 		postcodeCountryCoherence: booleanValue(values, "postcode-country-coherence"),
 		forkEntity: booleanValue(values, "fork-entity"),
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
-		...(capitalTier === undefined ? {} : { capitalTier }),
-		...(variantAliasExemption === undefined ? {} : { variantAliasExemption }),
+		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
+		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),
@@ -215,7 +231,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		debugSize: stringValue(values, "debug-size")!,
 		stdin: booleanValue(values, "stdin"),
 		timing: booleanValue(values, "timing"),
-		...(stringValue(values, "tiles") ? { tiles: stringValue(values, "tiles") } : {}),
+		...(stringValue(values, "tiles") ? { tiles: stringValue(values, "tiles")! } : {}),
 	}
 }
 

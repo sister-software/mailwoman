@@ -87,7 +87,7 @@ place relationships, and resolver candidates may point elsewhere.
 
 When no request locale is supplied, the runtime can use `MW_LOCALE` or the machine's `Intl` locale as
 low-priority preference evidence. It keeps the machine timezone separate and reports both in the
-`LocaleHint` provenance. A server can disable host inference with `machinePreferences: false`, because
+`LocaleHint` provenance. A server can disable host inference with `machinePreferences: "none"`, because
 a container's locale describes the container rather than the person making the request.
 
 ## If translation is added later

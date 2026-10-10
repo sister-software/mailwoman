@@ -10,7 +10,7 @@ import { feedChunks, linkWithRel, readAtomFeed } from "#tools/fetch/atom"
  * as `https://atom.cuzk.gov.cz/AD/AD.xml` served them on 2026-10-02.
  *
  * Both shapes a reader has to survive are here: a feed-level `<link>` sits beside the
- * entries that carry their own, and every href separates its query parameters with `&amp;`.
+ * entries that have their own, and every href separates its query parameters with `&amp;`.
  */
 const CZ_SERVICE_XML =
 	`<?xml version="1.0" encoding="UTF-8" standalone="no"?>` +
@@ -102,7 +102,8 @@ describe("readAtomFeed", () => {
 
 		const service = await readAtomFeed(feedChunks(CZ_SERVICE_XML))
 
-		// The service document states no length on any link, which is not a length of zero.
+		// The service document states no length on any link.
+		// That is not a length of zero.
 		expect(service.links.every((link) => link.length === null)).toBe(true)
 	})
 
@@ -152,9 +153,9 @@ describe("linkWithRel", () => {
 		expect(linkWithRel(feed.links, "NEXT")?.href).toBe("https://services.cuzk.gov.cz/gml/inspire/ad/epsg-4258")
 	})
 
-	it("answers undefined for a relation the collection does not carry", async () => {
+	it("answers null for a relation the collection does not carry", async () => {
 		const feed = await readAtomFeed(feedChunks(CZ_SERVICE_XML))
 
-		expect(linkWithRel(feed.links, "enclosure")).toBeUndefined()
+		expect(linkWithRel(feed.links, "enclosure")).toBeNull()
 	})
 })

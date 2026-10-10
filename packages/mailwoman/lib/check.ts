@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The result of one named check, produced by tooling and rendered by the command line.
+ * @file The result of a single check, produced by tooling and rendered by the command line.
  */
 
 /**

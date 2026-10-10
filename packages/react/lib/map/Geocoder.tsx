@@ -47,13 +47,13 @@ export interface GeocoderProps {
 	/**
 	 * The example chips.
 	 *
-	 * @default []
+	 * @defaultValue []
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
 	 * Whether the developer panel starts open.
 	 *
-	 * @default false
+	 * @defaultValue `false`
 	 */
 	developer?: boolean
 	/**
@@ -66,7 +66,7 @@ export interface GeocoderProps {
 	/**
 	 * The minimum map zoom at which the viewport is sent as a location bias.
 	 *
-	 * @default 4
+	 * @defaultValue `4`
 	 */
 	minBiasZoom?: number
 	/**
@@ -75,7 +75,7 @@ export interface GeocoderProps {
 	 * Set it to false when the host controls the camera or a test needs a fixed view.
 	 * The marker and outline render either way.
 	 *
-	 * @default true
+	 * @defaultValue `true`
 	 */
 	applyResultCamera?: boolean
 }
@@ -161,8 +161,6 @@ function GeocoderInner({
 		[runtime, compare]
 	)
 
-	const onForceWASMChange = useCallback((forceWASM: boolean) => runtime.setForceWASM?.(forceWASM), [runtime])
-
 	return (
 		<div className="mw-geocoder-demo">
 			<div className="mw-geocoder-demo__map">
@@ -198,7 +196,6 @@ function GeocoderInner({
 				map={map}
 				onSubmitQuery={onSubmitQuery}
 				onSelectVersion={onSelectVersion}
-				onForceWASMChange={onForceWASMChange}
 				developer={developer}
 			/>
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}

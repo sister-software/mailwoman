@@ -16,18 +16,17 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { res9ShortCellToRes6Parent } from "#filing/landscape"
+import { BDC_SPEED_BUCKET_25_100, BDC_SPEED_BUCKET_GIGABIT, res9ShortCellToRes6Parent } from "#filing/landscape"
 import {
 	PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES,
 	physicalCategoriesForTechnology,
 	plausibilityCheck,
-	type GeocodeLike,
 	type PlausibilityAbstainReason,
 	type PlausibilityBundle,
 	type PlausibilityCoverageAxisState,
@@ -66,8 +65,8 @@ const PROVIDER_DSL = 130_002
 
 const SPRINGFIELD_CENTROID = { lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude }
 
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : undefined
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : null
 }
 
 function fixtureRows(): BDCAvailabilityRow[] {
@@ -200,6 +199,8 @@ async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<l
 		freshnessPolicy: "sealed",
 		spineKeys: { h3: { column: "h3_cell", resolution: resolutionOverride } },
 		createdAt: `${ASOF_DATE}T00:00:00Z`,
+		attribution: null,
+		sourceRecords: null,
 	})
 
 	resources.move()
@@ -276,7 +277,7 @@ describe("plausibilityCheck — claim resolution", () => {
 	})
 
 	it("throws when geocode resolves no coordinate for the address", async () => {
-		const geocode = async (): Promise<GeocodeLike> => ({ lat: null, lon: null })
+		const geocode = async (): Promise<NullableLatLon> => ({ lat: null, lon: null })
 
 		await expect(
 			plausibilityCheck(
@@ -311,7 +312,7 @@ describe("plausibilityCheck — claim resolution", () => {
 	})
 
 	it("geocodes an address claim and resolves it through the point path", async () => {
-		const geocode = async (address: string): Promise<GeocodeLike> => {
+		const geocode = async (address: string): Promise<NullableLatLon> => {
 			expect(address).toBe("123 Main St, Springfield, IL")
 
 			return { lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude }
@@ -454,6 +455,93 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 		expect(bundle.coverage_confidence).toBe("low")
 
 		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "not_applicable" })
+	})
+
+	it("a zero-row geoid with deps.bdcGeoidCell reads as covered with no filing evidence", async () => {
+		await using bdc = await buildBDCFixture()
+
+		const bundle = await plausibilityCheck(
+			{ geoid: "170010001009999", technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
+			{ bdcDB: bdc.db, bdcGeoidCell: () => SPRINGFIELD_RES9_SHORT }
+		)
+
+		expect(bundle.coverage_detail.filing).toBe("covered")
+		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
+		expect(bundle.evidence_found.some((e) => e.type === "abstain")).toBe(false)
+		expect(bundle.coverage_confidence).toBe("low")
+	})
+
+	it("a zero-row geoid without a resolver keeps the documented safe result — abstain insufficient_survey_data", async () => {
+		await using bdc = await buildBDCFixture()
+
+		const bundle = await plausibilityCheck(
+			{ geoid: "170010001009999", technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
+			{ bdcDB: bdc.db }
+		)
+
+		expect(bundle.coverage_detail.filing).toBe("cell_unsurveyed")
+		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
+	})
+
+	it("retains both speed tiers from one provider, technology and block, corroborating per tier", async () => {
+		await using scratch = await temporaryDirectory("bdc-plausibility-two-tier-")
+		const out = scratch.path("bdc.db")
+
+		await buildBDCDatabase({
+			rows: [
+				{
+					geoid: GEOID_SPRINGFIELD,
+					provider_id: PROVIDER_FIBER,
+					technology_code: BroadbandTechnologyCode.OpticalCarrierFiber,
+					location_id: "SPR-FIBER-50",
+					max_advertised_download_speed: 50,
+					max_advertised_upload_speed: 10,
+					low_latency: 1,
+					business_residential_code: "R",
+				},
+				{
+					geoid: GEOID_SPRINGFIELD,
+					provider_id: PROVIDER_FIBER,
+					technology_code: BroadbandTechnologyCode.OpticalCarrierFiber,
+					location_id: "SPR-FIBER-1000",
+					max_advertised_download_speed: 1000,
+					max_advertised_upload_speed: 1000,
+					low_latency: 1,
+					business_residential_code: "R",
+				},
+			],
+			out,
+			asOfDate: ASOF_DATE,
+			buildSHA: "deadbeef",
+			blockCentroids,
+		})
+
+		const inlineDB = scratch.use(new DatabaseClient<BDCDatabase>(out, { readOnly: true }))
+
+		const bundle = await plausibilityCheck(
+			{
+				geoid: GEOID_SPRINGFIELD,
+				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+				claimedDownloadMbps: 100,
+			},
+			{ bdcDB: inlineDB }
+		)
+
+		// Collapse to the maximum tier would answer this 100 Mbps claim identically
+		// while losing the filed 50/10 tier.
+		// Retained, the two entries disagree on corroboration — the 50 Mbps row is
+		// below the claim, the gigabit row meets it.
+		const filingEntries = bundle.evidence_found.filter((e) => e.type === "filing")
+		expect(filingEntries).toHaveLength(2)
+
+		const byBucket = new Map(filingEntries.map((e) => [e.filing.speed_bucket, e.corroborates]))
+
+		expect(byBucket).toEqual(
+			new Map([
+				[BDC_SPEED_BUCKET_25_100, false],
+				[BDC_SPEED_BUCKET_GIGABIT, true],
+			])
+		)
 	})
 })
 
@@ -852,7 +940,7 @@ describe("§7-2b criteria", () => {
 
 			expect(byPoint.block_resolution).toBe("h3_cell_approximation")
 
-			const geocode = async (): Promise<GeocodeLike> => ({ lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude })
+			const geocode = async (): Promise<NullableLatLon> => ({ lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude })
 
 			const byAddress = await plausibilityCheck(
 				{

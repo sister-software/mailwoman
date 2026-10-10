@@ -18,16 +18,19 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
 import { checkCase } from "#tools/eval-harness/gauntlet/check-case"
 import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stamp"
 import {
 	buildGauntletDeps,
 	type GauntletDepsOptions,
 	type GauntletResolverPins,
+	PRODUCTION_RESOLVER_PINS,
 	runOne,
 } from "#tools/eval-harness/gauntlet/harness"
 import { routeCountry } from "#tools/eval-harness/gauntlet/routing"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
+import { pinnedSwitch } from "#tools/eval-harness/switch-pin"
 
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.
@@ -45,15 +48,15 @@ export interface GauntletLayerOptions {
 	 */
 	model?: string
 	/**
-	 * Override the card's near-postcode gazetteer choreography.
+	 * The near-postcode gazetteer choreography, `"declared"` (the card's) by default.
 	 *
-	 * A declared ablation.
-	 * The choreography pairs with the train-time half, so a board run under `false`
+	 * Any other value is a declared ablation.
+	 * The choreography pairs with the train-time half, so a board run under `"off"`
 	 * measures what the channel is worth on every tag at once.
 	 *
 	 * This is the only way to price the locality it recovers against the postcode it was added to guard.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: GauntletDepsOptions["suppressGazetteerNearPostcode"]
 	/**
 	 * Candidate tokenizer (tokenizer-splice candidates only).
 	 */
@@ -90,9 +93,10 @@ export interface GauntletLayerOptions {
 export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
 	const pins = {
 		...(options.pins ? { pins: options.pins } : {}),
-		...(options.suppressGazetteerNearPostcode === undefined
-			? {}
-			: { suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode }),
+		// Unset leaves `buildGauntletDeps` its one default, the card's declaration.
+		...(options.suppressGazetteerNearPostcode
+			? { suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode }
+			: {}),
 	}
 
 	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...pins }
@@ -207,7 +211,12 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// Printed whenever the pass could have fired, except when it is explicitly pinned off.
 	// An enabled-pin key would hide the firing count on the standard unpinned run.
 	// The pass is now enabled by default.
-	if (options.pins?.postcodeCountryCoherence !== false) {
+	if (
+		pinnedSwitch(
+			(options.pins ?? PRODUCTION_RESOLVER_PINS).postcodeCountryCoherence,
+			GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence
+		)
+	) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 
 		for (const o of overrides) {

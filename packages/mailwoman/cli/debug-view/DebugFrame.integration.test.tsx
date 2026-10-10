@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, ribbonSegments } from "mailwoman/debug-view/DebugFrame"
 import { describe, expect, it } from "vitest"
 
 import { renderInkToString } from "#cli/debug-view/static-render"
-import type { GeocodeResult, GeocodeTrace } from "#geocode"
+import type { GeocodeTrace } from "#geocode"
 
 const TREE = {
 	raw: "3215 SE Clinton St, Portland OR",
@@ -32,7 +33,15 @@ const RESULT = {
 	street: "SE Clinton St",
 	countryCode: "US",
 	hierarchy: [
-		{ tag: "locality", value: "Portland", name: "Portland", placeID: "wof:101715829", lat: 45.52, lon: -122.67 },
+		{
+			tag: "locality",
+			value: "Portland",
+			name: "Portland",
+			placeID: "wof:101715829",
+			lat: 45.52,
+			lon: -122.67,
+			in_winner_lineage: null,
+		},
 	],
 	candidates: [
 		{ name: "Portland", tag: "locality", lat: 45.52, lon: -122.67, countryCode: "US", placeID: "wof:101715829" },
@@ -43,6 +52,15 @@ const RESULT = {
 	dependent_locality: null,
 	unit: null,
 	postcode_country_scope: null,
+	rooftop: null,
+	capital_promotion: null,
+	dropped_components: null,
+	unfollowed_components: null,
+	derivation: null,
+	entity: null,
+	variant_alias_exemption: "not_applied",
+	admin_coherence: null,
+	authoritative: null,
 	intent_markers: [],
 } as GeocodeResult
 
@@ -63,8 +81,11 @@ const TRACE = {
 		systemSource: "auto",
 		localeLogits: [4, 1],
 		localeCountries: ["US", "FR"],
+		spanScores: null,
+		anchor: null,
+		country: null,
 		gazetteer: { features: [[], []], confidence: [0, 1] },
-		priors: [{ kind: "fst", applied: true }],
+		priors: [{ kind: "fst", applied: true, probePath: null, census: null, censusProbedParents: null }],
 		repairs: [],
 		tokens: [
 			{ piece: "▁3215", start: 0, end: 4, label: "B-house_number", confidence: 0.91 },
@@ -81,7 +102,7 @@ const TRACE = {
 		totalLength: RESULT.input.length,
 		whitespacePattern: "single",
 	},
-	kind: { kind: "structured_address", confidence: 0.9, alternatives: [] },
+	kind: { kind: "structured_address", confidence: 0.9, alternatives: [], intentMarkers: null },
 	inputMode: "formatted",
 	locale: "en-US",
 	resolver: [],

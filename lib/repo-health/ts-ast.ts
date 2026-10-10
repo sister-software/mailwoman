@@ -40,7 +40,7 @@ export function moduleSpecifierLiterals(
 	const specifiers: ts.StringLiteralLike[] = []
 
 	const visit = (node: ts.Node): void => {
-		let specifier: ts.Expression | undefined
+		let specifier: ts.Expression | null = null
 
 		if (ts.isImportDeclaration(node)) {
 			// `phaseModifier` rather than the deprecated `isTypeOnly`: it also distinguishes `import defer`, which runs.
@@ -49,10 +49,10 @@ export function moduleSpecifierLiterals(
 			}
 		} else if (ts.isExportDeclaration(node)) {
 			if (options.includeTypeOnly || !node.isTypeOnly) {
-				specifier = node.moduleSpecifier
+				specifier = node.moduleSpecifier ?? null
 			}
 		} else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-			specifier = node.arguments[0]
+			specifier = node.arguments[0] ?? null
 		} else if (options.includeTypeOnly && ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) {
 			specifier = node.argument.literal
 		}

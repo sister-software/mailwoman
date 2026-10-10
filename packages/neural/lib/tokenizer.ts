@@ -156,7 +156,7 @@ export class MailwomanTokenizer {
 	encode(text: string): EncodeResult {
 		const raw = this.processor.encodeWithOffsets(text)
 
-		if (raw.error !== undefined) {
+		if (raw.error) {
 			throw new Error(`tokenizer encode failed: ${raw.error}`)
 		}
 

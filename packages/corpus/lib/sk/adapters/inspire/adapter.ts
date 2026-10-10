@@ -14,7 +14,7 @@
  *
  * The reference form is a WFS stored-query URL: an `ad:component` href is
  * `…/ad/ows?…&storedQuery_id=urn:ogc:def:query:OGC-WFS::GetFeatureById&id=AdminUnitName.199`, and
- * that `id` parameter equals the target's `gml:id` exactly, which a `GetFeatureById` fetch of
+ * that `id` parameter equals the target's `gml:id` exactly. A `GetFeatureById` fetch of
  * `AdminUnitName.199` confirms. `componentJoinKey` reads it. Each reference also repeats its target's
  * value in `xlink:title`, as Czechia's does, and the adapter reads none of those titles. Three of an
  * address's references are `ad:AdminUnitName` features whose titles are a region, a district and a
@@ -36,7 +36,7 @@
  * 1,000 times, `buildingIdentifier` 334 times, and the street count was also exactly 334.
  *
  * The same publisher serves its register's own rendered address through `ra:address` on the same
- * GeoServer, which is what pins the composition. Three records, matched by street, number and postcode:
+ * GeoServer. That rendering pins the composition. Three records, matched by street, number and postcode:
  *
  * | `addressNumber` | `buildingIdentifier` | street | `fulladdress` |
  * | --- | --- | --- | --- |
@@ -45,7 +45,7 @@
  * | `142` | (absent) | (absent) | `142,Sikenička,94359` |
  *
  * So the number is `addressNumber` by itself, or `addressNumber/buildingIdentifier` where the
- * orientation number exists, which is the publisher's own `annotation` field verbatim. A street-less
+ * orientation number exists. That is the publisher's own `annotation` field verbatim. A street-less
  * address is ordinary rather than a defect: 666 of those 1,000 referenced no `ad:ThoroughfareName`.
  *
  * The place names come from two types. `ad:AdminUnitName` at `4thOrder` is the municipality and is
@@ -154,19 +154,20 @@ const MUNICIPALITY_LEVEL = "4thOrder"
  */
 interface ReferencedValue {
 	/**
-	 * The feature's element name, which decides where its value goes.
+	 * The feature's element name.
+	 * It decides where its value goes.
 	 */
 	readonly type: string
 
 	/**
-	 * The street name, place name or postcode the feature states.
+	 * The street name, place name or postcode the feature states, null when it states none.
 	 */
-	readonly value?: string
+	readonly value: string | null
 
 	/**
 	 * The administrative level an `ad:AdminUnitName` states, such as `4thOrder`.
 	 */
-	readonly level?: string
+	readonly level: string | null
 }
 
 /**
@@ -174,18 +175,18 @@ interface ReferencedValue {
  */
 function referencedValue(feature: MarkupElement): ReferencedValue {
 	if (feature.name === "ad:ThoroughfareName") {
-		return { type: feature.name, value: thoroughfareName(feature) }
+		return { type: feature.name, value: thoroughfareName(feature), level: null }
 	}
 
 	if (feature.name === "ad:PostalDescriptor") {
-		return { type: feature.name, value: postalDescriptorCode(feature) }
+		return { type: feature.name, value: postalDescriptorCode(feature), level: null }
 	}
 
 	if (feature.name === "ad:AdminUnitName") {
 		return { type: feature.name, value: placeName(feature), level: adminUnitLevel(feature) }
 	}
 
-	return { type: feature.name, value: placeName(feature) }
+	return { type: feature.name, value: placeName(feature), level: null }
 }
 
 /**
@@ -195,12 +196,12 @@ function referencedValue(feature: MarkupElement): ReferencedValue {
  * number, and the two are joined by a solidus where it does.
  * The table in this module's header reads that off three records of the publisher's `ra:address` layer.
  *
- * @returns The number, or undefined when the publisher states no `addressNumber`.
+ * @returns The number, or null when the publisher states no `addressNumber`.
  */
-export function slovakHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | undefined {
+export function slovakHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | null {
 	const descriptive = designator(byType, "addressNumber")
 
-	if (!descriptive) return undefined
+	if (!descriptive) return null
 
 	const orientation = designator(byType, "buildingIdentifier")
 
@@ -272,26 +273,23 @@ export function createSKInspireAdapter(): CorpusAdapter {
 }
 
 /**
- * One address's row, or `undefined` when it holds too little to render.
+ * One address's row, or `null` when it holds too little to render.
  *
  * The component index is complete before this is called, so a reference that
  * resolves to no feature raises rather than being deferred.
  */
-function composeRow(
-	address: MarkupElement,
-	referenced: ReadonlyMap<string, ReferencedValue>
-): CanonicalRow | undefined {
-	const addressID = address.attributes["gml:id"]?.trim()
+function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, ReferencedValue>): CanonicalRow | null {
+	const addressID = address.attributes["gml:id"]?.trim() ?? null
 	const voided = voidDesignatorTypes(address)
 
 	for (const type of ["addressNumber", "buildingIdentifier"]) {
 		if (voided.has(type)) throw new VoidDesignatorError(SK_INSPIRE_ADAPTER_ID, addressID, type)
 	}
 
-	let street: string | undefined
-	let postcode: string | undefined
-	let municipality: string | undefined
-	let settlement: string | undefined
+	let street: string | null = null
+	let postcode: string | null = null
+	let municipality: string | null = null
+	let settlement: string | null = null
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
@@ -312,7 +310,7 @@ function composeRow(
 
 	const place = municipality ?? settlement
 
-	if (!place) return undefined
+	if (!place) return null
 
 	const components: CanonicalRow["components"] = {}
 	const house = slovakHouseNumber(designatorsByType(address))
@@ -325,8 +323,8 @@ function composeRow(
 		components.street = street
 	}
 
-	// The settlement part is a dependent locality only where it names something other
-	// than the municipality, which 101 of 426 address-area references do.
+	// The settlement part is a dependent locality only where it differs from the
+	// municipality. 101 of 426 address-area references do.
 	if (settlement && municipality && settlement !== municipality) {
 		components.dependent_locality = settlement
 	}
@@ -339,7 +337,7 @@ function composeRow(
 
 	const rendered = formatAddressRow(components, "SK", { singleLine: true })
 
-	if (!rendered) return undefined
+	if (!rendered) return null
 
 	const { raw, components: aligned } = rendered
 

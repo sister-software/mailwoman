@@ -273,11 +273,11 @@ describe("StreetInterpolator — artifact-carried radius calibration", () => {
 		calibrated[Symbol.dispose]()
 	})
 
-	it("reports undefined for an extract predating the metadata table", () => {
-		expect(interpolator.radiusCalibration).toBeUndefined()
+	it("reports null for an extract predating the metadata table", () => {
+		expect(interpolator.radiusCalibration).toBeNull()
 	})
 
-	it("reports undefined for an empty or invalid calibration table", () => {
+	it("reports null for an empty or invalid calibration table", () => {
 		using emptyDB = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(emptyDB, [MAIN_EVEN])
 
@@ -286,7 +286,7 @@ describe("StreetInterpolator — artifact-carried radius calibration", () => {
 		)
 
 		const emptyCalib = new StreetInterpolator({ database: emptyDB })
-		expect(emptyCalib.radiusCalibration).toBeUndefined()
+		expect(emptyCalib.radiusCalibration).toBeNull()
 		emptyCalib[Symbol.dispose]()
 	})
 })

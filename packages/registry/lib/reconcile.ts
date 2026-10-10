@@ -109,7 +109,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
-	const person = formatPersonName(rep.name, "short")
+	const person = formatPersonName(rep.name ?? null, "short")
 
 	return rep.organization?.canonical ?? (person || rep.id)
 }
@@ -133,7 +133,7 @@ export interface ReconciliationReportOptions {
 	/**
 	 * The report's level-one heading.
 	 *
-	 * It defaults to "Coverage reconciliation — eligibility ↔ enrollment".
+	 * @defaultValue `"Coverage reconciliation — eligibility ↔ enrollment"`
 	 */
 	title?: string
 
@@ -154,7 +154,8 @@ export interface ReconciliationReportOptions {
 
 	/**
 	 * The number of `eligible-not-enrolled` entities that the spot-check lists.
-	 * It defaults to 15.
+	 *
+	 * @defaultValue `15`
 	 */
 	spotCheckLimit?: number
 }

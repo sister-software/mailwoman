@@ -24,10 +24,12 @@ const FILL_IDS = [
 ] as const
 
 /**
- * Returns the first jurisdiction fill whose visibility is on, or `undefined` when all are off.
+ * Returns the first jurisdiction fill whose visibility is on, or `null` when all are off.
  */
-function visibleFill(map: MapLibreMap): string | undefined {
-	return FILL_IDS.find((id) => map.getLayer(id) !== undefined && map.getLayoutProperty(id, "visibility") !== "none")
+function visibleFill(map: MapLibreMap): string | null {
+	return (
+		FILL_IDS.find((id) => map.getLayer(id) !== undefined && map.getLayoutProperty(id, "visibility") !== "none") ?? null
+	)
 }
 
 const percent = (value: unknown): string =>
@@ -140,13 +142,14 @@ function JurisdictionLegend({ layerID }: { layerID: string }): ReactNode {
  * Tracks the visible jurisdiction fill and the hovered jurisdiction, and renders the legend and card.
  */
 export function JurisdictionInspector({ map }: { map: MapLibreMap | null }): ReactNode {
-	const [layerID, setLayerID] = useState<string | undefined>()
+	const [layerID, setLayerID] = useState<string | null>(null)
 	const [hover, setHover] = useState<Hover | undefined>()
 
 	useEffect(() => {
 		if (!map) return
 
-		// The layer toggle changes visibility through the style, which fires `styledata`.
+		// The layer toggle changes visibility through the style.
+		// That change fires `styledata`.
 		const syncLayer = () => {
 			const next = visibleFill(map)
 

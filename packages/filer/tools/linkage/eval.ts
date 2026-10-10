@@ -189,9 +189,9 @@ async function readRegistrantFamilies(
  * Records one truth-positive pair.
  *
  * Two registrants whose `holdingCompany` values put them in one family form the pair.
- * The outcome also records whether the run recovered it.
+ * The result also records whether the run recovered it.
  */
-export interface TruthPositivePairOutcome {
+export interface TruthPositivePairResult {
 	a: FRN
 	b: FRN
 	familyID: string
@@ -202,8 +202,8 @@ function findTruthPositivePairs(
 	representatives: readonly FRN[],
 	truthGroupOf: ReadonlyMap<FRN, string>,
 	predictedSame: (a: FRN, b: FRN) => boolean
-): TruthPositivePairOutcome[] {
-	const outcomes: TruthPositivePairOutcome[] = []
+): TruthPositivePairResult[] {
+	const results: TruthPositivePairResult[] = []
 
 	for (let i = 0; i < representatives.length; i++) {
 		for (let j = i + 1; j < representatives.length; j++) {
@@ -211,13 +211,13 @@ function findTruthPositivePairs(
 			const b = representatives[j]!
 			const familyID = truthGroupOf.get(a)
 
-			if (familyID === undefined || familyID !== truthGroupOf.get(b)) continue
+			if (!familyID || familyID !== truthGroupOf.get(b)) continue
 
-			outcomes.push({ a, b, familyID, recovered: predictedSame(a, b) })
+			results.push({ a, b, familyID, recovered: predictedSame(a, b) })
 		}
 	}
 
-	return outcomes
+	return results
 }
 
 /**
@@ -243,7 +243,7 @@ export interface LinkageEvalRun {
 	 * families the prediction ignores.
 	 */
 	observedFamilyIDsOf: Map<FRN, string[]>
-	truthPositivePairs: TruthPositivePairOutcome[]
+	truthPositivePairs: TruthPositivePairResult[]
 }
 
 /**

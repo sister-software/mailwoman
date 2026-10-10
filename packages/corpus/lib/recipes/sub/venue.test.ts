@@ -8,24 +8,20 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
+import { allocate, buildSubVenueForm, isBoardReserved, SUBVENUE_LEGS, type SubVenueLeg } from "#recipes/sub/venue"
+import { buildStreetNegatives } from "#recipes/sub/venue/context"
 import {
-	allocate,
 	buildIdentifierModel,
-	buildSubVenueForm,
-	buildStreetNegatives,
 	containsPhrase,
 	defaultLexiconPath,
 	hasPromotedShape,
-	isBoardReserved,
 	isSignIdentifier,
 	matchesPromotedShape,
 	promotedSurfacesFor,
 	readSubVenueLexicon,
 	sampleIdentifier,
-	SUBVENUE_LEGS,
-	type SubVenueLeg,
-} from "#recipes/sub/venue"
-import { SUBVENUE_PROMOTIONS } from "#tools"
+} from "#recipes/sub/venue/sources"
+import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 
 const lexicon = await readSubVenueLexicon(defaultLexiconPath())
 const shippedModifiers = lexicon.modifiers.filter((m) => m.shipped).map((m) => m.id)

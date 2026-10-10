@@ -107,9 +107,9 @@ def run_training_loop(
     train_loss_running = 0.0
     log_every = max(1, cfg.train.log_every_steps)
     print(f"max_steps={cfg.train.max_steps} batch_size={cfg.train.batch_size}")
-    # Every train row a consumed batch carried, counted by jurisdiction and phenomenon: the realized
+    # Every train row a consumed batch held, counted by jurisdiction and phenomenon: the realized
     # exposure the release check reads. A resumed process counts only what it trains, and writes its
-    # own segment named by the step it resumed from, so a preempted run's segments sum.
+    # own segment, taken from the step it resumed from, so a preempted run's segments sum.
     realized = StageCounter("realized_draws")
 
     # The streaming iterator may exhaust before max_steps when row_limit is set, so restart per
@@ -191,8 +191,8 @@ def write_realized_exposure(
     """Write the realized-draws stage beside the checkpoint, as ``exposure-realized-from-<step>.json``."""
     report = build_report(
         [realized],
-        # `Config` carries no path to the YAML it was loaded from, so the run is identified by its
-        # output directory and `training_config` stays null rather than naming a guess.
+        # `Config` has no path to the YAML it was loaded from, so the run is identified by its
+        # output directory and `training_config` stays null rather than a guess.
         label_set=label_set_contract(getattr(cfg.data, "label_set", "stage3")),
         inputs={
             "output_dir": str(output_dir),

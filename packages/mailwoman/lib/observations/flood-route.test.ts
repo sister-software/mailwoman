@@ -52,14 +52,16 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 				}),
 			],
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	// A fixed verdict lets the tests assert the marker's `kind` exactly.
 	return {
 		classifier,
 		resolver,
-		placeCountry: false,
-		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [] }),
+		placeCountry: "none",
+		classifyKind: async () => ({ kind: TEST_VERDICT_KIND, confidence: 1, alternatives: [], intentMarkers: null }),
 	}
 }
 
@@ -185,7 +187,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 			const evidence = marker.evidence!
 
 			expect(evidence.reading).toBe("designated_absence")
-			expect(evidence.code).toBeUndefined()
+			expect(evidence.code).toBeNull()
 			expect((evidence.definition as { code: string }).code).toBe("FZ1")
 			expect((evidence.coverage as { basis: string; observedRows: number }).basis).toBe("designated")
 			expect((evidence.coverage as { basis: string; observedRows: number }).observedRows).toBe(0)
@@ -217,7 +219,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 		const route = createAuthorityDesignationRoute({ databasePath })
 
 		try {
-			expect(route.observe(undefined, undefined)).toEqual({ fired: false, refusal: "no_coordinate" })
+			expect(route.observe(null, null)).toEqual({ fired: false, refusal: "no_coordinate" })
 		} finally {
 			route[Symbol.dispose]()
 		}

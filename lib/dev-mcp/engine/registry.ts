@@ -5,14 +5,18 @@
  *   Caches geocode sessions by effective configuration and source fingerprint.
  */
 
+import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
+	type CapitalTier,
 	createGeocodeCommandOptions,
 	createGeocodeSession,
+	GEOCODE_SWITCH_DEFAULTS,
 	type GeocodeSession,
 	type GeocodeSessionOptions,
 } from "mailwoman/geocode"
+import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/switch-pin"
 import type { PathBuilderLike } from "path-ts"
 
 import { missingWeightsCacheArtifacts } from "#dev-mcp/eval-report"
@@ -35,28 +39,42 @@ export interface EngineConfig {
 	 * A candidate weights bundle to load instead of the installed package.
 	 */
 	weights_cache?: string
-	gazetteer_prior?: boolean
-	place_country?: boolean
+	gazetteer_prior?: SwitchPin
+	/**
+	 * Whether the venue-head prior feeds the parse.
+	 *
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.venueHeadPrior`
+	 */
+	venue_head_prior?: SwitchPin
+	/**
+	 * Multiplier on the venue-head table's biases.
+	 */
+	venue_head_bias_scale?: number
+	place_country?: SwitchPin
 	place_country_threshold?: number
-	postcode_country_coherence?: boolean
-	fork_entity?: boolean
-	locale_country_prior?: boolean
-	postcode_shape_coherence?: boolean
-	postcode_containment_coherence?: boolean
-	admin_containment_rerank?: boolean
+	postcode_country_coherence?: SwitchPin
+	fork_entity?: SwitchPin
+	locale_country_prior?: SwitchPin
+	postcode_shape_coherence?: SwitchPin
+	postcode_containment_coherence?: SwitchPin
+	admin_containment_rerank?: SwitchPin
 	/**
-	 * Enables the POI venue tier.
-	 * The default is off.
+	 * Whether `poi.db` entity upgrades reach the venue tier.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
 	 */
-	poi_venue_tier?: boolean
+	poi_venue_tier?: SwitchPin
 	/**
-	 * Enables capital-status ranking.
+	 * The capital-status ranking tier (`"auto"`, `"required"` or `"off"`).
 	 */
-	capital_tier?: boolean
+	capital_tier?: CapitalTier
 	/**
-	 * Exempts own-name variant aliases from the cross-country primary-preference penalty.
+	 * Whether own-name variant aliases are exempt from the cross-country primary-preference penalty.
+	 *
+	 * The vocabulary matches `GeocodeResult.variant_alias_exemption`.
+	 * Unset keeps the production default, `"applied"`.
 	 */
-	variant_alias_exemption?: boolean
+	variant_alias_exemption?: VariantAliasExemption
 	/**
 	 * Records decode-path evidence for each run.
 	 */
@@ -80,6 +98,8 @@ export const EFFECTIVE_KEY_FOR = {
 	data_root: "dataRoot",
 	weights_cache: "weightsCacheRoot",
 	gazetteer_prior: "gazetteerPrior",
+	venue_head_prior: "venueHeadPrior",
+	venue_head_bias_scale: "venueHeadBiasScale",
 	place_country: "placeCountry",
 	place_country_threshold: "placeCountryThreshold",
 	postcode_country_coherence: "postcodeCountryCoherence",
@@ -121,18 +141,32 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		locale: config.locale ?? production.locale,
 		countryScope: config.country_scope ?? production.countryScope,
 		dataRoot: config.data_root ?? production.dataRoot,
-		localeCountryPrior: config.locale_country_prior ?? production.localeCountryPrior,
-		placeCountry: config.place_country ?? production.placeCountry,
-		postcodeCountryCoherence: config.postcode_country_coherence ?? production.postcodeCountryCoherence,
-		forkEntity: config.fork_entity ?? production.forkEntity,
-		postcodeShapeCoherence: config.postcode_shape_coherence ?? production.postcodeShapeCoherence,
-		postcodeContainmentCoherence: config.postcode_containment_coherence ?? production.postcodeContainmentCoherence,
+		localeCountryPrior: pinnedSwitch(config.locale_country_prior ?? "production", production.localeCountryPrior),
+		placeCountry: pinnedSwitch(config.place_country ?? "production", production.placeCountry),
+		postcodeCountryCoherence: pinnedSwitch(
+			config.postcode_country_coherence ?? "production",
+			production.postcodeCountryCoherence
+		),
+		forkEntity: pinnedSwitch(config.fork_entity ?? "production", production.forkEntity),
+		postcodeShapeCoherence: pinnedSwitch(
+			config.postcode_shape_coherence ?? "production",
+			production.postcodeShapeCoherence
+		),
+		postcodeContainmentCoherence: pinnedSwitch(
+			config.postcode_containment_coherence ?? "production",
+			production.postcodeContainmentCoherence
+		),
 		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
-		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
-		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
-		...(config.poi_venue_tier === true ? { poiVenueTier: true } : {}),
-		...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
-		...(config.variant_alias_exemption === undefined ? {} : { variantAliasExemption: config.variant_alias_exemption }),
+		gazetteerPrior: pinnedSwitch(config.gazetteer_prior ?? "production", production.gazetteerPrior),
+		venueHeadPrior: pinnedSwitch(config.venue_head_prior ?? "production", production.venueHeadPrior),
+		venueHeadBiasScale: config.venue_head_bias_scale ?? production.venueHeadBiasScale,
+		adminContainmentRerank: pinnedSwitch(
+			config.admin_containment_rerank ?? "production",
+			production.adminContainmentRerank
+		),
+		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
+		capitalTier: config.capital_tier ?? production.capitalTier,
+		variantAliasExemption: config.variant_alias_exemption ?? production.variantAliasExemption,
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),

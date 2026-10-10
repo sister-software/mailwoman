@@ -251,8 +251,8 @@ describe("filterArtifacts — the --only substring filter", () => {
 		},
 	]
 
-	it("returns everything when only is undefined or empty", () => {
-		expect(filterArtifacts(artifacts, undefined)).toHaveLength(2)
+	it("returns everything when only is null or empty", () => {
+		expect(filterArtifacts(artifacts, null)).toHaveLength(2)
 		expect(filterArtifacts(artifacts, "")).toHaveLength(2)
 	})
 

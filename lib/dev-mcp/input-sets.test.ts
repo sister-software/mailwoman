@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { describe, expect, it } from "vitest"
 
 import type { InputSetRef } from "#dev-mcp/input-sets"
@@ -30,7 +30,7 @@ describe("resolveInputSet — board", () => {
 
 		expect(set.selection).toBe("full")
 		expect(set.n).toBeGreaterThan(500)
-		expect(set.populationN).toBeUndefined()
+		expect(set.populationN).toBeNull()
 		// Recomputed per resolve, never cached.
 		expect(set.corpusHash).toMatch(/^[0-9a-f]{64}$/)
 	})
@@ -78,7 +78,7 @@ describe("resolveInputSet — literal", () => {
 
 		expect(set.hasTruth.none).toBe(1)
 		expect(set.notes.join(" ")).toContain("observed but not graded")
-		expect(set.inputs[0]).not.toHaveProperty("routeCountry")
+		expect(set.inputs[0]).toHaveProperty("routeCountry", null)
 	})
 
 	it("rejects an empty set rather than measuring nothing", async () => {

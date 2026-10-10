@@ -216,7 +216,7 @@ that a geocode without the layer is byte-identical to one with it, apart from th
   tooling. Whoever builds it will face a reversed meaning of zero in the source's own encoding. The
   derived Crop Frequency Layer's value domain runs from `"1"` (planted once in 18 years) through `"18"`
   (planted every year), then **`"255"` means planted zero times**, while **`"0"` is No Data**. A reader
-  that takes 0 as "never planted" reads _we have no data here_ as _nothing was ever grown here_, which is
+  that takes 0 as "never planted" reads _we have no data here_ as _no crop was ever grown here_, which is
   the opposite of the truth. This vocabulary uses no numeric sentinel for either state and should not
   start.
 - **The layer computes no suitability score.** It repeats what an authority states, in the authority's

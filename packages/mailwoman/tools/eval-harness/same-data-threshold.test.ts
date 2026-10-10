@@ -41,7 +41,7 @@ function panelFor(id: string, goldPresent: boolean): SameDataPanelRow {
 	}
 }
 
-function resultFor(overrides: Partial<ArmRowResult> & Pick<ArmRowResult, "rowID">): ArmRowResult {
+function armRowResult(overrides: Partial<ArmRowResult> & Pick<ArmRowResult, "rowID">): ArmRowResult {
 	return {
 		arm: "mailwoman",
 		stratum: "unambiguous",
@@ -59,6 +59,7 @@ function resultFor(overrides: Partial<ArmRowResult> & Pick<ArmRowResult, "rowID"
 			candidateIDs: ["101"],
 			candidateFields: ["id"],
 		},
+		error: null,
 		...overrides,
 	}
 }
@@ -70,7 +71,7 @@ const PANEL = new Map([
 
 describe("same-data abstention threshold (#2264)", () => {
 	it("turns a below-threshold selection into an abstention rather than a wrong answer", () => {
-		const [withheld] = applyThreshold([resultFor({ rowID: "present", confidence: 0.2 })], 0.5)
+		const [withheld] = applyThreshold([armRowResult({ rowID: "present", confidence: 0.2 })], 0.5)
 
 		expect(withheld?.selection).toBeNull()
 		expect(withheld?.correct).toBe(false)
@@ -80,14 +81,14 @@ describe("same-data abstention threshold (#2264)", () => {
 	})
 
 	it("keeps a selection whose confidence reaches the threshold exactly", () => {
-		const [kept] = applyThreshold([resultFor({ rowID: "present", confidence: 0.5 })], 0.5)
+		const [kept] = applyThreshold([armRowResult({ rowID: "present", confidence: 0.5 })], 0.5)
 
 		expect(kept?.selection).toBe("101")
 		expect(kept?.correct).toBe(true)
 	})
 
 	it("leaves an errored row untouched, because a harness failure is not a selection", () => {
-		const errored = resultFor({
+		const errored = armRowResult({
 			rowID: "present",
 			confidence: 0,
 			selection: null,
@@ -102,8 +103,8 @@ describe("same-data abstention threshold (#2264)", () => {
 
 	it("reproduces the unthresholded metrics at threshold zero", () => {
 		const results = [
-			resultFor({ rowID: "present", confidence: 0.2 }),
-			resultFor({ rowID: "absent", stratum: "gold_absent", confidence: 0.9, correct: false }),
+			armRowResult({ rowID: "present", confidence: 0.2 }),
+			armRowResult({ rowID: "absent", stratum: "gold_absent", confidence: 0.9, correct: false }),
 		]
 
 		const [point] = thresholdCurve("mailwoman", results, PANEL, [0])
@@ -118,8 +119,8 @@ describe("same-data abstention threshold (#2264)", () => {
 	it("counts the withheld-gold selections no threshold can withhold", () => {
 		const ceiling = irreducibleFalseSelections(
 			[
-				resultFor({ rowID: "absent", stratum: "gold_absent", confidence: 1, correct: false }),
-				resultFor({ rowID: "absent", stratum: "gold_absent", confidence: 0.4, correct: false }),
+				armRowResult({ rowID: "absent", stratum: "gold_absent", confidence: 1, correct: false }),
+				armRowResult({ rowID: "absent", stratum: "gold_absent", confidence: 0.4, correct: false }),
 			],
 			PANEL
 		)
@@ -129,8 +130,8 @@ describe("same-data abstention threshold (#2264)", () => {
 
 	it("requires both axes before it calls a threshold dominating", () => {
 		const results = [
-			resultFor({ rowID: "present", confidence: 0.2 }),
-			resultFor({ rowID: "absent", stratum: "gold_absent", confidence: 0.2, correct: false }),
+			armRowResult({ rowID: "present", confidence: 0.2 }),
+			armRowResult({ rowID: "absent", stratum: "gold_absent", confidence: 0.2, correct: false }),
 		]
 
 		const curve = thresholdCurve("mailwoman", results, PANEL, [0, 0.5])

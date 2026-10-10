@@ -7,7 +7,9 @@
  *   arrays at accepting states.
  */
 
-import type { FSTContinuation, FSTMatchResult, FSTQueryResult, PlaceEntry } from "#fst/types"
+import type { AncestrieMatch } from "@mailwoman/ancestrie"
+
+import type { FSTContinuation, FSTQueryResult, PlaceEntry } from "#fst/types"
 
 interface FSTNode {
 	edges: Map<string, number>
@@ -35,7 +37,7 @@ export class FSTMatcher {
 		return count
 	}
 
-	walk(tokens: string[]): FSTMatchResult | null {
+	walk(tokens: string[]): AncestrieMatch | null {
 		let stateID = 0
 
 		for (const token of tokens) {
@@ -53,7 +55,7 @@ export class FSTMatcher {
 		return { stateID, accepted: node.places.length > 0, depth: tokens.length }
 	}
 
-	walkFrom(prev: FSTMatchResult, token: string): FSTMatchResult | null {
+	walkFrom(prev: AncestrieMatch, token: string): AncestrieMatch | null {
 		const node = this.nodes[prev.stateID]
 
 		if (!node) return null

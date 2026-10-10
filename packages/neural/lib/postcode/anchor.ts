@@ -5,19 +5,9 @@ import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { isGermanStreetToken } from "@mailwoman/codex/de"
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
+import type { PostcodePlace } from "@mailwoman/core/resolver"
 
 import { collectMatches } from "#postcode/repair"
-
-/**
- * One gazetteer hit for a postcode.
- *
- * A `lat` and `lon` of 0 mean the postcode is known but has no centroid.
- */
-export interface PostcodePlace {
-	country: string
-	lat: number
-	lon: number
-}
 
 /**
  * The postcode lookup that the anchor extractor needs from a gazetteer.
@@ -87,7 +77,8 @@ export interface PostcodeAnchor {
 export interface ExtractPostcodeAnchorsOpts {
 	/**
 	 * Whether to retry an unmatched span with its {@link editDistance1Variants} at reduced confidence.
-	 * It defaults to false.
+	 *
+	 * @defaultValue `false`
 	 */
 	fuzzy?: boolean
 }

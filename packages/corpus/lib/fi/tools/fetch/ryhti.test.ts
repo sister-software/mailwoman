@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -41,8 +41,8 @@ const ROW = `0001,Mannerheimintie,Mannerheimvägen,HELSINKI,HELSINGFORS,"091","0
 /**
  * An `APIClient` over a scripted transport, with the dispatched URLs recorded on `calls`.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "ryhti test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -175,7 +175,7 @@ describe("downloadRyhti", () => {
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
 
-		// The HEAD alone.
+		// Only the HEAD.
 		// A body request against the real host would be 351 MB.
 		expect(client.calls).toEqual([FI_RYHTI_CSV_URL])
 	})
@@ -200,8 +200,8 @@ describe("downloadRyhti", () => {
 			retries: 0,
 		})
 
-		// The transfer is refused by the aborted signal rather than skipped,
-		// which is what proves the re-run check did not match.
+		// The aborted signal refuses the transfer rather than skipping it.
+		// That proves the re-run check did not match.
 		expect(summary).toMatchObject({ fetched: 0, skipped: 0, failed: 1, failedCodes: ["ryhti"] })
 	})
 
@@ -245,7 +245,8 @@ describe("downloadRyhti", () => {
 			retries: 0,
 		})
 
-		// A host that states neither value gives the check no term to compare, which is not agreement.
+		// A host that states neither value gives the check no term to compare.
+		// That is not agreement.
 		expect(summary).toMatchObject({ skipped: 0, failed: 1 })
 	})
 })
@@ -258,7 +259,7 @@ describe("decompressToCSV", () => {
 
 		// Finnish and Swedish place names are multi-byte, and `Ähtäri`/`Pedersöre` repeated
 		// past any chunk boundary is what a per-chunk `toString("utf8")` turns into U+FFFD.
-		// The file itself carries none: 60,014,592 decompressed bytes were scanned for `EF BF BD` with 0 found.
+		// The file itself holds none: 60,014,592 decompressed bytes were scanned for `EF BF BD` with 0 found.
 		const rows = Array.from({ length: 20_000 }, (_, index) => `${index},Ähtäri,Pedersöre,ÄHTÄRI,PEDERSÖRE`)
 		const text = `${HEADER}\n${rows.join("\n")}\n`
 

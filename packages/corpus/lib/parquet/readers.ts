@@ -8,7 +8,7 @@
  *   Both throw for an unreadable file, so a caller cannot mistake a read failure for an empty file.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"

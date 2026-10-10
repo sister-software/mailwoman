@@ -10,11 +10,16 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer/stamp-manifest"
 
 /**
@@ -96,7 +101,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 function parseHn(raw: unknown): number | null {
-	if (raw === null || raw === undefined) return null
+	if (raw === null || !raw) return null
 	const s = String(raw).trim()
 
 	if (!/^\d+$/.test(s)) return null
@@ -272,7 +277,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 							Math.min(from, to),
 							Math.max(from, to),
 							parity,
-							zip === null || zip === undefined ? null : String(zip),
+							zip ? String(zip) : null,
 							countyFips,
 							streetRaw,
 							polyline,
@@ -316,6 +321,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			// The layer joins only on `street_norm`.
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
+			sourceRecords: null,
 		})
 
 		await swapDatabaseIntoPlace(tmpOut, finalOut)
@@ -332,16 +338,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

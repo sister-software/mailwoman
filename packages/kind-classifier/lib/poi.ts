@@ -8,7 +8,8 @@
  * Spec §3.1.
  */
 
-import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import type { POISpatialRelation } from "@mailwoman/core/pipeline"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
 /**
  * Comma-segment ceiling for a POI-led query.
  *
@@ -29,20 +30,26 @@ export interface POIPhraseMatch {
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
-	mechanism?: "exact" | "locale_normalized" | "typo"
-	inputPhrase?: string
 	/**
-	 * Absent means `"category"`; optional so existing `POIPhraseLookup` implementors stay source-compatible.
+	 * How the phrase matched, or `null` when the lookup does not report it.
 	 */
-	kind?: "category" | "brand" | "name"
+	mechanism: "exact" | "locale_normalized" | "typo" | null
+	/**
+	 * The phrase the lookup received, or `null` when the lookup does not report it.
+	 */
+	inputPhrase: string | null
+	/**
+	 * What `categoryID` identifies.
+	 */
+	kind: "category" | "brand" | "name"
 	/**
 	 * Wikidata QID when known, `kind: "brand"` only.
-	 * Absent when a brand resolved using its name only.
+	 *
+	 * It is `null` when a brand resolved using its name only, and for other kinds.
 	 */
-	wikidata?: string
+	wikidata: string | null
 	/**
-	 * Whether this hit is one member of a set the caller must search together
-	 * rather than one candidate in a preference list.
+	 * How the caller reads several hits for one phrase.
 	 *
 	 * A lookup returning several hits means two different things: a phrase index
 	 * returns the categories one typed phrase could name, the curated reading first
@@ -50,16 +57,15 @@ export interface POIPhraseMatch {
 	 * rung returns every entity kind that affords one activity in a stable enumeration.
 	 * The enumeration does not express a preference.
 	 *
-	 * The first result would impose an ordering that the source does not provide.
-	 * Set on every member of such a set, so {@link matchPOISubject} returns them all
-	 * and the POI branch searches their union.
-	 *
-	 * Absent, the committed lexicon's shape, keeps the first-hit reading.
+	 * - `"preference"`: the hits are a preference list; {@link matchPOISubject} keeps the first.
+	 *   The committed lexicon's shape.
+	 * - `"set"`: this hit is one member of a set the caller must search together,
+	 *   so {@link matchPOISubject} returns them all and the POI branch searches their union.
 	 */
-	searchAsSet?: boolean
+	reading: POIPhraseReading
 	/**
 	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to.
-	 * Absent means the condition is true everywhere.
+	 * `null` means the claim is true in every country.
 	 *
 	 * A scope is a statement about establishments, so it is judged against the country of
 	 * the place being searched rather than the caller's locale: the locale is the lens the
@@ -67,29 +73,26 @@ export interface POIPhraseMatch {
 	 * `matchPOISubject` returns the value unchanged.
 	 * The POI intent stage binds it once the anchor has resolved.
 	 */
-	countryScope?: readonly string[]
+	countryScope: readonly string[] | null
 }
+
+/**
+ * How several hits for one phrase are read, as {@link POIPhraseMatch.reading} describes.
+ */
+export type POIPhraseReading = "preference" | "set"
 
 /**
  * Injected phrase→category lookup, exact-phrase and locale-aware, returning `[]` on miss.
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
-export type POISpatialRelation = "comma" | "near" | "in" | "at" | "around" | "to"
-
-export interface POIQuerySpan {
-	text: string
-	/**
-	 * Half-open character offsets into the normalized input.
-	 */
-	start: number
-	end: number
-}
+/**
+ * A span of the normalized input, with half-open character offsets.
+ */
+export type POIQuerySpan = TextSpan
 
 /**
- * Which lexicon this hit came from.
- *
- * Category lookups set `"category"` as the backward-compatible default.
+ * The subject phrase {@link matchPOISubject} chose and the lexicon hits for it.
  */
 export interface POISubjectMatch {
 	/**
@@ -100,7 +103,7 @@ export interface POISubjectMatch {
 	match: POIPhraseMatch
 	/**
 	 * Every category the subject reaches, `match` first: one entry unless the lookup
-	 * returned a {@link POIPhraseMatch.searchAsSet} set, in which case it holds the
+	 * returned a `"set"` {@link POIPhraseMatch.reading}, in which case it holds the
 	 * whole set and the POI branch searches their union.
 	 * The order is the lookup's and states no preference.
 	 */
@@ -110,13 +113,13 @@ export interface POISubjectMatch {
 	/**
 	 * The relation crossing from the subject span to the anchor span.
 	 */
-	relation?: POISpatialRelation
-	relationSpan?: POIQuerySpan
+	relation: POISpatialRelation | null
+	relationSpan: POIQuerySpan | null
 	/**
 	 * The anchor remainder after the separator; `""` when the whole input matched.
 	 */
 	remainder: string
-	anchorSpan?: POIQuerySpan
+	anchorSpan: POIQuerySpan | null
 }
 
 /**
@@ -145,15 +148,15 @@ const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to)\s+/gi
 const MAX_SUBJECT_TOKENS = 8
 
 /**
- * The categories one candidate subject reaches: the whole array when the first hit
- * declares {@link POIPhraseMatch.searchAsSet}, preserved as the lookup returned it
+ * The categories one candidate subject reaches: the whole array when the first hit reads
+ * as a `"set"` ({@link POIPhraseMatch.reading}), preserved as the lookup returned it
  * and never filtered, so a rung that flagged only some members keeps every member.
  *
  * The inconsistency stays visible.
  * Otherwise, use only the first hit.
  */
 function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
-	return hits[0]!.searchAsSet ? [...hits] : [hits[0]!]
+	return hits[0]!.reading === "set" ? [...hits] : [hits[0]!]
 }
 
 /**
@@ -167,17 +170,13 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  *
  * The winning candidate's hits are listed per {@link reachedMatches}.
  */
-export function matchPOISubject(
-	text: string,
-	locale: string | undefined,
-	lookup: POIPhraseLookup
-): POISubjectMatch | null {
+export function matchPOISubject(text: string, locale: string | null, lookup: POIPhraseLookup): POISubjectMatch | null {
 	const trimmed = text.trim()
 	const inputStart = text.indexOf(trimmed)
 
 	if (!trimmed) return null
 
-	const whole = lookup(trimmed, locale)
+	const whole = lookup(trimmed, locale ?? undefined)
 
 	if (whole.length) {
 		const matches = reachedMatches(whole)
@@ -187,7 +186,10 @@ export function matchPOISubject(
 			matches,
 			subject: trimmed,
 			subjectSpan: { text: trimmed, start: inputStart, end: inputStart + trimmed.length },
+			relation: null,
+			relationSpan: null,
 			remainder: "",
+			anchorSpan: null,
 		}
 	}
 
@@ -200,7 +202,7 @@ export function matchPOISubject(
 		// Whitespace-only split rather than `wordsOf`, because a comma inside a subject is real content.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
-		const hits = lookup(subject, locale)
+		const hits = lookup(subject, locale ?? undefined)
 
 		if (!hits.length) continue
 
@@ -254,7 +256,7 @@ export function createScorePOIQuery(
 	locale?: string
 ): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
 	return (input, shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
 
 		if (!matched) return 0
 
@@ -296,11 +298,11 @@ export function createScorePOICategory(
 	locale?: string
 ): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
 	return (input, _shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
 
 		if (!matched || matched.remainder !== "") return 0
 
-		if ((matched.match.kind ?? "category") !== "category") return 0
+		if (matched.match.kind !== "category") return 0
 
 		return POI_CATEGORY_CONFIDENCE * matched.match.confidence
 	}
@@ -311,16 +313,12 @@ export function createScorePOICategory(
  * `null` when the input is not a bare category, under the same conditions as
  * {@link createScorePOICategory} so the two cannot disagree.
  */
-export function matchPOICategory(
-	text: string,
-	locale: string | undefined,
-	lookup: POIPhraseLookup
-): POIPhraseMatch | null {
+export function matchPOICategory(text: string, locale: string | null, lookup: POIPhraseLookup): POIPhraseMatch | null {
 	const matched = matchPOISubject(text, locale, lookup)
 
 	if (!matched || matched.remainder !== "") return null
 
-	if ((matched.match.kind ?? "category") !== "category") return null
+	if (matched.match.kind !== "category") return null
 
 	return matched.match
 }

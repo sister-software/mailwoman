@@ -60,6 +60,8 @@ function evalForm499Row(
 ): Form499Row {
 	return {
 		doingBusinessAs: "",
+		lifecycle: null,
+		operatingStates: null,
 		usfContributor: false,
 		principalCommType: "Competitive Local Exchange Carrier (CLEC)",
 		managementCompany: "",

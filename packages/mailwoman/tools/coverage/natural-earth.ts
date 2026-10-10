@@ -11,7 +11,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { streamToDisk } from "@mailwoman/core/utils"
@@ -100,20 +101,20 @@ export async function fetchNaturalEarthFile(
 }
 
 /**
- * Returns the ISO 3166-1 alpha-2 code a map unit stands for, or `undefined` for a unit no jurisdiction owns.
+ * Returns the ISO 3166-1 alpha-2 code a map unit stands for, or `null` for a unit no jurisdiction owns.
  *
  * `ISO_A2` holds `-99` for France and Norway and a subdivision code such as `FR-973`
  * for French Guiana, so the code is read from `ISO_A2_EH`.
- * The US Minor Outlying Islands carry `ISO_A2_EH` `US` and are told apart by `ADM0_A3` `UMI`.
+ * The US Minor Outlying Islands have `ISO_A2_EH` `US` and are told apart by `ADM0_A3` `UMI`.
  *
- * A disputed or special area, such as Bir Tawil or the Cyprus buffer zone, carries `-99` in both fields.
+ * A disputed or special area, such as Bir Tawil or the Cyprus buffer zone, has `-99` in both fields.
  */
-export function mapUnitJurisdiction(properties: NaturalEarthUnitProperties): string | undefined {
+export function mapUnitJurisdiction(properties: NaturalEarthUnitProperties): string | null {
 	if (properties.ADM0_A3 === "UMI") return "UM"
 
 	const code = properties.ISO_A2_EH === "-99" ? properties.ISO_A2 : properties.ISO_A2_EH
 
-	return /^[A-Z]{2}$/u.test(code) ? code : undefined
+	return /^[A-Z]{2}$/u.test(code) ? code : null
 }
 
 /**

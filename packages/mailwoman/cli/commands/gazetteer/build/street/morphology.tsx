@@ -42,7 +42,7 @@ const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
-			locales: options.locales === undefined ? undefined : extractDelimited(options.locales),
+			locales: options.locales ? extractDelimited(options.locales) : undefined,
 			output: options.out,
 			onProgress: (line) => console.error(line),
 		})

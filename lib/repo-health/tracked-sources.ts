@@ -13,7 +13,7 @@
  *   and `.yarn`.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { isPresent } from "@mailwoman/core/objects"
 import { resolvePath } from "path-ts"
 
@@ -43,9 +43,11 @@ export const PACKAGE_SOURCE_PATH = /^(?:packages\/[^/]+\/(?:lib|sdk|tools|cli)|l
 
 export interface TrackedSourceOptions {
 	/**
-	 * Pathspecs in `git ls-files` form (default: every `.ts` / `.tsx`).
+	 * Pathspecs in `git ls-files` form.
 	 *
 	 * See {@link pathspecPattern} for the matching rule.
+	 *
+	 * @defaultValue every `.ts` / `.tsx`
 	 */
 	globs?: readonly string[]
 	/**

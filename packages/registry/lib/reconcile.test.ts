@@ -18,7 +18,17 @@ const CONFIG: ReconcileConfig = {
 }
 
 function rec(id: string, source: string): SourceRecord {
-	return { id, source }
+	return {
+		id,
+		source,
+		name: null,
+		organization: null,
+		address: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
+	}
 }
 
 function entity(id: string, sources: string[], coordinate?: { latitude: number; longitude: number }): ResolvedEntity {
@@ -27,8 +37,11 @@ function entity(id: string, sources: string[], coordinate?: { latitude: number; 
 	return {
 		id,
 		records,
-		representative: { ...records[0]!, organization: { canonical: `Org ${id}`, raw: `Org ${id}`, designations: [] } },
-		...(coordinate ? { coordinate } : {}),
+		representative: {
+			...records[0]!,
+			organization: { canonical: `Org ${id}`, raw: `Org ${id}`, designations: [], dba: null },
+		},
+		coordinate: coordinate ?? null,
 		cohesion: sources.length > 1 ? 10 : null,
 	}
 }
@@ -70,6 +83,7 @@ describe("reconcileCoverage", () => {
 			id: "x",
 			records: [rec("1", "fcc"), rec("2", "nppes"), rec("3", "nppes")],
 			representative: rec("1", "fcc"),
+			coordinate: null,
 			cohesion: 5,
 		}
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -61,8 +61,8 @@ export interface TriageAttestation {
 	 * `unattested` means the check ran and found no match.
 	 */
 	state: "attested" | "unattested" | "unmeasured"
-	population?: number
-	distanceKm?: number
+	population: number | null
+	distanceKm: number | null
 }
 
 /**
@@ -97,7 +97,7 @@ export interface TriageRow {
 	/**
 	 * The live record that covers this place, if any.
 	 */
-	coveredBy?: CoveredBy
+	coveredBy: CoveredBy | null
 	attestation: TriageAttestation
 }
 
@@ -116,10 +116,10 @@ export interface TriageSummary {
 	/**
 	 * The number of uncovered rows that GeoNames attests.
 	 *
-	 * It is `undefined` when the country has no dump.
+	 * It is `null` when the country has no dump.
 	 * A value of 0 means the check ran and found none.
 	 */
-	uncoveredAttested?: number
+	uncoveredAttested: number | null
 }
 
 /**
@@ -140,7 +140,8 @@ export interface TriageOptions {
 
 	/**
 	 * The ISO 3166-1 alpha-2 countries to triage.
-	 * Defaults to every country in the database.
+	 *
+	 * @defaultValue every country in the database.
 	 */
 	countries?: readonly string[]
 
@@ -180,9 +181,9 @@ function fold(value: string): string {
 function judgeCoverage(
 	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },
 	neighbours: readonly LiveRecord[]
-): { verdict: CoverageVerdict; coveredBy?: CoveredBy } {
-	let containment: { record: LiveRecord; distanceKm: number } | undefined
-	let crossBand: { record: LiveRecord; distanceKm: number } | undefined
+): { verdict: CoverageVerdict; coveredBy: CoveredBy | null } {
+	let containment: { record: LiveRecord; distanceKm: number } | null = null
+	let crossBand: { record: LiveRecord; distanceKm: number } | null = null
 
 	for (const live of neighbours) {
 		const distanceKm = haversineKm(dead.lat, dead.lon, live.lat, live.lon)
@@ -237,7 +238,7 @@ function judgeCoverage(
 		}
 	}
 
-	return { verdict: CoverageVerdict.Uncovered }
+	return { verdict: CoverageVerdict.Uncovered, coveredBy: null }
 }
 
 async function loadAttestors(
@@ -360,7 +361,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 				live
 			)
 
-			let attestation: TriageAttestation = { state: "unmeasured" }
+			let attestation: TriageAttestation = { state: "unmeasured", population: null, distanceKm: null }
 
 			if (attestors) {
 				const near = (attestors.get(key) ?? [])
@@ -370,7 +371,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 
 				attestation = near.length
 					? { state: "attested", population: near[0]!.pop, distanceKm: near[0]!.distanceKm }
-					: { state: "unattested" }
+					: { state: "unattested", population: null, distanceKm: null }
 			}
 
 			countryRows.push({
@@ -385,7 +386,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 					? CurrencyClass.DeprecatedNoSuccessor
 					: CurrencyClass.NotCurrentUnstated,
 				coverage: verdict,
-				...(coveredBy ? { coveredBy } : {}),
+				coveredBy,
 				attestation,
 			})
 		}
@@ -407,7 +408,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 				coveredCrossBand: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
 				coveredContainment: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
 				uncovered: uncovered.length,
-				...(attestors ? { uncoveredAttested: uncovered.filter((r) => r.attestation.state === "attested").length } : {}),
+				uncoveredAttested: attestors ? uncovered.filter((r) => r.attestation.state === "attested").length : null,
 			})
 		}
 

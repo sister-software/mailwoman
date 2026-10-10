@@ -7,7 +7,8 @@
  * The second input is mostly not input: the eight global discovery lookups repeat once per jurisdiction and are dropped, because they name a lookup rather than a national source.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
@@ -261,7 +262,7 @@ export interface BuildSourceRegisterOptions {
 	sourceVersion?: string
 }
 
-function required(value: string | undefined, field: string, row: number): string {
+function required(value: string | null | undefined, field: string, row: number): string {
 	const trimmed = (value ?? "").trim()
 
 	if (!trimmed) throw new Error(`row ${row}: ${field} is empty, and the register has nowhere to put an unnamed value`)
@@ -542,17 +543,17 @@ async function readSources(
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 
 /**
- * A column's value, or `undefined` when the research pass left it unresolved.
+ * A column's value, or `null` when the research pass left it unresolved.
  *
  * Every value outside the placeholder set is returned, so a value somebody fills in
  * later reaches the register or fails the build rather than being lost.
  */
-export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
+export function readUnresolvedColumn(value: string | null | undefined, column: string, row: number): string | null {
 	const trimmed = (value ?? "").trim()
 
-	if (!trimmed) return undefined
+	if (!trimmed) return null
 
-	if (UNRESOLVED_COLUMN_PLACEHOLDERS.has(trimmed.toLowerCase())) return undefined
+	if (UNRESOLVED_COLUMN_PLACEHOLDERS.has(trimmed.toLowerCase())) return null
 
 	if (column === "address_role" && !ADDRESS_ROLE_BY_NAME[trimmed.toLowerCase()]) {
 		throw new Error(
@@ -589,8 +590,8 @@ type RecordedDecision = Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense,
  * One publisher can hold a license over several jurisdictions, and the register
  * scopes a decision to one publisher in one jurisdiction, so reading that publisher's
  * terms once produces several decisions with the same body.
- * Naming the shared body keeps each license id's own decision while the prose behind
- * it has one home, so nine copies cannot drift apart under later editing.
+ * A shared body keeps each license id's own decision while the prose behind it has one home.
+ * Nine copies cannot drift apart under later editing.
  */
 interface SharedDecisionReference {
 	sameAs: string
@@ -612,7 +613,8 @@ function isSharedReference(value: RecordedDecision | SharedDecisionReference): v
 }
 
 /**
- * The source fields a review resolves, which the research CSV records as placeholders.
+ * The source fields a review resolves.
+ * The research CSV records placeholders for them.
  *
  * The CSV holds the research pass's findings and is a working document of that pass,
  * so a later review records its own findings here rather than by editing the pass's record.
@@ -651,7 +653,8 @@ async function readSourceResolutions(
  *
  * @throws When a resolution's source id is absent from the register.
  * Such an entry is a typo or a source that has been removed.
- * Keeping it silently would leave a review whose fields reach no row, which reads as work already done.
+ * An entry kept silently would leave a review whose fields reach no row.
+ * That reads as work already done.
  */
 export function applySourceResolutions(
 	sources: readonly AddressSourceRecord[],
@@ -682,7 +685,7 @@ export function applySourceResolutions(
  * because reading it as empty would silently drop somebody's recorded work.
  * This function validates no decision it reads, because `auditAddressSourceRegister` already does.
  */
-async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
+async function readLicenseDecisions(decisionsPath: PathBuilderLike | null): Promise<Map<string, LicenseDecision>> {
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
 
 	return resolveRecordedDecisions(await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath))
@@ -696,8 +699,8 @@ async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined):
  * function checks only that the file declares a reading for each reference.
  *
  * @throws When a `sameAs` reads a reading absent from `sharedReadings`.
- * Such a reference would otherwise produce a decision carrying no terms, which the audit
- * would report as an unknown review state rather than as the typo it is.
+ * Such a reference would otherwise produce a decision holding no terms.
+ * The audit would report that as an unknown review state rather than as the typo it is.
  */
 export function resolveRecordedDecisions(file: LicenseDecisionsFile): Map<string, LicenseDecision> {
 	const shared = file.sharedReadings ?? {}
@@ -763,7 +766,7 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 		})
 		.toSorted((left, right) => left.licenseID.localeCompare(right.licenseID))
 
-	const licenses = applyLicenseDecisions(generated, await readLicenseDecisions(options.decisionsPath))
+	const licenses = applyLicenseDecisions(generated, await readLicenseDecisions(options.decisionsPath ?? null))
 
 	const register: AddressSourceRegister = {
 		registerID: "address-source-register",

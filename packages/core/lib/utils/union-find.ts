@@ -33,7 +33,7 @@ export function createUnionFind(): UnionFind {
 		while (true) {
 			const next = parent.get(root)
 
-			if (next === undefined || next === root) break
+			if (!next || next === root) break
 			root = next
 		}
 

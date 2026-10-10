@@ -18,7 +18,7 @@ it("completes BDC and filer queries before closing their connections", async () 
 		out: bdcPath,
 		asOfDate: "2026-07-30",
 		buildSHA: "fixture",
-		blockCentroids: () => undefined,
+		blockCentroids: () => null,
 	})
 
 	{

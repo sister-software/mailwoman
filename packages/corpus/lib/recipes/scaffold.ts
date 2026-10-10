@@ -8,7 +8,7 @@
  *   supplies the I/O.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
@@ -58,9 +58,10 @@ export interface RecipeTuple {
 	postcode?: string
 	country?: string
 	/**
-	 * Defaults to `leading` when absent.
 	 *
 	 * That matches every tuples file written before this field existed.
+	 *
+	 * @defaultValue `leading` when absent.
 	 */
 	postcodePlacement?: PostcodePlacement
 	/**
@@ -350,7 +351,8 @@ export function alignAndWrite(
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
-	if (!aligned.row) return false
+	// A quarantined result also has a `row`, the quarantine record, so the kind decides.
+	if (aligned.kind !== "labeled") return false
 
 	write(
 		stringifyJSON({
@@ -394,26 +396,28 @@ export interface RecipeOptions {
 	intlFraction?: number
 	/**
 	 * `german`: fraction of native-order rows rendered with no commas at all.
-	 * The default is 0.3.
+	 *
+	 * @defaultValue `0.3`
 	 */
 	commaFreeFraction?: number
 	/**
 	 * `german`: fraction of rows whose `dependent_locality` is a WOF Ortsteil of the tuple's locality.
 	 *
-	 * The default is 0.3.
 	 * It is 0 when no admin database is readable.
+	 *
+	 * @defaultValue `0.3`
 	 */
 	ortsteilFraction?: number
 	/**
 	 * `german`: the WOF admin database the Ortsteil pool is read from.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db`
 	 */
 	adminDB?: string
 	/**
 	 * `locale`: fraction of rows that append an explicit country surface form + a `country` component.
 	 *
-	 * Default 0.
+	 * @defaultValue `0`
 	 */
 	countryFraction?: number
 	/**
@@ -429,7 +433,7 @@ export interface RecipeOptions {
 	/**
 	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`
 	 */
 	banDir?: PathBuilderLike
 	multilocaleCount?: number
@@ -448,48 +452,54 @@ export interface RecipeOptions {
 	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >=
 	 * longNumberMinDigits digits (oversample the failing long-number class).
 	 *
-	 * Default 1 = no boost.
+	 * @defaultValue `1` = no boost
 	 */
 	longNumberBoost?: number
 	/**
 	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted.
 	 *
-	 * Default 3.
+	 * @defaultValue `3`
 	 */
 	longNumberMinDigits?: number
 	/**
 	 * `sub-venue`: the sub-venue lexicon JSON.
 	 *
-	 * Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved through the package manifest so it works
+	 * @defaultValue = the committed `corpus/data/sub-venue-lexicon.json`, resolved through the package manifest so it works
 	 * from the source tree and from `out/`.
 	 */
 	lexicon?: string
 	/**
 	 * `sub-venue`: directory of `sub-venue-extract` JSONLs, one per region.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/sub-venue/extracts`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/sub-venue/extracts`
 	 */
 	extractsDir?: string
 	/**
-	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound
-	 * pools (the two of poi.db's four countries this recipe has legs for).
-	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/poi/poi.db`.
-	 */
-	poiDB?: string
-	/**
 	 * `sub-venue`: GB/US/FR address-context tuples jsonl.
 	 *
-	 * Default the house-venue v3 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`);
+	 * @defaultValue the house-venue v3 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`);
 	 * DE and ES read OpenAddresses directly.
 	 */
 	subVenueTuples?: string
 	/**
 	 * `sub-venue`: share of emitted rows that are confound negatives.
 	 *
-	 * Default 0.3.
+	 * @defaultValue `0.3`
 	 */
 	negativeFraction?: number
+	/**
+	 * `venue` and `sub-venue`: the Overture place-names Parquet file with `name`,
+	 * `category` and `country` columns.
+	 *
+	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/overture`
+	 */
+	venueNames?: PathBuilderLike
+	/**
+	 * `venue`: share of locality rows that also carry the tuple's region after the locality.
+	 *
+	 * @defaultValue `0.5`
+	 */
+	venueRegionFraction?: number
 }
 
 /**

@@ -48,6 +48,8 @@ export const noRootScriptsCheck: RepoCheck = {
 					file: tracked,
 					message:
 						"A file under the root scripts/ directory. Register it as an operation, a check, a command, or a dev-tools measurement.",
+					line: null,
+					details: null,
 				})
 			}
 		}
@@ -73,6 +75,7 @@ export const noRootScriptsCheck: RepoCheck = {
 					file,
 					line: index,
 					message: "Builds a path into the absent root scripts/ directory.",
+					details: null,
 				})
 			}
 		}
@@ -98,6 +101,7 @@ export const noRootScriptsCheck: RepoCheck = {
 						line: index,
 						message:
 							"Runs a root scripts/ path. Call the registered entry point (`yarn mwops …` or a `mailwoman` command).",
+						details: null,
 					})
 				} else if (BARE_LIB_RUN.test(line) && !runsRegisteredAdapter(line)) {
 					diagnostics.push({
@@ -106,6 +110,7 @@ export const noRootScriptsCheck: RepoCheck = {
 						line: index,
 						message:
 							"Runs a bare source path (lib/, sdk/, tools/ or cli/). CI executes registered entry points only (`yarn mwops …` or a `mailwoman` command).",
+						details: null,
 					})
 				}
 			}

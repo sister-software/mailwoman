@@ -15,8 +15,8 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ```ts
 // Library — parse programmatically
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })
@@ -91,8 +91,8 @@ classification with production-ready defaults.
 
 ```ts
 import { decodeAsJSON, decodeAsTuples } from "@mailwoman/core/decoder"
-import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })
@@ -143,12 +143,12 @@ ones you'll reach for most:
 const parse = createRuntimePipeline({
 	classifier,
 	resolver, // optional — see "Geocoding" below
-	normalizeCase: true, // title-case detected all-caps input before the model (default: off)
+	caseNormalization: "title-case", // title-case detected all-caps input before the model (the default)
 })
 
 await parse("350 5TH AVE, NEW YORK, NY 10118", {
 	locale: "en-US", // assert a locale instead of detecting it
-	hardPlaceCountry: true, // confine resolution to a confidently-detected country (default: on)
+	placerCountryUse: "filter", // confine resolution to a confidently-detected country (the default)
 })
 ```
 

@@ -6,7 +6,7 @@
  *   slot the parse filled by itself.
  */
 
-import type { GeocodeResult } from "mailwoman/geocode"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { describe, expect, it } from "vitest"
 
 import { forwardToResolved } from "#forward-address"

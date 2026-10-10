@@ -1,43 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { WordConsistencyOpts, WordConsistencySetting } from "@mailwoman/core/pipeline"
+
 import { SPACE_SENTINEL } from "#tokenizer"
 import { softmax } from "#viterbi"
-
-/**
- * Limits which words {@link enforceWordConsistency} relabels.
- *
- * The default options relabel every word whose pieces disagree on entity type.
- */
-export interface WordConsistencyOpts {
-	/**
-	 * Leaves a word unchanged when the winning type's mean probability across its
-	 * pieces falls below this floor; `0` or unset never skips.
-	 *
-	 * A low-confidence vote marks rows where per-piece confidence is unreliable.
-	 * A relabelled row would amplify noise.
-	 */
-	minMeanConfidence?: number
-
-	/**
-	 * Leaves any word containing a byte-fallback piece (`<0xNN>`) unchanged.
-	 *
-	 * Its surviving pieces are not trustworthy voters.
-	 * The default is `false`.
-	 */
-	skipByteFallbackWords?: boolean
-
-	/**
-	 * Treats a punctuation-only piece as a word separator, like whitespace.
-	 * The default is `false`.
-	 *
-	 * Otherwise a continuation piece such as the `,` in `Ave,` joins the word.
-	 * Its `O` label can outvote a real span.
-	 *
-	 * The halves of a slash compound such as `12/345` can also vote independently.
-	 */
-	splitOnPunctuation?: boolean
-}
 
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
@@ -52,8 +19,8 @@ const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
  * with an optional confidence floor.
  * Any other value disables it.
  */
-export function parseWordConsistencyEnv(value: string | undefined): boolean | WordConsistencyOpts {
-	if (value === "1") return true
+export function parseWordConsistencyEnv(value: string | null): WordConsistencySetting {
+	if (value === "1") return {}
 
 	if (value?.startsWith("conditional")) {
 		const opts: WordConsistencyOpts = { skipByteFallbackWords: true, splitOnPunctuation: true }
@@ -66,7 +33,7 @@ export function parseWordConsistencyEnv(value: string | undefined): boolean | Wo
 		return opts
 	}
 
-	return false
+	return "off"
 }
 
 /**

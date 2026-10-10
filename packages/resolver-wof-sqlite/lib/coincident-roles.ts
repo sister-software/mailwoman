@@ -65,25 +65,25 @@ export interface BuildCoincidentRolesOpts {
 	/**
 	 * Drop + rebuild the table if it already exists.
 	 *
-	 * Default true (the build is cheap + idempotent).
+	 * @defaultValue `true` (the build is cheap + idempotent)
 	 */
 	drop?: boolean
 	/**
 	 * Relative tolerance: a pair is kept when centroid distance ≤ `toleranceFraction × bbox-diagonal`.
 	 *
-	 * Default 0.15.
+	 * @defaultValue `0.15`
 	 */
 	toleranceFraction?: number
 	/**
 	 * Floor (km) under the relative tolerance, so small-bbox city-states still qualify.
 	 *
-	 * Default 12.
+	 * @defaultValue `12`
 	 */
 	minToleranceKm?: number
 	/**
 	 * Centroid distance (km) below which a region-tier pair is classed `city-state` (metadata only).
 	 *
-	 * Default 2.
+	 * @defaultValue `2`
 	 */
 	cityStateMaxKm?: number
 	onProgress?: (phase: string, detail?: string) => void
@@ -319,6 +319,17 @@ export function loadCoincidentLocalities<DB>(db: DatabaseClient<DB>): Map<number
 				relationshipType: r.relationshipType,
 				population: r.population,
 				distanceKm: r.distanceKm,
+				parent_id: null,
+				prominence: null,
+				referential: null,
+				encyclopedic: null,
+				importance: null,
+				exactMatch: null,
+				mismatch: null,
+				resolutionQuality: null,
+				containedByQualifier: null,
+				regionScopeMiss: null,
+				variantAliasExempted: null,
 			}
 
 			const list = map.get(r.adminID)

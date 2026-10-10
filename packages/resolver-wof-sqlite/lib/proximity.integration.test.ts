@@ -221,7 +221,7 @@ describe("findPlace — backwards compat", () => {
 		const candidates = await lookup.findPlace({ text: "London", placetype: "locality" })
 		expect(candidates).toHaveLength(1)
 		expect(candidates[0]?.country).toBe("GB")
-		expect(candidates[0]?.distanceKm).toBeUndefined()
+		expect(candidates[0]?.distanceKm).toBeNull()
 	})
 
 	test("Near + bbox without R*Tree (legacy DB) is silently ignored; neither crash nor proximity filter", async () => {

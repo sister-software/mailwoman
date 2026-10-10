@@ -8,6 +8,7 @@
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
@@ -23,9 +24,20 @@ const IBARAKI = 7
 const GOKA = 8
 
 const PLACES: ResolvedPlace[] = [
-	{ id: JAPAN, name: "日本", placetype: "country", country: "JP", lat: 36, lon: 138, score: 10 },
-	{ id: 9, name: "栃木県", placetype: "region", country: "JP", parent_id: JAPAN, lat: 36.56, lon: 139.88, score: 9 },
+	{ ...EMPTY_PLACE_FIELDS, id: JAPAN, name: "日本", placetype: "country", country: "JP", lat: 36, lon: 138, score: 10 },
 	{
+		...EMPTY_PLACE_FIELDS,
+		id: 9,
+		name: "栃木県",
+		placetype: "region",
+		country: "JP",
+		parent_id: JAPAN,
+		lat: 36.56,
+		lon: 139.88,
+		score: 9,
+	},
+	{
+		...EMPTY_PLACE_FIELDS,
 		id: HYOGO,
 		name: "兵庫県",
 		placetype: "region",
@@ -36,6 +48,7 @@ const PLACES: ResolvedPlace[] = [
 		score: 9,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: KOBE,
 		name: "神戸市",
 		placetype: "locality",
@@ -46,6 +59,7 @@ const PLACES: ResolvedPlace[] = [
 		score: 8,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: KOBE_NISHI,
 		name: "西区",
 		placetype: "borough",
@@ -56,6 +70,7 @@ const PLACES: ResolvedPlace[] = [
 		score: 3,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: FUKUOKA,
 		name: "福岡市",
 		placetype: "locality",
@@ -67,6 +82,7 @@ const PLACES: ResolvedPlace[] = [
 	},
 	// The namesake ward, better scored: the unscoped probe would take it.
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: FUKUOKA_NISHI,
 		name: "西区",
 		placetype: "borough",
@@ -77,6 +93,7 @@ const PLACES: ResolvedPlace[] = [
 		score: 7,
 	},
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: IBARAKI,
 		name: "茨城県",
 		placetype: "region",
@@ -89,6 +106,7 @@ const PLACES: ResolvedPlace[] = [
 	// The town under its prefecture.
 	// The county 猿島郡 has no record at all.
 	{
+		...EMPTY_PLACE_FIELDS,
 		id: GOKA,
 		name: "五霞町",
 		placetype: "locality",
@@ -138,7 +156,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "兵庫県", [node("municipality", "神戸市西区")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBe(34.67)
@@ -167,7 +185,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "茨城県", [node("municipality", "猿島郡五霞町")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBe(36.11)
@@ -196,7 +214,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "栃木県", [node("municipality", "猿島郡五霞町")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBeUndefined()
@@ -212,7 +230,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			roots: [node("prefecture", "兵庫県", [node("municipality", "尼崎市")])],
 		}
 
-		const resolved = await resolver.resolveTree(tree, { defaultCountry: "JP" })
+		const resolved = await resolver.resolveTree(tree, { defaultCountry: { country: "JP", source: "caller" } })
 		const municipality = municipalityOf(resolved)
 
 		expect(municipality.lat).toBeUndefined()

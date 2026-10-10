@@ -134,6 +134,7 @@ A file-top comment records the priced-and-declined dependency: `@mailwoman/carto
 
 ```ts
 import { describe, expect, it } from "vitest"
+
 import { lonLatToWorldPx, metersPerPixel, TILE_SIZE, worldPxToLonLat } from "./mercator.ts"
 
 describe("lonLatToWorldPx", () => {
@@ -303,7 +304,9 @@ export class TileSource {
 
 ```ts
 import { fileURLToPath } from "node:url"
+
 import { afterAll, describe, expect, it } from "vitest"
+
 import { TileSource } from "./tile-source.ts"
 
 const FIXTURE = fileURLToPath(new URL("./test/fixtures/portland.pmtiles", import.meta.url))
@@ -379,7 +382,9 @@ export function decodeMVT(data: Uint8Array): DecodedLayer[] {
 
 ```ts
 import { open, type FileHandle } from "node:fs/promises"
+
 import { PMTiles, type RangeResponse, type Source } from "pmtiles"
+
 import { decodeMVT } from "./mvt.ts"
 
 class FilePMTilesSource implements Source {
@@ -447,6 +452,7 @@ export function stylesFor(layerName: string, zoom: number): LayerStyle[]
 
 ```ts
 import { describe, expect, it } from "vitest"
+
 import { stylesFor } from "./style.ts"
 
 describe("stylesFor", () => {
@@ -536,6 +542,7 @@ export function drawCircle(grid: RGBAGrid, centerX: number, centerY: number, rad
 
 ```ts
 import { describe, expect, it } from "vitest"
+
 import { drawCircle, drawPolyline, fillPolygon, RGBAGrid } from "./raster.ts"
 
 function litPixels(grid: RGBAGrid): Array<[number, number]> {
@@ -707,6 +714,7 @@ If `TerminalLike` requires more members than `write`/`columns`/`rows`, satisfy i
 
 ```ts
 import { describe, expect, it } from "vitest"
+
 import { frameToANSILines, overlayText, rasterizeToFrame } from "./frame.ts"
 import { RGBAGrid } from "./raster.ts"
 
@@ -808,7 +816,9 @@ export class MapRenderer {
 
 ```ts
 import { fileURLToPath } from "node:url"
+
 import { afterAll, describe, expect, it } from "vitest"
+
 import { frameToANSILines } from "./frame.ts"
 import { MapRenderer } from "./renderer.ts"
 import { TileSource } from "./tile-source.ts"
@@ -914,6 +924,7 @@ Color packing helper: `rgbToPacked([r, g, b])` â†’ `(r << 16) | (g << 8) | b` â€
 
 ```ts
 import type { AddressTree } from "@mailwoman/core" // the decoder AddressTree (nodes carry start/end char offsets)
+
 import type { GeocodeResult } from "../geocode-core.ts"
 export interface GeocodeRun {
 	result: GeocodeResult
@@ -979,6 +990,7 @@ export function resolveTilesPath(flagValue?: string): string | null
 
 ```ts
 import { describe, expect, it } from "vitest"
+
 import { resolveTilesPath } from "./tiles.ts"
 
 describe("resolveTilesPath", () => {
@@ -1000,8 +1012,9 @@ describe("resolveTilesPath", () => {
 
 ```ts
 import { existsSync } from "node:fs"
-import { $public } from "@mailwoman/core/env"
+
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { $public } from "@mailwoman/core/env"
 
 export function resolveTilesPath(flagValue?: string): string | null {
 	if (flagValue) return flagValue
@@ -1066,6 +1079,7 @@ export function renderInkToString(tree: React.ReactElement, columns: number): Pr
 
 ```ts
 import { EventEmitter } from "node:events"
+
 import { render } from "ink"
 
 class CaptureStream extends EventEmitter {

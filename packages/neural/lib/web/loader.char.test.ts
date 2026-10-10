@@ -14,7 +14,7 @@ const { sessionCreateMock, classifierConfigs } = vi.hoisted(() => ({
 	classifierConfigs: [] as Array<Record<string, unknown>>,
 }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -90,6 +90,8 @@ describe("the browser loader on a char card", () => {
 		const requested: string[] = []
 
 		const result = await loadNeuralClassifierFromURLs({
+			postcodeBinaryURLs: [],
+			pairIndexURLs: [],
 			modelURL: `${BASE}/model.onnx`,
 			modelCardURL: `${BASE}/model-card.json`,
 			fetchImpl: charFetch(requested),
@@ -113,6 +115,8 @@ describe("the browser loader on a char card", () => {
 
 		await expect(
 			loadNeuralClassifierFromURLs({
+				postcodeBinaryURLs: [],
+				pairIndexURLs: [],
 				modelURL: `${BASE}/model.onnx`,
 				modelCardURL: `${BASE}/model-card.json`,
 				fetchImpl: async (input) => {

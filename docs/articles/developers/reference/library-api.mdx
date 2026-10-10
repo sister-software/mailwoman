@@ -62,41 +62,41 @@ the first call to the returned function rather than in the factory.
 
 Two stages take an injected implementation. The rest carry production defaults.
 
-| Option                | Type                               | Default                      | Effect                                                                        |
-| --------------------- | ---------------------------------- | ---------------------------- | ----------------------------------------------------------------------------- |
-| `classifier`          | `AddressClassifier`                | none                         | Stage 3. Without it the pipeline runs the structural stages only              |
-| `resolver`            | `Resolver`                         | none                         | Stage 6. Without it the tree carries no coordinates                           |
-| `fst`                 | `FSTMatcher` or `false`            | auto-load                    | Gazetteer emission priors. Loaded from the classifier's weights package       |
-| `streetMorphology`    | `FSTMatcher` or `false`            | auto-load                    | Signal source for the street-context decision                                 |
-| `streetEvidence`      | `StreetLocalityEvidence`, `false`  | auto-load                    | Reranks the street on atlas-confirmed evidence. Requires a span-head model    |
-| `placeCountry`        | function or `false`                | the bundled coarse placer    | A confident country guess becomes a soft ranking prior. It never filters      |
-| `poiQueryKind`        | `boolean` or `{ poiDatabasePath }` | `true` (intent only)         | Detects a POI query and extracts its intent. The object form also executes it |
-| `normalizeCase`       | `boolean`                          | on                           | Title-cases detected all-caps ASCII input before the model                    |
-| `hardPlaceCountry`    | `boolean`                          | on                           | Promotes a confident country guess to a filter, inside a coverage safelist    |
-| `hardCountrySafelist` | `ReadonlySet<string>`              | the gazetteer's own manifest | Which countries the hard filter applies to. Falls back to a built-in list     |
-| `detectLocale`        | function                           | `@mailwoman/locale-hint`     | Stage 2                                                                       |
-| `classifyKind`        | function                           | `@mailwoman/kind-classifier` | Stage 2.5. An explicit override wins over the POI-aware default               |
-| `groupPhrases`        | function                           | `@mailwoman/phrase-grouper`  | Stage 2.7                                                                     |
+| Option                | Type                                             | Default                             | Effect                                                                                |
+| --------------------- | ------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `classifier`          | `AddressClassifier`                              | none                                | Stage 3. Without it the pipeline runs the structural stages only                      |
+| `resolver`            | `Resolver`                                       | none                                | Stage 6. Without it the tree carries no coordinates                                   |
+| `fst`                 | `"auto"`, `"none"` or a matcher                  | `"auto"`                            | Gazetteer emission priors. Loaded from the classifier's weights package               |
+| `streetMorphology`    | `"auto"`, `"none"` or a matcher                  | `"auto"`                            | Signal source for the street-context decision                                         |
+| `streetEvidence`      | `"auto"`, `"none"` or a `StreetLocalityEvidence` | `"auto"`                            | Reranks the street on atlas-confirmed evidence. Requires a span-head model            |
+| `placeCountry`        | `"auto"`, `"none"` or a function                 | `"auto"`: the bundled coarse placer | A confident country guess becomes a soft ranking prior. It never filters              |
+| `poiQueryKind`        | `"extract"`, `"none"` or `{ poiDatabasePath }`   | `"extract"`                         | Detects a POI query and extracts its intent. The object form also executes it         |
+| `caseNormalization`   | `"title-case"` or `"preserve"`                   | `"title-case"`                      | Title-cases detected all-caps ASCII input before the model                            |
+| `placerCountryUse`    | `"filter" \| "prior"`                            | `"filter"`                          | `"filter"` promotes a confident country guess to a filter, inside a coverage safelist |
+| `hardCountrySafelist` | `ReadonlySet<string>`                            | the gazetteer's own manifest        | Which countries the hard filter applies to. Falls back to a built-in list             |
+| `detectLocale`        | function                                         | `@mailwoman/locale-hint`            | Stage 2                                                                               |
+| `classifyKind`        | function                                         | `@mailwoman/kind-classifier`        | Stage 2.5. An explicit override wins over the POI-aware default                       |
+| `groupPhrases`        | function                                         | `@mailwoman/phrase-grouper`         | Stage 2.7                                                                             |
 
-Pass `false` to `fst`, `streetMorphology`, `streetEvidence`, `placeCountry` or `poiQueryKind`
-suppresses both the auto-load and any explicit value, which is how a caller gets output identical to a
-build without that mechanism.
+A `"none"` value for `fst`, `streetMorphology`, `streetEvidence`, `placeCountry` or `poiQueryKind`
+suppresses the auto-load, which is how a caller gets output identical to a build without that mechanism.
+`machinePreferences` takes the same `"auto"`, `"none"` or explicit value.
 
 ### Per-call options
 
 The second argument to the returned function is `PipelineOpts`. A per-call value overrides the
 factory default.
 
-| Field               | Type                            | Default                  | Effect                                                    |
-| ------------------- | ------------------------------- | ------------------------ | --------------------------------------------------------- |
-| `locale`            | `string`                        | derived by `locale-hint` | BCP-47 tag, for example `en-US`                           |
-| `inputMode`         | `"fragmented"` or `"formatted"` | derived from the kind    | Which register the evidence channels run in               |
-| `resolveOpts`       | `ResolveOpts`                   | none                     | Passed through to the resolver                            |
-| `normalizeCase`     | `boolean`                       | the factory value        | Overrides the factory default for this call               |
-| `hardPlaceCountry`  | `boolean`                       | the factory value        | Overrides the factory default for this call               |
-| `forceFullPipeline` | `boolean`                       | off                      | Disables the structural fast paths. A debugging aid       |
-| `jointReconcile`    | `boolean`                       | off                      | Retired as a default in 2026-06. Kept for comparison runs |
-| `signal`            | `AbortSignal`                   | none                     | Cancels the call                                          |
+| Field               | Type                                      | Default                         | Effect                                              |
+| ------------------- | ----------------------------------------- | ------------------------------- | --------------------------------------------------- |
+| `locale`            | `string`                                  | derived by `locale-hint`        | BCP-47 tag, for example `en-US`                     |
+| `inputMode`         | `"fragmented"`, `"formatted"` or `"auto"` | `"auto"`: derived from the kind | Which register the evidence channels run in         |
+| `resolveOpts`       | `ResolveOpts`                             | none                            | Passed through to the resolver                      |
+| `caseNormalization` | `"title-case"` or `"preserve"`            | the factory value               | Overrides the factory default for this call         |
+| `placetypePair`     | `"inherit"`, `"off"` or a prior           | `"inherit"`                     | The classifier's placetype-pair prior for this call |
+| `placerCountryUse`  | `"filter" \| "prior"`                     | the factory value               | Overrides the factory default for this call         |
+| `forceFullPipeline` | `boolean`                                 | off                             | Disables the structural fast paths. A debugging aid |
+| `signal`            | `AbortSignal`                             | none                            | Cancels the call                                    |
 
 ### Return shape
 
@@ -109,7 +109,7 @@ factory default.
 | `kind`            | `QueryKindResult`                   | The query kind, for example `structured_address`                    |
 | `phraseProposals` | `PhraseProposal[]`                  | Stage 2.7 proposals. Empty when a fast path skipped the stage       |
 | `tree`            | `AddressTree`                       | The parse                                                           |
-| `poiIntent`       | `POIIntentOutcome` or absent        | Present only when `path` is `"poi"`                                 |
+| `poiIntent`       | `POIQueryResult` or absent          | Present only when `path` is `"poi"`                                 |
 | `timing`          | `Record<string, number>`            | Milliseconds per stage                                              |
 | `path`            | `"fast-path"`, `"full"`, or `"poi"` | Which route the input took                                          |
 
@@ -206,19 +206,19 @@ siblings, four of which the source marks internal), the `queryShapeBiasScale` ma
 morphology-prior override, the pre-v4.4.0 `bridgePunctuationGaps` switch, and `trailingLocality`,
 which is deprecated and scheduled for deletion at the next major.
 
-| Field                      | Type                                | Default                          | Effect                                                                                    |
-| -------------------------- | ----------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------- |
-| `fst`                      | `FSTMatcherLike`                    | none                             | Gazetteer matches become additive emission biases                                         |
-| `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`                   | Which register the evidence channels run in                                               |
-| `queryShape`               | `QueryShapeLike`                    | none                             | Known-format hits become additive emission biases                                         |
-| `normalizeCase`            | `boolean`                           | on                               | Title-cases detected all-caps ASCII input                                                 |
-| `calibrate`                | `Calibrator`                        | off                              | Maps raw span confidence through a calibration table                                      |
-| `enforceWordConsistency`   | `boolean` or `WordConsistencyOpts`  | on                               | Per-word BIO vote, skipping byte-fallback words                                           |
-| `postcodeRepair`           | `boolean`                           | off                              | Deterministic postcode repair pass                                                        |
-| `unitRepair`               | `boolean`                           | off                              | Deterministic unit repair pass                                                            |
-| `spanProposer`             | `boolean`                           | on                               | Span-proposal priors                                                                      |
-| `addressSystemConventions` | `"auto"` or a system code           | from the model card              | Which address-system conventions apply                                                    |
-| `placetypePair`            | `PlacetypePairPriorOpts` or `false` | the weights package's pair index | The call inherits the package value when this option is omitted. Only `false` disables it |
+| Field                      | Type                                             | Default                                       | Effect                                                                                  |
+| -------------------------- | ------------------------------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `fst`                      | `FSTMatcherLike`                                 | none                                          | Gazetteer matches become additive emission biases                                       |
+| `inputMode`                | `"fragmented"` or `"formatted"`                  | `"fragmented"`                                | Which register the evidence channels run in                                             |
+| `queryShape`               | `QueryShapeLike`                                 | none                                          | Known-format hits become additive emission biases                                       |
+| `caseNormalization`        | `"title-case"` or `"preserve"`                   | `"title-case"`                                | Title-cases detected all-caps ASCII input                                               |
+| `calibrate`                | `Calibrator`                                     | off                                           | Maps raw span confidence through a calibration table                                    |
+| `enforceWordConsistency`   | `"off"` or `WordConsistencyOpts`                 | the shipped settings                          | Per-word BIO vote, skipping byte-fallback words. `{}` runs the unthresholded vote       |
+| `postcodeRepair`           | `boolean`                                        | off                                           | Deterministic postcode repair pass                                                      |
+| `unitRepair`               | `boolean`                                        | off                                           | Deterministic unit repair pass                                                          |
+| `spanProposer`             | `"inherit"`, `"auto"`, `"none"` or a config      | `"inherit"`: the classifier's proposer        | Span-proposal priors. `"auto"` uses the default proposer even if the config disabled it |
+| `addressSystemConventions` | `"inherit"`, `"off"`, `"auto"` or a system code  | `"inherit"`: from the model card              | Which address-system conventions apply                                                  |
+| `placetypePair`            | `"inherit"`, `"off"` or `PlacetypePairPriorOpts` | `"inherit"`: the weights package's pair index | `"off"` disables the prior for the call. A prior object replaces the package value      |
 
 The table above is the classifier's own defaults, and `createRuntimePipeline` pins two of them on
 every call it makes: `postcodeRepair: true`, and the shipped word-consistency settings.
@@ -297,24 +297,23 @@ row.
 `GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmExtracts` and
 `hardCountrySafelist` are omitted as evaluation and build-time wiring.
 
-| Field                    | Type                           | Default              | Effect                                                         |
-| ------------------------ | ------------------------------ | -------------------- | -------------------------------------------------------------- |
-| `classifier`             | `GeocodeClassifier`            | required             | The parser                                                     |
-| `inputMode`              | `"fragmented"` / `"formatted"` | from the query kind  | Which register the evidence channels run in                    |
-| `resolver`               | `Resolver`                     | required             | The gazetteer walk                                             |
-| `extracts`               | `RegionDatabaseResolver`       | none                 | Per-state rooftop and interpolation lookups                    |
-| `nationalExtracts`       | `(country) => RegionDatabases` | none                 | Per-country lookups, for example the French rooftop database   |
-| `defaultCountry`         | `string`                       | none                 | Scopes the resolver to one country                             |
-| `bias`                   | proximity points               | none                 | Soft re-rank toward a viewport or a user location              |
-| `interpCalibration`      | `number` or a table            | the database's value | Multiplier on the interpolation tier's uncertainty radius      |
-| `normalizeCase`          | `boolean`                      | on                   | Title-cases detected all-caps input                            |
-| `normalizeInput`         | `boolean`                      | on                   | Runs the normalize stage                                       |
-| `placeCountry`           | function or `false`            | the bundled placer   | Soft country prior                                             |
-| `hardPlaceCountry`       | `boolean`                      | on                   | Hard country filter inside the coverage safelist               |
-| `adminCoherence`         | `boolean`                      | on                   | Joint admin-consistency re-pick                                |
-| `postcodeCountryPrior`   | `boolean`                      | on                   | Postcode shape informs the country                             |
-| `retryAlternateRegister` | `boolean`                      | on                   | Retries the parse in the other input register on a weak result |
-| `parsedTree`             | `AddressTree`                  | none                 | Skips the parse when you already have the tree                 |
+| Field                  | Type                                          | Default                       | Effect                                                                                                    |
+| ---------------------- | --------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `classifier`           | `GeocodeClassifier`                           | required                      | The parser                                                                                                |
+| `inputMode`            | `"fragmented"`, `"formatted"` or `"auto"`     | `"auto"`: from the query kind | Which register the evidence channels run in                                                               |
+| `resolver`             | `Resolver`                                    | required                      | The gazetteer walk                                                                                        |
+| `extracts`             | `RegionDatabaseResolver`                      | none                          | Per-state rooftop and interpolation lookups                                                               |
+| `nationalExtracts`     | `(country) => RegionDatabases`                | none                          | Per-country lookups, for example the French rooftop database                                              |
+| `defaultCountry`       | `{ country, source: "caller" \| "inferred" }` | none                          | Scopes the resolver to one country. `"inferred"` marks a locale guess that stronger evidence can override |
+| `bias`                 | proximity points                              | none                          | Soft re-rank toward a viewport or a user location                                                         |
+| `interpCalibration`    | `number` or a table                           | the database's value          | Multiplier on the interpolation tier's uncertainty radius                                                 |
+| `caseNormalization`    | `"title-case"` or `"preserve"`                | `"title-case"`                | Title-cases detected all-caps input                                                                       |
+| `normalizeInput`       | `boolean`                                     | on                            | Runs the normalize stage                                                                                  |
+| `placeCountry`         | `"auto"`, `"none"` or a function              | `"auto"`: the bundled placer  | Soft country prior                                                                                        |
+| `placerCountryUse`     | `"filter" \| "prior"`                         | `"filter"`                    | `"filter"` hard-filters inside the coverage safelist                                                      |
+| `adminCoherence`       | `boolean`                                     | on                            | Joint admin-consistency re-pick                                                                           |
+| `postcodeCountryPrior` | `boolean`                                     | on                            | Postcode shape informs the country                                                                        |
+| `parsedTree`           | `AddressTree`                                 | none                          | Skips the parse when you already have the tree                                                            |
 
 ### Resolution tiers
 

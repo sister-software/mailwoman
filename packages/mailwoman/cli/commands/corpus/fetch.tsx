@@ -9,7 +9,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
+import type { FetchSourceID } from "@mailwoman/corpus/tools/fetch"
+import type { FetchSummary } from "@mailwoman/corpus/tools/fetch/download/network"
 import { Text } from "ink"
 import { PathBuilder } from "path-ts"
 
@@ -122,49 +123,47 @@ export const spec = {
 type Options = OptionsOf<typeof spec>
 
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
-	const {
-		fetchACRASG,
-		fetchADSEE,
-		fetchBan,
-		fetchBDAdresses,
-		fetchBrussels,
-		fetchCORDIS,
-		fetchAnnuaireEducationOverseas,
-		fetchFinessOverseas,
-		fetchGLEIF,
-		fetchVaris,
-		fetchVlaanderenAD,
-		fetchWallonie,
-		fetchCzCuzk,
-		fetchDKAddresses,
-		fetchEMUiAPL,
-		fetchESBizkaia,
-		fetchESCatastro,
-		fetchESGipuzkoa,
-		fetchESNavarra,
-		fetchGCISTW,
-		fetchGeonamesDumps,
-		fetchGeonamesPostal,
-		fetchHoujinJP,
-		fetchHRSA,
-		fetchIMLSPLS,
-		fetchITANAC,
-		fetchJusoKR,
-		fetchLocaldataKR,
-		fetchMatrikkelen,
-		fetchNAD,
-		fetchNLKadaster,
-		fetchNPPES,
-		fetchOpenAddresses,
-		fetchOurAirports,
-		fetchReteaScolara,
-		fetchRyhti,
-		fetchSKInspire,
-		fetchStateHISchools,
-		fetchStateSources,
-		fetchTigerFull,
-		fetchWikidataSubVenue,
-	} = await import("@mailwoman/corpus/tools")
+	const { fetchACRASG } = await import("@mailwoman/corpus/sg/tools/fetch/acra")
+	const { fetchADSEE } = await import("@mailwoman/corpus/ee/tools/fetch/ads")
+	const { fetchBan } = await import("@mailwoman/corpus/fr/tools/fetch/ban")
+	const { fetchBDAdresses } = await import("@mailwoman/corpus/lu/tools/fetch/bd-adresses")
+	const { fetchBrussels } = await import("@mailwoman/corpus/be/tools/fetch/brussels")
+	const { fetchCORDIS } = await import("@mailwoman/corpus/tools/fetch/cordis")
+	const { fetchAnnuaireEducationOverseas } = await import("@mailwoman/corpus/fr/tools/fetch/annuaire-education")
+	const { fetchFinessOverseas } = await import("@mailwoman/corpus/fr/tools/fetch/finess")
+	const { fetchGLEIF } = await import("@mailwoman/corpus/tools/fetch/gleif")
+	const { fetchVaris } = await import("@mailwoman/corpus/lv/tools/fetch/varis")
+	const { fetchVlaanderenAD } = await import("@mailwoman/corpus/tools/fetch/vlaanderen-ad")
+	const { fetchWallonie } = await import("@mailwoman/corpus/be/tools/fetch/wallonie")
+	const { fetchCzCuzk } = await import("@mailwoman/corpus/cz/tools/fetch/cuzk")
+	const { fetchDKAddresses } = await import("@mailwoman/corpus/dk/tools/fetch/inspire")
+	const { fetchEMUiAPL } = await import("@mailwoman/corpus/pl/tools/fetch/emuia")
+	const { fetchESBizkaia } = await import("@mailwoman/corpus/es/tools/fetch/bizkaia")
+	const { fetchESCatastro } = await import("@mailwoman/corpus/es/tools/fetch/catastro")
+	const { fetchESGipuzkoa } = await import("@mailwoman/corpus/es/tools/fetch/gipuzkoa")
+	const { fetchESNavarra } = await import("@mailwoman/corpus/es/tools/fetch/navarra")
+	const { fetchGCISTW } = await import("@mailwoman/corpus/tw/tools/fetch/gcis")
+	const { fetchGeonamesDumps } = await import("@mailwoman/corpus/tools/fetch/geonames/dump")
+	const { fetchGeonamesPostal } = await import("@mailwoman/corpus/tools/fetch/geonames/postal")
+	const { fetchHoujinJP } = await import("@mailwoman/corpus/jp/tools/fetch/houjin")
+	const { fetchHRSA } = await import("@mailwoman/corpus/us/tools/fetch/hrsa")
+	const { fetchIMLSPLS } = await import("@mailwoman/corpus/us/tools/fetch/imls-pls")
+	const { fetchITANAC } = await import("@mailwoman/corpus/it/tools/fetch/anac")
+	const { fetchJusoKR } = await import("@mailwoman/corpus/kr/tools/fetch/juso")
+	const { fetchLocaldataKR } = await import("@mailwoman/corpus/kr/tools/fetch/localdata")
+	const { fetchMatrikkelen } = await import("@mailwoman/corpus/no/tools/fetch/matrikkelen")
+	const { fetchNAD } = await import("@mailwoman/corpus/us/tools/fetch/nad")
+	const { fetchNLKadaster } = await import("@mailwoman/corpus/nl/tools/fetch/kadaster")
+	const { fetchNPPES } = await import("@mailwoman/corpus/us/tools/fetch/nppes")
+	const { fetchOpenAddresses } = await import("@mailwoman/corpus/tools/fetch/openaddresses")
+	const { fetchOurAirports } = await import("@mailwoman/corpus/tools/fetch/ourairports")
+	const { fetchReteaScolara } = await import("@mailwoman/corpus/ro/tools/fetch/retea-scolara")
+	const { fetchRyhti } = await import("@mailwoman/corpus/fi/tools/fetch/ryhti")
+	const { fetchSKInspire } = await import("@mailwoman/corpus/sk/tools/fetch/inspire")
+	const { fetchStateHISchools } = await import("@mailwoman/corpus/us/tools/fetch/state/hi-schools")
+	const { fetchStateSources } = await import("@mailwoman/corpus/us/tools/fetch/state/sources")
+	const { fetchTigerFull } = await import("@mailwoman/corpus/us/tools/fetch/tiger-full")
+	const { fetchWikidataSubVenue } = await import("@mailwoman/corpus/tools/fetch/wikidata-subvenue")
 
 	const base = { outRoot: PathBuilder.from(options.outRoot) }
 
@@ -205,8 +204,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchESCatastro(
 				{
 					...base,
-					provinces: options.provinces === undefined ? undefined : extractDelimited(options.provinces),
-					municipalities: options.municipalities === undefined ? undefined : extractDelimited(options.municipalities),
+					provinces: options.provinces ? extractDelimited(options.provinces) : undefined,
+					municipalities: options.municipalities ? extractDelimited(options.municipalities) : undefined,
 					limit: options.limit,
 				},
 				reportToStderr
@@ -217,7 +216,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchESNavarra(
 				{
 					...base,
-					partitions: options.partitions === undefined ? undefined : extractDelimited(options.partitions),
+					partitions: options.partitions ? extractDelimited(options.partitions) : undefined,
 					limit: options.limit,
 				},
 				reportToStderr
@@ -226,9 +225,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchMatrikkelen(
 				{
 					...base,
-					// Undefined takes both areas the address-source register carries rows for,
+					// Undefined takes both areas the address-source register holds rows for,
 					// `0000` for the mainland and `2100` for Svalbard.
-					areas: options.areas === undefined ? undefined : extractDelimited(options.areas),
+					areas: options.areas ? extractDelimited(options.areas) : undefined,
 				},
 				reportToStderr
 			)
@@ -244,14 +243,14 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchHoujinJP(base, reportToStderr)
 		case "it-anac":
 			return fetchITANAC(
-				{ ...base, editions: options.editions === undefined ? undefined : extractDelimited(options.editions) },
+				{ ...base, editions: options.editions ? extractDelimited(options.editions) : undefined },
 				reportToStderr
 			)
 		case "juso-kr":
 			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
 		case "localdata-kr":
 			return fetchLocaldataKR(
-				{ ...base, categories: options.categories === undefined ? undefined : extractDelimited(options.categories) },
+				{ ...base, categories: options.categories ? extractDelimited(options.categories) : undefined },
 				reportToStderr
 			)
 		case "ban":
@@ -276,7 +275,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					...base,
 					// Undefined means every country the source's own countryInfo.txt catalogs.
 					// Present dumps are skipped.
-					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
+					countries: options.countries ? extractDelimited(options.countries) : undefined,
 				},
 				reportToStderr
 			)
@@ -287,7 +286,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					// Undefined rather than an empty list when the flag is absent:
 					// the module's own default set is the answer for "fetch what the corpus wants",
 					// and an empty array would fetch no countries while looking deliberate.
-					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
+					countries: options.countries ? extractDelimited(options.countries) : undefined,
 				},
 				reportToStderr
 			)

@@ -40,6 +40,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { CapabilityManifest, TagCapability } from "@mailwoman/neural/weights/channels"
 import type { PathBuilderLike } from "path-ts"
 
 import {
@@ -57,31 +58,31 @@ export interface CapabilityManifestOptions {
 	/**
 	 * ONNX artifact.
 	 *
-	 * Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	model?: string
 	/**
 	 * SentencePiece tokenizer.
 	 *
-	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
 	 * Model card JSON.
 	 *
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	modelCard?: string
 	/**
 	 * Anchor lookup JSON.
 	 *
-	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * @defaultValue the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	anchorLookup?: string
 	/**
 	 * Gazetteer lexicon JSON.
 	 *
-	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * @defaultValue `data/gazetteer/anchor-lexicon-v1.json`
 	 */
 	gazetteerLexicon?: string
 	/**
@@ -98,9 +99,9 @@ const TIERS: Record<string, ScorerOverrides> = {
 	// Production default: anchor and gazetteer both fed (no override needed, createScorer's defaults).
 	server: {},
 	// On-device lighter feed: anchor fed, gazetteer ablated.
-	// `overrides.gazetteer:false` warns loudly (a declared ablation), which is correct,
+	// `overrides.gazetteer: "off"` warns loudly (a declared ablation), which is correct,
 	// since pocket is a deliberate below-ship-config tier.
-	pocket: { gazetteer: false },
+	pocket: { gazetteer: "off" },
 }
 
 /**
@@ -120,16 +121,6 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-/**
- * `{ maskOffF1, maskOnF1? }`, where maskOnF1 is present only for forbidden-set tags the model emits.
- */
-interface TagCapability {
-	maskOffF1: number
-	maskOnF1?: number
-}
-
-type Capabilities = Record<string, Record<string, Record<string, TagCapability>>>
-
 interface ResolvedPaths {
 	model: PathBuilderLike
 	tokenizer: PathBuilderLike
@@ -138,8 +129,8 @@ interface ResolvedPaths {
 	gazetteerLexicon: string
 }
 
-async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
-	const capabilities: Capabilities = {}
+async function buildManifest(paths: ResolvedPaths): Promise<CapabilityManifest> {
+	const capabilities: CapabilityManifest = {}
 
 	for (const [tier, tierOverrides] of Object.entries(TIERS)) {
 		capabilities[tier] = {}

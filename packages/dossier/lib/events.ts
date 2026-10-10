@@ -5,8 +5,8 @@
  *   Commercial events and organizational roles. An inquiry, a commitment, an order, an active subscription,
  *   a landlord's permission and an accepted build are six different events, each with its own parties,
  *   physical scope and date. A permission reaches only the entities in its scope. An ownership or
- *   management record says who holds the role. Signing authority is a separate fact that stays unknown
- *   until a record states it.
+ *   management record states who holds the role. The signing authority is a separate fact that stays
+ *   unknown until a record states it.
  */
 
 import type { EntityID } from "#identifiers"
@@ -40,7 +40,7 @@ export interface CommercialEvent {
 	 * The entities the event applies to, and no wider.
 	 */
 	scope: readonly EntityID[]
-	date?: ISODate
+	date: ISODate | null
 	evidence: Evidence
 }
 
@@ -69,8 +69,8 @@ export function activeSubscriptionsAt(
 		event.scope.includes(subject)
 	)
 
-	const undated = subscriptions.filter((event) => event.date === undefined)
-	const active = subscriptions.filter((event) => event.date !== undefined && compareISODate(event.date, date) <= 0)
+	const undated = subscriptions.filter((event) => event.date === null)
+	const active = subscriptions.filter((event) => event.date !== null && compareISODate(event.date, date) <= 0)
 
 	return { count: active.length, events: active, undated }
 }
@@ -115,8 +115,8 @@ export function signingAuthorityFor(
 
 export interface ConstructionWindow {
 	subject: EntityID
-	start?: ISODate
-	end?: ISODate
+	start: ISODate | null
+	end: ISODate | null
 	/**
 	 * The stage the source states, such as `permit issued` or `rough-in`.
 	 */

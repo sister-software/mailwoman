@@ -29,10 +29,10 @@ export class SqliteConventionSource<DB> implements ConventionSource {
 		this.#schema = schema
 	}
 
-	get(wofID: number): Convention | undefined {
+	get(wofID: number): Convention | null {
 		const cached = this.#cache.get(wofID)
 
-		if (cached !== undefined) return cached ?? undefined
+		if (cached !== undefined) return cached
 		let value: Convention | null = null
 
 		try {
@@ -49,6 +49,6 @@ export class SqliteConventionSource<DB> implements ConventionSource {
 
 		this.#cache.set(wofID, value)
 
-		return value ?? undefined
+		return value
 	}
 }

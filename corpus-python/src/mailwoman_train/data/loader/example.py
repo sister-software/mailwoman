@@ -18,7 +18,7 @@ class EncodedExample:
     locale_id: int = IGNORE_INDEX
     # The address system the row's text follows (``address_systems.address_system_id``), or
     # IGNORE_INDEX when its country has no layout. The address-system head's per-row target, and the
-    # value a locale hint carries.
+    # value the locale hint takes.
     address_system_id: int = IGNORE_INDEX
     # Postcode-anchor channel (#239/#240). Per-piece ``(max_length, ANCHOR_FEATURE_DIM)`` features +
     # ``(max_length,)`` confidence, or None when no anchor lookup is configured (back-compat).

@@ -80,7 +80,7 @@ function stamp<Pick extends { metadata?: Record<string, unknown> }>(
  * Two probes at most, each drawn from the caller's budget (`hasBudget`).
  */
 export async function resolveCompoundMunicipality<
-	Place extends { regionScopeMiss?: boolean },
+	Place extends { regionScopeMiss?: boolean | null },
 	Pick extends { top: Place; metadata?: Record<string, unknown> },
 >(
 	value: string,

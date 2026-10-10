@@ -42,7 +42,7 @@ describe("evidence constructors", () => {
 		).toThrow(/authoritative relation cannot carry a score/i)
 	})
 
-	it("an inferred relation accepts a score, and an unscored one carries no score key", () => {
+	it("an inferred relation accepts a score, and an unscored one carries a null score", () => {
 		const scored = relation({
 			source: "form-499",
 			vintage: "2025-12-07",
@@ -60,6 +60,6 @@ describe("evidence constructors", () => {
 
 		expect(scored.assertion).toBe("inferred")
 		expect(scored.score).toBe(0.82)
-		expect(unscored).not.toHaveProperty("score")
+		expect(unscored).toHaveProperty("score", null)
 	})
 })

@@ -8,7 +8,7 @@
  *   fresh `latLngToCell` result.
  */
 
-import { readFileSize } from "@mailwoman/core/fs/readers"
+import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import {
 	assertAreaAgreement,
 	areaAgreementFrom,
@@ -196,7 +196,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			)
 		},
 		ingest: async (kdb) => {
-			if (!source) return undefined
+			if (!source) return null
 
 			return aggregateChunks([
 				await ingestFloodChunk(kdb, {

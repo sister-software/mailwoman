@@ -24,7 +24,7 @@ import {
 	MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_MODIFIERS,
-} from "#venue-structure"
+} from "#venue/structure"
 
 /**
  * USPS Pub-28 C2 canonicals whose designator is descriptive rather than addressing
@@ -88,8 +88,9 @@ function phraseToPattern(phrase: string): string {
 /**
  * Build the span-proposer lexicon from the codex tables of the requested systems.
  *
- * Defaults to every system with designator tables in the codex today.
  * The result is pure data — safe to share across parses.
+ *
+ * @defaultValue every system with designator tables in the codex today.
  */
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)

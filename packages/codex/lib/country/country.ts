@@ -14,8 +14,6 @@ import { Alpha3ToCountryRecord, CountryISO2 } from "#country/codes"
 import type { CountryName } from "#country/names"
 import { foldName } from "#normalize"
 
-export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/codes"
-
 /**
  * Common address spellings by ISO alpha-2.
  *
@@ -44,7 +42,7 @@ export const COUNTRY_SURFACE_FORMS = {
 	BR: ["Brazil", "Brasil", "BR", "BRA"],
 	JP: ["Japan", "日本", "Nippon", "JP", "JPN"],
 	// `ROM` was Romania's alpha-3 until ISO replaced it with `ROU` in 2002.
-	// The ISO table carries `ROU`, and the retired code stays resolvable here
+	// The ISO table lists `ROU`, and the retired code stays resolvable here
 	// because address data outlives a standard's revisions.
 	RO: ["Romania", "RO", "ROU", "ROM"],
 } as const satisfies Partial<Record<CountryISO2, readonly string[]>>
@@ -121,14 +119,14 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 /**
  * Check lookup by lowercase token first, then by folded token.
  */
-function probeCountry(token: string): string | undefined {
+function probeCountry(token: string): string | null {
 	const direct = COUNTRY_LOOKUP.get(token.trim().toLowerCase())
 
 	if (direct) return direct
 
 	const folded = foldName(token)
 
-	return folded ? COUNTRY_LOOKUP.get(folded) : undefined
+	return folded ? (COUNTRY_LOOKUP.get(folded) ?? null) : null
 }
 
 /**
@@ -151,7 +149,7 @@ export interface CountryMatch {
  *
  * Multi-word names must be passed as full phrases.
  */
-export function matchCountry(token: string | null | undefined): CountryMatch | null {
+export function matchCountry(token: string | null): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
 	const iso2 = probeCountry(token)
 
@@ -170,14 +168,14 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
  *
  * Returns undefined if unresolved.
  */
-export function countryCodeForTable(country: string | null | undefined): string | undefined {
+export function countryCodeForTable(country: string | null): string | null {
 	const trimmed = country?.trim()
 
-	if (!trimmed) return undefined
+	if (!trimmed) return null
 
 	if (trimmed.length === 2) return trimmed.toUpperCase()
 
-	return matchCountry(trimmed)?.iso2
+	return matchCountry(trimmed)?.iso2 ?? null
 }
 
 /**
@@ -213,7 +211,7 @@ export function isAlpha2CodeShape(value: unknown): value is string {
  * Case-insensitive check for any recognized country form.
  */
 export function isCountryToken(token: unknown): boolean {
-	return typeof token === "string" && probeCountry(token) !== undefined
+	return typeof token === "string" && probeCountry(token) !== null
 }
 
 /**

@@ -5,7 +5,7 @@
  *   The lockstep pin: dev-mcp's effective defaults are production's, field by field.
  */
 
-import { createGeocodeCommandOptions } from "mailwoman/geocode"
+import { createGeocodeCommandOptions, GEOCODE_SWITCH_DEFAULTS } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 import { resolveConfig } from "#dev-mcp/engine/registry"
@@ -38,13 +38,25 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 
 	it("still lets every pin override the production default", () => {
 		const resolved = resolveConfig({
-			postcode_shape_coherence: true,
+			postcode_shape_coherence: "on",
 			place_country_threshold: 0.5,
-			admin_containment_rerank: false,
+			admin_containment_rerank: "off",
 		})
 
 		expect(resolved.postcodeShapeCoherence).toBe(true)
 		expect(resolved.placeCountryThreshold).toBe(0.5)
 		expect(resolved.adminContainmentRerank).toBe(false)
+	})
+
+	it("resolves variant_alias_exemption from either named value or the production default", () => {
+		expect(resolveConfig({}).variantAliasExemption).toBe(createGeocodeCommandOptions().variantAliasExemption)
+		expect(resolveConfig({ variant_alias_exemption: "applied" }).variantAliasExemption).toBe("applied")
+		expect(resolveConfig({ variant_alias_exemption: "not_applied" }).variantAliasExemption).toBe("not_applied")
+	})
+
+	it("resolves poi_venue_tier to an explicit value in both directions", () => {
+		expect(resolveConfig({}).poiVenueTier).toBe(GEOCODE_SWITCH_DEFAULTS.poiVenueTier)
+		expect(resolveConfig({ poi_venue_tier: "on" }).poiVenueTier).toBe(true)
+		expect(resolveConfig({ poi_venue_tier: "off" }).poiVenueTier).toBe(false)
 	})
 })

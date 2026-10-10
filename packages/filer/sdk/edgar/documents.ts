@@ -83,8 +83,8 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
 	const archiveURL = accessionArchiveURL(cik, accessionNumber)
 	const documents: ExhibitDocument[] = []
 
-	let type: string | undefined
-	let filename: string | undefined
+	let type: string | null = null
+	let filename: string | null = null
 
 	for (const line of TextSpliterator.from(htmlToLayoutText(headerHTML, BLOCK_ELEMENTS), { skipEmpty: true })) {
 		const field = MANIFEST_FIELD_PATTERN.exec(line.trim())
@@ -96,8 +96,8 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
 		switch (field[1]!.toUpperCase()) {
 			case "DOCUMENT": {
 				// A new block abandons whatever the previous one left half-stated.
-				type = undefined
-				filename = undefined
+				type = null
+				filename = null
 
 				break
 			}
@@ -117,8 +117,8 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
 
 		if (type && filename) {
 			documents.push({ type, filename, url: `${archiveURL}/${filename}` })
-			type = undefined
-			filename = undefined
+			type = null
+			filename = null
 		}
 	}
 

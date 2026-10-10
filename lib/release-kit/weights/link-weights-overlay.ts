@@ -18,7 +18,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -109,6 +110,22 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			await makeDirectories(dir)
 			await removePathIfPresent(resolvePath(dir, "model-card.json"))
 			await copyFileTo(cardSource, resolvePath(dir, "model-card.json"))
+		}
+
+		// A graph linked into an overlay that declares a base is never read and goes stale.
+		// Remove one left by an earlier recipe, so the directory says what the resolver does.
+		if (recipe.inheritsBase(locale)) {
+			for (const stale of ["model.onnx", "tokenizer.model"]) {
+				const path = resolvePath(dir, stale)
+
+				if (await pathExists(path)) {
+					if (!plan) {
+						await removePathIfPresent(path)
+					}
+
+					log(`  ${plan ? "·" : "✓"} ${stale}  removed: the package inherits its graph through mailwoman.baseWeights`)
+				}
+			}
 		}
 
 		const artifacts: LinkableArtifact[] = recipe.linkableFor(locale)

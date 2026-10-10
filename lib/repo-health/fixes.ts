@@ -25,6 +25,6 @@ export const fixes: ReadonlyArray<RepoFix> = [
 /**
  * The fix for a check id, or no fix when that check has no mechanical repair.
  */
-export function findFix(id: string): RepoFix | undefined {
-	return fixes.find((fix) => fix.id === id)
+export function findFix(id: string): RepoFix | null {
+	return fixes.find((fix) => fix.id === id) ?? null
 }

@@ -342,6 +342,7 @@ export const moduleCohesionCheck: RepoCheck = {
 				message: `${cohesion.communities.length} declaration communities, modularity ${cohesion.modularity.toFixed(2)}; ${describe(left)} while ${describe(right)} — each group reads what the other never does, so one of them can move to its own module`,
 				file,
 				line: right.line,
+				details: null,
 			})
 		}
 

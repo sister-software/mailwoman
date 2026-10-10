@@ -36,7 +36,7 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -54,7 +54,7 @@ export interface FetchNADOptions extends BaseFetchOptions {
 	/**
 	 * Fetch strategy.
 	 *
-	 * Default `featureserver`.
+	 * @defaultValue `featureserver`
 	 */
 	mode?: "featureserver" | "bulk"
 	/**
@@ -64,31 +64,31 @@ export interface FetchNADOptions extends BaseFetchOptions {
 	/**
 	 * Records per output file.
 	 *
-	 * Default `100000`.
+	 * @defaultValue `100000`
 	 */
 	chunkSize?: number
 	/**
 	 * Records per http request.
 	 *
-	 * Default `5000`.
+	 * @defaultValue `5000`
 	 */
 	pageSize?: number
 	/**
 	 * Parallel page fetches within a chunk.
 	 *
-	 * Default `4`.
+	 * @defaultValue `4`
 	 */
 	concurrency?: number
 	/**
 	 * Start objectid.
 	 *
-	 * Default `1`.
+	 * @defaultValue `1`
 	 */
 	startOID?: number
 	/**
 	 * Stop before this OID.
 	 *
-	 * Default = total count.
+	 * @defaultValue = total count.
 	 */
 	endOID?: number
 }

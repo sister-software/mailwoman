@@ -6,14 +6,19 @@
  *   in the loop. Progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
  */
 
-import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
+import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
-import { Box, Text } from "ink"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
@@ -40,7 +45,7 @@ export const spec = {
 const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
-			{ BDCFileCategory, BDCFilingDataType, BDCProviderSubCategory },
+			{ BDCFileCategory, BDCFilingDataType, BDCProviderSubCategory, BDCTechnologyType },
 			{ buildBDCDatabase },
 			{ createBDCClient, formatBDCThrottleStats },
 			{ createTIGERBlockCentroidLookup },
@@ -72,7 +77,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		let filerDBPath: PathBuilderLike | undefined
+		let filerDBPath: PathBuilderLike | null = null
 
 		if (options.providerListPath) {
 			if (!(await pathExists(options.providerListPath))) {
@@ -102,7 +107,8 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		const files = await retrieveAvailabilityFiles(client, {
 			asOfDate,
 			category: BDCFileCategory.Provider,
-			subcategory: BDCProviderSubCategory.FixedBroadband,
+			subcategory: BDCProviderSubCategory.LocationCoverage,
+			technologyType: BDCTechnologyType.FixedBroadband,
 		})
 
 		const stateFiles = files.filter((file) => file.stateCode === options.state)
@@ -128,7 +134,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ build: ${out}`)
 
-		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
+		let filerDB: DatabaseClientHandle<FilerDatabase> | null = null
 
 		if (filerDBPath) {
 			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDBPath})`)
@@ -145,7 +151,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 				includeLocationIDs: options.includeLocationIDs,
 				blockCentroids: await createTIGERBlockCentroidLookup(tigerDBPath),
 				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
-				filerDB,
+				filerDB: filerDB ?? undefined,
 				onProgress: (message) => console.error(`  [bdc] ${message}`),
 			})
 
@@ -164,16 +170,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

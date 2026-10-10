@@ -17,7 +17,17 @@ import { classifyRescueRow, type RescueRowInput, summarizeRescue } from "#tools/
 const PARIS = { expectLat: 48.8773422, expectLon: 2.3516751, expectToleranceM: 1000 }
 
 function row(overrides: Partial<RescueRowInput>): RescueRowInput {
-	return { lat: null, lon: null, entityFired: false, alternateCandidates: [], ...overrides }
+	return {
+		expectLat: null,
+		expectLon: null,
+		expectToleranceM: null,
+		lat: null,
+		lon: null,
+		entityFired: false,
+		unconditionalEntityHit: null,
+		alternateCandidates: [],
+		...overrides,
+	}
 }
 
 describe("classifyRescueRow", () => {
@@ -81,7 +91,7 @@ describe("classifyRescueRow", () => {
 		const graded = classifyRescueRow(row({ ...PARIS }))
 
 		expect(graded.classification).toBe("no_rescue_on_hand")
-		expect(graded.deliveredKm).toBeUndefined()
+		expect(graded.deliveredKm).toBeNull()
 	})
 
 	it("marks a truthless row ungraded rather than guessing", () => {
@@ -92,9 +102,36 @@ describe("classifyRescueRow", () => {
 describe("summarizeRescue", () => {
 	it("counts every class and the check-protects flag with the row total as denominator", () => {
 		const reports = [
-			{ id: "a", input: "a", markers: [], classification: "correct_as_is" as const, checkProtects: true },
-			{ id: "b", input: "b", markers: [], classification: "rescue_available_entity" as const, checkProtects: false },
-			{ id: "c", input: "c", markers: [], classification: "ungraded" as const, checkProtects: false },
+			{
+				id: "a",
+				input: "a",
+				country: null,
+				markers: [],
+				classification: "correct_as_is" as const,
+				deliveredKm: null,
+				rescueRank: null,
+				checkProtects: true,
+			},
+			{
+				id: "b",
+				input: "b",
+				country: null,
+				markers: [],
+				classification: "rescue_available_entity" as const,
+				deliveredKm: null,
+				rescueRank: null,
+				checkProtects: false,
+			},
+			{
+				id: "c",
+				input: "c",
+				country: null,
+				markers: [],
+				classification: "ungraded" as const,
+				deliveredKm: null,
+				rescueRank: null,
+				checkProtects: false,
+			},
 		]
 
 		const summary = summarizeRescue(reports)

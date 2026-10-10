@@ -23,7 +23,8 @@
  *       [--card neural-weights-en-us/model-card.json] [--notes "..."] [--replace]
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isoDate } from "@mailwoman/core/utils"
 
@@ -50,19 +51,19 @@ export interface LedgerAppendOptions {
 	/**
 	 * Model card JSON (run-metadata defaults).
 	 *
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * @defaultValue `neural-weights-en-us/model-card.json`
 	 */
 	card?: string
 	/**
 	 * The ledger file.
 	 *
-	 * Default `evals/scores-by-version.json`.
+	 * @defaultValue `evals/scores-by-version.json`
 	 */
 	ledger?: string
 	/**
 	 * ISO date the model trained.
 	 *
-	 * Default: today.
+	 * @defaultValue today.
 	 */
 	trainedAt?: string
 	/**

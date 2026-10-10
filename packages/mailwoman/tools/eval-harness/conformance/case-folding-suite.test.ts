@@ -1,4 +1,4 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import {
@@ -117,14 +117,14 @@ describe("the committed case-folding suite", () => {
 	})
 
 	it("measures more than one comparator and more than one country", () => {
-		expect(new Set(fixtures.map((fixture) => fixture.outcomeComparator)).size).toBeGreaterThan(1)
+		expect(new Set(fixtures.map((fixture) => fixture.resultComparator)).size).toBeGreaterThan(1)
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 
 	it("gives every tracked row a reference and a note, and every enforcing row neither", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeNull()
 
 				continue
 			}

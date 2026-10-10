@@ -39,6 +39,7 @@ class FakeAddressPoints {
 
 class FakeInterp {
 	closed = false
+	readonly radiusCalibration = null
 	opts: { dbPath: string }
 
 	constructor(opts: { dbPath: string }) {

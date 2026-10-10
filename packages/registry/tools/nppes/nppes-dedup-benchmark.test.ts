@@ -10,7 +10,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { ORG_TAU, orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
+import { ORG_TAU, type NPIPrimary } from "#tools/nppes/org-name"
 import { writeOvermergePacket } from "#tools/nppes/overmerge-packet"
 import { renderNPPESDedupReport, type NPPESReportInput, type SweepArm } from "#tools/nppes/report"
 import type { MessyRow } from "#tools/nppes/sample"
@@ -22,24 +22,41 @@ import {
 	buildOrgNameH3Grain,
 	collectPrimaryCoordinates,
 } from "#tools/nppes/truth-grains"
+import { orgTokens } from "#tools/shared"
 import type { ResolvedEntity, SourceRecord } from "#types"
 
 function record(id: string, latitude?: number, longitude?: number): SourceRecord {
 	return {
 		id,
+		source: null,
+		name: null,
+		organization: null,
+		phone: null,
+		email: null,
+		attributes: null,
+		raw: null,
 		address:
 			latitude === undefined || longitude === undefined
-				? { components: {}, canonicalKey: `k-${id}` }
+				? { components: {}, canonicalKey: `k-${id}`, formatted: null, geocode: null, raw: null }
 				: {
 						components: {},
 						canonicalKey: `k-${id}`,
-						geocode: { coordinate: { latitude, longitude }, tier: "address_point", uncertaintyMeters: 1 },
+						formatted: null,
+						raw: null,
+						geocode: {
+							coordinate: { latitude, longitude },
+							tier: "address_point",
+							uncertaintyMeters: 1,
+							hierarchy: null,
+							poBox: null,
+							multiUnit: null,
+						},
 					},
 	}
 }
 
 function entity(id: string, records: SourceRecord[]): ResolvedEntity {
-	return { id, records, representative: records[0]!, cohesion: null }
+	return { id, records, representative: records[0]!, coordinate: null, cohesion: null }
 }
 
 function primary(entries: Array<[npi: string, org: string, addrKey: string]>): Map<string, NPIPrimary> {

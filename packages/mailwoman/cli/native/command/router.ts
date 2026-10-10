@@ -1,7 +1,8 @@
-import { readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { optionPropertyName } from "@mailwoman/core/scripting/utils"
+import { optionPropertyName } from "@mailwoman/core/scripting/arguments"
 import { createElement } from "react"
 import type { ComponentType } from "react"
 import { Globerator } from "spliterator/node/fs"
@@ -80,7 +81,7 @@ async function listCommandNames(directory: URL): Promise<string[]> {
  * trying the literal spelling first and only then the prefix-directory readings,
  * so the layout can change without renaming anything the user types.
  */
-async function resolveSegment(within: readonly string[], segment: string): Promise<string[] | undefined> {
+async function resolveSegment(within: readonly string[], segment: string): Promise<string[] | null> {
 	for (const candidate of commandPathCandidates(segment)) {
 		const parts = [...within, ...candidate]
 
@@ -89,7 +90,7 @@ async function resolveSegment(within: readonly string[], segment: string): Promi
 		if (await tryStat(new URL(`${parts.join("/")}/`, COMMANDS_ROOT))) return candidate
 	}
 
-	return undefined
+	return null
 }
 
 async function runCommand(module: CommandModule, commandPath: string, argv: readonly string[]): Promise<number> {

@@ -7,10 +7,11 @@
 
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
+import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
+import { type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 
@@ -110,9 +111,9 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 }
 
 /**
- * The outcome fields that an entity answer writes.
+ * The result fields that an entity answer writes.
  *
- * The type is structural to avoid an import cycle with the outcome module.
+ * The type is structural to avoid an import cycle with the result module.
  */
 export interface ForkEntityAnswerTarget {
 	lat: number | null
@@ -121,12 +122,12 @@ export interface ForkEntityAnswerTarget {
 	epistemic_status?: string
 	countryCode: string | null
 	venue: string | null
-	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
-	admin_coherence?: AdminCoherenceReport
+	entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
+	admin_coherence: AdminCoherenceReport | null
 }
 
 /**
- * Writes the entity's coordinates, venue tier and admin coherence report to the outcome.
+ * Writes the entity's coordinates, venue tier and admin coherence report to the result.
  */
 function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,
@@ -149,8 +150,8 @@ function applyForkEntityAnswer(
 
 	const coherence = forkedEntityCoherenceField(roots, entity)
 
-	if (coherence.admin_coherence) {
-		result.admin_coherence = coherence.admin_coherence
+	if (coherence) {
+		result.admin_coherence = coherence
 	}
 }
 
@@ -187,7 +188,7 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 
 	const resolverName = postcode.metadata?.["resolver_name"]
 
-	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : undefined)
+	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : null)
 		? VENUE_UNIT_ANCHOR_THRESHOLD_M
 		: VENUE_ANCHOR_THRESHOLD_M
 }
@@ -248,12 +249,16 @@ export function probeVenueNearAnchor(
  * Applies the fork-entity probe, then the optional near-anchor venue refinement.
  *
  * The fork probe runs only for a declared fork with no coordinate.
+ * When `poiVenueTier` is set, a parsed venue with no coordinate takes the same exact-name probe,
+ * so `Buckingham Palace` parsed as one venue span resolves without a locality to anchor it.
+ *
+ * The probe answers only when one entity holds the name.
  * The refinement runs only when `poiVenueTier` is set and the current tier is `admin` or `street`.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
 		resolution_tier: string | null
-		entity?: { name: string; categoryID: string | null; confidence: number; country: string }
+		entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
 	},
 	markers: readonly { code: string }[],
 	parseInput: string,
@@ -271,6 +276,14 @@ export function applyEntityTiers(
 		deps.isStreetGeneric
 	) {
 		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+
+		if (entity) {
+			applyForkEntityAnswer(result, entity, resolvedRoots)
+		}
+	}
+
+	if (deps.poiVenueTier === true && result.lat === null && result.venue && deps.poiLookup && deps.isStreetGeneric) {
+		const entity = probeForkEntity(result.venue, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
 
 		if (entity) {
 			applyForkEntityAnswer(result, entity, resolvedRoots)
@@ -365,7 +378,7 @@ export function probeVenueNearAnchorFolded(
 	const hits = opts.lookup.search({ name: queryHead, limit: 24 })
 
 	const folded = hits.filter((h) => {
-		if (h.name === null) return false
+		if (!h.name) return false
 		const hitHead = venueHeadSegment(h.name) ?? h.name
 
 		return normalizeLocalityForKey(hitHead) === queryKey

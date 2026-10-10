@@ -75,7 +75,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 	return idsPath
 }
 
-function entryOf(code: string, value: string | undefined): [string, string][] {
+function entryOf(code: string, value: string | null | undefined): [string, string][] {
 	return value ? [[code, value]] : []
 }
 
@@ -86,7 +86,7 @@ const provisionOperation = defineOperation({
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: ProvisionInputSchema,
 	outputSchema: ProvisionReportSchema.extend({
-		written: z.string().optional(),
+		written: z.string().nullable(),
 	}),
 	async run(input, context) {
 		const apply = input.apply === true && !context.dryRun
@@ -112,7 +112,7 @@ const provisionOperation = defineOperation({
 
 		const written = apply ? await recordShopIDs(input.mode, report) : null
 
-		return { ...report, ...(written ? { written } : {}) }
+		return { ...report, written }
 	},
 })
 

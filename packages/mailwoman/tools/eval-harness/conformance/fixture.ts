@@ -15,11 +15,11 @@ import { JSONSpliterator } from "spliterator"
 import type { GauntletGeocodeOpts } from "#tools/eval-harness/gauntlet/harness"
 
 /**
- * Supported outcome comparators.
+ * Supported result comparators.
  *
  * Each checks one observable interface; implementations live in `comparators.ts`.
  */
-export const OUTCOME_COMPARATORS = [
+export const RESULT_COMPARATORS = [
 	"resolution_identity",
 	"assembled_coordinate",
 	"parse_whole_strict",
@@ -28,10 +28,10 @@ export const OUTCOME_COMPARATORS = [
 	"candidate_admissibility",
 ] as const
 
-export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
+export type ResultComparatorName = (typeof RESULT_COMPARATORS)[number]
 
 /**
- * Relations a fixture may require between base and variant outcomes.
+ * Relations a fixture may require between base and variant results.
  */
 export const CONFORMANCE_RELATIONS = ["equivalent", "refines", "diverges"] as const
 
@@ -50,7 +50,7 @@ export type ConformanceStatus = (typeof CONFORMANCE_STATUSES)[number]
  * Relations supported by each comparator.
  * Reject expectations the instrument cannot evaluate.
  */
-export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly ConformanceRelation[]> = {
+export const RELATIONS_BY_COMPARATOR: Record<ResultComparatorName, readonly ConformanceRelation[]> = {
 	resolution_identity: ["equivalent", "refines", "diverges"],
 	assembled_coordinate: ["equivalent", "refines", "diverges"],
 	parse_whole_strict: ["equivalent", "diverges"],
@@ -94,35 +94,35 @@ export interface ConformanceFixture {
 	/**
 	 * Options shared by both sides; absent means production defaults.
 	 */
-	context?: ConformanceContext
+	context: ConformanceContext | null
 	/**
 	 * Required comparator for the expected relation.
 	 */
-	outcomeComparator: OutcomeComparatorName
+	resultComparator: ResultComparatorName
 	/**
-	 * The relation the two outcomes must stand in.
+	 * The relation the two results must stand in.
 	 */
 	expect: ConformanceRelation
 	/**
 	 * Whether failure blocks the run; defaults to `pass`.
 	 */
-	status?: ConformanceStatus
+	status: ConformanceStatus | null
 	/**
 	 * Issue or record associated with a tracked row.
 	 */
-	bugRef?: string
+	bugRef: string | null
 	/**
 	 * Source row or input set for this fixture.
 	 */
-	rowRef?: string
+	rowRef: string | null
 	/**
 	 * Coordinate tolerance in meters; supported only by `assembled_coordinate`.
 	 */
-	toleranceM?: number
+	toleranceM: number | null
 	/**
 	 * A note for the fixture author; the suite does not grade it.
 	 */
-	note?: string
+	note: string | null
 }
 
 /**
@@ -134,7 +134,7 @@ const FIXTURE_KEYS = new Set<string>([
 	"base",
 	"variant",
 	"context",
-	"outcomeComparator",
+	"resultComparator",
 	"expect",
 	"status",
 	"bugRef",
@@ -147,8 +147,8 @@ function isContextKey(key: string): key is ContextKey {
 	return (CONTEXT_KEYS as readonly string[]).includes(key)
 }
 
-function isOutcomeComparator(value: unknown): value is OutcomeComparatorName {
-	return typeof value === "string" && (OUTCOME_COMPARATORS as readonly string[]).includes(value)
+function isResultComparator(value: unknown): value is ResultComparatorName {
+	return typeof value === "string" && (RESULT_COMPARATORS as readonly string[]).includes(value)
 }
 
 function isConformanceRelation(value: unknown): value is ConformanceRelation {
@@ -169,8 +169,8 @@ function requireNonEmptyString(record: Record<string, unknown>, key: string, lab
 	return value
 }
 
-function readContext(raw: unknown, label: string): ConformanceContext | undefined {
-	if (raw === undefined) return undefined
+function readContext(raw: unknown, label: string): ConformanceContext | null {
+	if (raw === undefined) return null
 
 	if (!isPlainObject(raw)) {
 		throw new Error(`${label}: "context" must be an object (got ${stringifyJSON(raw)})`)
@@ -216,22 +216,22 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	const base = requireNonEmptyString(record, "base", label)
 	const variant = requireNonEmptyString(record, "variant", label)
 
-	const comparator = record["outcomeComparator"]
+	const comparator = record["resultComparator"]
 
 	if (comparator === undefined) {
 		throw new Error(
-			`${label}: "outcomeComparator" is required — a law states which observable interface it preserves. ` +
-				`Known: ${OUTCOME_COMPARATORS.join(", ")}`
+			`${label}: "resultComparator" is required — a law states which observable interface it preserves. ` +
+				`Known: ${RESULT_COMPARATORS.join(", ")}`
 		)
 	}
 
-	if (!isOutcomeComparator(comparator)) {
+	if (!isResultComparator(comparator)) {
 		throw new Error(
-			`${label}: unknown outcomeComparator ${stringifyJSON(comparator)} — known: ${OUTCOME_COMPARATORS.join(", ")}`
+			`${label}: unknown resultComparator ${stringifyJSON(comparator)} — known: ${RESULT_COMPARATORS.join(", ")}`
 		)
 	}
 
-	const outcomeComparator = comparator
+	const resultComparator = comparator
 	const expected = record["expect"]
 
 	if (expected === undefined) {
@@ -243,11 +243,11 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	}
 
 	const expect = expected
-	const supported = RELATIONS_BY_COMPARATOR[outcomeComparator]
+	const supported = RELATIONS_BY_COMPARATOR[resultComparator]
 
 	if (!supported.includes(expect)) {
 		throw new Error(
-			`${label}: comparator "${outcomeComparator}" cannot express the relation "${expect}" — it reports ` +
+			`${label}: comparator "${resultComparator}" cannot express the relation "${expect}" — it reports ` +
 				`${supported.join(" / ")}. See RELATIONS_BY_COMPARATOR.`
 		)
 	}
@@ -267,7 +267,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	}
 
 	// `bugRef` is only valid on non-blocking tracked rows.
-	if (bugRef !== undefined && (status === undefined || status === "pass")) {
+	if (bugRef && (!status || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
 				`"${status ?? "pass"}" — a enforcing row that names a defect asserts the defect is fixed.`
@@ -277,10 +277,10 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	const tolerance = record["toleranceM"]
 
 	if (tolerance !== undefined) {
-		if (outcomeComparator !== "assembled_coordinate") {
+		if (resultComparator !== "assembled_coordinate") {
 			throw new Error(
 				`${label}: "toleranceM" is only read by the assembled_coordinate comparator, and this row names ` +
-					`"${outcomeComparator}" — a stored expectation no branch reads asserts nothing.`
+					`"${resultComparator}" — a stored expectation no branch reads asserts nothing.`
 			)
 		}
 
@@ -308,14 +308,14 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		law,
 		base,
 		variant,
-		outcomeComparator,
+		resultComparator,
 		expect,
-		...(status ? { status } : {}),
-		...(typeof bugRef === "string" ? { bugRef } : {}),
-		...(context ? { context } : {}),
-		...(typeof rowRef === "string" ? { rowRef } : {}),
-		...(typeof tolerance === "number" ? { toleranceM: tolerance } : {}),
-		...(typeof note === "string" ? { note } : {}),
+		status: status ?? null,
+		bugRef: typeof bugRef === "string" ? bugRef : null,
+		context: context ?? null,
+		rowRef: typeof rowRef === "string" ? rowRef : null,
+		toleranceM: typeof tolerance === "number" ? tolerance : null,
+		note: typeof note === "string" ? note : null,
 	}
 }
 

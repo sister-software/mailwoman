@@ -12,7 +12,7 @@
  *
  * Every variant grades against a graceful-degradation ladder synthesized per row from the gazetteer, with the
  * expected rung computed from the components the deletion left behind rather than from the variant's own output.
- * Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
+ * Three results are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
  * justifies, or it abstained where the surviving evidence justifies no pick. Substitution is a hard fail at every
  * rung, because a coordinate cannot redeem a slot refilled by the wrong token.
  *
@@ -28,15 +28,14 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	ABLATION_ABSENT,
-	type AblationGrade,
 	achievedRung,
 	buildCaseLadder,
 	describeLadder,
 	expectFor,
 	gradeAgainstLadder,
 	ladderComponentDisagreement,
-	PASSING_GRADES,
 } from "#ablation/expectation"
+import { type AblationGrade, PASSING_GRADES } from "#ablation/grades"
 import { AblationGazetteer } from "#tools/eval-harness/gauntlet/ablation/gazetteer"
 // Re-exported from their historical home so every importer and test keeps its path.
 import { renderAblationMarkdown } from "#tools/eval-harness/gauntlet/ablation/report"
@@ -46,37 +45,16 @@ import {
 	ABLATABLE_COMPONENTS,
 	type AblatableComponent,
 	type AblationCell,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	type AblationSkip,
 	type AblationVariant,
 	DEFAULT_ABLATION_TOLERANCE_KM,
 } from "#tools/eval-harness/gauntlet/ablation/types"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stamp"
-import { buildGauntletDeps, runOne } from "#tools/eval-harness/gauntlet/harness"
+import { buildGauntletDeps, PRODUCTION_RESOLVER_PINS, runOne } from "#tools/eval-harness/gauntlet/harness"
 import { type GauntletLayerOptions, layerDepsOptions } from "#tools/eval-harness/gauntlet/regression"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
-
-export { ABLATION_ABSENT } from "#ablation/expectation"
-
-export { aggregateCells, classifySlot, isTierDrop, scoreAblation } from "#tools/eval-harness/gauntlet/ablation/scoring"
-
-export {
-	formatAblationCell,
-	formatAblationLadderCell,
-	renderAblationMarkdown,
-} from "#tools/eval-harness/gauntlet/ablation/report"
-
-export {
-	ABLATABLE_COMPONENTS,
-	DEFAULT_ABLATION_TOLERANCE_KM,
-	type AblatableComponent,
-	type AblationCell,
-	type AblationRowOutcome,
-	type AblationSkip,
-	type AblationVariant,
-	type SlotOutcome,
-} from "#tools/eval-harness/gauntlet/ablation/types"
 
 /**
  * How many substitutions the console summary lists before it truncates:
@@ -87,8 +65,8 @@ const SUBSTITUTION_PRINT_LIMIT = 60
 
 const WORD_CHAR = /[\p{L}\p{N}]/u
 
-function isWordChar(c: string | undefined): boolean {
-	return c !== undefined && WORD_CHAR.test(c)
+function isWordChar(c: string | null): boolean {
+	return c !== null && WORD_CHAR.test(c)
 }
 
 /**
@@ -113,9 +91,9 @@ export function boundedOccurrences(input: string, value: string): number[] {
 
 		from = at + 1
 
-		if (isWordChar(input[at - 1])) continue
+		if (isWordChar(input[at - 1] ?? null)) continue
 
-		if (isWordChar(input[at + needle.length])) continue
+		if (isWordChar(input[at + needle.length] ?? null)) continue
 
 		hits.push(at)
 	}
@@ -239,14 +217,17 @@ export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
 	 * Where the artifacts land.
 	 *
-	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 * The promotion eval uses the same convention.
 	 *
 	 * The directory is deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
+	 *
+	 * @defaultValue `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Restrict the deleted components (default: all of {@linkcode ABLATABLE_COMPONENTS}).
+	 * Restrict the deleted components.
+	 *
+	 * @defaultValue all of {@linkcode ABLATABLE_COMPONENTS}
 	 */
 	components?: readonly string[]
 	/**
@@ -413,7 +394,7 @@ export async function runAblationLayer(
 			: `[ablation] ⚠ NO EXPECTATION MODEL — ${gazetteer.unavailableReason}. Every variant grades \`ungraded\`; only the anchor-graded columns mean anything.`
 	)
 
-	const rows: AblationRowOutcome[] = []
+	const rows: AblationRowResult[] = []
 	const skips: Array<AblationSkip & { caseID: string }> = []
 	const ladderProblems: Array<{ caseID: string; reason: string }> = []
 	let anchorsRun = 0
@@ -475,7 +456,7 @@ export async function runAblationLayer(
 				})
 			}
 
-			if (built.ladder == null) {
+			if (!built.ladder) {
 				ladderProblems.push({ caseID: c.id, reason: built.reason })
 			}
 
@@ -530,7 +511,7 @@ export async function runAblationLayer(
 					expectedRungDepth: expectation.depth,
 					expectedWhy: expectation.why,
 					expectedSource: expectation.source,
-					ladderAnchor: ("anchorSource" in built ? built.anchorSource : null) as AblationRowOutcome["ladderAnchor"],
+					ladderAnchor: ("anchorSource" in built ? built.anchorSource : null) as AblationRowResult["ladderAnchor"],
 					anchorRungDepth,
 					achievedRung: achievedRungName,
 					achievedRungDepth: graded.achievedRungDepth,
@@ -611,14 +592,16 @@ export async function runAblationLayer(
 }
 
 function describePins(options: AblationLayerOptions): string {
-	return options.pins?.postcodeCountryCoherence === undefined
+	const pin = (options.pins ?? PRODUCTION_RESOLVER_PINS).postcodeCountryCoherence
+
+	return pin === "production"
 		? "resolver pins: (none pinned — production defaults)"
-		: `resolver pins: postcodeCountryCoherence=${options.pins.postcodeCountryCoherence ? "ON" : "OFF"}`
+		: `resolver pins: postcodeCountryCoherence=${pin.toUpperCase()}`
 }
 
 function printSummary(
 	cells: readonly AblationCell[],
-	rows: readonly AblationRowOutcome[],
+	rows: readonly AblationRowResult[],
 	meta: {
 		boardID: string
 		measuredAt: string
@@ -712,7 +695,7 @@ function printSummary(
 	const recovered = rows.filter((r) => r.slot === "recovered")
 
 	console.log(
-		`\n  slot outcomes: ${rows.filter((r) => r.slot === "absent").length} absent, ${recovered.length} recovered, ${substituted.length} substituted`
+		`\n  slot results: ${rows.filter((r) => r.slot === "absent").length} absent, ${recovered.length} recovered, ${substituted.length} substituted`
 	)
 
 	if (meta.skips.length) {

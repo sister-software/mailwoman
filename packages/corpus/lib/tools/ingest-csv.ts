@@ -29,7 +29,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import type { Database } from "@mailwoman/sqlite/database-schema"
@@ -98,7 +98,7 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	let textCount = 0
 
 	for (const s of samples) {
-		if (s === null) {
+		if (!s) {
 			nullCount++
 
 			continue
@@ -262,7 +262,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		const values = fields.map((f, i) => {
 			const v = normalizeField(f)
 
-			if (v === null) return null
+			if (!v) return null
 			const col = columns[i]
 
 			if (col?.type === "INTEGER" && /^-?\d+$/.test(v)) return Number.parseInt(v, 10)

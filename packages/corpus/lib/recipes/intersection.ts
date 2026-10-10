@@ -34,7 +34,7 @@
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -395,7 +395,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 	}
 
 	for (const [tag, value] of Object.entries(components)) {
-		if (value == null) continue
+		if (!value) continue
 		const indices = span_tags.map((t, i) => (t === tag ? i : -1)).filter((i) => i >= 0)
 
 		if (indices.length !== 1) {

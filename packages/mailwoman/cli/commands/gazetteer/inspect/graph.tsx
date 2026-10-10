@@ -50,7 +50,7 @@ const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, optio
 
 		const localRepoDirectory = PathBuilder.from(args[0])
 
-		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
+		const roles: PlacetypeRole[] | null = parseRoles(options.roles)
 
 		await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
 

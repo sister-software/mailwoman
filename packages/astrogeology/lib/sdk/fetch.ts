@@ -12,7 +12,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -34,7 +35,9 @@ export interface FetchedSource {
 
 export interface DownloadPinnedOptions {
 	/**
-	 * The day a nightly archive is taken as, `yyyy-MM-DD`. @default today
+	 * The day a nightly archive is taken as, `yyyy-MM-DD`.
+	 *
+	 * @defaultValue today
 	 */
 	snapshotDate?: string
 	onProgress?: (message: string) => void
@@ -69,7 +72,7 @@ async function writeLock(lock: SourcesLock): Promise<void> {
  *
  * Product-pinned sources keep the original filename from the URL.
  */
-function sourceCachePath(source: PlanetarySource, snapshot: string | undefined) {
+function sourceCachePath(source: PlanetarySource, snapshot: string | null) {
 	const fileName = snapshot ? `${source.id}-${snapshot}${extname(source.url)}` : basename(source.url)
 
 	return dataRootPath("astrogeology", source.body, "source", fileName)
@@ -84,7 +87,7 @@ export async function downloadPinned(
 ): Promise<FetchedSource> {
 	const lock = await readLock()
 	const locked: LockedSource | undefined = lock[source.id]
-	const snapshot = source.pinned === "snapshot" ? (options.snapshotDate ?? locked?.snapshot ?? isoDate()) : undefined
+	const snapshot = source.pinned === "snapshot" ? (options.snapshotDate ?? locked?.snapshot ?? isoDate()) : null
 	const path = sourceCachePath(source, snapshot)
 
 	const onDisk = await pathExists(path)
@@ -142,7 +145,7 @@ export async function downloadPinned(
 	// An earlier read could overwrite pins another fetch recorded meanwhile.
 	await writeLock({
 		...(await readLock()),
-		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), ...(snapshot ? { snapshot } : {}) },
+		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), snapshot },
 	})
 
 	return { path, bytes, sha256, reused: false }

@@ -71,7 +71,7 @@ const HTTP_MULTIPLE_CHOICES = 300
 export interface CreateCensusGeocoderClientOptions {
 	/**
 	 * Maximum requests per minute.
-	 * Defaults to {@linkcode CENSUS_DEFAULT_REQUESTS_PER_MINUTE}.
+	 * @defaultValue {@linkcode CENSUS_DEFAULT_REQUESTS_PER_MINUTE}
 	 */
 	requestsPerMinute?: number
 	/**
@@ -81,12 +81,14 @@ export interface CreateCensusGeocoderClientOptions {
 	clock?: ClockLike
 	/**
 	 * Cache directory.
-	 * Defaults to `dataRootPath("geocode-oracle", "census")`.
+	 *
+	 * @defaultValue `dataRootPath("geocode-oracle", "census")`
 	 */
 	cacheDir?: PathBuilderLike
 	/**
 	 * Cache lifetime in milliseconds.
-	 * Defaults to one week.
+	 *
+	 * @defaultValue one week.
 	 */
 	cacheTTLMs?: number
 	/**

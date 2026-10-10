@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/registry",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "The geocode-first record-matching application: resolve messy contact/organization records into canonical, geocoded entities (block → score → cluster) and export them as GeoJSON for spatial analysis. The clinic-funding use case mailwoman was built for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -70,10 +70,10 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
-		"spliterator": "^8.1.0"
+		"spliterator": "^9.2.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.1",
+		"@types/node": "^26.6.4",
 		"path-ts": "^2.5.0",
 		"playwright": "^1.63.0"
 	}

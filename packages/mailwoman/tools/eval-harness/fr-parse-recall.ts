@@ -3,7 +3,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes } from "@mailwoman/core/decoder"
-import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -74,7 +75,7 @@ export interface FRParseRecallOptions {
 	/**
 	 * Model card that supplies the candidate's labels.
 	 *
-	 * It defaults to `packages/neural-weights-en-us/model-card.json`.
+	 * @defaultValue `packages/neural-weights-en-us/model-card.json`
 	 */
 	modelCard?: string
 
@@ -86,7 +87,8 @@ export interface FRParseRecallOptions {
 
 	/**
 	 * JSONL fixture of French bare-street rows.
-	 * It defaults to the bundled `fr-bare-street-40.jsonl`.
+	 *
+	 * @defaultValue the bundled `fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string
 
@@ -221,9 +223,9 @@ export async function frParseRecall(
 			labels: card.labels,
 			postcodeAnchorLookup: anchor,
 			gazetteerLexicon: lexicon,
-			suppressGazetteerNearPostcode: true,
+			suppressGazetteerNearPostcode: "on",
 			addressSystemConventions: "auto",
-			bridgePunctuationGaps: true,
+			bridgePunctuationGaps: "on",
 		})
 	})()
 
@@ -239,8 +241,8 @@ export async function frParseRecall(
 		const want = normalizeStreetForKeyLocale(r.street_raw, "fr")
 		const bareQ = `${r.number} ${r.street_raw}, ${r.locality_norm}`
 		const anchQ = `${r.number} ${r.street_raw}, ${r.postcode} ${r.locality_norm}`
-		const bare = streetKeyOf(await classifier.parse(bareQ, { postcodeRepair: true, normalizeCase: true }))
-		const anch = streetKeyOf(await classifier.parse(anchQ, { postcodeRepair: true, normalizeCase: true }))
+		const bare = streetKeyOf(await classifier.parse(bareQ, { postcodeRepair: true, caseNormalization: "title-case" }))
+		const anch = streetKeyOf(await classifier.parse(anchQ, { postcodeRepair: true, caseNormalization: "title-case" }))
 
 		if (bare === want) {
 			bareOk++
@@ -299,7 +301,7 @@ export async function frParseRecall(
 		pass: true,
 	}
 
-	if (args.floor !== undefined) {
+	if (args.floor) {
 		const floor = Number(args.floor)
 
 		if (bareRate < floor) {

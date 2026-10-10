@@ -229,7 +229,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 		for await (const cells of CSVSpliterator.fromAsync<string[]>(input, {
 			header: false,
 		})) {
-			if (header === null) {
+			if (!header) {
 				header = cells.map((h) => h.toLowerCase())
 				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				const ix = (name: string): number => header!.indexOf(name)
@@ -258,7 +258,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				continue
 			}
 
-			if (cols === null) continue
+			if (!cols) continue
 
 			// Raw CNIG splits the road type from the street name, so the two are joined here.
 			const street =
@@ -271,7 +271,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			if (!street) continue
 
 			let locality: string | null
-			let dependent_locality: string | undefined
+			let dependent_locality: string | null = null
 
 			if (part.districtAsLocality) {
 				const rawDistrict = get(cells, cols.district)
@@ -288,7 +288,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 					dependent_locality =
 						cleanedCity && cleanedCity.localeCompare(locality, undefined, { sensitivity: "base" }) !== 0
 							? cleanedCity
-							: undefined
+							: null
 				} else {
 					locality = cleanCityNoise(rawCity)
 				}
@@ -367,15 +367,15 @@ export function applyCountryAppend(
  * Applies the per-run `districtAsLocality` override to a part.
  * An unset override returns the part unchanged.
  */
-export function applyDistrictAsLocalityOverride(part: LocalePart, override: boolean | undefined): LocalePart {
-	return override === undefined ? part : { ...part, districtAsLocality: override }
+export function applyDistrictAsLocalityOverride(part: LocalePart, override: boolean | null): LocalePart {
+	return override === null ? part : { ...part, districtAsLocality: override }
 }
 
 /**
  * Returns the country's `pedaniaParts` when the override is true and that property exists.
  * Returns the default parts in all other cases.
  */
-export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | undefined): LocalePart[] {
+export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | null): LocalePart[] {
 	return override === true && countrySource.pedaniaParts ? countrySource.pedaniaParts : countrySource.parts
 }
 
@@ -431,7 +431,7 @@ export const localeRecipe: CorpusRecipe = {
 		const count = opts.count ?? 4000
 		// When unset, each part keeps its own setting.
 		// True also selects the ES pedanía parts.
-		const districtAsLocalityOverride = opts.districtAsLocality
+		const districtAsLocalityOverride = opts.districtAsLocality ?? null
 		const parts = resolveLocaleParts(countrySource, districtAsLocalityOverride)
 
 		const pool: LocaleBaseTuple[] = []
@@ -461,10 +461,14 @@ export const localeRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const order = random() < intlFraction ? "international" : "native"
 
-			// These draws happen only for ES and NL, so other countries' seeded output is unaffected.
+			// These draws happen only for ES and NL, so other countries' seeded output
+			// is unaffected. country-branch: the ES house-number join and the NL glued
+			// postcode are measured surface shares for those two sources.
+			// A per-country surface table in the codex address layouts would replace both branches.
 			const nativeHouseJoin =
 				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : undefined
 
+			// country-branch: see the ES branch above.
 			const postcodeShape =
 				country === "NL"
 					? random() < NL_GLUED_POSTCODE_FRACTION

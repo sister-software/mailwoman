@@ -1,5 +1,5 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
+import { EMPTY_PLACE_FIELDS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier } from "#geocode"
@@ -17,6 +17,8 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 
 			return tree
 		}),
+		artifactCoverage: null,
+		capabilityGaps: null,
 	}
 
 	return { resolver, seen }
@@ -25,13 +27,13 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 const emptyTree: AddressTree = { raw: "x", roots: [] }
 
 describe("GeocodeAddress — coarse-placer soft prior", () => {
-	test("placeCountry: false ⇒ no anchorPosterior (the disable / byte-stable path)", async () => {
+	test("placeCountry: none ⇒ no anchorPosterior (the disable / byte-stable path)", async () => {
 		const { resolver, seen } = captureResolver()
 
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			placeCountry: false,
+			placeCountry: "none",
 		})
 
 		expect(seen[0]?.anchorPosterior).toBeUndefined()
@@ -79,11 +81,14 @@ describe("GeocodeAddress — coarse-placer soft prior", () => {
 		await geocodeAddress("Hauptstraße 5, Berlin", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
-			defaultCountry: "DE",
+			defaultCountry: { country: "DE", source: "caller" },
 			placeCountry,
 		})
 
-		expect(seen[0]).toMatchObject({ defaultCountry: "DE", anchorPosterior: { DE: 0.97 } })
+		expect(seen[0]).toMatchObject({
+			defaultCountry: { country: "DE", source: "caller" },
+			anchorPosterior: { DE: 0.97 },
+		})
 	})
 
 	test("abstain (country: null) ⇒ no posterior injected", async () => {
@@ -118,7 +123,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 
 	const placerFR = () => ({ country: "FR", confidence: 0.97 })
 
-	function guardResolver(dominant: { country: string; exactMatch?: boolean } | undefined): {
+	function guardResolver(dominant: { country: string; exactMatch?: boolean } | null): {
 		resolver: Resolver
 		seen: ResolveOpts[]
 	} {
@@ -128,6 +133,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 			dominant
 				? [
 						{
+							...EMPTY_PLACE_FIELDS,
 							id: 1,
 							name: "x",
 							placetype: "locality",
@@ -135,7 +141,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 							lat: 45,
 							lon: -73,
 							score: 9,
-							...(dominant.exactMatch === undefined ? {} : { exactMatch: dominant.exactMatch }),
+							exactMatch: dominant.exactMatch ?? null,
 						},
 					]
 				: []
@@ -182,7 +188,7 @@ describe("GeocodeAddress — the dominant-bearer condition on hardCountry", () =
 	})
 
 	test("an unknown locality is not disagreement — hardens as before", async () => {
-		const { resolver, seen } = guardResolver(undefined)
+		const { resolver, seen } = guardResolver(null)
 
 		await geocodeAddress("1001 Rue X, Zzyzzx", {
 			classifier: fakeClassifier(treeWithLocality("Zzyzzx")),

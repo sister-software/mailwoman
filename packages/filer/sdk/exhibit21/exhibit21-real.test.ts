@@ -8,10 +8,9 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { htmlToLayoutText } from "@mailwoman/core/html/text"
+import { htmlToText } from "@mailwoman/core/html/text"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { describe, expect, it } from "vitest"
 
 import { parseExhibit21 } from "#sdk/exhibit21"
@@ -35,14 +34,6 @@ const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 
 async function fixture(name: string): Promise<string> {
 	return readLocalTextFile(FIXTURE_DIRECTORY(name))
-}
-
-/**
- * The document after the parser's preprocessing.
- * The substring invariant is measured against this text.
- */
-function normalized(html: string): string {
-	return normalizeWhitespace(htmlToLayoutText(html))
 }
 
 /**
@@ -141,7 +132,8 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	})
 
 	it.each(FIXTURE_NAMES)("%s keeps the substring invariant — nothing assembled, nothing truncated", async (name) => {
-		const haystack = normalized(await fixture(name))
+		// The substring invariant is measured against the document after the parser's preprocessing.
+		const haystack = htmlToText(await fixture(name))
 
 		for (const subsidiary of parseExhibit21(await fixture(name)).subsidiaries) {
 			expect(haystack, `${name}: name ${stringifyJSON(subsidiary.name)}`).toContain(subsidiary.name)

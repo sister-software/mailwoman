@@ -33,38 +33,40 @@ export type {
 	AuthoritativeResponse,
 } from "#resolver/authoritative-provider"
 
-export {
-	createFixtureAuthoritativeProvider,
-	fixtureExactMatch,
-	type FixtureAuthoritativeProviderOptions,
-	type FixtureAuthoritativeRule,
-} from "#resolver/fixture-authoritative-provider"
-
 export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
 
-export { hardCountrySafelistFromCoverage } from "#resolver/types"
+export { EMPTY_PLACE_FIELDS, RESOLVE_SWITCH_DEFAULTS, resolveSwitches } from "#resolver/types"
+export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
+
+export type {
+	Ancestor,
+	BackendCapabilityGap,
+	CoincidentLocality,
+	ResolveCandidateTrace,
+	ResolveNodeTrace,
+	ResolveOpts,
+	ResolveSwitches,
+	DefaultCountry,
+	DefaultCountrySource,
+	ResolvedPlace,
+	Resolver,
+	ResolverBackend,
+	WeakResolutionReading,
+} from "#resolver/types"
 
 export type {
 	AddressPointHit,
 	AddressPointLookup,
-	Ancestor,
-	BackendCapabilityGap,
-	CoincidentLocality,
-	CountryBBoxFact,
-	CountryCoverageFact,
-	GazetteerArtifactCoverage,
 	InterpolatedPointHit,
 	InterpolationLookup,
+	POIDistanceHit,
+	PostcodePlace,
 	PostcodePrefixAncestor,
 	PostcodePrefixIndexLike,
 	PostcodePrefixNode,
-	ResolveCandidateTrace,
-	ResolveNodeTrace,
-	ResolveOpts,
-	ResolvedPlace,
-	Resolver,
-	ResolverBackend,
 	StreetCentroidHit,
 	StreetCentroidLookup,
-	WeakResolutionReading,
-} from "#resolver/types"
+	WOFAncestor,
+} from "#resolver/lookup-types"
+
+export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "#resolver/coverage-facts"

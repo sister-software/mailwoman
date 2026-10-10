@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import * as ort from "onnxruntime-web/webgpu"
+import * as ort from "onnxruntime-web/wasm"
 
 import type { NeuralRunner } from "#classifier"
+import { INPUTS_EMBEDS, type EmbeddingTable } from "#embedding/rows"
 import {
 	decodeInferOutput,
 	packCharFeed,
@@ -20,16 +21,9 @@ import {
  */
 export interface WebONNXRunnerOpts {
 	/**
-	 * Whether to try the WebGPU provider before WASM.
-	 * The default is `true`.
-	 *
-	 * Turn it off where WebGPU is known to fail, because the failed attempt adds latency.
-	 */
-	useWebGPU?: boolean
-
-	/**
 	 * The fixed input sequence length of the model.
-	 * The default is {@link DEFAULT_FIXED_SEQ_LEN}.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_FIXED_SEQ_LEN}
 	 */
 	fixedSeqLen?: number
 
@@ -39,11 +33,26 @@ export interface WebONNXRunnerOpts {
 	 * When unset, onnxruntime-web uses its default location.
 	 */
 	wasmPathsRoot?: string
+
+	/**
+	 * The token-embedding table of a split release, whose `encoder.onnx` declares `inputs_embeds`.
+	 * An unsplit `model.onnx` reads `input_ids` and needs none.
+	 */
+	embeddings?: EmbeddingTable
+
+	/**
+	 * The onnxruntime-web `.wasm` binary, fetched by the caller.
+	 *
+	 * Without it, onnxruntime-web requests the binary when the session is created.
+	 * A host that downloads it beside the model takes it off the critical path.
+	 *
+	 * When the promise resolves `null` or rejects, onnxruntime-web fetches it.
+	 */
+	wasmBinary?: Promise<Uint8Array | null>
 }
 
 /**
  * The default length to which the web runner pads every token feed.
- * WebGPU needs static input shapes.
  */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
@@ -60,7 +69,7 @@ export async function fetchBytes(url: string, fetchImpl: typeof fetch = fetch): 
 	return new Uint8Array(await res.arrayBuffer())
 }
 
-function configureWASMPaths(root: string | undefined): void {
+function configureWASMPaths(root: string | null): void {
 	if (!root) return
 
 	ort.env.wasm.wasmPaths = root
@@ -74,15 +83,14 @@ function outputTensor(tensor: ort.Tensor): OutputTensor {
  * The execution backend of the web runner's session and the size of the loaded model in bytes.
  */
 export interface WebONNXRunnerDiagnostics {
-	backend: "webgpu" | "wasm"
+	backend: "wasm"
 	modelBytes: number
 }
 
 /**
- * Runs the model in browsers with `onnxruntime-web`.
+ * Runs the model in browsers with `onnxruntime-web`'s WASM backend.
  *
- * The session is created on the first inference, on WebGPU when allowed and available
- * and on WASM otherwise. {@link WebONNXRunner.diagnostics} stays `null` until then.
+ * The session is created on the first inference. {@link WebONNXRunner.diagnostics} stays `null` until then.
  */
 export class WebONNXRunner implements NeuralRunner {
 	public readonly fixedSeqLen: number
@@ -94,12 +102,14 @@ export class WebONNXRunner implements NeuralRunner {
 	#modelBytes: Uint8Array | null
 
 	readonly #modelByteLength: number
-	private readonly opts: WebONNXRunnerOpts
+	readonly #embeddings: EmbeddingTable | null
+	readonly #wasmBinary: Promise<Uint8Array | null> | null
 
 	private constructor(modelBytes: Uint8Array, opts: WebONNXRunnerOpts) {
 		this.#modelBytes = modelBytes
 		this.#modelByteLength = modelBytes.byteLength
-		this.opts = opts
+		this.#embeddings = opts.embeddings ?? null
+		this.#wasmBinary = opts.wasmBinary ?? null
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
 
@@ -107,7 +117,7 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Creates a runner from model bytes that have already been fetched.
 	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
-		configureWASMPaths(opts.wasmPathsRoot)
+		configureWASMPaths(opts.wasmPathsRoot ?? null)
 		const runner = new WebONNXRunner(modelBytes, opts)
 
 		return runner
@@ -128,11 +138,11 @@ export class WebONNXRunner implements NeuralRunner {
 
 			// A release() during the load increments the generation and frees this session,
 			// so a stale load must not store it.
-			const adopt = (session: ort.InferenceSession, backend: WebONNXRunnerDiagnostics["backend"]) => {
+			const adopt = (session: ort.InferenceSession) => {
 				if (generation !== this.#generation) return session
 
 				this.#session = session
-				this.diagnostics = { backend, modelBytes: this.#modelByteLength }
+				this.diagnostics = { backend: "wasm", modelBytes: this.#modelByteLength }
 				this.#modelBytes = null
 
 				return session
@@ -143,17 +153,17 @@ export class WebONNXRunner implements NeuralRunner {
 
 				if (!modelBytes) throw new Error("the ONNX runner has been released")
 
-				const wantWebGPU = this.opts.useWebGPU !== false
-
-				if (wantWebGPU) {
+				// onnxruntime-web reads the binary once, when its first session initializes the runtime.
+				if (this.#wasmBinary && !ort.env.wasm.wasmBinary) {
 					try {
-						const session = await ort.InferenceSession.create(modelBytes, {
-							executionProviders: ["webgpu", "wasm"],
-							graphOptimizationLevel: "all",
-						})
+						const wasmBinary = await this.#wasmBinary
 
-						return adopt(session, "webgpu")
-					} catch {}
+						if (wasmBinary) {
+							ort.env.wasm.wasmBinary = wasmBinary
+						}
+					} catch {
+						// onnxruntime-web fetches the binary from its own location.
+					}
 				}
 
 				const session = await ort.InferenceSession.create(modelBytes, {
@@ -161,7 +171,7 @@ export class WebONNXRunner implements NeuralRunner {
 					graphOptimizationLevel: "all",
 				})
 
-				return adopt(session, "wasm")
+				return adopt(session)
 			})()
 		}
 
@@ -169,7 +179,7 @@ export class WebONNXRunner implements NeuralRunner {
 	}
 
 	/**
-	 * Frees the session's native memory in the WASM heap or on the GPU.
+	 * Frees the session's native memory in the WASM heap.
 	 * Garbage collection never reclaims that memory.
 	 *
 	 * It may be called more than once.
@@ -235,8 +245,19 @@ export class WebONNXRunner implements NeuralRunner {
 		const { inputIDs, attentionMask, seqLen } = packTokenFeed(tokenIDs, this.fixedSeqLen)
 
 		const feeds: Record<string, ort.Tensor> = {
-			input_ids: new ort.Tensor("int64", inputIDs.data, inputIDs.dims),
 			attention_mask: new ort.Tensor("int64", attentionMask.data, attentionMask.dims),
+		}
+
+		if (session.inputNames.includes(INPUTS_EMBEDS)) {
+			if (!this.#embeddings) {
+				throw new Error(`this graph declares ${INPUTS_EMBEDS}; pass the release's embedding table as \`embeddings\``)
+			}
+
+			const embeds = await this.#embeddings.embed(tokenIDs, this.fixedSeqLen)
+
+			feeds[INPUTS_EMBEDS] = new ort.Tensor("float32", embeds.data, embeds.dims)
+		} else {
+			feeds["input_ids"] = new ort.Tensor("int64", inputIDs.data, inputIDs.dims)
 		}
 
 		const packed = packSoftChannelFeeds(

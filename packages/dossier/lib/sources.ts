@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A source record is the document a claim cites. It carries the publisher, a title, and the three time
+ *   A source record is the document a claim cites. It records the publisher, a title, and the three time
  *   concepts, so a dossier can say when a fact was observed, when the record became available, and when
  *   this application read it.
  */
@@ -15,7 +15,14 @@ export interface SourceRecord extends SourceTime {
 	id: SourceRecordID
 	publisher: string
 	title: string
-	url?: string
+	url: string | null
+}
+
+/**
+ * Returns each source record identifier in `sources` once, in the order of its first appearance.
+ */
+export function distinctSources(sources: Iterable<SourceRecordID>): SourceRecordID[] {
+	return [...new Set(sources)]
 }
 
 export function sourceIndex(records: readonly SourceRecord[]): ReadonlyMap<SourceRecordID, SourceRecord> {

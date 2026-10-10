@@ -11,7 +11,7 @@
  *   so it requires a compiled tree.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { build, type Metafile, type Plugin } from "esbuild"
 import { resolvePath } from "path-ts"
 
@@ -202,7 +202,7 @@ function edgePolicy(row: BundleRow): Plugin {
 					return { path: args.path, external: true }
 				}
 
-				return undefined
+				return null
 			})
 		},
 	}
@@ -212,8 +212,8 @@ interface BuildFailure {
 	errors?: Array<{ text: string; location?: { file: string } | null }>
 }
 
-function diagnostic(message: string, file?: string): Diagnostic {
-	return { severity: DiagnosticSeverity.Error, message, file }
+function diagnostic(message: string, file: string | null = null): Diagnostic {
+	return { severity: DiagnosticSeverity.Error, message, file, line: null, details: null }
 }
 
 async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | Diagnostic[]> {

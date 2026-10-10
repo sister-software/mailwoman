@@ -6,9 +6,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { htmlToLayoutText } from "@mailwoman/core/html/text"
+import { htmlToText } from "@mailwoman/core/html/text"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { describe, expect, it } from "vitest"
 
 import { fetchExhibit21, parseExhibit21, type SECDocumentClient } from "#sdk/exhibit21"
@@ -134,7 +133,10 @@ describe("parseExhibit21 — clean HTML table", () => {
 	it("a data row with no jurisdiction column is a name-only subsidiary, not unparseable", () => {
 		const html = "<table><tr><td>Standalone Sub LLC</td></tr></table>"
 
-		expect(parseExhibit21(html)).toEqual({ subsidiaries: [{ name: "Standalone Sub LLC" }], unparseable: 0 })
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Standalone Sub LLC", jurisdiction: null }],
+			unparseable: 0,
+		})
 	})
 
 	it("an empty <tr></tr> is skipped as formatting cruft — not a subsidiary, not unparseable", () => {
@@ -213,7 +215,10 @@ describe("parseExhibit21 — nested-list variant", () => {
 	it("a list item with no parenthetical jurisdiction is name-only, not unparseable", () => {
 		const html = "<ul><li>Standalone Sub LLC</li></ul>"
 
-		expect(parseExhibit21(html)).toEqual({ subsidiaries: [{ name: "Standalone Sub LLC" }], unparseable: 0 })
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Standalone Sub LLC", jurisdiction: null }],
+			unparseable: 0,
+		})
 	})
 })
 
@@ -246,7 +251,7 @@ describe("parseExhibit21 — plain-text variant", () => {
 		const result = parseExhibit21(text)
 
 		expect(result.unparseable).toBe(0)
-		expect(result.subsidiaries).toEqual([{ name: "Acme Fiber, LLC, Delaware" }])
+		expect(result.subsidiaries).toEqual([{ name: "Acme Fiber, LLC, Delaware", jurisdiction: null }])
 	})
 
 	it("blank lines are skipped, never counted as unparseable", () => {
@@ -275,15 +280,6 @@ describe("fetchExhibit21", () => {
 		expect(result).toEqual({ subsidiaries: [{ name: "Fetched Sub LLC", jurisdiction: "Delaware" }], unparseable: 0 })
 	})
 })
-
-/**
- * A name is only emitted if it appears in the input as a contiguous string,
- * checked here against the same strip/decode/collapse normalization every parse
- * strategy applies rather than against the raw source.
- */
-function normalizedDocument(html: string): string {
-	return normalizeWhitespace(htmlToLayoutText(html))
-}
 
 /**
  * Every case the fabrication audit found, kept so the substring-invariant test runs across them.
@@ -323,12 +319,14 @@ const NAME_ONLY_PROBES: Record<string, string> = {
 	"name-only plain-text line": "Standalone Sub LLC\n",
 }
 
+// Each test checks the text after the strip, decode and collapse steps that every
+// parse strategy applies, rather than the raw source.
 describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a name is only emitted if the input contains it", () => {
 	it.each(FIXTURE_FILES)(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		async (name) => {
 			const html = await fixture(name)
-			const normalized = normalizedDocument(html)
+			const normalized = htmlToText(html)
 			const result = parseExhibit21(html)
 
 			for (const subsidiary of result.subsidiaries) {
@@ -344,7 +342,7 @@ describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a na
 	it.each(Object.entries(FABRICATION_AUDIT_CASES))(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		(_label, html) => {
-			const normalized = normalizedDocument(html)
+			const normalized = htmlToText(html)
 			const result = parseExhibit21(html)
 
 			for (const subsidiary of result.subsidiaries) {
@@ -360,7 +358,7 @@ describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a na
 	it.each(Object.entries(NAME_ONLY_PROBES))(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		(_label, html) => {
-			const normalized = normalizedDocument(html)
+			const normalized = htmlToText(html)
 			const result = parseExhibit21(html)
 
 			for (const subsidiary of result.subsidiaries) {

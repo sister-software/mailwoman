@@ -25,7 +25,7 @@ export function readPath(value: unknown, path: string): { present: boolean; valu
 	let current: unknown = value
 
 	for (const segment of path.split(".")) {
-		if (current === null || current === undefined || typeof current !== "object" || Array.isArray(current)) {
+		if (current === null || !current || typeof current !== "object" || Array.isArray(current)) {
 			return { present: false, value: undefined }
 		}
 
@@ -49,11 +49,7 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
 	for (const row of rows) {
 		const { present, value } = readPath(row, path)
 
-		const key = !present
-			? ABSENT_KEY
-			: typeof value === "object" && value !== null
-				? stringifyJSON(value)
-				: String(value)
+		const key = present ? (typeof value === "object" && value ? stringifyJSON(value) : String(value)) : ABSENT_KEY
 
 		counts[key] = (counts[key] ?? 0) + 1
 	}

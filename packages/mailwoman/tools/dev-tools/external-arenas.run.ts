@@ -10,6 +10,7 @@
 
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseAddressSystemConventions } from "@mailwoman/neural/classifier/options"
 
 import { externalArenas } from "#tools/eval-harness/external-arenas"
 
@@ -35,8 +36,8 @@ async function main(): Promise<void> {
 		modelCard: cli["model-card"],
 		gazetteerLexicon: cli["gazetteer-lexicon"],
 		anchorLookup: cli["anchor-lookup"],
-		conventions: cli.conventions,
-		bridgeGaps: cli["bridge-gaps"],
+		conventions: cli.conventions ? parseAddressSystemConventions(cli.conventions) : "off",
+		bridgePunctuationGaps: cli["bridge-gaps"] ? "on" : "off",
 	})
 }
 

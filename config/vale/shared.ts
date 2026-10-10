@@ -5,7 +5,7 @@
  * @file Shared utilities for Vale.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
@@ -65,7 +65,7 @@ const ValeSurfaceConfigPath = {
 	"docs-vocab": ".vale-vocab.ini",
 } as const satisfies Record<Surface, string>
 
-export function assertSurfaceArg(input: string | undefined): asserts input is Surface {
+export function assertSurfaceArg(input: string | null): asserts input is Surface {
 	if (!input || !Object.hasOwn(ValeSurfaceConfigPath, input)) {
 		throw new Error(
 			`Usage: node config/vale/lint-prose.ts <${Object.keys(ValeSurfaceConfigPath).join("|")}> [path ...]`

@@ -19,9 +19,9 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	/**
 	 * The in-process ingest, run under the first handle.
 	 *
-	 * Return `undefined` to defer to {@link batched}, keeping any writes made before deferring.
+	 * Return `null` to defer to {@link batched}, keeping any writes made before deferring.
 	 */
-	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | undefined>
+	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | null>
 	/**
 	 * The bounded child-process ingest, run while the parent holds no handle: each child opens the
 	 * temp file and appends one chunk at a time, so there is exactly one writer at every instant.
@@ -44,7 +44,7 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 ): Promise<Result> {
 	const tmpPath = `${options.out}.tmp-${process.pid}`
 
-	let streamed: Streamed | undefined
+	let streamed: Streamed | null
 
 	{
 		using kdb = new DatabaseClient<DB>(tmpPath)
@@ -64,7 +64,7 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 		}
 	}
 
-	if (streamed === undefined) {
+	if (streamed == null) {
 		if (!options.batched) {
 			throw new Error("buildSealedArtifact: the in-process ingest deferred and no batched ingest was supplied")
 		}
@@ -84,7 +84,7 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 		kdb.exec("PRAGMA journal_mode = OFF")
 		kdb.exec("PRAGMA synchronous = OFF")
 
-		const result = await options.finish(kdb, streamed)
+		const result = await options.finish(kdb, streamed as Streamed)
 
 		kdb.exec("VACUUM")
 

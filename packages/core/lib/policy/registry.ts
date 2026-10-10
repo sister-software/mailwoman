@@ -17,7 +17,7 @@ import type { ClassificationProposal } from "#types"
 
 const GLOBAL_LOCALE_KEY = "*"
 
-function policyKey(component: ComponentTag, locale: string | undefined): string {
+function policyKey(component: ComponentTag, locale: string | null | undefined): string {
 	return `${component}::${locale ?? GLOBAL_LOCALE_KEY}`
 }
 
@@ -31,9 +31,11 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
 	/**
-	 * Build a registry pre-loaded with `mode` for every component (default `neural_only`).
+	 * Build a registry pre-loaded with `mode` for every component.
 	 *
 	 * The input-shape router passes a shape-derived default so the whole table starts from the routed prior.
+	 *
+	 * @param mode ["neural_only"] The policy every component starts with.
 	 */
 	static withDefaults(mode: PolicyMode = "neural_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()
@@ -75,7 +77,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 			if (localized) return localized
 		}
 
-		const global = this.#entries.get(policyKey(component, undefined))
+		const global = this.#entries.get(policyKey(component, null))
 
 		if (global) return global
 

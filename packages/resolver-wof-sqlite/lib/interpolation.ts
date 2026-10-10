@@ -34,11 +34,11 @@ export interface InterpolatedHit {
 	 * True when the matched segment side's parity agrees with the house number
 	 * (or the side is `mixed`); false is an opposite-side fallback.
 	 */
-	parityMatched?: boolean
+	parityMatched: boolean | null
 	/**
 	 * `both` sits between two known neighbor numbers; `single` is extrapolated from one side only.
 	 */
-	bracket?: "both" | "single"
+	bracket: "both" | "single" | null
 	/**
 	 * Uncertainty radius in meters: half the matched segment length for `tiger_range`, half the
 	 * bracket span for `address_point`/`both`, or a larger extrapolation penalty for `single`.
@@ -139,7 +139,7 @@ export class StreetInterpolator<
 		| PreparedAll<[postcode: string, street: RouteKey, minNumber: number, maxNumber: number], SegmentRow>
 		| undefined
 	readonly #byStreet: PreparedAll<[street: RouteKey, minNumber: number, maxNumber: number], SegmentRow> | undefined
-	readonly #radiusCalibration: number | undefined
+	readonly #radiusCalibration: number | null = null
 
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB> }) {
 		using resources = new DisposableStack()
@@ -171,7 +171,7 @@ export class StreetInterpolator<
 
 		// The conformal radius multiplier ships in the extract's `interp_calibration` table
 		// and is read once at open time.
-		// Extracts without that table leave it undefined.
+		// Extracts without that table leave it null.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
 				| { radius_multiplier: unknown }
@@ -189,9 +189,9 @@ export class StreetInterpolator<
 
 	/**
 	 * The artifact's own conformal radius multiplier, read from the extract at construction;
-	 * `undefined` when the extract predates the table or contains no valid row.
+	 * `null` when the extract predates the table or contains no valid row.
 	 */
-	get radiusCalibration(): number | undefined {
+	get radiusCalibration(): number | null {
 		return this.#radiusCalibration
 	}
 
@@ -267,6 +267,7 @@ export class StreetInterpolator<
 			interpolated: true,
 			method: "tiger_range",
 			parityMatched,
+			bracket: null,
 			uncertaintyM: Math.round((lengthKm * 1000) / 2),
 			source: best.source,
 			release: best.release,

@@ -25,7 +25,7 @@
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -45,7 +45,7 @@ export interface FetchLocaldataKROptions extends BaseFetchOptions {
 	/**
 	 * Category slugs to fetch (the path segment of `/file/<slug>/info`).
 	 *
-	 * Defaults to every category the portal lists.
+	 * @defaultValue every category the portal lists.
 	 */
 	categories?: string[]
 }

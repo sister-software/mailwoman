@@ -102,19 +102,21 @@ export interface ReverseGeocodeOpts {
 	/**
 	 * Restrict the hierarchy to these placetypes (both the bbox candidates and the descent tiers).
 	 *
-	 * Default: every admin placetype in the gazetteer.
 	 * E.g.
 	 *
 	 * `["region", "county", "locality"]` to skip the neighborhood grain.
+	 *
+	 * @defaultValue every admin placetype in the gazetteer.
 	 */
 	placetypes?: WOFPlacetype[]
 	/**
 	 * Cap on the bbox candidate fetch.
 	 *
-	 * The default is 128.
 	 * Current measurements show that this covers a dense metro.
 	 *
 	 * The most bbox-overlapping point we have measured is a few dozen neighborhoods plus the admin chain.
+	 *
+	 * @defaultValue `128`
 	 */
 	maxCandidates?: number
 	/**
@@ -123,7 +125,8 @@ export interface ReverseGeocodeOpts {
 	 * This keeps a sparse gazetteer from "refining" to a far-away sibling.
 	 *
 	 * Polygon-confirmed steps ignore it (containment is exact regardless of centroid distance).
-	 * Default 25 km.
+	 *
+	 * @defaultValue `25 km`
 	 */
 	maxApproximateKm?: number
 }
@@ -159,23 +162,35 @@ interface CandidateRow {
 	lon: number
 }
 
-function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidate {
-	const c: PlaceCandidate = {
+const ABSENT_CANDIDATE_FIELDS = {
+	parent_id: null,
+	distanceKm: null,
+	exactMatch: null,
+	prominence: null,
+	population: null,
+	referential: null,
+	encyclopedic: null,
+	importance: null,
+	bbox: null,
+	mismatch: null,
+	containedByQualifier: null,
+	regionScopeMiss: null,
+	variantAliasExempted: null,
+} as const satisfies Partial<PlaceCandidate>
+
+function toPlaceCandidate(row: CandidateRow, distanceKm: number | null = null): PlaceCandidate {
+	return {
+		...ABSENT_CANDIDATE_FIELDS,
 		id: row.id,
 		name: row.name,
 		placetype: row.placetype as WOFPlacetype,
 		country: row.country ?? "",
 		lat: row.lat,
 		lon: row.lon,
-		parent_id: row.parent_id ?? undefined,
+		parent_id: row.parent_id ?? null,
 		score: 0,
+		distanceKm,
 	}
-
-	if (distanceKm !== undefined) {
-		c.distanceKm = distanceKm
-	}
-
-	return c
 }
 
 export class WOFReverseGeocoder implements Disposable {
@@ -252,7 +267,7 @@ export class WOFReverseGeocoder implements Disposable {
 	 * The async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
 	 *
 	 * Exposed directly for callers that can't await mid-call
-	 * (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`, whose `POIIntentOutcome`
+	 * (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`, whose `POIQueryResult`
 	 * return type is synchronous by interface. See `poi-intent.ts`'s `deps.execute`).
 	 */
 	reverseGeocodeSync(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): ReverseGeocodeResult {
@@ -309,7 +324,7 @@ export class WOFReverseGeocoder implements Disposable {
 		// Approximate descent into finer tiers than the winner.
 		let current = winner
 		let currentConfirmed = winnerConfirmed
-		let currentDistanceKm = currentConfirmed ? undefined : haversineKm(lat, lon, current.lat, current.lon)
+		let currentDistanceKm = currentConfirmed ? null : haversineKm(lat, lon, current.lat, current.lon)
 
 		for (const tier of DESCENT_TIERS) {
 			if (placetypeDepth(tier) <= placetypeDepth(current.placetype)) continue
@@ -318,7 +333,7 @@ export class WOFReverseGeocoder implements Disposable {
 			const kids = this.#descendants(current.id, tier, lat, lon, maxApproximateKm)
 			let next: CandidateRow | null = null
 			let nextConfirmed = false
-			let nextKm: number | undefined
+			let nextKm: number | null = null
 			let bestKm = Infinity
 
 			for (const k of kids) {
@@ -327,7 +342,7 @@ export class WOFReverseGeocoder implements Disposable {
 				if (contains === true) {
 					next = k
 					nextConfirmed = true
-					nextKm = undefined
+					nextKm = null
 
 					break
 				}
@@ -359,7 +374,13 @@ export class WOFReverseGeocoder implements Disposable {
 
 		for (const a of ancestorLineage(this.#admin, current.id)) {
 			if (!byID.has(a.id)) {
-				byID.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
+				byID.set(a.id, {
+					...ABSENT_CANDIDATE_FIELDS,
+					...a,
+					placetype: a.placetype as WOFPlacetype,
+					country: a.country ?? "",
+					score: 0,
+				})
 			}
 		}
 
@@ -368,7 +389,13 @@ export class WOFReverseGeocoder implements Disposable {
 
 			for (const a of ancestorLineage(this.#admin, winner.id)) {
 				if (!byID.has(a.id)) {
-					byID.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
+					byID.set(a.id, {
+						...ABSENT_CANDIDATE_FIELDS,
+						...a,
+						placetype: a.placetype as WOFPlacetype,
+						country: a.country ?? "",
+						score: 0,
+					})
 				}
 			}
 		}

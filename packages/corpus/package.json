@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/corpus",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -48,11 +48,6 @@
 			"node": "./lib/utils.ts",
 			"default": "./out/utils.js"
 		},
-		"#tools": {
-			"types": "./out/tools.d.ts",
-			"node": "./lib/tools.ts",
-			"default": "./out/tools.js"
-		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -83,6 +78,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
@@ -90,16 +86,16 @@
 		"@mailwoman/tiger": "workspace:*",
 		"apache-arrow": "^21.2.0",
 		"fastest-levenshtein": "^1.0.16",
-		"parquet-wasm": "0.7.2",
+		"parquet-wasm": "0.9.0",
 		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^8.1.0",
-		"zod": "^4.5.4"
+		"spliterator": "^9.2.0",
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.1",
+		"@types/node": "^26.6.4",
 		"adm-zip": "^0.6.1",
-		"kysely": "^0.29.5",
+		"kysely": "^0.29.6",
 		"write-excel-file": "^4.1.1"
 	}
 }

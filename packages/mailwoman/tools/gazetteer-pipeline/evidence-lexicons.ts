@@ -9,7 +9,8 @@ import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPathBuilder, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -185,7 +186,7 @@ export async function loadPersonNameSurfaces(): Promise<Set<string>> {
  *
  * It never needs invalidating because the inputs are static files.
  */
-let personNameSurfacesMemo: Set<string> | undefined
+let personNameSurfacesMemo: Set<string> | null = null
 
 async function scanPersonNameSurfaces(): Promise<Set<string>> {
 	const dictionariesDir = resourceDictionaryPathBuilder("libpostal")
@@ -242,23 +243,26 @@ export function clearsProminenceFloor(
 export interface BuildLocalitySurfaceLexiconOpts {
 	/**
 	 * The countries whose locality names become evidence.
-	 * Defaults to US and FR.
+	 *
+	 * @defaultValue US and FR.
 	 */
 	countries?: string[]
 	/**
 	 * The placetypes to read.
-	 * Defaults to `locality`, `localadmin`, and `neighbourhood`.
+	 *
+	 * @defaultValue `locality`, `localadmin`, and `neighbourhood`.
 	 */
 	placetypes?: string[]
 	/**
 	 * The WOF admin database.
-	 * Defaults to `admin-global-priority.db` under the data root.
+	 *
+	 * @defaultValue `admin-global-priority.db` under the data root.
 	 */
 	dbPath?: PathBuilderLike
 	/**
 	 * The output path.
 	 *
-	 * Defaults to `gazetteer/locality-surface-lexicon-v6.json` under the data root.
+	 * @defaultValue `gazetteer/locality-surface-lexicon-v6.json` under the data root.
 	 */
 	output?: PathBuilderLike
 	onProgress?: (line: string) => void
@@ -497,7 +501,7 @@ export interface BuildStreetTypeLexiconOpts {
 	/**
 	 * The output path.
 	 *
-	 * Defaults to the committed `data/gazetteer/street-type-lexicon-v3.json`.
+	 * @defaultValue the committed `data/gazetteer/street-type-lexicon-v3.json`.
 	 */
 	output?: PathBuilderLike
 }

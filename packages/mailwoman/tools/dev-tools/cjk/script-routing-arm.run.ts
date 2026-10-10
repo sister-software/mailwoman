@@ -48,7 +48,7 @@ function carriesFamilyScript(shape: QueryShape): boolean {
  *
  * The grader uses `decodeAsJSON` because the board's `expectComponents` is written against that projection.
  */
-function agreement(tree: AddressTree, want: Record<string, string> | undefined): [number, number] {
+function agreement(tree: AddressTree, want: Record<string, string> | null): [number, number] {
 	if (!want) return [0, 0]
 	const got = decodeAsJSON(tree) as Record<string, string>
 	const keys = Object.keys(want)
@@ -66,9 +66,9 @@ if (family === primary) {
 
 interface ArmRow {
 	id: string
-	country?: string
+	country: string | null
 	input: string
-	characterClass?: string
+	characterClass: string | null
 	familyShare: number
 	routedToday: boolean
 	underPresence: boolean
@@ -89,17 +89,17 @@ for (const board of await loadRegressionCases()) {
 
 	rows.push({
 		id: board.id,
-		...(board.country ? { country: board.country } : {}),
+		country: board.country || null,
 		input: board.input,
-		characterClass: shape.characterClass,
+		characterClass: shape.characterClass ?? null,
 		familyShare: (shape.scripts ?? [])
 			.filter((entry) => FAMILY_SCRIPTS.has(entry.script))
 			.reduce((sum, entry) => sum + entry.share, 0),
 		routedToday,
 		underPresence: true,
 		underSegment: carriesFamilySegment(shape),
-		latin: agreement(await primary.parse(board.input), want),
-		character: agreement(await family.parse(board.input), want),
+		latin: agreement(await primary.parse(board.input), want ?? null),
+		character: agreement(await family.parse(board.input), want ?? null),
 	})
 }
 

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { ResolvedPlace } from "@mailwoman/core/resolver"
+import { EMPTY_PLACE_FIELDS, type ResolvedPlace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -13,6 +13,7 @@ import {
 } from "#toponym-prior"
 
 const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" | "country">): ResolvedPlace => ({
+	...EMPTY_PLACE_FIELDS,
 	placetype: "locality",
 	lat: 0,
 	lon: 0,
@@ -216,7 +217,7 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 
 	it("never bands a candidate that carries no country", () => {
 		const anonymous = [
-			place({ id: 1, name: "X", country: undefined, prominence: 6, importance: 0.6 }),
+			place({ id: 1, name: "X", country: null, prominence: 6, importance: 0.6 }),
 			place({ id: 2, name: "X", country: "US", prominence: 3, importance: 0.61 }),
 		]
 
@@ -251,7 +252,7 @@ describe("rankByCountryPrior", () => {
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1 }),
 		]
 
-		expect(rankByCountryPrior(rows, undefined)).toEqual(rows)
+		expect(rankByCountryPrior(rows, null)).toEqual(rows)
 	})
 
 	it("falls back to `score` when the backend reports no prominence", () => {
@@ -328,7 +329,7 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 	})
 
 	it("walks past several rows, stopping at the first over the margin", () => {
-		const level = (p: { country?: string }): number => (p.country === "GD" ? 2 : 0)
+		const level = (p: { country: string | null }): number => (p.country === "GD" ? 2 : 0)
 
 		const ranked = promoteCapitals(
 			[

@@ -1,13 +1,19 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier"
+import {
+	addressSystemConventionsFor,
+	type ConventionsSetting,
+	gazetteerSuppressionFor,
+	type ModelCardToggle,
+	punctuationBridgingFor,
+} from "#classifier/options"
 import { ScriptRoutedClassifier } from "#classifier/script-router"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
@@ -61,7 +67,26 @@ export async function loadClassifierFromWeights(
 
 		placetypeCensusPath?: PathBuilderLike
 
-		suppressGazetteerNearPostcode?: boolean
+		/**
+		 * Whether to zero the gazetteer channel next to postcode-anchor hits.
+		 *
+		 * The default `"declared"` follows the model card (see {@link gazetteerSuppressionFor}).
+		 */
+		suppressGazetteerNearPostcode?: ModelCardToggle
+
+		/**
+		 * Whether to merge same-tag spans split by punctuation.
+		 *
+		 * The default `"declared"` follows the model card (see {@link punctuationBridgingFor}).
+		 */
+		bridgePunctuationGaps?: ModelCardToggle
+
+		/**
+		 * The address-system conventions mode.
+		 *
+		 * The default `"declared"` follows the model card (see {@link addressSystemConventionsFor}).
+		 */
+		addressSystemConventions?: ConventionsSetting
 	} = {}
 ): Promise<NeuralAddressClassifier> {
 	/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
@@ -87,12 +112,12 @@ export async function loadClassifierFromWeights(
 	const resolved: ResolvedWeights = await resolveWeights(opts)
 
 	const labels =
-		(await readLabelsFromModelCard(resolved.modelCardPath)) ??
-		(await readLabelsFromModelCard(resolved.baseModelCardPath))
+		(await readLabelsFromModelCard(resolved.modelCardPath ?? null)) ??
+		(await readLabelsFromModelCard(resolved.baseModelCardPath ?? null))
 
-	const crf = await readCRFTransitions(resolved.crfTransitionsPath)
+	const crf = await readCRFTransitions(resolved.crfTransitionsPath ?? null)
 
-	let semiCRFGrammar: SemiCRFTransitions | undefined
+	let semiCRFGrammar: SemiCRFTransitions | null = null
 
 	if (resolved.semiCRFTransitionsPath) {
 		try {
@@ -126,7 +151,7 @@ export async function loadClassifierFromWeights(
 		}),
 	])
 
-	const declared = await readRequiredChannels(resolved.modelCardPath)
+	const declared = await readRequiredChannels(resolved.modelCardPath ?? null)
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
@@ -142,8 +167,8 @@ export async function loadClassifierFromWeights(
 
 	const anchorDetail =
 		declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)
-			? await unfedAnchorDetail(resolved.packageDir)
-			: undefined
+			? await unfedAnchorDetail(resolved.packageDir ?? null)
+			: null
 
 	if (anchorDetail) {
 		warnUnfedChannel("anchor", anchorDetail)
@@ -195,7 +220,7 @@ export async function loadClassifierFromWeights(
 	const streetTypeLexicon = lexicons.street_type
 	const localitySurfaceLexicon = lexicons.locality_surface
 
-	let placetypePair: PlacetypePairPriorOpts | undefined
+	let placetypePair: PlacetypePairPriorOpts | null = null
 
 	if (resolved.pairIndexPath) {
 		try {
@@ -229,20 +254,23 @@ export async function loadClassifierFromWeights(
 		opts.placetypeCensusPath
 	)
 
-	const suppressGazetteerNearPostcode =
-		opts.suppressGazetteerNearPostcode ?? declared?.suppress_gazetteer_near_postcode ?? false
+	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(
+		opts.suppressGazetteerNearPostcode ?? "declared",
+		declared
+	)
 
-	const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
+	const bridgePunctuationGaps = punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared)
+	const addressSystemConventions = addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared)
 
 	const addressSystems =
-		(await readAddressSystemsFromModelCard(resolved.modelCardPath)) ??
-		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath))
+		(await readAddressSystemsFromModelCard(resolved.modelCardPath ?? null)) ??
+		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath ?? null))
 
 	return new NeuralAddressClassifier({
 		...(tokenizer ? { tokenizer } : {}),
 		...(charEncoder ? { charEncoder } : {}),
 		runner,
-		labels,
+		...(labels ? { labels } : {}),
 		...(addressSystems ? { addressSystems } : {}),
 		transitions: crf?.transitions,
 		startTransitions: crf?.startTransitions,
@@ -259,8 +287,8 @@ export async function loadClassifierFromWeights(
 		...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
-		...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
-
-		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
+		suppressGazetteerNearPostcode,
+		bridgePunctuationGaps,
+		addressSystemConventions,
 	})
 }

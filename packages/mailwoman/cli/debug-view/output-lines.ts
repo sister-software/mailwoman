@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 
 import { ABSENT } from "#cli/debug-view/trace-rows"
-import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
 /**
@@ -40,7 +40,7 @@ export interface OutputLine {
  *
  * The formatter trims trailing zeroes so a four-decimal centroid still prints as four.
  */
-function formatCoordinate(lat: number | null | undefined, lon: number | null | undefined): string {
+function formatCoordinate(lat: number | null, lon: number | null): string {
 	if (lat == null || lon == null) return "unresolved"
 
 	return `${Number(lat.toFixed(6))}, ${Number(lon.toFixed(6))}`

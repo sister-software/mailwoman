@@ -5,7 +5,7 @@
  * @file Reads nearby flood features from the Environment Agency service.
  */
 
-import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
+import { createOGCFeaturesBBoxReader, type OGCFeature } from "@mailwoman/core/api"
 
 import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "#sdk/client"
 import { EA_FLOOD_LAYER } from "#vocabulary"
@@ -25,10 +25,7 @@ const SERVICE_FEATURE_LIMIT = 200
 /**
  * One feature as the service publishes it — the only shape the comparison reads.
  */
-export interface ServiceFeature {
-	properties?: { flood_zone?: string }
-	geometry?: { type: string; coordinates: unknown }
-}
+export type ServiceFeature = OGCFeature<{ flood_zone?: string }>
 
 /**
  * The one call the verification makes against the service: the features it publishes near a point.
@@ -36,7 +33,7 @@ export interface ServiceFeature {
  * The reader is a function.
  * Tests can exercise the check's logic without a live client.
  *
- * The comparison's value is that it decides which of three outcomes a point gets.
+ * The comparison's value is that it decides which of three results a point gets.
  *
  * An HTTP client would let tests observe these decisions only in a live run.
  * A scripted reader lets tests pin each decision. {@link createEAServiceReader}

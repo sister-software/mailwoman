@@ -12,5 +12,5 @@
 		"packages/registry/lib/models/**",
 		"**/*.d.ts"
 	],
-	"path": ["packages", "scripts"]
+	"path": ["packages"]
 }

@@ -291,10 +291,10 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
  */
 export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	return [
-		geoCellKey((r) => r.address?.geocode?.coordinate),
-		exactKey((r) => r.address?.canonicalKey),
-		exactKey((r) => r.phone),
-		exactKey((r) => r.email),
+		geoCellKey((r) => r.address?.geocode?.coordinate ?? null),
+		exactKey((r) => r.address?.canonicalKey ?? null),
+		exactKey((r) => r.phone ?? null),
+		exactKey((r) => r.email ?? null),
 	]
 }
 
@@ -305,19 +305,19 @@ export interface ResolveConfig {
 	/**
 	 * The model used to score candidate pairs.
 	 *
-	 * Default {@link buildDefaultModel}.
+	 * @defaultValue {@link buildDefaultModel}
 	 */
 	model?: FellegiSunterModel<SourceRecord>
 	/**
 	 * The blocking keys whose union forms the candidate set.
 	 *
-	 * Default {@link defaultBlockingKeys}.
+	 * @defaultValue {@link defaultBlockingKeys}
 	 */
 	blockingKeys?: BlockingKey<SourceRecord>[]
 	/**
 	 * Link two records into the same entity at or above this match weight (bits).
 	 *
-	 * Default 0.
+	 * @defaultValue `0`
 	 */
 	threshold?: number
 	/**
@@ -327,7 +327,7 @@ export interface ResolveConfig {
 	/**
 	 * Fit the model's `m`/`u` to the candidate pairs with EM before scoring (label-free).
 	 *
-	 * Default false.
+	 * @defaultValue `false`
 	 */
 	trainEM?: boolean
 	/**
@@ -353,7 +353,8 @@ export interface ResolveConfig {
 	 * a link, so a shared address cannot merge two records without that corroboration.
 	 *
 	 * Suppresses the spatial-only links that fuse distinct co-located providers.
-	 * Default false.
+	 *
+	 * @defaultValue `false`
 	 */
 	requireCorroboration?: boolean
 	/**
@@ -432,7 +433,7 @@ export interface ResolveConfig {
 }
 
 /**
- * The outcome of a resolve pass.
+ * The result of a resolve pass.
  */
 export interface ResolveResult {
 	entities: ResolvedEntity[]
@@ -559,7 +560,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			id: `entity-${i}`,
 			records: group,
 			representative: rep,
-			coordinate: rep.address?.geocode?.coordinate ?? undefined,
+			coordinate: rep.address?.geocode?.coordinate ?? null,
 			cohesion: group.length > 1 && minIntraWeight[i]! !== Infinity ? minIntraWeight[i]! : null,
 		}
 	})

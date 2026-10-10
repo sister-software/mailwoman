@@ -39,7 +39,7 @@ export interface SubscriptionObservation {
 	 * The current token's `expires`, a UTC calendar date.
 	 * Absent when no token has been minted.
 	 */
-	graceUntil?: string
+	graceUntil?: string | null
 	/**
 	 * Today, a UTC calendar date.
 	 */
@@ -61,7 +61,7 @@ export function licenseStateAfterSubscription(
 	if (!ended) return LicenseState.Active
 
 	// Calendar dates compare as strings.
-	return observation.graceUntil !== undefined && observation.today <= observation.graceUntil
+	return observation.graceUntil && observation.today <= observation.graceUntil
 		? LicenseState.Active
 		: LicenseState.Lapsed
 }

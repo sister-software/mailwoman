@@ -10,7 +10,7 @@
  *   A pinned CIK at the top score resolves that tie.
  */
 
-import type { EdgarSubsidiaryRow } from "#sdk/build/filer"
+import type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
 import { corroborateCIK, type CIKCorroborationOptions } from "#sdk/cik-corroboration"
 import {
 	fetchExhibit21Documents,
@@ -66,16 +66,16 @@ export const EdgarSkipReason = {
 export type EdgarSkipReason = (typeof EdgarSkipReason)[keyof typeof EdgarSkipReason]
 
 /**
- * One registrant's outcome, present for every input name including the ones that produced rows,
+ * One registrant's result, present for every input name including the ones that produced rows,
  * so a report can be read end-to-end without joining it back to the request list.
  */
-export interface EdgarIngestOutcome {
+export interface EdgarIngestResult {
 	query: string
-	cik?: CIK
-	registrantName?: string
-	sic?: string
-	accessionNumber?: string
-	filingDate?: string
+	cik: CIK | null
+	registrantName: string | null
+	sic: string | null
+	accessionNumber: string | null
+	filingDate: string | null
 	subsidiaries: number
 	/**
 	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
@@ -83,14 +83,14 @@ export interface EdgarIngestOutcome {
 	 * A high count against a low `subsidiaries` signals an unhandled layout.
 	 */
 	unparseable: number
-	skipReason?: EdgarSkipReason
+	skipReason: EdgarSkipReason | null
 }
 
 /**
- * The full per-run report: every registrant's outcome plus the row and skip totals.
+ * The full per-run report: every registrant's result plus the row and skip totals.
  */
 export interface EdgarIngestReport {
-	outcomes: EdgarIngestOutcome[]
+	results: EdgarIngestResult[]
 	rows: number
 	registrantsWithRows: number
 	skipped: Record<EdgarSkipReason, number>
@@ -109,7 +109,7 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 	/**
 	 * Called once per registrant as it completes, for progress on a long run.
 	 */
-	onOutcome?: (outcome: EdgarIngestOutcome) => void
+	onResult?: (result: EdgarIngestResult) => void
 }
 
 /**
@@ -134,18 +134,19 @@ async function resolveCorroboratedCIK(
 	tickers: readonly CompanyTickerEntry[],
 	options: EdgarIngestOptions
 ): Promise<
-	| { ok: true; cik: CIK; registrantName: string; sic?: string; payload: unknown }
+	| { ok: true; cik: CIK; registrantName: string; sic: string | null; payload: unknown }
 	| { ok: false; reason: EdgarSkipReason }
 > {
 	const candidates = resolveCIKCandidates(query, tickers, options.minScore ? { minScore: options.minScore } : {})
 
 	if (!candidates.length) return { ok: false, reason: EdgarSkipReason.Unresolved }
 
-	const corroborated: Array<{ cik: CIK; registrantName: string; sic?: string; payload: unknown; score: number }> = []
+	const corroborated: Array<{ cik: CIK; registrantName: string; sic: string | null; payload: unknown; score: number }> =
+		[]
 
 	for (const candidate of candidates) {
 		const payload = await client.get<SubmissionsPayload>(submissionsURL(candidate.cik))
-		const sic = typeof payload?.sic === "string" ? payload.sic : undefined
+		const sic = typeof payload?.sic === "string" ? payload.sic : null
 		const verdict = corroborateCIK(candidate.cik, sic, options)
 
 		if (!verdict.corroborated) continue
@@ -215,7 +216,7 @@ async function collectForFiling(
 			rows.push({
 				cik: filing.cik,
 				subsidiaryName: subsidiary.name,
-				...(subsidiary.jurisdiction ? { jurisdiction: subsidiary.jurisdiction } : {}),
+				jurisdiction: subsidiary.jurisdiction || null,
 				filingDate: filing.filingDate,
 			})
 		}
@@ -240,7 +241,7 @@ export async function collectEdgarSubsidiaryRows(
 	options: EdgarIngestOptions = {}
 ): Promise<{ rows: EdgarSubsidiaryRow[]; report: EdgarIngestReport }> {
 	const rows: EdgarSubsidiaryRow[] = []
-	const outcomes: EdgarIngestOutcome[] = []
+	const results: EdgarIngestResult[] = []
 
 	const skipped: Record<EdgarSkipReason, number> = {
 		[EdgarSkipReason.Unresolved]: 0,
@@ -251,20 +252,30 @@ export async function collectEdgarSubsidiaryRows(
 		[EdgarSkipReason.NoSubsidiaries]: 0,
 	}
 
-	const finish = (outcome: EdgarIngestOutcome): void => {
-		if (outcome.skipReason) {
-			skipped[outcome.skipReason]++
+	const finish = (result: EdgarIngestResult): void => {
+		if (result.skipReason) {
+			skipped[result.skipReason]++
 		}
 
-		outcomes.push(outcome)
-		options.onOutcome?.(outcome)
+		results.push(result)
+		options.onResult?.(result)
 	}
 
 	for (const query of queries) {
 		const resolved = await resolveCorroboratedCIK(client, query, tickers, options)
 
 		if (!resolved.ok) {
-			finish({ query, subsidiaries: 0, unparseable: 0, skipReason: resolved.reason })
+			finish({
+				query,
+				cik: null,
+				registrantName: null,
+				sic: null,
+				accessionNumber: null,
+				filingDate: null,
+				subsidiaries: 0,
+				unparseable: 0,
+				skipReason: resolved.reason,
+			})
 
 			continue
 		}
@@ -273,13 +284,20 @@ export async function collectEdgarSubsidiaryRows(
 			query,
 			cik: resolved.cik,
 			registrantName: resolved.registrantName,
-			...(resolved.sic ? { sic: resolved.sic } : {}),
+			sic: resolved.sic || null,
 		}
 
 		const [filing] = parseTenKFilings(resolved.cik, resolved.payload)
 
 		if (!filing) {
-			finish({ ...base, subsidiaries: 0, unparseable: 0, skipReason: EdgarSkipReason.NoTenK })
+			finish({
+				...base,
+				accessionNumber: null,
+				filingDate: null,
+				subsidiaries: 0,
+				unparseable: 0,
+				skipReason: EdgarSkipReason.NoTenK,
+			})
 
 			continue
 		}
@@ -294,22 +312,22 @@ export async function collectEdgarSubsidiaryRows(
 			filingDate: filing.filingDate,
 			subsidiaries: collected.rows.length,
 			unparseable: collected.unparseable,
-			...(collected.rows.length
-				? {}
-				: {
-						// Zero rows with no abstentions means the filing had no Exhibit 21.
-						// Zero rows with abstentions means one was read and yielded no row.
-						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
-					}),
+			// Zero rows with no abstentions means the filing had no Exhibit 21.
+			// Zero rows with abstentions means one was read and yielded no row.
+			skipReason: collected.rows.length
+				? null
+				: collected.unparseable
+					? EdgarSkipReason.NoSubsidiaries
+					: EdgarSkipReason.NoExhibit21,
 		})
 	}
 
 	return {
 		rows,
 		report: {
-			outcomes,
+			results,
 			rows: rows.length,
-			registrantsWithRows: outcomes.filter((outcome) => outcome.subsidiaries > 0).length,
+			registrantsWithRows: results.filter((result) => result.subsidiaries > 0).length,
 			skipped,
 		},
 	}

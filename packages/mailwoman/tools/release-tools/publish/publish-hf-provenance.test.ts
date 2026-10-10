@@ -14,7 +14,7 @@ import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { verifyTrainingProvenance } from "#tools/release-tools/publish/hf"
+import { readTokenizerVocab, verifyTrainingProvenance } from "#tools/release-tools/publish/hf"
 
 async function cardWith(card: object): Promise<{ path: PathBuilder; dispose: () => Promise<void> }> {
 	const directory = await temporaryDirectory("mw-hf-provenance-")
@@ -90,5 +90,27 @@ describe("verifyTrainingProvenance", () => {
 		const card = repoRootPathBuilder("packages/neural-weights-cjk/model-card.json")
 
 		await expect(verifyTrainingProvenance(card)).resolves.toBeUndefined()
+	})
+})
+
+describe("readTokenizerVocab", () => {
+	it("reads the vocabulary size the card records", async () => {
+		const card = await cardWith({ architecture: { vocab_size: 73_143 } })
+
+		try {
+			await expect(readTokenizerVocab(card.path)).resolves.toBe(73_143)
+		} finally {
+			await card.dispose()
+		}
+	})
+
+	it("refuses a card that records no vocabulary size", async () => {
+		const card = await cardWith({ architecture: {} })
+
+		try {
+			await expect(readTokenizerVocab(card.path)).rejects.toThrow(/architecture\.vocab_size/)
+		} finally {
+			await card.dispose()
+		}
 	})
 })

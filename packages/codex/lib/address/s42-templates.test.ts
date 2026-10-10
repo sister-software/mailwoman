@@ -7,7 +7,7 @@
  *   The 72 codes were confirmed against UPU's own 72-option template selector on 2026-09-30, and the 2010 group
  *   of seventeen is quoted from UPU's own announcement. Both documents are retained under
  *   `internal/strategy/rights-receipts/upu-s42-2026-09-30/`. These assertions hold the counts, the code
- *   resolution and the cohort containment, which is what a reader can check without re-fetching.
+ *   resolution and the cohort containment. That is what a reader can check without re-fetching.
  */
 
 import { describe, expect, it } from "vitest"

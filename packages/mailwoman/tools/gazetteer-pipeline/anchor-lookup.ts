@@ -21,7 +21,7 @@ const ZCTA_SOURCE = "census-zcta-2024"
 
 type Centroid = [number, number, string | null]
 
-function fiveDigit(name: string | null | undefined): string | null {
+function fiveDigit(name: string | null): string | null {
 	const n = (name || "").trim().toUpperCase()
 
 	return /^[0-9]{5}$/.test(n) ? n : null
@@ -114,7 +114,7 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
 	for (const [pc, [lat, lon, source]] of units) {
-		if (source === null) continue
+		if (!source) continue
 		const outward = pc.slice(0, -GB_INWARD_LENGTH)
 		const bucket = acc.get(outward)
 
@@ -161,11 +161,11 @@ async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 
 	for (const row of readUnquotedTSVText(await readLocalTextFile(path))) {
 		const fields = row
-		const pc = fields.length ? fiveDigit(fields[0]) : null
+		const pc = fields.length ? fiveDigit(fields[0] ?? null) : null
 
 		if (!pc || fields.length < GAZETTEER_ROW_COLUMNS) continue
-		const lat = pyFloat(fields[5])
-		const lon = pyFloat(fields[6])
+		const lat = pyFloat(fields[5] ?? null)
+		const lon = pyFloat(fields[6] ?? null)
 
 		if (lat === null || lon === null) continue
 
@@ -272,7 +272,7 @@ export interface AnchorLookupOptions {
 
 	/**
 	 * The country codes to include, in centroid-priority order.
-	 * Defaults to {@linkcode ANCHOR_PILOT_COUNTRIES}.
+	 * @defaultValue {@linkcode ANCHOR_PILOT_COUNTRIES}
 	 *
 	 * Every code must have a loader.
 	 * All of {@linkcode ANCHOR_V2_COUNTRIES} have one.
@@ -281,7 +281,7 @@ export interface AnchorLookupOptions {
 
 	/**
 	 * Whether to add GB outward-district keys beside the unit keys.
-	 * Defaults to `true` and applies only when GB is included.
+	 * @defaultValue `true` and applies only when GB is included.
 	 */
 	gbOutward?: boolean
 }
@@ -404,7 +404,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 			}
 		}
 
-		if (source === null && members.includes("US") && zcta.has(pc)) {
+		if (!source && members.includes("US") && zcta.has(pc)) {
 			;[lat, lon] = zcta.get(pc)!
 			source = ZCTA_SOURCE
 

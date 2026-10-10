@@ -1,4 +1,4 @@
-.TH MAILWOMAN 1 "" "mailwoman 10.1.0" "User Commands"
+.TH MAILWOMAN 1 "" "mailwoman 10.2.0" "User Commands"
 .SH NAME
 mailwoman \- calibrated, retrieval\-augmented postal\-address parser and geocoder
 .SH SYNOPSIS
@@ -124,6 +124,12 @@ Options:
                                               ranking prior. (default: false)
   \-\-[no\-]gazetteer\-prior                      Feed the gazetteer FST prior to the parse;
                                               \-\-no\-gazetteer\-prior disables it. (default: true)
+  \-\-[no\-]venue\-head\-prior                     Feed the venue\-head prior, from
+                                              @mailwoman/poi\-taxonomy's head\-word table, to the
+                                              parse; \-\-no\-venue\-head\-prior disables it. (default:
+                                              true)
+  \-\-venue\-head\-bias\-scale <multiplier>        Multiplier on the venue\-head table's biases. (default:
+                                              1)
   \-\-[no\-]place\-country                        Use the coarse\-placer country prior;
                                               \-\-no\-place\-country disables it. (default: true)
   \-\-[no\-]postcode\-country\-coherence           Allow coherent postcode/locality evidence to override
@@ -137,11 +143,13 @@ Options:
   \-\-[no\-]admin\-containment\-rerank             Region\-qualifier containment reranking of locality
                                               candidates; \-\-no\-admin\-containment\-rerank disables it.
                                               (default: true)
-  \-\-capital\-tier                              Bounded national\-capital promotion on bare city names
-                                              (default on); \-\-no\-capital\-tier disables it.
-  \-\-variant\-alias\-exemption                   Own\-name variant aliases keep their holder's rank in
-                                              cross\-country contests (default on);
-                                              \-\-no\-variant\-alias\-exemption disables it.
+  \-\-capital\-tier <string>                     Bounded national\-capital promotion on bare city names:
+                                              auto (skip when the capitals reference is missing),
+                                              required (fail when it is missing), or off. (default:
+                                              auto)
+  \-\-variant\-alias\-exemption <string>          Whether own\-name variant aliases keep their holder's
+                                              rank in cross\-country contests: applied or
+                                              not_applied. (default: applied)
   \-\-place\-country\-threshold <probability>     Coarse\-placer abstention threshold. (default: 0.9)
   \-\-format <string>                           Output format. (default: json)
   \-\-json                                      Shorthand for \-\-format json. (default: false)

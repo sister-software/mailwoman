@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -48,8 +48,8 @@ const RELEASE = stringifyJSON({
 /**
  * An `APIClient` over a scripted transport, with the dispatched URLs recorded on `calls`.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "it-anac test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
@@ -105,7 +105,7 @@ describe("decompressToJSONL", () => {
 	it("keeps an accented place name whole across a gzip chunk boundary", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-it-anac-gunzip-")
 
-		// Two releases whose locality names carry accented characters, padded
+		// Two releases whose locality names hold accented characters, padded
 		// so the compressed stream is written in more than one chunk.
 		const lines = Array.from({ length: 4000 }, (_, index) =>
 			stringifyJSON({
@@ -199,7 +199,7 @@ describe("isANACEditionCurrent", () => {
 
 		const { path } = await recordRun(scratch.path)
 
-		expect(await isANACEditionCurrent(undefined, HEAD, path, false)).toBe(false)
+		expect(await isANACEditionCurrent(null, HEAD, path, false)).toBe(false)
 	})
 })
 
@@ -238,7 +238,7 @@ describe("downloadITANAC", () => {
 		const summary = await downloadITANAC(client, { outputDir: scratch.path, editions: ["2025"] })
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
-		// The HEAD alone.
+		// The HEAD only.
 		// No request for the body was dispatched.
 		expect(client.calls).toHaveLength(1)
 		// The edition on disk is untouched, and the adapter still reads it.

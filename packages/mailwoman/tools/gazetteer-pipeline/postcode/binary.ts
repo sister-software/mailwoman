@@ -13,6 +13,7 @@
  */
 
 import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
+import type { NamedLatLon } from "@mailwoman/spatial"
 
 /**
  * GB unit postcode shape in stripped form (`SW1A2AA`).
@@ -71,23 +72,15 @@ export const POSTCODE_BINARY_SOURCES: readonly PostcodeBinarySource[] = [
 /**
  * Returns browser granularity for a country, if configured.
  */
-export function browserGranularityFor(country: string): GBGranularity | undefined {
-	return POSTCODE_BINARY_SOURCES.find((source) => source.country === country.toUpperCase())?.browserGranularity
-}
-
-/**
- * Raw postcode row from the source database.
- */
-export interface PostcodeDatabaseRow {
-	name: string
-	lat: number
-	lon: number
+export function browserGranularityFor(country: string): GBGranularity | null {
+	return POSTCODE_BINARY_SOURCES.find((source) => source.country === country.toUpperCase())?.browserGranularity ?? null
 }
 
 export interface BuildPostcodeBinaryOptions {
 	/**
 	 * GB key granularity.
-	 * The default is `unit`, and non-GB builds ignore it.
+	 *
+	 * @defaultValue `unit`, and non-GB builds ignore it.
 	 */
 	gbGranularity?: GBGranularity
 }
@@ -144,11 +137,14 @@ function isPlaced(lat: number, lon: number): boolean {
  */
 export function buildPostcodeBinaryEntries(
 	country: string,
-	rows: readonly PostcodeDatabaseRow[],
+	rows: readonly NamedLatLon[],
 	options: BuildPostcodeBinaryOptions = {}
 ): BuildPostcodeBinaryResult {
 	const cc = country.toUpperCase()
 
+	// country-branch: GB is the one postcode system split into outward and inward halves.
+	// A granularity per country in the codex postal regimes would replace the
+	// three GB branches in this module.
 	if (cc !== "GB") {
 		return {
 			entries: rows.map((row) => ({
@@ -171,7 +167,7 @@ export function buildPostcodeBinaryEntries(
 		const key = postcodeBinaryKey(cc, row.name)
 		const district = gbOutwardFromKey(key)
 
-		if (district === null) {
+		if (!district) {
 			skipped++
 
 			continue
@@ -228,6 +224,7 @@ export const POSTCODE_BINARY_KEY_FLOORS: Readonly<Record<string, number>> = {
  */
 export function keyFloorFor(country: string, granularity: GBGranularity): number {
 	const cc = country.toUpperCase()
+	// country-branch: see `buildPostcodeBinary` above.
 	const keyed = cc === "GB" && granularity === "outward" ? "GB:outward" : cc
 
 	return POSTCODE_BINARY_KEY_FLOORS[keyed] ?? 1
@@ -241,6 +238,7 @@ export function keyFloorViolation(country: string, keys: number, granularity: GB
 
 	if (keys >= floor) return null
 	const cc = country.toUpperCase()
+	// country-branch: see `buildPostcodeBinary` above.
 	const scope = cc === "GB" ? `${cc} (${granularity} granularity)` : cc
 
 	return (

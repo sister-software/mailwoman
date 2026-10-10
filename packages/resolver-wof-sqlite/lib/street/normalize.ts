@@ -374,7 +374,7 @@ export function stripLocalityQualifier(locality: string): string {
 	}
 
 	const words = [...s.matchAll(/\S+/gu)].map((match) => ({ value: match[0], index: match.index }))
-	let qualifierStart: number | undefined
+	let qualifierStart: number | null = null
 
 	for (let index = 1; index < words.length; index++) {
 		const word = words[index]!
@@ -397,7 +397,7 @@ export function stripLocalityQualifier(locality: string): string {
 	const suffix = words.at(-1)
 
 	if (
-		qualifierStart === undefined &&
+		qualifierStart === null &&
 		suffix &&
 		words.length > 1 &&
 		(["S", "N", "E", "W", "V", "Ø", "Sø", "Fyn", "Thy", "Sjælland", "Jylland"].includes(suffix.value) ||
@@ -406,7 +406,7 @@ export function stripLocalityQualifier(locality: string): string {
 		qualifierStart = suffix.index
 	}
 
-	if (qualifierStart !== undefined) {
+	if (qualifierStart !== null) {
 		s = s.slice(0, qualifierStart).trimEnd()
 	}
 

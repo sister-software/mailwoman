@@ -28,7 +28,7 @@ const session = await loadModel("path/to/model.onnx")
 | Module                            | Purpose                                                                                                                   |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | **`tokenizer.ts`**                | SentencePiece unigram tokenizer (loads `.model` file)                                                                     |
-| **`onnx-runner.ts`**              | ONNX Runtime Web inference session (WebGPU / WASM backends)                                                               |
+| **`onnx-runner.ts`**              | ONNX Runtime Web inference session (WASM backend)                                                                         |
 | **`classifier.ts`**               | `NeuralAddressClassifier` — tokenize → run → decode                                                                       |
 | **`scorer.ts`**                   | `createScorer` / `ProductionScorer` — canonical entry point that reads `requires` from `model-card.json` and fails closed |
 | **`anchor-inference.ts`**         | Postcode anchor feature injection (soft channel rather than override)                                                     |

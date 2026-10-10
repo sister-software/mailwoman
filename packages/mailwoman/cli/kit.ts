@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "#cli/kit/shared"
+export { type Check } from "#check"
 export * from "#cli/kit/harness-command"
 export * from "#cli/kit/engine-stamp"
 export * from "#metadata"

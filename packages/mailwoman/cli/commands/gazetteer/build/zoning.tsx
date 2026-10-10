@@ -14,7 +14,7 @@
  *   rather than a number argued to.
  */
 
-import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 
@@ -289,7 +289,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 					describeRow: (row) =>
 						`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind}, ` +
 						`service ${row.serviceInside ? "inside" : "outside"}, ` +
-						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
+						`${row.nearestEdgeMetres === null ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
 				})
 			)
 		}
@@ -297,7 +297,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	// Progress streams to stderr until the summary lands.
+	// `CommandTaskResult` renders it.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

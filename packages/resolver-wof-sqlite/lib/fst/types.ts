@@ -21,16 +21,16 @@ export interface PlaceEntry {
 	referential: number
 	/**
 	 * The encyclopedic importance in [0, 1], for display only.
-	 * It is `undefined` when unavailable.
+	 * It is `null` when unavailable.
 	 */
-	encyclopedic?: number
+	encyclopedic: number | null
 	lat: number
 	lon: number
 	/**
 	 * The number of countries with a place of this surface, clamped to 255.
-	 * It is `undefined` when unavailable.
+	 * It is `null` when unavailable.
 	 */
-	crossCountryBranches?: number
+	crossCountryBranches: number | null
 }
 
 /**
@@ -48,15 +48,6 @@ export type PlacetypeID =
 	| "campus"
 	| "dependency"
 	| "street_affix"
-
-/**
- * The result of walking a token sequence through the FST.
- */
-export interface FSTMatchResult {
-	stateID: number
-	accepted: boolean
-	depth: number
-}
 
 /**
  * One outgoing edge from an FST state, with the number of places its target state accepts.
@@ -96,16 +87,16 @@ export interface FSTProvenance {
 	/**
 	 * The count of places with an encyclopedic score at build time.
 	 *
-	 * It is `undefined` for a build that predates the separate encyclopedic score.
+	 * It is `null` for a build that predates the separate encyclopedic score.
 	 * The value `0` means a current build used a database without encyclopedic scores.
 	 */
-	encyclopedicMatches?: number
+	encyclopedicMatches: number | null
 	/**
 	 * The {@link ImportanceSplitSource} that records whether the encyclopedic score is real,
 	 * reconstructed from a legacy column, or absent.
 	 */
-	importanceSource?: string
-	sourceDB?: string
+	importanceSource: string | null
+	sourceDB: string | null
 	/**
 	 * The MD5 of the source database's bytes at build time.
 	 * The freshness check compares it.
@@ -113,26 +104,26 @@ export interface FSTProvenance {
 	 * `sourceDB` by itself cannot detect staleness.
 	 * A rebuild replaces the admin database at the same path.
 	 *
-	 * The field is `undefined` for artifacts built before the stamp existed.
+	 * The field is `null` for artifacts built before the stamp existed.
 	 * An unknown digest has a different value.
 	 */
-	sourceDBMD5?: string
+	sourceDBMD5: string | null
 	/**
 	 * The byte size of the source database at build time.
 	 *
 	 * It detects a truncated source and makes a staleness warning readable.
 	 */
-	sourceDBBytes?: number
-	modelCardVersion?: string
+	sourceDBBytes: number | null
+	modelCardVersion: string | null
 	/**
 	 * The surface-exclusion policy applied at build time.
 	 * It is absent for an uncurated build.
 	 */
-	exclusionPolicy?: string
+	exclusionPolicy: string | null
 	/**
 	 * The count of name insertions the exclusion policy rejected.
 	 */
-	excludedInsertions?: number
+	excludedInsertions: number | null
 }
 
 /**

@@ -118,49 +118,52 @@ beforeAll(async () => {
 
 describe("AddressPointSqliteLookup", () => {
 	it("answers an exact (street, number) within the postcode scope", () => {
-		expect(lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })?.lat).toBe(-27.1836)
+		expect(lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })?.lat).toBe(-27.1836)
 	})
 
 	it("prefers a verbatim range key over the low-end fallback", () => {
-		expect(lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505" })?.lat).toBe(-27.9999)
+		expect(lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505", bbox: null })?.lat).toBe(-27.9999)
 	})
 
 	it("falls back to the range's low end when the range key misses", () => {
-		expect(lookup.find({ street: "Forest Road", number: "19-21", postcode: "7250" })?.lat).toBe(-41.4316)
-		expect(lookup.find({ street: "Forest Road", number: "19-21", locality: "Trevallyn" })?.lat).toBe(-41.4316)
+		expect(lookup.find({ street: "Forest Road", number: "19-21", postcode: "7250", bbox: null })?.lat).toBe(-41.4316)
+
+		expect(lookup.find({ street: "Forest Road", number: "19-21", locality: "Trevallyn", bbox: null })?.lat).toBe(
+			-41.4316
+		)
 	})
 
 	it("stays null when neither the range key nor its low end exists", () => {
-		expect(lookup.find({ street: "Forest Road", number: "23-25", postcode: "7250" })).toBeNull()
+		expect(lookup.find({ street: "Forest Road", number: "23-25", postcode: "7250", bbox: null })).toBeNull()
 	})
 
 	it("never treats a plain number as a range", () => {
-		expect(lookup.find({ street: "Forest Road", number: "21", postcode: "7250" })).toBeNull()
+		expect(lookup.find({ street: "Forest Road", number: "21", postcode: "7250", bbox: null })).toBeNull()
 	})
 
 	it("bridges letter-suffix spacing in both directions, then falls to the base number", () => {
-		expect(lookup.find({ street: "Rue de l'Église", number: "3a", postcode: "67530" })?.lat).toBe(48.4771)
-		expect(lookup.find({ street: "Rue de l'Église", number: "3 a", postcode: "67530" })?.lat).toBe(48.4771)
+		expect(lookup.find({ street: "Rue de l'Église", number: "3a", postcode: "67530", bbox: null })?.lat).toBe(48.4771)
+		expect(lookup.find({ street: "Rue de l'Église", number: "3 a", postcode: "67530", bbox: null })?.lat).toBe(48.4771)
 
-		expect(lookup.find({ street: "Forest Road", number: "19a", postcode: "7250" })?.lat).toBe(-41.4316)
+		expect(lookup.find({ street: "Forest Road", number: "19a", postcode: "7250", bbox: null })?.lat).toBe(-41.4316)
 
-		expect(lookup.find({ street: "Rue de l'Église", number: "4a", postcode: "67530" })).toBeNull()
+		expect(lookup.find({ street: "Rue de l'Église", number: "4a", postcode: "67530", bbox: null })).toBeNull()
 	})
 
 	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
-		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
+		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505", bbox: null })).toBeNull()
 
-		expect(lookup.find({ street: "Osborne Drive", number: "32 1/2", postcode: "4505" })).toBeNull()
+		expect(lookup.find({ street: "Osborne Drive", number: "32 1/2", postcode: "4505", bbox: null })).toBeNull()
 
-		expect(lookup.find({ street: "Osborne Drive", number: "unit 32", postcode: "4505" })).toBeNull()
-		expect(lookup.find({ street: "Osborne Drive", number: "apt 3a", postcode: "4505" })).toBeNull()
+		expect(lookup.find({ street: "Osborne Drive", number: "unit 32", postcode: "4505", bbox: null })).toBeNull()
+		expect(lookup.find({ street: "Osborne Drive", number: "apt 3a", postcode: "4505", bbox: null })).toBeNull()
 
-		expect(lookup.find({ street: "PO Box", number: "123-125", postcode: "4505" })).toBeNull()
+		expect(lookup.find({ street: "PO Box", number: "123-125", postcode: "4505", bbox: null })).toBeNull()
 	})
 
 	it("unit siblings share the building coordinate through every rung", () => {
-		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
-		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505" })
+		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })
+		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505", bbox: null })
 
 		expect(base?.lat).toBeDefined()
 
@@ -168,7 +171,7 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("carries the register row's own locality and postcode on the hit", () => {
-		const hit = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
+		const hit = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })
 
 		expect(hit?.localityNorm).toBe("burpengary")
 		expect(hit?.postcode).toBe("4505")
@@ -200,42 +203,55 @@ describe("The bbox fall-through's scope contradiction", () => {
 		const londonBox = { minLat: 51.4, maxLat: 51.6, minLon: -0.2, maxLon: 0 }
 
 		expect(fullKeys.find({ street: "Mill Lane", number: "7", locality: "London", bbox: londonBox })?.lat).toBe(51.5)
-		expect(fullKeys.find({ street: "Rue de la République", number: "10", postcode: "77170" })?.lat).toBe(48.718479)
+
+		expect(fullKeys.find({ street: "Rue de la République", number: "10", postcode: "77170", bbox: null })?.lat).toBe(
+			48.718479
+		)
 	})
 })
 
 describe("The postcode rung's locality contradiction", () => {
 	it("answers the row whose locality agrees, whichever village the query names", () => {
-		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz" })?.lat).toBe(
-			51.52
-		)
+		expect(
+			fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz", bbox: null })?.lat
+		).toBe(51.52)
 
-		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Werlitzsch" })?.lat).toBe(
-			51.4367
-		)
+		expect(
+			fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Werlitzsch", bbox: null })?.lat
+		).toBe(51.4367)
 	})
 
 	it("answers nothing when the query names a third place under the same postcode — admin is the better answer", () => {
-		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Schönwölkau" })).toBeNull()
+		expect(
+			fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Schönwölkau", bbox: null })
+		).toBeNull()
 	})
 
 	it("keeps answering by postcode alone when the query names no locality", () => {
-		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509" })).not.toBeNull()
+		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", bbox: null })).not.toBeNull()
 	})
 
 	it("Never refuses on the locality under the US extract, whose keys are abbreviated ( follow-up)", () => {
-		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })
+		const hit = lookup.find({
+			street: "Airport Pkwy",
+			number: "4900",
+			postcode: "75001",
+			locality: "Addison",
+			bbox: null,
+		})
 
 		expect(hit?.lat).toBe(32.965477444)
 		expect(hit?.localityNorm).toBe("addi")
 
-		expect(lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas" })?.lat).toBe(
-			32.965477444
-		)
+		expect(
+			lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas", bbox: null })?.lat
+		).toBe(32.965477444)
 	})
 
 	it("holds a full-name extract to the locality it names", () => {
-		expect(fullKeys.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas" })).toBeNull()
+		expect(
+			fullKeys.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas", bbox: null })
+		).toBeNull()
 	})
 })
 
@@ -281,34 +297,37 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 	})
 
 	it("answers the parse's region + subregion as the scope, with the common 台 for the register's 臺", () => {
-		const hit = zh.find({ street: "重慶南路一段", number: "122號", region: "台北市", subregion: "中正區" })
+		const hit = zh.find({ street: "重慶南路一段", number: "122號", region: "台北市", subregion: "中正區", bbox: null })
 
 		expect(hit).toMatchObject({ lat: 25.0399658, lon: 121.5124584, localityNorm: "台北市中正區" })
 	})
 
 	it("keeps the two 中正區 apart: Keelung's 中正路 122 is not Taipei's", () => {
-		expect(zh.find({ street: "中正路", number: "122號", region: "台北市", subregion: "中正區" })).toBeNull()
-		expect(zh.find({ street: "中正路", number: "122", region: "基隆市", subregion: "中正區" })?.lat).toBe(25.1283)
+		expect(zh.find({ street: "中正路", number: "122號", region: "台北市", subregion: "中正區", bbox: null })).toBeNull()
+
+		expect(zh.find({ street: "中正路", number: "122", region: "基隆市", subregion: "中正區", bbox: null })?.lat).toBe(
+			25.1283
+		)
 	})
 
 	it("falls from a sub-number to its base number, in either written order", () => {
 		const scope = { region: "高雄市", subregion: "旗津區" }
 
-		expect(zh.find({ street: "旗下巷", number: "14之12號", ...scope })?.lat).toBe(22.6133451)
-		expect(zh.find({ street: "旗下巷", number: "14號之12", ...scope })?.lat).toBe(22.6133451)
-		expect(zh.find({ street: "旗下巷", number: "１４號之１２", ...scope })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "14之12號", ...scope, bbox: null })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "14號之12", ...scope, bbox: null })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "１４號之１２", ...scope, bbox: null })?.lat).toBe(22.6133451)
 
-		expect(zh.find({ street: "旗下巷", number: "14附3號", ...scope })?.lat).toBe(22.6133451)
-		expect(zh.find({ street: "旗下巷", number: "14之12附1號", ...scope })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "14附3號", ...scope, bbox: null })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "14之12附1號", ...scope, bbox: null })?.lat).toBe(22.6133451)
 	})
 
 	it("matches the stored pair by its tail when the line names only the 鄉鎮市區", () => {
-		expect(zh.find({ street: "重慶南路一段", number: "122號", subregion: "中正區" })?.lat).toBe(25.0399658)
-		expect(zh.find({ street: "中正路", number: "122號", subregion: "中正區" })?.lat).toBe(25.1283)
-		expect(zh.find({ street: "中正路", number: "122號", subregion: "信義區" })).toBeNull()
+		expect(zh.find({ street: "重慶南路一段", number: "122號", subregion: "中正區", bbox: null })?.lat).toBe(25.0399658)
+		expect(zh.find({ street: "中正路", number: "122號", subregion: "中正區", bbox: null })?.lat).toBe(25.1283)
+		expect(zh.find({ street: "中正路", number: "122號", subregion: "信義區", bbox: null })).toBeNull()
 	})
 
 	it("a scope-less query misses rather than answering the first row of the street", () => {
-		expect(zh.find({ street: "重慶南路一段", number: "122號" })).toBeNull()
+		expect(zh.find({ street: "重慶南路一段", number: "122號", bbox: null })).toBeNull()
 	})
 })

@@ -50,7 +50,7 @@ export class GeocoderFixture {
 	 * while a load error the page reports ends the wait at once with that text.
 	 */
 	async expectReady(): Promise<void> {
-		const outcome = await this.page.waitForFunction(
+		const handle = await this.page.waitForFunction(
 			() => {
 				const error = document.querySelector(".mw-error")?.textContent?.trim()
 
@@ -64,7 +64,7 @@ export class GeocoderFixture {
 			{ timeout: 180_000, polling: 500 }
 		)
 
-		const value = await outcome.jsonValue()
+		const value = await handle.jsonValue()
 
 		if (value && "error" in value) {
 			throw new Error(`the geocoder reported a load error: ${value.error}`)

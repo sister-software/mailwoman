@@ -10,10 +10,9 @@
  *   fragmentation happens to stay low is not reproducible.
  *
  *   The domain checks run here and throw: an unknown policy, policy interpretation or defense type is a
- *   source-schema change. The ingest step must reject it instead of mapping it to a nearest neighbor or null,
- *   which would convert "the source changed" into
- *   "there is no data here". The defense check compares case-folded and stores the source's own string for the
- *   source's inconsistent capitalization.
+ *   source-schema change. The ingest step rejects it instead of mapping it to a nearest neighbor or null,
+ *   because that mapping converts "the source changed" into "there is no data here". The defense check
+ *   compares case-folded and stores the source's own string for the source's inconsistent capitalization.
  *
  *   The chunk owns no artifact. It appends rows to a database that the parent created and will seal.
  *   It returns counts for the parent to add. Chunks run one at a time against that file, so no writers overlap.
@@ -213,7 +212,7 @@ export async function ingestCoastalChunk(
 
 			scenarioCounts[feature.scenario.key] = (scenarioCounts[feature.scenario.key] ?? 0) + 1
 
-			if (feature.defenceType !== null) {
+			if (feature.defenceType) {
 				defenceTypeCounts.set(feature.defenceType, (defenceTypeCounts.get(feature.defenceType) ?? 0) + 1)
 			}
 
@@ -286,7 +285,7 @@ function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 		["mt_smp", feature.mtPolicy],
 		["lt_smp", feature.ltPolicy],
 	] as Array<[string, string | null]>) {
-		if (value !== null && !NCERM_POLICY_VALUES.has(value)) {
+		if (value && !NCERM_POLICY_VALUES.has(value)) {
 			throw new Error(
 				`coastal build: ${feature.areaID} carries ${field} ${stringifyJSON(value)}, which is not in the authority's ` +
 					`declared policy domain (${[...NCERM_POLICY_VALUES].map((entry) => stringifyJSON(entry)).join(", ")}) — ` +
@@ -299,7 +298,7 @@ function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 		["mt_smp_int", feature.mtPolicyInterpretation],
 		["lt_smp_int", feature.ltPolicyInterpretation],
 	] as Array<[string, string | null]>) {
-		if (value !== null && !NCERM_POLICY_INTERPRETATION_VALUES.has(value)) {
+		if (value && !NCERM_POLICY_INTERPRETATION_VALUES.has(value)) {
 			throw new Error(
 				`coastal build: ${feature.areaID} carries ${field} ${stringifyJSON(value)}, which is not in the authority's ` +
 					`declared interpretation domain (${[...NCERM_POLICY_INTERPRETATION_VALUES].map((entry) => stringifyJSON(entry)).join(", ")})`
@@ -307,7 +306,7 @@ function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 		}
 	}
 
-	if (feature.defenceType !== null && !NCERM_DEFENCE_TYPES_FOLDED.has(foldDefenceType(feature.defenceType))) {
+	if (feature.defenceType && !NCERM_DEFENCE_TYPES_FOLDED.has(foldDefenceType(feature.defenceType))) {
 		throw new Error(
 			`coastal build: ${feature.areaID} carries def_type ${stringifyJSON(feature.defenceType)}, which is not in the ` +
 				"authority's declared defence domain even case-folded — the fold exists for the source's own inconsistent " +

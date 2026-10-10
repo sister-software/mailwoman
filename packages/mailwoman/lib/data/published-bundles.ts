@@ -19,6 +19,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { LayerTier } from "@mailwoman/core/layers/schema"
 import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
+import { isPlainObject } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
 
 /**
@@ -173,12 +174,8 @@ function fail(path: string, where: string, problem: string): never {
 	throw new Error(`${path}: ${where} ${problem}`)
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
 function assertUnmeasured(value: Record<string, unknown>, path: string, where: string): UnmeasuredValue {
-	if (typeof value.reason !== "string" || !value.reason.length) {
+	if (typeof value.reason !== "string" || !value.reason) {
 		fail(path, where, "is unmeasured and records no reason")
 	}
 
@@ -186,7 +183,7 @@ function assertUnmeasured(value: Record<string, unknown>, path: string, where: s
 }
 
 function assertServedSize(value: unknown, path: string, where: string): ServedSize {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, where, "is not an object")
 	}
 
@@ -204,7 +201,7 @@ function assertServedSize(value: unknown, path: string, where: string): ServedSi
 }
 
 function assertServedManifest(value: unknown, path: string, where: string): ServedManifest {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, where, "is not an object")
 	}
 
@@ -214,7 +211,7 @@ function assertServedManifest(value: unknown, path: string, where: string): Serv
 		fail(path, where, `has status ${stringifyJSON(value.status ?? null)} rather than measured or unmeasured`)
 	}
 
-	if (typeof value.tier !== "string" || !value.tier.length) {
+	if (typeof value.tier !== "string" || !value.tier) {
 		fail(path, where, "records no tier")
 	}
 
@@ -234,7 +231,7 @@ function assertServedManifest(value: unknown, path: string, where: string): Serv
 }
 
 function assertDatabaseLicense(value: unknown, path: string, where: string): DatabaseLicense {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, where, "is not an object")
 	}
 
@@ -244,7 +241,7 @@ function assertDatabaseLicense(value: unknown, path: string, where: string): Dat
 		fail(path, where, `has status ${stringifyJSON(value.status ?? null)} rather than measured or unmeasured`)
 	}
 
-	if (typeof value.license !== "string" || !value.license.length) {
+	if (typeof value.license !== "string" || !value.license) {
 		fail(path, where, "is measured and records no license")
 	}
 
@@ -260,11 +257,11 @@ const OPTIONAL_COMPONENT_STRINGS = [
 ] as const satisfies ReadonlyArray<keyof RightsComponent>
 
 function assertRightsComponent(value: unknown, path: string, where: string): RightsComponent {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, where, "is not an object")
 	}
 
-	if (typeof value.source !== "string" || !value.source.length) {
+	if (typeof value.source !== "string" || !value.source) {
 		fail(path, where, "has no source")
 	}
 
@@ -292,7 +289,7 @@ function assertRightsComponent(value: unknown, path: string, where: string): Rig
 }
 
 function assertRights(value: unknown, path: string, where: string): BundleRightsRecord {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, where, "is not an object")
 	}
 
@@ -309,11 +306,11 @@ function assertRights(value: unknown, path: string, where: string): BundleRights
 }
 
 function assertArtifact(value: unknown, path: string, where: string): PublishedArtifactRecord {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, where, "is not an object")
 	}
 
-	if (typeof value.remotePath !== "string" || !value.remotePath.length) {
+	if (typeof value.remotePath !== "string" || !value.remotePath) {
 		fail(path, where, "has no remotePath")
 	}
 
@@ -331,7 +328,7 @@ function assertArtifact(value: unknown, path: string, where: string): PublishedA
  * A reader that filled one in would hand its consumers an unmeasured number.
  */
 export function assertPublishedBundlesSnapshot(value: unknown, path: string): PublishedBundlesSnapshot {
-	if (!isRecord(value)) {
+	if (!isPlainObject(value)) {
 		fail(path, "the document", "is not an object")
 	}
 
@@ -339,7 +336,7 @@ export function assertPublishedBundlesSnapshot(value: unknown, path: string): Pu
 		fail(path, "measuredAt", `is ${stringifyJSON(value.measuredAt ?? null)} rather than an ISO 8601 instant`)
 	}
 
-	if (typeof value.bucket !== "string" || !value.bucket.length) {
+	if (typeof value.bucket !== "string" || !value.bucket) {
 		fail(path, "bucket", "is missing")
 	}
 
@@ -350,11 +347,11 @@ export function assertPublishedBundlesSnapshot(value: unknown, path: string): Pu
 	const bundles = value.bundles.map((entry, index): PublishedBundleRecord => {
 		const where = `bundles[${index}]`
 
-		if (!isRecord(entry)) {
+		if (!isPlainObject(entry)) {
 			fail(path, where, "is not an object")
 		}
 
-		if (typeof entry.bundle !== "string" || !entry.bundle.length) {
+		if (typeof entry.bundle !== "string" || !entry.bundle) {
 			fail(path, where, "has no bundle name")
 		}
 

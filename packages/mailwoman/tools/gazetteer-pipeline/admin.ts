@@ -12,7 +12,8 @@
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -46,13 +47,13 @@ export interface BuildAdminOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * Default `<data-root>/src/wof-repos`.
+	 * @defaultValue `<data-root>/src/wof-repos`
 	 */
 	dataDir?: PathBuilderLike
 	/**
 	 * Output artifact path.
 	 *
-	 * Default `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
+	 * @defaultValue `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: PathBuilderLike
 	overtureCountries?: readonly string[]
@@ -70,7 +71,7 @@ export interface BuildAdminOptions {
 	/**
 	 * Build-log path.
 	 *
-	 * Default `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
+	 * @defaultValue `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
 	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -285,11 +286,3 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		elapsedSeconds: Math.round((performance.now() - t0) / 100) / 10,
 	}
 }
-
-// Re-export the step functions so `gazetteer-pipeline/admin` is a complete surface on its own.
-export * from "#gazetteer/admin/enrich"
-export * from "#gazetteer/admin/fold/geonames"
-export * from "#gazetteer/admin/fold/overture"
-export * from "#gazetteer/admin/fold/staleness"
-export * from "#gazetteer/admin/freeze"
-export * from "#gazetteer/admin/ingest-wof"

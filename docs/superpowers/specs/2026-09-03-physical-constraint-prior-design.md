@@ -170,8 +170,8 @@ Once the artifact is built, the doctor summarizes each of these from the artifac
 - **F1.** Answered 2026-09-03: NSUL is published under OGL-UK-3.0, GB coverage, six-weekly, and each
   row carries `PCDS`, the unit postcode from Code-Point Open. The user guide (May 2025, Epoch 118)
   requires four attribution statements: `Contains OS data © Crown copyright and database right
-[year]`, `Contains Royal Mail data © Royal Mail copyright and Database right [year]`, `Contains
-GeoPlace data © Local Government Information House Limited copyright and database right [year]`,
+  [year]`, `Contains Royal Mail data © Royal Mail copyright and Database right [year]`, `Contains
+  GeoPlace data © Local Government Information House Limited copyright and database right [year]`,
   and `Source: Office for National Statistics licensed under the Open Government Licence v.3.0`.
   Northern Ireland (`BT`) postcode data is excluded from the open terms and needs a separate
   Land & Property Services license, which the NI section already assumed.

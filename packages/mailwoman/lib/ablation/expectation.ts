@@ -85,7 +85,7 @@ export interface AblationLadder {
 export const ABSTAIN_RUNG = "abstain"
 
 /**
- * Expected rung outcome with reason.
+ * Expected rung result with reason.
  */
 export type ExpectedRung =
 	| { kind: "rung"; depth: number; why: string }
@@ -97,8 +97,6 @@ export type ExpectedRung =
  * Any on-ladder answer or abstention is acceptable.
  */
 export const UNCONSTRAINED_RUNG = "unconstrained"
-
-export { ABLATION_GRADES, type AblationGrade, emptyGrades, PASSING_GRADES } from "#ablation/grades"
 
 /**
  * Placetype fallback rung radius in km (measured p90 bbox radius).
@@ -572,7 +570,7 @@ export function gradeAgainstLadder(input: {
 	lat: number | null
 	lon: number | null
 	/**
-	 * Deleted component slot outcome (`substituted` is hard fail).
+	 * Deleted component slot result (`substituted` is hard fail).
 	 */
 	slot: "absent" | "recovered" | "substituted"
 	/**
@@ -613,7 +611,7 @@ export function gradeAgainstLadder(input: {
 		// For unconstrained cases, abstention and any on-ladder rung are acceptable.
 		if (!resolved) return { grade: "correctlyAbstained", achievedRungDepth: null, degradedRungs: null }
 
-		if (achieved == null) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
+		if (!achieved) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
 
 		return { grade: fell === 0 ? "held" : "degraded", achievedRungDepth, degradedRungs: fell }
 	}
@@ -621,7 +619,7 @@ export function gradeAgainstLadder(input: {
 	if (!resolved) return { grade: "lost", achievedRungDepth: null, degradedRungs: null }
 
 	// Distinguish off-ladder wrong place from on-ladder over-coarsening.
-	if (achieved == null) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
+	if (!achieved) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
 
 	// Do not penalize below undeleted precision floor.
 	if (achieved.depth > Math.max(expected.depth, anchorRungDepth)) {

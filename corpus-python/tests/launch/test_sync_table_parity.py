@@ -69,7 +69,7 @@ def test_every_corpus_version_can_be_read_off_the_table() -> None:
     """Require the table to list its corpus versions by name; `corpus()` records each version name and `launch/stage.py` reads its corpora from the same rows."""
     versions = {version for entry in CORPUS_VERSIONS.values() for version in corpus_versions(entry)}
 
-    assert len(versions) == 28, sorted(versions)
+    assert len(versions) == 31, sorted(versions)
     assert "v0.30.0-bare-postcode" in versions
     assert "v8-cjk-regs-2026-09-08" in versions
     # Each entry must be a bare version name. A slash means a row stored a literal path.
@@ -79,5 +79,5 @@ def test_every_corpus_version_can_be_read_off_the_table() -> None:
 def test_the_totals_match_the_measured_census() -> None:
     """Pin the total transfer and verified-path counts across the whole table."""
     plans = [plan_sync(entry) for entry in CORPUS_VERSIONS.values()]
-    assert sum(len(plan.rclone_commands) for plan in plans) == 59
-    assert sum(len(plan.check_paths) for plan in plans) == 167
+    assert sum(len(plan.rclone_commands) for plan in plans) == 65
+    assert sum(len(plan.check_paths) for plan in plans) == 188

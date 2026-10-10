@@ -69,8 +69,8 @@ function normalized(node: ts.Node, source: ts.SourceFile): string {
 /**
  * The sorted, normalized members of a type literal or interface body, or undefined below the floor.
  */
-function memberKey(members: ts.NodeArray<ts.TypeElement>, source: ts.SourceFile): string | undefined {
-	if (members.length < MEMBER_FLOOR) return undefined
+function memberKey(members: ts.NodeArray<ts.TypeElement>, source: ts.SourceFile): string | null {
+	if (members.length < MEMBER_FLOOR) return null
 
 	const parts = members.map((member) => normalized(member, source).replace(/;$/u, ""))
 
@@ -96,30 +96,30 @@ function headerKey(node: ts.InterfaceDeclaration | ts.TypeAliasDeclaration, sour
  * An interface and a type-literal alias with the same members share a key,
  * since the two spellings declare one shape.
  */
-function shapeKey(node: ts.InterfaceDeclaration | ts.TypeAliasDeclaration, source: ts.SourceFile): string | undefined {
+function shapeKey(node: ts.InterfaceDeclaration | ts.TypeAliasDeclaration, source: ts.SourceFile): string | null {
 	const header = headerKey(node, source)
 
 	if (ts.isInterfaceDeclaration(node)) {
 		const body = memberKey(node.members, source)
 
-		return body ? `shape${header} ${body}` : undefined
+		return body ? `shape${header} ${body}` : null
 	}
 
 	if (ts.isTypeLiteralNode(node.type)) {
 		const body = memberKey(node.type.members, source)
 
-		return body ? `shape${header} ${body}` : undefined
+		return body ? `shape${header} ${body}` : null
 	}
 
 	if (ts.isUnionTypeNode(node.type)) {
-		if (node.type.types.length < MEMBER_FLOOR) return undefined
+		if (node.type.types.length < MEMBER_FLOOR) return null
 
 		const parts = node.type.types.map((member) => normalized(member, source))
 
 		return `union${header} ${parts.toSorted().join(" | ")}`
 	}
 
-	return undefined
+	return null
 }
 
 function hasExportModifier(node: ts.HasModifiers): boolean {

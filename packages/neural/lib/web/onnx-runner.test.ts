@@ -1,4 +1,5 @@
-import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
@@ -6,6 +7,8 @@ import { MailwomanTokenizer } from "#tokenizer"
 import { WebONNXRunner } from "#web/onnx-runner"
 import { resolveWeights } from "#weights"
 import { readLabelsFromModelCard } from "#weights/channels"
+
+import { installORTWasmBinary } from "../../test/ort-wasm-binary.ts"
 
 async function resolvePresentWeights(): Promise<{
 	modelPath: string
@@ -26,10 +29,12 @@ async function resolvePresentWeights(): Promise<{
 const weights = await resolvePresentWeights()
 const haveWeights = weights !== null
 
+await installORTWasmBinary()
+
 describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
 		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
-		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
+		const runner = await WebONNXRunner.fromBytes(modelBytes)
 		const tokenIDs = [1, 2, 3, 4, 5]
 		const result = await runner.infer(tokenIDs)
 
@@ -49,11 +54,11 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),
-			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
+			WebONNXRunner.fromBytes(modelBytes),
 		])
 
-		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
-		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
+		const labels = await readLabelsFromModelCard(weights!.modelCardPath ?? null)
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner, ...(labels ? { labels } : {}) })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")
 		expect(tree.raw).toBe("123 Main St, Springfield, IL 62704")

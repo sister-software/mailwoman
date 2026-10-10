@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { realPath } from "@mailwoman/core/fs/readers"
+import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePath } from "path-ts"

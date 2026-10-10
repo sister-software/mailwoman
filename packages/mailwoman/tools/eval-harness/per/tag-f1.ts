@@ -8,8 +8,10 @@
 import type { SystemCode } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
+import type { AddressSystemConventions, Toggle } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -181,15 +183,15 @@ export interface UnfoldedEvalClassifierOptions {
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode (paired with the lexicon feed).
 	 */
-	suppressGazNearPostcode: boolean
+	suppressGazetteerNearPostcode: Toggle
 	/**
-	 * `auto` | `<system>` enables the address-system conventions mask.
+	 * `auto` | `<system>` enables the address-system conventions mask, and `off` disables it.
 	 */
-	conventions?: string
+	conventions: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
 	 */
-	bridgeGaps?: boolean
+	bridgePunctuationGaps: Toggle
 }
 
 /**
@@ -223,9 +225,9 @@ export async function createUnfoldedEvalClassifier(
 		...(feedGazetteerLexicon
 			? { gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(options.gazetteerLexicon)) }
 			: {}),
-		suppressGazetteerNearPostcode: options.suppressGazNearPostcode,
-		...(options.conventions ? { addressSystemConventions: options.conventions as "auto" } : {}),
-		...(options.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
+		suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode,
+		addressSystemConventions: options.conventions,
+		bridgePunctuationGaps: options.bridgePunctuationGaps,
 	})
 }
 
@@ -277,7 +279,7 @@ export interface MaskScorerArtifactPaths {
 export interface MaskOffOnOptions {
 	/**
 	 * Serving-tier channel overrides layered under the conventions toggle
-	 * (`{ gazetteer: false }` for the pocket tier).
+	 * (`{ gazetteer: "off" }` for the pocket tier).
 	 */
 	tierOverrides?: ScorerOverrides
 	/**
@@ -314,7 +316,7 @@ export async function scoreConventionsMaskOffOn(
 		return decodeAsJSON(parsed) as Record<string, string>
 	}
 
-	const offScorer = await createScorer({ ...base, overrides: { ...options.tierOverrides, conventions: false } })
+	const offScorer = await createScorer({ ...base, overrides: { ...options.tierOverrides, conventions: "off" } })
 	const off = await scorePerTagF1(rows, tags, classifyWith(offScorer))
 
 	const onScorer = await createScorer({ ...base, overrides: { ...options.tierOverrides, conventions: "auto" } })

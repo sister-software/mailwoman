@@ -27,7 +27,7 @@ describe("SourcesLockSchema", () => {
 		})
 
 		expect(lock["moon-nomenclature"]?.snapshot).toBe("2026-09-07")
-		expect(lock["moon-dem"]?.snapshot).toBeUndefined()
+		expect(lock["moon-dem"]?.snapshot).toBeNull()
 	})
 
 	test.each([
@@ -59,6 +59,7 @@ describe("PlanetaryBuildManifestSchema", () => {
 						longitudeRange: "0..360",
 						latitudeType: "planetocentric",
 						referenceBody: "Moon_2000_IAU_IAG (sphere, 1737400 m)",
+						controlNetwork: null,
 					},
 				},
 			],
@@ -109,12 +110,12 @@ const OLYMPUS_MONS = {
 describe("PlanetaryNomenclatureFeatureSchema", () => {
 	test("accepts Tycho and maps a blank origin to absence", () => {
 		const feature = PlanetaryNomenclatureFeatureSchema.parse(TYCHO)
-		expect(feature.origin).toBeUndefined()
+		expect(feature.origin).toBeNull()
 		expect(feature.cleanName).toBe("Tycho")
 	})
 
 	test("accepts Olympus Mons without a bounding box", () => {
-		expect(PlanetaryNomenclatureFeatureSchema.parse(OLYMPUS_MONS).bbox).toBeUndefined()
+		expect(PlanetaryNomenclatureFeatureSchema.parse(OLYMPUS_MONS).bbox).toBeNull()
 	})
 
 	test.each([

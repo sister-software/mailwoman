@@ -7,6 +7,7 @@
  */
 
 import type { QueryKindResult } from "@mailwoman/core/pipeline"
+import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import type { POIPhraseLookup, createKindClassifier } from "@mailwoman/kind-classifier"
 import type { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
@@ -66,9 +67,9 @@ export interface POIBrandSubject extends POISubjectBase {
 	name: string
 	/**
 	 * The brand's Wikidata QID.
-	 * It is absent when the lexicon had no QID for the brand.
+	 * It is `null` when the lexicon had no QID for the brand.
 	 */
-	wikidata?: string
+	wikidata: string | null
 }
 
 /**
@@ -83,22 +84,15 @@ export type POISubject = POICategorySubject | POIBrandSubject
  */
 export interface POIExplorerResult {
 	kindResult: QueryKindResult
-	subject?: POISubject
-	overpassQL?: string
-	overpassError?: string
+	subject: POISubject | null
+	overpassQL: string | null
+	overpassError: string | null
 }
 
 /**
  * One live poi.db hit, as the results list renders it.
  */
-export interface POISearchHit {
-	name: string
-	lat: number
-	lon: number
-	distanceM: number
-	country: string
-	confidence: number
-}
+export type POISearchHit = POIDistanceHit
 
 /**
  * The result of an injected live search.
@@ -112,27 +106,32 @@ export type POILiveSearchResult =
 	| { status: "unavailable" }
 
 /**
+ * What a live search looks for near `anchor`: a taxonomy category with its Overture
+ * leaf categories, or a chain brand identified by its Wikidata QID.
+ */
+export type POILiveSearchRequest =
+	| {
+			kind: "category"
+			categoryID: string
+			overtureCategoryIDs: string[]
+			anchor: string
+	  }
+	| {
+			kind: "brand"
+			brandName: string
+			wikidata: string
+			anchor: string
+	  }
+
+/**
  * The injected live-search function.
  *
- * It probes the published poi.db for the resolved category, its Overture leaf
- * categories and the anchor text.
+ * It probes the published poi.db for the request's subject and the anchor text.
  * The explorer runs intent-only when this function is absent.
- *
- * For a brand subject, `brandWikidata` contains the QID and the probe fetches by it.
- * In that case `categoryID` holds the brand name and `overtureCategoryIDs` is empty.
  *
  * A probe that cannot serve brands should leave `usePOISearch`'s `brandLiveSearch` option unset.
  */
-export type POILiveSearch = (params: {
-	categoryID: string
-	overtureCategoryIDs: string[]
-	anchor: string
-	/**
-	 * The brand's Wikidata QID.
-	 * It is present only when the subject is a chain brand.
-	 */
-	brandWikidata?: string
-}) => Promise<POILiveSearchResult>
+export type POILiveSearch = (request: POILiveSearchRequest) => Promise<POILiveSearchResult>
 
 /**
  * The state of a "Search live" request.

@@ -85,6 +85,7 @@ beforeAll(async () => {
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
 		createdAt: "2026-08-18T00:00:00.000Z",
+		sourceRecords: null,
 	})
 
 	await writeLayerCoverage(database, [
@@ -163,6 +164,6 @@ describe("layer interface", () => {
 		const surveyed = await readLayerCoverage(kdb, 1)
 
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
-		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 2)).toBeNull()
 	})
 })

@@ -11,7 +11,8 @@
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -110,7 +111,7 @@ const mixtureAuditPresent = await pathExists(mixtureAuditPath)
 if (!mixtureAuditPresent) {
 	console.error(
 		`sampled stage: no audit at ${mixtureAuditPath}. Produce one with\n` +
-			`  cd corpus-python && uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
+			`  uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
 			`    --config ${configPath} --corpus-dir <corpus> --json ${mixtureAuditPath}\n` +
 			`The stage reads \`unknown\` until then, which states what this checkout holds rather than what a ` +
 			`jurisdiction has.\n`

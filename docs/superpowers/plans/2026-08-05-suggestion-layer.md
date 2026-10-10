@@ -546,7 +546,7 @@ default.
   Without it, every `canonicalize` op has to be re-derived by string comparison from data the
   pipeline already computed and discarded.
 - `PlaceCandidate` (`resolver-wof-sqlite/types.ts:48-93`) gains `matchType: "exact" | "alias" |
-"postal_city" | "fuzzy"`. The value is already computed at
+  "postal_city" | "fuzzy"`. The value is already computed at
   `candidate-lookup.ts:450` (the Jaccard) and `:328` (the postal-city short-circuit), then
   discarded. `PostcodeAnchor` already carries this field under this name
   (`neural/postcode-anchor.ts:87`), so the name is settled.

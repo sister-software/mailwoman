@@ -15,8 +15,6 @@ import { type EmailBlock, licenseEmailPreview, licenseEmailSections } from "#ema
 import type { LicenseEmail } from "#email/provider"
 import { LicenseEmailTemplate } from "#email/template"
 
-export { licenseEmailSubject } from "#email/content"
-
 const TITLE = "Your Mailwoman commercial license"
 
 function textLines(block: EmailBlock): string[] {

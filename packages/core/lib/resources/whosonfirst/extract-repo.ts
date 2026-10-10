@@ -11,7 +11,8 @@
 
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
-import { isDirectory, pathExists, readLocalJSONFile } from "#fs/readers"
+import { readLocalJSONFile } from "#fs/readers"
+import { isDirectory, pathExists } from "#fs/readers/stat"
 import type { WOFFeature } from "#resources/whosonfirst/placetypes/admin"
 
 /**

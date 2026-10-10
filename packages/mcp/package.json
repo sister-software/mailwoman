@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/mcp",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "MCP server — mailwoman's toolset for agents: address parsing and geocoding, POI search and Overpass export, layer manifests, plausibility checks, and FCC broadband and filer lookups.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -67,9 +67,9 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"@modelcontextprotocol/sdk": "^1.30.0",
+		"@modelcontextprotocol/sdk": "^1.32.1",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }

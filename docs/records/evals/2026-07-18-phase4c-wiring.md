@@ -54,7 +54,7 @@ much lower on fragments than the segmentation seg@1 the board used.
 ## Status + what's next
 
 - `mailwoman/kbest-street-rerank.ts` — `rerankByStreetEvidence(classifier, text, evidence, grammar,
-opts)`, PURE composition (injected evidence), byte-stable fallback for span-less models. Unit
+  opts)`, PURE composition (injected evidence), byte-stable fallback for span-less models. Unit
   tested; `SQLiteStreetNameLookup` now exported from the resolver-wof-sqlite barrel (a gap #1156 left).
 - **Not yet in the runtime pipeline / CLI.** The function is the wired primitive; threading it into
   `createRuntimePipeline` behind a flag (so the CLI + drop-in servers exercise it) is the next step,

@@ -10,21 +10,21 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import type { LocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
 import { regionMatches } from "#tools/eval-harness/oa/resolver/admin-match"
-import type { ArmOutcome } from "#tools/eval-harness/oa/resolver/aggregate"
+import type { ArmResult } from "#tools/eval-harness/oa/resolver/aggregate"
 import type { OARow } from "#tools/eval-harness/oa/resolver/rows"
 import type { Resolved } from "#tools/eval-harness/oa/resolver/tree-hits"
 import { mostSpecific } from "#tools/eval-harness/oa/resolver/tree-hits"
 
 /**
- * Outcome for one row, with the resolved names that the `--errors-json` dump uses to classify misses.
+ * Result for one row, with the resolved names that the `--errors-json` dump uses to classify misses.
  *
  * A wrong `resolvedLoc` points to resolver ranking.
  * A missing value points to coverage or parsing.
  */
-export interface RowScore extends ArmOutcome {
-	resolvedLoc?: string
-	resolvedLocID?: number
-	resolvedReg?: string
+export interface RowScore extends ArmResult {
+	resolvedLoc: string | null
+	resolvedLocID: number | null
+	resolvedReg: string | null
 }
 
 /**
@@ -49,12 +49,12 @@ export function scoreResolvedRow(row: OARow, resolved: Resolved[], localityMatch
 	const regResolved = resolved.find((r) => r.placetype === "region")
 
 	return {
-		locMatch: localityMatches(row.expected.locality, locNode),
-		regMatch: regionMatches(regResolved?.name, row.expected.region),
+		locMatch: localityMatches(row.expected.locality ?? null, locNode ?? null),
+		regMatch: regionMatches(regResolved?.name ?? null, row.expected.region ?? null),
 		resolved: !!best,
 		err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
-		resolvedLoc: locRaw,
-		resolvedLocID: locNode?.id,
-		resolvedReg: regResolved?.name,
+		resolvedLoc: locRaw ?? null,
+		resolvedLocID: locNode?.id ?? null,
+		resolvedReg: regResolved?.name ?? null,
 	}
 }

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode"
@@ -24,6 +25,7 @@ import {
 	lookupNormalize,
 	lookupStreetMorphology,
 	openSealedArtifact,
+	type LocaleLookup,
 	type LookupResult,
 	type LookupRow,
 } from "#dev-mcp/lookup"
@@ -90,25 +92,25 @@ export async function runLookup(
 
 	switch (source) {
 		case LookupSource.Normalize: {
-			return {
+			return lookupResult({
 				source,
 				rows: lookupNormalize(queries, args.locale ?? "und"),
 				notes: [
 					"Normalization always answers, so every row is a hit. The useful column is `changed`: a query whose " +
 						"normalized form differs is the usual reason a lookup against another source misses.",
 				],
-			}
+			})
 		}
 
 		case LookupSource.Codex: {
-			return {
+			return lookupResult({
 				source,
 				rows: lookupCodex(queries),
 				notes: [
 					"Pure reference data — no artifact, so this source is never unavailable and a miss is always a real " +
 						"absence from the codex tables.",
 				],
-			}
+			})
 		}
 
 		case LookupSource.Candidate: {
@@ -150,7 +152,7 @@ export async function runLookup(
 						const openedB = await openSealedArtifact<WOFDatabase>(comparePath)
 
 						if ("unavailable" in openedB || !comparePath) {
-							return {
+							return lookupResult({
 								source,
 								provenance: { artifact: path },
 								rows,
@@ -160,32 +162,34 @@ export async function runLookup(
 									splitNote,
 									...(idNote ? [idNote] : []),
 								],
-							}
+							})
 						}
 
 						try {
 							const rowsCompare = lookupCandidate(openedB.db, queries, candidateOptions)
 
 							return {
-								source,
-								provenance: { artifact: path, compare_artifact: comparePath },
-								rows,
+								...lookupResult({
+									source,
+									provenance: { artifact: path, compare_artifact: comparePath },
+									rows,
+									notes: [
+										"Two artifacts, same queries: `rows` is the primary, `rows_compare` the compare_candidate_db, " +
+											"and `deltas` the per-query difference — computed over the RETURNED rows only, so raise " +
+											"`limit` before reading a delta over a deep key population.",
+										splitNote,
+										...(idNote ? [idNote] : []),
+									],
+								}),
 								rows_compare: rowsCompare,
 								deltas: diffCandidateRows(rows, rowsCompare),
-								notes: [
-									"Two artifacts, same queries: `rows` is the primary, `rows_compare` the compare_candidate_db, " +
-										"and `deltas` the per-query difference — computed over the RETURNED rows only, so raise " +
-										"`limit` before reading a delta over a deep key population.",
-									splitNote,
-									...(idNote ? [idNote] : []),
-								],
 							}
 						} finally {
 							openedB.db.destroy()
 						}
 					}
 
-					return {
+					return lookupResult({
 						source,
 						provenance: { artifact: path },
 						rows,
@@ -197,7 +201,7 @@ export async function runLookup(
 							splitNote,
 							...(idNote ? [idNote] : []),
 						],
-					}
+					})
 				} finally {
 					importanceDB?.destroy()
 				}
@@ -205,18 +209,20 @@ export async function runLookup(
 		}
 
 		case LookupSource.POI: {
-			return withArtifact(source, poiDatabaseRoot(dataRoot)("poi.db").toString(), (db, path) => ({
-				source,
-				provenance: { artifact: path },
-				rows: lookupPOI(db, queries, {
-					...(args.country ? { country: args.country } : {}),
-					...(args.limit ? { limit: args.limit } : {}),
-				}),
-				notes: [
-					"The exact-`name_key` path only. The runtime also reaches rows through an FTS5 name index, so a miss " +
-						"here is an absence from the exact key, not proof no POI answers this name.",
-				],
-			}))
+			return withArtifact(source, poiDatabaseRoot(dataRoot)("poi.db").toString(), (db, path) =>
+				lookupResult({
+					source,
+					provenance: { artifact: path },
+					rows: lookupPOI(db, queries, {
+						...(args.country ? { country: args.country } : {}),
+						...(args.limit ? { limit: args.limit } : {}),
+					}),
+					notes: [
+						"The exact-`name_key` path only. The runtime also reaches rows through an FTS5 name index, so a miss " +
+							"here is an absence from the exact key, not proof no POI answers this name.",
+					],
+				})
+			)
 		}
 
 		case LookupSource.WOF: {
@@ -243,7 +249,7 @@ export async function runLookup(
  *
  * An explicit path that does not resolve is returned as given, so opening it reports why it is unavailable.
  */
-async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
+async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | null> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
@@ -251,9 +257,13 @@ async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLik
 	return config.candidate_db
 }
 
+function lookupResult(result: Pick<LookupResult, "source" | "rows" | "notes"> & Partial<LookupResult>): LookupResult {
+	return { provenance: null, unavailable_reason: null, by_locale: null, ...result }
+}
+
 async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
-	path: string | undefined,
+	path: string | null,
 	build: (db: DatabaseClient<WOFDatabase>, path: string) => T | Promise<T>
 ): Promise<T | LookupResult> {
 	const opened = await openSealedArtifact<WOFDatabase>(path)
@@ -261,7 +271,7 @@ async function withArtifact<T extends LookupResult>(
 	if ("unavailable" in opened || !path) {
 		const unavailable = "unavailable" in opened ? opened.unavailable : "No artifact path was resolved for this source."
 
-		return { source, rows: [], unavailable_reason: unavailable, notes: [UNAVAILABLE_NOTE] }
+		return lookupResult({ source, rows: [], unavailable_reason: unavailable, notes: [UNAVAILABLE_NOTE] })
 	}
 
 	try {
@@ -293,12 +303,12 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 	}
 
 	if (!extracts.length) {
-		return {
+		return lookupResult({
 			source: LookupSource.WOF,
 			rows: [],
 			unavailable_reason: `No WOF extract could be opened. ${skipped.join(" ")}`,
 			notes: [UNAVAILABLE_NOTE],
-		}
+		})
 	}
 
 	try {
@@ -311,7 +321,7 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 			rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { id: number }).id)))
 		)
 
-		return {
+		return lookupResult({
 			source: LookupSource.WOF,
 			provenance: { artifact: extracts.map((extract) => extract.name).join(", ") },
 			rows,
@@ -324,7 +334,7 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 					"nothing downstream.",
 				...(idNote ? [idNote] : []),
 			],
-		}
+		})
 	} finally {
 		for (const extract of extracts) {
 			extract.db.destroy()
@@ -339,23 +349,23 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	try {
 		resolved = await resolveWeights({ locale })
 	} catch (error) {
-		return {
+		return lookupResult({
 			source: LookupSource.Postcode,
 			rows: [],
 			unavailable_reason: `No weights package resolved for locale ${locale}: ${(error as Error).message}`,
 			notes: [UNAVAILABLE_NOTE],
-		}
+		})
 	}
 
 	if (!resolved.anchorLookupPath) {
-		return {
+		return lookupResult({
 			source: LookupSource.Postcode,
 			rows: [],
 			unavailable_reason:
 				`${resolved.packageDir ?? resolved.source} ships no postcode anchor artifact (neither postcode-<cc>.bin nor ` +
 				"anchor-lookup.json). The anchor channel runs OFF for this locale — an absent artifact, not an empty one.",
 			notes: [UNAVAILABLE_NOTE],
-		}
+		})
 	}
 
 	const spanMode = (await readRequiredChannels(resolved.modelCardPath))?.anchor?.span_mode ?? "alnum-run"
@@ -364,15 +374,15 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	try {
 		resolver = await loadAnchorArtifact(resolved.anchorLookupPath)
 	} catch (error) {
-		return {
+		return lookupResult({
 			source: LookupSource.Postcode,
 			rows: [],
 			unavailable_reason: `${resolved.anchorLookupPath.path} did not parse: ${(error as Error).message}`,
 			notes: [UNAVAILABLE_NOTE],
-		}
+		})
 	}
 
-	return {
+	return lookupResult({
 		source: LookupSource.Postcode,
 		provenance: { artifact: resolved.anchorLookupPath.path, locale, span_mode: spanMode },
 		rows: lookupPostcodeAnchor(resolver, args.queries, { spanMode }),
@@ -382,7 +392,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 			`The card declares span_mode "${spanMode}", which decides whether a key containing a space is reachable at ` +
 				"serve at all.",
 		],
-	}
+	})
 }
 
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
@@ -417,47 +427,57 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
 
 		for (const locale of args.locales) {
-			byLocale[locale] = await probeLocaleFST(registry, args, locale)
+			const { artifact, rows, unavailable_reason } = await probeLocaleFST(registry, args, locale)
+
+			byLocale[locale] = { artifact, rows, unavailable_reason }
 		}
 
-		return { source: args.source, by_locale: byLocale, rows: [], notes }
+		return lookupResult({ source: args.source, by_locale: byLocale, rows: [], notes })
 	}
 
 	const probe = await probeLocaleFST(registry, args, args.config?.locale)
 
 	if (probe.unavailable_reason) {
-		return { source: args.source, rows: [], unavailable_reason: probe.unavailable_reason, notes: [UNAVAILABLE_NOTE] }
+		return lookupResult({
+			source: args.source,
+			rows: [],
+			unavailable_reason: probe.unavailable_reason,
+			notes: [UNAVAILABLE_NOTE],
+		})
 	}
 
-	return {
+	return lookupResult({
 		source: args.source,
 		provenance: { engine_id: probe.engine_id, artifact: probe.artifact },
 		rows: probe.rows,
 		notes,
-	}
+	})
 }
 
 async function probeLocaleFST(
 	registry: EngineRegistryLike,
 	args: LookupArgs,
 	locale: string | undefined
-): Promise<{ artifact?: string; engine_id?: string; rows: LookupRow[]; unavailable_reason?: string }> {
+): Promise<LocaleLookup & { engine_id: string | null }> {
 	const engine = await registry.acquire({
 		...args.config,
 		...(locale ? { locale } : {}),
-		gazetteer_prior: true,
+		gazetteer_prior: "on",
 	})
 
 	const path =
 		args.source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
 
-	const loaded = await loadFSTArtifact(path, deserializeFST)
+	const loaded = await loadFSTArtifact(path ?? null, deserializeFST)
 
-	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
+	if ("unavailable" in loaded) {
+		return { artifact: null, engine_id: null, rows: [], unavailable_reason: loaded.unavailable }
+	}
 
 	return {
-		...(path ? { artifact: resolvePath(path) } : {}),
+		artifact: path ? resolvePath(path) : null,
 		engine_id: engine.engineID,
+		unavailable_reason: null,
 		rows:
 			args.source === LookupSource.FST
 				? lookupFST(loaded.fst, normalizeTokens, args.queries)

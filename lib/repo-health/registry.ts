@@ -10,6 +10,7 @@
 import type { RepoCheck } from "#repo-health/check"
 import { bundleGraphCheck } from "#repo-health/checks/bundle-graph"
 import { cliFlagPropertiesCheck } from "#repo-health/checks/cli-flag-properties"
+import { countryBranchesCheck } from "#repo-health/checks/country-branches"
 import { dataProvenanceCheck } from "#repo-health/checks/data-provenance"
 import { debtCheck } from "#repo-health/checks/debt"
 import { docLinkTargetsCheck } from "#repo-health/checks/doc-link-targets"
@@ -21,6 +22,7 @@ import { localeScopeCheck } from "#repo-health/checks/locale/scope"
 import { localeTablesCheck } from "#repo-health/checks/locale/tables"
 import { manifestTargetsCheck } from "#repo-health/checks/manifest-targets"
 import { moduleCohesionCheck } from "#repo-health/checks/module/cohesion"
+import { moduleReexportsCheck } from "#repo-health/checks/module/reexports"
 import { moduleSurfaceCheck } from "#repo-health/checks/module/surface"
 import { nestedIndexCheck } from "#repo-health/checks/nested-index"
 import { noRootScriptsCheck } from "#repo-health/checks/no-root-scripts"
@@ -70,6 +72,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	workspaceFilesCheck,
 	moduleSurfaceCheck,
 	moduleCohesionCheck,
+	moduleReexportsCheck,
 	privateNameShadowsCheck,
 	cliFlagPropertiesCheck,
 	prefixDirectoriesCheck,
@@ -82,6 +85,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	runtimeFlagsCheck,
 	wireIdentifiersCheck,
 	stalePathLiteralsCheck,
+	countryBranchesCheck,
 	debtCheck,
 	bundleGraphCheck,
 	vocabCensusCheck,
@@ -89,6 +93,6 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	typecheckTestsCheck,
 ]
 
-export function findCheck(id: string): RepoCheck | undefined {
-	return checks.find((check) => check.id === id)
+export function findCheck(id: string): RepoCheck | null {
+	return checks.find((check) => check.id === id) ?? null
 }

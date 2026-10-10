@@ -15,7 +15,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -41,15 +41,17 @@ const SVALBARD = MATRIKKELEN_AREAS[1]!
 
 const LAST_MODIFIED = "Tue, 08 Sep 2026 08:19:56 GMT"
 
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "matrikkelen test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })
 }
 
 /**
- * A recorded entry for Svalbard, whose archive the address-source register measured at 58,079 bytes.
+ * A recorded entry for Svalbard.
+ *
+ * The address-source register measured its archive at 58,079 bytes.
  */
 function recordedSvalbard(overrides: Partial<MatrikkelenFileManifest> = {}): MatrikkelenFileManifest {
 	return {
@@ -105,7 +107,7 @@ describe("matrikkelenInputPath", () => {
 
 describe("matrikkelenAreasFor", () => {
 	it("takes both areas when a caller names none", () => {
-		expect(matrikkelenAreasFor(undefined)).toEqual(MATRIKKELEN_AREAS)
+		expect(matrikkelenAreasFor(null)).toEqual(MATRIKKELEN_AREAS)
 		expect(matrikkelenAreasFor([])).toEqual(MATRIKKELEN_AREAS)
 	})
 
@@ -173,17 +175,17 @@ describe("recordedMatrikkelenArea", () => {
 	})
 
 	it("reads no entry where the manifest holds none for the area", () => {
-		expect(recordedMatrikkelenArea(undefined)).toBeUndefined()
+		expect(recordedMatrikkelenArea(null)).toBeNull()
 	})
 
 	it("reads no entry where the recorded run stated no last-modified, so the skip is not decided from it", () => {
-		expect(recordedMatrikkelenArea(recordedSvalbard({ last_modified: null }))).toBeUndefined()
+		expect(recordedMatrikkelenArea(recordedSvalbard({ last_modified: null }))).toBeNull()
 	})
 
 	it("reads no entry from a manifest written before the area fields existed", () => {
 		const { area_code: _area, member_bytes: _bytes, ...older } = recordedSvalbard()
 
-		expect(recordedMatrikkelenArea(older)).toBeUndefined()
+		expect(recordedMatrikkelenArea(older)).toBeNull()
 	})
 })
 
@@ -202,7 +204,7 @@ describe("MATRIKKELEN_REQUIRED_COLUMNS", () => {
 		])
 
 		// The published header's first column is `lokalid` carrying a byte-order mark,
-		// so a check that named it would fail on every file the publisher writes.
+		// so a check that includes it would fail on every file the publisher writes.
 		expect(MATRIKKELEN_REQUIRED_COLUMNS).not.toContain("lokalid")
 	})
 })

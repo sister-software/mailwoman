@@ -3,7 +3,7 @@
 
 /**
  *   Aliases and containment. An alias is text that may refer to an entity. It resolves only when exactly
- *   one candidate carries evidence, and two candidates stay two. A containment link relates a child to a
+ *   one candidate holds evidence, and two candidates stay two. A containment link relates a child to a
  *   parent through one source record, so a parcel with two buildings keeps both.
  */
 
@@ -15,7 +15,7 @@ import type { ClaimInterval, ISODate } from "#time"
 
 export interface Evidence extends ClaimInterval {
 	source: SourceRecordID
-	observedAt?: ISODate
+	observedAt: ISODate | null
 }
 
 export interface AliasCandidate {
@@ -25,7 +25,7 @@ export interface AliasCandidate {
 
 export interface Alias {
 	text: string
-	address?: PostalAddress
+	address: PostalAddress | null
 	candidates: readonly AliasCandidate[]
 }
 

@@ -12,7 +12,8 @@
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -39,31 +40,31 @@ export interface BuildPostcodeDatabaseOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * Default `<data-root>/src/wof-repos`.
+	 * @defaultValue `<data-root>/src/wof-repos`
 	 */
 	reposDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
+	 * @defaultValue `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: PathBuilderLike
 	/**
 	 * Census zcta Gazetteer file (US pass 1).
 	 *
-	 * Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
+	 * @defaultValue `<data-root>/census/2024_Gaz_zcta_national.txt`
 	 */
 	zctaPath?: PathBuilderLike
 	/**
 	 * GeoNames postal dump dir.
 	 *
-	 * Default `<data-root>/geonames-postal`.
+	 * @defaultValue `<data-root>/geonames-postal`
 	 */
 	geonamesPostalDir?: PathBuilderLike
 	/**
 	 * Admin gazetteer for the parent/ancestor borrows.
 	 *
-	 * Default the live `admin-global-priority.db`.
+	 * @defaultValue the live `admin-global-priority.db`.
 	 */
 	adminPath?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
@@ -218,8 +219,3 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		sealed: true,
 	}
 }
-
-export * from "#gazetteer/postcode/binary"
-export * from "#gazetteer/postcode/centroid-fills"
-export * from "#gazetteer/postcode/geonames/tail"
-export * from "#gazetteer/postcode/zcta-centroids"

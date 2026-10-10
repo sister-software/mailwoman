@@ -6,7 +6,7 @@
  *   resolved ancestry labeled by tag, so a Japanese municipality is `city` and a prefecture `state`.
  */
 
-import type { GeocodeResult } from "mailwoman/geocode"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 
 import type { NominatimAddressDetails, ResolvedAddress } from "#index"
 
@@ -24,8 +24,8 @@ export const TAG_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 	country: "country",
 }
 
-function joinNonEmpty(...parts: Array<string | undefined>): string {
-	return parts.filter((part) => part !== undefined && part.length).join(", ")
+function joinNonEmpty(...parts: Array<string | null | undefined>): string {
+	return parts.filter((part) => part != null && part.length).join(", ")
 }
 
 /**

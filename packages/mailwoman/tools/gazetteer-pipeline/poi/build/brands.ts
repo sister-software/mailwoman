@@ -37,8 +37,6 @@ import { dirname, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer/poi/defaults"
 
-export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer/poi/defaults"
-
 /**
  * The brand table's own schema/data version — bump when the shape or matching semantics change.
  *
@@ -215,13 +213,13 @@ export interface BuildBrandTableOptions {
 	/**
 	 * Dominance floor — see {@link aggregateBrands}.
 	 *
-	 * Defaults to {@link DEFAULT_DOMINANCE}.
+	 * @defaultValue {@linkcode DEFAULT_DOMINANCE}
 	 */
 	dominance?: number
 	/**
 	 * The brand table's own `version` field.
 	 *
-	 * Defaults to {@link BRAND_TABLE_VERSION}.
+	 * @defaultValue {@linkcode BRAND_TABLE_VERSION}
 	 */
 	version?: string
 }

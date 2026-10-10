@@ -115,8 +115,8 @@ wasm 33
 
 The four lexicons are not in that call because the loader derives their URLs from `modelURL` — swap
 the last path segment, keep the rest — which is why step 1 put them in the same directory. Pass
-`gazetteerLexiconURL`, `countryLexiconURL`, `streetTypeLexiconURL` or `localitySurfaceLexiconURL`
-explicitly if yours live elsewhere, or `null` to skip one.
+`gazetteerLexicon`, `countryLexicon`, `streetTypeLexicon` or `localitySurfaceLexicon` as `{ url }`
+if yours live elsewhere, or `"none"` to skip one. The default is `"auto"`.
 
 `modelCardURL` is the one optional-looking argument that is not optional. The card carries the label
 set, and this bundle emits 33 of them. Omit it and the classifier falls back to a built-in 21-label

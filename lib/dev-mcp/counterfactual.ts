@@ -97,7 +97,7 @@ export interface SettingSkip {
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
-	country: string | undefined
+	country: string | null
 ): Promise<{ flips: CounterfactualFlip[]; skipped: SettingSkip[] }> {
 	const flips: CounterfactualFlip[] = []
 	const skipped: SettingSkip[] = []
@@ -114,7 +114,7 @@ export async function enumerateFlips(
 		setting: "gazetteer_prior",
 		from: String(effective.gazetteerPrior),
 		to: String(!effective.gazetteerPrior),
-		patch: { gazetteer_prior: !effective.gazetteerPrior },
+		patch: { gazetteer_prior: effective.gazetteerPrior ? "off" : "on" },
 	})
 
 	const scopeTo = effective.countryScope === "none" ? "auto" : "none"
@@ -130,7 +130,7 @@ export async function enumerateFlips(
 		setting: "fork_entity",
 		from: String(effective.forkEntity),
 		to: String(!effective.forkEntity),
-		patch: { fork_entity: !effective.forkEntity },
+		patch: { fork_entity: effective.forkEntity ? "off" : "on" },
 	})
 
 	return { flips, skipped }
@@ -141,7 +141,7 @@ export async function enumerateFlips(
  */
 async function localeCounterfactual(
 	current: string,
-	country: string | undefined
+	country: string | null
 ): Promise<CounterfactualFlip | { why: string }> {
 	if (!country) {
 		return { why: "the input set carries no country for this row, so there is no row locale to flip to" }
@@ -174,7 +174,7 @@ async function localeCounterfactual(
 export interface CounterfactualTarget {
 	id: string
 	input: string
-	country?: string | undefined
+	country: string | null
 	base: CounterfactualAnswer
 }
 

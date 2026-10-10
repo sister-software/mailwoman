@@ -25,7 +25,7 @@ export interface MeasureResolutionsOptions extends CoastalIngestOptions, Resolut
 	/**
 	 * Which scenarios to measure.
 	 *
-	 * Defaults to all twelve.
+	 * @defaultValue all twelve.
 	 */
 	scenarioKeys?: ReadonlyArray<string>
 }
@@ -105,5 +105,3 @@ export async function measureCoastalCellResolutions(
 		measurements: indexes.map((index) => index.finish()),
 	}
 }
-
-export { formatResolutionTotalRows, formatScenarioMeasurementRows } from "#sdk/cells"

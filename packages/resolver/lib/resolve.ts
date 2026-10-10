@@ -12,12 +12,14 @@ import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/pla
 import { collectNodes, type AddressNode, type AddressTree, type Interpretation } from "@mailwoman/core/decoder"
 import {
 	type BackendCapabilityGap,
+	type DefaultCountry,
 	type ResolveNodeTrace,
 	type ResolvedPlace,
 	type ResolveOpts,
 	type Resolver,
 	type ResolverBackend,
 	countriesFromPostcodeFormat,
+	resolveSwitches,
 } from "@mailwoman/core/resolver"
 
 import {
@@ -54,6 +56,7 @@ import {
 	NOOP_TRACE_RECORDER,
 	pickCompletion,
 	type ResolutionState,
+	type ResolvedOpts,
 } from "#resolve/passes"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
@@ -94,6 +97,23 @@ function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 	return matched.iso2
 }
 
+/**
+ * The default country a lookup filters by, or undefined when none applies.
+ * `country` lookups ignore an inferred scope.
+ */
+function scopedCountryFor(placetype: string, scope: DefaultCountry | null): string | undefined {
+	if (!scope || (placetype === "country" && scope.source === "inferred")) return undefined
+
+	return scope.country
+}
+
+/**
+ * Reports whether the caller chose the default country scope.
+ */
+function isCallerScope(scope: DefaultCountry | null): boolean {
+	return scope?.source === "caller"
+}
+
 class WOFResolver implements Resolver {
 	readonly #backend: ResolverBackend
 	/**
@@ -107,7 +127,7 @@ class WOFResolver implements Resolver {
 
 	constructor(backend: ResolverBackend) {
 		this.#backend = backend
-		this.artifactCoverage = backend.artifactCoverage
+		this.artifactCoverage = backend.artifactCoverage ?? null
 		this.capabilityGaps = describeCapabilityGaps(backend)
 		reportCapabilityGaps(this.capabilityGaps)
 	}
@@ -117,10 +137,12 @@ class WOFResolver implements Resolver {
 	 */
 	findPlace: Resolver["findPlace"] = (query) => this.#backend.findPlace(query)
 
-	async resolveTree(tree: AddressTree, opts: ResolveOpts = {}): Promise<AddressTree> {
+	async resolveTree(tree: AddressTree, callerOpts: ResolveOpts = {}): Promise<AddressTree> {
+		// Every on/off switch resolves against the one defaults table, so the reads below are plain truthiness.
+		const opts: ResolvedOpts = { ...callerOpts, ...resolveSwitches(callerOpts) }
 		// Optional early postcode-shape pass.
 		// Runs sync and can only narrow candidates.
-		const shapeVerdict = opts.postcodeShapeCoherence === true ? applyPostcodeShapeCoherence(tree.roots) : null
+		const shapeVerdict = opts.postcodeShapeCoherence ? applyPostcodeShapeCoherence(tree.roots) : null
 
 		const state: ResolutionState = {
 			lookupsRemaining: opts.maxLookups ?? 10,
@@ -129,17 +151,16 @@ class WOFResolver implements Resolver {
 			minWinningScore: opts.minWinningScore ?? 0,
 			minScoreRefusals: 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
-			defaultCountry: opts.defaultCountry,
-			defaultCountryIsInferred: opts.defaultCountryIsInferred === true,
+			defaultCountry: opts.defaultCountry ?? null,
 			bareLocalityNode: loneBareLocalityNode(tree, opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP),
-			parentFallback: opts.parentFallback ?? true,
+			parentFallback: opts.parentFallback,
 			// Only enable unreachable diagnostics when a trace sink exists.
 			...(opts.diagnoseUnreachable && opts.traceSink ? { diagnoseUnreachable: true } : {}),
 			postcode: firstPostcodeValue(tree.roots),
 			// Optional postcode-containment hint for locality lookups.
-			postcodeContainmentCoherence: opts.postcodeContainmentCoherence === true,
+			postcodeContainmentCoherence: opts.postcodeContainmentCoherence,
 			// Optional postcode-prefix prior and index.
-			postcodePrefixPrior: opts.postcodePrefixPrior === true,
+			postcodePrefixPrior: opts.postcodePrefixPrior,
 			postcodePrefixIndex: opts.postcodePrefixIndex,
 			// Derive format-implied countries when not provided.
 			postcodeFormatCountries:
@@ -153,10 +174,10 @@ class WOFResolver implements Resolver {
 			capitalLevel: opts.capitalLevel,
 			hardCountry: opts.hardCountry,
 			// Dual-role hierarchy completion (default on, backend-dependent).
-			hierarchyCompletion: opts.hierarchyCompletion ?? true,
-			includeAncestors: opts.includeAncestors ?? false,
+			hierarchyCompletion: opts.hierarchyCompletion,
+			includeAncestors: opts.includeAncestors,
 			// Optional admin containment rerank uses a pre-scanned region qualifier.
-			adminContainmentRerank: opts.adminContainmentRerank === true,
+			adminContainmentRerank: opts.adminContainmentRerank,
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 			localityNodePresent: false,
@@ -172,28 +193,28 @@ class WOFResolver implements Resolver {
 		// Explicit scope outranks inferred default scope.
 		let explicitScope: string | null = null
 
-		if (!state.defaultCountry || state.defaultCountryIsInferred) {
+		if (state.defaultCountry?.source !== "caller") {
 			explicitScope = explicitCountryScope(tree.roots)
 
 			if (explicitScope) {
-				state.defaultCountry = explicitScope
-				state.defaultCountryIsInferred = false
+				state.defaultCountry = { country: explicitScope, source: "caller" }
 			}
 		}
 
-		if (opts.postcodeCountryCoherence !== false && state.postcode) {
+		if (opts.postcodeCountryCoherence && state.postcode) {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
-				defaultCountry: state.defaultCountry,
-				...(shapeVerdict?.narrowing !== undefined ? { candidateSystems: shapeVerdict.narrowing } : {}),
-				...(opts.postcodeCountryCoherenceThresholdKm !== undefined
+				defaultCountry: state.defaultCountry?.country ?? null,
+				...(shapeVerdict?.narrowing ? { candidateSystems: shapeVerdict.narrowing } : {}),
+				...(opts.postcodeCountryCoherenceThresholdKm != null
 					? { thresholdKm: opts.postcodeCountryCoherenceThresholdKm }
 					: {}),
 			})
 
 			if (postcodeScope) {
 				// Override default country for the walk.
-				state.defaultCountry = postcodeScope.country
+				// The postcode's country replaces the scope but keeps its source.
+				state.defaultCountry = { country: postcodeScope.country, source: state.defaultCountry?.source ?? "caller" }
 			}
 		}
 
@@ -223,18 +244,18 @@ class WOFResolver implements Resolver {
 		}
 
 		// Admin coherence passes (default on).
-		if (opts.adminCoherence !== false) {
+		if (opts.adminCoherence) {
 			// Clear contradictory parent-fallback picks before coherence passes.
 			applyParentFallbackContradiction(newRoots)
 			await applyAdminCoherence(newRoots, this.#backend)
 			// Re-resolve locality when explicit country contradicts it.
 			await applyExplicitCountryCoherence(newRoots, this.#backend)
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
-			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
+			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
 		}
 
 		// Postcode/locality consistency pass (default on).
-		if (opts.postcodeConsistency !== false) {
+		if (opts.postcodeConsistency) {
 			applyPostcodeConsistency(newRoots, opts.postcodeConsistencyThresholdKm ?? 50, opts.postcodeConsistencyMaxMoveKm)
 		}
 
@@ -250,7 +271,7 @@ class WOFResolver implements Resolver {
 
 		// Span-rescore fallback tier (default on).
 		// Skip when a min-score refusal already occurred.
-		if (opts.spanRescore !== false && state.minScoreRefusals === 0) {
+		if (opts.spanRescore && state.minScoreRefusals === 0) {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
 		}
 
@@ -308,7 +329,7 @@ class WOFResolver implements Resolver {
 		let resolved: CoordinateOptionalPlace | null = null
 
 		// Skip lookup for shape-excluded postcode spans.
-		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length && !isShapeExcludedPostcode(node)) {
+		if (placetype && state.lookupsRemaining > 0 && node.value.trim() && !isShapeExcludedPostcode(node)) {
 			let picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 
 			// Compound JP municipality handling with scoped fallback control.
@@ -427,8 +448,7 @@ class WOFResolver implements Resolver {
 		const countryHint = node.metadata?.["country_hint"]
 
 		// Do not apply inferred default-country filtering to country lookups.
-		const defaultCountryForLookup =
-			placetype === "country" && state.defaultCountryIsInferred ? undefined : state.defaultCountry
+		const defaultCountryForLookup = scopedCountryFor(placetype, state.defaultCountry)
 
 		const country =
 			parentResolved?.country ??
@@ -449,11 +469,11 @@ class WOFResolver implements Resolver {
 		const containmentEligible =
 			state.adminContainmentRerank &&
 			placetype === "locality" &&
-			state.regionQualifier !== undefined &&
-			(!state.defaultCountry || state.defaultCountryIsInferred)
+			state.regionQualifier != null &&
+			!isCallerScope(state.defaultCountry)
 
 		if (containmentEligible) {
-			query.regionQualifier = state.regionQualifier
+			query.regionQualifier = state.regionQualifier!
 		}
 
 		// Optional locality postcode hint and containment coherence flag.
@@ -476,7 +496,7 @@ class WOFResolver implements Resolver {
 		// For unconstrained postalcodes, probe format-implied countries only.
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
 			rec.check("postcode_format_probe")
-			let best: ResolvedPlace | undefined
+			let best: ResolvedPlace | null = null
 
 			for (const impliedCountry of state.postcodeFormatCountries) {
 				try {
@@ -510,7 +530,7 @@ class WOFResolver implements Resolver {
 				}
 
 				// If parent scope misses, retry once without parent scope.
-				if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
+				if (!candidates.length && state.parentFallback && query.parentID != null) {
 					delete query.parentID
 					rec.check("parent_fallback_retry")
 					candidates = await this.#backend.findPlace(query)
@@ -538,10 +558,8 @@ class WOFResolver implements Resolver {
 				const metadata: Record<string, unknown> = {
 					postcode_prefix: probe.prefix,
 					postcode_prefix_ancestors: probe.node.ancestors,
-					...(probe.node.radiusP95Km !== undefined ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
-					...(probe.node.lat !== undefined && probe.node.lon !== undefined
-						? { coordinate_source: "postcode_prefix" }
-						: {}),
+					...(probe.node.radiusP95Km != null ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
+					...(probe.node.lat != null && probe.node.lon != null ? { coordinate_source: "postcode_prefix" } : {}),
 				}
 
 				rec.check("postcode_prefix_prior")
@@ -603,8 +621,8 @@ class WOFResolver implements Resolver {
 
 				if (tier !== 0) return tier
 				// Unknown-country candidates get zero posterior mass.
-				const aKey = (a.prominence ?? a.score) + w * (a.country === undefined ? 0 : (post[a.country] ?? 0))
-				const bKey = (b.prominence ?? b.score) + w * (b.country === undefined ? 0 : (post[b.country] ?? 0))
+				const aKey = (a.prominence ?? a.score) + w * (a.country ? (post[a.country] ?? 0) : 0)
+				const bKey = (b.prominence ?? b.score) + w * (b.country ? (post[b.country] ?? 0) : 0)
 
 				return bKey - aKey || b.score - a.score
 			})
@@ -693,7 +711,7 @@ class WOFResolver implements Resolver {
 			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
 			// Mark picks admitted outside resolved parent scope.
-			...((parentResolved && typeof parentResolved.id === "number" && query.parentID === undefined) ||
+			...((parentResolved && typeof parentResolved.id === "number" && query.parentID == null) ||
 			top.regionScopeMiss === true
 				? { parent_fallback: true }
 				: {}),

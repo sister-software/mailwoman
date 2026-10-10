@@ -58,7 +58,7 @@ async function main(): Promise<void> {
 			ccID: () => 0,
 			ptID: () => 0,
 			regionOf: new Map(),
-			importance: undefined,
+			importance: null,
 			stageRow: () => {},
 			progress: (phase, message) => console.error(`[${phase}] ${arm.name}: ${message}`),
 			deadPlacetypes: arm.deadPlacetypes,

@@ -62,7 +62,7 @@ describe("parseMapURL", () => {
 		const row = parseMapURL("https://maps.app.goo.gl/nope", "https://www.google.com/maps/search/nothing+here")
 
 		expect(row.resolved).toBe(false)
-		expect(row.latitude).toBeUndefined()
+		expect(row.latitude).toBeNull()
 		expect(row.reason).toMatch(/neither/)
 	})
 

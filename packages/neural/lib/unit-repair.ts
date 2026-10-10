@@ -24,8 +24,6 @@ import {
 	tokenIndicesOverlapping,
 } from "#span/repair"
 
-export type { RepairResult } from "#span/repair"
-
 /**
  * A detected secondary-unit substring with its char range.
  *

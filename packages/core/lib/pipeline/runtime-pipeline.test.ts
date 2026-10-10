@@ -1,3 +1,5 @@
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -11,12 +13,12 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
 import type {
 	AddressClassifier,
 	LocaleHint,
-	NormalizedInputLite,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "#pipeline/types"
-import type { GazetteerArtifactCoverage, Resolver, ResolveOpts } from "#resolver/types"
+import type { GazetteerArtifactCoverage } from "#resolver/coverage-facts"
+import type { Resolver, ResolveOpts } from "#resolver/types"
 
 function fakeTree(raw: string, roots: AddressNode[] = []): AddressTree {
 	return { raw, roots }
@@ -27,39 +29,54 @@ function fakeClassifier(tree: AddressTree): AddressClassifier {
 }
 
 function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
-	return { resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)) }
+	return {
+		resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)),
+		artifactCoverage: null,
+		capabilityGaps: null,
+	}
 }
 
 describe("HardCountryFor — coverage-guarded hard country filter", () => {
-	const ON = true
-
 	it("returns the country when confident AND safelisted (the pure-win case)", () => {
-		expect(hardCountryFor("ES", 0.99, {}, ON, undefined)).toBe("ES")
+		expect(hardCountryFor({ country: "ES", confidence: 0.99 }, {}, { use: "filter", safelist: null })).toBe("ES")
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("ES")).toBe(true)
 	})
 
 	it("stays SOFT (undefined) for a confident but NON-safelisted country — the low-coverage tail", () => {
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("FI")).toBe(false)
-		expect(hardCountryFor("FI", 1, {}, ON, undefined)).toBeUndefined()
+		expect(hardCountryFor({ country: "FI", confidence: 1 }, {}, { use: "filter", safelist: null })).toBeNull()
 	})
 
 	it("stays SOFT below the confidence bar even when safelisted", () => {
-		expect(hardCountryFor("ES", 0.5, {}, ON, undefined)).toBeUndefined()
+		expect(hardCountryFor({ country: "ES", confidence: 0.5 }, {}, { use: "filter", safelist: null })).toBeNull()
 	})
 
-	it("is OFF when hardPlaceCountry is false/undefined", () => {
-		expect(hardCountryFor("ES", 0.99, {}, false, undefined)).toBeUndefined()
-		expect(hardCountryFor("ES", 0.99, {}, undefined, undefined)).toBeUndefined()
+	it("is OFF when the placer country is only a prior", () => {
+		expect(hardCountryFor({ country: "ES", confidence: 0.99 }, {}, { use: "prior", safelist: null })).toBeNull()
 	})
 
 	it("never overwrites a caller's own hardCountry / defaultCountry", () => {
-		expect(hardCountryFor("ES", 0.99, { defaultCountry: "US" }, ON, undefined)).toBeUndefined()
-		expect(hardCountryFor("ES", 0.99, { hardCountry: "US" }, ON, undefined)).toBeUndefined()
+		expect(
+			hardCountryFor(
+				{ country: "ES", confidence: 0.99 },
+				{ defaultCountry: { country: "US", source: "caller" } },
+				{ use: "filter", safelist: null }
+			)
+		).toBeNull()
+
+		expect(
+			hardCountryFor({ country: "ES", confidence: 0.99 }, { hardCountry: "US" }, { use: "filter", safelist: null })
+		).toBeNull()
 	})
 
 	it("honors a safelist override (how the eval measures unrestricted to grow the list)", () => {
-		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
-		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
+		expect(hardCountryFor({ country: "FI", confidence: 0.99 }, {}, { use: "filter", safelist: new Set(["FI"]) })).toBe(
+			"FI"
+		)
+
+		expect(
+			hardCountryFor({ country: "ES", confidence: 0.99 }, {}, { use: "filter", safelist: new Set(["FI"]) })
+		).toBeNull()
 	})
 })
 
@@ -74,9 +91,9 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 		placed: string
 		artifact?: GazetteerArtifactCoverage
 		override?: ReadonlySet<string>
-	}): Promise<string | undefined> => {
+	}): Promise<string | null> => {
 		const resolveTree = vi.fn(async (tree: AddressTree, _opts?: ResolveOpts) => tree)
-		const resolver: Resolver = { resolveTree }
+		const resolver: Resolver = { resolveTree, artifactCoverage: null, capabilityGaps: null }
 
 		if (opts.artifact) {
 			resolver.artifactCoverage = opts.artifact
@@ -90,14 +107,14 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 				placeCountry: () => ({ country: opts.placed, confidence: 1 }),
 			},
 			{
-				hardPlaceCountry: true,
+				placerCountryUse: "filter",
 				...(opts.override ? { hardCountrySafelist: opts.override } : {}),
 			}
 		)
 
 		const resolveOpts = resolveTree.mock.calls[0]?.[1] as { hardCountry?: string } | undefined
 
-		return resolveOpts?.hardCountry
+		return resolveOpts?.hardCountry ?? null
 	}
 
 	it("uses the artifact's safelist when the resolver carries one (FI hard-filters once its artifact says so)", async () => {
@@ -105,16 +122,16 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 	})
 
 	it("artifact safelist REPLACES the constant — a constant member absent from the artifact stays soft", async () => {
-		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]) })).toBeUndefined()
+		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]) })).toBeNull()
 	})
 
 	it("No artifact → the code-constant fallback, byte-identical (ES hard, FI soft)", async () => {
 		expect(await run({ placed: "ES" })).toBe("ES")
-		expect(await run({ placed: "FI" })).toBeUndefined()
+		expect(await run({ placed: "FI" })).toBeNull()
 	})
 
 	it("the per-call override (the eval instrument) outranks the artifact", async () => {
-		expect(await run({ placed: "FI", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBeUndefined()
+		expect(await run({ placed: "FI", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBeNull()
 		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBe("ES")
 	})
 })
@@ -187,17 +204,24 @@ describe("runPipeline — stage composition", () => {
 			computeQueryShape: vi.fn((_input) => {
 				order.push("queryShape")
 
-				return { knownFormats: [] }
+				return { ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] }
 			}),
 			detectLocale: vi.fn(async (_in, _sh, opts) => {
 				order.push("detectLocale")
 
-				return { locale: opts?.hint ?? "und", confidence: 1, alternatives: [], source: "caller" as const }
+				return {
+					locale: opts?.hint ?? "und",
+					confidence: 1,
+					alternatives: [],
+					source: "caller" as const,
+					script: [],
+					evidence: null,
+				}
 			}),
 			classifyKind: vi.fn(async (_in, _sh, _lo) => {
 				order.push("classifyKind")
 
-				return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
+				return { kind: "structured_address" as const, confidence: 0, alternatives: [], intentMarkers: null }
 			}),
 			classifier: {
 				parse: vi.fn(async (text) => {
@@ -212,6 +236,8 @@ describe("runPipeline — stage composition", () => {
 
 					return tree
 				}),
+				artifactCoverage: null,
+				capabilityGaps: null,
 			},
 		}
 
@@ -221,6 +247,7 @@ describe("runPipeline — stage composition", () => {
 
 	it("passes QueryShape into classifier.parse", async () => {
 		const shape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.9 }],
 		}
 
@@ -235,7 +262,9 @@ describe("runPipeline — stage composition", () => {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-
+			fst: null,
+			caseNormalization: "title-case",
+			placetypePair: "inherit",
 			inputMode: "formatted",
 		})
 	})
@@ -246,10 +275,24 @@ describe("runPipeline — stage composition", () => {
 		expect(classifier.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ inputMode: "fragmented" }))
 	})
 
-	it("Threads PipelineOpts.normalizeCase to classifier.parse", async () => {
+	it("Threads PipelineOpts.caseNormalization to classifier.parse", async () => {
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
-		await runPipeline("214 JONES RD", { classifier }, { normalizeCase: true })
-		expect(classifier.parse).toHaveBeenCalledWith("214 JONES RD", expect.objectContaining({ normalizeCase: true }))
+		await runPipeline("214 JONES RD", { classifier }, { caseNormalization: "preserve" })
+
+		expect(classifier.parse).toHaveBeenCalledWith(
+			"214 JONES RD",
+			expect.objectContaining({ caseNormalization: "preserve" })
+		)
+	})
+
+	it("Defaults caseNormalization to title-case and placetypePair to inherit", async () => {
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
+		await runPipeline("214 JONES RD", { classifier })
+
+		expect(classifier.parse).toHaveBeenCalledWith(
+			"214 JONES RD",
+			expect.objectContaining({ caseNormalization: "title-case", placetypePair: "inherit" })
+		)
 	})
 
 	it("skips resolver when not wired", async () => {
@@ -272,9 +315,11 @@ describe("runPipeline — fast-path routing", () => {
 		kind: "postcode_only",
 		confidence: 0.97,
 		alternatives: [],
+		intentMarkers: null,
 	}
 
 	const postcodeShape: QueryShapeLite = {
+		...EMPTY_QUERY_SHAPE_VIEW,
 		knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 		totalLength: 5,
 		characterClass: "numeric",
@@ -302,6 +347,7 @@ describe("runPipeline — fast-path routing", () => {
 
 	it("fast-paths locality_only inputs when shape is short + alpha", async () => {
 		const localityShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [],
 			totalLength: 5,
 			characterClass: "alpha",
@@ -311,6 +357,7 @@ describe("runPipeline — fast-path routing", () => {
 			kind: "locality_only",
 			confidence: 0.96,
 			alternatives: [],
+			intentMarkers: null,
 		}
 
 		const classifier = fakeClassifier(fakeTree("Paris"))
@@ -365,7 +412,12 @@ describe("runPipeline — fast-path routing", () => {
 		const resolver = fakeResolver((t) => t)
 
 		const stages: RuntimePipelineStages = {
-			computeQueryShape: () => ({ knownFormats: [], totalLength: 5, characterClass: "alpha" }),
+			computeQueryShape: () => ({
+				...EMPTY_QUERY_SHAPE_VIEW,
+				knownFormats: [],
+				totalLength: 5,
+				characterClass: "alpha",
+			}),
 			classifyKind: async () => postcodeOnlyKind,
 			classifier,
 			resolver,
@@ -419,6 +471,8 @@ describe("RunPipeline — graceful degradation", () => {
 			resolveTree: vi.fn(async () => {
 				throw new Error("resolver boom")
 			}),
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		const result = await runPipeline("hello", { classifier, resolver })
@@ -435,7 +489,7 @@ describe("runPipeline — abort signal", () => {
 
 	it("aborts between normalize and queryShape if signaled", async () => {
 		const controller = new AbortController()
-		const computeQueryShape = vi.fn(() => ({ knownFormats: [] }))
+		const computeQueryShape = vi.fn(() => ({ ...EMPTY_QUERY_SHAPE_VIEW, knownFormats: [] }))
 
 		const normalize = vi.fn((raw: string) => {
 			controller.abort()
@@ -459,7 +513,7 @@ describe("runPipeline — abort signal", () => {
 		const classifyKind = vi.fn(async () => {
 			controller.abort()
 
-			return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
+			return { kind: "structured_address" as const, confidence: 0, alternatives: [], intentMarkers: null }
 		})
 
 		await expect(
@@ -508,6 +562,7 @@ describe("runPipeline — abort signal", () => {
 
 describe("runPipeline — timing budget shape", () => {
 	const postcodeShape: QueryShapeLite = {
+		...EMPTY_QUERY_SHAPE_VIEW,
 		knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 		totalLength: 5,
 		characterClass: "numeric",
@@ -517,6 +572,7 @@ describe("runPipeline — timing budget shape", () => {
 		kind: "postcode_only",
 		confidence: 0.97,
 		alternatives: [],
+		intentMarkers: null,
 	}
 
 	it("full path with all stages: normalize / query-shape / locale-hint / kind-classifier / token-classify / resolve", async () => {
@@ -612,6 +668,7 @@ describe("RunPipeline — non-graceful stage failures", () => {
 
 	it("Resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
 		const postcodeShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",
@@ -621,11 +678,18 @@ describe("RunPipeline — non-graceful stage failures", () => {
 			resolveTree: vi.fn(async () => {
 				throw new Error("resolver exploded")
 			}),
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
-			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			classifyKind: async () => ({
+				kind: "postcode_only" as const,
+				confidence: 0.97,
+				alternatives: [],
+				intentMarkers: null,
+			}),
 			resolver,
 		})
 
@@ -643,6 +707,8 @@ describe("runPipeline — locale + opts threading", () => {
 				confidence: 1,
 				alternatives: [],
 				source: "caller",
+				script: [],
+				evidence: null,
 			})
 		)
 
@@ -651,7 +717,7 @@ describe("runPipeline — locale + opts threading", () => {
 	})
 
 	it("passes resolveOpts to resolver", async () => {
-		const resolver: Resolver = { resolveTree: vi.fn(async (t) => t) }
+		const resolver: Resolver = { resolveTree: vi.fn(async (t) => t), artifactCoverage: null, capabilityGaps: null }
 		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
 		expect(resolver.resolveTree).toHaveBeenCalledWith(expect.anything(), { maxLookups: 3 })
 	})
@@ -667,6 +733,8 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 
 				return t
 			}),
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
 		return { resolver, seen }
@@ -704,6 +772,25 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 		const placeCountry = vi.fn(() => ({ country: "DE", confidence: 0.97 }))
 		await runPipeline("Hauptstraße 5, Berlin", { resolver, placeCountry }, { resolveOpts: { maxLookups: 7 } })
 		expect(seen[0]).toMatchObject({ maxLookups: 7, anchorPosterior: { DE: 0.97 } })
+	})
+
+	it('hard-filters a confident safelisted guess by default, and only adds the prior under "prior"', async () => {
+		const placeCountry = vi.fn(() => ({ country: "DE", confidence: 0.97 }))
+
+		const byDefault = captureResolveOpts()
+		await runPipeline("Hauptstraße 5, Berlin", { resolver: byDefault.resolver, placeCountry })
+		expect(byDefault.seen[0]).toMatchObject({ hardCountry: "DE" })
+
+		const priorOnly = captureResolveOpts()
+
+		await runPipeline(
+			"Hauptstraße 5, Berlin",
+			{ resolver: priorOnly.resolver, placeCountry },
+			{ placerCountryUse: "prior" }
+		)
+
+		expect(priorOnly.seen[0]).toMatchObject({ anchorPosterior: { DE: 0.97 } })
+		expect(priorOnly.seen[0]).not.toHaveProperty("hardCountry")
 	})
 
 	it("abstains (country: null) ⇒ no posterior injected", async () => {
@@ -753,6 +840,7 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 		const placeCountry = vi.fn(() => ({ country: "US", confidence: 0.96 }))
 
 		const postcodeShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",
@@ -760,7 +848,12 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
-			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			classifyKind: async () => ({
+				kind: "postcode_only" as const,
+				confidence: 0.97,
+				alternatives: [],
+				intentMarkers: null,
+			}),
 			resolver,
 			placeCountry,
 		})
@@ -819,6 +912,8 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 				resolveTree: vi.fn(async () => {
 					throw new Error("backend closed")
 				}),
+				artifactCoverage: null,
+				capabilityGaps: null,
 			},
 		})
 
@@ -829,6 +924,7 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 
 	it("records a resolver throw on the FAST path too", async () => {
 		const postcodeShape: QueryShapeLite = {
+			...EMPTY_QUERY_SHAPE_VIEW,
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",
@@ -836,11 +932,18 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
-			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			classifyKind: async () => ({
+				kind: "postcode_only" as const,
+				confidence: 0.97,
+				alternatives: [],
+				intentMarkers: null,
+			}),
 			resolver: {
 				resolveTree: vi.fn(async () => {
 					throw new Error("backend closed")
 				}),
+				artifactCoverage: null,
+				capabilityGaps: null,
 			},
 		})
 

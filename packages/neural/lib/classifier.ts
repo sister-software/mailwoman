@@ -18,21 +18,29 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
-import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import {
+	DEFAULT_CASE_NORMALIZATION,
+	proposeSpans,
+	type ProposedSpan,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+	type WordConsistencySetting,
+} from "@mailwoman/core/pipeline"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
-import { confidentLocaleCountry, LOCALE_COUNTRIES, localeHintID, resolveSystemVerdict } from "#address-system"
+import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
 import { encodeCharUnits } from "#char-encoder"
 import type {
+	AddressSystemConventions,
 	NeuralAddressClassifierConfig,
 	ParseOpts,
 	ParseWithLogitsResult,
 	SpanProposerConfig,
 } from "#classifier/options"
+import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
-import { buildFSTEmissionPriors } from "#fst-prior"
-import { STAGE2_BIO_LABELS } from "#labels"
+import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
+import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
@@ -47,8 +55,9 @@ import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
 import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
 import type { MailwomanTokenizer, TokenizedPiece } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
-import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "#trace"
+import type { NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
+import { buildVenueHeadEmissionPriors } from "#venue/head-prior"
 import {
 	argmaxWithConfidence,
 	buildBIOEndMask,
@@ -60,10 +69,13 @@ import {
 import { enforceWordConsistency } from "#word-consistency"
 
 export type {
+	AddressSystemConventions,
 	NeuralAddressClassifierConfig,
 	ParseOpts,
 	ParseWithLogitsResult,
+	PlacetypeCensusSelection,
 	SpanProposerConfig,
+	SpanProposerSelection,
 } from "#classifier/options"
 
 export {
@@ -109,10 +121,10 @@ export interface NeuralRunner {
 function treeWithLocaleCountry(
 	text: string,
 	tokens: DecoderToken[],
-	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | undefined,
+	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | null,
 	localeCountry: { country: string; confidence: number } | null
 ): AddressTree {
-	return Object.assign(buildAddressTree(text, tokens, calibrate), localeCountry ? { localeCountry } : {})
+	return Object.assign(buildAddressTree(text, tokens, calibrate ?? undefined), localeCountry ? { localeCountry } : {})
 }
 
 /**
@@ -163,36 +175,36 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * The semi-Markov segment-transition grammar from `semi-crf-transitions.json`,
-	 * `undefined` when the bundle has no span grammar.
+	 * `null` when the bundle has no span grammar.
 	 */
-	get spanGrammar(): SemiCRFTransitions | undefined {
-		return this.cfg.semiCRFGrammar
+	get spanGrammar(): SemiCRFTransitions | null {
+		return this.cfg.semiCRFGrammar ?? null
 	}
 
 	/**
-	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) or `undefined` when the
+	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) or `null` when the
 	 * weights package has none, loaded by the runtime pipeline as the default `opts.fst`.
 	 */
-	get fstPath(): PathBuilderLike | undefined {
-		return this.cfg.fstPath
+	get fstPath(): PathBuilderLike | null {
+		return this.cfg.fstPath ?? null
 	}
 
 	/**
-	 * The path to the street-morphology FST (`fst-street-morphology.bin`), or `undefined`
+	 * The path to the street-morphology FST (`fst-street-morphology.bin`), or `null`
 	 * when the weights package and its base have none.
 	 */
-	get streetMorphologyPath(): string | undefined {
-		return this.cfg.streetMorphologyPath
+	get streetMorphologyPath(): string | null {
+		return this.cfg.streetMorphologyPath ?? null
 	}
 
 	/**
-	 * The loaded `model.onnx` path and the weights source that supplied it, `undefined`
+	 * The loaded `model.onnx` path and the weights source that supplied it, `null`
 	 * when the instance was constructed directly instead of through {@link loadFromWeights}.
 	 */
-	get resolvedWeights(): { modelPath: string; source: string } | undefined {
+	get resolvedWeights(): { modelPath: string; source: string } | null {
 		return this.cfg.modelPath && this.cfg.weightsSource
 			? { modelPath: this.cfg.modelPath, source: this.cfg.weightsSource }
-			: undefined
+			: null
 	}
 
 	/**
@@ -204,6 +216,27 @@ export class NeuralAddressClassifier {
 		this.#defaultProposerCfg ??= { lexicon: buildCodexSpanLexicon() }
 
 		return this.#defaultProposerCfg
+	}
+
+	/**
+	 * Resolves the span proposer for one parse, or `null` when it is disabled.
+	 */
+	private spanProposerFor(opts: ParseOpts | undefined): SpanProposerConfig | null {
+		const selection = opts?.spanProposer ?? "inherit"
+		const source = selection === "inherit" ? (this.cfg.spanProposer ?? "auto") : selection
+
+		if (source === "none") return null
+
+		return source === "auto" ? this.defaultProposer() : source
+	}
+
+	/**
+	 * Resolves the address-system conventions for one parse.
+	 */
+	private conventionsFor(opts: ParseOpts | undefined): AddressSystemConventions {
+		const selection = opts?.addressSystemConventions ?? "inherit"
+
+		return selection === "inherit" ? (this.cfg.addressSystemConventions ?? "off") : selection
 	}
 
 	/**
@@ -232,16 +265,19 @@ export class NeuralAddressClassifier {
 	}
 
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
-		if (!text.length) return { raw: text, roots: [] }
+		if (!text) return { raw: text, roots: [] }
+
 		// The model trained on mixed case, so this converts all-caps ASCII input to title case.
 		// The conversion preserves length and keeps offsets valid.
-		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const modelText =
+			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
+
 		const { tokens, localeCountry } = await this.#decode(modelText, opts)
 
 		return treeWithLocaleCountry(
 			modelText,
 			tokens,
-			opts?.calibrate ? { calibrate: opts.calibrate } : undefined,
+			opts?.calibrate ? { calibrate: opts.calibrate } : null,
 			localeCountry
 		)
 	}
@@ -251,18 +287,20 @@ export class NeuralAddressClassifier {
 	 * same decode path as `parse` and the logits the raw model output before priors and repairs.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
-		if (!text.length) {
+		if (!text) {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
 
-		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const modelText =
+			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
+
 		const { tokens, logits, pieces, localeCountry } = await this.#decode(modelText, opts)
 
 		return {
 			tree: treeWithLocaleCountry(
 				modelText,
 				tokens,
-				opts?.calibrate ? { calibrate: opts.calibrate } : undefined,
+				opts?.calibrate ? { calibrate: opts.calibrate } : null,
 				localeCountry
 			),
 			logits,
@@ -279,19 +317,22 @@ export class NeuralAddressClassifier {
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]
 
-		if (!text.length) {
+		if (!text) {
 			// Empty input still reports the resolved conventions mode and a record for every prior kind.
 			return {
 				text,
 				caseNormalized: false,
 				pieces: [],
+				anchor: null,
+				gazetteer: null,
+				country: null,
 				logits: [],
+				localeLogits: null,
+				spanScores: null,
+				localeCountries: null,
 				detectedSystem: null,
-				systemSource: resolveSystemVerdict(
-					opts?.addressSystemConventions ?? this.cfg.addressSystemConventions,
-					undefined
-				).systemSource,
-				priors: TRACE_PRIOR_KINDS.map((kind) => ({ kind, applied: false })),
+				systemSource: resolveSystemVerdict(this.conventionsFor(opts), null).systemSource,
+				priors: TRACE_PRIOR_KINDS.map((kind) => untracedPrior(kind, false)),
 				emissions: [],
 				labels,
 				path: [],
@@ -301,7 +342,9 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const modelText =
+			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
+
 		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
 
 		if (!trace) throw new Error("traceParse: #decode returned no trace despite trace=true (invariant)")
@@ -310,13 +353,14 @@ export class NeuralAddressClassifier {
 			text: modelText,
 			caseNormalized: modelText !== text,
 			pieces: pieces.map((p) => ({ piece: p.piece, id: p.id, start: p.start, end: p.end })),
-			...(trace.anchor ? { anchor: trace.anchor } : {}),
-			...(trace.gazetteer ? { gazetteer: trace.gazetteer } : {}),
-			...(trace.country ? { country: trace.country } : {}),
+			anchor: trace.anchor,
+			gazetteer: trace.gazetteer,
+			country: trace.country,
 			logits,
+			localeLogits: trace.localeLogits,
 			// The country order travels with the logits so consumers do not hardcode it.
-			...(trace.localeLogits ? { localeLogits: trace.localeLogits, localeCountries: [...LOCALE_COUNTRIES] } : {}),
-			...(trace.spanScores ? { spanScores: trace.spanScores } : {}),
+			localeCountries: trace.localeLogits ? [...LOCALE_COUNTRIES] : null,
+			spanScores: trace.spanScores,
 			detectedSystem: trace.detectedSystem,
 			systemSource: trace.systemSource,
 			priors: trace.priors,
@@ -350,11 +394,11 @@ export class NeuralAddressClassifier {
 		 * The intermediates that `traceParse` needs, present only when `trace` is true.
 		 */
 		trace?: {
-			anchor?: SoftFeatureChannel
-			gazetteer?: SoftFeatureChannel
-			country?: SoftFeatureChannel
-			localeLogits?: number[]
-			spanScores?: number[][][]
+			anchor: SoftFeatureChannel | null
+			gazetteer: SoftFeatureChannel | null
+			country: SoftFeatureChannel | null
+			localeLogits: number[] | null
+			spanScores: number[][][] | null
 			detectedSystem: SystemCode | null
 			systemSource: "off" | "auto" | "pinned"
 			priors: TracePrior[]
@@ -372,13 +416,13 @@ export class NeuralAddressClassifier {
 
 		// The character path takes no soft-feature channels.
 		const soft: SoftFeatures = encoded.charIDs
-			? {}
+			? { anchor: null, gazetteer: null, country: null, streetType: null, localitySurface: null }
 			: buildSoftFeatures(text, pieces, {
 					postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
 					postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
 					gazetteerLexicon: this.cfg.gazetteerLexicon,
 					countryLexicon: this.cfg.countryLexicon,
-					suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+					suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
 					streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
 					localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
 				})
@@ -392,10 +436,10 @@ export class NeuralAddressClassifier {
 					soft.country,
 					soft.streetType || soft.localitySurface || this.cfg.addressSystems
 						? {
-								...(soft.streetType ? { streetType: soft.streetType } : {}),
-								...(soft.localitySurface ? { localitySurface: soft.localitySurface } : {}),
+								streetType: soft.streetType,
+								localitySurface: soft.localitySurface,
 								...(this.cfg.addressSystems
-									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint, text) }
+									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint ?? null, text) }
 									: {}),
 							}
 						: undefined
@@ -439,9 +483,7 @@ export class NeuralAddressClassifier {
 		// A prior counts as applied only when at least one cell is nonzero.
 		const matrixHasBias = (m: readonly (readonly number[])[]): boolean => m.some((row) => row.some((v) => v !== 0))
 
-		// A null system applies no conventions.
-		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
-		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits)
+		const { detectedSystem, systemSource } = resolveSystemVerdict(this.conventionsFor(opts), localeLogits)
 		const conventions = conventionsForSystem(detectedSystem)
 
 		const queryShapePrior = opts?.queryShape
@@ -453,7 +495,7 @@ export class NeuralAddressClassifier {
 
 		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
-		tracePriors?.push({ kind: "queryShape", applied: queryShapePrior !== undefined && matrixHasBias(queryShapePrior) })
+		tracePriors?.push(untracedPrior("queryShape", queryShapePrior !== undefined && matrixHasBias(queryShapePrior)))
 
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
@@ -479,7 +521,7 @@ export class NeuralAddressClassifier {
 			emissions = addEmissionMatrix(emissions, fstPrior)
 		}
 
-		tracePriors?.push({ kind: "fst", applied: fstPrior !== undefined && matrixHasBias(fstPrior) })
+		tracePriors?.push(untracedPrior("fst", fstPrior !== undefined && matrixHasBias(fstPrior)))
 
 		const morphologyPrior = opts?.fstStreetMorphology
 			? buildStreetMorphologyEmissionPriors(
@@ -494,31 +536,55 @@ export class NeuralAddressClassifier {
 			emissions = addEmissionMatrix(emissions, morphologyPrior)
 		}
 
-		tracePriors?.push({
-			kind: "streetMorphology",
-			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
-		})
+		tracePriors?.push(
+			untracedPrior("streetMorphology", morphologyPrior !== undefined && matrixHasBias(morphologyPrior))
+		)
 
-		// The span proposer adds phrase priors and is on by default, with `spanProposer: false` turning it off.
-		const configured = this.cfg.spanProposer === false ? undefined : (this.cfg.spanProposer ?? this.defaultProposer())
-		const proposerCfg = (opts?.spanProposer ?? true) ? configured : undefined
+		// The span proposer adds phrase priors and is on by default.
+		const proposerCfg = this.spanProposerFor(opts)
 		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
 
-		if (spanProposals.length) {
+		if (proposerCfg && spanProposals.length) {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
 
-		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
+		tracePriors?.push(untracedPrior("spanProposer", spanProposals.length > 0))
+
+		const morphologyFST = opts?.fstStreetMorphology
+
+		const venueHeadPrior = opts?.venueHead
+			? buildVenueHeadEmissionPriors(opts.venueHead, pieces, this.labels, {
+					...(morphologyFST ? { isStreetAffix: (word: string) => isStreetAffix(morphologyFST, word) } : {}),
+					...opts.venueHeadOpts,
+				})
+			: undefined
+
+		if (venueHeadPrior) {
+			emissions = addEmissionMatrix(emissions, venueHeadPrior)
+		}
+
+		tracePriors?.push(untracedPrior("venueHead", venueHeadPrior !== undefined && matrixHasBias(venueHeadPrior)))
 
 		// The placetype-pair prior stays off unless options or config enable it.
 		// It runs before the conventions mask, so the mask still removes any
 		// forbidden tag that the prior favors.
-		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
+		const placetypePairSelection = opts?.placetypePair ?? "inherit"
+
+		const placetypePairOpt =
+			placetypePairSelection === "inherit"
+				? this.cfg.placetypePair
+				: placetypePairSelection === "off"
+					? undefined
+					: placetypePairSelection
+
 		// This record, allocated only when tracing, receives the probe path that fired.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
 		// The census is probed only when tracing.
 		// Its observations enter the trace without changing a logit.
-		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
+		const censusSelection = opts?.placetypeCensus ?? "inherit"
+
+		const placetypeCensusOpt: PlacetypeCensusLike | undefined =
+			censusSelection === "inherit" ? this.cfg.placetypeCensus : censusSelection === "off" ? undefined : censusSelection
 
 		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
 
@@ -556,8 +622,9 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "placetypePair",
 			applied: placetypePairApplied,
-
-			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
+			probePath: (placetypePairApplied && pairProbeTrace?.firedPath) || null,
+			census: null,
+			censusProbedParents: null,
 		})
 
 		// The census adds no bias, so `applied` is always false and the observations
@@ -565,12 +632,9 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "placetypeCensus",
 			applied: false,
-			...(pairProbeTrace?.censusProbedParents === undefined
-				? {}
-				: {
-						census: pairProbeTrace.censusObservations ?? [],
-						censusProbedParents: pairProbeTrace.censusProbedParents,
-					}),
+			probePath: null,
+			census: pairProbeTrace?.censusProbedParents === undefined ? null : (pairProbeTrace.censusObservations ?? []),
+			censusProbedParents: pairProbeTrace?.censusProbedParents ?? null,
 		})
 
 		// Forbidden tags get an emission of -1e9 (log 0), and the mask copies the matrix
@@ -599,7 +663,7 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
+		tracePriors?.push(untracedPrior("conventionsMask", conventionsMaskApplied))
 
 		let labelIndices =
 			this.decodeMode === "viterbi"
@@ -624,14 +688,13 @@ export class NeuralAddressClassifier {
 		// The default matches the shipped pipeline so a bare classifier decodes as
 		// production does, but the character path never runs the repair because unspaced
 		// text such as a Japanese address would become one word.
-		const wordConsistency = this.cfg.charEncoder
-			? false
+		const wordConsistency: WordConsistencySetting = this.cfg.charEncoder
+			? "off"
 			: (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT)
 
-		if (wordConsistency) {
+		if (wordConsistency !== "off") {
 			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
-			const wcOpts = typeof wordConsistency === "object" ? wordConsistency : undefined
-			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices, wcOpts)
+			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices, wordConsistency)
 			labelIndices = wc.labelIndices
 			healedConfidence = wc.healedConfidence
 
@@ -696,7 +759,12 @@ export class NeuralAddressClassifier {
 
 		// The opt-in punctuation bridge merges same-tag fragments split by punctuation.
 		// Annotation and quoted spans block merges across their boundaries.
-		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
+		const bridgeSelection = opts?.bridgePunctuationGaps ?? "inherit"
+
+		const bridging =
+			bridgeSelection === "inherit" ? (this.cfg.bridgePunctuationGaps ?? DEFAULT_TOGGLE) : bridgeSelection
+
+		if (bridging === "on") {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length ? { blockedSpans } : undefined)
@@ -714,11 +782,11 @@ export class NeuralAddressClassifier {
 			...(trace
 				? {
 						trace: {
-							...(soft.anchor ? { anchor: soft.anchor } : {}),
-							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
-							...(soft.country ? { country: soft.country } : {}),
-							...(localeLogits ? { localeLogits } : {}),
-							...(spanScores ? { spanScores } : {}),
+							anchor: soft.anchor,
+							gazetteer: soft.gazetteer,
+							country: soft.country,
+							localeLogits,
+							spanScores,
 							detectedSystem,
 							systemSource,
 							priors: tracePriors!,
@@ -820,4 +888,11 @@ function addMatrices(a: number[][], b: number[][]): number[][] {
 	}
 
 	return out
+}
+
+/**
+ * A trace record for a prior with no probe path or census observations.
+ */
+function untracedPrior(kind: TracePriorKind, applied: boolean): TracePrior {
+	return { kind, applied, probePath: null, census: null, censusProbedParents: null }
 }

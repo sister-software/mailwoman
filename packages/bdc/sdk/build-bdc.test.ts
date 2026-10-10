@@ -5,7 +5,8 @@
  *   Tests for {@linkcode buildBDCDatabase}, the stage, materialize and seal build of `bdc.db`.
  */
 
-import { pathExists, statPath, readLocalBuffer, isFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath, isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
@@ -31,8 +32,9 @@ import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { BDCDatabase } from "#schema"
-import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "#sdk/build-bdc"
+import { buildBDCDatabase, peekProviderID, type BuildBDCResult } from "#sdk/build-bdc"
 import type { ProviderID } from "#sdk/common"
+import { geometryCentroid } from "#sdk/geometry"
 import type { BDCAvailabilityRow } from "#sdk/parsing"
 
 const GEOID_SF = "060750001001001"
@@ -46,8 +48,8 @@ const CENTROIDS: Record<string, { lat: number; lon: number }> = {
 	[GEOID_NY]: { lat: 40.7128, lon: -74.006 },
 }
 
-function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
-	return CENTROIDS[geoid]
+function blockCentroids(geoid: string): { lat: number; lon: number } | null {
+	return CENTROIDS[geoid] ?? null
 }
 
 function fixtureRows(): BDCAvailabilityRow[] {
@@ -224,7 +226,7 @@ describe("buildBDCDatabase", () => {
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(result.rows)
 		// Meaning-of-zero: an unsurveyed cell is unknown, never present with completeness 0.
-		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 999_999_999)).toBeNull()
 	})
 
 	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted (3a decision 6)", async () => {
@@ -789,9 +791,9 @@ describe("geometryCentroid", () => {
 		expect(centroid!.lat).toBeCloseTo(1, 5)
 	})
 
-	it("returns undefined for null or unparseable geometry", () => {
-		expect(geometryCentroid(null)).toBeUndefined()
-		expect(geometryCentroid("not json")).toBeUndefined()
-		expect(geometryCentroid(stringifyJSON({ type: "Point", coordinates: [0, 0] }))).toBeUndefined()
+	it("returns null for null or unparseable geometry", () => {
+		expect(geometryCentroid(null)).toBeNull()
+		expect(geometryCentroid("not json")).toBeNull()
+		expect(geometryCentroid(stringifyJSON({ type: "Point", coordinates: [0, 0] }))).toBeNull()
 	})
 })

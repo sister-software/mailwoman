@@ -5,32 +5,27 @@
  * `createServeEngine` builds the shared stack once at boot. The CLI's `serve` command awaits it before listening, so a misconfigured deployment fails at boot rather than on the first request. A degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503. When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback. `health` always answers.
  */
 
-import type {
-	BatchResultEntry,
-	GeocodeCallback,
-	GeocodeOutcome,
-	HealthData,
-	MailwomanAPIEngine,
-	ResolveTreeOutcome,
-} from "@mailwoman/api"
+import type { GeocodeCallback, HealthData, MailwomanAPIEngine } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
+import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { deriveInputMode } from "@mailwoman/core/pipeline"
-import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
+import type { InputModeSelection } from "@mailwoman/core/pipeline"
+import type { DefaultCountry, Resolver, ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { classifyKindSync } from "@mailwoman/kind-classifier"
-import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Globerator } from "spliterator/node/fs"
 
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
-import { geocodeAddress, type GeocodeClassifier } from "#geocode/core"
+import type { GeocodeClassifier } from "#geocode/classifier"
+import { deriveGeocodeRegister, geocodeAddress } from "#geocode/core"
 import { regionSlugFromTree, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
@@ -49,7 +44,7 @@ interface GeocodeDepsBundle {
 	 * The concrete US provider, because the engine's `reload` calls its `reload`.
 	 */
 	databases: USStateDatabaseProvider
-	defaultCountry?: string
+	defaultCountry: DefaultCountry | null
 }
 
 async function wofPaths(): Promise<string[]> {
@@ -156,16 +151,12 @@ async function buildHealthData(): Promise<HealthData> {
 	}
 }
 
-function oneGeocode(
-	deps: GeocodeDepsBundle,
-	address: string,
-	inputMode?: "fragmented" | "formatted"
-): Promise<GeocodeOutcome> {
+function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: InputModeSelection): Promise<GeocodeResult> {
 	return geocodeAddress(address, {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
 		databases: deps.databases.for,
-		defaultCountry: deps.defaultCountry,
+		...(deps.defaultCountry ? { defaultCountry: deps.defaultCountry } : {}),
 		interpCalibration: INTERP_RADIUS_CALIBRATION,
 		inputMode,
 	})
@@ -207,8 +198,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// Parse needs only the model weights, loaded here once per boot and reused by the
 	// geocode stack below, so `/v1/parse` answers even on a geocode-degraded boot.
 	let parse: MailwomanAPIEngine["parse"]
-	let neuralMod: typeof import("@mailwoman/neural") | undefined
-	let classifier: GeocodeClassifier | undefined
+	let neuralMod: typeof import("@mailwoman/neural") | null = null
+	let classifier: GeocodeClassifier | null = null
 
 	try {
 		neuralMod = await import("@mailwoman/neural")
@@ -217,10 +208,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		const parseClassifier = classifier
 
 		parse = async (address, opts) => {
-			const shape = computeQueryShape(address)
-
-			const inputMode =
-				opts.inputMode ?? deriveInputMode(classifyKindSync({ raw: address, normalized: address }, shape).kind)
+			const inputMode = opts.inputMode === "auto" ? deriveGeocodeRegister(address) : opts.inputMode
 
 			const tree = await parseClassifier.parse(address, { postcodeRepair: true, inputMode })
 
@@ -228,7 +216,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				input: address,
 				components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
 				tree,
-				debug: opts.debug ? decodeAsXML(tree) : undefined,
+				debug: opts.debug ? decodeAsXML(tree) : null,
 			}
 		}
 	} catch {
@@ -267,18 +255,24 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
 	const databases = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
-	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
+
+	const deps: GeocodeDepsBundle = {
+		classifier,
+		resolver,
+		databases,
+		defaultCountry: candidateDB ? null : { country: "US", source: "caller" },
+	}
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
-	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
+	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts.inputMode)
 
 	// Sequential because `onnxruntime-node`'s `session.run()` blocks the JS thread
 	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process.
 	// Results land in input order and a thrown row is isolated to its own `{ input, error }` slot.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
-		const inputMode = opts?.inputMode ?? "formatted"
+		const { inputMode } = opts
 		const inputs = addresses.map((a) => a.trim())
-		const results: BatchResultEntry[] = new Array<BatchResultEntry>(inputs.length)
+		const results: BatchRow[] = new Array<BatchRow>(inputs.length)
 
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i]!
@@ -309,7 +303,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 			const opts: ResolveOpts = {
 				...incomingOpts,
-				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
+				...((incomingOpts.defaultCountry ?? deps.defaultCountry)
+					? { defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry! }
+					: {}),
 				...(addressPoints ? { addressPoints } : {}),
 				// Calibration ladder: an explicit incoming factor wins, then the artifact's own
 				// header value (`interpolation.radiusCalibration`), then the in-code per-region
@@ -328,9 +324,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
 			recordTimed(performance.now() - t0, street ?? "admin")
 
-			const outcome: ResolveTreeOutcome = { tree: resolved }
-
-			return outcome
+			return { tree: resolved }
 		} catch (error) {
 			recordTimed(performance.now() - t0, "error")
 			throw error

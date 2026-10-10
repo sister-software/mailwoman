@@ -305,9 +305,10 @@ export function refreshLicenseKey(
 - [x] **Step 1: Write the failing test**
 
 ```ts
+import { createServer, type Server } from "node:http"
+
 // packages/core/lib/license/status.test.ts
 import { checkLicenseStatus, licenseWorkerURL, refreshLicenseKey } from "@mailwoman/core/license/status"
-import { createServer, type Server } from "node:http"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 // core's own tests may reach node:http; the client under test must not, and this file is the one place a stub worker
@@ -529,8 +530,8 @@ Behavior:
 Add to `packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`. The stub worker is a Hono app served through `@mailwoman/api-kit`'s `serveNode` on port 0, with `MAILWOMAN_LICENSE_URL` handed to the CLI child. The test generates a signing pair, but it cannot inject that pair into the register the CLI reads, because the compiled CLI ships its register. No token in a test is one the build trusts. The tests therefore assert the refusals precisely, and they assert the file writes through `adopt` of a token whose verification result the CLI reports. Use `--json` output for the payload echo. Concretely:
 
 ```ts
-import { Hono } from "hono"
 import { serveNode } from "@mailwoman/api-kit/serve"
+import { Hono } from "hono"
 
 // ... inside describe("mailwoman license")
 
@@ -904,6 +905,7 @@ import {
 	SUPPORT_EMAIL,
 	TERMS_PATH,
 } from "#license/shop"
+
 import styles from "./styles.module.css"
 
 /**
@@ -1058,10 +1060,9 @@ export function claimURL(sessionID: string): string // `${LICENSE_WORKER_URL}/v1
 - [x] **Step 1: Write the failing test**
 
 ```ts
+import { CLAIM_DEADLINE_MS, initialClaimState, nextClaimState } from "@site/src/license/claim"
 // docs/license-claim.test.ts
 import { describe, expect, it } from "vitest"
-
-import { CLAIM_DEADLINE_MS, initialClaimState, nextClaimState } from "@site/src/license/claim"
 
 // If `@site` does not resolve under the root vitest config, import by relative path; check how
 // docs/*.test.ts already import src.

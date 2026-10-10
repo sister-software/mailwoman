@@ -65,7 +65,7 @@ export interface FetchJusoKROptions extends BaseFetchOptions {
 	/**
 	 * The month to fetch as `yyyymm`.
 	 *
-	 * Defaults to the latest month the portal lists as present.
+	 * @defaultValue the latest month the portal lists as present.
 	 */
 	month?: string
 }

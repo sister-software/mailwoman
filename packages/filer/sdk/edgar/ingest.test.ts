@@ -95,7 +95,7 @@ describe("collectEdgarSubsidiaryRows — the happy path", () => {
 		})
 
 		expect(report.registrantsWithRows).toBe(1)
-		expect(report.outcomes[0]).toMatchObject({ cik: CABLE_ONE, sic: "4841", subsidiaries: 16 })
+		expect(report.results[0]).toMatchObject({ cik: CABLE_ONE, sic: "4841", subsidiaries: 16 })
 	})
 
 	it("stamps the FILING date on every row, not the run date", async () => {
@@ -172,7 +172,7 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 
 		const { report } = await collectEdgarSubsidiaryRows(client, ["Cable One"], tickers)
 
-		expect(report.outcomes[0]?.cik).toBe(CABLE_ONE)
+		expect(report.results[0]?.cik).toBe(CABLE_ONE)
 	})
 
 	it("ABSTAINS when two different corroborated CIKs both survive", async () => {
@@ -199,7 +199,7 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 		const { report } = await collectEdgarSubsidiaryRows(await stubClient({}), ["Zzyzx Unrelated Holdings"], TICKERS)
 
 		expect(report.skipped[EdgarSkipReason.Unresolved]).toBe(1)
-		expect(report.outcomes[0]).toMatchObject({ query: "Zzyzx Unrelated Holdings", subsidiaries: 0 })
+		expect(report.results[0]).toMatchObject({ query: "Zzyzx Unrelated Holdings", subsidiaries: 0 })
 	})
 
 	it("records a registrant with no 10-K", async () => {
@@ -222,7 +222,7 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 		expect(report.skipped[EdgarSkipReason.NoExhibit21]).toBe(1)
 	})
 
-	it("emits an outcome for EVERY query, including the ones that worked", async () => {
+	it("emits a result for EVERY query, including the ones that worked", async () => {
 		const client = await stubClient({
 			"0001632127": {
 				cikPath: "1632127",
@@ -236,10 +236,10 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 		const seen: string[] = []
 
 		const { report } = await collectEdgarSubsidiaryRows(client, ["Cable One, Inc.", "Zzyzx Unrelated"], TICKERS, {
-			onOutcome: (outcome) => seen.push(outcome.query),
+			onResult: (result) => seen.push(result.query),
 		})
 
-		expect(report.outcomes).toHaveLength(2)
+		expect(report.results).toHaveLength(2)
 		expect(seen).toEqual(["Cable One, Inc.", "Zzyzx Unrelated"])
 	})
 
@@ -256,6 +256,6 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 
 		const { report } = await collectEdgarSubsidiaryRows(client, ["Cable One, Inc."], TICKERS)
 
-		expect(report.outcomes[0]?.unparseable).toBeGreaterThan(0)
+		expect(report.results[0]?.unparseable).toBeGreaterThan(0)
 	})
 })

@@ -1,4 +1,4 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -65,7 +65,7 @@ function parseStdoutJSON(stdout: string): unknown {
 
 const ADDRESS = "350 5th Ave, New York, NY 10118"
 
-let absentPlainParse: Promise<{ stdout: string; stderr: string; code: number }> | undefined
+let absentPlainParse: Promise<{ stdout: string; stderr: string; code: number }> | null = null
 
 /**
  * The plain `parse --locale pt-BR` run under the stub home.

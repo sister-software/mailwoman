@@ -21,7 +21,7 @@ import { serializePairIndex, type PairIndexHeaderInput } from "#pair"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
-vi.mock("onnxruntime-web/webgpu", () => {
+vi.mock("onnxruntime-web/wasm", () => {
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -116,13 +116,13 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 	return {
 		modelURL: MODEL_URL,
 		tokenizerURL: TOKENIZER_URL,
-		gazetteerLexiconURL: null,
-		countryLexiconURL: null,
-		streetTypeLexiconURL: null,
-		localitySurfaceLexiconURL: null,
+		gazetteerLexicon: "none" as const,
+		countryLexicon: "none" as const,
+		streetTypeLexicon: "none" as const,
+		localitySurfaceLexicon: "none" as const,
 		pairIndexURLs,
-		...(country !== undefined ? { country } : {}),
-		runner: { useWebGPU: false },
+		postcodeBinaryURLs: [],
+		...(country ? { country } : {}),
 		fetchImpl: makeFetch(),
 	}
 }
@@ -138,7 +138,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(pairIndexes).toHaveLength(1)
 		expect(pairIndexes[0]!.resolver).not.toBeNull()
 
-		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: false })
+		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: "none" })
 
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
@@ -154,9 +154,13 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 
 		// "Shoreditch London" has no postcode, so the call site pins the posture with `{ country }`.
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
-		expect(placetypePair).toBeDefined()
+		expect(placetypePair).not.toBeNull()
 
-		const json = await result.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
+		const json = await result.classifier.parseJSON("Shoreditch London", {
+			spanProposer: "none",
+			placetypePair: placetypePair ?? "inherit",
+		})
+
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
 	})
@@ -174,10 +178,14 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(priorFree.pairIndexes).toEqual([])
 
 		const placetypePair = loaded.selectPairIndexForText("Shoreditch London")
-		expect(placetypePair).toBeUndefined()
+		expect(placetypePair).toBeNull()
 
-		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
-		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })
+		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", {
+			spanProposer: "none",
+			placetypePair: placetypePair ?? "inherit",
+		})
+
+		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: "none" })
 
 		expect(loadedJSON).toEqual(priorFreeJSON)
 		expect(loadedJSON.street).toBe("Shoreditch")

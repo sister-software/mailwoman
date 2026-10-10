@@ -153,7 +153,7 @@ class MailwomanCoarseEncoder(
 
         self._init_weights()
         # Built after `_init_weights`, which draws every parameter registered before it from the global RNG.
-        # Building these first would shift those draws, and a run with both flags off would stop
+        # A build of these first would shift those draws, and a run with both flags off would stop
         # reproducing earlier runs.
         self._build_address_system(
             hidden_size=hidden_size,

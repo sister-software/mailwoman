@@ -11,7 +11,8 @@
  *   The index records each rename, so reviewers see moved files instead of a deletion beside an addition.
  */
 
-import { readLocalTextFile, realPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { git } from "@mailwoman/core/git"

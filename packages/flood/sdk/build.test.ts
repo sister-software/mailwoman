@@ -7,7 +7,7 @@
  *   carrying opposite meanings.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { rectangleRing } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
@@ -175,7 +175,7 @@ describe("FloodZoneLookup — the three readings", () => {
 		expect(reading.kind).toBe(FloodReadingKind.Designated)
 		expect(reading.zoneCode).toBe("FZ3")
 		expect(reading.containment).toBe(FloodContainmentPath.WholeCell)
-		expect(reading.areaID).toBeUndefined()
+		expect(reading.areaID).toBeNull()
 	})
 
 	it("answers the adjacent square's interior with the other zone", () => {
@@ -221,9 +221,9 @@ describe("FloodZoneLookup — the three readings", () => {
 		const reading = lookup.lookup(FIXTURE_ORIGIN.lat + 5, FIXTURE_ORIGIN.lon + 5)
 
 		expect(reading.kind).toBe(FloodReadingKind.Unknown)
-		expect(reading.coverage).toBeUndefined()
-		expect(reading.definition).toBeUndefined()
-		expect(reading.zoneCode).toBeUndefined()
+		expect(reading.coverage).toBeNull()
+		expect(reading.definition).toBeNull()
+		expect(reading.zoneCode).toBeNull()
 	})
 
 	it("carries the authority's own exclusions on every reading, including the absence", () => {

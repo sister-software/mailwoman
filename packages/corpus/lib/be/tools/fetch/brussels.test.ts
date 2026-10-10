@@ -5,7 +5,7 @@
  *   Proves what the Brussels fetcher reads from the publisher's HEAD response, and when it decides
  *   the archive on disk is already the one the service holds.
  *
- *   Paradigm publishes no INSPIRE ATOM feed for this theme, so `last-modified` carries the whole
+ *   Paradigm publishes no INSPIRE ATOM feed for this theme, so `last-modified` drives the whole
  *   freshness decision. There is no `<updated>` element to compare and no dataset feed to resolve.
  *   The values here are the publisher's own, recorded when the reader was written: 11,521,182 bytes
  *   and `Thu, 01 Dec 2022 07:57:50 GMT`.
@@ -15,7 +15,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -49,8 +49,8 @@ const RECORDED: BrusselsManifest = {
 /**
  * The real client over a stubbed transport, so the request takes the production path.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "brussels test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

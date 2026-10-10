@@ -74,8 +74,8 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 
 ```ts
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })

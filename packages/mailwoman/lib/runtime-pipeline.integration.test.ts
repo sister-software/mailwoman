@@ -23,7 +23,7 @@ function fakeClassifier(): AddressClassifier {
 }
 
 function passthroughResolver(): Resolver {
-	return { resolveTree: vi.fn(async (tree) => tree) }
+	return { resolveTree: vi.fn(async (tree) => tree), artifactCoverage: null, capabilityGaps: null }
 }
 
 describe("createRuntimePipeline — wiring", () => {
@@ -42,7 +42,7 @@ describe("createRuntimePipeline — wiring", () => {
 	})
 
 	it("can disable host inference for a server runtime", async () => {
-		const pipeline = createRuntimePipeline({ machinePreferences: false })
+		const pipeline = createRuntimePipeline({ machinePreferences: "none" })
 		const result = await pipeline("Paris")
 
 		expect(result.locale).toMatchObject({ locale: "en-US", confidence: 0.3, source: "detected" })
@@ -120,6 +120,7 @@ describe("createRuntimePipeline — wiring", () => {
 			kind: "structured_address" as const,
 			confidence: 0,
 			alternatives: [],
+			intentMarkers: null,
 		}))
 
 		const pipeline = createRuntimePipeline({ classifier, classifyKind: customKind })
@@ -134,6 +135,8 @@ describe("createRuntimePipeline — wiring", () => {
 			confidence: 0.92,
 			alternatives: [],
 			source: "detected" as const,
+			script: [],
+			evidence: null,
 		}))
 
 		const pipeline = createRuntimePipeline({ detectLocale: customDetect })
@@ -208,6 +211,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 			kind: "vague" as const,
 			confidence: 0.5,
 			alternatives: [],
+			intentMarkers: null,
 		}))
 
 		const pipeline = createRuntimePipeline({ classifyKind: customKind })

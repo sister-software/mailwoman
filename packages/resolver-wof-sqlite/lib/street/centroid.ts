@@ -92,7 +92,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 
 		if (!streetNorm) return null
 
-		let row: AggRow | undefined
+		let row: AggRow | null = null
 
 		if (query.postcode?.trim()) {
 			row = this.#byPostcode(query.postcode.trim(), streetNorm)

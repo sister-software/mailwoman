@@ -5,7 +5,7 @@
  * The activation-coverage census: is every mechanism in the parse path alive on at least one board row?
  *
  * A pipeline part with no test case that activates it is itself a kind of failure: soft mechanisms are
- * designed to degrade silently and outcome tests cannot see a counterfactual, so the census asks not
+ * designed to degrade silently and result tests cannot see a counterfactual, so the census asks not
  * "did the rows pass" but "did each mechanism signal on any row at all".
  *
  * Levels, per mechanism:
@@ -15,9 +15,9 @@
  *   channels.
  * - **L1 signaled** — it produced nonzero input to the next stage. This file computes L0 and L1 from one
  *   traced run.
- * - **L2 moved an outcome** — needs ablation pairs. This file does not compute L2.
+ * - **L2 moved a result** — needs ablation pairs. This file does not compute L2.
  *   The gauntlet's ablation layer owns that measurement. Reports mark it unmeasured so readers can
- *   distinguish L1 coverage from outcome relevance.
+ *   distinguish L1 coverage from result relevance.
  *
  * A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached:
  * every zero needs either a row that activates it or an allowlisted reason someone can state
@@ -180,7 +180,7 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 	for (const [kind, tally] of Object.entries(aggregate.priors)) {
 		const allowReason = CENSUS_ALLOWLIST[kind]
 
-		if (allowReason !== undefined) {
+		if (allowReason) {
 			aggregate.allowlisted.push({ mechanism: kind, reason: allowReason, expectation_held: tally.l1_applied === 0 })
 
 			continue
@@ -220,8 +220,8 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
  * Run the census: one traced parse per input, aggregated.
  */
 export async function runCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
-	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
-	const config = (args["config"] as Record<string, unknown> | undefined) ?? {}
+	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
+	const config = (args["config"] as Record<string, unknown> | null) ?? {}
 	// The census uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
 	const engine = await registry.acquire({ ...config, trace: true })
@@ -248,7 +248,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		n: aggregate.n,
 		selection: set.selection,
 		eventLabel: "were parsed with every present evidence channel silent",
-		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
+		populationN: set.populationN,
 	})
 
 	const inertSentence = aggregate.inert.length
@@ -269,7 +269,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 				? `ALLOWLIST STALE: ${staleAllowlist.map((entry) => entry.mechanism).join(", ")} fired despite a reason ` +
 					"on file saying it cannot — the reason is out of date, not the mechanism wrong."
 				: "",
-			"L2 (moved an outcome) is NOT measured here — that needs ablation pairs (gauntlet ablation layer). " +
+			"L2 (moved a result) is NOT measured here — that needs ablation pairs (gauntlet ablation layer). " +
 				"L1 coverage is necessary for relevance, never sufficient.",
 		]
 			.filter((sentence) => sentence.length)

@@ -12,7 +12,8 @@
  *   than by cleanup code that must survive kill signals.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
@@ -139,7 +140,7 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 }
 
 /**
- * One workspace's pack-and-audit outcome.
+ * One workspace's pack-and-audit result.
  *
  * A pack that could not produce a tarball reports the thrown message as its
  * single failure rather than aborting the sweep.

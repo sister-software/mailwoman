@@ -8,12 +8,14 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { createWOFResolver, DEFAULT_POSTCODE_MAX_MOVE_KM } from "#resolve"
 
 const PC = {
+	...EMPTY_PLACE_FIELDS,
 	id: 900,
 	name: "75001",
 	placetype: "postalcode",
@@ -25,6 +27,7 @@ const PC = {
 }
 
 const SP_FAR = {
+	...EMPTY_PLACE_FIELDS,
 	id: 1,
 	name: "Saint-Pierre",
 	placetype: "locality",
@@ -37,6 +40,7 @@ const SP_FAR = {
 
 // ~600 km from PC
 const SP_NEAR = {
+	...EMPTY_PLACE_FIELDS,
 	id: 2,
 	name: "Saint-Pierre",
 	placetype: "locality",
@@ -82,7 +86,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 		})
 
@@ -96,7 +100,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 			postcodeConsistencyMaxMoveKm: Infinity,
 		})
@@ -112,7 +116,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 			postcodeConsistencyMaxMoveKm: 200,
 		})
@@ -130,7 +134,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 		})
 
@@ -146,7 +150,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 			postcodeConsistencyMaxMoveKm: 1000,
 		})
@@ -163,7 +167,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 			postcodeConsistencyMaxMoveKm: 1,
 		})
@@ -177,7 +181,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: true,
 		})
 
@@ -189,7 +193,11 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 
 	it("DEFAULT (ON since the 2026-07-04 promote): unset opts re-pick the consistent instance", async () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
-		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), { defaultCountry: "FR" })
+
+		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
+			defaultCountry: { country: "FR", source: "caller" },
+		})
+
 		const loc = out.roots.find((n) => n.tag === "locality")!
 
 		expect(loc.placeID).toBe("wof:2") // the postcode-consistent instance wins by default now
@@ -200,7 +208,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
-			defaultCountry: "FR",
+			defaultCountry: { country: "FR", source: "caller" },
 			postcodeConsistency: false,
 		})
 
@@ -212,7 +220,12 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 
 	it("no-ops when no postcode resolved (no anchor to disambiguate against)", async () => {
 		const resolver = createWOFResolver(await makeBackend([SP_FAR, SP_NEAR]))
-		const out = await resolver.resolveTree(tree([localityNode()]), { defaultCountry: "FR", postcodeConsistency: true })
+
+		const out = await resolver.resolveTree(tree([localityNode()]), {
+			defaultCountry: { country: "FR", source: "caller" },
+			postcodeConsistency: true,
+		})
+
 		const loc = out.roots.find((n) => n.tag === "locality")!
 		expect(loc.placeID).toBe("wof:1")
 	})

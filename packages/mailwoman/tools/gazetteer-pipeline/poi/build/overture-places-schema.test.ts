@@ -5,7 +5,7 @@ import {
 	chooseCountryExpression,
 	hasBrandColumn,
 	type DescribeColumn,
-} from "#gazetteer/poi/build/poi"
+} from "#gazetteer/poi/build/overture"
 
 const OLDER_RELEASE_COLUMNS: DescribeColumn[] = [
 	{ column_name: "id" },

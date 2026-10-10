@@ -42,7 +42,7 @@ export interface RerankedCandidate<T = unknown> extends RerankCandidate<T> {
 	/**
 	 * Why it was vetoed, when it was.
 	 */
-	reason?: string
+	reason: string | null
 }
 
 export interface RerankResult<T = unknown> {
@@ -68,8 +68,11 @@ export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
 	/**
-	 * Resolve at most this many candidates (default 5); each costs a resolver round-trip,
-	 * so this is the latency knob.
+	 * Resolve at most this many candidates.
+	 *
+	 * Each costs a resolver round-trip, so this is the latency knob.
+	 *
+	 * @defaultValue `5`
 	 */
 	maxResolve?: number
 	/**
@@ -104,7 +107,7 @@ export async function rerankByResolution<T>(
 		const candidate = candidates[i]!
 
 		if (i >= maxResolve) {
-			ranked.push({ ...candidate, resolved: null, implausible: false })
+			ranked.push({ ...candidate, resolved: null, implausible: false, reason: null })
 
 			continue
 		}
@@ -116,7 +119,7 @@ export async function rerankByResolution<T>(
 		} catch {
 			// A resolver failure is not evidence against the parse, so the model's rank stands
 			// rather than vetoing a possibly-correct hypothesis on an outage.
-			ranked.push({ ...candidate, resolved: null, implausible: false })
+			ranked.push({ ...candidate, resolved: null, implausible: false, reason: null })
 
 			continue
 		}
@@ -130,7 +133,7 @@ export async function rerankByResolution<T>(
 			...candidate,
 			resolved,
 			implausible: verdict.implausible,
-			...(verdict.reason ? { reason: verdict.reason } : {}),
+			reason: verdict.reason,
 		})
 	}
 

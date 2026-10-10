@@ -120,7 +120,7 @@ describe("parseForm499Notes — never infers", () => {
 	it("skips blank, null and undefined cells without counting them", () => {
 		const lifecycle = parseForm499Notes(["", null, undefined, "   "])
 
-		expect(lifecycle).toEqual({ notes: [], reasons: [], unrecognized: 0 })
+		expect(lifecycle).toEqual({ notes: [], reasons: [], unrecognized: 0, ceasedAt: null, replacedByForm499ID: null })
 	})
 
 	it("never throws, whatever it is handed", () => {

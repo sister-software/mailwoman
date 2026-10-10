@@ -3,8 +3,8 @@
 
 import { describe, expect, it } from "vitest"
 
+import { escapeHTML } from "#strings/escape"
 import {
-	escapeHTML,
 	escapeTrustPolicy,
 	sanitizeHTML,
 	sanitizeTrustPolicy,

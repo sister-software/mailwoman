@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
-import { createMailwomanAPI, type MailwomanAPIEngine, type ParsedAddressResult } from "#index"
-import { type GeocodeOutcomeLike, MAX_ADDRESS_LENGTH } from "#schema"
+import { createMailwomanAPI, MAX_ADDRESS_LENGTH, type MailwomanAPIEngine } from "#index"
+import type { ParseResponse } from "#operations/parse/address"
 
 beforeEach(() => {
 	resetMetricsForTest()
@@ -20,7 +21,7 @@ beforeEach(() => {
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
-function fixtureParseOutcome(address: string, debug?: boolean): ParsedAddressResult {
+function fixtureParseResponse(address: string, debug?: boolean): ParseResponse {
 	return {
 		input: address,
 		components: [
@@ -28,26 +29,52 @@ function fixtureParseOutcome(address: string, debug?: boolean): ParsedAddressRes
 			{ tag: "street", value: "Pennsylvania Ave NW" },
 		],
 		tree: { raw: address, roots: [] },
-		debug: debug ? "diagnostic report" : undefined,
+		debug: debug ? "diagnostic report" : null,
 	}
 }
 
-interface GeocodeResultWithAddress extends Pick<GeocodeOutcomeLike, "lat" | "lon" | "resolution_tier"> {
-	address: string
-}
-
-function fixtureGeocodeOutcome(address: string): GeocodeResultWithAddress {
-	return { address, lat: 38.8977, lon: -77.0365, resolution_tier: "address_point" }
+function fixtureGeocodeResult(address: string): GeocodeResult {
+	return {
+		input: address,
+		components: {},
+		dropped_components: null,
+		unfollowed_components: null,
+		lat: 38.8977,
+		lon: -77.0365,
+		resolution_tier: "address_point",
+		epistemic_status: "observed",
+		derivation: null,
+		entity: null,
+		rooftop: null,
+		uncertainty_m: 1,
+		locality: null,
+		region: null,
+		postcode: null,
+		house_number: null,
+		street: null,
+		venue: null,
+		dependent_locality: null,
+		unit: null,
+		countryCode: null,
+		hierarchy: [],
+		candidates: [],
+		postcode_country_scope: null,
+		capital_promotion: null,
+		variant_alias_exemption: "not_applied",
+		intent_markers: [],
+		admin_coherence: null,
+		authoritative: null,
+	}
 }
 
 /**
  * A fully-wired fixture engine — every method present, exercising every 200 happy path.
  */
-const fullEngine: MailwomanAPIEngine<GeocodeResultWithAddress> = {
-	parse: async (address, opts) => fixtureParseOutcome(address, opts.debug),
-	geocode: async (address) => fixtureGeocodeOutcome(address),
+const fullEngine: MailwomanAPIEngine = {
+	parse: async (address, opts) => fixtureParseResponse(address, opts.debug),
+	geocode: async (address) => fixtureGeocodeResult(address),
 	batch: async (addresses) => ({
-		results: addresses.map((a) => (a === "bad" ? { input: a, error: "boom" } : fixtureGeocodeOutcome(a))),
+		results: addresses.map((a) => (a === "bad" ? { input: a, error: "boom" } : fixtureGeocodeResult(a))),
 	}),
 	resolveTree: async (tree) => ({ tree }),
 	reload: async () => ({ reloaded: true, versions: { wof: "v1" } }),
@@ -66,11 +93,11 @@ test("POST /v1/parse: happy path returns the components + decoded tree", async (
 	})
 
 	expect(res.status).toBe(200)
-	const body = (await res.json()) as ParsedAddressResult
+	const body = (await res.json()) as ParseResponse
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.components).toHaveLength(2)
 	expect(body.tree.roots).toEqual([])
-	expect(body.debug).toBeUndefined()
+	expect(body.debug).toBeNull()
 })
 
 test("POST /v1/parse: debug:true reaches the engine and rides back in the response", async () => {
@@ -82,7 +109,7 @@ test("POST /v1/parse: debug:true reaches the engine and rides back in the respon
 		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW", debug: true }),
 	})
 
-	const body = (await res.json()) as ParsedAddressResult
+	const body = (await res.json()) as ParseResponse
 	expect(body.debug).toBe("diagnostic report")
 })
 
@@ -91,7 +118,7 @@ test("GET /v1/parse?address=&debug=: happy path, first-value query reads", async
 
 	const res = await app.request("/v1/parse?address=1600+Pennsylvania+Ave+NW&debug=true")
 	expect(res.status).toBe(200)
-	const body = (await res.json()) as ParsedAddressResult
+	const body = (await res.json()) as ParseResponse
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.debug).toBe("diagnostic report")
 })
@@ -106,7 +133,7 @@ test('POST /v1/parse: missing address body key -> 400 { error: "address is requi
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test('POST /v1/parse: empty-string address -> 400 { error: "address is required" }', async () => {
@@ -119,7 +146,7 @@ test('POST /v1/parse: empty-string address -> 400 { error: "address is required"
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test('GET /v1/parse: absent address -> 400 { error: "address is required" }', async () => {
@@ -127,7 +154,7 @@ test('GET /v1/parse: absent address -> 400 { error: "address is required" }', as
 
 	const res = await app.request("/v1/parse")
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test("POST /v1/parse: engine.parse absent -> 501", async () => {
@@ -140,7 +167,7 @@ test("POST /v1/parse: engine.parse absent -> 501", async () => {
 	})
 
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "parse not implemented" })
+	expect(await res.json()).toEqual({ error: "parse not implemented", detail: null })
 })
 
 test("GET /v1/parse: engine.parse absent -> 501", async () => {
@@ -148,12 +175,12 @@ test("GET /v1/parse: engine.parse absent -> 501", async () => {
 
 	const res = await app.request("/v1/parse?address=x")
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "parse not implemented" })
+	expect(await res.json()).toEqual({ error: "parse not implemented", detail: null })
 })
 
 // MARK: /v1/geocode
 
-test("POST /v1/geocode: happy path passes the GeocodeOutcome through verbatim", async () => {
+test("POST /v1/geocode: happy path passes the GeocodeResult through verbatim", async () => {
 	const app = createMailwomanAPI(fullEngine)
 
 	const res = await app.request("/v1/geocode", {
@@ -163,7 +190,7 @@ test("POST /v1/geocode: happy path passes the GeocodeOutcome through verbatim", 
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual(fixtureGeocodeOutcome("1600 Pennsylvania Ave NW"))
+	expect(await res.json()).toEqual(fixtureGeocodeResult("1600 Pennsylvania Ave NW"))
 })
 
 test('POST /v1/geocode: missing address -> 400 { error: "address is required" }', async () => {
@@ -176,7 +203,7 @@ test('POST /v1/geocode: missing address -> 400 { error: "address is required" }'
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required" })
+	expect(await res.json()).toEqual({ error: "address is required", detail: null })
 })
 
 test("POST /v1/geocode: engine.geocode absent -> 503 (deps missing in production)", async () => {
@@ -226,7 +253,7 @@ test("POST /v1/batch: happy path returns one row per address, in order, per-row 
 
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as { results: unknown[] }
-	expect(body.results).toEqual([fixtureGeocodeOutcome("1600 Pennsylvania Ave NW"), { input: "bad", error: "boom" }])
+	expect(body.results).toEqual([fixtureGeocodeResult("1600 Pennsylvania Ave NW"), { input: "bad", error: "boom" }])
 })
 
 test("POST /v1/batch: empty addresses array -> 200 { results: [] }, even with no engine", async () => {
@@ -252,7 +279,7 @@ test('POST /v1/batch: wrong body shape -> 400 { error: "body must be { addresses
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "body must be { addresses: string[] }" })
+	expect(await res.json()).toEqual({ error: "body must be { addresses: string[] }", detail: null })
 })
 
 test("POST /v1/batch: over batchMax -> 413", async () => {
@@ -265,7 +292,7 @@ test("POST /v1/batch: over batchMax -> 413", async () => {
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "batch too large: 3 > 2" })
+	expect(await res.json()).toEqual({ error: "batch too large: 3 > 2", detail: null })
 })
 
 test("POST /v1/batch: engine.batch absent -> 503", async () => {
@@ -321,7 +348,7 @@ test('POST /v1/resolve: wrong body shape -> 400 { error: "body must be { tree: A
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "body must be { tree: AddressTree, opts? }" })
+	expect(await res.json()).toEqual({ error: "body must be { tree: AddressTree, opts? }", detail: null })
 })
 
 test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
@@ -543,7 +570,7 @@ test("bodyLimitBytes: an oversized /v1/* POST answers 413, not a buffered crash"
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "request body too large" })
+	expect(await res.json()).toEqual({ error: "request body too large", detail: null })
 })
 
 test("an engine fault answers the native 500 envelope with a helpful detail, never a crash", async () => {

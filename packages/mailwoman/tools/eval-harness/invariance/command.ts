@@ -7,24 +7,21 @@
  *   narrates everything and owns only the exit code, matching `eval promote` / `eval error-analysis`.
  */
 
-import {
-	type ModelSelectOptions,
-	loadSuite,
-	buildParseFn,
-	runInvarianceSuite,
-} from "#tools/eval-harness/invariance/runner"
+import { loadSuite } from "#tools/eval-harness/invariance/fixtures"
+import { type ModelSelectOptions, buildParseFn } from "#tools/eval-harness/invariance/parser"
+import { runInvarianceSuite } from "#tools/eval-harness/invariance/runner"
 
 export interface InvarianceCommandOptions extends ModelSelectOptions {
 	/**
 	 * Alternate suite fixture path.
 	 *
-	 * Default the shipped `suite.jsonl`.
+	 * @defaultValue the shipped `suite.jsonl`.
 	 */
 	suite?: string
 	/**
 	 * Fail the check if the new-violation degraded count exceeds this.
 	 *
-	 * Default 0.
+	 * @defaultValue `0`
 	 */
 	maxDegraded?: number
 	/**
@@ -57,7 +54,7 @@ export async function runInvarianceCommand(options: InvarianceCommandOptions): P
 
 	const parse = await buildParseFn(options)
 
-	let baselineParse: Awaited<ReturnType<typeof buildParseFn>> | undefined
+	let baselineParse: Awaited<ReturnType<typeof buildParseFn>> | null = null
 
 	if (options.baselineWeightsCache || options.baseline) {
 		console.error(`[invariance] loading baseline model (regression mode)…`)

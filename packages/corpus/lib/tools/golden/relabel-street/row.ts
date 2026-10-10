@@ -28,7 +28,7 @@ export interface GoldenStreetRow {
 }
 
 /**
- * The relabel outcome class for one row.
+ * The relabel result class for one row.
  */
 export type GoldenRelabelClass =
 	| "split-suffix"
@@ -139,8 +139,9 @@ export interface RelabelStreetRowOptions {
 	/**
 	 * Whether to also move a leading directional into `street_prefix`.
 	 *
-	 * Defaults to `true`; without it `N Desmet Avenue` grades as `street: "N Desmet"`
-	 * against a model that emits a prefix.
+	 * Without it `N Desmet Avenue` grades as `street: "N Desmet"` against a model that emits a prefix.
+	 *
+	 * @defaultValue `true`
 	 */
 	splitPrefix?: boolean
 }
@@ -177,9 +178,9 @@ export function relabelGoldenStreetRow(
 	const flags: GoldenRelabelFlag[] = []
 	let rowClass: GoldenRelabelClass
 	let name = street
-	let suffix: string | undefined
+	let suffix: string | null = null
 	let suffixGap = ""
-	let canonical: USStreetSuffix | undefined
+	let canonical: USStreetSuffix | null = null
 
 	const split = splitLastWord(street)
 
@@ -214,7 +215,7 @@ export function relabelGoldenStreetRow(
 		}
 	}
 
-	let prefix: string | undefined
+	let prefix: string | null = null
 	let prefixGap = ""
 
 	if (splitPrefix && !row.components.street_prefix) {

@@ -7,9 +7,10 @@
  *   positive bias on street and negative bias on dependent_locality.
  */
 
+import type { AncestrieMatch } from "@mailwoman/ancestrie"
 import { describe, expect, it } from "vitest"
 
-import type { FSTMatcherLike, FSTMatchLike, FSTPlaceEntryLike } from "#fst-prior"
+import type { FSTMatcherLike, FSTPlaceEntryLike } from "#fst-prior"
 import { STAGE3_BIO_LABELS } from "#labels"
 import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
 
@@ -29,7 +30,7 @@ function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
 	}
 
 	return {
-		walk(tokens: string[]): FSTMatchLike | null {
+		walk(tokens: string[]): AncestrieMatch | null {
 			const key = tokens.join(" ")
 			const state = states.get(key)
 
@@ -37,7 +38,7 @@ function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
 
 			return null
 		},
-		walkFrom(): FSTMatchLike | null {
+		walkFrom(): AncestrieMatch | null {
 			return null
 		},
 		accepting(stateID: number): FSTPlaceEntryLike[] {

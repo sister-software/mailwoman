@@ -107,7 +107,7 @@ export async function* parseProviderList(source: PathBuilderLike): AsyncIterable
 
 		if (!fields.length || (fields.length === 1 && !fields[0])) continue
 
-		if (header === null) {
+		if (!header) {
 			assertRequiredProviderListColumns(fields, csvPath)
 			header = fields
 

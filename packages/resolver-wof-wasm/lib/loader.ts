@@ -41,8 +41,9 @@ export interface LoadSlimOpts {
 	/**
 	 * Optional fetch implementation override.
 	 *
-	 * Defaults to `globalThis.fetch`.
 	 * Useful in test harnesses that want to short-circuit network calls.
+	 *
+	 * @defaultValue `globalThis.fetch`
 	 */
 	fetchImpl?: typeof fetch
 }

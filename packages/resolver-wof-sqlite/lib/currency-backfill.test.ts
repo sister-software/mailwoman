@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The currency check's census mode: a dry run judges every dead row and stages no row. The report splits outcomes by the dead row's placetype.
+ * @file The currency check's census mode: a dry run judges every dead row and stages no row. The report splits results by the dead row's placetype.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -50,7 +50,7 @@ function geonamesRow(name: string, lat: number, lon: number, population: number)
 }
 
 async function census(
-	deadPlacetypes: readonly string[] | undefined,
+	deadPlacetypes: readonly string[] | null,
 	options: { dryRun: boolean }
 ): Promise<{ reports: CurrencyBackfillCountryReport[]; staged: string[]; total: number }> {
 	await using scratch = await temporaryDirectory("currency-backfill-")
@@ -72,7 +72,7 @@ async function census(
 		ccID: () => 1,
 		ptID: (placetype) => (placetype === "localadmin" ? 3 : 4),
 		regionOf: new Map(),
-		importance: undefined,
+		importance: null,
 		stageRow: (pkey, attrs) => {
 			staged.push(`${pkey}:${attrs.ptid}`)
 		},
@@ -87,7 +87,7 @@ async function census(
 
 describe("resurrectCurrencyHoles — the census mode", () => {
 	it("judges only localities by default, and the finer surviving child does not block the dead parent", async () => {
-		const { reports, staged, total } = await census(undefined, { dryRun: true })
+		const { reports, staged, total } = await census(null, { dryRun: true })
 
 		expect(DEFAULT_DEAD_PLACETYPES).toEqual(["locality"])
 		expect(reports).toHaveLength(1)
@@ -124,7 +124,7 @@ describe("resurrectCurrencyHoles — the census mode", () => {
 				ccID: () => 0,
 				ptID: () => 0,
 				regionOf: new Map(),
-				importance: undefined,
+				importance: null,
 				stageRow: () => {},
 				progress: () => {},
 			})

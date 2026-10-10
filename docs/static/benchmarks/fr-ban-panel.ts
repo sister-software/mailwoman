@@ -21,7 +21,8 @@
 
 import { banDatabaseRoot } from "@mailwoman/ban/paths"
 import { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
-import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { createRequire } from "@mailwoman/core/module/resolvers"
@@ -321,7 +322,7 @@ async function run() {
 					nationalDatabases: banExtracts.for,
 					// Pinned to `FR`, so the panel measures resolution inside France
 					// and makes no claim about country disambiguation.
-					defaultCountry: "FR",
+					defaultCountry: { country: "FR", source: "caller" },
 				})
 			} catch (error) {
 				records.push({

@@ -27,7 +27,7 @@ export interface POIExplorerProps {
 	/**
 	 * The example chips.
 	 *
-	 * @default POI_PRESETS
+	 * @defaultValue POI_PRESETS
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
@@ -77,7 +77,7 @@ function POIExplorerInner({
 	const showLiveBlock = Boolean(
 		runLiveSearch &&
 		subject &&
-		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
+		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== null : !subject.buildLocal)
 	)
 
 	return (
@@ -93,7 +93,10 @@ function POIExplorerInner({
 						<>
 							<SubjectPanel subject={subject} />
 							{subject.kind === "category" ? (
-								<OverpassBlock overpassQL={result.overpassQL} overpassError={result.overpassError} />
+								<OverpassBlock
+									overpassQL={result.overpassQL ?? undefined}
+									overpassError={result.overpassError ?? undefined}
+								/>
 							) : null}
 
 							{showLiveBlock ? (

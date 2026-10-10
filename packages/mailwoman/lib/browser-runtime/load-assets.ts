@@ -16,17 +16,14 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
-import { fetchWithProgress, fetchWithRetry } from "#browser-runtime/fetch"
-import type { ReleaseInfo } from "#browser-runtime/manifest"
+import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
+import { postcodeAnchorAssetsOf, type ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
 	assetURL,
 	loadFSTGazetteer,
 	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
-	PAIR_INDEX_VERSION,
-	pairIndexBaseURL,
-	pairIndexURLs,
 } from "#browser-runtime/resources"
 import type { AssetLoadProgress, FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
@@ -87,6 +84,24 @@ export interface LoadReleaseAssetsOptions {
 	 * Omit it and `lookup` is `null` without a gazetteer step.
 	 */
 	gazetteer?: { sqliteRuntimeBaseURL: string }
+
+	/**
+	 * The URL of the onnxruntime-web `.wasm` binary the host's bundle serves.
+	 *
+	 * Given it, the loader downloads the binary beside the model and hands it to the session.
+	 * Without it, onnxruntime-web requests the binary after the model has arrived.
+	 */
+	ortWASMURL?: string
+}
+
+/**
+ * Resolve an optional asset load to its value, or to `null` when it throws.
+ *
+ * Every optional fetch starts at the top of {@link loadReleaseAssets} and is awaited later.
+ * Its failure settles at once, so an earlier stage's await never sees an unhandled rejection.
+ */
+function settleOptional<T>(load: Promise<T>): Promise<T | null> {
+	return load.catch(() => null)
 }
 
 /**
@@ -120,27 +135,62 @@ export async function loadReleaseAssets(
 
 	progress.setStepLabels(steps)
 
-	// The pair indexes live on the public bucket beside every other model asset,
-	// under a dated generation: the objects ship an immutable Cache-Control,
-	// so a rebuilt index is readable only from a fresh path.
-	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
+	// Every fetch below starts now, beside the model, rather than when the stage before it finishes.
+	// The stages are still awaited in order, so the step labels advance in order.
+	const ortWASMURL = options.ortWASMURL
 
-	// Dynamic so the onnxruntime-web chunk loads only when a release does.
-	// The result is narrowed to the structural classifier interface this module exposes,
-	// so the neural package's own classifier type never enters a host bundle.
-	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
+	const wasmBinary = ortWASMURL
+		? settleOptional(
+				fetchWithRetry(ortWASMURL).then(async (res) => (res.ok ? new Uint8Array(await res.arrayBuffer()) : null))
+			)
+		: null
+
+	const calibrationLoad = settleOptional(
+		fetchWithRetry(assetURL(DEFAULT_LOCALE, release.version, "calibration.json")).then(async (res) =>
+			// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
+			res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
+		)
+	)
+
+	// The street-context check needs both matchers, so the morphology matcher is kept only beside the FST.
+	// A release that predates the morphology artifact answers null, and the parse runs with the check off.
+	const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(DEFAULT_LOCALE, release.version)) : null
+
+	const streetMorphologyLoad = release.hasFST
+		? settleOptional(loadStreetMorphologyFST(DEFAULT_LOCALE, release.version))
+		: null
 
 	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
 	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
 	// Each smaller asset would move the bar backwards if the loader reported it when loading began.
 	const reportBytes = progress.setByteFraction
 
-	const modelFetch = reportBytes
+	const progressFetch = reportBytes
 		? fetchWithProgress(
 				(received, total) => reportBytes(total ? Math.min(1, received / total) : null),
 				(url) => url.endsWith(".onnx")
 			)
 		: fetchWithRetry
+
+	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
+		postcodeAnchor: postcodeAnchorAssetsOf(release),
+		splitEmbeddings: release.splitEmbeddings,
+	})
+
+	// The card, model, embedding and tokenizer URLs are known now.
+	// Their fetches start before the loader chunk arrives.
+	// The loader reads each through `modelFetch` and reports a failure with its own message.
+	const modelFetch = prefetchingFetch(progressFetch, [
+		classifierURLs.modelCardURL,
+		classifierURLs.modelURL,
+		...("embeddings" in classifierURLs ? [classifierURLs.embeddings.hotURL] : []),
+		classifierURLs.tokenizerURL,
+	])
+
+	// Dynamic so the onnxruntime-web chunk loads only when a release does.
+	// The result is narrowed to the structural classifier interface this module exposes,
+	// so the neural package's own classifier type never enters a host bundle.
+	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
 
 	const {
 		classifier,
@@ -150,15 +200,9 @@ export async function loadReleaseAssets(
 		// `release` is the ReleaseInfo parameter in this scope. The classifier's disposer needs its own name.
 		release: releaseClassifier,
 	} = (await loadNeuralClassifierFromURLs({
-		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-			hasAnchor: release.hasAnchor,
-			forceWASM: progress.forceWASM,
-		}),
+		...classifierURLs,
+		...(wasmBinary ? { runner: { wasmBinary } } : {}),
 		fetchImpl: modelFetch,
-		// Every published pair index is loaded.
-		// The loader keeps each live and `selectPairIndexForText` picks per parse.
-		// Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
-		pairIndexURLs: pairIndexURLs(pairIndexBase),
 	})) as {
 		classifier: MailwomanClassifierLike
 		diagnostics?: { backend: string; modelBytes: number } | null
@@ -176,43 +220,13 @@ export async function loadReleaseAssets(
 	progress.setStepIndex(0)
 
 	// The calibration table is the model's own held-out reliability, so it must match the loaded version.
-	// A release without one leaves `calibrator` null and the host shows raw softmax scores.
-	let calibrator: Calibrator | null = null
+	const calibrator: Calibrator | null = await calibrationLoad
 
-	try {
-		const calRes = await fetchWithRetry(assetURL(DEFAULT_LOCALE, release.version, "calibration.json"))
-
-		if (calRes.ok) {
-			calibrator = createCalibrator((await calRes.json()) as CalibrationTable)
-		}
-	} catch {
-		// No calibration table for this version, so raw scores it is.
-	}
-
-	let fstMatcher: FSTMatcherLike | null = null
-	let fstProvenance: FSTProvenance | null = null
-	let streetMorphologyMatcher: FSTMatcherLike | null = null
-
-	if (release.hasFST) {
-		try {
-			const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, release.version)
-			fstMatcher = fstResult.matcher
-			fstProvenance = fstResult.provenance ?? null
-		} catch {
-			// FST not available for this version.
-		}
-
-		// The street-context check needs both matchers, so the morphology matcher
-		// is loaded only once the gazetteer FST is.
-		// A release that predates the artifact answers null and the parse runs with the check off.
-		if (fstMatcher) {
-			try {
-				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
-			} catch {
-				// A corrupt or unfetchable artifact leaves the check off.
-			}
-		}
-	}
+	const fstResult = fstLoad ? await fstLoad : null
+	const fstMatcher: FSTMatcherLike | null = fstResult?.matcher ?? null
+	const fstProvenance: FSTProvenance | null = fstResult?.provenance ?? null
+	const streetMorphology = streetMorphologyLoad ? await streetMorphologyLoad : null
+	const streetMorphologyMatcher: FSTMatcherLike | null = fstMatcher ? streetMorphology : null
 
 	progress.setStepIndex(1)
 

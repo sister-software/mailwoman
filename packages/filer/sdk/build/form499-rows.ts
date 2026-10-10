@@ -23,7 +23,7 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  * the interval (`valid_from <= t < valid_to`) and make the filer disappear from `asOf` reads.
  * Callers still record the date as `ceased_at`.
  */
-export function closeableCessationDate(ceasedAt: string | undefined, validFrom: string): string | null {
+export function closeableCessationDate(ceasedAt: string | null, validFrom: string): string | null {
 	if (!ceasedAt) return null
 
 	return ceasedAt > validFrom ? ceasedAt : null
@@ -33,7 +33,7 @@ export function closeableCessationDate(ceasedAt: string | undefined, validFrom: 
  * {@linkcode processForm499Lifecycle}'s per-row context.
  */
 export interface Form499LifecycleContext {
-	lifecycle: Form499Lifecycle | undefined
+	lifecycle: Form499Lifecycle | null
 	form499NodeID: string
 	lastFiledAt: string
 }
@@ -65,7 +65,7 @@ export function processForm499Lifecycle(
 	context: Form499LifecycleContext
 ): string | null {
 	const { lifecycle, form499NodeID, lastFiledAt } = context
-	const ceasedAt = lifecycle?.ceasedAt
+	const ceasedAt = lifecycle?.ceasedAt ?? null
 	const relationshipValidTo = closeableCessationDate(ceasedAt, lastFiledAt)
 
 	if (ceasedAt) {

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { autocomplete, buildFSTFromWOF, FSTMatcher } from "#fst"
@@ -84,6 +84,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		parentChain: [],
 		lat: 0,
 		lon: 0,
+		encyclopedic: null,
+		crossCountryBranches: null,
 	})
 
 	const matcher = new FSTMatcher([

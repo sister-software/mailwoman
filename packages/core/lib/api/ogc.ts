@@ -48,7 +48,7 @@ export class OGCServiceError extends Error {
 const EXCEPTION_OPEN = "<ServiceException"
 
 /**
- * The element a WFS 2.0 service carries its message in, with an optional namespace prefix.
+ * The element a WFS 2.0 service states its message in, with an optional namespace prefix.
  *
  * OGC 1.x answers `<ServiceExceptionReport>` holding `<ServiceException>`.
  * WFS 2.0 answers `<ows:ExceptionReport>` holding `<ows:Exception exceptionCode="…">`
@@ -80,13 +80,13 @@ const OWS_EXCEPTION_CODE = /exceptionCode\s*=\s*"([^"]*)"/u
  * The entire report would become the message if the parser matched that tag.
  * An unclosed element reads as unreadable rather than as empty.
  */
-function exceptionText(body: string): string | undefined {
+function exceptionText(body: string): string | null {
 	let cursor = 0
 
 	for (;;) {
 		const start = body.indexOf(EXCEPTION_OPEN, cursor)
 
-		if (start === -1) return undefined
+		if (start === -1) return null
 
 		const after = start + EXCEPTION_OPEN.length
 
@@ -99,11 +99,11 @@ function exceptionText(body: string): string | undefined {
 
 		const contentStart = body.indexOf(">", after)
 
-		if (contentStart === -1) return undefined
+		if (contentStart === -1) return null
 
 		const end = body.indexOf("</ServiceException>", contentStart)
 
-		if (end === -1) return undefined
+		if (end === -1) return null
 
 		return body.slice(contentStart + 1, end)
 	}
@@ -112,26 +112,26 @@ function exceptionText(body: string): string | undefined {
 /**
  * The text of an `ExceptionText` element, with or without a namespace prefix.
  *
- * The prefix is captured so the closing tag matches the one the document opened,
- * which keeps a prefixed element from closing on an unprefixed one.
+ * The prefix is captured so the closing tag matches the one the document opened.
+ * A prefixed element therefore never closes on an unprefixed one.
  */
-function owsExceptionText(body: string): string | undefined {
+function owsExceptionText(body: string): string | null {
 	const open = OWS_EXCEPTION_TEXT_OPEN.exec(body)
 
-	if (!open) return undefined
+	if (!open) return null
 
 	const prefix = open[1]
 	const contentStart = open.index + open[0].length
 	const end = body.indexOf(prefix ? `</${prefix}:ExceptionText>` : "</ExceptionText>", contentStart)
 
 	// An unclosed element reads as unreadable rather than as empty, as the 1.x path does.
-	if (end === -1) return undefined
+	if (end === -1) return null
 
 	return body.slice(contentStart, end)
 }
 
 /**
- * The exception message inside an OGC or OWS exception report, or `undefined` for a body that is neither.
+ * The exception message inside an OGC or OWS exception report, or `null` for a body that is neither.
  *
  * Both dialects are read, because a report shares the HTTP status a real answer arrives on
  * and a caller that recognizes one spelling parses the other as data.
@@ -143,8 +143,8 @@ function owsExceptionText(body: string): string | undefined {
  *
  * Split from the request so the detection is testable against captured bodies.
  */
-export function readOGCServiceException(body: string): string | undefined {
-	if (!body.includes("ExceptionReport")) return undefined
+export function readOGCServiceException(body: string): string | null {
+	if (!body.includes("ExceptionReport")) return null
 
 	if (body.includes("ServiceExceptionReport")) {
 		// A body remains an exception report when its exception element cannot be read.
@@ -168,7 +168,7 @@ export function readOGCServiceException(body: string): string | undefined {
 export function assertNoOGCServiceException(body: string, context: string): void {
 	const exception = readOGCServiceException(body)
 
-	if (exception !== undefined) {
+	if (exception) {
 		throw new OGCServiceError(context, exception)
 	}
 }
@@ -195,6 +195,14 @@ export interface CreateOGCFeaturesBBoxReaderOptions {
 	 * Features per request — a ceiling rather than a page size when the probe bbox is meters wide.
 	 */
 	limit: number
+}
+
+/**
+ * One feature as an OGC API Features service publishes it, reduced to the fields a comparison reads.
+ */
+export interface OGCFeature<Properties = Record<string, unknown>> {
+	properties?: Properties
+	geometry?: { type: string; coordinates: unknown }
 }
 
 /**
@@ -249,7 +257,7 @@ export async function readOGCCollectionBBox(
 
 	if (!bbox || bbox.length < BBOX_ORDINATES) {
 		throw new TypeError(
-			`${options.context}: the OGC collection${options.subject === undefined ? "" : ` ${options.subject}`} carried no spatial extent`
+			`${options.context}: the OGC collection${options.subject ? ` ${options.subject}` : ""} carried no spatial extent`
 		)
 	}
 
@@ -280,7 +288,7 @@ export interface ReadWFSFeatureCountOptions {
 async function readReportedNumberMatched(
 	client: Pick<APIClient, "fetch">,
 	options: ReadWFSFeatureCountOptions & { startIndex?: number }
-): Promise<string | undefined> {
+): Promise<string | null> {
 	const { data } = await client.fetch<string>({
 		method: "GET",
 		url: options.wfsURL,
@@ -303,11 +311,12 @@ async function readReportedNumberMatched(
 /**
  * The feature count a WFS reports for one type.
  *
- * `resultType=hits`, which returns the count without a single geometry.
+ * `resultType=hits` returns the count without a single geometry.
  *
  * This takes the service's word for the count.
  * A caller that cannot check the number against the publisher's own figure reads
- * {@linkcode readCheckedWFSFeatureCount} instead, which asks a second time.
+ * {@linkcode readCheckedWFSFeatureCount} instead.
+ * That reader asks a second time.
  *
  * @param options.subject Names the layer in the refusal, where the caller reads more than one.
  */
@@ -316,9 +325,9 @@ export async function readWFSFeatureCount(
 	options: ReadWFSFeatureCountOptions
 ): Promise<number> {
 	const numberMatched = await readReportedNumberMatched(client, options)
-	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
+	const subject = options.subject ? ` for ${options.subject}` : ""
 
-	if (numberMatched === undefined) {
+	if (!numberMatched) {
 		throw new Error(`${options.context}: the WFS hits response${subject} carried no numberMatched attribute`)
 	}
 
@@ -338,7 +347,7 @@ export async function readWFSFeatureCount(
 /**
  * How much a service's own feature count is worth.
  *
- * `reported` is the number the service stated, and `usable` says whether a second read agreed with it.
+ * `reported` is the number the service stated, and `usable` records whether a second read agreed with it.
  * A caller records the count only where `usable` is true and records `because` otherwise,
  * so that a service which cannot count is told apart from one that counted a small number.
  */
@@ -359,34 +368,27 @@ const COUNT_PROBE_SIZE = 10
 /**
  * The feature count a WFS reports for one type, checked against a page of that type.
  *
- * Two INSPIRE Addresses services measured on 2026-09-30 answer a bare `resultType=hits`
- * request wrongly, in opposite directions, and the number alone tells a reader neither.
+ * A bare `resultType=hits` request over a capped service answers with the cap,
+ * so the number cannot tell a reader whether it describes the type.
+ * This asks past index 0 and then probes a page.
  *
- * Flanders (`geo.api.vlaanderen.be/ad/wfs`) answers `numberMatched="10000"` without a `startIndex`
- * and `4563062` with one, so the first request meets a per-request cap rather than counting the type.
- * This asks past index 0 for that reason.
+ * Flanders (`geo.api.vlaanderen.be/ad/wfs`) answers `numberMatched="10000"` without a
+ * `startIndex` and its real count with one, so this asks past index 0.
  *
- * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) states three different
- * numbers for one type and none of them is its count, measured 2026-10-01.
- * A bare request answers `numberMatched="1000"`, which is MapServer's default feature cap.
- *
- * The same request at `startIndex=1` answers `1`.
- * A feature page answers `numberMatched="unknown"`.
- * Its type holds 8,625,921 features.
+ * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) reports MapServer's feature
+ * cap for a bare request, `unknown` for a feature page, and another number at `startIndex=1`.
+ * Its type held 8,625,921 features.
  *
  * The tell is that a page of the same type returns more features than the count admits,
  * so this asks for one page and refuses a count that page contradicts.
- * A service answering this way is counted by paging instead: the count is the largest
- * `startIndex` that still returns a feature, which a doubling search followed by a bisection
- * finds in about 2·log2(n) requests, and a page straddling that index confirms the boundary.
+ * Such a service is counted by paging instead: {@linkcode countWFSFeaturesByPaging}.
  *
  * A missing `numberMatched` can also be transient.
- * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with
- * no such attribute and the other eight with `1704196`.
+ * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with no such attribute.
  *
  * This reports that response as unusable rather than inventing a count,
  * so a caller that needs the number retries, through `APIClient`'s `retry` configuration
- * or by reading the `numberMatched` a feature page carries.
+ * or by reading the `numberMatched` a feature page holds.
  *
  * @param options.subject Names the layer in the reason, where the caller reads more than one.
  */
@@ -397,7 +399,7 @@ export async function readCheckedWFSFeatureCount(
 	const probeSize = options.probeSize ?? COUNT_PROBE_SIZE
 	const numberMatched = await readReportedNumberMatched(client, { ...options, startIndex: 1 })
 
-	if (numberMatched === undefined) {
+	if (!numberMatched) {
 		return { reported: null, usable: false, because: "the hits response carried no numberMatched attribute" }
 	}
 
@@ -429,7 +431,7 @@ export async function readCheckedWFSFeatureCount(
 	assertNoOGCServiceException(probe, options.context)
 
 	const returned = rootAttribute(probe, "numberReturned", { xml: true })
-	const observed = returned !== undefined && /^\d+$/u.test(returned) ? Number(returned) : null
+	const observed = returned && /^\d+$/u.test(returned) ? Number(returned) : null
 
 	if (observed !== null && observed > reported) {
 		return {
@@ -440,12 +442,13 @@ export async function readCheckedWFSFeatureCount(
 	}
 
 	// A page no larger than the reported count agrees with it whatever the truth is,
-	// so agreement alone does not establish that the count describes the type.
-	// Asking for one feature at the reported index does: a service holding exactly that many has none there.
+	// so agreement does not establish that the count describes the type.
+	// One request does: asking for one feature at the reported index.
+	// A service holding exactly that many returns none there.
 	//
 	// Poland's address service is why this request exists.
-	// It answers `numberMatched="1000"`, which is MapServer's own feature cap, and its pages cap
-	// at 1,000 too, so a 10-feature probe agreed with 1,000 while the type held 8,626,951 on 2026-10-02.
+	// It answers `numberMatched="1000"`, MapServer's own feature cap, and its pages cap at 1,000 too.
+	// A 10-feature probe therefore agreed with 1,000 while the type held 8,626,951.
 	// A caller trusting that would have stored 1,000 features and recorded the type as read whole.
 	const { data: beyond } = await client.fetch<string>({
 		method: "GET",
@@ -465,7 +468,7 @@ export async function readCheckedWFSFeatureCount(
 
 	const beyondReturned = rootAttribute(beyond, "numberReturned", { xml: true })
 
-	if (beyondReturned !== undefined && /^[1-9]\d*$/u.test(beyondReturned)) {
+	if (beyondReturned && /^[1-9]\d*$/u.test(beyondReturned)) {
 		return {
 			reported,
 			usable: false,
@@ -486,7 +489,8 @@ export async function readCheckedWFSFeatureCount(
 export interface PagedWFSFeatureCount {
 	count: number
 	/**
-	 * Requests this measurement sent, which is the cost a caller is choosing to pay.
+	 * Requests this measurement sent.
+	 * This is the cost a caller is choosing to pay.
 	 */
 	requests: number
 	/**
@@ -507,8 +511,8 @@ const PAGING_COUNT_CEILING = 2 ** 34
 /**
  * The feature count a type holds, measured by asking which indices hold a feature.
  *
- * For a service whose own `resultType=hits` cannot be trusted, which
- * {@linkcode readCheckedWFSFeatureCount} reports as `usable: false`.
+ * This serves a service whose own `resultType=hits` cannot be trusted.
+ * {@linkcode readCheckedWFSFeatureCount} reports that condition as `usable: false`.
  * What such a service still answers truthfully is whether a feature exists at a given
  * `startIndex`, so the count is the largest index that returns one, plus one.
  *
@@ -516,7 +520,7 @@ const PAGING_COUNT_CEILING = 2 ** 34
  * It costs about 2·log2(n) requests: 51 for Poland's 8,625,921 features.
  *
  * A page straddling the last index then confirms the boundary.
- * `confirmed` carries that answer to the caller, because a service that caps a
+ * `confirmed` reports that answer to the caller, because a service that caps a
  * page would make the bisection stop early.
  *
  * The measurement means something only where paging works.
@@ -559,7 +563,7 @@ export async function countWFSFeaturesByPaging(
 
 		const returned = rootAttribute(data, "numberReturned", { xml: true })
 
-		return { returned: returned !== undefined && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
+		return { returned: returned && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
 	}
 
 	const leading = options.identify ?? ((body: string) => /gml:id="([^"]+)"/u.exec(body)?.[1] ?? null)
@@ -571,7 +575,7 @@ export async function countWFSFeaturesByPaging(
 
 	const second = await read(2, 2)
 
-	if (leading(first.body) !== null && leading(first.body) === leading(second.body)) {
+	if (leading(first.body) && leading(first.body) === leading(second.body)) {
 		throw new Error(
 			`${options.context}: the service answered startIndex 0 and startIndex 2 with the same leading feature, so it is ignoring startIndex and a count measured by paging it would be this service's page cap rather than its feature count`
 		)

@@ -17,7 +17,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
  *
  * `null` marks an option that JSON cannot express, such as a function or a map.
  */
-type KnobOptionKind = "number" | "boolean" | "string" | "string[]" | "weak-resolution" | null
+type KnobOptionKind = "number" | "boolean" | "string" | "string[]" | "weak-resolution" | "default-country" | null
 
 /**
  * The JSON type of every `ResolveOpts` field.
@@ -28,8 +28,7 @@ const KNOB_OPTION_KINDS = {
 	maxLookups: "number",
 	minWinningScore: "number",
 	candidatesPerLookup: "number",
-	defaultCountry: "string",
-	defaultCountryIsInferred: "boolean",
+	defaultCountry: "default-country",
 	fuzzyCountryScope: "string",
 	bias: null,
 	parentFallback: "boolean",
@@ -92,6 +91,12 @@ function matchesKind(value: unknown, kind: Exclude<KnobOptionKind, null>): boole
 			return Array.isArray(value) && value.every((entry) => typeof entry === "string")
 		case "weak-resolution":
 			return typeof value === "string" && WEAK_RESOLUTION_READINGS.has(value)
+		case "default-country": {
+			if (typeof value !== "object" || !value) return false
+			const { country, source } = value as { country?: unknown; source?: unknown }
+
+			return typeof country === "string" && (source === "caller" || source === "inferred")
+		}
 	}
 }
 
@@ -112,13 +117,13 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 	const labels = new Set<string>()
 
 	return value.map((entry: unknown, index) => {
-		if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+		if (typeof entry !== "object" || !entry || Array.isArray(entry)) {
 			throw new Error(`${source}: arm ${index} is not an object`)
 		}
 
 		const { label, opts } = entry as { label?: unknown; opts?: unknown }
 
-		if (typeof label !== "string" || !label.length) {
+		if (typeof label !== "string" || !label) {
 			throw new Error(`${source}: arm ${index} has no string "label"`)
 		}
 
@@ -126,7 +131,7 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 
 		labels.add(label)
 
-		if (typeof opts !== "object" || opts === null || Array.isArray(opts)) {
+		if (typeof opts !== "object" || !opts || Array.isArray(opts)) {
 			throw new Error(`${source}: arm "${label}" has no "opts" object`)
 		}
 
@@ -137,7 +142,7 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 
 			const kind = KNOB_OPTION_KINDS[key as keyof typeof KNOB_OPTION_KINDS]
 
-			if (kind === null) {
+			if (!kind) {
 				throw new Error(`${source}: arm "${label}" sets "${key}", which a JSON arms file cannot express`)
 			}
 

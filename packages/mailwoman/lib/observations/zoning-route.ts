@@ -50,7 +50,7 @@ export interface ZoningDesignationObservation {
 	 *
 	 * Its basis is `source_present`, which supports a presence claim only.
 	 */
-	coverage?: ObservationCoverageRecord
+	coverage: ObservationCoverageRecord | null
 	/**
 	 * The index cell that was probed.
 	 */
@@ -106,7 +106,7 @@ export interface ZoningDesignationRoute extends Disposable {
 	 * Reads the layer at one coordinate.
 	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
-	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
+	observe: (latitude: number | null, longitude: number | null) => ZoningDecision
 }
 
 /**
@@ -129,7 +129,7 @@ export function createZoningDesignationRoute(options: ZoningDesignationRouteOpti
 
 	return createDesignationRoute(lookup, {
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
-		refusalFor: (reading) => (reading.kind !== ZoningReadingKind.Designated ? "no_designation_here" : undefined),
+		refusalFor: (reading) => (reading.kind !== ZoningReadingKind.Designated ? "no_designation_here" : null),
 		toObservation: (reading, latitude, longitude) =>
 			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
@@ -151,7 +151,7 @@ function toObservation(
 		reading: reading.kind,
 		designations: reading.designations,
 		containment: reading.containment,
-		...observationCoverageRecord(reading.coverage),
+		coverage: observationCoverageRecord(reading.coverage),
 		indexCellIndex: reading.indexCellIndex,
 		limits: reading.limits,
 		coverageLimit: reading.coverageLimit,

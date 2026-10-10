@@ -6,6 +6,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"
+import type { RoutedArtifactRecord } from "#dev-mcp/routed-mailwoman-arm"
 
 /**
  * Enumerates how cleanly a two-arm comparison isolates its declared configuration
@@ -179,29 +180,22 @@ export function assertComparableField(field: string): void {
 	}
 }
 
-interface ResolvedArtifact {
-	name: string
-	path: string | null
-	origin: string | null
-	/**
-	 * The digest of the bytes the arm read, or `null` when the arm recorded none.
-	 *
-	 * Two recorded digests that differ make isolation ambiguous.
-	 * A `null` on either side leaves the comparison unable to say whether the bytes agree,
-	 * which is a different reading from agreement.
-	 */
-	digest: string | null
-}
-
 /**
  * One locale's resolved artifacts, keyed by artifact name.
  */
-type ResolvedByName = Map<string, Pick<ResolvedArtifact, "origin" | "path" | "digest">>
+type ResolvedByName = Map<string, Pick<RoutedArtifactRecord, "origin" | "path" | "digest">>
 
-function readArtifacts(value: unknown): ResolvedArtifact[] | null {
+/**
+ * Reads one locale's artifact records, with a `null` digest where the arm recorded none.
+ *
+ * Two recorded digests that differ make isolation ambiguous.
+ * A `null` on either side leaves the comparison unable to establish whether the bytes agree.
+ * That is a different reading from agreement.
+ */
+function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
 	if (!Array.isArray(value)) return null
 
-	const artifacts: ResolvedArtifact[] = []
+	const artifacts: RoutedArtifactRecord[] = []
 
 	for (const entry of value) {
 		if (typeof entry !== "object" || entry === null) return null
@@ -231,7 +225,7 @@ function readArtifacts(value: unknown): ResolvedArtifact[] | null {
  * Runs recorded before the record existed have no such record.
  */
 function resolvedArtifactsByLocale(provenance: unknown): Map<string, ResolvedByName> | null {
-	if (typeof provenance !== "object" || provenance === null) return null
+	if (typeof provenance !== "object" || !provenance) return null
 
 	const byLocale = (provenance as Record<string, unknown>)["artifacts_by_locale"]
 
@@ -246,12 +240,12 @@ function resolvedArtifactsByLocale(provenance: unknown): Map<string, ResolvedByN
 		const locale = record["locale"]
 		const artifacts = readArtifacts(record["artifacts"])
 
-		if (typeof locale !== "string" || artifacts === null) return null
+		if (typeof locale !== "string" || !artifacts) return null
 
 		const resolved: ResolvedByName = new Map()
 
 		for (const artifact of artifacts) {
-			if (artifact.path === null) continue
+			if (!artifact.path) continue
 
 			resolved.set(artifact.name, {
 				origin: artifact.origin ?? "unstated",
@@ -315,8 +309,8 @@ export function artifactSetWarnings(provenanceA: unknown, provenanceB: unknown):
 			divergences.push(`${locale}: arm B fed ${onlyB.join(", ")} and arm A left ${pronounFor(onlyB)} unresolved.`)
 		}
 
-		// An artifact both arms resolved under one name can still hold different bytes,
-		// which the name comparison above reads as agreement.
+		// An artifact both arms resolved under one name can still hold different bytes.
+		// The name comparison above reads that as agreement.
 		for (const name of [...a.keys()].filter((key) => b.has(key)).toSorted()) {
 			const left = a.get(name)!
 			const right = b.get(name)!

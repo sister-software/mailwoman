@@ -1,6 +1,6 @@
 {
 	"benchmarkID": "same-data-resolver-v1",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/2261",
 	"claim": "Given the same frozen candidate fixture, Mailwoman selects the correct admin candidate more often and makes fewer wrong-area selections than the registered baseline resolver.",
 	"claimBoundary": "The benchmark says nothing about global coverage, index quality, retrieval, rooftop accuracy, or performance against any third-party geocoder. Those claims belong to the end-to-end record at docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md, which this work does not alter.",
@@ -92,7 +92,7 @@
 	],
 	"withheldFixtureFields": {
 		"fields": ["containedByQualifier", "regionScopeMiss", "resolutionQuality", "mismatch", "variantAliasExempted"],
-		"reason": "Each is a verdict the backend already computed ABOUT THIS QUERY rather than a fact about the place. Shipping one hands every arm a partly solved row and makes the containment ablation unmeasurable. They are absent for every arm, and adminContainmentRerank is pinned off, which is also its library default.",
+		"reason": "Each is a verdict the backend already computed ABOUT THIS QUERY rather than a fact about the place. Shipping one hands every arm a partly solved row and makes the containment ablation unmeasurable. They are absent for every arm, and adminContainmentRerank is pinned off for every arm (SAME_DATA_RESOLVER_PINS), against its library default of on.",
 		"carriedAnyway": {
 			"fields": ["prominence", "referential"],
 			"reason": "Both are backend-derived from population and the bias points, so they repeat evidence the fixture already carries — but the production ranking reads them, and removing them would change the arm under test rather than the baseline. They stay in the fixture, available to every arm, and the baseline's declared rule does not read them."

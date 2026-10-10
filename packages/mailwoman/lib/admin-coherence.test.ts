@@ -6,10 +6,10 @@
  *   `toGauntletResult`.
  */
 
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { describe, expect, it } from "vitest"
 
 import { assessAdminCoherence, type AdminCoherenceWinner } from "#admin-coherence"
-import type { GeocodeResult } from "#geocode"
 import { toGauntletResult } from "#tools/eval-harness/gauntlet/harness"
 
 /**
@@ -192,7 +192,7 @@ describe("assessAdminCoherence — country verdicts", () => {
 	})
 })
 
-describe("toGauntletResult threading (additive optional field)", () => {
+describe("toGauntletResult threading (nullable field)", () => {
 	const baseResult: GeocodeResult = {
 		input: "Weimar, Thüringen",
 		components: { locality: "Weimar", region: "Thüringen" },
@@ -210,9 +210,28 @@ describe("toGauntletResult threading (additive optional field)", () => {
 		dependent_locality: null,
 		unit: null,
 		countryCode: "US",
-		hierarchy: [{ tag: "locality", value: "Weimar", name: "Weimar", lat: 29.7, lon: -96.78 }],
-		candidates: [{ name: "Weimar", tag: "locality", lat: 29.7, lon: -96.78, countryCode: "US" }],
+		hierarchy: [
+			{
+				tag: "locality",
+				value: "Weimar",
+				name: "Weimar",
+				lat: 29.7,
+				lon: -96.78,
+				placeID: null,
+				in_winner_lineage: null,
+			},
+		],
+		candidates: [{ name: "Weimar", tag: "locality", lat: 29.7, lon: -96.78, countryCode: "US", placeID: null }],
 		postcode_country_scope: null,
+		rooftop: null,
+		capital_promotion: null,
+		dropped_components: null,
+		unfollowed_components: null,
+		derivation: null,
+		entity: null,
+		variant_alias_exemption: "not_applied",
+		admin_coherence: null,
+		authoritative: null,
 		intent_markers: [],
 	}
 
@@ -225,11 +244,10 @@ describe("toGauntletResult threading (additive optional field)", () => {
 		expect(projected.admin_coherence).toEqual({ region: "unverifiable", country: "unstated" })
 	})
 
-	it("omits the field entirely when the result has none (additive — absence stays absence)", () => {
+	it("carries a null field through when the result has none", () => {
 		const projected = toGauntletResult(baseResult)
 
-		expect(projected.admin_coherence).toBeUndefined()
-		expect("admin_coherence" in projected).toBe(false)
+		expect(projected.admin_coherence).toBeNull()
 	})
 })
 

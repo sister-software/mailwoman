@@ -34,10 +34,8 @@ import {
 	runSpanBoard,
 	type SpanBoardFixture,
 	type SpanBoardOptions,
-	type SpanBoardOutcome,
+	type SpanBoardResult,
 } from "#tools/eval-harness/span-board"
-
-export { wilson } from "#tools/eval-harness/span-board"
 
 /**
  * Fixture set backing the fragment board, with bare-street and partial-address probes.
@@ -58,9 +56,9 @@ export interface FragmentFixture extends SpanBoardFixture {
 
 export type FragmentBoardOptions = SpanBoardOptions
 
-export type FragmentBoardOutcome = SpanBoardOutcome
+export type FragmentBoardResult = SpanBoardResult
 
-export async function runFragmentBoard(options: FragmentBoardOptions = {}): Promise<FragmentBoardOutcome> {
+export async function runFragmentBoard(options: FragmentBoardOptions = {}): Promise<FragmentBoardResult> {
 	return runSpanBoard<FragmentFixture>(
 		{
 			name: "fragment board",

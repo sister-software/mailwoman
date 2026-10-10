@@ -32,10 +32,11 @@
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import type { TextSpan } from "@mailwoman/query-shape"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
-import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "#utils/tokenize"
+import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
 
 /**
  * Options for `alignRow`.
@@ -44,7 +45,7 @@ export interface AlignOptions {
 	/**
 	 * Tokenizer to use.
 	 *
-	 * Defaults to `whitespaceTokenizer()`.
+	 * @defaultValue `whitespaceTokenizer()`
 	 */
 	tokenizer?: Tokenizer
 
@@ -52,19 +53,21 @@ export interface AlignOptions {
 	 * Max Levenshtein edit distance to accept when a verbatim substring match fails.
 	 *
 	 * Set `0` to require verbatim matches only.
-	 * Default `2`.
 	 *
 	 * Distance is computed against same-length windows in `raw`, so the threshold
 	 * scales naturally with the component value length.
+	 *
+	 * @defaultValue `2`
 	 */
 	maxEditDistance?: number
 
 	/**
 	 * Case-insensitive comparison for substring search.
 	 *
-	 * Default `true`.
 	 * The retained span in `raw` is the original case.
 	 * Only matching is case-insensitive.
+	 *
+	 * @defaultValue `true`
 	 */
 	caseInsensitive?: boolean
 }
@@ -220,17 +223,17 @@ function locateSpan(args: {
 	raw: string
 	claimed: Array<[number, number]>
 	maxEditDistance: number
-}): { start: number; end: number } | undefined {
+}): { start: number; end: number } | null {
 	const { haystack, needle, claimed, maxEditDistance } = args
 
-	if (!needle.length) return undefined
+	if (!needle) return null
 
 	// Pass 1: verbatim substring.
 	// Word-boundary-aligned matches are preferred over intra-word ones, so a short
 	// value cannot claim the inside of an earlier word.
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence).
-	let intraWord: { start: number; end: number } | undefined
+	let intraWord: { start: number; end: number } | null = null
 	let from = 0
 
 	while (true) {
@@ -249,7 +252,7 @@ function locateSpan(args: {
 
 	if (intraWord) return intraWord
 
-	if (maxEditDistance <= 0) return undefined
+	if (maxEditDistance <= 0) return null
 
 	// Pass 2: fuzzy sliding-window.
 	const len = needle.length
@@ -264,7 +267,7 @@ function locateSpan(args: {
 		if (d <= maxEditDistance) return { start: i, end: i + len }
 	}
 
-	return undefined
+	return null
 }
 
 const WORD_CHAR = /[\p{L}\p{N}]/u
@@ -290,7 +293,7 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 /**
  * Assign BIO labels to tokens from component spans sorted by start offset.
  */
-function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
+function labelTokens(tokens: readonly TextSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
 	const out: BIOLabel[] = []
 	const seenSpan = new Set<number>()
 

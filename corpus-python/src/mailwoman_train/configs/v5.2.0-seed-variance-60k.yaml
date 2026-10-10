@@ -1,7 +1,7 @@
 # v5.2.0 differs from v5.0.0 only in its seed, 43 in place of 42. The corpus, the 134 admitted
 # countries and the 60k-step cosine schedule are unchanged, and the run starts from scratch.
 #
-# Comparing it with v5.0.0 measures how many board rows change outcome between two seeds of the same
+# Comparing it with v5.0.0 measures how many board rows change result between two seeds of the same
 # config. The model is a measurement and is not a promotion candidate. Its result cannot excuse a
 # regression in another candidate.
 data:

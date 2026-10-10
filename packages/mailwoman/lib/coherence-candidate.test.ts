@@ -100,8 +100,8 @@ afterEach(async () => {
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
  *
- * `adminCoherence: false` keeps the re-pick out of the way, since this test
- * is about the stamp and the verdict.
+ * `adminCoherence: false` and `adminContainmentRerank: false` keep the re-pick and the
+ * containment rerank out of the way, since this test is about the stamp and the verdict.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolver = createWOFResolver(lookup)
@@ -109,12 +109,13 @@ async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolved = await resolver.resolveTree(tree(node("locality", "Weimar"), node("region", regionValue)), {
 		includeAncestors,
 		adminCoherence: false,
+		adminContainmentRerank: false,
 	})
 
 	const nodes = [...walkNodes(resolved.roots)] as AdminCoherenceSourceNode[]
 	const winner = nodes.find((n) => n.tag === "locality")!
 
-	return { winner, fragment: adminCoherenceField(nodes, winner, undefined) }
+	return { winner, fragment: adminCoherenceField(nodes, winner, null) }
 }
 
 describe("admin coherence over the candidate backend's ancestors sidecar", () => {
@@ -132,18 +133,18 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 			{ id: USA, placetype: "country", name: "United States" },
 		])
 
-		expect(fragment.admin_coherence!.region).toBe("contradicted")
+		expect(fragment!.region).toBe("contradicted")
 	})
 
 	test("without the stamp the same winner reads unverifiable — the pre-sidecar standing state", async () => {
 		const { fragment } = await verdictFor("Thüringen", false)
 
-		expect(fragment.admin_coherence!.region).toBe("unverifiable")
+		expect(fragment!.region).toBe("unverifiable")
 	})
 
 	test("a qualifier the ancestry vouches for reads confirmed", async () => {
 		const { fragment } = await verdictFor("Texas", true)
 
-		expect(fragment.admin_coherence!.region).toBe("confirmed")
+		expect(fragment!.region).toBe("confirmed")
 	})
 })

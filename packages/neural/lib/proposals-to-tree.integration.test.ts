@@ -19,6 +19,7 @@ function makeProposal(component: ComponentTag, body: string, start: number, conf
 		source: "neural",
 		source_id: "neural-test",
 		penalty: 0,
+		metadata: null,
 	}
 }
 

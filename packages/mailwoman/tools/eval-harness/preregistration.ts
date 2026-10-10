@@ -14,7 +14,7 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import type { PathBuilderLike } from "path-ts"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
-import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board"
+import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board/runtime"
 
 /**
  * Resolves a committed pre-registration file from the package root.
@@ -265,8 +265,8 @@ export interface PreregisteredArtifactIdentity extends WeightsIdentity {
 	 *
 	 * When it is missing, `poiLayerManifestNote` records the reason.
 	 */
-	poiLayerManifest?: LayerManifest
-	poiLayerManifestNote?: string
+	poiLayerManifest: LayerManifest | null
+	poiLayerManifestNote: string | null
 	resolverBackend: POIBoardResolverBackend
 }
 
@@ -282,10 +282,8 @@ export async function readArtifactIdentity(
 
 	return {
 		poiDatabasePath: db,
-		...(probed.manifest ? { poiLayerManifest: probed.manifest } : {}),
-		...(probed.manifest
-			? {}
-			: { poiLayerManifestNote: probed.error ?? "the database carries no layer_manifest table" }),
+		poiLayerManifest: probed.manifest ?? null,
+		poiLayerManifestNote: probed.manifest ? null : (probed.error ?? "the database carries no layer_manifest table"),
 		resolverBackend: backend,
 		...(await readWeightsIdentity(options)),
 	}

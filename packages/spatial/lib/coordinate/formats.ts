@@ -75,7 +75,9 @@ export function qiblaBearing(lat: number, lon: number): number {
 const GEOHASH_BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
 /**
- * Encode a coordinate as a geohash of the given precision (default 9 ≈ 4.8 m).
+ * Encode a coordinate as a geohash of the given precision.
+ *
+ * @param precision [9] Geohash length. 9 characters is about 4.8 m.
  */
 export function toGeohash(lat: number, lon: number, precision = 9): string {
 	let latMin = -90
@@ -125,7 +127,9 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 const A_CODE = "A".charCodeAt(0)
 
 /**
- * Maidenhead grid locator (default 6-char: field uppercase, square digits, subsquare lowercase).
+ * Maidenhead grid locator: field uppercase, square digits, subsquare lowercase.
+ *
+ * @param pairs [3] Character pairs in the locator. 3 pairs is the 6-character form.
  */
 export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	const lonAdj = lon + 180
@@ -155,8 +159,9 @@ const unixEpochJulian = 2_440_587.5
 export function sunTimes(
 	lat: number,
 	lon: number,
-	date: Date = new Date()
-): { rise?: number; set?: number; noon: number } {
+	date: Date | null = null
+): { rise: number | null; set: number | null; noon: number } {
+	date ??= new Date()
 	const julian = date.getTime() / 86_400_000 + unixEpochJulian
 	const n = Math.round(julian - J2000 - 0.0009 + lon / 360)
 	const meanSolarTime = n + 0.0009 - lon / 360
@@ -174,7 +179,7 @@ export function sunTimes(
 	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86_400)
 	const noon = toEpoch(transit)
 
-	if (cosH >= 1 || cosH <= -1) return { noon }
+	if (cosH >= 1 || cosH <= -1) return { rise: null, set: null, noon }
 	const hourAngle = toDeg(Math.acos(cosH))
 
 	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
@@ -256,7 +261,7 @@ export const coordinateFormatAnnotator: Annotator = ({ lat, lon, date }): Partia
 	dms: toDMS(lat, lon),
 	geohash: toGeohash(lat, lon),
 	maidenhead: toMaidenhead(lat, lon),
-	mgrs: toMGRS(lat, lon) || undefined,
+	mgrs: toMGRS(lat, lon) || null,
 	mercator: toMercator(lat, lon),
 	qiblaBearing: qiblaBearing(lat, lon),
 	sun: sunTimes(lat, lon, date),

@@ -48,7 +48,7 @@ export class RequestPacer {
 	 * A zero-interval pacer would never actually pace.
 	 * Silently accepting one would make a misconfigured caller look throttled when it isn't.
 	 * @param clock Time source.
-	 * Defaults to {@linkcode systemClock}.
+	 * @defaultValue {@linkcode systemClock}
 	 */
 	constructor(intervalMs: number, clock: ClockLike = systemClock) {
 		if (!Number.isFinite(intervalMs) || intervalMs <= 0) {

@@ -24,7 +24,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
@@ -185,6 +185,9 @@ for (const seed of rows) {
 	let streetColumn = "street"
 	let localityExpression: string | null = null
 
+	// country-branch: GB streets are attested against a CSV register with its own columns,
+	// every other country against the parquet corpus.
+	// A register table keyed by country would replace this.
 	if (country === "GB" && gbRegister) {
 		register = gbRegister
 		source = `read_csv('${escapeSQLString(gbRegister)}', header = true)`
@@ -237,6 +240,8 @@ for (const seed of rows) {
 		continue
 	}
 
+	// country-branch: the GB register's locality is a scalar column and the corpus's is a list.
+	// See the register branch above.
 	const localityClause =
 		localityLiteral && localityExpression
 			? country === "GB"
@@ -274,7 +279,7 @@ for (const seed of rows) {
 console.log(`${verdicts.length} rows, Overture release ${release}${gbRegister ? `, GB register ${gbRegister}` : ""}\n`)
 
 for (const verdict of verdicts) {
-	if (verdict.street === null) {
+	if (!verdict.street) {
 		console.log(`  ${verdict.id} (${verdict.country})  expects no street — excluded`)
 
 		continue

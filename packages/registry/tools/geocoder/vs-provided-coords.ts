@@ -49,13 +49,13 @@ export interface GeocoderVsProvidedCoordsOptions {
 	/**
 	 * Record-matcher sources directory.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/record-matcher/sources`
 	 */
 	sources?: string
 	/**
 	 * Facilities geocoded.
 	 *
-	 * Default 2000.
+	 * @defaultValue `2000`
 	 */
 	max?: number
 	/**
@@ -84,7 +84,7 @@ export interface GeocoderVsProvidedCoordsOptions {
  *
  * Strictness is the measurement rather than an unfinished migration.
  */
-function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
+function parseLatLon(raw: string | null | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
 	const [a, b] = TextSpliterator.from(raw, { delimiter: "," }).map(Number).toArray()
 

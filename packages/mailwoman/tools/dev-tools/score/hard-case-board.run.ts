@@ -5,7 +5,8 @@
  * Compares FST arms on the hard-case board through the runtime pipeline, holding the model and resolver fixed.
  */
 
-import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -83,7 +84,7 @@ for (const arm of arms) {
 			createRuntimePipeline({
 				classifier: classifiers.get(locale)!,
 				resolver,
-				fst,
+				fst: fst || "none",
 			})
 		)
 	}
@@ -91,7 +92,7 @@ for (const arm of arms) {
 	pipelines.set(arm, byLocale)
 }
 
-interface Outcome {
+interface CaseScore {
 	coordOK: boolean | null
 	placeOK: boolean | null
 	errKm: number | null
@@ -109,7 +110,7 @@ const norm = (s: string): string =>
 		.replaceAll(/[̀-ͯ]/gu, "")
 		.trim()
 
-function score(c: HardCase, resolved: Resolved[]): Outcome {
+function score(c: HardCase, resolved: Resolved[]): CaseScore {
 	const best = mostSpecific(resolved)
 
 	const errKm =
@@ -125,10 +126,10 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 	// The expected place can be an ancestor of the most specific result, so every resolved node is checked.
 	let placeOK: boolean | null = null
 
-	if (c.expectPlaceID !== undefined) {
+	if (c.expectPlaceID) {
 		const want = Number(c.expectPlaceID.replace(/^wof:/u, ""))
 		placeOK = resolved.some((r) => r.id === want)
-	} else if (c.expectPlaceName !== undefined) {
+	} else if (c.expectPlaceName) {
 		const want = norm(c.expectPlaceName)
 		placeOK = resolved.some((r) => norm(r.name) === want)
 	}
@@ -151,13 +152,13 @@ interface RowResult {
 	input: string
 	popBias: number
 	impBias: number
-	byArm: Record<string, Outcome>
+	byArm: Record<string, CaseScore>
 }
 
 const results: RowResult[] = []
 
 for (const c of board) {
-	const byArm: Record<string, Outcome> = {}
+	const byArm: Record<string, CaseScore> = {}
 
 	for (const arm of arms) {
 		const pipeline = pipelines.get(arm)!.get(c.locale)!

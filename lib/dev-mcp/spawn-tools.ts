@@ -11,6 +11,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
+import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { z } from "zod"
 
 import { checkCLIAllowlist } from "#dev-mcp/cli/allowlist"
@@ -45,8 +46,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					.enum(["regression", "metamorphic", "holdout", "ablation", "all"])
 					.default("regression")
 					.describe("`all` runs the multi-layer sequence and takes considerably longer."),
-				gazetteer_prior: z.boolean().optional(),
-				postcode_country_coherence: z.boolean().optional(),
+				gazetteer_prior: SwitchPinSchema.default("production"),
+				postcode_country_coherence: SwitchPinSchema.default("production"),
 				candidate: z.string().optional().describe("Candidate ONNX path — required for the held-out layer."),
 				weights_cache: z.string().optional(),
 				tokenizer: z.string().optional(),
@@ -68,19 +69,11 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					argv.push("--layer", layer)
 				}
 
-				if (args["gazetteer_prior"]) {
-					argv.push("--gazetteer-prior")
-				}
-
-				// The CLI uses separate flags for the two directions.
-				// `undefined` reaches neither flag.
-				// Unset means the production default that the board grades.
-				if (args["postcode_country_coherence"] === true) {
-					argv.push("--postcode-country-coherence")
-				}
-
-				if (args["postcode_country_coherence"] === false) {
-					argv.push("--postcode-country-coherence-off")
+				for (const [flag, key] of [
+					["--gazetteer-prior", "gazetteer_prior"],
+					["--postcode-country-coherence", "postcode_country_coherence"],
+				] as const) {
+					argv.push(flag, SwitchPinSchema.parse(args[key] ?? "production"))
 				}
 
 				for (const [flag, key] of [
@@ -183,7 +176,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// The eval runs its own recompile-before-eval guard, stricter than this one
 				// and surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
-				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
+				const outDir = (args["out_dir"] as string | null) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
 				// The promotion battery is `mailwoman eval promote --check <spec>`; a wrong
 				// subcommand can exit 0 with no verdict, so the job "succeeds" silently.
 				const argv = ["packages/mailwoman/out/cli/main.js", "eval", "promote", "--check", check, "--out-dir", outDir]
@@ -245,7 +238,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					registry.repoRoot
 				)
 
-				const timeoutMs = ((args["timeout_s"] as number | undefined) ?? 120) * 1000
+				const timeoutMs = ((args["timeout_s"] as number | null) ?? 120) * 1000
 				const startedAt = Date.now()
 
 				while (jobs.get(job.jobID)!.state === "running" && Date.now() - startedAt < timeoutMs) {
@@ -345,7 +338,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					// graded failure from a process crash.
 					...(job.state === "failed" && report.verdict
 						? {
-								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
+								job_result: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
 							}
 						: {}),
 					summary: summarizeJob(job.state, summary.elapsed_s, report, Boolean(promotionEvalOutDir)),

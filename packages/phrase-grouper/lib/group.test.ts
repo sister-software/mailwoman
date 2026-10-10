@@ -8,6 +8,7 @@
 
 import type { PhraseGrouper, PhraseProposal } from "@mailwoman/core/pipeline"
 import type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { groupPhrases, groupPhrasesSync } from "#group"
@@ -27,15 +28,15 @@ function input(normalized: string): NormalizedInputLite {
 }
 
 function shape(opts: Partial<QueryShapeLike> = {}): QueryShapeLike {
-	return { knownFormats: [], ...opts }
+	return { ...EMPTY_QUERY_SHAPE_VIEW, ...opts }
 }
 
 function kinds(proposals: PhraseProposal[]): string[] {
 	return proposals.map((p) => p.kindHypothesis)
 }
 
-function findKind(proposals: PhraseProposal[], kind: string, body?: string): PhraseProposal | undefined {
-	return proposals.find((p) => p.kindHypothesis === kind && (body === undefined || p.span.body === body))
+function findKind(proposals: PhraseProposal[], kind: string, body?: string): PhraseProposal | null {
+	return proposals.find((p) => p.kindHypothesis === kind && (body === undefined || p.span.body === body)) ?? null
 }
 
 describe("phrase-grouper — interface", () => {
@@ -121,6 +122,7 @@ describe("scorePostcode", () => {
 	it("lifts QueryShape postcode hits to POSTCODE proposals", () => {
 		const out = scorePostcode(
 			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
 				knownFormats: [{ format: "us_zip", span: { start: 23, end: 28 }, confidence: 0.92 }],
 			}),
 			"350 5th Ave, New York, 10118"
@@ -133,7 +135,10 @@ describe("scorePostcode", () => {
 
 	it("skips po_box format (not a postcode)", () => {
 		const out = scorePostcode(
-			shape({ knownFormats: [{ format: "po_box", span: { start: 0, end: 8 }, confidence: 0.9 }] }),
+			shape({
+				...EMPTY_QUERY_SHAPE_VIEW,
+				knownFormats: [{ format: "po_box", span: { start: 0, end: 8 }, confidence: 0.9 }],
+			}),
 			"PO Box 1"
 		)
 

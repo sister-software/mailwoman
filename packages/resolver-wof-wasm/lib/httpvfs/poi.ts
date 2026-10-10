@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
@@ -30,19 +31,17 @@ export function loadPOICategoryCodes(database: RangeDatabase): Promise<Map<strin
 }
 
 /**
- * Options for {@link searchPOICategory}; a non-empty `categoryIDs` replaces `categoryID`.
+ * Options for {@link searchPOICategory}.
  */
 export interface POISearchOpts {
-	categoryID: string
-
 	/**
-	 * The Overture `taxonomy.primary` leaf ids that the canonical category rolls up,
-	 * such as those from `resolveOvertureCategories`.
+	 * The category ids to search: one id, or every Overture `taxonomy.primary` leaf a
+	 * canonical category rolls up, such as those from `resolveOvertureCategories`.
 	 *
 	 * Probes every known leaf per cell and unions the rows.
 	 * Skips unknown leaves.
 	 */
-	categoryIDs?: string[]
+	categoryIDs: readonly string[]
 	center: { lat: number; lon: number }
 
 	/**
@@ -58,14 +57,7 @@ export interface POISearchOpts {
 /**
  * One POI result returned by {@link searchPOICategory}, with its distance from the search center in meters.
  */
-export interface POISearchHit {
-	name: string
-	lat: number
-	lon: number
-	distanceM: number
-	country: string
-	confidence: number
-}
+export type POISearchHit = POIDistanceHit
 
 interface POIRow {
 	name: string | null
@@ -105,8 +97,7 @@ export async function searchPOICategory(database: RangeDatabase, opts: POISearch
 	const maxRings = Math.max(1, opts.maxRings ?? DEFAULT_MAX_RINGS)
 	const codes = await loadPOICategoryCodes(database)
 
-	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
-	const categoryIDs = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
+	const categoryIDs = opts.categoryIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
 	if (!categoryIDs.length) return []
 

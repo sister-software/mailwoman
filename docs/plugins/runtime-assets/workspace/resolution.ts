@@ -6,7 +6,7 @@
  *   under `lib/` and falls back to `out/`, so the site bundles source where it exists.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
 
 /**

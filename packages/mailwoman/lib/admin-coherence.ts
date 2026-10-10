@@ -12,29 +12,17 @@
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
 import { walkNodes } from "@mailwoman/core/decoder"
+import type { AdminCoherenceReport, AdminCoherenceVerdict } from "@mailwoman/core/geocode"
 import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-
-/**
- * Verdict for one parsed qualifier.
- */
-type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
-
-/**
- * Verdicts for the parsed `region` and `country` qualifiers.
- */
-export interface AdminCoherenceReport {
-	region: AdminCoherenceVerdict
-	country: AdminCoherenceVerdict
-}
 
 /**
  * Parsed `region` and `country` qualifiers.
  * Blank values count as absent.
  */
 export interface ParsedAdminQualifiers {
-	region?: string | undefined
-	country?: string | undefined
+	region?: string | null
+	country?: string | null
 }
 
 /**
@@ -50,8 +38,8 @@ interface AdminAncestor {
  */
 export interface AdminCoherenceWinner {
 	tag: string
-	countryCode?: string | undefined
-	ancestry?: readonly AdminAncestor[] | undefined
+	countryCode?: string | null
+	ancestry?: readonly AdminAncestor[] | null
 }
 
 /**
@@ -124,7 +112,7 @@ function winnerCountryKeys(winner: AdminCoherenceWinner): Set<string> {
 	return winnerKeys
 }
 
-function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
+function regionVerdict(parsedRegion: string | null, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
 	const parsed = parsedRegion?.trim()
 
 	if (!parsed) return "unstated"
@@ -146,7 +134,7 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 	return regionAncestors.length ? "contradicted" : "unverifiable"
 }
 
-function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
+function countryVerdict(parsedCountry: string | null, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
 	const parsed = parsedCountry?.trim()
 
 	if (!parsed) return "unstated"
@@ -168,8 +156,8 @@ export function assessAdminCoherence(
 	winner: AdminCoherenceWinner
 ): AdminCoherenceReport {
 	return {
-		region: regionVerdict(parsed.region, winner),
-		country: countryVerdict(parsed.country, winner),
+		region: regionVerdict(parsed.region ?? null, winner),
+		country: countryVerdict(parsed.country ?? null, winner),
 	}
 }
 
@@ -183,33 +171,33 @@ export interface AdminCoherenceSourceNode {
 }
 
 /**
- * Builds the `admin_coherence` response field from the parsed nodes and the resolved winner.
+ * Builds the `admin_coherence` response value from the parsed nodes and the resolved winner.
  *
  * The function uses `fallbackWinner` when `winner` is absent.
- * It returns an empty object when both are absent.
+ * It returns null when both are absent.
  */
 export function adminCoherenceField(
 	nodes: readonly AdminCoherenceSourceNode[],
-	winner: AdminCoherenceSourceNode | undefined,
-	fallbackWinner: AdminCoherenceSourceNode | undefined
-): { admin_coherence?: AdminCoherenceReport } {
+	winner: AdminCoherenceSourceNode | null,
+	fallbackWinner: AdminCoherenceSourceNode | null
+): AdminCoherenceReport | null {
 	const picked = winner ?? fallbackWinner
 
-	if (!picked) return {}
+	if (!picked) return null
 
 	const report = assessAdminCoherence(
 		{
-			region: nodes.find((n) => n.tag === "region")?.value?.trim() || undefined,
-			country: nodes.find((n) => n.tag === "country")?.value?.trim() || undefined,
+			region: nodes.find((n) => n.tag === "region")?.value?.trim() || null,
+			country: nodes.find((n) => n.tag === "country")?.value?.trim() || null,
 		},
 		{
 			tag: picked.tag,
-			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
+			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || null,
+			ancestry: (picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined) ?? null,
 		}
 	)
 
-	return { admin_coherence: report }
+	return report
 }
 
 /**
@@ -227,7 +215,7 @@ export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
 export function forkedEntityCoherenceField(
 	roots: readonly AdminCoherenceTreeNode[],
 	entity: { name: string; country: string }
-): { admin_coherence?: AdminCoherenceReport } {
+): AdminCoherenceReport | null {
 	const nodes: AdminCoherenceSourceNode[] = [...walkNodes(roots)].map((n) => ({
 		tag: n.tag,
 		value: n.value,
@@ -237,6 +225,6 @@ export function forkedEntityCoherenceField(
 	return adminCoherenceField(
 		nodes,
 		{ tag: "venue", value: entity.name, metadata: { resolver_country: entity.country } },
-		undefined
+		null
 	)
 }

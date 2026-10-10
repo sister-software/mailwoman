@@ -11,7 +11,7 @@ import {
 	runSpanBoard,
 	type SpanBoardFixture,
 	type SpanBoardOptions,
-	type SpanBoardOutcome,
+	type SpanBoardResult,
 } from "#tools/eval-harness/span-board"
 
 /**
@@ -33,7 +33,7 @@ export interface DigitFixture extends SpanBoardFixture {
 
 export type DigitBoardOptions = SpanBoardOptions
 
-export type DigitBoardOutcome = SpanBoardOutcome
+export type DigitBoardResult = SpanBoardResult
 
 /**
  * Joins the values of every node with the given tag in input order.
@@ -48,7 +48,7 @@ const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, ta
 /**
  * Runs the digit board against its fixtures.
  */
-export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<DigitBoardOutcome> {
+export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<DigitBoardResult> {
 	return runSpanBoard<DigitFixture>(
 		{
 			name: "digit board",

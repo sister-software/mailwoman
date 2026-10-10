@@ -28,22 +28,17 @@ import {
 	type SemanticObservationRoute,
 	type SemanticRouteIdentity,
 } from "#observations"
-import {
-	createPOIBoardPipeline,
-	POI_BOARD_FIXTURES,
-	type POIBoardFixture,
-	type POIBoardOptions,
-	type POIBoardOutcome,
-} from "#tools/eval-harness/poi/board"
+import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
+import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
 import {
 	computeProbeCounts,
 	decideProbe,
 	gradeWithComparator,
 	loadProbeDefinition,
-	poiOutcomeShape,
+	poiResultShape,
 	type ProbeCounts,
-	type ProbeRowOutcome,
+	type ProbeRowResult,
 	type ProbeVerdict,
 	probeDefinitionHash,
 	resolveControlRows,
@@ -89,7 +84,7 @@ export interface ProbeReceipt {
 	 * "no route was asked for" and "this receipt predates the field" the same reading.
 	 */
 	semanticRoute: ProbeSemanticRouteRecord
-	rows: ProbeRowOutcome[]
+	rows: ProbeRowResult[]
 	/**
 	 * Every firing of the injected route, in row order.
 	 * Empty on an un-injected run.
@@ -117,7 +112,7 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	/**
 	 * Commit sha recorded in the receipt.
 	 *
-	 * Defaults to the checkout's own short head.
+	 * @defaultValue the checkout's own short head.
 	 */
 	gitCommit?: string
 	/**
@@ -153,19 +148,19 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 
 	const { pipeline, db, backend } = pipelineHandle
 
-	const rows: ProbeRowOutcome[] = []
+	const rows: ProbeRowResult[] = []
 	const semanticObservations: ProbeRowObservation[] = []
 
 	for (const target of definition.targetRows) {
 		rows.push(await gradeRow(pipeline, definition, target, "target"))
-		semanticObservations.push(...drainObservations(route, target.id))
+		semanticObservations.push(...drainObservations(route ?? null, target.id))
 	}
 
 	for (const control of controls) {
-		const outcome = await gradeRow(pipeline, definition, control, "control")
+		const board = await gradeRow(pipeline, definition, control, "control")
 
-		rows.push({ ...outcome, group: groupByID.get(control.id) })
-		semanticObservations.push(...drainObservations(route, control.id))
+		rows.push({ ...board, group: groupByID.get(control.id) ?? null })
+		semanticObservations.push(...drainObservations(route ?? null, control.id))
 	}
 
 	const counts = computeProbeCounts(definition, rows)
@@ -190,7 +185,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
  * Take everything the route recorded while one row ran, addressed to that row. empty
  * when no route was injected.
  */
-function drainObservations(route: SemanticObservationRoute | undefined, rowID: string): ProbeRowObservation[] {
+function drainObservations(route: SemanticObservationRoute | null, rowID: string): ProbeRowObservation[] {
 	if (!route) return []
 
 	return route.takeObservations().map((observation) => ({ rowID, ...observation }))
@@ -201,19 +196,20 @@ async function gradeRow(
 	definition: SemanticProbeDefinition,
 	fixture: POIBoardFixture,
 	role: "target" | "control"
-): Promise<ProbeRowOutcome> {
+): Promise<ProbeRowResult> {
 	const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 	const result = await pipeline(fixture.query, runOpts)
-	const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
-	const shape = poiOutcomeShape(outcome)
+	const board: POIBoardResult = { path: result.path, poiIntent: result.poiIntent ?? null }
+	const shape = poiResultShape(board)
 
 	return {
 		id: fixture.id,
 		role,
+		group: null,
 		query: fixture.query,
 		shape,
-		...(outcome.poiIntent?.type === "abstain" ? { abstainReason: outcome.poiIntent.reason } : {}),
-		grade: gradeWithComparator(definition.outcomeComparator, fixture, outcome),
+		abstainReason: board.poiIntent?.type === "abstain" ? board.poiIntent.reason : null,
+		grade: gradeWithComparator(definition.resultComparator, fixture, board),
 	}
 }
 

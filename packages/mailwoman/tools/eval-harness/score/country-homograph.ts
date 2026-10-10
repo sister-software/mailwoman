@@ -12,6 +12,7 @@
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -35,7 +36,7 @@ export interface ScoreCountryHomographOptions {
 	/**
 	 * Eval jsonl.
 	 *
-	 * Default `data/eval/external/country-homograph-real.jsonl`.
+	 * @defaultValue `data/eval/external/country-homograph-real.jsonl`
 	 */
 	file?: string
 	/**
@@ -54,19 +55,25 @@ export interface ScoreCountryHomographOptions {
 	json?: string
 	/**
 	 * `auto` or `<system>` enables the address-system conventions mask.
+	 *
+	 * @defaultValue `"off"`
 	 */
-	conventions?: string
+	conventions?: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
-	bridgeGaps?: boolean
+	bridgePunctuationGaps?: Toggle
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode.
 	 *
 	 * The check always passes this for the country probe, because zero-filled clues
 	 * near a postcode depress country recall.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
-	suppressGazNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: Toggle
 	/**
 	 * Package-shaped `<root>` loads model + tokenizer + card + all soft channels
 	 * (anchor + gazetteer + country) from the package via `loadFromWeights`.
@@ -127,9 +134,9 @@ export async function scoreCountryHomograph(
 		weightsCache: options.weightsCache || "",
 		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 		gazetteerLexiconWhenPresent: true,
-		suppressGazNearPostcode: options.suppressGazNearPostcode ?? false,
-		...(options.conventions ? { conventions: options.conventions } : {}),
-		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
+		suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
+		conventions: options.conventions ?? "off",
+		bridgePunctuationGaps: options.bridgePunctuationGaps ?? DEFAULT_TOGGLE,
 	})
 
 	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()

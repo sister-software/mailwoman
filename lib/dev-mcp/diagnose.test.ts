@@ -16,7 +16,7 @@ import {
 	assembleAccount,
 	expectationCase,
 	matchShapes,
-	collectOutcomeFacts,
+	collectResultFacts,
 	collectParseFacts,
 	renderAccount,
 	collectRetrievalFacts,
@@ -24,7 +24,7 @@ import {
 	type AccountInput,
 	type ExpectationReading,
 } from "#dev-mcp/diagnose"
-import type { ResolvedInput } from "#dev-mcp/input-sets"
+import { resolvedInput } from "#dev-mcp/input-sets"
 
 /**
  * A minimal parse trace, the same skeleton `census.test.ts` uses so the two files agree on what a trace is.
@@ -45,6 +45,12 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 			[1, 0],
 			[0, 1],
 		],
+		anchor: null,
+		gazetteer: null,
+		country: null,
+		localeLogits: null,
+		spanScores: null,
+		localeCountries: null,
 		detectedSystem: null,
 		systemSource: "off",
 		priors: [],
@@ -72,17 +78,30 @@ function lookup(overrides: Partial<ResolveNodeTrace> = {}): ResolveNodeTrace {
 		tag: "locality",
 		value: "Weimar",
 		placetype: "locality",
-		query: { limit: 10 },
+		query: { country: null, parentID: null, postcode: null, regionQualifier: null, limit: 10 },
 		checks: [],
 		candidates: [],
 		candidatesTruncated: 0,
 		picked: null,
+		reachableIn: null,
 		...overrides,
 	}
 }
 
 function candidate(id: number, name: string, ranks: Record<string, number>) {
-	return { id, name, country: "US", placetype: "locality", score: 1, ranks }
+	return {
+		id,
+		name,
+		country: "US",
+		placetype: "locality",
+		score: 1,
+		prominence: null,
+		importance: null,
+		population: null,
+		exactMatch: null,
+		containedByQualifier: null,
+		ranks,
+	}
 }
 
 function run(overrides: Partial<AccountInput> = {}): AccountInput {
@@ -112,7 +131,7 @@ function traceOf(overrides: Partial<NonNullable<AccountInput["trace"]>> = {}): N
 const NO_EXPECTATION: ExpectationReading = { source: "none", met: null, issues: [] }
 const FAILED_EXPECTATION: ExpectationReading = { source: "board_case", met: false, issues: ["coord 400km off"] }
 
-const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country: "DE" }
+const ITEM = resolvedInput({ id: "row-1", input: "Weimar, Thüringen", country: "DE" })
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
@@ -180,7 +199,7 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
 		// One is a trace that predates the records and the other the walk stating it had no entry to resolve.
 		// A combined value would let an old trace read as a retrieval failure.
-		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
+		expect(collectRetrievalFacts(null).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
 
@@ -194,9 +213,9 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 })
 
-describe("collectOutcomeFacts — lineage standing is three-valued", () => {
+describe("collectResultFacts — lineage standing is three-valued", () => {
 	it("counts vouched, contradicted and unverifiable separately", () => {
-		const facts = collectOutcomeFacts({
+		const facts = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -215,7 +234,7 @@ describe("collectOutcomeFacts — lineage standing is three-valued", () => {
 
 	it("reports an absent coherence report as null, never as a passing check", () => {
 		expect(
-			collectOutcomeFacts({ lat: null, lon: null, resolution_tier: "admin", components: {}, hierarchy: [] })
+			collectResultFacts({ lat: null, lon: null, resolution_tier: "admin", components: {}, hierarchy: [] })
 				.admin_coherence
 		).toBeNull()
 	})
@@ -226,7 +245,7 @@ describe("matchShapes", () => {
 		parse: null,
 		evidence: null,
 		retrieval: collectRetrievalFacts([]),
-		outcome: collectOutcomeFacts({ lat: 1, lon: 2, resolution_tier: "admin", components: {}, hierarchy: [] }),
+		result: collectResultFacts({ lat: 1, lon: 2, resolution_tier: "admin", components: {}, hierarchy: [] }),
 	}
 
 	it("flags a high-confidence known format the parse contradicted, and ignores an ambiguous one", () => {
@@ -296,7 +315,7 @@ describe("matchShapes", () => {
 	})
 
 	it("flags a contradicted qualifier and a fragment outside the winner's lineage under one shape", () => {
-		const contradicted = collectOutcomeFacts({
+		const contradicted = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -305,7 +324,7 @@ describe("matchShapes", () => {
 			admin_coherence: { region: "contradicted", country: "confirmed" },
 		})
 
-		const chimera = collectOutcomeFacts({
+		const chimera = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -313,12 +332,12 @@ describe("matchShapes", () => {
 			hierarchy: [{ tag: "region", name: "Texas", in_winner_lineage: false }],
 		})
 
-		expect(matchShapes({ ...EMPTY, outcome: contradicted })).toContain("wrong_instance_detected")
-		expect(matchShapes({ ...EMPTY, outcome: chimera })).toContain("wrong_instance_detected")
+		expect(matchShapes({ ...EMPTY, result: contradicted })).toContain("wrong_instance_detected")
+		expect(matchShapes({ ...EMPTY, result: chimera })).toContain("wrong_instance_detected")
 	})
 
 	it("reads an unverifiable coherence verdict as no finding — absence of evidence is not evidence", () => {
-		const unverifiable = collectOutcomeFacts({
+		const unverifiable = collectResultFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -327,7 +346,7 @@ describe("matchShapes", () => {
 			admin_coherence: { region: "unverifiable", country: "unstated" },
 		})
 
-		expect(matchShapes({ ...EMPTY, outcome: unverifiable })).toEqual([])
+		expect(matchShapes({ ...EMPTY, result: unverifiable })).toEqual([])
 	})
 
 	it("orders multiple matches by pipeline execution stage", () => {
@@ -341,7 +360,7 @@ describe("matchShapes", () => {
 					picked: { id: 9, name: "Astoria", source: "ranked" },
 				}),
 			]),
-			outcome: collectOutcomeFacts({
+			result: collectResultFacts({
 				lat: 1,
 				lon: 2,
 				resolution_tier: "admin",
@@ -370,12 +389,12 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {
-		const item: ResolvedInput = {
+		const item = resolvedInput({
 			id: "row-bd",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
 			country: "BD",
 			expectComponents: { locality: "Dhaka", postcode: "1205", country: "Bangladesh" },
-		}
+		})
 
 		const parsedWithoutLocality = run({
 			result: {
@@ -392,12 +411,12 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("keeps unclassified when the expected tag EXISTS with a wrong value — that failure has a component to interrogate", () => {
-		const item: ResolvedInput = {
+		const item = resolvedInput({
 			id: "row-wrong-value",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
 			country: "BD",
 			expectComponents: { locality: "Dhaka" },
-		}
+		})
 
 		const parsedWithWrongLocality = run({
 			result: {
@@ -414,18 +433,18 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("keeps unclassified when the missing component's expected value is NOT in the input — nothing to mis-tag", () => {
-		const item: ResolvedInput = {
+		const item = resolvedInput({
 			id: "row-absent-surface",
 			input: "Somewhere Else Entirely",
 			country: "BD",
 			expectComponents: { locality: "Dhaka" },
-		}
+		})
 
 		expect(assembleAccount(item, run({ trace: traceOf() }), FAILED_EXPECTATION).shapes).toEqual(["unclassified"])
 	})
 
 	it("never lets a failed expectation add to a MECHANISM claim", () => {
-		// Commitment 1: expectations pin outcomes, never mechanisms, so a row that matched
+		// Commitment 1: expectations pin results, never mechanisms, so a row that matched
 		// a mechanism shape keeps it whether it passed or failed.
 		const starved = run({ trace: traceOf({ parse: trace({ gazetteer: SILENT_CHANNEL }) }) })
 
@@ -479,11 +498,13 @@ describe("assembleAccount — the terminal states", () => {
 
 describe("expectationCase", () => {
 	it("returns nothing for a row that asserts nothing — ungradeable is not passing", () => {
-		expect(expectationCase({ id: "0", input: "belleville" })).toBeNull()
+		expect(expectationCase(resolvedInput({ id: "0", input: "belleville" }))).toBeNull()
 	})
 
 	it("synthesizes a case for a corpus row with a coordinate but no seed", () => {
-		const built = expectationCase({ id: "p-1", input: "x", truthLat: 48.8, truthLon: 2.3, toleranceM: 250 })
+		const built = expectationCase(
+			resolvedInput({ id: "p-1", input: "x", truthLat: 48.8, truthLon: 2.3, toleranceM: 250 })
+		)
 
 		expect(built!.source).toBe("corpus_row")
 		expect(built!.table.expect_lat).toBe(48.8)
@@ -491,7 +512,7 @@ describe("expectationCase", () => {
 	})
 
 	it("leaves an unpinned tolerance null so the grader applies its own default", () => {
-		const built = expectationCase({ id: "p-2", input: "x", truthLat: 1, truthLon: 2 })
+		const built = expectationCase(resolvedInput({ id: "p-2", input: "x", truthLat: 1, truthLon: 2 }))
 
 		expect(built!.table.expect_tolerance_m).toBeNull()
 	})

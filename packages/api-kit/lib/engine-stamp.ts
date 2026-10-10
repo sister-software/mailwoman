@@ -8,9 +8,9 @@
  *   must not import `mailwoman`; the bin (`lib/cli.ts`) is the wiring layer that resolves the stamp and passes it in.
  */
 
-import { z } from "@hono/zod-openapi"
 import type { EngineStamp } from "@mailwoman/core/license"
 import type { MiddlewareHandler } from "hono"
+import { z } from "zod"
 
 /**
  * The stamp contains no licensee or key id.
@@ -23,29 +23,31 @@ export const EngineStampSchema = z
 		version: z.string(),
 		license: z.string(),
 		license_url: z.string(),
-		notice: z.string().optional(),
+		notice: z.string().nullable(),
 	})
-	.openapi("EngineStamp") satisfies z.ZodType<EngineStamp>
+	.meta({ id: "EngineStamp" }) satisfies z.ZodType<EngineStamp>
 
 /**
  * A route's response schema once the route attaches the stamp: the body schema
  * intersected with the optional `engine` field.
  *
- * Applied at the route, never on an outcome schema, so an outcome schema keeps describing
+ * Applied at the route, never on a result schema, so a result schema keeps describing
  * what the engine produces (the schema drift pin in `mailwoman` depends on that) and the
- * OpenAPI document references the outcome component through `allOf` instead of cloning it.
+ * OpenAPI document references the result component through `allOf` instead of cloning it.
  *
  * `name` registers the stamped shape as its own component.
  * It is required rather than optional because an unnamed intersection is inlined at every use:
  * a generator then has no name to give the type and invents one from the position it appears in.
  *
- * `PhotonResponse::Variant0`, or a flattened per-operation clone of an outcome that already has a name.
+ * `PhotonResponse::Variant0`, or a flattened per-operation clone of a result that already has a name.
  *
  * This produces one `$ref` per stamped shape.
  * Generated client type names then follow the document's names.
  */
 export function stampedResponseSchema<S extends z.ZodTypeAny>(schema: S, name: string) {
-	return z.intersection(schema, z.object({ engine: EngineStampSchema.optional() })).openapi(name)
+	return z
+		.intersection(schema, z.object({ engine: EngineStampSchema.optional() }))
+		.meta({ id: name, description: z.globalRegistry.get(schema)?.description })
 }
 
 /**
@@ -77,4 +79,27 @@ export function withEngineStamp<T extends object>(
 	stamp: EngineStamp | undefined
 ): T & { engine?: EngineStamp } {
 	return stamp ? { ...body, engine: stamp } : body
+}
+
+/**
+ * Options every compatibility app factory (`nominatim`, `photon`, `libpostal`) takes.
+ */
+export interface CompatibilityAppOptions {
+	/**
+	 * Whether to send permissive CORS headers and answer preflight `OPTIONS` requests.
+	 *
+	 * Set it to `false` when a reverse proxy already sets the CORS headers.
+	 *
+	 * @defaultValue `true` because browser clients call these APIs from other origins.
+	 */
+	cors?: boolean
+
+	/**
+	 * The engine stamp added to each response body and sent in the `Server`
+	 * and `Link: rel="license"` headers.
+	 *
+	 * The package's CLI always passes one.
+	 * An embedding application may omit it.
+	 */
+	engine?: EngineStamp
 }

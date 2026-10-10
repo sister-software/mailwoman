@@ -9,6 +9,7 @@
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
 import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoman/codex/us"
 // Subpath imports from core keep each command's dependency graph small.
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -20,8 +21,6 @@ import type * as React from "react"
 
 import type { Check } from "#check"
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
-
-export type { Check } from "#check"
 
 /**
  * Props for commands parsed from a native specification.
@@ -169,10 +168,10 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 }
 
 /**
- * Parses and validates comma-separated placetype roles, returning `undefined` for empty input.
+ * Parses and validates comma-separated placetype roles, returning `null` for empty input.
  */
-export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
-	if (!raw) return undefined
+export function parseRoles(raw: string | null | undefined): PlacetypeRole[] | null {
+	if (!raw) return null
 
 	const valid = new Set<string>(PlacetypeRoles)
 
@@ -206,7 +205,8 @@ export interface CommandTaskResultProps<T> {
 	running?: React.ReactNode
 	/**
 	 * Content shown after success.
-	 * Defaults to `String(result)`.
+	 *
+	 * @defaultValue `String(result)`
 	 */
 	done?: (result: T) => React.ReactNode
 }
@@ -259,14 +259,14 @@ export function phaseReporter(prefix = "  "): (phase: string, detail?: string) =
 /**
  * Parses comma-separated ISO 3166-1 alpha-2 country codes.
  */
-export function splitCountryCodes(raw: string | undefined): CountryISO2[] {
+export function splitCountryCodes(raw: string | null): CountryISO2[] {
 	return extractDelimited(raw).map(formatAsCountryISO2)
 }
 
 /**
  * Parses comma-separated USPS state and territory abbreviations and drops unrecognized values.
  */
-export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[] {
+export function splitUSStateCodes(raw: string | null): USStateAbbreviation[] {
 	return extractDelimited(raw).flatMap((value) => {
 		const code = formatAsUSStateAbbreviation(value)
 
@@ -277,7 +277,7 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 /**
  * Parses a non-negative integer option, returning `fallback` when absent and throwing for an invalid value.
  */
-export function countOption(raw: string | undefined, fallback: number): number {
+export function countOption(raw: string | null, fallback: number): number {
 	if (raw == null) return fallback
 
 	// `Number("")` is 0, so blank input needs an explicit rejection.
@@ -293,7 +293,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 /**
  * Parses comma-separated numbers.
  */
-export function splitNumberList(raw: string | undefined): number[] {
+export function splitNumberList(raw: string | null): number[] {
 	return extractDelimited(raw).map(Number)
 }
 
@@ -309,7 +309,7 @@ export function stripAnsi(value: string): string {
 /**
  * The result shape shared by polygon-layer verifications.
  */
-export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
+export interface LayerVerificationLike<Row extends { result: string; label: string }> {
 	agreement: readonly Row[]
 	agreed: number
 	disagreed: number
@@ -332,12 +332,12 @@ export interface FormatLayerVerificationOptions<Row> {
 /**
  * Prints each disagreement to stderr and returns the verification summary lines.
  */
-export function formatLayerVerification<Row extends { outcome: string; label: string }>(
+export function formatLayerVerification<Row extends { result: string; label: string }>(
 	verified: LayerVerificationLike<Row>,
 	options: FormatLayerVerificationOptions<Row>
 ): string[] {
 	for (const row of verified.agreement) {
-		if (row.outcome === "disagree") {
+		if (row.result === "disagree") {
 			console.error(options.describeRow(row))
 		}
 	}
@@ -365,7 +365,7 @@ export async function loadClassifierTolerant(
 		tokenizerPath?: string
 		onDegrade: (message: string) => void
 	}
-): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
+): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | null> {
 	try {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 
@@ -388,6 +388,22 @@ export async function loadClassifierTolerant(
 				: `⚠ neural weights failed to load — running a degraded structural parse. Encoder error: ${message}`
 		)
 
-		return undefined
+		return null
+	}
+}
+
+/**
+ * Returns the WOF admin database path a command reads, from its `--resolve-db` value or `$MAILWOMAN_WOF_DB`.
+ *
+ * A missing path becomes a {@linkcode CommandError} with the resolver's message.
+ * The CLI prints a `CommandError` as guidance rather than as a stack.
+ */
+export async function requireCommandWOFPath(options: { resolveDB?: string }): Promise<string> {
+	const { requireWOFPath } = await import("#resolver-backend")
+
+	try {
+		return await requireWOFPath(options.resolveDB)
+	} catch (error) {
+		throw new CommandError(errorMessage(error), { cause: error })
 	}
 }

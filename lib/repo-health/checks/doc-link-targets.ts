@@ -329,6 +329,7 @@ export const docLinkTargetsCheck: RepoCheck = {
 				file: link.file,
 				line: link.line,
 				message: `\`${link.target}\` is linked or backticked here and nothing this repository declares it. Point it at the symbol that exists, or write the name in plain text.`,
+				details: null,
 			})
 		}
 
@@ -337,6 +338,8 @@ export const docLinkTargetsCheck: RepoCheck = {
 				severity: DiagnosticSeverity.Warning,
 				file: SELF,
 				message: `\`${name}\` is registered in EXTERNAL_DOC_NAMES and no doc comment spells it. Remove the entry.`,
+				line: null,
+				details: null,
 			})
 		}
 

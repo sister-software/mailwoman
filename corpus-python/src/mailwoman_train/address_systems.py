@@ -7,7 +7,7 @@ a checkpoint's head has one output per id.
 
 A country has a ``local`` system and, where libaddressinput states a separate Latin-script layout, a
 ``latin`` one. A row written in Latin script reads the ``latin`` system when its country has one. Every
-other row reads ``local``. A country with no layout has no system, and its rows carry ``IGNORE_INDEX``.
+other row reads ``local``. A country with no layout has no system, and its rows get ``IGNORE_INDEX``.
 """
 
 from __future__ import annotations

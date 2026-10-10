@@ -20,7 +20,7 @@ import {
 	groupByFoldedName,
 	padRowIndex,
 	type StratumFillCensus,
-	type StratumOutcome,
+	type StratumResult,
 	uniqueNameEligible,
 } from "#tools/eval-harness/panel-fill"
 import {
@@ -96,7 +96,7 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 			// Through `bandFor` rather than a comparison written here, so the unbounded ceiling
 			// and the refusal of a row with no recorded population are decided in one
 			// place for the builder and the scorer alike.
-			extra: (city) => bandFor([band], city.population) !== null,
+			extra: (city) => bandFor([band], city.population ?? null) !== null,
 		})
 
 	const goldFor = (city: GeoNamesCity): number[] | null => goldSets.get(city.geonameid) ?? null
@@ -115,10 +115,10 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 				build: (city, index) => {
 					const gold = goldFor(city)
 
-					if (!gold) return { outcome: "ungradeable" } satisfies StratumOutcome<ProminencePanelRow>
+					if (!gold) return { result: "ungradeable" } satisfies StratumResult<ProminencePanelRow>
 
 					return {
-						outcome: "row",
+						result: "row",
 						row: {
 							id: `${label.replace("/", "-")}-${padRowIndex(index)}`,
 							stratum: label,

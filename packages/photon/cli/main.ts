@@ -78,7 +78,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"] ?? null)
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
@@ -142,7 +142,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// Locality→postcode enrichment: an admin answer whose containing postcode is
 			// unambiguous (exactly one, keyed by the resolved place's WOF ID) includes it.
 			// A multi-postcode city gets no postcode.
-			let enrichedPostcode: string | undefined
+			let enrichedPostcode: string | null = null
 
 			if (!result.postcode && !result.rooftop?.postcode) {
 				const localityID = result.hierarchy.find(

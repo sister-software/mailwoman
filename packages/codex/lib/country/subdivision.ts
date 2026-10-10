@@ -63,7 +63,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const put = (key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 
-		if (folded.length && !out.has(folded)) {
+		if (folded && !out.has(folded)) {
 			out.set(folded, match)
 		}
 	}
@@ -92,7 +92,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
  * Returns null for anything that isn't a US state or Canadian province/territory,
  * including bare country tokens (use {@link matchCountry} for those).
  */
-export function matchSubdivision(token: string | null | undefined): SubdivisionMatch | null {
+export function matchSubdivision(token: string | null): SubdivisionMatch | null {
 	if (!token || typeof token !== "string") return null
 
 	return SUBDIVISION_LOOKUP.get(foldName(token)) ?? null
@@ -115,7 +115,7 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
 	const put = (country: string, key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 
-		if (!folded.length) return
+		if (!folded) return
 
 		const scoped = byCountry.get(country) ?? new Map<string, SubdivisionMatch>()
 
@@ -160,7 +160,7 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
  *
  * The unscoped lookup exists for the address-line case where the subdivision itself is the country evidence.
  */
-export function matchSubdivisionIn(countryAlpha2: string, token: string | null | undefined): SubdivisionMatch | null {
+export function matchSubdivisionIn(countryAlpha2: string, token: string | null): SubdivisionMatch | null {
 	if (!token || typeof token !== "string") return null
 
 	return SCOPED_SUBDIVISION_LOOKUP.get(countryAlpha2.toUpperCase())?.get(foldName(token)) ?? null

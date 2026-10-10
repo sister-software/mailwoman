@@ -8,22 +8,17 @@
 
 import { describe, expect, it } from "vitest"
 
+import { ABLATION_ABSENT } from "#ablation/expectation"
 import {
-	ABLATABLE_COMPONENTS,
-	ABLATION_ABSENT,
 	ablationBoardID,
 	ablationVariants,
-	type AblationRowOutcome,
-	aggregateCells,
 	boundedOccurrences,
-	classifySlot,
 	deleteSpan,
-	formatAblationCell,
-	isTierDrop,
-	renderAblationMarkdown,
-	scoreAblation,
 } from "#tools/eval-harness/gauntlet/ablation"
-import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"
+import { formatAblationCell, renderAblationMarkdown } from "#tools/eval-harness/gauntlet/ablation/report"
+import { aggregateCells, classifySlot, isTierDrop, scoreAblation } from "#tools/eval-harness/gauntlet/ablation/scoring"
+import { ABLATABLE_COMPONENTS, type AblationRowResult } from "#tools/eval-harness/gauntlet/ablation/types"
+import { type GauntletResult, PRODUCTION_RESOLVER_PINS } from "#tools/eval-harness/gauntlet/harness"
 import { runAblationOptions } from "#tools/eval-harness/gauntlet/run"
 
 /**
@@ -44,6 +39,9 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 		dependent_locality: null,
 		unit: null,
 		postcode_country_scope: null,
+		capital_promotion: null,
+		variant_alias_exemption: "not_applied",
+		admin_coherence: null,
 		hierarchy: [],
 		components: {},
 		...over,
@@ -203,7 +201,7 @@ describe("classifySlot — substitution is not the same as absence", () => {
 		expect(classifySlot("BT3 9QQ", "bt39qq")).toBe("recovered")
 	})
 
-	// A slot refilled by a different token counts as a substitution, with holds and abstentions as separate outcomes.
+	// A slot refilled by a different token counts as a substitution, with holds and abstentions as separate results.
 	it("reads a different token in the slot as a substitution", () => {
 		expect(classifySlot("94043", "1600")).toBe("substituted")
 		expect(classifySlot("75005", "1802")).toBe("substituted")
@@ -267,9 +265,9 @@ describe("isTierDrop — coarsening costs the user precision even at zero displa
 })
 
 /**
- * A row outcome carrying the fields a cell aggregates, with the rest filler.
+ * A row result carrying the fields a cell aggregates, with the rest filler.
  */
-function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
+function row(over: Partial<AblationRowResult>): AblationRowResult {
 	return {
 		caseID: "case",
 		component: "postcode",
@@ -311,7 +309,7 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 describe("aggregateCells", () => {
 	const meta = { boardID: "board", measuredAt: "2026-08-05T00:00:00.000Z" }
 
-	it("keys by (component, locale) and counts each outcome class once", () => {
+	it("keys by (component, locale) and counts each result class once", () => {
 		const cells = aggregateCells(
 			[
 				row({ caseID: "a", broken: true, displacementKm: 12, tierDrop: true }),
@@ -362,9 +360,9 @@ describe("the support-0-is-absence rendering rule", () => {
 	const meta = { boardID: "board", measuredAt: "2026-08-05T00:00:00.000Z" }
 
 	it("renders a missing cell as absence, never as a zero", () => {
-		expect(formatAblationCell(undefined)).toBe(ABLATION_ABSENT)
-		expect(formatAblationCell(undefined)).not.toBe("0")
-		expect(formatAblationCell(undefined)).not.toContain("0")
+		expect(formatAblationCell(null)).toBe(ABLATION_ABSENT)
+		expect(formatAblationCell(null)).not.toBe("0")
+		expect(formatAblationCell(null)).not.toContain("0")
 	})
 
 	it("renders an explicitly zero-support cell the same way", () => {
@@ -378,8 +376,8 @@ describe("the support-0-is-absence rendering rule", () => {
 
 		// 0 of 2 broken is a measurement.
 		// It must not read like the unmeasured cell above.
-		expect(formatAblationCell(cell)).toBe("0/2")
-		expect(formatAblationCell(cell)).not.toBe(ABLATION_ABSENT)
+		expect(formatAblationCell(cell ?? null)).toBe("0/2")
+		expect(formatAblationCell(cell ?? null)).not.toBe(ABLATION_ABSENT)
 	})
 
 	it("puts the absence marker in the matrix and says what it means", () => {
@@ -466,14 +464,14 @@ describe("runAblationOptions — a CLI flag reaches the layer", () => {
 	it("carries the three ablation options alongside the shared model/pin ladder", () => {
 		const options = runAblationOptions({
 			candidate: "./out/v9/model.onnx",
-			postcodeCountryCoherence: false,
+			postcodeCountryCoherence: "off",
 			out: "/tmp/map",
 			components: ["postcode", "street"],
 			limit: 12,
 		})
 
 		expect(options.model).toBe("./out/v9/model.onnx")
-		expect(options.pins).toEqual({ postcodeCountryCoherence: false })
+		expect(options.pins).toEqual({ ...PRODUCTION_RESOLVER_PINS, postcodeCountryCoherence: "off" })
 		expect(options.outDir).toBe("/tmp/map")
 		expect(options.components).toEqual(["postcode", "street"])
 		expect(options.limit).toBe(12)

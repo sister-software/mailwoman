@@ -28,7 +28,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -38,12 +38,13 @@ import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetc
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 /**
- * The archive's URL, which is the whole acquisition path for this theme.
+ * The archive's URL, the whole acquisition path for this theme.
  */
 export const BE_BRUSSELS_ARCHIVE_URL = "https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip"
 
 /**
- * The name the archive is written under, which is what the adapter's `inputPath` states.
+ * The name the archive is written under.
+ * The adapter's `inputPath` states this name.
  */
 export const BE_BRUSSELS_ARCHIVE_FILENAME = "URBIS_ADM_Adresses.zip"
 
@@ -85,8 +86,9 @@ export interface DownloadBrusselsOptions {
  * What the publisher's HEAD response states about the archive it holds.
  *
  * Both fields read `null` where the header is absent, rather than an empty string or zero.
- * An absent `last-modified` is the service declining to state a version, which is a
- * different fact from a version that happens to match the one on disk.
+ * An absent `last-modified` is the service declining to state a version.
+ *
+ * That differs from a version that happens to match the one on disk.
  */
 export interface BrusselsPublication {
 	lastModified: string | null
@@ -96,7 +98,7 @@ export interface BrusselsPublication {
 /**
  * Reads the publisher's HEAD response.
  *
- * Separate from {@linkcode downloadBrussels} because this one request carries the whole freshness
+ * Separate from {@linkcode downloadBrussels} because this one request holds the whole freshness
  * decision, and the download itself runs on global `fetch`, which a unit test cannot intercept.
  */
 export async function readBrusselsPublication(
@@ -122,16 +124,17 @@ export async function readBrusselsPublication(
  * Whether the archive on disk is the one the publisher currently serves.
  *
  * A skip requires the publisher to state a `last-modified` value.
- * Where it states none, both sides read `null` and an equality test would hold,
- * which would keep an archive of unknown age for as long as the service stayed silent.
- * Downloading 11 MiB again is the cheaper error.
+ * Where it states none, both sides read `null` and an equality test would hold.
+ *
+ * A skip there would keep an archive of unknown age for as long as the service stayed silent.
+ * A second 11 MiB download is the cheaper error.
  */
 export function brusselsPublicationIsRecorded(
 	recorded: BrusselsManifest,
 	bytesOnDisk: number,
 	publication: BrusselsPublication
 ): boolean {
-	if (publication.lastModified === null) return false
+	if (!publication.lastModified) return false
 
 	return recorded.last_modified === publication.lastModified && recorded.bytes === bytesOnDisk
 }

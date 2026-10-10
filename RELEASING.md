@@ -83,7 +83,7 @@ The two sources differ only in where the bytes come from:
   `yarn release` uses. Measured 2026-08-25: PASS, 51/51 in 37.4 s.
 - `--source hf` runs `release.fetch-hf-weights` against the public bucket, which is the recipe
   `publish.yml` runs and the same call the workflow makes. It needs no credentials. `--version <model-card
-version>` overrides the version, which otherwise comes from the base package's `model-card.json`
+  version>` overrides the version, which otherwise comes from the base package's `model-card.json`
   exactly as CI reads it.
 
 `--source hf` derives the set of files to materialize instead of reading a list. The set is each
@@ -612,7 +612,7 @@ captures run against the real shipped weights instead of a staging candidate:
    the same lineage may change none of these values, so confirm through the card instead of assuming drift.
    These values are a **different measurement** from the npm package download/unpacked size quoted in
    `getting-started.mdx`. Get those sizes from the registry, never by arithmetic: `npm view
-@mailwoman/neural-weights-en-us@<version> dist.unpackedSize` for the unpacked figure, and a
+   @mailwoman/neural-weights-en-us@<version> dist.unpackedSize` for the unpacked figure, and a
    `curl -r 0-0` range-request (`content-range: bytes 0-0/<total>`) against the tarball URL for the
    compressed download figure.
 2. **Re-run the docs' captured CLI examples** (`mailwoman parse`, `mailwoman geocode`, the
@@ -630,7 +630,7 @@ captures run against the real shipped weights instead of a staging candidate:
    stay on the old version. Only the library/CLI/server captures move to the new one. State this
    explicitly in `status.mdx`, so the version mismatch does not look like an oversight.
 3. **Check `evals/scores-by-version.json` for the new version's row.** `mailwoman eval
-ledger-append` writes it, and the promotion eval prints that command in its `PASS` output. The
+   ledger-append` writes it, and the promotion eval prints that command in its `PASS` output. The
    operator runs the command from the session that holds the promotion eval's `PASS` output. If your
    task is a docs-only refresh and you do not have that output, do not fabricate or backfill the row.
    Verify whether the row is in the ledger and report it. Also flag any missing row for a prior version

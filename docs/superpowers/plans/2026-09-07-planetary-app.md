@@ -153,8 +153,8 @@ git commit -m "feat(cartographer): the style composer takes base layers, the hil
 - [ ] **Step 1: Test**
 
 ```ts
-import { validateStyleMin } from "@maplibre/maplibre-gl-style-spec"
 import { createPlanetaryStyle } from "@mailwoman/cartographer/planetary"
+import { validateStyleMin } from "@maplibre/maplibre-gl-style-spec"
 import { expect, test } from "vitest"
 
 test.each(["moon", "mars"] as const)(

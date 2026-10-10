@@ -18,7 +18,7 @@
  *   `labels` key. Existence and completeness are different questions.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { describe, expect, test, vi } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"

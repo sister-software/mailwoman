@@ -5,7 +5,8 @@
  *   Generates localized PO-box and private-mailbox rows in which the designator and number form one `po_box` span.
  */
 
-import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address/format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/random"
 
@@ -139,7 +140,8 @@ export interface SynthesizedPoBoxRow {
 export interface PoBoxSynthesisOpts {
 	/**
 	 * The random source.
-	 * It defaults to `Math.random`.
+	 *
+	 * @defaultValue `Math.random`
 	 */
 	random?: () => number
 	/**
@@ -150,7 +152,8 @@ export interface PoBoxSynthesisOpts {
 	pickNumber?: (random: () => number) => string
 	/**
 	 * The probability of a private-mailbox row when the locale and tuple allow one.
-	 * The default is 0.
+	 *
+	 * @defaultValue `0`
 	 */
 	pmbRatio?: number
 }

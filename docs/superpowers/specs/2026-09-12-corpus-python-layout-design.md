@@ -26,7 +26,7 @@ so a layout that adds one top-level entry per country would not scale.
 | `tests/mailwoman_train/` | 9,793 over 74 files    | flat, mirrors the flat source                                             |
 
 Baseline on this branch: `983 passed, 11 skipped, 26 warnings in 29.60s` under
-`uv run --extra dev --extra train pytest tests -q`.
+`uv run --extra dev --extra train pytest corpus-python/tests -q`.
 
 The four longest functions:
 
@@ -291,9 +291,9 @@ Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes e
 
 ## 11. Acceptance criteria
 
-- `uv run --extra dev --extra train pytest tests -q` reports at least 983 passed at every step.
-- `uv run mypy`, `uvx ruff@0.16.5 check corpus-python`, `uvx ruff@0.16.5 format --check corpus-python` and
-  `uv run bandit -c pyproject.toml -r src` pass.
+- `uv run --extra dev --extra train pytest corpus-python/tests -q` reports at least 983 passed at every step.
+- `uv run mypy`, `uv run --extra dev ruff check corpus-python`, `uv run --extra dev ruff format --check corpus-python` and
+  `uv run --extra dev bandit -c pyproject.toml -r corpus-python/src` pass.
 - `yarn health` and root `yarn test` pass, and the quoted-literal search reports no stale `train_remote.py` path in a
   tracked file.
 - No module in `src/mailwoman_train/` exceeds 500 lines, and no function exceeds 120. Two modules sit near the limit

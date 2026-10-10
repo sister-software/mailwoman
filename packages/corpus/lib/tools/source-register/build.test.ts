@@ -14,20 +14,20 @@
 import { describe, expect, it } from "vitest"
 
 import type { AddressSourceRecord } from "#source-register"
-import { applySourceResolutions, readUnresolvedColumn, resolveRecordedDecisions } from "#tools"
+import { applySourceResolutions, readUnresolvedColumn, resolveRecordedDecisions } from "#tools/source-register/build"
 import { AddressRole } from "#types"
 
 describe("readUnresolvedColumn", () => {
 	it("reads a declared placeholder as unresolved, whatever its case", () => {
-		expect(readUnresolvedColumn("varies", "address_role", 1)).toBeUndefined()
-		expect(readUnresolvedColumn("Varies", "address_role", 1)).toBeUndefined()
-		expect(readUnresolvedColumn("country-specific", "coverage", 1)).toBeUndefined()
+		expect(readUnresolvedColumn("varies", "address_role", 1)).toBeNull()
+		expect(readUnresolvedColumn("Varies", "address_role", 1)).toBeNull()
+		expect(readUnresolvedColumn("country-specific", "coverage", 1)).toBeNull()
 	})
 
 	it("reads an empty or absent column as unresolved", () => {
-		expect(readUnresolvedColumn("", "upstream", 1)).toBeUndefined()
-		expect(readUnresolvedColumn("   ", "upstream", 1)).toBeUndefined()
-		expect(readUnresolvedColumn(undefined, "upstream", 1)).toBeUndefined()
+		expect(readUnresolvedColumn("", "upstream", 1)).toBeNull()
+		expect(readUnresolvedColumn("   ", "upstream", 1)).toBeNull()
+		expect(readUnresolvedColumn(null, "upstream", 1)).toBeNull()
 	})
 
 	it("returns a value somebody resolved", () => {
@@ -67,7 +67,8 @@ describe("resolveRecordedDecisions", () => {
 
 		expect([...resolved.keys()]).toEqual(["unchecked-a", "unchecked-b"])
 
-		// Each carries its own id, which is what keeps one reading from becoming one wide election.
+		// Each has its own id.
+		// That keeps one reading from becoming one wide election.
 		expect(resolved.get("unchecked-a")).toMatchObject({ licenseID: "unchecked-a", state: "elected" })
 		expect(resolved.get("unchecked-b")).toMatchObject({ licenseID: "unchecked-b", state: "elected" })
 	})

@@ -96,15 +96,15 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	})
 
 	it("returns undefined for an unknown (child, parent) pair", () => {
-		expect(resolver().probe("shoreditch", "manchester")).toBeUndefined()
-		expect(resolver().probe("nowhere", "london")).toBeUndefined()
+		expect(resolver().probe("shoreditch", "manchester")).toBeNull()
+		expect(resolver().probe("nowhere", "london")).toBeNull()
 	})
 
 	it("distinguishes pairs sharing a child with different parents", () => {
 		const r = resolver()
 
 		expect(r.probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
-		expect(r.probe("shoreditch", "greater london")).toBeUndefined()
+		expect(r.probe("shoreditch", "greater london")).toBeNull()
 	})
 
 	it("exposes the header as written (input fields + the embedded tag table), including delta", () => {
@@ -147,7 +147,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	it("handles an empty entry list as a valid file — every probe misses", () => {
 		const r = resolver([])
 
-		expect(r.probe("anything", "anything")).toBeUndefined()
+		expect(r.probe("anything", "anything")).toBeNull()
 		expect(r.header).toEqual(HEADER_AS_WRITTEN)
 	})
 
@@ -180,9 +180,9 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		expect(r.probe("new york", "ny")).toEqual(LOCALITY_UNDER_REGION)
 		expect(r.probe("new", "york ny")).toEqual(LOCALITY_UNDER_REGION)
 
-		expect(r.probe("new york ny", "")).toBeUndefined()
-		expect(r.probe("new york", "york ny")).toBeUndefined()
-		expect(r.probe("new", "ny")).toBeUndefined()
+		expect(r.probe("new york ny", "")).toBeNull()
+		expect(r.probe("new york", "york ny")).toBeNull()
+		expect(r.probe("new", "ny")).toBeNull()
 	})
 })
 
@@ -203,7 +203,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
-		expect(r.transitionBeta).toBeUndefined()
+		expect(r.transitionBeta).toBeNull()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
 
@@ -226,7 +226,7 @@ describe("ParentDelta header field (whole-edge default-on,)", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
-		expect(r.parentDelta).toBeUndefined()
+		expect(r.parentDelta).toBeNull()
 		expect(peekPairIndexHeader(bytes).parentDelta).toBeUndefined()
 		expect("parentDelta" in r.header).toBe(false)
 	})

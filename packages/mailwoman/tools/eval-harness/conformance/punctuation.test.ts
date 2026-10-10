@@ -21,7 +21,7 @@
 import { describe, expect, it } from "vitest"
 
 import { classifyCaseTransformation } from "#tools/eval-harness/conformance/case-folding"
-import type { ConformanceOutcome } from "#tools/eval-harness/conformance/comparators"
+import type { ConformanceResult } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	auditPunctuationSuite,
@@ -63,9 +63,13 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 		base: DE_NIPPES,
 		variant: PUNCTUATION_TRANSFORMATION_BY_NAME["comma-removed"](DE_NIPPES),
 		context: { caseCountry: "DE" },
-		outcomeComparator: "component_map",
+		resultComparator: "component_map",
 		expect: "equivalent",
 		rowRef: "cases/de/regression.jsonl#de-r9-nippes-koeln",
+		status: null,
+		bugRef: null,
+		toleranceM: null,
+		note: null,
 		...over,
 	}
 }
@@ -316,7 +320,7 @@ describe("auditPunctuationSuite", () => {
 				base: FR_COMER,
 				variant: "COMER parísméxico",
 				context: { caseCountry: "FR" },
-				outcomeComparator: "resolution_identity",
+				resultComparator: "resolution_identity",
 			}),
 		])
 
@@ -325,11 +329,11 @@ describe("auditPunctuationSuite", () => {
 	})
 
 	it("rejects a row with no country — an unrouted row grades against a locale that is not its own", () => {
-		expect(auditPunctuationSuite([fixture({ context: undefined })])[0]).toContain("no context.caseCountry")
+		expect(auditPunctuationSuite([fixture({ context: null })])[0]).toContain("no context.caseCountry")
 	})
 
 	it("rejects a row with no committed source", () => {
-		expect(auditPunctuationSuite([fixture({ rowRef: undefined })])[0]).toContain("no rowRef")
+		expect(auditPunctuationSuite([fixture({ rowRef: null })])[0]).toContain("no rowRef")
 	})
 
 	it("rejects a relation other than equivalent", () => {
@@ -377,9 +381,12 @@ describe("a seeded punctuation regression", () => {
 				dependent_locality: commaless ? null : "Nippes",
 				unit: null,
 				postcode_country_scope: null,
+				capital_promotion: null,
+				variant_alias_exemption: "not_applied",
+				admin_coherence: null,
 				hierarchy: [],
 			},
-		} satisfies ConformanceOutcome
+		} satisfies ConformanceResult
 	}
 
 	it("fails with the row, the transformation, the comparator and the mechanism", async () => {

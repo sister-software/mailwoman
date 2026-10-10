@@ -20,12 +20,15 @@ import {
 	type AuthoritativeQuery,
 	type AuthoritativeResponse,
 	AuthoritativeResponseStatus,
-	createFixtureAuthoritativeProvider,
-	fixtureExactMatch,
 	type Resolver,
 } from "@mailwoman/core/resolver"
+import {
+	createFixtureAuthoritativeProvider,
+	fixtureExactMatch,
+} from "@mailwoman/core/resolver/fixture-authoritative-provider"
 
-import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
+import type { GeocodeClassifier } from "#geocode/classifier"
+import type { GeocodeDeps } from "#geocode/core"
 import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#tools/eval-harness/premise-linkage/schema"
 
 /**
@@ -192,6 +195,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			],
 			attribution: "Synthetic fixture data — not derived from any licensed source",
 			license: "fixture-terms-v1",
+			retrievedAt: null,
 			datasetVersion: "fixture-premise-linkage",
 		},
 	},
@@ -250,6 +254,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasStreet: true,
 			hasLocality: true,
 			hasHistoricalAlias: false,
+			expectedLat: null,
+			expectedLon: null,
 		},
 		matchOn: "golf terrace",
 		transportError: true,
@@ -265,6 +271,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasStreet: true,
 			hasLocality: true,
 			hasHistoricalAlias: false,
+			expectedLat: null,
+			expectedLon: null,
 		},
 		matchOn: "hotel terrace",
 		// The provider commits to a premise but supplies no identifier in the graded scheme.
@@ -280,7 +288,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 ]
 
 /**
- * The synthetic fixture set: every outcome the harness can record, at least once,
+ * The synthetic fixture set: every result the harness can record, at least once,
  * across the five shape classes.
  */
 export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
@@ -356,6 +364,8 @@ export function syntheticFixtureDeps(): GeocodeDeps {
 	}
 
 	const resolver: Resolver = {
+		artifactCoverage: null,
+		capabilityGaps: null,
 		resolveTree: async (tree) => ({
 			raw: tree.raw,
 			roots: [
@@ -372,5 +382,5 @@ export function syntheticFixtureDeps(): GeocodeDeps {
 		}),
 	}
 
-	return { classifier, resolver, placeCountry: false }
+	return { classifier, resolver, placeCountry: "none" }
 }

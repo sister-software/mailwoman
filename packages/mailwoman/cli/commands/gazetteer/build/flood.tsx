@@ -17,7 +17,8 @@
  *   because the footprint comes from the authority's statement rather than from the polygons.
  */
 
-import { formatFileSize, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 import {
@@ -263,7 +264,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	// Progress streams to stderr, leaving stdout for the summary.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return <CommandSummaryLines lines={state.result} />

@@ -21,6 +21,7 @@ import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { expect, test } from "vitest"
 
+import { BODIES } from "#bodies"
 import { buildHillshadePMTiles } from "#build/hillshade"
 import { emitManifest } from "#build/manifest"
 import { applyPMTilesMetadata, hillshadeMetadata, nomenclatureMetadata, readMailwomanMetadata } from "#build/metadata"
@@ -39,7 +40,7 @@ test("minZoomForDiameter declutters by size", () => {
 	expect(minZoomForDiameter(24.033133)).toBe(6)
 	expect(minZoomForDiameter(4.6)).toBe(8)
 	expect(minZoomForDiameter(0)).toBe(2)
-	expect(minZoomForDiameter(undefined)).toBe(2)
+	expect(minZoomForDiameter(null)).toBe(2)
 })
 
 test("the Moon fixture builds a nomenclature archive whose tiles carry the five features", async () => {
@@ -100,6 +101,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 					sha256: "a".repeat(64),
 					bytes: 1,
 					snapshot: "2026-09-07",
+					coordinates: BODIES.moon.coordinates,
 				},
 			],
 			outputs: [

@@ -25,7 +25,10 @@ class FakeRunner implements NeuralRunner {
 		return {
 			logits: this.#canned,
 			numLabels: this.#canned[0]?.length ?? 0,
-			...(this.#localeLogits ? { localeLogits: this.#localeLogits } : {}),
+			localeLogits: this.#localeLogits ?? null,
+			addressSystemLogits: null,
+			spanScores: null,
+			maxSpan: null,
 		}
 	}
 }
@@ -100,7 +103,13 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const bare = await classifier.traceParse(text)
 		const queryShapePrior = bare.priors.find((p) => p.kind === "queryShape")
 
-		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
+		expect(queryShapePrior).toEqual({
+			kind: "queryShape",
+			applied: false,
+			probePath: null,
+			census: null,
+			censusProbedParents: null,
+		})
 
 		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
 	})
@@ -113,7 +122,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			probe: (child: string, parent: string) =>
 				child === "moelfre" && parent === "abergele"
 					? ({ tag: "dependent_locality", parentTag: "locality" } as const)
-					: undefined,
+					: null,
 		}
 
 		const commaText = "Moelfre, Abergele"
@@ -126,13 +135,15 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const commaTrace = await commaClassifier.traceParse(commaText, {
 			placetypePair: { index },
-			spanProposer: false,
+			spanProposer: "none",
 		})
 
 		expect(commaTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: true,
 			probePath: "segment",
+			census: null,
+			censusProbedParents: null,
 		})
 
 		const bareText = "Moelfre Abergele"
@@ -145,20 +156,25 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const bareTrace = await bareClassifier.traceParse(bareText, {
 			placetypePair: { index },
-			spanProposer: false,
+			spanProposer: "none",
 		})
 
 		expect(bareTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: true,
 			probePath: "anchored",
+			census: null,
+			censusProbedParents: null,
 		})
 
-		const inertTrace = await bareClassifier.traceParse(bareText, { spanProposer: false })
+		const inertTrace = await bareClassifier.traceParse(bareText, { spanProposer: "none" })
 
 		expect(inertTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: false,
+			probePath: null,
+			census: null,
+			censusProbedParents: null,
 		})
 	})
 
@@ -173,9 +189,16 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 1 }],
 		}
 
-		const traced = await classifier.traceParse(text, { queryShape: shape, spanProposer: false })
+		const traced = await classifier.traceParse(text, { queryShape: shape, spanProposer: "none" })
 
-		expect(traced.priors.find((p) => p.kind === "queryShape")).toEqual({ kind: "queryShape", applied: true })
+		expect(traced.priors.find((p) => p.kind === "queryShape")).toEqual({
+			kind: "queryShape",
+			applied: true,
+			probePath: null,
+			census: null,
+			censusProbedParents: null,
+		})
+
 		expect(traced.emissions).not.toEqual(traced.logits)
 	})
 
@@ -215,7 +238,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
-		const trace = await classifier.traceParse(text, { postcodeRepair: true, spanProposer: false })
+		const trace = await classifier.traceParse(text, { postcodeRepair: true, spanProposer: "none" })
 		const repair = trace.repairs.find((r) => r.pass === "postcodeRepair")
 
 		expect(repair).toBeDefined()
@@ -256,7 +279,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		})
 
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
-		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
+		const clippedTrace = await unpinned.traceParse(text, { spanProposer: "none" })
 
 		expect(clippedTrace.repairs.filter((r) => r.pass === "postcodeRepair")).toEqual([])
 		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
@@ -270,7 +293,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			addressSystemConventions: "gb",
 		})
 
-		const trace = await pinned.traceParse(text, { spanProposer: false })
+		const trace = await pinned.traceParse(text, { spanProposer: "none" })
 		expect(trace.systemSource).toBe("pinned")
 		expect(trace.detectedSystem).toBe("gb")
 		const repair = trace.repairs.find((r) => r.pass === "postcodeRepair")
@@ -289,7 +312,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const logits = logitsWithBoost(pieces.length, 0, "B-street")
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
-		const trace = await classifier.traceParse(text, { spanProposer: false })
+		const trace = await classifier.traceParse(text, { spanProposer: "none" })
 
 		expect(trace.repairs).toEqual([])
 	})
@@ -344,7 +367,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
-		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: true, spanProposer: false })
+		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: "on", spanProposer: "none" })
 		const bridge = trace.repairs.find((r) => r.pass === "spanBridge")
 
 		expect(trace.tokens.length).toBeLessThan(pieces.length)
@@ -370,7 +393,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			postcodeAnchorLookup: anchor,
 		})
 
-		const trace = await classifier.traceParse(text, { spanProposer: false })
+		const trace = await classifier.traceParse(text, { spanProposer: "none" })
 
 		expect(trace.anchor).toBeDefined()
 		expect(trace.anchor!.confidence).toHaveLength(pieces.length)
@@ -389,7 +412,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const localeLogits = [10, 0, 0, 0, 0, 0, 0, 0, 0]
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits, localeLogits) })
 
-		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: false })
+		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: "none" })
 
 		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../test/fixtures/trace-schema.snap.json")
 	})

@@ -199,7 +199,7 @@ def test_a_locale_hint_of_minus_one_reads_as_no_hint(tmp_path) -> None:
 
     model = _model(**BUNDLE_FLAGS, use_locale_hint=True, num_address_systems=7)
     assert model.locale_hint_embedding is not None
-    # The trainer zero-initializes the hint rows, which would make every id agree.
+    # The trainer zero-initializes the hint rows. That would make every id agree.
     torch.nn.init.normal_(model.locale_hint_embedding.weight)
     path = export_to_onnx(model, tmp_path / "hinted.onnx", max_length=SEQ)
     session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])

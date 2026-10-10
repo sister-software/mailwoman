@@ -54,19 +54,19 @@ export interface PostcodeCountryScope {
 	 *
 	 * It is set only for `pair` evidence, because the other verdicts compare no second point.
 	 */
-	distanceKm?: number
+	distanceKm: number | null
 
 	/**
 	 * The postcode place behind the verdict.
 	 * It is absent for `locality` evidence.
 	 */
-	postcodePlace?: ResolvedPlace
+	postcodePlace: ResolvedPlace | null
 
 	/**
 	 * The locality place behind the verdict.
 	 * It is absent for `postcode` evidence.
 	 */
-	localityPlace?: ResolvedPlace
+	localityPlace: ResolvedPlace | null
 }
 
 /**
@@ -82,17 +82,17 @@ export interface PostcodeCountryScopeOpts {
 	postcode: string
 
 	/**
-	 * The caller's default country filter, or `undefined` when no default applies.
+	 * The caller's default country filter, or null when no default applies.
 	 *
 	 * Without a default, only the `pair` test runs.
 	 * The pass returns a scope when exactly one country qualifies.
 	 */
-	defaultCountry: string | undefined
+	defaultCountry: string | null
 
 	/**
 	 * The consistency radius in kilometers.
 	 *
-	 * It defaults to {@link POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}.
+	 * @defaultValue {@linkcode POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}
 	 */
 	thresholdKm?: number
 
@@ -131,13 +131,13 @@ export function localityValuesInDocumentOrder(roots: readonly AddressNode[]): st
 /**
  * Returns the first value of {@link localityValuesInDocumentOrder}.
  */
-export function firstLocalityValue(roots: readonly AddressNode[]): string | undefined {
-	return localityValuesInDocumentOrder(roots)[0]
+export function firstLocalityValue(roots: readonly AddressNode[]): string | null {
+	return localityValuesInDocumentOrder(roots)[0] ?? null
 }
 
 function collectInDocumentOrder(nodes: readonly AddressNode[], tag: string, out: string[], seen: Set<string>): void {
 	for (const n of nodes) {
-		if (n.tag === tag && n.value.trim().length) {
+		if (n.tag === tag && n.value.trim()) {
 			const value = n.value.trim()
 			const key = value.toLowerCase()
 
@@ -247,7 +247,7 @@ export async function findPostcodeCountryScope(
 	opts: PostcodeCountryScopeOpts
 ): Promise<PostcodeCountryScope | null> {
 	const postcode = opts.postcode.trim()
-	const defaultCountry = opts.defaultCountry?.trim().toUpperCase() || undefined
+	const defaultCountry = opts.defaultCountry?.trim().toUpperCase() || null
 
 	if (!postcode) return null
 
@@ -320,11 +320,19 @@ export async function findPostcodeCountryScope(
 		const ownPostcode = pcHolders.get(country)
 
 		const contradicted =
-			ownPostcode !== undefined &&
+			ownPostcode != null &&
 			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > thresholdKm
 
 		if (country !== defaultCountry && !contradicted && !verdicts.has(country)) {
-			verdicts.set(country, { country, postcode, locality, evidence: "locality", localityPlace })
+			verdicts.set(country, {
+				country,
+				postcode,
+				locality,
+				evidence: "locality",
+				distanceKm: null,
+				postcodePlace: null,
+				localityPlace,
+			})
 		}
 	}
 
@@ -336,7 +344,15 @@ export async function findPostcodeCountryScope(
 		const [country, postcodePlace] = [...pcHolders.entries()][0]!
 
 		if (country !== defaultCountry) {
-			return { country, postcode, locality: localities[0]!, evidence: "postcode", postcodePlace }
+			return {
+				country,
+				postcode,
+				locality: localities[0]!,
+				evidence: "postcode",
+				distanceKm: null,
+				postcodePlace,
+				localityPlace: null,
+			}
 		}
 	}
 
@@ -367,7 +383,7 @@ export function stampPostcodeCountryScope(roots: readonly AddressNode[], scope: 
 
 			postcode_country_scope_evidence: scope.evidence,
 
-			...(scope.distanceKm !== undefined ? { postcode_country_scope_km: scope.distanceKm } : {}),
+			...(scope.distanceKm != null ? { postcode_country_scope_km: scope.distanceKm } : {}),
 		}
 	}
 }

@@ -7,7 +7,8 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { pathExists, readLocalTextFile } from "#fs/readers"
+import { readLocalTextFile } from "#fs/readers"
+import { pathExists } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { createHash } from "#hash"
 import { streamToDisk } from "#utils/stream-to-disk"

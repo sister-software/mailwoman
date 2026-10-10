@@ -50,15 +50,18 @@ export async function eventRecorded(ledger: Ledger, eventID: string): Promise<bo
 	return row !== undefined
 }
 
-export async function findLicenseBySubscription(
-	ledger: Ledger,
-	subscriptionID: string
-): Promise<LicenseRow | undefined> {
-	return ledger.selectFrom("licenses").selectAll().where("subscription_id", "=", subscriptionID).executeTakeFirst()
+export async function findLicenseBySubscription(ledger: Ledger, subscriptionID: string): Promise<LicenseRow | null> {
+	return (
+		(await ledger
+			.selectFrom("licenses")
+			.selectAll()
+			.where("subscription_id", "=", subscriptionID)
+			.executeTakeFirst()) ?? null
+	)
 }
 
-export async function findLicense(ledger: Ledger, lid: string): Promise<LicenseRow | undefined> {
-	return ledger.selectFrom("licenses").selectAll().where("lid", "=", lid).executeTakeFirst()
+export async function findLicense(ledger: Ledger, lid: string): Promise<LicenseRow | null> {
+	return (await ledger.selectFrom("licenses").selectAll().where("lid", "=", lid).executeTakeFirst()) ?? null
 }
 
 /**
@@ -111,7 +114,7 @@ export async function setLicenseState(
  *
  * (`returning` by itself would answer the cleared column. That value is null.)
  */
-export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {
+export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | null> {
 	const row = await ledger
 		.selectFrom("licenses")
 		.select("refresh_secret_pending")
@@ -120,7 +123,7 @@ export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Pro
 
 	const pending = row?.refresh_secret_pending
 
-	if (!pending) return undefined
+	if (!pending) return null
 
 	const cleared = await ledger
 		.updateTable("licenses")
@@ -129,21 +132,24 @@ export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Pro
 		.where("refresh_secret_pending", "=", pending)
 		.executeTakeFirst()
 
-	return Number(cleared.numUpdatedRows ?? 0) > 0 ? pending : undefined
+	return Number(cleared.numUpdatedRows ?? 0) > 0 ? pending : null
 }
 
-export async function findToken(ledger: Ledger, invoiceID: string): Promise<LicenseTokenRow | undefined> {
-	return ledger.selectFrom("license_tokens").selectAll().where("invoice_id", "=", invoiceID).executeTakeFirst()
+export async function findToken(ledger: Ledger, invoiceID: string): Promise<LicenseTokenRow | null> {
+	return (
+		(await ledger.selectFrom("license_tokens").selectAll().where("invoice_id", "=", invoiceID).executeTakeFirst()) ??
+		null
+	)
 }
 
-export async function findTokenLid(ledger: Ledger, invoiceID: string): Promise<string | undefined> {
+export async function findTokenLid(ledger: Ledger, invoiceID: string): Promise<string | null> {
 	const row = await ledger
 		.selectFrom("license_tokens")
 		.select("lid")
 		.where("invoice_id", "=", invoiceID)
 		.executeTakeFirst()
 
-	return row?.lid
+	return row?.lid ?? null
 }
 
 /**
@@ -175,14 +181,16 @@ export async function countTokens(ledger: Ledger, lid: string): Promise<number> 
 /**
  * The token that is current for a license: the one with the latest expiry.
  */
-export async function currentToken(ledger: Ledger, lid: string): Promise<LicenseTokenRow | undefined> {
-	return ledger
-		.selectFrom("license_tokens")
-		.selectAll()
-		.where("lid", "=", lid)
-		.orderBy("expires", "desc")
-		.limit(1)
-		.executeTakeFirst()
+export async function currentToken(ledger: Ledger, lid: string): Promise<LicenseTokenRow | null> {
+	return (
+		(await ledger
+			.selectFrom("license_tokens")
+			.selectAll()
+			.where("lid", "=", lid)
+			.orderBy("expires", "desc")
+			.limit(1)
+			.executeTakeFirst()) ?? null
+	)
 }
 
 export async function setEmailState(
@@ -229,8 +237,11 @@ export async function countFailedEmailsBefore(ledger: Ledger, cutoff: string): P
 /**
  * The license a Checkout Session created and its current token, for the success page's claim.
  */
-export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: string): Promise<LicenseRow | undefined> {
-	return ledger.selectFrom("licenses").selectAll().where("checkout_session_id", "=", sessionID).executeTakeFirst()
+export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: string): Promise<LicenseRow | null> {
+	return (
+		(await ledger.selectFrom("licenses").selectAll().where("checkout_session_id", "=", sessionID).executeTakeFirst()) ??
+		null
+	)
 }
 
 /**

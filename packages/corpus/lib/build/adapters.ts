@@ -6,7 +6,8 @@
  *   previous build finished.
  */
 
-import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilder } from "path-ts"
 
 import type { BuildStage } from "#build/types"

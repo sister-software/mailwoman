@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "#anchor-inference"
+export { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 export * from "#classifier"
 export * from "#gazetteer-inference"
 export * from "#labels"
@@ -10,7 +11,7 @@ export * from "#postcode/anchor"
 export * from "#postcode/binary-resolver"
 export * from "#proposal-classifier"
 export { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
-export { parseWordConsistencyEnv, type WordConsistencyOpts } from "#word-consistency"
+export { parseWordConsistencyEnv } from "#word-consistency"
 export type { BuildPriorsOpts, KnownFormatHitLike, QueryShapeLike, TokenLike } from "#query-shape-prior"
 export * from "#scorer"
 export * from "#semi-markov-decode"

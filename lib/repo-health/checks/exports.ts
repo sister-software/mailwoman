@@ -60,7 +60,6 @@ const ALLOWED_DUPLICATE_EXPORTS = new Set([
 	"packages/codex/lib/us/street/suffix.ts:StreetSuffixAbbreviationRecord,US_STREET_SUFFIX_VARIANTS",
 	"packages/core/lib/decoder/containment.ts:PARENT_OF,WESTERN_PARENT_OF",
 	"packages/corpus/lib/recipes/sub/venue.ts:buildPositiveForms,buildSubVenueForm",
-	"packages/fastify/lib/index.ts:default,mailwomanFastify",
 	"packages/mailwoman/tools/gazetteer-pipeline/defaults.ts:DEFAULT_FOLD_COUNTRIES,DEFAULT_GEONAMES_COUNTRIES",
 ])
 
@@ -99,7 +98,7 @@ export const exportsCheck: RepoCheck = {
 		const observedAllowedDuplicates = new Set<string>()
 
 		const unexpected = (file: string, message: string): void => {
-			diagnostics.push({ severity: DiagnosticSeverity.Error, message, file })
+			diagnostics.push({ severity: DiagnosticSeverity.Error, message, file, line: null, details: null })
 		}
 
 		for (const issue of report.issues) {
@@ -129,6 +128,9 @@ export const exportsCheck: RepoCheck = {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message: `stale duplicate-export allowlist entry ${expected}`,
+					file: null,
+					line: null,
+					details: null,
 				})
 			}
 		}

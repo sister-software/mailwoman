@@ -53,7 +53,7 @@ describe("openDuckDB", () => {
 
 		expect(directory.length).toBeGreaterThan(0)
 
-		const { pathExists } = await import("@mailwoman/core/fs/readers")
+		const { pathExists } = await import("@mailwoman/core/fs/readers/stat")
 
 		expect(await pathExists(directory)).toBe(true)
 	})

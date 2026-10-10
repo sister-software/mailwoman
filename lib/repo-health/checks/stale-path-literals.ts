@@ -131,6 +131,7 @@ export const stalePathLiteralsCheck: RepoCheck = {
 			message: `"${entry.literal}" was tracked once and is gone — a moved file leaves this kind of reference behind, and the code reading it treats absence as an answer rather than an error`,
 			file: entry.file,
 			line: entry.line,
+			details: null,
 		}))
 	},
 }

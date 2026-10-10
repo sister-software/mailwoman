@@ -9,8 +9,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 
 import {
 	type ComparatorReading,
-	compareOutcomes,
-	type ConformanceOutcome,
+	compareResults,
+	type ConformanceResult,
 } from "#tools/eval-harness/conformance/comparators"
 import type { ConformanceContext, ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import type { GauntletDeps } from "#tools/eval-harness/gauntlet/harness"
@@ -20,10 +20,7 @@ import { toGauntletResult } from "#tools/eval-harness/gauntlet/harness"
  * Produces one side of a law, letting a caller attach trace and mechanism-account detail
  * rather than this module reaching for a private workspace.
  */
-export type ConformanceObserver = (
-	query: string,
-	context: ConformanceContext | undefined
-) => Promise<ConformanceOutcome>
+export type ConformanceObserver = (query: string, context: ConformanceContext | null) => Promise<ConformanceResult>
 
 /**
  * One fixture's result.
@@ -42,7 +39,7 @@ export interface ConformanceFinding {
  * with no mechanism account attached.
  */
 export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceObserver {
-	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context)) })
+	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context ?? undefined)) })
 }
 
 /**
@@ -51,7 +48,7 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
  */
 export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTraced"]): ConformanceObserver {
 	return async (query, context) => {
-		const { result, resolver } = await geocodeTraced(query, context)
+		const { result, resolver } = await geocodeTraced(query, context ?? undefined)
 
 		return { result: toGauntletResult(result), candidates: resolver }
 	}
@@ -70,7 +67,7 @@ export async function runConformanceFixtures(
 	for (const fixture of fixtures) {
 		const base = await observe(fixture.base, fixture.context)
 		const variant = await observe(fixture.variant, fixture.context)
-		const reading = compareOutcomes(fixture, base, variant)
+		const reading = compareResults(fixture, base, variant)
 
 		findings.push({ fixture, reading, held: reading.observed === fixture.expect })
 	}
@@ -157,7 +154,7 @@ export function formatConformanceFinding(finding: ConformanceFinding): string {
 	const mark = reading.observed === "unmeasured" ? "?" : held ? "✓" : tracked ? "~" : "✗"
 
 	const head =
-		`${mark} [${fixture.law}] ${fixture.id}${status}${rowRef} · ${fixture.outcomeComparator} ` +
+		`${mark} [${fixture.law}] ${fixture.id}${status}${rowRef} · ${fixture.resultComparator} ` +
 		`expected ${fixture.expect}, observed ${reading.observed}`
 
 	const lines = [

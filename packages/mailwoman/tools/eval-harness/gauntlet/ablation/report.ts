@@ -12,17 +12,15 @@ import { ABLATION_ABSENT } from "#ablation/expectation"
 import {
 	ABLATABLE_COMPONENTS,
 	type AblationCell,
-	type AblationRowOutcome,
+	type AblationRowResult,
 	aggregateAblationComponents,
 } from "#tools/eval-harness/gauntlet/ablation/types"
-
-export { ABLATION_ABSENT } from "#ablation/expectation"
 
 /**
  * Renders one cell as `broken/support`, with a missing or zero-support cell rendering
  * as {@linkcode ABLATION_ABSENT} rather than a zero.
  */
-export function formatAblationCell(cell: AblationCell | undefined): string {
+export function formatAblationCell(cell: AblationCell | null): string {
 	if (!cell || cell.support === 0) return ABLATION_ABSENT
 
 	return `${cell.brokenCount}/${cell.support}`
@@ -32,7 +30,7 @@ export function formatAblationCell(cell: AblationCell | undefined): string {
  * Renders one cell under the expectation model as `trueFail/ladderGraded`, where a cell with real
  * support but a zero `ladderGradedCount` renders as {@linkcode ABLATION_ABSENT} rather than `0/0`.
  */
-export function formatAblationLadderCell(cell: AblationCell | undefined): string {
+export function formatAblationLadderCell(cell: AblationCell | null): string {
 	if (!cell || cell.support === 0 || cell.ladderGradedCount === 0) return ABLATION_ABSENT
 
 	return `${cell.trueFailCount}/${cell.ladderGradedCount}`
@@ -49,9 +47,9 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render only the matrix.
+	 * The per-row results behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render only the matrix.
 	 */
-	rows: readonly AblationRowOutcome[],
+	rows: readonly AblationRowResult[],
 	meta: {
 		boardID: string
 		measuredAt: string
@@ -143,7 +141,9 @@ export function renderAblationMarkdown(
 		lines.push(`| --- | ${wide.map(() => "--:").join(" | ")} |`)
 
 		for (const tag of components) {
-			lines.push(`| ${tag} | ${wide.map((l) => formatAblationLadderCell(byKey.get(cellKey(tag, l)))).join(" | ")} |`)
+			lines.push(
+				`| ${tag} | ${wide.map((l) => formatAblationLadderCell(byKey.get(cellKey(tag, l)) ?? null)).join(" | ")} |`
+			)
 		}
 	}
 
@@ -160,7 +160,7 @@ export function renderAblationMarkdown(
 		lines.push(`| --- | ${wide.map(() => "--:").join(" | ")} |`)
 
 		for (const tag of components) {
-			lines.push(`| ${tag} | ${wide.map((l) => formatAblationCell(byKey.get(cellKey(tag, l)))).join(" | ")} |`)
+			lines.push(`| ${tag} | ${wide.map((l) => formatAblationCell(byKey.get(cellKey(tag, l)) ?? null)).join(" | ")} |`)
 		}
 	}
 

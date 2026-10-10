@@ -6,29 +6,43 @@
  *   ranking and preserves the answer's epistemic status alongside its constraints.
  */
 
-import type { Evidence } from "#evidence"
-import type { EpistemicStatus } from "#status"
+import { z } from "zod"
 
-export interface DerivationNode {
+import { EvidenceSchema } from "#evidence"
+import { type EpistemicStatus, EpistemicStatusSchema } from "#status"
+
+/**
+ * One constraint behind an answer.
+ */
+export const DerivationNodeSchema = z.object({
 	/**
 	 * Constraint target, such as a component, layer, or probe.
 	 */
-	label: string
-	evidence: Evidence
+	label: z.string(),
+	evidence: EvidenceSchema,
 	/**
 	 * Auditable description of the constraint's effect on the answer.
 	 */
-	contribution: string
-}
+	contribution: z.string(),
+})
 
-export interface DerivationProjection {
-	status: EpistemicStatus
-	constraints: readonly DerivationNode[]
-	/**
-	 * Uncertainty radius in meters, or `null` when unknown.
-	 */
-	uncertaintyM: number | null
-}
+export type DerivationNode = z.infer<typeof DerivationNodeSchema>
+
+/**
+ * The derivation behind an answer: its epistemic status, constraints and uncertainty.
+ */
+export const DerivationProjectionSchema = z
+	.object({
+		status: EpistemicStatusSchema,
+		constraints: z.array(DerivationNodeSchema).readonly(),
+		/**
+		 * Uncertainty radius in meters, or `null` when unknown.
+		 */
+		uncertaintyM: z.number().nullable(),
+	})
+	.meta({ id: "DerivationProjection", description: "The derivation behind an answer." })
+
+export type DerivationProjection = z.infer<typeof DerivationProjectionSchema>
 
 export interface DerivationInput {
 	status: EpistemicStatus

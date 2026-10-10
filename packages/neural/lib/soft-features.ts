@@ -7,6 +7,7 @@ import {
 	buildAnchorFeatures,
 	warnShapedKeyerObligationOnce,
 } from "#anchor-inference"
+import type { Toggle } from "#classifier/options"
 import { buildCountryFeatures, type CountryLexicon } from "#country-inference"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "#gazetteer-inference"
 import type { TokenizedPiece } from "#tokenizer"
@@ -27,31 +28,31 @@ export interface SoftFeatures {
 	/**
 	 * The postcode-anchor channel.
 	 */
-	anchor?: SoftFeatureChannel
+	anchor: SoftFeatureChannel | null
 
 	/**
 	 * The gazetteer channel, already zeroed next to postcode-anchor hits when suppression is enabled.
 	 */
-	gazetteer?: SoftFeatureChannel
+	gazetteer: SoftFeatureChannel | null
 
 	/**
 	 * The country channel.
 	 *
 	 * Near-postcode suppression never applies to it, so it still marks the country in `12345 USA`.
 	 */
-	country?: SoftFeatureChannel
+	country: SoftFeatureChannel | null
 
 	/**
 	 * The street-type evidence channel.
 	 */
-	streetType?: SoftFeatureChannel
+	streetType: SoftFeatureChannel | null
 
 	/**
 	 * The locality-surface evidence channel.
 	 *
 	 * It is built only when the street-type lexicon is absent or matched at least one piece.
 	 */
-	localitySurface?: SoftFeatureChannel
+	localitySurface: SoftFeatureChannel | null
 }
 
 /**
@@ -64,9 +65,10 @@ export interface SoftFeatureSources {
 
 	/**
 	 * The substrings the anchor channel looks up.
-	 * The default is `alnum-run`.
 	 *
 	 * It must match the model card's `requires.anchor.span_mode`.
+	 *
+	 * @defaultValue `alnum-run`
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 
@@ -78,9 +80,9 @@ export interface SoftFeatureSources {
 	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit.
 	 *
 	 * It needs both the gazetteer lexicon and the anchor lookup.
-	 * Enable it only for a model trained with the same suppression.
+	 * Turn it on only for a model trained with the same suppression.
 	 */
-	suppressGazetteerNearPostcode?: boolean
+	suppressGazetteerNearPostcode: Toggle
 
 	/**
 	 * The street-type evidence lexicon uses the gazetteer lexicon schema.
@@ -100,7 +102,7 @@ export function buildSoftFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	sources: SoftFeatureSources
 ): SoftFeatures {
-	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup, sources.postcodeAnchorSpanMode, undefined)
+	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup ?? null, sources.postcodeAnchorSpanMode ?? null, null)
 
 	const anchor = sources.postcodeAnchorLookup
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {
@@ -113,7 +115,7 @@ export function buildSoftFeatures(
 		: undefined
 
 	const gazFed =
-		gazetteer && anchor && sources.suppressGazetteerNearPostcode
+		gazetteer && anchor && sources.suppressGazetteerNearPostcode === "on"
 			? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 			: gazetteer
 
@@ -126,15 +128,15 @@ export function buildSoftFeatures(
 	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
 
 	const localitySurface =
-		sources.localitySurfaceLexicon && (streetContext || sources.streetTypeLexicon === undefined)
+		sources.localitySurfaceLexicon && (streetContext || !sources.streetTypeLexicon)
 			? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
 			: undefined
 
 	return {
-		...(anchor ? { anchor } : {}),
-		...(gazFed ? { gazetteer: gazFed } : {}),
-		...(country ? { country } : {}),
-		...(streetType ? { streetType } : {}),
-		...(localitySurface ? { localitySurface } : {}),
+		anchor: anchor ?? null,
+		gazetteer: gazFed ?? null,
+		country: country ?? null,
+		streetType: streetType ?? null,
+		localitySurface: localitySurface ?? null,
 	}
 }

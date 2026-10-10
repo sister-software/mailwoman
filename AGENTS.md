@@ -1,11 +1,11 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The repository also contains 68 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-70 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The repository also contains 73 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+75 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-one workspaces publish to npm. `.release-it.json` defines that set. Eight workspaces are private,
+Sixty-one workspaces publish to npm. `.release-it.json` defines that set. Thirteen workspaces are private,
 and `packages/osm` remains unpublished pending ODbL counsel sign-off. Run the workspace check described
 in `lib/release-kit/AGENTS.md` after adding or moving a workspace.
 
@@ -125,6 +125,15 @@ runtime imports. A declaration several packages need has one home and is importe
 which adds no runtime dependency; the `duplicate-exported-shape` repository check reports an exported
 interface or type alias whose body another workspace also exports. When two platforms must
 agree on behavior, share the function rather than copying its constants.
+
+A rule about one country lives in per-country data or under a per-country directory, never as a
+hard-coded branch in a shared module. The codex holds per-country tables, and an adapter or recipe for
+one country sits under `packages/<workspace>/lib/<cc>/`. A shared module that must branch on a country
+writes `// country-branch: <reason>` on the line above, stating why the rule is one country's and which
+planetary source would replace it. The `country-branches` repository check reports every other
+comparison against a country literal. Before writing a branch for US, GB or another well-covered locale,
+look for the source that covers every country: Who's On First admin names and abbreviations, the
+Overture places file, the codex country tables.
 
 The acronym convention capitalizes each acronym as a complete camel-case component: `createWOFResolver`,
 `parseJSON`, `readID`, and `modelURL`. Preserve external names, snake-case wire fields, and documented

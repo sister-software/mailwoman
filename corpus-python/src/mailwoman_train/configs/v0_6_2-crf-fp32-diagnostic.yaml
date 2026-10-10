@@ -14,7 +14,7 @@
 #   4. eval_every_steps: 2000 → 500          (catch divergence quickly. cheap)
 #   5. output_dir: separate v062-crf-diag    (don't clobber other checkpoints)
 #
-# Expected outcomes:
+# Expected results:
 #   - pass: training survives past step 1700 without NaN. fp32 hypothesis confirmed.
 #     Action: v0.6.3 can re-enable CRF with crf_fp32: true.
 #   - fail: NaN at the previously-observed steps. fp32 isn't the fix — the

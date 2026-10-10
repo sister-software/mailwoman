@@ -32,10 +32,8 @@ canonicalizeOrganizationName("Baylor Univ. Med. Ctr.");
 ```ts
 // Address record (the core of the record system)
 import { PostalAddress, createPostalAddress } from "@mailwoman/record/address"
-
 // Person name parsing → structured components
 import { parsePersonName, type ParsedPersonName } from "@mailwoman/record/name"
-
 // Organization name canonicalization → matchable key
 import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwoman/record/organization"
 ```

@@ -5,10 +5,11 @@ import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
-import { AGREEMENT_VERSION, SHOP_PLANS, WEBHOOK_EVENTS } from "#shop/catalog"
+import { AGREEMENT_VERSION, SHOP_PLANS } from "#shop/catalog"
 import { withShopIDs } from "#shop/ids"
 import { provisionShop } from "#shop/provision"
 import { STRIPE_API_VERSION, stripeClient } from "#stripe/client"
+import { ACCEPTED_EVENT_TYPES as WEBHOOK_EVENTS } from "#stripe/webhook"
 import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe/mock"
 
 const worker = readEnv(env)
@@ -140,7 +141,15 @@ describe("the shop provisioner", () => {
 		expect(Object.values(report.prices).map((price) => price.action)).toEqual(["missing", "missing"])
 		expect(Object.values(report.paymentLinks).map((link) => link.action)).toEqual(["missing", "missing"])
 		expect(report.portal.action).toBe("missing")
-		expect(report.webhook).toEqual({ url: `${WORKER}/v1/webhooks/stripe`, action: "missing" })
+
+		expect(report.webhook).toEqual({
+			id: null,
+			url: `${WORKER}/v1/webhooks/stripe`,
+			action: "missing",
+			drift: null,
+			secret: null,
+		})
+
 		expect(report.terms.url).toBe(`${SITE}/license/terms/${AGREEMENT_VERSION}`)
 		expect(stripe.calls.every((call) => call.method === "GET")).toBe(true)
 	})
@@ -154,16 +163,17 @@ describe("the shop provisioner", () => {
 			apply: true,
 		})
 
-		expect(report.product).toEqual({ id: "prod_1", action: "created" })
+		expect(report.product).toEqual({ id: "prod_1", action: "created", drift: null })
 
 		for (const plan of SHOP_PLANS) {
-			expect(report.prices[plan.code]).toEqual({ id: `price_${plan.code}`, action: "created" })
+			expect(report.prices[plan.code]).toEqual({ id: `price_${plan.code}`, action: "created", drift: null })
 			expect(report.paymentLinks[plan.code]).toMatchObject({ action: "created", consent: true })
 		}
 
 		expect(report.portal).toEqual({
 			id: "bpc_1",
 			action: "created",
+			drift: null,
 			url: "https://billing.stripe.com/p/login/test_new",
 		})
 
@@ -171,6 +181,7 @@ describe("the shop provisioner", () => {
 			id: "we_1",
 			url: `${WORKER}/v1/webhooks/stripe`,
 			action: "created",
+			drift: null,
 			secret: "whsec_answered_once",
 		})
 
@@ -239,15 +250,22 @@ describe("the shop provisioner", () => {
 			apply: true,
 		})
 
-		expect(report.product).toEqual({ id: "prod_1", action: "exists" })
+		expect(report.product).toEqual({ id: "prod_1", action: "exists", drift: null })
 
 		expect(report.portal).toEqual({
 			id: "bpc_1",
 			action: "exists",
+			drift: null,
 			url: "https://billing.stripe.com/p/login/test_portal",
 		})
 
-		expect(report.webhook).toEqual({ id: "we_1", url: `${WORKER}/v1/webhooks/stripe`, action: "exists" })
+		expect(report.webhook).toEqual({
+			id: "we_1",
+			url: `${WORKER}/v1/webhooks/stripe`,
+			action: "exists",
+			drift: null,
+			secret: null,
+		})
 
 		expect(report.paymentLinks["commercial-monthly-v1"]).toMatchObject({
 			action: "exists",
@@ -285,8 +303,8 @@ describe("the shop provisioner", () => {
 		expect(report.terms.consent).toBe(false)
 
 		expect(Object.values(report.paymentLinks)).toEqual([
-			{ action: "blocked", consent: false, promotionCodes: false },
-			{ action: "blocked", consent: false, promotionCodes: false },
+			{ id: null, url: null, action: "blocked", drift: null, consent: false, promotionCodes: false },
+			{ id: null, url: null, action: "blocked", drift: null, consent: false, promotionCodes: false },
 		])
 
 		const attempts = stripe.calls.filter((call) => call.method === "POST" && call.path === "/v1/payment_links")
@@ -340,6 +358,7 @@ describe("the shop provisioner", () => {
 			id: "plink_new_commercial-monthly-v1",
 			url: "https://buy.stripe.com/test_new_commercial-monthly-v1",
 			action: "replaced",
+			drift: null,
 			consent: true,
 			promotionCodes: true,
 		})
@@ -386,6 +405,7 @@ describe("the shop provisioner", () => {
 			url: `${WORKER}/v1/webhooks/stripe`,
 			action: "updated",
 			drift: [`api_version is 2020-08-27; the catalog says ${STRIPE_API_VERSION}`],
+			secret: null,
 		})
 
 		const update = stripe.calls.find((call) => call.method === "POST" && call.path === "/v1/webhook_endpoints/we_1")!
@@ -432,6 +452,7 @@ describe("the shop provisioner", () => {
 			id: "bpc_1",
 			action: "exists",
 			drift: ["login_page.enabled is false; the catalog says true"],
+			url: null,
 		})
 
 		expect(readOnly.calls.every((call) => call.method === "GET")).toBe(true)
@@ -442,6 +463,7 @@ describe("the shop provisioner", () => {
 		expect(report.portal).toEqual({
 			id: "bpc_1",
 			action: "updated",
+			drift: null,
 			url: "https://billing.stripe.com/p/login/live_enabled",
 		})
 
@@ -463,7 +485,7 @@ describe("the shop provisioner", () => {
 
 		const report = await provisionShop(stripeClient(worker, stripe.fetch), { siteOrigin: SITE, apply: false })
 
-		expect(report.product).toEqual({ id: "prod_1", action: "exists" })
+		expect(report.product).toEqual({ id: "prod_1", action: "exists", drift: null })
 		expect(stripe.calls.filter((call) => call.path === "/v1/products")).toHaveLength(2)
 	})
 })

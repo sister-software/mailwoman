@@ -15,8 +15,8 @@
  *
  *   Everything here is built structurally with `isAxiosError: true` and `config`/`code`/`response`.
  *   The adapter uses `APIClientConfig["axios"]` because the packages under test reach Axios integrations through
- *   `@mailwoman/core`. Where an axios type has to be named, such as the response
- *   {@linkcode stubFetchingBodies} resolves, it is named here rather than by the calling test,
+ *   `@mailwoman/core`. The axios type {@linkcode stubFetchingBodies} resolves is stated here
+ *   rather than by the calling test,
  *   so a workspace that stubs a request needs no `axios` dependency of its own.
  */
 
@@ -51,9 +51,9 @@ export interface StubRequestConfig {
 }
 
 /**
- * One scripted adapter outcome.
+ * One scripted adapter result.
  */
-export interface StubOutcome {
+export interface StubResult {
 	status?: number
 	statusText?: string
 	/**
@@ -110,9 +110,9 @@ export interface StubTransportOptions {
 	 */
 	clock?: { now(): number }
 	/**
-	 * The body served when an outcome names none.
+	 * The body served when a result names none.
 	 *
-	 * Defaults to `{ ok: true }`; pass the envelope the client under test expects
+	 * @defaultValue `{ ok: true }`; pass the envelope the client under test expects
 	 * when it validates one (BDC's `{ data: [] }`, say).
 	 */
 	defaultBody?: unknown
@@ -122,11 +122,11 @@ export interface StubTransportOptions {
  * A client answering each `fetch` with the next of `bodies`, holding on the last once exhausted.
  *
  * A reader that takes `Pick<APIClient, "fetch">` reads only `data`, so the stub states
- * that field alone rather than building headers and a config.
- * Passing several bodies scripts a reader that asks twice, such as a count checked against a page.
+ * that field only rather than building headers and a config.
+ * Several bodies script a reader that asks twice, such as a count checked against a page.
  *
  * This lives beside {@linkcode stubTransport} so that a workspace which does not
- * depend on `axios` can still stub the method: the axios type is named here,
+ * depend on `axios` can still stub the method: the axios type is stated here,
  * in core, rather than by the test that calls this.
  */
 export function stubFetchingBodies(...bodies: string[]): Pick<APIClient, "fetch"> {
@@ -165,7 +165,7 @@ export function axiosLikeError(message: string, code: string, config: StubReques
 }
 
 /**
- * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted)
+ * A stub Axios adapter that replays `results` (holding on the last entry once exhausted)
  * and records every dispatch.
  *
  * It reproduces what Axios's real adapters do on a failing status — reject with an
@@ -173,7 +173,7 @@ export function axiosLikeError(message: string, code: string, config: StubReques
  * by the adapter rather than by the interceptor chain.
  * A test that resolves with a 4xx instead would exercise a path the real transport never takes.
  */
-export function stubTransport(outcomes: StubOutcome[], options: StubTransportOptions = {}): StubTransport {
+export function stubTransport(results: StubResult[], options: StubTransportOptions = {}): StubTransport {
 	const { clock, defaultBody = { ok: true } } = options
 	const calls: string[] = []
 	const configs: StubRequestConfig[] = []
@@ -188,15 +188,15 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 			dispatchTimes.push(clock.now())
 		}
 
-		const outcome = outcomes[Math.min(index, outcomes.length - 1)]!
+		const stub = results[Math.min(index, results.length - 1)]!
 
 		index++
 
-		if (outcome.throws) {
-			throw axiosLikeError(outcome.throws.message, outcome.throws.code, config)
+		if (stub.throws) {
+			throw axiosLikeError(stub.throws.message, stub.throws.code, config)
 		}
 
-		const status = outcome.status ?? HTTP_OK
+		const status = stub.status ?? HTTP_OK
 
 		const response = {
 			// Axios's `transformResponse` runs on the raw body, so the stub passes
@@ -205,12 +205,12 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 			// Bytes also pass through unchanged.
 			// The stub serializes other values as a JSON endpoint would.
 			data:
-				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)
-					? outcome.body
-					: stringifyJSON(outcome.body ?? defaultBody),
+				typeof stub.body === "string" || Buffer.isBuffer(stub.body)
+					? stub.body
+					: stringifyJSON(stub.body ?? defaultBody),
 			status,
-			statusText: outcome.statusText ?? "OK",
-			headers: outcome.headers ?? {},
+			statusText: stub.statusText ?? "OK",
+			headers: stub.headers ?? {},
 			config,
 		}
 

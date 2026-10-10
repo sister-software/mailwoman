@@ -152,7 +152,7 @@ function ancestorsOfConcept(
 interface DerivedDraft {
 	subject: ConceptID
 	assertion: RelationAssertion
-	countries?: readonly string[]
+	countries: readonly string[] | null
 	inputs: Map<string, DerivationInput>
 }
 
@@ -189,7 +189,7 @@ function edgeKey(assertion: RelationAssertion): string {
 	return `${assertion.relation}${KEY_SEPARATOR}${assertion.target}`
 }
 
-function draftKey(subject: ConceptID, assertion: RelationAssertion, countries: readonly string[] | undefined): string {
+function draftKey(subject: ConceptID, assertion: RelationAssertion, countries: readonly string[] | null): string {
 	const scope = countries?.join(COUNTRY_SEPARATOR) ?? ""
 
 	return `${subject}${KEY_SEPARATOR}${edgeKey(assertion)}${KEY_SEPARATOR}${assertion.modality}${KEY_SEPARATOR}${scope}`
@@ -242,7 +242,7 @@ function deriveInheritedFacts(
 					continue
 				}
 
-				const countries = assertion.countries?.length ? assertion.countries.toSorted(compareIdentifiers) : undefined
+				const countries = assertion.countries?.length ? assertion.countries.toSorted(compareIdentifiers) : null
 				const key = draftKey(concept.id, assertion, countries)
 				const existing = drafts.get(key)
 				const draft: DerivedDraft = existing ?? { subject: concept.id, assertion, countries, inputs: new Map() }

@@ -27,12 +27,12 @@
  * streams the member out of the archive rather than reading an extracted copy.
  *
  * The receipt written beside the archive records the URL, the publish date, the byte count and the
- * sha256 of the archive, which identify the bytes a corpus row was read from.
+ * sha256 of the archive. Together they identify the bytes a corpus row was read from.
  */
 
 import { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
@@ -55,7 +55,8 @@ import { readManifest, resumableDownload, writeManifest } from "#tools/fetch/dow
 export const GLEIF_LATEST_PUBLISH_URL = "https://goldencopy.gleif.org/api/v2/golden-copies/publishes/latest"
 
 /**
- * The directory the archive and its receipt are written under, which is the adapter's `inputPath`.
+ * The directory the archive and its receipt are written under.
+ * It is the adapter's `inputPath`.
  */
 const SLUG = "gleif"
 
@@ -154,7 +155,8 @@ export async function readGLEIFLatestPublish(client: Pick<APIClient, "fetch">): 
 }
 
 /**
- * The archive's file name, which is the last path segment of the URL the API names.
+ * The archive's file name.
+ * It is the last path segment of the URL the API returns.
  */
 export function gleifArchiveFilename(url: string): string {
 	const name = new URL(url).pathname.split("/").at(-1) ?? ""

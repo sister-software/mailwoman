@@ -60,7 +60,7 @@ version works where the string-first v0 imploded.
     Western/romanized only; does not map nicknames to roots (lossy/gendered — that belongs
     in the matcher as a fuzzy agreement level).
   - `organization.ts`: `canonicalizeOrganizationName` — Winkler designation-strip (`Acme
-Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
+    Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
     period/apostrophe removal (`S.A.` to `sa`), leading-`The` drop. ISO 20275 ELF + cleanco
     designation list.
 

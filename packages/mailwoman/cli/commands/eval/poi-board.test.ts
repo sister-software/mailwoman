@@ -1,4 +1,4 @@
-import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIQueryResult } from "@mailwoman/core/pipeline"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
@@ -12,14 +12,15 @@ import {
 	POI_BOARD_FIXTURES,
 	POI_BOARD_FLOORS,
 	type POIBoardFixture,
-	type POIBoardOutcome,
+	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
-import { canonicalJSON, loadProbeDefinition } from "#tools/eval-harness/semantic-utility/probe"
+import { canonicalJSON } from "#tools/eval-harness/preregistration"
+import { loadProbeDefinition } from "#tools/eval-harness/semantic-utility/probe"
 
 const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
 const probeDefinition = await loadProbeDefinition()
 
-function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
+function boardResultFor(poiIntent: POIQueryResult): POIBoardResult {
 	return { path: "poi", poiIntent }
 }
 
@@ -58,7 +59,7 @@ const addressFixture: POIBoardFixture = {
 }
 
 function poiResult(
-	overrides: Partial<NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>[number]> = {}
+	overrides: Partial<NonNullable<Extract<POIQueryResult, { type: "intent" }>["results"]>[number]> = {}
 ) {
 	return {
 		name: "Some Place",
@@ -69,19 +70,26 @@ function poiResult(
 		country: "US",
 		confidence: 0.9,
 		gersID: "gers-1",
+		ancestry: null,
+		distanceM: null,
 		...overrides,
 	}
 }
 
 describe("gradeCase — results expectation", () => {
 	it("passes when ≥1 result, nearest within range, top category matches", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
 		})
 
-		const grade = gradeCase(resultsFixture, outcome)
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.pass).toBe(true)
 		expect(grade.nearestKm).toBeCloseTo(0, 3)
@@ -89,67 +97,87 @@ describe("gradeCase — results expectation", () => {
 	})
 
 	it("uses the NEAREST result's distance, not necessarily the top-ranked one", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [poiResult({ latitude: 10, longitude: 10 }), poiResult({ latitude: 39.7817, longitude: -89.6501 })],
 		})
 
-		const grade = gradeCase(resultsFixture, outcome)
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.nearestKm).toBeLessThan(1)
 	})
 
 	it("fails when the nearest result is outside maxNearestKm", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [poiResult({ latitude: 10, longitude: 10 })],
 		})
 
-		const grade = gradeCase(resultsFixture, outcome)
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/> maxNearestKm/)
 	})
 
 	it("fails when the top result's category doesn't match, even if in range", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [poiResult({ latitude: 39.7817, longitude: -89.6501, categoryID: "restaurant" })],
 		})
 
-		const grade = gradeCase(resultsFixture, outcome)
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/top category restaurant !== expected cafe/)
 	})
 
 	it("fails on zero results", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [],
 		})
 
-		const grade = gradeCase(resultsFixture, outcome)
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.resultCount).toBe(0)
-		expect(grade.nearestKm).toBeUndefined()
+		expect(grade.nearestKm).toBeNull()
 	})
 
-	it("fails when the outcome is an abstain instead of results", () => {
-		const outcome = intentOutcome({ type: "abstain", reason: "anchor_required" })
-		const grade = gradeCase(resultsFixture, outcome)
+	it("fails when the result is an abstain instead of results", () => {
+		const boardResult = boardResultFor({ type: "abstain", reason: "anchor_required" })
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/got abstain\(anchor_required\)/)
 	})
 
 	it("fails when the pipeline never took the poi path at all", () => {
-		const grade = gradeCase(resultsFixture, { path: "full" })
+		const grade = gradeCase(resultsFixture, { path: "full", poiIntent: null })
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/no poi intent/)
@@ -158,9 +186,14 @@ describe("gradeCase — results expectation", () => {
 
 describe("gradeCase — brand results expectation", () => {
 	it("passes when the top result's brandWikidata matches the expected QID", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			intent: {
+				subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [
 				poiResult({
 					latitude: 29.7604,
@@ -171,16 +204,21 @@ describe("gradeCase — brand results expectation", () => {
 			],
 		})
 
-		const grade = gradeCase(brandResultsFixture, outcome)
+		const grade = gradeCase(brandResultsFixture, boardResult)
 
 		expect(grade.pass).toBe(true)
 		expect(grade.nearestKm).toBeCloseTo(0, 3)
 	})
 
 	it("fails when the top result's brandWikidata doesn't match, even if in range", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			intent: {
+				subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [
 				poiResult({
 					latitude: 29.7604,
@@ -191,33 +229,43 @@ describe("gradeCase — brand results expectation", () => {
 			],
 		})
 
-		const grade = gradeCase(brandResultsFixture, outcome)
+		const grade = gradeCase(brandResultsFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/top brandWikidata Q999999 !== expected Q319642/)
 	})
 
 	it("fails on zero results", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			intent: {
+				subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [],
 		})
 
-		const grade = gradeCase(brandResultsFixture, outcome)
+		const grade = gradeCase(brandResultsFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.resultCount).toBe(0)
 	})
 
 	it("Category grading is unaffected by the brandWikidata branch (check)", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
 		})
 
-		const grade = gradeCase(resultsFixture, outcome)
+		const grade = gradeCase(resultsFixture, boardResult)
 
 		expect(grade.pass).toBe(true)
 	})
@@ -225,28 +273,33 @@ describe("gradeCase — brand results expectation", () => {
 
 describe("gradeCase — abstain expectation", () => {
 	it("passes on an exact reason match", () => {
-		const outcome = intentOutcome({ type: "abstain", reason: "requires_build_local_layer" })
-		const grade = gradeCase(abstainFixture, outcome)
+		const boardResult = boardResultFor({ type: "abstain", reason: "requires_build_local_layer" })
+		const grade = gradeCase(abstainFixture, boardResult)
 
 		expect(grade.pass).toBe(true)
 	})
 
 	it("fails on a different abstain reason", () => {
-		const outcome = intentOutcome({ type: "abstain", reason: "anchor_required" })
-		const grade = gradeCase(abstainFixture, outcome)
+		const boardResult = boardResultFor({ type: "abstain", reason: "anchor_required" })
+		const grade = gradeCase(abstainFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/expected abstain\(requires_build_local_layer\), got abstain\(anchor_required\)/)
 	})
 
-	it("fails when the outcome carries results instead of an abstain", () => {
-		const outcome = intentOutcome({
+	it("fails when the result carries results instead of an abstain", () => {
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
 			results: [poiResult({ categoryID: "fire_hydrant" })],
 		})
 
-		const grade = gradeCase(abstainFixture, outcome)
+		const grade = gradeCase(abstainFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 	})
@@ -254,24 +307,30 @@ describe("gradeCase — abstain expectation", () => {
 
 describe("gradeCase — address expectation", () => {
 	it("passes when the pipeline never claims the poi path", () => {
-		const grade = gradeCase(addressFixture, { path: "full" })
+		const grade = gradeCase(addressFixture, { path: "full", poiIntent: null })
 
 		expect(grade.pass).toBe(true)
 	})
 
 	it("passes when path is full-length address parse even with poiIntent absent", () => {
-		const grade = gradeCase(addressFixture, { path: "fast-path" })
+		const grade = gradeCase(addressFixture, { path: "fast-path", poiIntent: null })
 
 		expect(grade.pass).toBe(true)
 	})
 
 	it("fails when the poi branch wrongly claims a full address", () => {
-		const outcome = intentOutcome({
+		const boardResult = boardResultFor({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } },
+			intent: {
+				subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
+				relation: null,
+				anchor: null,
+				limit: null,
+			},
+			results: null,
 		})
 
-		const grade = gradeCase(addressFixture, outcome)
+		const grade = gradeCase(addressFixture, boardResult)
 
 		expect(grade.pass).toBe(false)
 		expect(grade.detail).toMatch(/poi branch claimed it/)
@@ -565,11 +624,17 @@ describe("the tracked-row convention", () => {
 	it("splits grades by status and reports a tracked row that started passing", () => {
 		const trackedFixture = tracked({ rowRef: "semantic-utility/probe-definition.json#x", note: "why" })
 		const set = [resultsFixture, trackedFixture]
-		const subject: POIIntent = { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } }
+
+		const subject: POIIntent = {
+			subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
+			relation: null,
+			anchor: null,
+			limit: null,
+		}
 
 		const grades = [
-			gradeCase(resultsFixture, { path: "full" }),
-			gradeCase(trackedFixture, intentOutcome({ type: "intent", intent: subject, results: [] })),
+			gradeCase(resultsFixture, { path: "full", poiIntent: null }),
+			gradeCase(trackedFixture, boardResultFor({ type: "intent", intent: subject, results: [] })),
 		]
 
 		const partition = partitionCases(set, grades)
@@ -584,7 +649,7 @@ describe("the tracked-row convention", () => {
 
 		const holdingGrade = gradeCase(
 			trackedFixture,
-			intentOutcome({
+			boardResultFor({
 				type: "intent",
 				intent: subject,
 				results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
@@ -595,7 +660,7 @@ describe("the tracked-row convention", () => {
 	})
 
 	it("Refuses a grade whose id names no committed fixture, rather than dropping it from the floors", () => {
-		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full" })
+		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full", poiIntent: null })
 
 		expect(() => partitionCases([resultsFixture], [orphan])).toThrow(/names no committed fixture/u)
 	})

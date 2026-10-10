@@ -1,7 +1,7 @@
 {
 	"decisionID": "phase-2-decision-1967",
 	"definitionVersion": "1.1.0",
-	"definitionSHA256": "5ca934472f9755d61c6d99ccc55103ee6bb77a6fe0c489c0502bc518da60d8d6",
+	"definitionSHA256": "989d7dfb1f8c60d9d0e3aa2e61b94f22491ddcd7635b975cce155d7c71d304c0",
 	"generatedAt": "2026-09-05T12:33:13.203Z",
 	"gitCommit": "82d96d859",
 	"artifact": {
@@ -15,8 +15,8 @@
 		"phraseLexiconID": "mailwoman-activity-phrases",
 		"phraseLexiconVersion": "1.0.0",
 		"declaredPhrases": 11,
-		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
-		"absenceDefinitionSHA256": "6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856",
+		"semanticUtilityDefinitionSHA256": "2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8",
+		"absenceDefinitionSHA256": "48d7889672f5bb64829482209ed8b79d0ba94b243d9d939befc5fcd364bca56d",
 		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
 		"coverageLayerVersion": "260627"
 	},
@@ -30,8 +30,8 @@
 		"phraseLexiconID": "mailwoman-activity-phrases",
 		"phraseLexiconVersion": "1.0.0",
 		"declaredPhrases": 11,
-		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
-		"absenceDefinitionSHA256": "6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856",
+		"semanticUtilityDefinitionSHA256": "2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8",
+		"absenceDefinitionSHA256": "48d7889672f5bb64829482209ed8b79d0ba94b243d9d939befc5fcd364bca56d",
 		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
 		"coverageLayerVersion": "260627"
 	},
@@ -100,7 +100,7 @@
 		{
 			"measurement": "semantic_utility.definition_hash_matches_pin",
 			"observed": 1,
-			"detail": "both arms read #1928 ruler df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c"
+			"detail": "both arms read #1928 ruler 2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8"
 		},
 		{
 			"measurement": "semantic_utility.route_identity_matches_pins",
@@ -145,7 +145,7 @@
 		{
 			"measurement": "absence_probe.rows_holding",
 			"observed": 11,
-			"detail": "11/11 registered rows produced the outcome registered for them, verdict HOLDS"
+			"detail": "11/11 registered rows produced the result registered for them, verdict HOLDS"
 		},
 		{
 			"measurement": "absence_probe.targets_fired",
@@ -160,7 +160,7 @@
 		{
 			"measurement": "absence_probe.definition_hash_matches_pin",
 			"observed": 1,
-			"detail": "#1965 ruler 6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856"
+			"detail": "#1965 ruler 48d7889672f5bb64829482209ed8b79d0ba94b243d9d939befc5fcd364bca56d"
 		},
 		{
 			"measurement": "poi_board.floors_unmet",
@@ -227,7 +227,7 @@
 				{
 					"id": "brd-p-01",
 					"measures": "Board row `sem-act-us-03` (`where can i pick up a prescription near Coalinga CA`) answers `pharmacy`-or-`drugstore` within 25 km and is promoted from `improvement_target` to a COUNTED `pass`.",
-					"todayReads": "Tracked and failing as registered: `expected a poi outcome (results), got path=full (no poi intent)`. At that anchor `pharmacy near Coalinga CA` returns zero rows while `drugstore near Coalinga CA` returns two, at 0.77 km and 1.71 km."
+					"todayReads": "Tracked and failing as registered: `expected a poi result (results), got path=full (no poi intent)`. At that anchor `pharmacy near Coalinga CA` returns zero rows while `drugstore near Coalinga CA` returns two, at 0.77 km and 1.71 km."
 				},
 				{
 					"id": "brd-p-02",
@@ -372,7 +372,7 @@
 				"value": 1
 			},
 			"met": true,
-			"detail": "both arms read #1928 ruler df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c"
+			"detail": "both arms read #1928 ruler 2785806c6f00bda71459d100b78ee45c096bb65a0ffbbbe7456e217671d4d6a8"
 		},
 		{
 			"id": "rec-c-05",
@@ -511,7 +511,7 @@
 				"value": 11
 			},
 			"met": true,
-			"detail": "11/11 registered rows produced the outcome registered for them, verdict HOLDS"
+			"detail": "11/11 registered rows produced the result registered for them, verdict HOLDS"
 		},
 		{
 			"id": "abn-t-02",
@@ -557,7 +557,7 @@
 				"value": 1
 			},
 			"met": true,
-			"detail": "#1965 ruler 6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856"
+			"detail": "#1965 ruler 48d7889672f5bb64829482209ed8b79d0ba94b243d9d939befc5fcd364bca56d"
 		},
 		{
 			"id": "srf-c-01",

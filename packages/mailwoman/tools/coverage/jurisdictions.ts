@@ -7,7 +7,7 @@
  *   and its board rows.
  *
  *   The training numbers come from a run's realized-draws exposure report, the rows the trainer
- *   actually drew, rather than from a corpus census, which counts rows a run may never sample.
+ *   actually drew, rather than from a corpus census. A census counts rows a run may never sample.
  */
 
 import {
@@ -15,7 +15,8 @@ import {
 	readAddressSourceRegister,
 	type AddressSourceRegister,
 } from "@mailwoman/corpus/source-register"
-import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
@@ -29,7 +30,7 @@ import {
 import type { AddressSystemRegistry } from "#tools/dev-tools/codex/address/systems"
 
 /**
- * The source-layer name the jurisdiction tiles carry.
+ * The source-layer name the jurisdiction tiles use.
  */
 export const JURISDICTION_SOURCE_LAYER = "jurisdictions"
 
@@ -64,7 +65,7 @@ export interface ExposureReport {
 }
 
 /**
- * The properties one jurisdiction feature carries.
+ * The properties one jurisdiction feature holds.
  *
  * A measure with no reading is omitted rather than written as zero, because a vector
  * tile property cannot hold null and zero is a reading.
@@ -144,12 +145,12 @@ export function countRegisterSources(register: AddressSourceRegister): Map<strin
 
 /**
  * The share of `numerator` among `numerator + other`, rounded to three places,
- * or `undefined` when both are zero.
+ * or `null` when both are zero.
  */
-function share(numerator: number, other: number): number | undefined {
+function share(numerator: number, other: number): number | null {
 	const total = numerator + other
 
-	return total > 0 ? Math.round((numerator / total) * 1000) / 1000 : undefined
+	return total > 0 ? Math.round((numerator / total) * 1000) / 1000 : null
 }
 
 /**
@@ -203,12 +204,12 @@ export function jurisdictionProperties(inputs: JurisdictionInputs): Map<string, 
 		const postcode = exposure?.phenomena["postcode-precedes-locality"]?.realized_draws
 		const postcodeFirst = share(postcode?.["before"] ?? 0, postcode?.["after"] ?? 0)
 
-		if (postcodeFirst !== undefined) { properties["postcode_first_share"] = postcodeFirst }
+		if (postcodeFirst !== null) { properties["postcode_first_share"] = postcodeFirst }
 
 		const houseNumber = exposure?.phenomena["house-number-precedes-street"]?.realized_draws
 		const houseNumberFirst = share(houseNumber?.["before"] ?? 0, houseNumber?.["after"] ?? 0)
 
-		if (houseNumberFirst !== undefined) { properties["house_number_first_share"] = houseNumberFirst }
+		if (houseNumberFirst !== null) { properties["house_number_first_share"] = houseNumberFirst }
 
 		const system = localSystem.get(code)
 
@@ -286,7 +287,7 @@ export interface JurisdictionTileOptions {
 }
 
 /**
- * The outcome of a jurisdiction tile build.
+ * The result of a jurisdiction tile build.
  */
 export interface JurisdictionTileResult {
 	out: string

@@ -1,5 +1,6 @@
+import type { AncestrieMatch } from "@mailwoman/ancestrie"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it, test } from "vitest"
 
@@ -10,7 +11,6 @@ import {
 	isStreetShapedSurface,
 	normalizeFSTToken,
 	type FSTMatcherLike,
-	type FSTMatchLike,
 	type FSTPlaceEntryLike,
 } from "#fst-prior"
 import { STAGE2_BIO_LABELS } from "#labels"
@@ -34,7 +34,7 @@ function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 	}
 
 	return {
-		walk(tokens: string[]): FSTMatchLike | null {
+		walk(tokens: string[]): AncestrieMatch | null {
 			const key = tokens.join(" ")
 			const state = states.get(key)
 
@@ -48,7 +48,7 @@ function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 
 			return null
 		},
-		walkFrom(prev: FSTMatchLike, token: string): FSTMatchLike | null {
+		walkFrom(prev: AncestrieMatch, token: string): AncestrieMatch | null {
 			for (const [path] of states) {
 				const parts = path.split(" ")
 

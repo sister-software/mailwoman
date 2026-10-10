@@ -146,7 +146,7 @@ for (const row of reader.getRowObjects()) {
 		bySource.set(source, entry)
 	}
 
-	if (surface === null) {
+	if (!surface) {
 		entry.noRegionSpan += rows
 
 		continue

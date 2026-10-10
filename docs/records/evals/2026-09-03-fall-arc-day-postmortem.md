@@ -98,7 +98,7 @@ Decision packages posted, no build: #1998, #1999, #2048, and step 4 (#1684 exp 1
   does not yet justify.
 - The venue-tier default-on decision has its issue (#2110). The routed battery through the new
   `poiVenueTier` pin (PR #2109) read 4 improve, 1 regress, `University of Chichester, The Dome, Upper
-Bognor Rd, Bognor Regis PO21 1HR` landing on the Chichester campus 9.87 km away: the 30 km reach was
+  Bognor Rd, Bognor Regis PO21 1HR` landing on the Chichester campus 9.87 km away: the 30 km reach was
   sized for a locality centroid and the anchor was a unit postcode 80 m from truth. PR #2112 scales the
   reach to the anchor's grade; on the branch the routed battery reads 2 improve, 0 regress, and the
   default path is byte-stable (0 of 651). The D-rule objection is closed; default-on is the operator's

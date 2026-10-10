@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest"
 
 import { createOutlineContainment } from "#sdk/country-outline"
 
-// An L-shaped outline with a hole, so a bounding box alone would misplace points in the notch.
+// An L-shaped outline with a hole, so a bounding box would misplace points in the notch.
 const outline = {
 	type: "Polygon",
 	coordinates: [

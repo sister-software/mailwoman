@@ -163,6 +163,7 @@ export const moduleSurfaceCheck: RepoCheck = {
 					message: `${hit.count} top-level ${METRIC_LABEL[hit.metric]} (threshold ${MODULE_SURFACE_THRESHOLDS[hit.metric]}); inspect whether a source, locale, or responsibility can move into its own module`,
 					file,
 					line: hit.line,
+					details: null,
 				})
 			}
 		}

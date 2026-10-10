@@ -6,7 +6,7 @@
  *
  *   The CSV is 28 MB and republished weekly, so the default case measures what the dataset record
  *   states about it rather than transferring it. The three statements the module depends on are all
- *   here: that the record carries a `csv` resource, that the resource's URL carries the edition's own
+ *   here: that the record has a `csv` resource, that the resource's URL holds the edition's own
  *   timestamp, and that the record states an md5 the transfer can be checked against.
  */
 

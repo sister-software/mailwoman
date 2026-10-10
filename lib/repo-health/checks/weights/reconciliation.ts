@@ -39,6 +39,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${record.packageName} declares mailwoman.baseWeights ${record.baseWeights}, which is not a published weights package`,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -47,6 +49,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${record.packageName}'s inherited lineage is unresolved: ${record.inherited.unresolved}`,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -61,6 +65,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 						severity: DiagnosticSeverity.Error,
 						message: `${record.packageName} is at ${record.packageVersion} and its base ${record.baseWeights} is at ${baseVersion} — every workspace releases in lockstep`,
 						file,
+						line: null,
+						details: null,
 					})
 				}
 			}
@@ -90,6 +96,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${cardPath} records a digest for ${digested}, which ${record.workspace}/package.json does not declare in "files"`,
 					file: cardPath,
+					line: null,
+					details: null,
 				})
 			}
 
@@ -102,6 +110,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${record.packageName} declares a base and also ships model.onnx — an overlay decodes through its base's graph`,
 					file,
+					line: null,
+					details: null,
 				})
 			}
 		}

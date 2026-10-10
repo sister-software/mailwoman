@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/zoning",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "Irish Generalised Zoning Types (MyPlan.ie) — acquisition, build, and the zoning-ireland.db layer reader",
 	"keywords": [
 		"geospatial",
@@ -82,9 +82,9 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.5",
+		"kysely": "^0.29.6",
 		"path-ts": "^2.5.0",
-		"spliterator": "^8.1.0"
+		"spliterator": "^9.2.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

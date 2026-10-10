@@ -47,7 +47,6 @@ import { inferMapping, ingestRows, normalizeCSV, parseCSV } from "@mailwoman/reg
 // parseCSV(text): Record<string, string>[]
 // inferMapping(header): ColumnMapping
 // normalizeCSV(path, { mapping, delimiter? }): AsyncGenerator<SourceRecord>  — streams, does NOT geocode
-
 // Resolve — run the full matcher pipeline
 import { resolveEntities } from "@mailwoman/registry"
 // resolveEntities(records, config?): ResolveResult
@@ -55,10 +54,8 @@ import { resolveEntities } from "@mailwoman/registry"
 //   config: { model?, blockingKeys?, threshold?, maxBlockSize?, trainEM?, addressFrequency?,
 //             collapseSpatial?, requireCorroboration?, usePhone?, linkage?, discriminators?,
 //             exactDiscriminators?, scorer?, learnedScorer? }
-
 // Export — GeoJSON, MapLibre HTML, reconciliation reports
 import { reconcile, toGeoJSON, toMapHTML } from "@mailwoman/registry"
-
 // Learned scorer — pre-trained GBT for single-dataset dedup, default-on
 import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "@mailwoman/registry"
 ```
@@ -92,7 +89,7 @@ mailwoman registry --sources tx-nppes.json --reconcile tx-fcc.json --resolve-db 
 ```
 
 `--resolve-db` (or `$MAILWOMAN_WOF_DB`) is required to BOOT, and is then ignored whenever
-`$MAILWOMAN_CANDIDATE_DB` is set. `resolveWOFPath` throws before anything opens; `createResolverBackend`
+`$MAILWOMAN_CANDIDATE_DB` is set. `requireCommandWOFPath` throws before anything opens; `createResolverBackend`
 then prefers the candidate backend and never touches the WOF path (`run.tsx`'s own inline comment states
 this correctly: "`$MAILWOMAN_CANDIDATE_DB` → the demo-parity candidate backend; else FTS over wofPath").
 A nonexistent path satisfies that requirement.

@@ -6,7 +6,8 @@ import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "#pair"
-import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "#web/loader"
+import type { LoadedPairIndex } from "#web/loader"
+import { detectPairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 
 const browserSafePackageRoots = {
 	"locale-hint": resolvePackageDirectory("@mailwoman/locale-hint"),
@@ -139,9 +140,9 @@ describe("resolvePairIndexForText — per-parse selection among the loaded index
 	})
 
 	test("A detected country with NO loaded index → undefined (byte-stable no-prior)", () => {
-		expect(resolvePairIndexForText(loaded, "東京都千代田区丸の内1-9-1")).toBeUndefined()
+		expect(resolvePairIndexForText(loaded, "東京都千代田区丸の内1-9-1")).toBeNull()
 
-		expect(resolvePairIndexForText([gb], "350 5th Ave, New York, NY 10118")).toBeUndefined()
+		expect(resolvePairIndexForText([gb], "350 5th Ave, New York, NY 10118")).toBeNull()
 	})
 
 	test("The explicit { country } override bypasses detection (pins a posture the text shape can't reveal)", () => {
@@ -150,7 +151,7 @@ describe("resolvePairIndexForText — per-parse selection among the loaded index
 	})
 
 	test("No indexes loaded → undefined regardless of text", () => {
-		expect(resolvePairIndexForText([], "10 Downing Street, London SW1A 2AA")).toBeUndefined()
-		expect(resolvePairIndexForText([], "Shoreditch London", { country: "en-gb" })).toBeUndefined()
+		expect(resolvePairIndexForText([], "10 Downing Street, London SW1A 2AA")).toBeNull()
+		expect(resolvePairIndexForText([], "Shoreditch London", { country: "en-gb" })).toBeNull()
 	})
 })

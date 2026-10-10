@@ -31,15 +31,6 @@ import {
 	hasStreetHouseNumber,
 } from "#tools/eval-harness/oa/resolver/tree-hits"
 
-/**
- * Re-exports the aggregate counter types so that report code can import them from the eval module.
- */
-export type { Agg, AggPair } from "#tools/eval-harness/oa/resolver/aggregate"
-/**
- * Re-exports the options type that {@linkcode oaResolverEval} accepts.
- */
-export type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
-
 const MAX_DIAGNOSTIC_MISSES = 5000
 
 /**
@@ -240,8 +231,8 @@ export async function oaResolverEval(
 					reg: ns.regMatch,
 					resolved: ns.resolved,
 					err: ns.err,
-					...(ns.resolvedLoc === undefined ? {} : { resolvedLoc: ns.resolvedLoc }),
-					...(ns.resolvedReg === undefined ? {} : { resolvedReg: ns.resolvedReg }),
+					resolvedLoc: ns.resolvedLoc,
+					resolvedReg: ns.resolvedReg,
 				},
 			})
 		}
@@ -294,7 +285,7 @@ export async function oaResolverEval(
 	if (collectRows) {
 		await writeLocalJSONFile(outRows, options.outRows || "")
 
-		reportError(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
+		reportError(`wrote ${outRows.length} per-row results → ${options.outRows || ""}`)
 	}
 
 	if (collectResolvedDump) {

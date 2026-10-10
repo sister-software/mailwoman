@@ -20,16 +20,22 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { NamedLatLon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { Box, Text } from "ink"
 import { type PathBuilder, resolvePathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
-import type { GBGranularity, PostcodeDatabaseRow } from "#gazetteer/postcode/binary"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
+import type { GBGranularity } from "#gazetteer/postcode/binary"
 
 interface LocaleSource {
 	country: string
@@ -103,7 +109,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 
 			using conn = new DatabaseClient<WOFDatabase>(db, { readOnly: true })
 
-			const rows = allRows<PostcodeDatabaseRow>(
+			const rows = allRows<NamedLatLon>(
 				conn.prepare(
 					`SELECT name, latitude AS lat, longitude AS lon FROM spr
 					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`
@@ -158,16 +164,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

@@ -5,7 +5,7 @@
  *   The {@linkcode AblationGazetteerProbe} implementation: only wof/admin-global-priority.db and wof/candidate.db are read, both optional, so a machine without them gets `available: false` and anchor-only grading.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -70,7 +70,7 @@ function bboxOf(
  * Parses the resolver's `placeID` URI back to a WOF id, returning `null` for anything else
  * so a future non-WOF backend is not silently read as one.
  */
-export function wofIDFromPlaceID(placeID: string | undefined): number | null {
+export function wofIDFromPlaceID(placeID: string | null): number | null {
 	if (!placeID) return null
 
 	const match = /^wof:(\d+)$/.exec(placeID)

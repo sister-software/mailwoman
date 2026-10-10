@@ -16,7 +16,8 @@
  *     node packages/ban/out/tools/build/street-centroid-database.js --country fr --out /tmp/sc-fr.db
  */
 
-import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { md5File } from "@mailwoman/core/hash"
@@ -263,6 +264,7 @@ async function main(): Promise<void> {
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "layer_coverage.h3_cell", resolution: STREET_CENTROID_COVERAGE_RESOLUTION } },
 			createdAt: isoSeconds(),
+			sourceRecords: null,
 		})
 
 		const designated = cells.filter((cell) => cell.basis === "designated").length

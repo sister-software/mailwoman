@@ -37,6 +37,8 @@ function filerRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID">
 		dcAgentTelephone: "",
 		dcAgentEmailAddress: "",
 		dcAgentAddress: "",
+		lifecycle: null,
+		operatingStates: null,
 		...overrides,
 	}
 }

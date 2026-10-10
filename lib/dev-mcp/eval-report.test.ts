@@ -20,7 +20,7 @@ async function outDir(verdict?: unknown, provenance?: string): Promise<PathBuild
 		await writeLocalJSONFile(verdict, dir("verdict.json"))
 	}
 
-	if (provenance !== undefined) {
+	if (provenance) {
 		await writeLocalFile(provenance, dir("provenance.txt"))
 	}
 
@@ -77,7 +77,7 @@ describe("readEvalReport", () => {
 		const report = await readEvalReport(await outDir(), "", "")
 
 		expect(report.verdict).toBeNull()
-		expect(report.notes.join(" ")).toContain("different outcomes")
+		expect(report.notes.join(" ")).toContain("different results")
 	})
 
 	it("surfaces the ledger command and refuses to imply it was run", async () => {

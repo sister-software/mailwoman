@@ -59,11 +59,11 @@ function composeResolvingAll(
 	address: MarkupElement,
 	referenced: ReadonlyMap<string, string>,
 	final: boolean
-): CanonicalRow | undefined | "deferred" {
+): CanonicalRow | null | "deferred" {
 	const hrefs = address.children.filter((c) => c.name === "ad:component").map((c) => c.attributes["xlink:href"] ?? "")
 
 	for (const href of hrefs) {
-		if (!referenced.has(href.replace("#", ""))) return final ? undefined : "deferred"
+		if (!referenced.has(href.replace("#", ""))) return final ? null : "deferred"
 	}
 
 	return row(address.attributes["gml:id"]!)
@@ -81,7 +81,7 @@ describe("streamInspireRows", () => {
 		)
 
 		// `AD.2` arrives after the street and is emitted in document order.
-		// `AD.1` was held, so it arrives last rather than being refused for a reference the document did carry.
+		// `AD.1` was held until the end, then emitted because the document holds its reference.
 		expect(rows.map((r) => r.source_id)).toEqual(["AD.2", "AD.1"])
 	})
 

@@ -19,7 +19,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *   Run: node packages/mailwoman/tools/dev-tools/rescore-ceiling-probe.run.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJSON, firstNodeWhere } from "@mailwoman/core/decoder"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -96,7 +96,7 @@ async function main() {
 		}>(file).take(N)) {
 			s.n++
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
-			const r = await resolver.resolveTree(tree, { defaultCountry: cc })
+			const r = await resolver.resolveTree(tree, { defaultCountry: { country: cc, source: "caller" } })
 
 			if (firstNodeWhere(r.roots, (n) => Boolean(n.placeID?.startsWith("wof:")))) {
 				s.res++

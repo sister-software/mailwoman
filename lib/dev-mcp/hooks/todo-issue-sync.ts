@@ -8,7 +8,8 @@
  *   markers. A lock and a replaceable payload file serialize concurrent updates.
  */
 
-import { pathExists, readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
 	makeDirectories,
 	makeDirectoryExclusive,
@@ -74,7 +75,7 @@ async function hookMain(): Promise<void> {
 
 	if (issue === null) return
 
-	const todos = (payload.tool_input as { todos?: TodoItem[] } | undefined)?.todos
+	const todos = (payload.tool_input as { todos?: TodoItem[] } | null)?.todos
 
 	if (!Array.isArray(todos)) return
 

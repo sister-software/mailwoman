@@ -119,8 +119,8 @@ describe("the US arm's exclusions", () => {
 
 	it("excludes a coordinate shared across DIFFERENT prefixes, and only across different ones", () => {
 		expect(built.excludedUnits["placeholderCoordinate"]).toBe(2)
-		expect(nodeFor("400")?.lat).toBeUndefined()
-		expect(nodeFor("500")?.lat).toBeUndefined()
+		expect(nodeFor("400")?.lat).toBeNull()
+		expect(nodeFor("500")?.lat).toBeNull()
 	})
 
 	it("excludes null island without losing the unit from the count", () => {
@@ -135,9 +135,9 @@ describe("the US arm's exclusions", () => {
 
 		expect(node).toBeDefined()
 		expect(node?.unitCount).toBe(1)
-		expect(node?.lat).toBeUndefined()
-		expect(node?.lon).toBeUndefined()
-		expect(node?.radiusP95Km).toBeUndefined()
+		expect(node?.lat).toBeNull()
+		expect(node?.lon).toBeNull()
+		expect(node?.radiusP95Km).toBeNull()
 	})
 })
 
@@ -180,7 +180,7 @@ describe("the US arm's coverage reporting", () => {
 
 	it("ships a radiusP95Km beside every coordinate it ships", () => {
 		for (const node of built.nodes) {
-			expect(node.lat === undefined).toBe(node.radiusP95Km === undefined)
+			expect(node.lat === null).toBe(node.radiusP95Km === null)
 		}
 	})
 })

@@ -15,7 +15,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { type StubOutcome, stubTransport } from "@mailwoman/core/api/test-transport"
+import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { silentLogger } from "@mailwoman/core/logging"
 import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -36,7 +36,9 @@ const RIGHTS = "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 const UPDATED = "2026-09-02T11:45:47Z"
 
 /**
- * The download service feed, whose one entry's `rel="alternate"` link is the whole country.
+ * The download service feed.
+ *
+ * Its one entry's `rel="alternate"` link is the whole country.
  *
  * The entry's `<id>` names a sibling feed rather than the data, and that feed answers HTTP 404,
  * so the id is written here as the publisher writes it to keep a reader from following it.
@@ -60,8 +62,8 @@ const FEED = `<?xml version="1.0" encoding="UTF-8"?>
 /**
  * The real client over a stubbed transport, so the requests take the production path.
  */
-function stubClient(outcomes: StubOutcome[]): APIClient & { calls: string[] } {
-	const transport = stubTransport(outcomes)
+function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
+	const transport = stubTransport(results)
 	const client = new APIClient({ displayName: "nl-kadaster test", logger: silentLogger(), axios: transport.axios })
 
 	return Object.assign(client, { calls: transport.calls })

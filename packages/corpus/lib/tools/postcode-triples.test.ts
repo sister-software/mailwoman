@@ -137,7 +137,7 @@ describe("readTriplesFromGeonames", () => {
 
 		expect(triples.map((t) => t.locality)).toEqual(["San Rafael", "Chicago"])
 		// US address lines omit the county, so the reader drops it.
-		expect(triples.every((t) => t.dependentLocality === undefined)).toBe(true)
+		expect(triples.every((t) => t.dependentLocality === null)).toBe(true)
 		expect(triples.every((t) => t.postcodePlacement === "after_region" && t.locale === "en-US")).toBe(true)
 	})
 
@@ -153,6 +153,7 @@ describe("applyLocalityQuota", () => {
 	const make = (locality: string, postcode: string): PostcodeTriple => ({
 		postcode,
 		locality,
+		dependentLocality: null,
 		region: "Saxony",
 		country: "Germany",
 		cc: "DE",
@@ -188,6 +189,7 @@ describe("applyCountryBudget", () => {
 	const make = (cc: string, locality: string, postcode: string): PostcodeTriple => ({
 		postcode,
 		locality,
+		dependentLocality: null,
 		region: "R",
 		country: "C",
 		cc,

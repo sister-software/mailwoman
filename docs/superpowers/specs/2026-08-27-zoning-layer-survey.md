@@ -484,7 +484,7 @@ anonymously**; the median reachable layer holds 150 features. And the license fi
 **That 85 % is a real absence rather than a measurement artifact, and the failure direction was tested
 specifically**: re-checking 25 search-reported-empty items against the item endpoint confirmed **25 of 25
 empty, zero false negatives**. So the largest single obstacle to a US zoning layer is measurable, and it
-is not discovery and not format — **it is that five publishers in six make no statement at all about reuse**,
+comes from reuse terms: **five publishers in six make no statement at all about reuse**,
 which leaves reuse governed by default copyright.
 
 **The conclusion this forces is §7.2's.** A jurisdiction-coverage map of the United States cannot be
@@ -590,7 +590,7 @@ past** as of 2026-08-27, measured with `where=PLAN_TO < DATE '2026-08-27'`. The 
 **Acquisition — three routes, measured.**
 
 1. **Bulk GeoJSON**, via the Hub download API. `GET
-https://hub.arcgis.com/api/download/v1/items/5c2608ebedd84013aaeff8bf669e8596/geojson?redirect=false&layers=0`
+   https://hub.arcgis.com/api/download/v1/items/5c2608ebedd84013aaeff8bf669e8596/geojson?redirect=false&layers=0`
    returns `{"status":"Completed","resultUrl":…}`; following the result URL (it 302s, so `-L` is
    required) returned **HTTP 200, 247,452,342 bytes in 41.1 s**, a `FeatureCollection` of exactly 85,330
    features with no null geometry.
@@ -840,7 +840,7 @@ as a real absence:
    identical full-corpus count of **1,893,030**. The control key is what caught it; any per-country figure
    taken from that API is fabricated.
 2. **A SPARQL exact-literal keyword match returns zero for a keyword that is present.** `?d dcat:keyword
-"PlannedLandUse"` returns **0**, while `FILTER(STR(?k) = "PlannedLandUse")` returns **267,072**. The
+   "PlannedLandUse"` returns **0**, while `FILTER(STR(?k) = "PlannedLandUse")` returns **267,072**. The
    literals are language-tagged. The zero suggests that nobody publishes planned land use, which is a
    plausible-sounding wrong answer.
 
@@ -1137,7 +1137,7 @@ redundant. The local code does not determine it:
 - **51 of the 772 `(authority, local code)` pairs take more than one generic type inside a single
   authority.** Cork County Council's `Residential` maps to **7** different generic types — `R1`, `R2`,
   `R3`, and also `G3` (conservation, amenity or buffer space), `G5`, `N1.6` and `S5`. Its `Special Policy
-Area` maps to **14**. Clare's `Utilities` maps to **11**.
+  Area` maps to **14**. Clare's `Utilities` maps to **11**.
 - **A further 24 local codes are consistent inside each authority and diverge across them** — `Commercial`,
   `District Centre`, `Enterprise`, `Low Density Residential`, `Neighbourhood Centre`, `Mixed Use Zoning`.
 

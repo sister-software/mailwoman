@@ -13,6 +13,7 @@
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -35,7 +36,7 @@ export interface ScoreAffixOptions {
 	/**
 	 * Eval jsonl.
 	 *
-	 * Default `data/eval/external/street-affix-real.jsonl`.
+	 * @defaultValue `data/eval/external/street-affix-real.jsonl`
 	 */
 	file?: string
 	/**
@@ -52,17 +53,23 @@ export interface ScoreAffixOptions {
 	json?: string
 	/**
 	 * `auto` or `<system>` enables the address-system conventions mask.
+	 *
+	 * @defaultValue `"off"`
 	 */
-	conventions?: string
+	conventions?: AddressSystemConventions
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
-	bridgeGaps?: boolean
+	bridgePunctuationGaps?: Toggle
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode
 	 * (paired with {@linkcode ScoreAffixOptions.gazetteerLexicon}).
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
 	 */
-	suppressGazNearPostcode?: boolean
+	suppressGazetteerNearPostcode?: Toggle
 	/**
 	 * Package-shaped `<root>` loads model + tokenizer + card + all soft channels
 	 * (anchor + gazetteer + country) from the package via `loadFromWeights`.
@@ -128,9 +135,9 @@ export async function scoreAffix(
 		model,
 		weightsCache: options.weightsCache || "",
 		gazetteerLexicon: options.gazetteerLexicon || "",
-		suppressGazNearPostcode: options.suppressGazNearPostcode ?? false,
-		...(options.conventions ? { conventions: options.conventions } : {}),
-		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
+		suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
+		conventions: options.conventions ?? "off",
+		bridgePunctuationGaps: options.bridgePunctuationGaps ?? DEFAULT_TOGGLE,
 	})
 
 	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()

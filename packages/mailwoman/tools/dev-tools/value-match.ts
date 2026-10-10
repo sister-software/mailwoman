@@ -21,7 +21,7 @@ export function norm(s: string): string {
 /**
  * Lowercase and trim while preserving punctuation and interior whitespace.
  */
-export function normLoose(s: string | undefined): string {
+export function normLoose(s: string | null): string {
 	return (s ?? "").toLowerCase().trim()
 }
 

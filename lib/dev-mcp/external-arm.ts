@@ -110,7 +110,7 @@ export interface ExternalArmIdentity {
 	interpolation_enabled: boolean | null
 	response_version: string | null
 	/**
-	 * The outcomes of the status and search probes.
+	 * The results of the status and search probes.
 	 */
 	probe: { status_path: string | null; status_http: number | null; search_ok: boolean }
 	warnings: string[]
@@ -139,8 +139,8 @@ function fields(value: unknown): Record<string, unknown> {
 	return isRecordLike(value) ? (value as Record<string, unknown>) : {}
 }
 
-function readString(value: unknown): string | null {
-	return typeof value === "string" && value.length ? value : null
+function nonEmptyString(value: unknown): string | null {
+	return typeof value === "string" && value ? value : null
 }
 
 /**
@@ -175,8 +175,8 @@ function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 
 	const feature = features[0]
 	const properties = fields(feature?.properties)
-	const label = readString(properties["name"]) ?? readString(properties["label"])
-	const resultType = readString(properties[typeKey])
+	const label = nonEmptyString(properties["name"]) ?? nonEmptyString(properties["label"])
+	const resultType = nonEmptyString(properties[typeKey])
 
 	if (!isPointLiteral(feature?.geometry)) {
 		return { lat: null, lon: null, label, resultType, noResultReason: "the top feature carried no point geometry" }
@@ -201,9 +201,9 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const geocoding = fields(fields(searchBody)["geocoding"])
 
 			return {
-				version: readString(fields(geocoding["engine"])["version"]),
+				version: nonEmptyString(fields(geocoding["engine"])["version"]),
 				data_vintage: null,
-				response_version: readString(geocoding["version"]),
+				response_version: nonEmptyString(geocoding["version"]),
 			}
 		},
 	},
@@ -215,8 +215,8 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const status = fields(statusBody)
 
 			return {
-				version: readString(status["version"]),
-				data_vintage: readString(status["import_date"]),
+				version: nonEmptyString(status["version"]),
+				data_vintage: nonEmptyString(status["import_date"]),
 				response_version: null,
 			}
 		},
@@ -242,8 +242,8 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const top = fields(body[0])
 			const lat = readCoordinate(top["lat"], isValidLatitude)
 			const lon = readCoordinate(top["lon"], isValidLongitude)
-			const label = readString(top["display_name"])
-			const resultType = readString(top["addresstype"]) ?? readString(top["type"])
+			const label = nonEmptyString(top["display_name"])
+			const resultType = nonEmptyString(top["addresstype"]) ?? nonEmptyString(top["type"])
 
 			if (lat === null || lon === null) {
 				return { lat: null, lon: null, label, resultType, noResultReason: "the top place carried no readable lat/lon" }
@@ -255,9 +255,9 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 			const status = fields(statusBody)
 
 			return {
-				version: readString(status["software_version"]),
-				data_vintage: readString(status["data_updated"]),
-				response_version: readString(status["database_version"]),
+				version: nonEmptyString(status["software_version"]),
+				data_vintage: nonEmptyString(status["data_updated"]),
+				response_version: nonEmptyString(status["database_version"]),
 			}
 		},
 	},
@@ -373,7 +373,7 @@ export class ExternalGeocoderClient extends APIClient {
 		const read = this.#protocol.readIdentity(statusBody, searchBody)
 		const warnings: string[] = []
 
-		if (statusPath === null) {
+		if (!statusPath) {
 			warnings.push(
 				`GET ${this.#protocol.statusPath} did not answer (HTTP ${statusHTTP ?? "no response"}), so this endpoint's ` +
 					`identity could not be observed. Every engine here has a compatible drop-in inside this repo answering ` +
@@ -381,7 +381,7 @@ export class ExternalGeocoderClient extends APIClient {
 			)
 		}
 
-		if (read.data_vintage === null) {
+		if (!read.data_vintage) {
 			warnings.push(
 				"This endpoint reports no data vintage, so the index behind the numbers is undated. A coverage difference " +
 					"between arms cannot be dated to a build from this result."
@@ -390,14 +390,14 @@ export class ExternalGeocoderClient extends APIClient {
 
 		const version = read.version ?? declaredVersion ?? null
 
-		if (read.version === null && declaredVersion) {
+		if (!read.version && declaredVersion) {
 			warnings.push(
 				`Version ${stringifyJSON(declaredVersion)} is CALLER-DECLARED — the endpoint did not confirm it. Recorded ` +
 					"as the caller's claim about what is running, not as an observation."
 			)
 		}
 
-		if (version === null) {
+		if (!version) {
 			throw new Error(
 				`External arm ${this.engine} at ${this.endpoint} will not say what it is: ` +
 					`GET ${this.#protocol.statusPath} answered ${statusHTTP ?? "nothing"} and the search response carries no ` +
@@ -411,7 +411,7 @@ export class ExternalGeocoderClient extends APIClient {
 			engine: this.engine,
 			endpoint: this.endpoint,
 			version,
-			version_source: read.version === null ? "caller-declared" : "endpoint",
+			version_source: read.version ? "endpoint" : "caller-declared",
 			data_vintage: read.data_vintage,
 			// None of the supported engines reports these two fields.
 			system_scope: null,

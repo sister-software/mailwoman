@@ -22,21 +22,27 @@ function stubFetch(response: unknown, status = 200) {
 describe("serializableResolveOpts", () => {
 	test("strips the live lookup handles, keeps the rest", () => {
 		const opts: ResolveOpts = {
-			defaultCountry: "US",
+			defaultCountry: { country: "US", source: "caller" },
 			maxLookups: 3,
 			interpolationRadiusCalibration: 1.7,
 			addressPoints: {} as AddressPointLookup,
-			interpolation: {} as InterpolationLookup,
+			interpolation: { radiusCalibration: null } as InterpolationLookup,
 		}
 
 		const out = serializableResolveOpts(opts)!
-		expect(out).toEqual({ defaultCountry: "US", maxLookups: 3, interpolationRadiusCalibration: 1.7 })
+
+		expect(out).toEqual({
+			defaultCountry: { country: "US", source: "caller" },
+			maxLookups: 3,
+			interpolationRadiusCalibration: 1.7,
+		})
+
 		expect("addressPoints" in out).toBe(false)
 		expect("interpolation" in out).toBe(false)
 	})
 
-	test("undefined passes through", () => {
-		expect(serializableResolveOpts(undefined)).toBeUndefined()
+	test("undefined becomes null", () => {
+		expect(serializableResolveOpts(undefined)).toBeNull()
 	})
 })
 
@@ -46,13 +52,16 @@ describe("RemoteResolver", () => {
 		const fetchSpy = stubFetch({ tree: resolved })
 		const r = new RemoteResolver({ endpoint: "http://resolver/v1/resolve", fetch: fetchSpy })
 
-		const got = await r.resolveTree(tree, { defaultCountry: "US", addressPoints: {} as AddressPointLookup })
+		const got = await r.resolveTree(tree, {
+			defaultCountry: { country: "US", source: "caller" },
+			addressPoints: {} as AddressPointLookup,
+		})
 
 		expect(got).toEqual(resolved)
 		const [, init] = fetchSpy.mock.calls[0]!
 		const body = parseJSONStrict<{ tree: AddressTree; opts: unknown }>(init.body)
 		expect(body.tree.raw).toBe(tree.raw)
-		expect(body.opts).toEqual({ defaultCountry: "US" })
+		expect(body.opts).toEqual({ defaultCountry: { country: "US", source: "caller" } })
 	})
 
 	test("throws on a non-2xx response", async () => {

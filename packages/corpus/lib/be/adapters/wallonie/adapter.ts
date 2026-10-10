@@ -77,8 +77,8 @@
  * and states what identifies it: the SPW's ICAR presentation to the Club des utilisateurs du PICC
  * (27 February 2015) lists the communes' validation of sub-addresses identified by their
  * `numéro de boîte`, the box number, and its ICAR address form records each sub-address's `Numéro` apart from the `Index`
- * field. A box number identifies one delivery point inside the numbered premise, which is the
- * concept the `unit` tag carries. It is not a floor, a building, an entrance or a staircase, even
+ * field. A box number identifies one delivery point inside the numbered premise. That is the
+ * concept the `unit` tag records. It is not a floor, a building, an entrance or a staircase, even
  * where a code such as `0RCH` (rez-de-chaussée) names the box after the floor it sits on.
  *
  * The value is rendered as the publisher writes it, with no designator word: `Rue de la Station 29
@@ -307,25 +307,25 @@ export async function readWallonieComponents(
 		if (feature.name === "ad:ThoroughfareName") {
 			const street = thoroughfareName(feature)
 
-			if (street !== undefined) {
+			if (street) {
 				streets.set(id, street)
 			}
 		} else if (feature.name === "ad:PostalDescriptor") {
 			const postcode = postalDescriptorCode(feature)
 
-			if (postcode !== undefined) {
+			if (postcode) {
 				postcodes.set(id, postcode)
 			}
 		} else if (feature.name === "ad:AddressAreaName") {
 			const area = placeName(feature)
 
-			if (area !== undefined) {
+			if (area) {
 				areas.set(id, area)
 			}
 		} else if (adminUnitLevel(feature) === MUNICIPALITY_LEVEL) {
 			const municipality = placeName(feature)
 
-			if (municipality !== undefined) {
+			if (municipality) {
 				municipalities.set(id, municipality)
 			}
 		}
@@ -412,11 +412,11 @@ export function createWallonieAdapter(): CorpusAdapter {
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					// `designatorsByType` leaves out a designator the publisher marked void, so a void number
-					// and an absent one both read as undefined and `voidDesignatorTypes` separates them below.
+					// and an absent one both read as null and `voidDesignatorTypes` separates them below.
 					const byType = designatorsByType(address)
 					const house = designator(byType, HOUSE_NUMBER_DESIGNATOR)
 
-					if (house === undefined) {
+					if (!house) {
 						// A void number is a value this run could not read and an absent one is
 						// a number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
@@ -431,19 +431,19 @@ export function createWallonieAdapter(): CorpusAdapter {
 
 					const box = designator(byType, NUMBER_EXTENSION_DESIGNATOR)
 
-					if (box !== undefined) {
+					if (box) {
 						extensions++
 					}
 
-					let street: string | undefined
-					let postcode: string | undefined
-					let locality: string | undefined
-					let area: string | undefined
+					let street: string | null = null
+					let postcode: string | null = null
+					let locality: string | null = null
+					let area: string | null = null
 
 					for (const href of componentHrefs(address)) {
 						const key = componentJoinKey(href)
 
-						if (key === undefined) continue
+						if (!key) continue
 
 						street = index.streets.get(key) ?? street
 						postcode = index.postcodes.get(key) ?? postcode
@@ -455,7 +455,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 
 					// A component the index cannot answer is a street, postcode or locality this run could not read.
 					// A row emitted without it would record an absence the publisher never stated.
-					if (street === undefined || postcode === undefined || locality === undefined) {
+					if (!street || !postcode || !locality) {
 						countDropped(tally, Refusal.Unjoined)
 
 						continue
@@ -468,14 +468,14 @@ export function createWallonieAdapter(): CorpusAdapter {
 						locality,
 					}
 
-					if (box !== undefined) {
+					if (box) {
 						components.unit = box
 					}
 
 					// The `partie de commune` is a dependent locality only where it names
 					// something other than the municipality.
 					// `Braine-l'Alleud` has an area of the same name, and `Beauvechain` has `Hamme-Mille`.
-					if (area !== undefined && area !== locality) {
+					if (area && area !== locality) {
 						components.dependent_locality = area
 					}
 

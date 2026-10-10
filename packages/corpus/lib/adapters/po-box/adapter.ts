@@ -55,18 +55,21 @@ export interface PoBoxAdapterOptions {
 	/**
 	 * Probability (0..1) of emitting a PMB-with-street variant when the input has
 	 * a street and the locale supports PMB.
-	 * The default is 0.15.
+	 *
+	 * @defaultValue `0.15`
 	 */
 	pmbRatio?: number
 	/**
 	 * Deterministic seed for reproducible synthesis.
-	 * The default is `Date.now()`.
+	 *
+	 * @defaultValue `Date.now()`
 	 */
 	seed?: number
 	/**
 	 * Probability (0..1) per input tuple of additionally emitting one self-contained US
 	 * military/diplomatic PO-box row, so military volume scales with the input stream.
-	 * The default is 0.
+	 *
+	 * @defaultValue `0`
 	 */
 	militaryRatio?: number
 }
@@ -109,7 +112,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 
 				const input = tryParsingJSON<PoBoxInputRow>(trimmed)
 
-				if (input === null) {
+				if (!input) {
 					skipped++
 
 					continue
@@ -159,7 +162,9 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 
 				// US military/diplomatic rows are self-contained and off by default,
 				// so the default random stream and output stay byte-identical.
-				// They are US-only and count against `limit`.
+				// They are US-only and count against `limit`. country-branch: APO/FPO/DPO
+				// rows exist in the US postal system only.
+				// A postal-regime flag in the codex would replace this.
 				const militaryAllowed = !options.country || options.country === "US"
 
 				if (

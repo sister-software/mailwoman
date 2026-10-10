@@ -52,7 +52,9 @@ export interface OracleKOptions {
 	 */
 	goldenDir?: string
 	/**
-	 * Hypotheses kept per input (default 10).
+	 * Hypotheses kept per input.
+	 *
+	 * @defaultValue `10`
 	 */
 	k?: number
 	/**
@@ -65,7 +67,7 @@ export interface OracleKOptions {
 	assertBaseline?: string
 }
 
-export interface OracleKOutcome {
+export interface OracleKResult {
 	exitCode: number
 }
 
@@ -335,7 +337,7 @@ function extractSurface(
  *
  * Reports information and always exits 0.
  */
-export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
+export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKResult> {
 	const k = options.k ?? 10
 
 	const logTransition = await buildTransitionTable(options.goldenDir ?? "data/eval/golden/v0.1.2/dev")

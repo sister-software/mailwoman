@@ -16,6 +16,7 @@
 		{ "path": "../core" },
 		{ "path": "../codex" },
 		{ "path": "../evidence" },
+		{ "path": "../poi-taxonomy" },
 		{ "path": "../query-shape" }
 	]
 }

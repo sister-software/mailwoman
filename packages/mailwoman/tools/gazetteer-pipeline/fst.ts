@@ -19,7 +19,8 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/paths"
 import {
@@ -125,11 +126,11 @@ export interface FSTFreshnessRow {
 	artifact: string
 	present: boolean
 	/**
-	 * `undefined` = current.
+	 * `null` = current.
 	 * Otherwise the prose from `fstStaleReason`.
 	 */
-	staleReason?: string
-	builtAt?: string
+	staleReason: string | null
+	builtAt: string | null
 	rebuildCommand: string
 }
 
@@ -156,7 +157,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
 
 		if (!(await pathExists(path))) {
-			rows.push({ artifact: relative, present: false, rebuildCommand })
+			rows.push({ artifact: relative, present: false, staleReason: null, builtAt: null, rebuildCommand })
 
 			continue
 		}
@@ -171,8 +172,8 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 		rows.push({
 			artifact: relative,
 			present: true,
-			...(staleReason === undefined ? {} : { staleReason }),
-			...(fields?.provenance?.builtAt ? { builtAt: fields.provenance.builtAt } : {}),
+			staleReason,
+			builtAt: fields?.provenance?.builtAt || null,
 			rebuildCommand,
 		})
 	}
@@ -323,7 +324,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 		if (!key || !country) return
 		const seen = first.get(key)
 
-		if (seen === undefined) {
+		if (!seen) {
 			first.set(key, country)
 
 			return
@@ -332,7 +333,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 		if (seen === country) return
 		let set = overflow.get(key)
 
-		if (set === undefined) {
+		if (!set) {
 			set = new Set([seen])
 			overflow.set(key, set)
 		}
@@ -366,17 +367,23 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 
 export interface BuildLocaleFSTsOpts {
 	/**
-	 * Locales to build (default: every FST_LOCALES key).
+	 * Locales to build.
+	 *
+	 * @defaultValue every {@linkcode FST_LOCALES} key
 	 */
 	locales?: string[]
 	/**
-	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`).
+	 * WOF admin DB.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated`).
+	 * Output dir.
 	 *
 	 * Never the shipped dir.
+	 *
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated`
 	 */
 	outputDir?: PathBuilderLike
 	/**

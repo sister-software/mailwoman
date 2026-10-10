@@ -44,11 +44,17 @@ export type { RegionAbbreviationTokenOpts } from "#region-abbreviations"
 export { segment } from "#segmentation"
 
 /**
+ * Re-exports the empty query-shape view that hand-built shapes spread.
+ */
+export { EMPTY_QUERY_SHAPE_VIEW } from "#types"
+
+/**
  * Re-exports the query-shape data types, including the narrow `*View` interfaces
  * that let consumers depend on only the fields they read.
  */
 export type {
 	CharacterClass,
+	CharRange,
 	ComputeQueryShapeOpts,
 	KnownFormat,
 	KnownFormatHit,
@@ -65,6 +71,7 @@ export type {
 	SegmentSeparator,
 	SegmentView,
 	SpanRange,
+	TextSpan,
 	TokenCharacterClass,
 	TokenClass,
 	TokenClassView,

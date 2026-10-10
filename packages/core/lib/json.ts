@@ -25,10 +25,8 @@ export type StringifiedJSON<T = unknown> = Tagged<string, "JSON", T>
  * It also allows for optional newline and indentation settings.
  *
  * @param input The object to be pretty-printed.
- * @param newline Whether to append a newline character at the end of the output.
- * Defaults to `true`.
- * @param space The indent: a string to repeat, or a count of spaces.
- * Defaults to a tab character (`"\t"`).
+ * @param newline [true] Whether to append a newline character at the end of the output.
+ * @param space ["\t"] The indent: a string to repeat, or a count of spaces.
  * The builtin accepts a string or number for indentation.
  * This parameter handles the conversion from `2` to `" "` for callers that need it.
  *
@@ -57,7 +55,7 @@ export function prettyJSON<T = unknown>(input: T, newline = true, space: string 
  * @see {@linkcode prettyJSON} for human-friendly JSON output.
  */
 export function stringifyJSON<T>(input: T, keys?: readonly string[]): StringifiedJSON<T> {
-	return JSON.stringify(input, keys as string[] | undefined) as StringifiedJSON<T>
+	return JSON.stringify(input, keys as string[] | null) as StringifiedJSON<T>
 }
 
 /**
@@ -119,8 +117,8 @@ export function parseJSONStrict<T = unknown>(input: string): T {
  *
  * @param scope Names the reader in the error, e.g. `coastal client`.
  */
-export function parseJSONArray<T>(raw: string | undefined, scope: string): T[] {
-	if (raw === undefined) return []
+export function parseJSONArray<T>(raw: string | null | undefined, scope: string): T[] {
+	if (!raw) return []
 
 	const parsed = parseJSONStrict<unknown>(raw)
 

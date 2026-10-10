@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/fastify",
-	"version": "10.1.0",
+	"version": "10.2.0",
 	"description": "Fastify plugin for mailwoman — registers POST /parse, /geocode and /poi plus GET /health, and a fastify.mailwoman decorator, over one local runtime pipeline built lazily or injected.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -45,16 +45,21 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@fastify/swagger": "^9.9.1",
+		"@mailwoman/api": "workspace:*",
 		"@mailwoman/core": "workspace:^",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"fastify-plugin": "^6.0.0",
-		"mailwoman": "workspace:^"
+		"fastify-type-provider-zod": "^7.0.0",
+		"mailwoman": "workspace:^",
+		"openapi-types": "^12.1.3",
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
-		"fastify": "^5.12.3"
+		"fastify": "^5.12.5"
 	},
 	"peerDependencies": {
 		"fastify": ">=5"

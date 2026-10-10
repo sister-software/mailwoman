@@ -10,7 +10,6 @@ import { describe, expect, it } from "vitest"
 
 import {
 	ANCHOR_FEATURE_DIM,
-	LOCALE_ORDER,
 	anchorFeatureVector,
 	buildAnchorFeatures,
 	countShapedOnlyKeys,
@@ -18,6 +17,7 @@ import {
 	type AnchorEntry,
 	type AnchorLookup,
 } from "#anchor-inference"
+import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import type { TokenizedPiece } from "#tokenizer"
 
 describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () => {
@@ -103,7 +103,7 @@ describe("buildAnchorFeatures — span modes", () => {
 		const tokenRe = /[A-Za-z0-9]+/g
 		let m: RegExpExecArray | null
 
-		while ((m = tokenRe.exec(text)) !== null) {
+		while ((m = tokenRe.exec(text))) {
 			const entry = lookup.get(m[0].toUpperCase())
 
 			if (!entry) continue
@@ -267,7 +267,7 @@ describe("buildAnchorFeatures — span modes", () => {
  * keyer fired 0/120 on the gb-golden board when case normalization was off.
  *
  * The default parse path never saw it because `normalizeInputCase` restores GB postcode
- * casing first, but lowercase is the user register and a `normalizeCase: false`
+ * casing first, but lowercase is the user register and a `caseNormalization: "preserve"`
  * parse lost the entire GB/NL anchor channel in silence.
  */
 describe("buildAnchorFeatures — shaped mode case-folds before shape detection (#1512)", () => {
@@ -362,7 +362,7 @@ describe("shapedKeyerObligationViolation", () => {
 	})
 
 	it("flags an undeclared card against a unit-key lookup, naming the remedy", () => {
-		const violation = shapedKeyerObligationViolation(withUnits, undefined, "postcode-gb.bin")
+		const violation = shapedKeyerObligationViolation(withUnits, null, "postcode-gb.bin")
 
 		expect(violation).toContain("span_mode")
 		expect(violation).toContain("shaped")
@@ -375,7 +375,7 @@ describe("shapedKeyerObligationViolation", () => {
 
 	it("passes a coherent pairing, and any pairing without unit keys", () => {
 		expect(shapedKeyerObligationViolation(withUnits, "shaped", "postcode-gb.bin")).toBeNull()
-		expect(shapedKeyerObligationViolation(withoutUnits, undefined, "postcode-gb.bin")).toBeNull()
-		expect(shapedKeyerObligationViolation(undefined, undefined, undefined)).toBeNull()
+		expect(shapedKeyerObligationViolation(withoutUnits, null, "postcode-gb.bin")).toBeNull()
+		expect(shapedKeyerObligationViolation(null, null, null)).toBeNull()
 	})
 })

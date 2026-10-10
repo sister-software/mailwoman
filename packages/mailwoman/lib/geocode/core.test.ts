@@ -1,16 +1,20 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import {
+	EMPTY_PLACE_FIELDS,
 	type ResolvedPlace,
 	type Resolver,
 	type ResolveOpts,
 	countryFromPostcodeFormat,
+	RESOLVE_SWITCH_DEFAULTS,
 } from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
+	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
+	geocodeSwitches,
 	type GeocodeClassifier,
 	type GeocodeDeps,
 	parseForGeocode,
@@ -55,7 +59,7 @@ describe("CountryFromPostcodeFormat", () => {
 	})
 
 	it("is null on empty / missing input", () => {
-		expect(countryFromPostcodeFormat(undefined)).toBeNull()
+		expect(countryFromPostcodeFormat(null)).toBeNull()
 		expect(countryFromPostcodeFormat("")).toBeNull()
 		expect(countryFromPostcodeFormat("   ")).toBeNull()
 	})
@@ -133,10 +137,10 @@ describe("ExtractGeocodeResult — a component the answer did not follow", () =>
 		])
 
 		expect(r.components.postcode).toBe("744301")
-		expect(r.dropped_components).toBeUndefined()
+		expect(r.dropped_components).toBeNull()
 	})
 
-	it("omits the field entirely when the answer followed everything it parsed", () => {
+	it("nulls the field when the answer followed everything it parsed", () => {
 		const agreeing: AddressTree = {
 			raw: "Paris, 75008",
 			roots: [
@@ -145,7 +149,7 @@ describe("ExtractGeocodeResult — a component the answer did not follow", () =>
 			],
 		}
 
-		expect(extractGeocodeResult("Paris, 75008", agreeing).unfollowed_components).toBeUndefined()
+		expect(extractGeocodeResult("Paris, 75008", agreeing).unfollowed_components).toBeNull()
 	})
 })
 
@@ -593,9 +597,11 @@ describe("The lineage-attachment wiring", () => {
 					roots: [node({ tag: "locality", value: "Weimar", lat: 1, lon: 2, placeID: "wof:1" })],
 				}
 			},
+			artifactCoverage: null,
+			capabilityGaps: null,
 		}
 
-		return { classifier, resolver, placeCountry: false }
+		return { classifier, resolver, placeCountry: "none" }
 	}
 
 	it("opts into includeAncestors by default — the stamp the admin-coherence verdicts read", async () => {
@@ -611,11 +617,69 @@ describe("The lineage-attachment wiring", () => {
 
 		expect(captured[0]?.includeAncestors).toBe(false)
 	})
+
+	it("an unset switch resolves exactly as its explicit default", async () => {
+		const unset: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", capturingDeps(unset))
+
+		const explicit: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", { ...capturingDeps(explicit), ...GEOCODE_SWITCH_DEFAULTS })
+
+		expect(explicit).toEqual(unset)
+		expect(geocodeSwitches({})).toEqual(GEOCODE_SWITCH_DEFAULTS)
+
+		expect(geocodeSwitches({ adminCoherence: false, poiVenueTier: true })).toMatchObject({
+			adminCoherence: false,
+			poiVenueTier: true,
+			includeAncestors: true,
+		})
+	})
+
+	it("passes every forwarded switch as an explicit value", async () => {
+		const captured: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", capturingDeps(captured))
+
+		expect(captured[0]).toMatchObject({
+			adminCoherence: true,
+			includeAncestors: true,
+			postcodeCountryCoherence: true,
+			adminContainmentRerank: true,
+			postcodeShapeCoherence: false,
+			postcodeContainmentCoherence: false,
+			spanRescoreRequireContextRemainder: false,
+			postcodePrefixPrior: false,
+		})
+
+		expect(captured[0]).not.toHaveProperty("diagnoseUnreachable")
+	})
+
+	it("forwards an explicit adminContainmentRerank: false", async () => {
+		const captured: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", { ...capturingDeps(captured), adminContainmentRerank: false })
+
+		expect(captured[0]?.adminContainmentRerank).toBe(false)
+	})
+
+	it("shares the resolver's default for every switch it only forwards", () => {
+		for (const key of [
+			"adminCoherence",
+			"diagnoseUnreachable",
+			"postcodeCountryCoherence",
+			"postcodeShapeCoherence",
+			"postcodeContainmentCoherence",
+			"adminContainmentRerank",
+			"spanRescoreRequireContextRemainder",
+			"postcodePrefixPrior",
+		] as const) {
+			expect(GEOCODE_SWITCH_DEFAULTS[key]).toBe(RESOLVE_SWITCH_DEFAULTS[key])
+		}
+	})
 })
 
 describe(": a famous namesake the model reads as a `street` keeps its candidate list", () => {
 	const SPRINGFIELDS: ResolvedPlace[] = [
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 10,
 			name: "Springfield",
 			placetype: "locality",
@@ -627,6 +691,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 11,
 			name: "Springfield",
 			placetype: "locality",
@@ -638,6 +703,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 			exactMatch: true,
 		},
 		{
+			...EMPTY_PLACE_FIELDS,
 			id: 12,
 			name: "Springfield",
 			placetype: "locality",
@@ -662,7 +728,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
 
-		placeCountry: false,
+		placeCountry: "none",
 	})
 
 	it("returns every namesake, not just the winner", async () => {

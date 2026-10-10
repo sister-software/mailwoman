@@ -7,10 +7,10 @@
  *
  * A publisher shipping the Addresses theme as one document writes an `ad:Address` beside the
  * `ad:ThoroughfareName`, `ad:PostalDescriptor` and place-name features it references, and the order
- * is the publisher's own. Czechia interleaves them per municipality, and the Netherlands writes
- * 300,318 reference features before its first address.
+ * is the publisher's own. Czechia interleaves them per municipality, and the Netherlands writes its
+ * reference features before its first address.
  *
- * Either way a reader has to index as it goes, because a document of 32 GB cannot be read twice from
+ * Either way a reader has to index as it goes, because a 32 GB document cannot be read twice from
  * one stream and the references are local. An address naming a feature the pass has not reached yet
  * is held rather than refused, since until the document ends an unresolved reference and an absent
  * one are the same observation. That distinction is what the repository's partial-read rule turns on.
@@ -21,10 +21,8 @@
  *
  * A publisher that writes every reference *after* its addresses needs the opposite of holding, and
  * {@linkcode streamIndexedInspireRows} serves it. The Dirección General del Catastro and the
- * Diputación Foral de Gipuzkoa both do: Catastro's Ceuta member writes its 511 reference features in
- * the last 530,000 of 11,861,975 bytes, and Gipuzkoa writes its 4,516 in the last 6,722,000 of
- * 313,162,472. Holding would mean holding every address. That is 68,744 subtrees for Gipuzkoa and
- * the whole of Madrid for Catastro, so those two read the member twice and index first.
+ * Diputación Foral de Gipuzkoa both do, so holding would leave every address pending. Those two
+ * read the member twice and index first.
  */
 
 import type { MarkupElement } from "@mailwoman/core/html/elements"
@@ -36,12 +34,13 @@ import type { CanonicalRow } from "#types"
  * What a {@linkcode ComposeInspireRow} callback answers for one address.
  *
  * A row is emitted.
- * `undefined` refuses the address, which the caller counts.
+ * `null` refuses the address.
+ * The caller counts each refusal.
  *
- * `deferred` states that the address carries a reference the pass has not indexed yet,
+ * `deferred` states that the address holds a reference the pass has not indexed yet,
  * so the driver holds it and asks again once the document has ended.
  */
-export type InspireRowResult = CanonicalRow | undefined | "deferred"
+export type InspireRowResult = CanonicalRow | null | "deferred"
 
 /**
  * Builds one row from an address and the references indexed so far.
@@ -69,30 +68,33 @@ export interface StreamInspireRowsOptions<Indexed> {
 	chunks: AsyncIterable<string | Uint8Array>
 
 	/**
-	 * The element each address is written as, which every INSPIRE publisher spells `ad:Address`.
+	 * The element each address is written as.
+	 * Every INSPIRE publisher spells it `ad:Address`.
 	 */
 	addressElement?: string
 
 	/**
-	 * The elements an address references, which are indexed as they arrive.
+	 * The elements an address references.
+	 * The reader indexes them as they arrive.
 	 */
 	componentElements: readonly string[]
 
 	/**
 	 * What to index a referenced feature under.
 	 *
-	 * The default is its `gml:id`, which is what a local `#` fragment
-	 * and a stored-query `Id` parameter both name.
 	 * A feature carrying no key is skipped, because an address cannot reference it.
+	 *
+	 * @defaultValue its `gml:id`, which is what a local `#` fragment
+	 * and a stored-query `Id` parameter both name.
 	 */
-	key?: (feature: MarkupElement) => string | undefined
+	key?: (feature: MarkupElement) => string | null
 
 	/**
 	 * What to keep per referenced feature.
 	 *
 	 * Czechia keeps the subtree, because it reads several values off one feature.
-	 * The Netherlands keeps the one string it needs, which holds 300,318 strings
-	 * rather than 300,318 subtrees.
+	 * The Netherlands keeps the one string it needs.
+	 * That holds 300,318 strings rather than 300,318 subtrees.
 	 */
 	index: (feature: MarkupElement) => Indexed
 
@@ -115,15 +117,15 @@ export interface StreamInspireRowsOptions<Indexed> {
 /**
  * The default key a referenced feature is indexed under.
  */
-function gmlID(feature: MarkupElement): string | undefined {
-	return feature.attributes["gml:id"]
+function gmlID(feature: MarkupElement): string | null {
+	return feature.attributes["gml:id"] ?? null
 }
 
 /**
  * The rows one document holds, in the order the publisher wrote its addresses.
  *
  * A held address is answered after the document ends, so those rows arrive last.
- * That reorders a publisher's output and changes no row, because each row carries its own `source_id`.
+ * That reorders a publisher's output and changes no row, because each row holds its own `source_id`.
  */
 export async function* streamInspireRows<Indexed>(
 	options: StreamInspireRowsOptions<Indexed>
@@ -180,8 +182,8 @@ export async function* streamInspireRows<Indexed>(
 
 		const row = options.compose(element, referenced, true)
 
-		// `deferred` after the document ended is a caller that ignored `final`,
-		// and the row is refused rather than held again, which would never terminate.
+		// `deferred` after the document ended is a caller that ignored `final`.
+		// The row is refused, because holding it again would never terminate.
 		if (!row || row === "deferred") continue
 
 		yield row
@@ -203,8 +205,9 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
 	 * Called once per pass, so it must deliver the same bytes each time.
 	 *
 	 * A factory rather than an iterable, because a byte stream is consumed by the first pass.
-	 * `inspireGMLChunks` inflates the archive member again, which is what makes the
-	 * second pass cheap relative to holding every address.
+	 * `inspireGMLChunks` inflates the archive member again.
+	 *
+	 * That is what makes the second pass cheap relative to holding every address.
 	 */
 	chunks: () => AsyncIterable<string | Uint8Array>
 
@@ -215,7 +218,7 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
 	 * so a reference resolving to no feature is a value the reader asked for and could not read.
 	 * The caller raises on one rather than writing the address without it.
 	 */
-	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | undefined
+	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | null
 }
 
 /**
@@ -223,7 +226,7 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
  *
  * The first pass reads only the component elements and the second only the addresses,
  * so the resident set is the index rather than the addresses.
- * The rows arrive in the publisher's own order, which {@linkcode streamInspireRows}
+ * The rows arrive in the publisher's own order. {@linkcode streamInspireRows}
  * cannot promise because it answers a held address last.
  */
 export async function* streamIndexedInspireRows<Indexed>(

@@ -15,7 +15,8 @@ import { resolvePath } from "path-ts"
 import { SEARCH_INDEX_FILENAME } from "../../src/search/constants.ts"
 
 /**
- * Docusaurus loads this file through jiti, which cannot resolve `node:sqlite` or parse `using`.
+ * Docusaurus loads this file through jiti.
+ * That loader cannot resolve `node:sqlite` or parse `using`.
  *
  * The extractor and the writer load through the runtime's own module loader instead.
  * `process.getBuiltinModule` keeps jiti from rewriting the lookup of `node:module`.
@@ -28,7 +29,10 @@ export default function searchIndexPlugin(context: LoadContext): Plugin {
 
 		async postBuild({ outDir, routesPaths }) {
 			const nativeRequire = createRequire(resolvePath(context.siteDir, "package.json").toString())
-			const { extractRecords } = nativeRequire("./plugins/search-index/extract.ts") as typeof import("./extract.ts")
+
+			const { extractRecords, isIndexedRoute } = nativeRequire(
+				"./plugins/search-index/extract.ts"
+			) as typeof import("./extract.ts")
 
 			const { writeSearchIndex } = nativeRequire(
 				"./plugins/search-index/write-index.ts"
@@ -38,7 +42,7 @@ export default function searchIndexPlugin(context: LoadContext): Plugin {
 			let pages = 0
 
 			for (const route of routesPaths) {
-				if (route === "/404.html" || route === "/404") continue
+				if (!isIndexedRoute(route)) continue
 
 				// `trailingSlash: false` emits `<route>.html`, and the root route `index.html`.
 				const file = resolvePath(outDir, route === "/" ? "index.html" : `${route.replace(/^\//, "")}.html`)

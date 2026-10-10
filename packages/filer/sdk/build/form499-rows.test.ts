@@ -27,7 +27,7 @@ describe("closeableCessationDate", () => {
 	})
 
 	it("has nothing to close when the filer never ceased", () => {
-		expect(closeableCessationDate(undefined, "2026-04-01")).toBeNull()
+		expect(closeableCessationDate(null, "2026-04-01")).toBeNull()
 		expect(closeableCessationDate("", "2026-04-01")).toBeNull()
 	})
 })

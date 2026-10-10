@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
-import { Box, Text } from "ink"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * The expected distinct-pair count for a GB build using only the PPD CSV.
@@ -94,7 +99,7 @@ const SOURCE_PARENT_TAGS = {
 /**
  * The secondary sources stay separate files so the header records an MD5 for each one.
  */
-function splitPathList(value: string | undefined): string[] {
+function splitPathList(value: string | null | undefined): string[] {
 	return extractDelimited(value)
 }
 
@@ -168,7 +173,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				header: false,
 				enableQuoteHandling: true,
 			})) {
-				if (header === null) {
+				if (!header) {
 					header = cells.map((h) => h.trim().toUpperCase())
 					cityIx = header.indexOf("CITY")
 					districtIx = header.indexOf("DISTRICT")
@@ -349,16 +354,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

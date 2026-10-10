@@ -347,7 +347,7 @@ def check_stratification(
     """RAISE on a train split missing a prefecture, or on a board municipality that leaks into it.
 
     Both failures produce a corpus that still trains and a board that still scores.
-    The board would measure memorization, the outcome it exists to rule out.
+    The board would measure memorization, the result it exists to rule out.
     """
     prefs = Counter(r["pref"] for r in train_rows)
     if len(prefs) != 47:
