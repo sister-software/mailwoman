@@ -1,0 +1,703 @@
+# v7.4.0 trains from scratch on the v0.7.3.2-venue-planet corpus: v0.7.2-address-systems plus the venue recipe's
+# rows for 147 countries (#2511), with the v7.2.0 run shape unchanged (#2438 adds the label floor).
+#
+# The differences from v7.2.0-address-systems-60k.yaml are:
+#
+# 1. `data.corpus_dir` moves to v0.7.3.2-venue-planet. The corpus adds 1,637,640 `spliced-venue-locality`
+#    rows and 1,478,399 `fragment-venue-bare` rows from Overture place names over WOF admin tuples, at
+#    `--venue-region-fraction 0`, with bare rows for spaceless-script names that end in a venue head.
+#
+# 2. `country_weights` is the v7.3.2 arm's list: the base's countries plus every country the venue recipe covers.
+#
+# 3. The venue sources draw 3% of the run through `source_reps`, fifteen times the v7.3.2 arm's reps because
+#    that arm divided the inherited reps by 15 for its 4,000 steps. The v7.3.1 arm at this share graded net
+#    +6 attributable on the 1,226-row board with 18 of 18 promotion floors. The v7.3.2 arm over this corpus
+#    graded net +10 attributable and missed `us.region` and `fr.region` by about one point, a fine-tune
+#    cost that a from-scratch run does not inherit.
+#
+# 4. The inherited receipt floors are the base's times 0.97 for the venue share and times 0.9 again, the
+#    margin the v7.3.2 arm needed after `ve-locality-postcode-region` drew 185 against 194. The two venue
+#    receipts are the arm's, because the audit's epoch window is a fixed 1,000,000 rows.
+#
+# 5. `data.required_validation_label_support` declares a floor of 500 validation rows holding `unit`
+#    (745 under v7.2.0). `po_box` has no floor: the US, FR and DE holdouts gave it 3 validation rows, and
+#    a floor it can meet waits on a validation draw that reaches the register rows (#2438). `train_log.csv`
+#    reports its support beside its F1.
+#
+# 6. `train.output_dir` and `train.trackio_run_name` name the v740 run.
+#
+# The run is from scratch with `--resume none`.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  # `NO` is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+  country_weights:
+    AD: 1
+    AE: 1
+    AF: 1
+    AG: 1
+    AI: 1
+    AL: 1
+    AM: 1
+    AO: 1
+    AR: 1
+    AS: 1
+    AT: 1
+    AU: 1
+    AW: 1
+    AX: 1
+    AZ: 1
+    BA: 1
+    BB: 1
+    BD: 1
+    BE: 1
+    BF: 1
+    BG: 1
+    BH: 1
+    BI: 1
+    BJ: 1
+    BL: 1
+    BM: 1
+    BN: 1
+    BQ: 1
+    BR: 1
+    BS: 1
+    BT: 1
+    BW: 1
+    BY: 1
+    BZ: 1
+    CA: 1
+    CD: 1
+    CF: 1
+    CG: 1
+    CH: 1
+    CI: 1
+    CK: 1
+    CL: 1
+    CN: 1
+    CO: 1
+    CR: 1
+    CU: 1
+    CV: 1
+    CW: 1
+    CY: 1
+    CZ: 1
+    DE: 1
+    DJ: 1
+    DK: 1
+    DM: 1
+    DO: 1
+    DZ: 1
+    EC: 1
+    EE: 1
+    EG: 1
+    ER: 1
+    ES: 1
+    ET: 1
+    FI: 1
+    FK: 1
+    FM: 1
+    FO: 1
+    FR: 1
+    GB: 1
+    GD: 1
+    GE: 1
+    GF: 1
+    GG: 1
+    GH: 1
+    GI: 1
+    GL: 1
+    GM: 1
+    GN: 1
+    GP: 1
+    GR: 1
+    GT: 1
+    GU: 1
+    GW: 1
+    HK: 1
+    HN: 1
+    HR: 1
+    HT: 1
+    HU: 1
+    ID: 1
+    IE: 1
+    IL: 1
+    IM: 1
+    IN: 1
+    IO: 1
+    IQ: 1
+    IR: 1
+    IS: 1
+    IT: 1
+    JE: 1
+    JM: 1
+    JO: 1
+    JP: 1
+    KE: 1
+    KG: 1
+    KH: 1
+    KM: 1
+    KN: 1
+    KR: 1
+    KW: 1
+    KY: 1
+    KZ: 1
+    LA: 1
+    LB: 1
+    LC: 1
+    LI: 1
+    LK: 1
+    LR: 1
+    LS: 1
+    LT: 1
+    LU: 1
+    LV: 1
+    MA: 1
+    MC: 1
+    MD: 1
+    ME: 1
+    MF: 1
+    MG: 1
+    MH: 1
+    MK: 1
+    ML: 1
+    MM: 1
+    MN: 1
+    MO: 1
+    MP: 1
+    MQ: 1
+    MS: 1
+    MT: 1
+    MU: 1
+    MV: 1
+    MW: 1
+    MX: 1
+    MY: 1
+    MZ: 1
+    NA: 1
+    NC: 1
+    NE: 1
+    NG: 1
+    NI: 1
+    NL: 1
+    "NO": 1
+    NP: 1
+    NZ: 1
+    OM: 1
+    PA: 1
+    PE: 1
+    PF: 1
+    PG: 1
+    PH: 1
+    PK: 1
+    PL: 1
+    PM: 1
+    PR: 1
+    PT: 1
+    PY: 1
+    QA: 1
+    RE: 1
+    RO: 1
+    RS: 1
+    RU: 1
+    RW: 1
+    SA: 1
+    SB: 1
+    SC: 1
+    SD: 1
+    SE: 1
+    SG: 1
+    SH: 1
+    SI: 1
+    SK: 1
+    SM: 1
+    SN: 1
+    SO: 1
+    SR: 1
+    ST: 1
+    SV: 1
+    SX: 1
+    SZ: 1
+    TC: 1
+    TH: 1
+    TJ: 1
+    TK: 1
+    TM: 1
+    TN: 1
+    TO: 1
+    TR: 1
+    TT: 1
+    TW: 1
+    TZ: 1
+    UA: 1
+    UG: 1
+    UM: 1
+    US: 1
+    UY: 1
+    UZ: 1
+    VA: 1
+    VC: 1
+    VE: 1
+    VG: 1
+    VI: 1
+    VN: 1
+    VU: 1
+    WF: 1
+    YT: 1
+    ZA: 1
+    ZM: 1
+    ZW: 1
+  source_weights:
+    invented-house-venue: 2
+    reviewed-postcode-tail: 0.05
+    overture-latam: 6
+    wof-admin: 2
+    wof-postalcode: 2
+    ban: 3
+    tiger: 4
+    usgov-nppes: 2
+    usgov-hrsa-fqhc: 2
+    usgov-nad: 1
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2
+    state-ia-contractors: 0
+    usgov-imls-pls: 0
+    deepseek-kryptonite: 3
+    invented-intersection: 1
+    rendered-de: 6
+    rendered-fr-order: 3
+    rendered-fr-admin-split: 6
+    spliced-unit: 0
+    spliced-unit-v30: 1.5
+    invented-po-box-cedex: 1.5
+    spliced-affix: 2
+    spliced-country: 2
+    overture: 3
+    gnaf: 6
+    invented-anchor-absorption: 6
+    fragment-fr-bare-street: 0
+    fragment-fr-bare-street-v22: 12
+    rendered-si-bare-village: 12
+    rendered-no-street-led: 0
+    rendered-cz-pcfirst-preposition: 0
+    rendered-cz-pcfirst-preposition-v21: 12
+    rendered-nl-postcode: 6
+    fragment-assay: 6
+    fragment-fr: 12
+    fragment-no: 12
+    rendered-gb: 6
+    rendered-pt: 6
+    rendered-ch: 6
+    rendered-hr: 6
+    rendered-sk: 6
+    rendered-lu: 6
+    spliced-sub-venue: 12
+    spliced-suffix-boundary: 2.5
+    osm: 0
+    osm-cn: 0
+  source_reps:
+    rendered-sg-register: 1
+    rendered-pk-register: 1
+    rendered-bd-register: 8
+    spliced-trailing-region-es-v28: 8
+    invented-po-box-military: 8
+    codex-bare-postcode: 1
+    spliced-trailing-region-us: 1
+    spliced-trailing-region-ca-bare: 4
+    osm-ru: 0.2
+    osm-in: 2
+    osm-id: 2
+    osm-ng: 4
+    osm-vn: 1
+    osm-pk: 1
+    osm-bd: 2
+    ban-gp: 0.15
+    ban-mq: 0.15
+    ban-re: 0.08
+    ban-gf: 0.3
+    ban-yt: 0.3
+    ban-nc: 0.3
+    ban-pm: 2
+    ban-bl: 1
+    ban-mf: 1
+    ban-pf: 1
+    ro-retea-scolara: 2
+    lv-varis: 0.1
+    cordis: 1
+    fr-finess-overseas: 4
+    fr-annuaire-education-overseas: 4
+    gleif-lei: 0.15
+    spliced-venue-locality: 0.07394
+    fragment-venue-bare: 0.07394
+  required_corpus_receipts:
+    - name: us-city-state-postcode
+      min_draws: 436
+      source: spliced-trailing-region-us
+      country: US
+      component_sequence:
+        - locality
+        - region
+        - postcode
+    - name: ca-region-code-tail
+      min_draws: 873
+      source: spliced-trailing-region-ca-bare
+      country: CA
+    - name: us-secondary-unit-current-generation
+      min_draws: 1746
+      source: spliced-unit-v30
+      country: US
+    - name: bare-postcode-czech
+      min_draws: 218
+      source: codex-bare-postcode
+      country: CZ
+    - name: cz-postcode-first-current-generation
+      min_draws: 873
+      source: rendered-cz-pcfirst-preposition-v21
+      country: CZ
+    - name: fr-bare-street-current-generation
+      min_draws: 873
+      source: fragment-fr-bare-street-v22
+      country: FR
+    - name: ve-locality-postcode-region
+      min_draws: 174
+      source: reviewed-postcode-tail
+      country: VE
+      component_sequence:
+        - locality
+        - postcode
+        - region
+    - name: sg-registers
+      min_draws: 873
+      source: rendered-sg-register
+      country: SG
+    - name: pk-house-line
+      min_draws: 873
+      source: rendered-pk-register
+      country: PK
+    - name: bd-trailing-postcode
+      min_draws: 436
+      source: rendered-bd-register
+      country: BD
+    - name: es-trailing-region-local-surfaces
+      min_draws: 436
+      source: spliced-trailing-region-es-v28
+      country: ES
+    - name: us-military-po-box
+      min_draws: 436
+      source: invented-po-box-military
+      country: US
+    - name: pt-native-order
+      min_draws: 873
+      source: rendered-pt
+      country: PT
+    - name: ch-native-order
+      min_draws: 873
+      source: rendered-ch
+      country: CH
+    - name: hr-native-order
+      min_draws: 873
+      source: rendered-hr
+      country: HR
+    - name: sk-native-order
+      min_draws: 873
+      source: rendered-sk
+      country: SK
+    - name: lu-native-order
+      min_draws: 873
+      source: rendered-lu
+      country: LU
+    - name: br-overture-rooftops
+      min_draws: 873
+      source: overture-latam
+      country: BR
+    - name: mx-overture-rooftops
+      min_draws: 873
+      source: overture-latam
+      country: MX
+    - name: osm-ru-exposure
+      min_draws: 40838
+      source: osm-ru
+      country: RU
+    - name: osm-in-exposure
+      min_draws: 10537
+      source: osm-in
+      country: IN
+    - name: osm-id-exposure
+      min_draws: 10842
+      source: osm-id
+      country: ID
+    - name: osm-ng-exposure
+      min_draws: 2741
+      source: osm-ng
+      country: NG
+    - name: osm-vn-exposure
+      min_draws: 7001
+      source: osm-vn
+      country: VN
+    - name: osm-pk-exposure
+      min_draws: 8127
+      source: osm-pk
+      country: PK
+    - name: osm-bd-exposure
+      min_draws: 2269
+      source: osm-bd
+      country: BD
+    - name: ban-gp-exposure
+      min_draws: 2278
+      source: ban-gp
+      country: GP
+    - name: ban-mq-exposure
+      min_draws: 1903
+      source: ban-mq
+      country: MQ
+    - name: ban-re-exposure
+      min_draws: 2531
+      source: ban-re
+      country: RE
+    - name: ban-gf-exposure
+      min_draws: 1641
+      source: ban-gf
+      country: GF
+    - name: ban-yt-exposure
+      min_draws: 1388
+      source: ban-yt
+      country: YT
+    - name: ban-nc-exposure
+      min_draws: 1484
+      source: ban-nc
+      country: NC
+    - name: ban-pm-exposure
+      min_draws: 549
+      source: ban-pm
+      country: PM
+    - name: ban-bl-exposure
+      min_draws: 567
+      source: ban-bl
+      country: BL
+    - name: ban-mf-exposure
+      min_draws: 750
+      source: ban-mf
+      country: MF
+    - name: ban-pf-exposure
+      min_draws: 532
+      source: ban-pf
+      country: PF
+    - name: ro-retea-scolara-exposure
+      min_draws: 3256
+      source: ro-retea-scolara
+      country: RO
+    - name: lv-varis-exposure
+      min_draws: 5063
+      source: lv-varis
+      country: LV
+    - name: cordis-exposure
+      min_draws: 5910
+      source: cordis
+    - name: fr-finess-overseas-exposure
+      min_draws: 977
+      source: fr-finess-overseas
+    - name: fr-annuaire-education-overseas-exposure
+      min_draws: 1134
+      source: fr-annuaire-education-overseas
+    - name: gleif-lei-exposure
+      min_draws: 20751
+      source: gleif-lei
+    - name: spliced-venue-locality-exposure
+      min_draws: 14180
+      source: spliced-venue-locality
+    - name: fragment-venue-bare-exposure
+      min_draws: 12810
+      source: fragment-venue-bare
+  required_validation_coverage:
+    - country: GB
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: FR
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: DE
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: US
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: RU
+      min_rows: 20
+      min_street_rows: 10
+    - country: CN
+      min_rows: 20
+      min_street_rows: 10
+    - country: IN
+      min_rows: 20
+      min_street_rows: 10
+    - country: ID
+      min_rows: 20
+      min_street_rows: 10
+    - country: NG
+      min_rows: 20
+      min_street_rows: 10
+    - country: PK
+      min_rows: 20
+      min_street_rows: 10
+    - country: BD
+      min_rows: 20
+      min_street_rows: 10
+    - country: VN
+      min_rows: 20
+      min_street_rows: 10
+    - country: RO
+      min_rows: 20
+      min_street_rows: 10
+    - country: LV
+      min_rows: 20
+      min_street_rows: 10
+    - country: GP
+      min_rows: 20
+      min_street_rows: 10
+    - country: MQ
+      min_rows: 20
+      min_street_rows: 10
+    - country: GF
+      min_rows: 20
+      min_street_rows: 10
+    - country: RE
+      min_rows: 20
+      min_street_rows: 10
+    - country: YT
+      min_rows: 20
+      min_street_rows: 10
+    - country: NC
+      min_rows: 20
+      min_street_rows: 10
+    - country: PF
+      min_rows: 20
+      min_street_rows: 10
+    - country: PM
+      min_rows: 20
+      min_street_rows: 10
+  required_validation_label_support:
+    - label: unit
+      split: val
+      min_rows: 500
+  augment_exclude_sources:
+    - spliced-suffix-boundary
+    - codex-bare-postcode
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_address_system_head: true
+  address_system_loss_weight: 0.3
+  use_locale_hint: true
+  locale_hint_drop_prob: 0.5
+  locale_hint_noise_prob: 0.05
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v740-venue-planet-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v740-venue-planet-60k-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""

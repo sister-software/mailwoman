@@ -56,8 +56,8 @@ the annuaire, FINESS) rather than an invented source. `unit` rows are 63,899,534
 US rows from the National Address Database. The adapter audit therefore finds the four register
 adapters already emitting what their sources state: GLEIF emits `po_box` and `unit`, FINESS and the
 annuaire emit `po_box`, and CORDIS refuses a line whose remainder holds a digit it cannot place, so a
-Belgian `BUS 7` box refuses the row rather than mislabeling it. The lever is the draw rather than the
-adapters: the 200,000-row training draw took 2,135 `po_box` rows from invented sources and 323 from
+Belgian `BUS 7` box refuses the row rather than mislabeling it. The draw decides the counts rather than
+the adapters: the 200,000-row training draw took 2,135 `po_box` rows from invented sources and 323 from
 registers, and the validation draw took 3, because the held-out regions are US, FR and DE and the
 register rows sit elsewhere.
 
