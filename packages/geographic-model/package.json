@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/geographic-model",
-	"version": "10.2.1",
+	"version": "10.2.2",
 	"description": "Stable geographic concepts, relations, mappings, source observations, derived facts, and their provenance — authored records compiled deterministically into runtime artifacts.",
 	"keywords": [
 		"affordance",
