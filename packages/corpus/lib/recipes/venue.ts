@@ -58,6 +58,11 @@ export const DEFAULT_VENUE_NAMES: PathBuilderLike = dataRootPath(
 export const DEFAULT_NAMES_PER_COUNTRY = 20_000
 
 /**
+ * Share of locality rows that also carry the region when `--venue-region-fraction` is absent.
+ */
+export const DEFAULT_REGION_FRACTION = 0.5
+
+/**
  * The two written shapes.
  */
 export const VenueTemplate = {
@@ -240,12 +245,17 @@ export const venueRecipe: CorpusRecipe = {
 	options: [
 		{ flag: "--venue-names <parquet>", description: `Overture place-names file (default ${DEFAULT_VENUE_NAMES})` },
 		{ flag: "--count <n>", description: `venue names per country (default ${DEFAULT_NAMES_PER_COUNTRY})` },
+		{
+			flag: "--venue-region-fraction <share>",
+			description: `locality rows that also carry the region (default ${DEFAULT_REGION_FRACTION})`,
+		},
 	],
 	async run(opts, write) {
 		if (!opts.input) throw new Error("venue recipe requires --input <tuples.jsonl>")
 		const random = makeMulberry32(opts.seed)
 		const venueNames = opts.venueNames ?? DEFAULT_VENUE_NAMES
 		const perCountry = opts.count ?? DEFAULT_NAMES_PER_COUNTRY
+		const regionFraction = opts.venueRegionFraction ?? DEFAULT_REGION_FRACTION
 		const byCountry = await groupTuplesByCountry(opts.input)
 		const boardInputs = await readGauntletInputs()
 
@@ -278,7 +288,7 @@ export const venueRecipe: CorpusRecipe = {
 
 				const tuple = tuples[Math.floor(random() * tuples.length)]!
 				const locality = tuple.locality!
-				const withRegion = Boolean(tuple.region) && random() < 0.5
+				const withRegion = Boolean(tuple.region) && random() < regionFraction
 				const components: Record<string, string> = { venue: name, locality }
 				let raw = `${name}, ${locality}`
 

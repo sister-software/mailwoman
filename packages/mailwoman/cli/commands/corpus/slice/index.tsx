@@ -65,6 +65,7 @@ export const spec = {
 		"sub-venue-tuples": stringOption("address-context tuples"),
 		"negative-fraction": stringOption("confound-negative fraction"),
 		"venue-names": stringOption("venue: Overture place-names parquet"),
+		"venue-region-fraction": stringOption("venue: share of locality rows that also carry the region"),
 	},
 } as const satisfies CommandSpec
 
@@ -132,6 +133,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 			subVenueTuples: options.subVenueTuples,
 			negativeFraction: num(options.negativeFraction),
 			venueNames: options.venueNames,
+			venueRegionFraction: num(options.venueRegionFraction),
 		}
 
 		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)

@@ -501,6 +501,12 @@ export interface RecipeOptions {
 	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/overture`
 	 */
 	venueNames?: PathBuilderLike
+	/**
+	 * `venue`: share of locality rows that also carry the tuple's region after the locality.
+	 *
+	 * @defaultValue `0.5`
+	 */
+	venueRegionFraction?: number
 }
 
 /**
