@@ -202,6 +202,27 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 		expect(hit?.confidence).toBe(0.99)
 	})
 
+	it("drops a leading word when the rest names one venue near the anchor", () => {
+		const MANCHESTER = { lat: 53.4714, lon: -2.2448 }
+		const lookup = stubLookup([{ name: "Manchester Art Gallery", lat: 53.4786, lon: -2.2417, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("The Manchester Art Gallery", MANCHESTER, { lookup })?.latitude).toBeCloseTo(
+			53.4786
+		)
+	})
+
+	it("refuses a remainder that holds a street-type word", () => {
+		const lookup = stubLookup([{ name: "Old Street", lat: 51.5257, lon: -0.0877, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("UTEA Old Street", LONDON, { lookup, isStreetGeneric: REAL_GENERICS })).toBeNull()
+	})
+
+	it("keeps the leading word when only one word would remain", () => {
+		const lookup = stubLookup([{ name: "Ivy", lat: 51.5121, lon: -0.1281, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("The Ivy", LONDON, { lookup })).toBeNull()
+	})
+
 	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
 		// The query's decoration exists on no row (the exact leg abstains), and the folded
 		// head matches both metro branches — a genuine ambiguity.

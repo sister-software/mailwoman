@@ -304,7 +304,7 @@ export function applyEntityTiers(
 		const hit = probeVenueNearAnchorFolded(
 			result.venue,
 			{ ...anchor, radiusM: venueAnchorRadiusM(anchor, resolvedRoots) },
-			{ lookup: deps.poiLookup }
+			{ lookup: deps.poiLookup, ...(deps.isStreetGeneric ? { isStreetGeneric: deps.isStreetGeneric } : {}) }
 		)
 
 		if (hit) {
@@ -364,12 +364,62 @@ function venueHeadSegment(venueRaw: string): string | null {
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,
 	anchor: VenueAnchor,
-	opts: Pick<ForkEntityProbeOpts, "lookup">
+	opts: Pick<ForkEntityProbeOpts, "lookup"> & Partial<Pick<ForkEntityProbeOpts, "isStreetGeneric">>
 ): ForkEntityHit | null {
 	const exact = probeVenueNearAnchor(venueRaw, anchor, opts)
 
 	if (exact) return exact
 
+	return probeVenueHeadNearAnchor(venueRaw, anchor, opts) ?? probeVenueWithoutLeadingWord(venueRaw, anchor, opts)
+}
+
+/**
+ * The fewest words the leading-word retry may probe with.
+ *
+ * A one-word remainder such as `Ivy` from `The Ivy` is a common noun more often than one venue's name.
+ */
+const LEADING_WORD_RETRY_MIN_REMAINDER = 2
+
+/**
+ * Retries a venue of three or more words without its first word, as in
+ * `The Manchester Art Gallery`, whose POI row is `Manchester Art Gallery`.
+ *
+ * The retry reads no article list, so it applies to any language's determiner.
+ * The remainder must still name a single venue within the anchor's radius.
+ *
+ * A remainder ending in a street-type word is refused.
+ * Dropping the brand from `UTEA Old Street` leaves a street name, which a venue
+ * row of that name would wrongly answer.
+ *
+ * A street-type word inside the name, as `Center` in `Aquatic Visitors Center (AVC)`, does not refuse it.
+ */
+function probeVenueWithoutLeadingWord(
+	venueRaw: string,
+	anchor: VenueAnchor,
+	opts: Pick<ForkEntityProbeOpts, "lookup"> & Partial<Pick<ForkEntityProbeOpts, "isStreetGeneric">>
+): ForkEntityHit | null {
+	const words = venueRaw.trim().split(/\s+/u)
+
+	if (words.length - 1 < LEADING_WORD_RETRY_MIN_REMAINDER) return null
+
+	const remainder = words.slice(1).join(" ")
+
+	const lastWord = normalizeLocalityForKey(remainder).split(" ").at(-1)
+
+	if (opts.isStreetGeneric && lastWord && opts.isStreetGeneric(lastWord)) return null
+
+	return probeVenueNearAnchor(remainder, anchor, opts)
+}
+
+/**
+ * Compares {@link venueHeadSegment} of the query and of each row, and requires
+ * a single match within the radius.
+ */
+function probeVenueHeadNearAnchor(
+	venueRaw: string,
+	anchor: VenueAnchor,
+	opts: Pick<ForkEntityProbeOpts, "lookup">
+): ForkEntityHit | null {
 	// Either side may include the decoration, so the retry runs even when the query has no head to strip.
 	const queryHead = venueHeadSegment(venueRaw) ?? venueRaw.trim()
 	const queryKey = normalizeLocalityForKey(queryHead)
