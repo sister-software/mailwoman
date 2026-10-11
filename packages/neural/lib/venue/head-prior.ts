@@ -48,11 +48,20 @@ export interface VenueHeadLexiconLike {
 /**
  * Overrides for {@linkcode buildVenueHeadEmissionPriors}.
  */
+/**
+ * The default multiplier on the lexicon's bias.
+ *
+ * At 1, a head of bias 3.67 such as GB `gallery` leaves the model's own `locality`
+ * and `region` emissions ahead on every word of `Manchester Art Gallery`, by 0.7 to 2.7 logits.
+ * At 2, the full regression board changes 6 of 1,257 rows, 2 of them improvements and none regressed.
+ */
+export const DEFAULT_VENUE_HEAD_BIAS_SCALE = 2
+
 export interface VenueHeadPriorOpts {
 	/**
 	 * Multiplier on the lexicon's bias.
 	 *
-	 * @defaultValue `1`
+	 * @defaultValue {@link DEFAULT_VENUE_HEAD_BIAS_SCALE}
 	 */
 	biasScale?: number
 	/**
@@ -140,7 +149,7 @@ export function buildVenueHeadEmissionPriors(
 
 	if (bVenue === undefined || iVenue === undefined) return matrix
 
-	const biasScale = opts.biasScale ?? 1
+	const biasScale = opts.biasScale ?? DEFAULT_VENUE_HEAD_BIAS_SCALE
 	const maxBias = opts.maxBias ?? 6
 	const extensionWords = opts.extensionWords ?? 3
 	const extensionDecay = opts.extensionDecay ?? 1
