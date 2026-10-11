@@ -60,6 +60,11 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 }
 
 /**
+ * English determiners that open a category phrase rather than a name.
+ */
+const ENGLISH_DETERMINERS: ReadonlySet<string> = new Set(["a", "an", "the", "some", "any"])
+
+/**
  * Looks a phrase up as a POI category (exact, then locale-normalized, then typo-tolerant),
  * then as a brand, then as a locale-restricted brand alias such as "mcdo".
  *
@@ -70,6 +75,13 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)
+
+		// A leading determiner opens a category phrase, as in "an art gallery".
+		if (words.length > 1 && ENGLISH_DETERMINERS.has(words[0]!.toLowerCase())) {
+			words.shift()
+			categoryHits = lookupPOICategory(words.join(" "), locale)
+		}
+
 		const tail = words.at(-1)
 
 		if (tail) {
@@ -83,7 +95,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 				singular = tail.slice(0, -1)
 			}
 
-			if (singular) {
+			if (singular && !categoryHits.length) {
 				words[words.length - 1] = singular
 				categoryHits = lookupPOICategory(words.join(" "), locale)
 			}

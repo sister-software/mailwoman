@@ -53,6 +53,17 @@ describe("poiTaxonomyLookup adapter", () => {
 	})
 
 	it.each([
+		["an art gallery", "art_gallery"],
+		["the pharmacies", "pharmacy"],
+	])("reads %s past its leading determiner", (phrase, categoryID) => {
+		expect(poiTaxonomyLookup(phrase, "en-GB")[0]?.categoryID).toBe(categoryID)
+	})
+
+	it("keeps a determiner-led name that is no category", () => {
+		expect(poiTaxonomyLookup("the manchester art gallery", "en-GB").some((m) => m.kind === "category")).toBe(false)
+	})
+
+	it.each([
 		["places of worship", "place_of_worship"],
 		["churches", "place_of_worship"],
 		["trains", "trains"],
