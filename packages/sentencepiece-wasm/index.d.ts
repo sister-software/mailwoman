@@ -76,7 +76,8 @@ export interface SentencePieceModule {
 
 /**
  * The emscripten modularize factory.
- * It resolves once the embedded wasm is instantiated.
+ *
+ * It resolves once `sentencepiece.wasm`, which sits beside the loader, is instantiated.
  */
 declare function createSentencePiece(): Promise<SentencePieceModule>
 
