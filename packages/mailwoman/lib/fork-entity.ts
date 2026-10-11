@@ -388,8 +388,8 @@ const LEADING_WORD_RETRY_MIN_REMAINDER = 2
  * The remainder must still name a single venue within the anchor's radius.
  *
  * A remainder ending in a street-type word is refused.
- * Dropping the brand from `UTEA Old Street` leaves a street name, which a venue
- * row of that name would wrongly answer.
+ * Without its brand, `UTEA Old Street` leaves the street name `Old Street`.
+ * A venue row of that name would then answer the query.
  *
  * A street-type word inside the name, as `Center` in `Aquatic Visitors Center (AVC)`, does not refuse it.
  */
