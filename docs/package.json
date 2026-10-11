@@ -110,7 +110,7 @@
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.10.2",
 		"@docusaurus/types": "^3.10.2",
-		"@playwright/test": "^1.63.0",
+		"@playwright/test": "^1.64.0",
 		"@storybook/addon-docs": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",
 		"@types/node": "^26.6.4",
