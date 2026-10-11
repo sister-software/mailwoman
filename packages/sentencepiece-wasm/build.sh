@@ -4,22 +4,22 @@
 # @license AGPL-3.0
 # @author Teffen Ellis, et al.
 #
-# Build the committed `sentencepiece.mjs` artifact: google/sentencepiece at the pinned tag below,
+# Build the committed `sentencepiece.mjs` loader and `sentencepiece.wasm` binary: google/sentencepiece at the pinned tag below,
 # compiled to wasm with emscripten and linked against binding.cpp (the embind wrapper exposing
 # native per-piece byte offsets — task #26).
 #
 # The artifact is committed (like core/data's reference blobs): consumers import
 # `@mailwoman/sentencepiece-wasm` as a plain dependency and never need emscripten. Re-run this
-# script only to bump the sentencepiece tag or change the binding; commit the regenerated .mjs in
-# the same PR and note the tag bump in the header of index.d.ts.
+# script only to bump the sentencepiece tag or change the binding; commit the regenerated .mjs and
+# .wasm in the same PR and note the tag bump in the header of index.d.ts.
 #
 # Prereqs: emsdk activated (`source ~/tools/emsdk/emsdk_env.sh`), cmake, git. The sentencepiece
 # checkout is cached outside the repo (a toolchain input, not a repo artifact).
 #
-# Single-file output on purpose: -sSINGLE_FILE=1 embeds the wasm as base64 in the .mjs, matching
-# how the previous runtime (@sctg/sentencepiece-js) shipped — no separate .wasm delivery path to
-# thread through the neural web loader, the docs demo, or the drop-in APIs. The size cost (~4/3× the wasm) is
-# accepted; the artifact is fetched once and cached.
+# The wasm ships as its own file beside the loader. The loader finds it with
+# `new URL("sentencepiece.wasm", import.meta.url)`, which Node resolves from the package directory and
+# Vite and webpack 5 bundle as an asset. A base64 blob embedded in a JavaScript file holds a package in
+# npm's post-upload processing; a `.wasm` file is a binary format the registry identifies by its header.
 
 set -euo pipefail
 
@@ -60,7 +60,6 @@ ABSL_LIBS=$(find "$BUILD_DIR/third_party/abseil-cpp" -name "*.a" | sort)
 
 # Link the binding. Notes on the flags:
 # - modularize + EXPORT_ES6: the artifact default-exports an async factory (createSentencePiece).
-# - SINGLE_FILE: wasm embedded as base64 (see header).
 # - environment=web,webview,worker,node: every consumer surface (browser demo, workers, Node CLI).
 # - ALLOW_MEMORY_GROWTH: tokenizer.model is ~1.6MB and encode allocations scale with input length.
 # - DISABLE_EXCEPTION_CATCHING=0: protobuf-lite + sentencepiece throw in cold error paths; without
@@ -75,7 +74,6 @@ emcc "$SCRIPT_DIR/binding.cpp" \
 	-sMODULARIZE=1 \
 	-sEXPORT_ES6=1 \
 	-sEXPORT_NAME=createSentencePiece \
-	-sSINGLE_FILE=1 \
 	-sALLOW_MEMORY_GROWTH=1 \
 	-sENVIRONMENT=web,webview,worker,node \
 	-sDISABLE_EXCEPTION_CATCHING=0 \
@@ -88,5 +86,5 @@ emcc "$SCRIPT_DIR/binding.cpp" \
 # and treat the specifier as a builtin, which is what the bundle-graph health check's allowance names.
 sed -i 's|await import("node:module")|await import(/* webpackIgnore: true */ "node:module")|' "$SCRIPT_DIR/sentencepiece.mjs"
 
-echo "Built $SCRIPT_DIR/sentencepiece.mjs from sentencepiece $SP_TAG:"
-ls -la "$SCRIPT_DIR/sentencepiece.mjs"
+echo "Built $SCRIPT_DIR/sentencepiece.mjs and sentencepiece.wasm from sentencepiece $SP_TAG:"
+ls -la "$SCRIPT_DIR/sentencepiece.mjs" "$SCRIPT_DIR/sentencepiece.wasm"
