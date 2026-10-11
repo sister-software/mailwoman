@@ -210,6 +210,11 @@ const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-thr
  * from it, and that module fetches `sqlite3.wasm` from beside itself.
  */
 const SQLITE_RUNTIME_LOCATOR = await tryResolveFile("@sqlite.org/sqlite-wasm/sqlite3.wasm")
+
+/**
+ * The SentencePiece wasm that `@mailwoman/sentencepiece-wasm` loads from beside its loader script.
+ */
+const SENTENCEPIECE_WASM_PATH = requireFromHere.resolve("@mailwoman/sentencepiece-wasm/sentencepiece.wasm")
 const CANDIDATE_DB_PATH = databaseRootPath(dataRootPath())("wof", "candidate.db")
 
 const haveGazetteer = SQLITE_RUNTIME_LOCATOR !== null && (await pathExists(CANDIDATE_DB_PATH))
@@ -765,6 +770,15 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 			{ body: Buffer.from(GAZETTEER_HTML), contentType: "text/html; charset=utf-8", assetClass: "sqliteRuntime" },
 		],
 		["/app.js", { body: appBundle, contentType: "text/javascript; charset=utf-8", assetClass: "runtimeJS" }],
+		// The tokenizer loader fetches its wasm from beside the bundled script, as a host must stage it.
+		[
+			"/sentencepiece.wasm",
+			{
+				body: await readLocalBuffer(SENTENCEPIECE_WASM_PATH),
+				contentType: "application/wasm",
+				assetClass: "tokenizer",
+			},
+		],
 	])
 
 	const mounts: DirectoryMount[] = [

@@ -60,16 +60,21 @@ function tree(raw: string, value: string): AddressTree {
 }
 
 /**
- * Returns the three lookups that the walk makes for a bare place name.
+ * Returns the lookups that the walk makes for a bare place name.
  *
  * The walk looks up the locality, then checks whether the token is a country or a region.
- * A fixture must record all three, or the replay misses.
+ * With no locality row it also probes the sub-locality placetypes.
+ * A fixture must record every one, or the replay misses.
  */
 function lookupsFor(text: string, candidates: SameDataCandidate[]) {
 	const queries = [
 		{ text, placetype: "locality", limit: 5 },
-		{ text, placetype: "country", limit: 1, excludeNameRoles: ["abbr", "gloss"] },
-		{ text, placetype: "region", limit: 1, excludeNameRoles: ["abbr", "gloss"] },
+		...["country", "region", "borough", "macrohood", "neighbourhood", "microhood"].map((placetype) => ({
+			text,
+			placetype,
+			limit: 1,
+			excludeNameRoles: ["abbr", "gloss"],
+		})),
 	]
 
 	return queries.map((query, index) => ({
