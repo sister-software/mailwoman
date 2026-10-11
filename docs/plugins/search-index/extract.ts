@@ -8,14 +8,13 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
-import { HIERARCHY_DEPTH, type SearchRecord } from "@mailwoman/react/search/types"
+import { HIERARCHY_DEPTH, type SearchRecord, TABLE_ROW_LEVEL } from "@mailwoman/react/search/types"
 import { type AnyNode, type Document, type Element, isTag, isText } from "domhandler"
 import { findAll, findOne, getAttributeValue } from "domutils"
 import { parseDocument } from "htmlparser2"
 
 const DEFAULT_CATEGORY = "Documentation"
 const HEADING = /^h([1-6])$/
-const TABLE_ROW_LEVEL = 5
 
 /**
  * Headings whose section is a list of links to other pages.

@@ -24,6 +24,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/paths"
+import { libpostalLineSurfaces } from "@mailwoman/core/resources/libpostal"
 import {
 	buildFSTFromWOF,
 	fstStaleReason,
@@ -183,13 +184,6 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 }
 
 /**
- * One dictionary line is `canonical|variant|variant…`, in which every pipe-separated form is a surface.
- */
-function surfacesOfLine(line: string): string[] {
-	return TextSpliterator.from(line, { delimiter: "|" }).toArray()
-}
-
-/**
  * Load the degenerate-surface exclusion sets from the shipped libpostal dictionaries.
  *
  * @returns Normalized-join keys (`normalizeTokens(surface).join(" ")`)
@@ -250,7 +244,7 @@ async function scanDegenerateSurfaces(
 			if (!(await pathExists(path))) continue
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
-				for (const surface of surfacesOfLine(line)) {
+				for (const surface of libpostalLineSurfaces(line)) {
 					const tokens = fold(surface)
 
 					if (!tokens.length) continue

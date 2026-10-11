@@ -177,6 +177,11 @@
 			"node": "./lib/resources/whosonfirst.ts",
 			"default": "./out/resources/whosonfirst.js"
 		},
+		"./resources/libpostal": {
+			"types": "./out/resources/libpostal.d.ts",
+			"node": "./lib/resources/libpostal.ts",
+			"default": "./out/resources/libpostal.js"
+		},
 		"./resources/whosonfirst/specificity": {
 			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts",
 			"node": "./lib/resources/whosonfirst/placetypes/specificity.ts",

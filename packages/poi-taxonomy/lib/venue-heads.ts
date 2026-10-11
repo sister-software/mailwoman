@@ -145,6 +145,16 @@ function layersFor(country: string): VenueHeadEntries[] {
 
 const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
 
+/**
+ * Whether `word` is written wholly in a script that does not separate words with spaces.
+ *
+ * The venue-head builder, the corpus venue recipe and this reader must classify a
+ * word the same way, so all three call this function.
+ */
+export function isSpacelessScriptWord(word: string): boolean {
+	return SPACELESS_SCRIPT_RE.test(word)
+}
+
 const ALL_LANGUAGES: readonly VenueHeadEntries[] = Object.values(TABLE.languages)
 
 function headBias(layers: readonly VenueHeadEntries[], position: VenueHeadPosition, key: string): number | null {
@@ -157,7 +167,7 @@ function headBias(layers: readonly VenueHeadEntries[], position: VenueHeadPositi
 	// A key written in a script without spaces between words identifies its language
 	// family by script, so every language aggregate may answer it.
 	// The highest bias wins.
-	if (!SPACELESS_SCRIPT_RE.test(key)) return null
+	if (!isSpacelessScriptWord(key)) return null
 	let best: number | null = null
 
 	for (const language of ALL_LANGUAGES) {
