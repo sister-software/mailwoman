@@ -445,6 +445,18 @@ describe("bare-country class", () => {
 			prominence: 6.3405,
 			exactMatch: true,
 		},
+		{
+			...EMPTY_PLACE_FIELDS,
+			id: 15,
+			name: "Buckingham Palace",
+			placetype: "neighbourhood",
+			country: "GB",
+			lat: 51.500321,
+			lon: -0.145433,
+			score: 0,
+			prominence: 0,
+			exactMatch: true,
+		},
 	]
 
 	const backend = (calls?: Array<{ text: string; placetype?: unknown; country?: string }>): ResolverBackend => ({
@@ -507,6 +519,28 @@ describe("bare-country class", () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Paris"))
 
 		expect(out.roots[0]?.tag).toBe("locality")
+	})
+
+	it("resolves a bare name with no locality or admin namesake to its sub-locality row (Buckingham Palace)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Buckingham Palace"))
+		const root = out.roots[0]!
+
+		expect(root.metadata?.["bare_sublocality_pick"]).toBe(true)
+		expect(root.lat).toBeCloseTo(51.500321, 4)
+	})
+
+	it("leaves a sub-locality name inside a longer address to the ordinary walk", async () => {
+		const tree = {
+			raw: "Buckingham Palace, Paris",
+			roots: [
+				node({ tag: "locality", value: "Buckingham Palace", start: 0, end: 17, confidence: 0.9 }),
+				node({ tag: "country", value: "Paris", start: 19, end: 24, confidence: 0.9 }),
+			],
+		}
+
+		const out = await createWOFResolver(backend()).resolveTree(tree)
+
+		expect(out.roots[0]?.metadata?.["bare_sublocality_pick"]).toBeUndefined()
 	})
 
 	it("never fires without a country namesake — bare 'Paris' is byte-stable", async () => {

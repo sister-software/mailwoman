@@ -161,3 +161,90 @@ export async function bareRegionCandidate(
 		return null
 	}
 }
+
+/**
+ * The sub-locality placetypes {@link bareSublocalityCandidate} probes, coarse to fine.
+ */
+const BARE_SUBLOCALITY_BANDS = ["borough", "macrohood", "neighbourhood", "microhood"] as const
+
+/**
+ * The best sub-locality row for a bare toponym with no locality row, or null.
+ *
+ * A whole-input name such as `Buckingham Palace` can be a Who's On First `neighbourhood` row.
+ * The locality placetype filter makes that row unreachable.
+ *
+ * The resolver would otherwise shorten the span and answer a different place.
+ *
+ * Bands are probed coarse to fine, and the first exact hit with a coordinate wins.
+ * The same scope, exact-match and alias-role rules as the country and region races apply.
+ */
+export async function bareSublocalityCandidate(
+	backend: ResolverBackend,
+	text: string,
+	scopedCountry: string | undefined
+): Promise<ResolvedPlace | null> {
+	for (const placetype of BARE_SUBLOCALITY_BANDS) {
+		try {
+			const hits = await backend.findPlace({
+				text,
+				placetype,
+				limit: 1,
+				excludeNameRoles: BARE_RACE_EXCLUDED_NAME_ROLES,
+				...(scopedCountry ? { country: scopedCountry } : {}),
+			})
+
+			const top = hits[0]
+
+			if (top && top.placetype === placetype && top.exactMatch !== false && !(top.lat === 0 && top.lon === 0)) {
+				return top
+			}
+		} catch {
+			continue
+		}
+	}
+
+	return null
+}
+
+/**
+ * The place a bare toponym with no locality row resolves to, or null.
+ *
+ * It returns the place with the trace check, pick source and node metadata that record the pick.
+ *
+ * The larger admin namesake from the country and region races wins first.
+ * A sub-locality namesake is probed only when neither race hit.
+ */
+export async function emptyLocalityPick(
+	backend: ResolverBackend,
+	text: string,
+	scopedCountry: string | undefined,
+	bareCountry: ResolvedPlace | null,
+	bareRegion: ResolvedPlace | null
+): Promise<{
+	place: ResolvedPlace
+	check: string
+	source: "empty_admin" | "bare_sublocality"
+	metadata: Record<string, boolean>
+} | null> {
+	const admin = pickLargerAdmin(bareCountry, bareRegion)
+
+	if (admin) {
+		return {
+			place: admin,
+			check: "empty_admin_pick",
+			source: "empty_admin",
+			metadata: admin === bareRegion ? { bare_region_repick: true } : { bare_country_repick: true },
+		}
+	}
+
+	const sublocality = await bareSublocalityCandidate(backend, text, scopedCountry)
+
+	return sublocality
+		? {
+				place: sublocality,
+				check: "bare_sublocality_pick",
+				source: "bare_sublocality",
+				metadata: { bare_sublocality_pick: true },
+			}
+		: null
+}

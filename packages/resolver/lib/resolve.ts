@@ -36,9 +36,9 @@ import {
 	BARE_REGION_DOMINANCE_LOG10,
 	bareCountryCandidate,
 	bareRegionCandidate,
+	emptyLocalityPick,
 	logPopulation,
 	loneBareLocalityNode,
-	pickLargerAdmin,
 } from "#bare-toponym-race"
 import { decorateNode } from "#decorate-node"
 import {
@@ -587,18 +587,16 @@ class WOFResolver implements Resolver {
 		const bareRegion = isBareRace ? await bareRegionCandidate(this.#backend, node.value, query.country) : null
 
 		if (!candidates.length) {
-			// With no locality candidates, pick the larger admin namesake.
-			const admin = pickLargerAdmin(bareCountry, bareRegion)
+			// With no locality candidates, a bare name takes an admin or sub-locality namesake.
+			const pick = isBareRace
+				? await emptyLocalityPick(this.#backend, node.value, query.country, bareCountry, bareRegion)
+				: null
 
-			if (admin) {
-				rec.check("empty_admin_pick")
-				rec.emit({ id: admin.id, name: admin.name, source: "empty_admin" })
+			if (pick) {
+				rec.check(pick.check)
+				rec.emit({ id: pick.place.id, name: pick.place.name, source: pick.source })
 
-				return {
-					top: admin,
-					alternatives: [],
-					metadata: admin === bareRegion ? { bare_region_repick: true } : { bare_country_repick: true },
-				}
+				return { top: pick.place, alternatives: [], metadata: pick.metadata }
 			}
 
 			rec.emit(null)
