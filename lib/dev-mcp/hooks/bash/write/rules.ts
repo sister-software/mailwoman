@@ -40,6 +40,8 @@ const ADMITTED = new Set([
 	"ls",
 	"paste",
 	"pgrep",
+	"podman",
+	"podman-compose",
 	"printf",
 	"ps",
 	"pwd",

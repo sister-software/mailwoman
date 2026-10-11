@@ -173,6 +173,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		"Avenida Corrientes",
 		"Avenida Diagonal",
 		"Avenida Paulista",
+		"Buckingham Palace",
 		"COMER parís.méxico",
 		"Diego Garcia",
 		"Gran Vía",
@@ -184,7 +185,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		"Rua Garrett",
 	]
 
-	test("the fork population over the corpus is the 15 rows structure cannot resolve", () => {
+	test("the fork population over the corpus is the 16 rows structure cannot resolve", () => {
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
