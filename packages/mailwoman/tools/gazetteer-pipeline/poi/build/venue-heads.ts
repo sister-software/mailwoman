@@ -332,24 +332,47 @@ export function pruneSuffixes(suffixes: VenueHeadBiases): VenueHeadBiases {
 }
 
 /**
- * Averages country entries into one language aggregate, weighting each country equally
- * and counting a head a country lacks as zero.
- * Means below {@link MIN_BIAS} are omitted.
+ * The fewest member countries that must carry a head before it enters a language aggregate.
+ *
+ * A head that one or two countries carry belongs to those countries' own tables.
+ */
+export const MIN_LANGUAGE_CARRIERS = 3
+
+/**
+ * Averages country entries into one language aggregate over the countries that carry each head.
+ *
+ * A country without a head is left out of that head's mean.
+ * Most of a language's countries have too few venue names to score any head,
+ * so counting them as zero would erase nearly every head.
+ *
+ * Heads with fewer carriers than {@link MIN_LANGUAGE_CARRIERS}, or than the language's
+ * scoring countries when it has fewer, and means below {@link MIN_BIAS} are omitted.
  */
 export function aggregateLanguage(members: readonly VenueHeadEntries[]): VenueHeadEntries {
 	const out: VenueHeadEntries = { first: {}, last: {}, suffix: {} }
 
 	for (const position of POSITIONS) {
-		const sums = new Map<string, number>()
+		const sums = new Map<string, { total: number; carriers: number }>()
 
 		for (const member of members) {
 			for (const [head, bias] of Object.entries(member[position])) {
-				sums.set(head, (sums.get(head) ?? 0) + bias)
+				const entry = sums.get(head) ?? { total: 0, carriers: 0 }
+
+				entry.total += bias
+				entry.carriers += 1
+				sums.set(head, entry)
 			}
 		}
 
-		for (const [head, sum] of sums) {
-			const mean = sum / members.length
+		// A language with fewer scoring countries than the minimum requires every one of them,
+		// so a language one country speaks keeps that country's heads.
+		const scoring = members.filter((member) => Object.keys(member[position]).length > 0).length
+		const required = Math.min(MIN_LANGUAGE_CARRIERS, scoring)
+
+		for (const [head, { total, carriers }] of sums) {
+			if (carriers < required) continue
+
+			const mean = total / carriers
 
 			if (mean >= MIN_BIAS) {
 				out[position][head] = round(mean)
