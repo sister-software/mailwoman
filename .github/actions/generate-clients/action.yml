@@ -14,11 +14,13 @@ description: Compile the repo and run `mailwoman clients generate` (Python + Rus
 runs:
   using: composite
   steps:
+    # The setup-node cache stays off: on the lab runners it archives the host's whole global Yarn cache,
+    # which every project on the machine shares, and uploads it after the job's work is done.
+    # `yarn install` already reads that cache from disk.
     - name: Setup Node
       uses: actions/setup-node@v6
       with:
         node-version-file: .nvmrc
-        cache: yarn
 
     - name: Enable Corepack (yarn 4)
       shell: bash
