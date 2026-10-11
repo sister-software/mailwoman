@@ -535,6 +535,7 @@ export interface ResolveNodeTrace {
 			| "ranked"
 			| "bare_country"
 			| "bare_region"
+			| "bare_sublocality"
 			| "postcode_prefix"
 			| "postcode_format_probe"
 			| "empty_admin"
