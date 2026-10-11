@@ -6,6 +6,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
+import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 import type { PathBuilderLike } from "path-ts"
 
 import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
@@ -74,7 +75,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		localeCountryPrior: false,
 		gazetteerPrior: GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
 		venueHeadPrior: GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
-		venueHeadBiasScale: 1,
+		venueHeadBiasScale: DEFAULT_VENUE_HEAD_BIAS_SCALE,
 		placeCountry: true,
 		postcodeCountryCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence,
 		forkEntity: true,

@@ -9,6 +9,7 @@
 import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
+import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
 import {
@@ -102,7 +103,7 @@ export const spec = {
 		},
 		"venue-head-bias-scale": {
 			type: "number",
-			default: 1,
+			default: DEFAULT_VENUE_HEAD_BIAS_SCALE,
 			hint: "multiplier",
 			description: "Multiplier on the venue-head table's biases.",
 		},

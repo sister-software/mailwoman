@@ -6,7 +6,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildVenueHeadEmissionPriors, type VenueHeadLexiconLike } from "#venue/head-prior"
+import {
+	buildVenueHeadEmissionPriors,
+	DEFAULT_VENUE_HEAD_BIAS_SCALE,
+	type VenueHeadLexiconLike,
+	type VenueHeadPriorOpts,
+} from "#venue/head-prior"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-venue", "I-venue"]
 const B = LABELS.indexOf("B-venue")
@@ -31,6 +36,18 @@ function lexicon(entries: {
 }
 
 /**
+ * Builds the matrix at a bias scale of 1, so each cell reads the lexicon's bias directly.
+ */
+function build(
+	lex: VenueHeadLexiconLike,
+	input: { piece: string }[],
+	labels: string[],
+	opts: VenueHeadPriorOpts = {}
+): number[][] {
+	return buildVenueHeadEmissionPriors(lex, input, labels, { biasScale: 1, ...opts })
+}
+
+/**
  * One SentencePiece-style piece per word, with the word-start marker.
  */
 function pieces(...words: string[]): { piece: string }[] {
@@ -39,11 +56,7 @@ function pieces(...words: string[]): { piece: string }[] {
 
 describe("buildVenueHeadEmissionPriors", () => {
 	it("biases both venue columns on a last-word head and the words before it", () => {
-		const m = buildVenueHeadEmissionPriors(
-			lexicon({ last: { gallery: 2 } }),
-			pieces("Manchester", "Art", "Gallery"),
-			LABELS
-		)
+		const m = build(lexicon({ last: { gallery: 2 } }), pieces("Manchester", "Art", "Gallery"), LABELS)
 
 		for (const row of [0, 1, 2]) {
 			expect(m[row]![B]).toBeCloseTo(2)
@@ -52,7 +65,7 @@ describe("buildVenueHeadEmissionPriors", () => {
 	})
 
 	it("leaves a piece between two words unbiased, so the next word can open a new span", () => {
-		const m = buildVenueHeadEmissionPriors(
+		const m = build(
 			lexicon({ last: { museum: 2 } }),
 			[{ piece: "▁History" }, { piece: "▁" }, { piece: "Mus" }, { piece: "eum" }],
 			LABELS
@@ -67,57 +80,38 @@ describe("buildVenueHeadEmissionPriors", () => {
 	it("skips a head followed by a street affix and stops an extension at one", () => {
 		const isStreetAffix = (w: string) => w === "street"
 
-		const streetName = buildVenueHeadEmissionPriors(
-			lexicon({ first: { museum: 2 } }),
-			pieces("Museum", "Street"),
-			LABELS,
-			{
-				isStreetAffix,
-			}
-		)
+		const streetName = build(lexicon({ first: { museum: 2 } }), pieces("Museum", "Street"), LABELS, {
+			isStreetAffix,
+		})
 
 		expect(streetName.flat().every((v) => v === 0)).toBe(true)
 
-		const stopped = buildVenueHeadEmissionPriors(
-			lexicon({ first: { musée: 2 } }),
-			pieces("Musée", "Rodin", "Street"),
-			LABELS,
-			{
-				isStreetAffix,
-			}
-		)
+		const stopped = build(lexicon({ first: { musée: 2 } }), pieces("Musée", "Rodin", "Street"), LABELS, {
+			isStreetAffix,
+		})
 
 		expect(stopped[1]![I]).toBeCloseTo(2)
 		expect(stopped[2]![I]).toBe(0)
 	})
 
 	it("decays the bias by extensionDecay once for each word from the head", () => {
-		const m = buildVenueHeadEmissionPriors(
-			lexicon({ last: { gallery: 2 } }),
-			pieces("Manchester", "Art", "Gallery"),
-			LABELS,
-			{
-				extensionDecay: 0.5,
-			}
-		)
+		const m = build(lexicon({ last: { gallery: 2 } }), pieces("Manchester", "Art", "Gallery"), LABELS, {
+			extensionDecay: 0.5,
+		})
 
 		expect(m[0]![B]).toBeCloseTo(0.5)
 		expect(m[1]![I]).toBeCloseTo(1)
 	})
 
 	it("biases a first-word head and the words after it, beginning the span at the head", () => {
-		const m = buildVenueHeadEmissionPriors(lexicon({ first: { musée: 2 } }), pieces("Musée", "dOrsay"), LABELS)
+		const m = build(lexicon({ first: { musée: 2 } }), pieces("Musée", "dOrsay"), LABELS)
 
 		expect(m[0]![B]).toBeCloseTo(2)
 		expect(m[1]![I]).toBeCloseTo(2)
 	})
 
 	it("stops the span at a comma and at a word with a digit", () => {
-		const m = buildVenueHeadEmissionPriors(
-			lexicon({ last: { gallery: 2 } }),
-			pieces("Mosley", "St", ",", "12", "Art", "Gallery"),
-			LABELS
-		)
+		const m = build(lexicon({ last: { gallery: 2 } }), pieces("Mosley", "St", ",", "12", "Art", "Gallery"), LABELS)
 
 		expect(m[4]![B]).toBeCloseTo(2)
 		expect(m[3]![B]).toBe(0)
@@ -127,7 +121,7 @@ describe("buildVenueHeadEmissionPriors", () => {
 	})
 
 	it("stops the span at a single-letter word, which belongs to the designator before it", () => {
-		const m = buildVenueHeadEmissionPriors(
+		const m = build(
 			lexicon({ last: { airport: 2 } }),
 			pieces("Concourse", "B", "O'Hare", "International", "Airport"),
 			LABELS
@@ -141,21 +135,13 @@ describe("buildVenueHeadEmissionPriors", () => {
 	})
 
 	it("requires a neighbor in the segment for a first-word or last-word head", () => {
-		const m = buildVenueHeadEmissionPriors(
-			lexicon({ last: { gallery: 2 }, first: { gallery: 2 } }),
-			pieces("Gallery"),
-			LABELS
-		)
+		const m = build(lexicon({ last: { gallery: 2 }, first: { gallery: 2 } }), pieces("Gallery"), LABELS)
 
 		expect(m[0]!.every((v) => v === 0)).toBe(true)
 	})
 
 	it("biases a single word that ends in a suffix head", () => {
-		const m = buildVenueHeadEmissionPriors(
-			lexicon({ suffix: { 館: 1.5 } }),
-			[{ piece: "▁国立" }, { piece: "西洋美術館" }],
-			LABELS
-		)
+		const m = build(lexicon({ suffix: { 館: 1.5 } }), [{ piece: "▁国立" }, { piece: "西洋美術館" }], LABELS)
 
 		expect(m[0]![B]).toBeCloseTo(1.5)
 		expect(m[1]![I]).toBeCloseTo(1.5)
@@ -163,7 +149,7 @@ describe("buildVenueHeadEmissionPriors", () => {
 	})
 
 	it("scales the bias and caps it at maxBias", () => {
-		const m = buildVenueHeadEmissionPriors(lexicon({ last: { palace: 6 } }), pieces("Buckingham", "Palace"), LABELS, {
+		const m = build(lexicon({ last: { palace: 6 } }), pieces("Buckingham", "Palace"), LABELS, {
 			biasScale: 2,
 			maxBias: 8,
 		})
@@ -171,11 +157,14 @@ describe("buildVenueHeadEmissionPriors", () => {
 		expect(m[1]![I]).toBeCloseTo(8)
 	})
 
+	it("applies the default scale when the caller sets none", () => {
+		const m = buildVenueHeadEmissionPriors(lexicon({ last: { gallery: 2 } }), pieces("Art", "Gallery"), LABELS)
+
+		expect(m[1]![I]).toBeCloseTo(2 * DEFAULT_VENUE_HEAD_BIAS_SCALE)
+	})
+
 	it("returns the zero matrix for a vocabulary without venue labels", () => {
-		const m = buildVenueHeadEmissionPriors(lexicon({ last: { gallery: 2 } }), pieces("Art", "Gallery"), [
-			"O",
-			"B-locality",
-		])
+		const m = build(lexicon({ last: { gallery: 2 } }), pieces("Art", "Gallery"), ["O", "B-locality"])
 
 		expect(m.flat().every((v) => v === 0)).toBe(true)
 	})
