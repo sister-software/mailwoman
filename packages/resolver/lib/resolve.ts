@@ -261,7 +261,7 @@ class WOFResolver implements Resolver {
 
 		// Postcode/locality consistency pass (default on).
 		if (opts.postcodeConsistency) {
-			applyPostcodeConsistency(newRoots, consistencyThresholdKm, opts.postcodeConsistencyMaxMoveKm)
+			await applyPostcodeConsistency(newRoots, consistencyThresholdKm, opts.postcodeConsistencyMaxMoveKm)
 		}
 
 		// Optional exact address-point tier.
@@ -287,7 +287,7 @@ class WOFResolver implements Resolver {
 
 		// A rooftop row keyed by locality name can lie in a namesake of the selected locality.
 		if (opts.addressPoints && opts.postcodeConsistency) {
-			applyRooftopConsistency(newRoots, consistencyThresholdKm)
+			await applyRooftopConsistency(newRoots, consistencyThresholdKm, this.#backend)
 		}
 
 		// Optional street-centroid tier runs last.
