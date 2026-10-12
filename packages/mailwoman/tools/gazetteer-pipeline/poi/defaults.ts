@@ -8,11 +8,13 @@
  */
 
 /**
- * Pinned Overture release for the places-theme ingest, kept independent of the
- * `.tsx` command's pin because `gazetteer-pipeline/*.ts` must stay importable under
- * plain `node` type-stripping without a JSX transform.
+ * Pinned Overture release for every Overture theme the gazetteer reads: places, divisions and addresses.
+ *
+ * One artifact must use a single vintage, and Overture deletes old releases from
+ * its bucket about a month after publishing a newer one.
+ * A pruned pin fails the admin build at its preflight.
  */
-export const DEFAULT_RELEASE = "2026-07-22.0"
+export const DEFAULT_RELEASE = "2026-09-23.1"
 
 /**
  * Default for `--min-rows`.

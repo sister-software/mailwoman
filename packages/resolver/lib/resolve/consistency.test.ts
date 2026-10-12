@@ -275,6 +275,28 @@ describe("resolveTree + rooftop consistency", () => {
 		expect(street.metadata?.resolution_tier).toBe("address_point")
 	})
 
+	it("finds the namesake nearest the rooftop when it ranks below the resolved candidates", async () => {
+		// Six more prominent namesakes fill the locality query's candidates, so the near one is not among them.
+		const farNamesakes = Array.from({ length: 6 }, (_, i) => ({
+			...SP_FAR,
+			id: 10 + i,
+			lat: 44 + i * 0.1,
+			score: 9 - i,
+		}))
+
+		const resolver = createWOFResolver(await makeBackend([...farNamesakes, SP_NEAR]))
+
+		const out = await resolver.resolveTree(addressTree(), {
+			defaultCountry: { country: "FR", source: "caller" },
+			addressPoints: rooftopAt(48.91, 2.41),
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		expect(loc.placeID).toBe("wof:2")
+		expect(loc.metadata?.rooftop_repicked).toBe(true)
+		expect(loc.metadata?.rooftop_outside_locality_km).toBeUndefined()
+	})
+
 	it("leaves a locality near the rooftop untouched", async () => {
 		const resolver = createWOFResolver(await makeBackend([SP_NEAR]))
 
