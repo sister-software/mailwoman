@@ -13,7 +13,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
 	type CountryHoldout,
 	defaultHoldouts,
+	HASHED_PLACE_HOLDOUT_DIVISOR,
 	hashBucket,
+	hashedHoldoutPlace,
 	type HoldoutPolicy,
 	splitForRow,
 	splitRows,
@@ -93,6 +95,47 @@ describe("hashBucket", () => {
 			expect(c).toBeGreaterThan(800)
 			expect(c).toBeLessThan(1200)
 		}
+	})
+})
+
+describe("splitForRow — hashed place holdout for an undeclared country", () => {
+	it("keys a row by venue, then locality, then postcode prefix, then region", () => {
+		expect(hashedHoldoutPlace({ venue: "Musée Gassi", locality: "Nairobi" })).toBe("venue:musée gassi")
+
+		expect(hashedHoldoutPlace({ locality: " Nairobi ", postcode: "00100", region: "Nairobi" })).toBe("locality:nairobi")
+
+		expect(hashedHoldoutPlace({ postcode: "00 100", region: "Nairobi" })).toBe("postcode:00")
+		expect(hashedHoldoutPlace({ region: "Nairobi" })).toBe("region:nairobi")
+		expect(hashedHoldoutPlace({})).toBeNull()
+	})
+
+	it("sends every row of one place to the same side of the train boundary", () => {
+		const localities = Array.from({ length: 400 }, (_, index) => `Town ${index}`)
+
+		const heldOut = localities.filter(
+			(locality) => splitForRow({ source_id: `${locality}-a`, country: "KE", components: { locality } }) !== "train"
+		)
+
+		expect(heldOut.length).toBeGreaterThan(0)
+		expect(heldOut.length).toBeLessThan(localities.length / 10)
+
+		for (const locality of heldOut) {
+			for (const suffix of ["b", "c", "d"]) {
+				expect(splitForRow({ source_id: `${locality}-${suffix}`, country: "KE", components: { locality } })).not.toBe(
+					"train"
+				)
+			}
+		}
+
+		expect(hashBucket(`KE|locality:${heldOut[0]!.toLowerCase()}`, HASHED_PLACE_HOLDOUT_DIVISOR)).toBe(0)
+	})
+
+	it("keeps a row with no place in train", () => {
+		expect(splitForRow({ source_id: "x", country: "KE", components: { street: "Moi Avenue" } })).toBe("train")
+	})
+
+	it("leaves a declared country to its declared places", () => {
+		expect(splitForRow({ source_id: "x", country: "US", components: { region: "Texas" } })).toBe("train")
 	})
 })
 
