@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	aggregateLanguage,
+	MIN_LANGUAGE_CARRIERS,
 	codexAdminWords,
 	HeadCounts,
 	MIN_SUFFIX_STEMS,
@@ -198,10 +199,31 @@ describe("pruneSuffixes", () => {
 })
 
 describe("aggregateLanguage", () => {
-	it("weights countries equally and counts a missing entry as zero", () => {
+	it("averages a head over the countries that carry it, leaving out those that lack it", () => {
 		const gb = { first: {}, last: { gallery: 4, palace: 2 }, suffix: {} }
-		const nz = { first: {}, last: { gallery: 2 }, suffix: {} }
+		const nz = { first: {}, last: { gallery: 2, palace: 2 }, suffix: {} }
+		const au = { first: {}, last: { gallery: 3 }, suffix: {} }
+		const empty = { first: {}, last: {}, suffix: {} }
 
-		expect(aggregateLanguage([gb, nz]).last).toEqual({ gallery: 3, palace: 1 })
+		expect(aggregateLanguage([gb, nz, au, empty, empty]).last).toEqual({ gallery: 3 })
+	})
+
+	it("omits a head carried by fewer than MIN_LANGUAGE_CARRIERS of the scoring countries", () => {
+		const gallery = { first: {}, last: { gallery: 4 }, suffix: {} }
+		const museum = { first: {}, last: { museum: 3 }, suffix: {} }
+
+		const members = [
+			...Array.from({ length: MIN_LANGUAGE_CARRIERS - 1 }, () => gallery),
+			...Array.from({ length: MIN_LANGUAGE_CARRIERS }, () => museum),
+		]
+
+		expect(aggregateLanguage(members).last).toEqual({ museum: 3 })
+	})
+
+	it("keeps a one-country language's heads", () => {
+		const only = { first: {}, last: { galleria: 4 }, suffix: {} }
+		const empty = { first: {}, last: {}, suffix: {} }
+
+		expect(aggregateLanguage([only, empty]).last).toEqual({ galleria: 4 })
 	})
 })
