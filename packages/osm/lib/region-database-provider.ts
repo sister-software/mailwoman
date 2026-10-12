@@ -110,7 +110,13 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 			const path = this.#addressPointsPath(cc).toString()
 
 			if (this.#onDisk.has(path)) {
-				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }
+				// The rooftop builder stores `addr:suburb` before `addr:city`, so a stored locality can be part of a place.
+				entry = {
+					addressPoints: new AddressPointSqliteLookup(path, {
+						streetLocale: streetLocaleForCountry(cc),
+						localityLevel: "finest",
+					}),
+				}
 			}
 		}
 
