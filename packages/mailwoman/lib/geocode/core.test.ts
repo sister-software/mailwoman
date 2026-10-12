@@ -140,6 +140,50 @@ describe("ExtractGeocodeResult — a component the answer did not follow", () =>
 		expect(r.dropped_components).toBeNull()
 	})
 
+	it("reports a locality the rooftop row lies outside, and keeps the rooftop coordinate", () => {
+		const tree: AddressTree = {
+			raw: "12 High Street, Whitchurch",
+			roots: [
+				node({ tag: "house_number", value: "12", start: 0, end: 2 }),
+				node({
+					tag: "street",
+					value: "High Street",
+					start: 3,
+					end: 14,
+					metadata: {
+						resolution_tier: "address_point",
+						address_point: {
+							lat: 52.969088,
+							lon: -2.6835909,
+							source: "osm",
+							release: "1",
+							locality_norm: "whitchurch",
+						},
+					},
+				}),
+				node({
+					tag: "locality",
+					value: "Whitchurch",
+					start: 16,
+					end: 26,
+					lat: 51.23174,
+					lon: -1.332674,
+					placeID: "wof:101852471",
+					metadata: { rooftop_outside_locality_km: 214.1 },
+				}),
+			],
+		}
+
+		const r = extractGeocodeResult("12 High Street, Whitchurch", tree)
+
+		expect(r.unfollowed_components).toEqual([
+			{ tag: "locality", value: "Whitchurch", reason: "rooftop_outside_locality", distance_km: 214.1 },
+		])
+
+		expect(r.lat).toBe(52.969088)
+		expect(r.resolution_tier).toBe("address_point")
+	})
+
 	it("nulls the field when the answer followed everything it parsed", () => {
 		const agreeing: AddressTree = {
 			raw: "Paris, 75008",
