@@ -205,6 +205,48 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 }
 
 /**
+ * The component tags {@link splitForRow} reads.
+ *
+ * A reader that rebuilds components from spans needs only these.
+ */
+export const HOLDOUT_COMPONENT_TAGS: ReadonlySet<string> = new Set(["venue", "region", "postcode", "locality"])
+
+/**
+ * One place in this many is held out in a country without a {@link defaultHoldouts} entry.
+ */
+export const HASHED_PLACE_HOLDOUT_DIVISOR = 50
+
+/**
+ * The key a row is held out by under the hashed holdout: its venue, else its locality,
+ * else the first two characters of its postcode, else its region.
+ *
+ * A venue name keys before its place because the venue recipes write one name both with a locality and bare.
+ * A locality key would hold out the first form and train on the second.
+ *
+ * Returns null for a row with none of the four.
+ * That row stays in train.
+ */
+export function hashedHoldoutPlace(
+	components: Partial<Record<"venue" | "locality" | "postcode" | "region", string>>
+): string | null {
+	const venue = components.venue?.trim().toLowerCase()
+
+	if (venue) return `venue:${venue}`
+
+	const locality = components.locality?.trim().toLowerCase()
+
+	if (locality) return `locality:${locality}`
+
+	const postcode = components.postcode?.replaceAll(/\s+/g, "").toUpperCase()
+
+	if (postcode && postcode.length >= 2) return `postcode:${postcode.slice(0, 2)}`
+
+	const region = components.region?.trim().toLowerCase()
+
+	return region ? `region:${region}` : null
+}
+
+/**
  * Returns the matchers for one country, reading a bare array as a region list.
  */
 export function holdoutPolicyFor(holdout: CountryHoldout | null): HoldoutPolicy {
@@ -225,13 +267,24 @@ export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
 ): SplitName {
-	const policy = holdoutPolicyFor(holdouts[row.country] ?? null)
+	const declared = holdouts[row.country]
 	const { region, postcode, locality } = row.components
+	let isHeldOut: boolean
 
-	const isHeldOut =
-		(region !== undefined && (policy.regions?.includes(region) ?? false)) ||
-		(postcode !== undefined && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
-		(locality !== undefined && (policy.localities?.includes(locality) ?? false))
+	if (declared) {
+		const policy = holdoutPolicyFor(declared)
+
+		isHeldOut =
+			(region !== undefined && (policy.regions?.includes(region) ?? false)) ||
+			(postcode !== undefined && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
+			(locality !== undefined && (policy.localities?.includes(locality) ?? false))
+	} else {
+		// A country without a declared holdout holds out whole places chosen by hash,
+		// so every country in the corpus reaches val and test.
+		const place = hashedHoldoutPlace(row.components)
+
+		isHeldOut = place !== null && hashBucket(`${row.country}|${place}`, HASHED_PLACE_HOLDOUT_DIVISOR) === 0
+	}
 
 	if (!isHeldOut) return "train"
 
