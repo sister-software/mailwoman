@@ -338,12 +338,12 @@ describe("applyEntityTiers for a parsed venue with no coordinate", () => {
 		expect(result.lat).toBeNull()
 	})
 
-	it("leaves a worldwide-ambiguous name to the anchored refinement, which answers from an admin anchor", () => {
-		const twoTaverns = stubLookup([
-			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
-			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
-		])
+	const twoTaverns = stubLookup([
+		{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
+		{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
+	])
 
+	it("leaves a worldwide-ambiguous name to the anchored refinement, which answers from an admin anchor", () => {
 		const bare = unplaced("Nine Elms Tavern")
 
 		applyEntityTiers(bare, [], "Nine Elms Tavern", [], {
@@ -369,5 +369,18 @@ describe("applyEntityTiers for a parsed venue with no coordinate", () => {
 		expect(anchored.resolution_tier).toBe("venue")
 		expect(anchored.lat).toBeCloseTo(51.48223)
 		expect(anchored.entity?.country).toBe("GB")
+	})
+
+	it("refines a postcode-tier answer to the venue, as it does an admin one", () => {
+		const anchored = { ...unplaced("Nine Elms Tavern"), lat: 51.4801, lon: -0.1335, resolution_tier: "postcode" }
+
+		applyEntityTiers(anchored, [], "Nine Elms Tavern, London SW11 8AY", [], {
+			poiLookup: twoTaverns,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(anchored.resolution_tier).toBe("venue")
+		expect(anchored.lat).toBeCloseTo(51.48223)
 	})
 })

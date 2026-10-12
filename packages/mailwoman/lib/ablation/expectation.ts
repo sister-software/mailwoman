@@ -821,8 +821,8 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 /**
  * Coarseness rank: higher is more precise.
  *
- * The tier ladder is `address_point → interpolated → street → admin`, and a deletion that
- * walks down it has cost the user precision even when the coordinate barely moved.
+ * The tier ladder is `address_point → interpolated → street → postcode → admin`, and a deletion
+ * that walks down it has cost the user precision even when the coordinate barely moved.
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
@@ -830,10 +830,12 @@ export function tierRank(tier: ResolutionTier): number {
 		case "venue":
 		case "address_point":
 		case "plus_code":
-			return 4
+			return 5
 		case "interpolated":
-			return 3
+			return 4
 		case "street":
+			return 3
+		case "postcode":
 			return 2
 		case "admin":
 			return 1

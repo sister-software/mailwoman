@@ -7,7 +7,7 @@
  *   Compile-time checks keep the type and schema aligned with {@linkcode SEED_CASE_KEY_ORDER}.
  */
 
-import type { ResolutionTier } from "@mailwoman/annotations/geo"
+import { RESOLUTION_TIERS, type ResolutionTier } from "@mailwoman/annotations/geo"
 import { stringifyJSON } from "@mailwoman/core/json"
 import zod from "zod"
 
@@ -127,7 +127,7 @@ export const SeedCaseSchema = zod.strictObject({
 	expectLat: zod.number().optional(),
 	expectLon: zod.number().optional(),
 	expectToleranceM: zod.number().optional(),
-	expectTier: zod.enum(["address_point", "interpolated", "street", "admin", "venue", "plus_code"]).optional(),
+	expectTier: zod.enum(RESOLUTION_TIERS).optional(),
 	expectAbstain: zod.boolean().optional(),
 	addedAt: zod.string().min(1),
 	bugRef: zod.string().optional(),

@@ -201,4 +201,19 @@ describe("coarserAnswerMarker", () => {
 			]
 		).toEqual(["postcode"])
 	})
+
+	test("a postcode answer uses the postcode and still reports the street it did not locate", () => {
+		expect(
+			coarserAnswerMarker({ kinds: STRUCTURED, components: { postcode: "SY23 3DT" }, reachedTier: "postcode" })
+		).toBeNull()
+
+		const marker = coarserAnswerMarker({
+			kinds: STRUCTURED,
+			components: { street: "Nant llan industrial estate", postcode: "SY23 3DT" },
+			reachedTier: "postcode",
+		})
+
+		expect(marker?.evidence?.["unusedComponents"]).toEqual(["street"])
+		expect(marker?.evidence?.["requiredTier"]).toBe("street")
+	})
 })

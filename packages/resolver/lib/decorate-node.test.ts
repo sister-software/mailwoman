@@ -104,3 +104,22 @@ describe("decorateNode and the unlocated sentinel", () => {
 		expect(n.placeID).toBe("wof:538966645")
 	})
 })
+
+describe("decorateNode and the stored extent", () => {
+	it("records an extent with area", () => {
+		const n = node()
+		const bbox = { minLat: 43.3, maxLat: 43.34, minLon: -95.5, maxLon: -95.44 }
+
+		decorateNode(n, place({ bbox }), [])
+
+		expect(n.metadata?.["resolver_bbox"]).toEqual(bbox)
+	})
+
+	it("records no extent for a point-only row, whose corners are its coordinate", () => {
+		const n = node()
+
+		decorateNode(n, place({ bbox: { minLat: 43.32, maxLat: 43.32, minLon: -95.47, maxLon: -95.47 } }), [])
+
+		expect(n.metadata?.["resolver_bbox"]).toBeUndefined()
+	})
+})

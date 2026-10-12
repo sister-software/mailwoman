@@ -85,6 +85,13 @@ export function decorateNode(
 		node.metadata["resolver_importance"] = resolved.importance
 	}
 
+	// A point-only row stores its coordinate as both corners, so only an extent with area measures the place's size.
+	const bbox = resolved.bbox
+
+	if (bbox && (bbox.minLat !== bbox.maxLat || bbox.minLon !== bbox.maxLon)) {
+		node.metadata["resolver_bbox"] = bbox
+	}
+
 	// The postcode pointed to a geographically different place than the parsed city name,
 	// surfaced so callers can warn rather than silently trust the resolved point.
 	if (resolved.mismatch) {
