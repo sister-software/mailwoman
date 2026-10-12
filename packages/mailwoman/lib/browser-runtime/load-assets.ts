@@ -18,7 +18,7 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
-import { postcodeAnchorAssetsOf, type ReleaseInfo } from "#browser-runtime/manifest"
+import { postcodeAnchorFilesOf, type ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
 	assetURL,
@@ -174,7 +174,7 @@ export async function loadReleaseAssets(
 		: fetchWithRetry
 
 	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-		postcodeAnchor: postcodeAnchorAssetsOf(release),
+		postcodeAnchors: postcodeAnchorFilesOf(release),
 		splitEmbeddings: release.splitEmbeddings,
 	})
 
