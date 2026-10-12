@@ -56,6 +56,31 @@ describe("shouldDropInferredScope (#1684)", () => {
 	})
 })
 
+describe("An inferred country the locale head has no class for", () => {
+	const INFERRED_NZ = { country: "NZ", source: "inferred" } as const
+	const INFERRED_AU = { country: "AU", source: "inferred" } as const
+
+	it("keeps the scope when the head names a country of the same codex address system", () => {
+		expect(shouldDropInferredScope(tree({ country: "GB", confidence: 0.92 }), INFERRED_NZ)).toBe(false)
+	})
+
+	it("drops the scope when the head names a country of a different address system", () => {
+		expect(shouldDropInferredScope(tree({ country: "US", confidence: 0.95 }), INFERRED_NZ)).toBe(true)
+		expect(shouldDropInferredScope(tree({ country: "DE", confidence: 0.95 }), INFERRED_NZ)).toBe(true)
+		expect(shouldDropInferredScope(tree({ country: "GB", confidence: 0.95 }), INFERRED_AU)).toBe(true)
+	})
+
+	it("still drops an inferred scope the head has a class for on any contrary country", () => {
+		expect(shouldDropInferredScope(tree({ country: "CZ", confidence: 1 }), INFERRED_US)).toBe(true)
+		expect(shouldDropInferredScope(tree({ country: "CA", confidence: 1 }), INFERRED_US)).toBe(true)
+	})
+
+	it("reads the postcode-format signal unchanged", () => {
+		expect(shouldDropInferredScope(tree({ country: "GB", confidence: 0.92 }), INFERRED_NZ, ["GB"])).toBe(true)
+		expect(shouldDropInferredScope(tree({ country: "GB", confidence: 0.92 }), INFERRED_NZ, ["NZ", "AU"])).toBe(false)
+	})
+})
+
 describe("CLI country scope feeds shouldDropInferredScope with its true source", () => {
 	it("a --locale country is inferred, so a contrary read withholds it", () => {
 		const scope = resolverDefaultCountry({ locale: "en-US" })
