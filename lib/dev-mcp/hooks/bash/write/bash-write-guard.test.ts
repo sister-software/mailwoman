@@ -127,6 +127,7 @@ describe("bash-write-guard: GitHub mutations owned by the development MCP", () =
 		["creating a pull request", `gh pr create --title "Feature" --body "Body"`],
 		["editing a pull request", `gh pr edit 2366 --body "Body"`],
 		["commenting on a pull request", `gh pr comment 2366 --body "Comment"`],
+		["creating a pull request naming this repository", `gh pr create --repo sister-software/mailwoman --title "F"`],
 	])("refuses %s", (_label, command) => {
 		expect(refusalFor(command)).not.toBeNull()
 		expect(guidanceFor(command)).toContain("mwdev_issue")
@@ -140,6 +141,11 @@ describe("bash-write-guard: GitHub mutations owned by the development MCP", () =
 		["watching checks", `gh pr checks 2366 --watch`],
 		["merging a pull request", `gh pr merge 2366 --squash`],
 		["reading a workflow run", `gh run view 36142066728`],
+		[
+			"creating a pull request upstream",
+			`gh pr create --repo whosonfirst-data/whosonfirst-data-admin-gb --base master`,
+		],
+		["commenting on an upstream pull request", `gh pr comment 12 -R whosonfirst-data/whosonfirst-data-admin-gb`],
 	])("still admits %s", (_label, command) => {
 		expect(refusalFor(command)).toBeNull()
 	})
