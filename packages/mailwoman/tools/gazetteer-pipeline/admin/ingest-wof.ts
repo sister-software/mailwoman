@@ -202,8 +202,10 @@ export interface IngestWOFOptions {
 	batchCommitSize?: number
 	/**
 	 * Called after every 25,000 ingested records.
+	 *
+	 * `found` counts the files the walk has yielded so far, and it grows until the walk finishes.
 	 */
-	onProgress?: (processed: number, skipped: number, total: number) => void
+	onProgress?: (processed: number, skipped: number, found: number) => void
 	/**
 	 * The GeoNames anchor lookup for label-point adjudication.
 	 */
@@ -240,14 +242,21 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		exclude.push("**/whosonfirst-data-postalcode-*/**")
 	}
 
-	const filePaths = await Globerator.from("**/data/**/*.geojson", {
+	let filesFound = 0
+
+	// The walk streams into the reader, so the paths of the millions of records are never held at once.
+	const filePaths = Globerator.from("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
 		absolute: true,
 		exclude,
 		// A data root can expose one checkout both directly and through a symlink.
 		// The ingester reads each record once when it skips symlinks.
 		followSymlinks: false,
-	}).toArray()
+	}).map((path) => {
+		filesFound++
+
+		return path
+	})
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -344,11 +353,11 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		commitIfNeeded()
 
 		if (processed % 25_000 === 0) {
-			opts.onProgress?.(processed, skipped, filePaths.length)
+			opts.onProgress?.(processed, skipped, filesFound)
 		}
 	}
 
 	commitIfNeeded(true)
 
-	return { filesFound: filePaths.length, placesIngested: processed, skipped, labelPointOverrides }
+	return { filesFound, placesIngested: processed, skipped, labelPointOverrides }
 }
