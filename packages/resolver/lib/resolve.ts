@@ -50,6 +50,7 @@ import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcod
 import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode/shape-coherence"
 import {
 	applyPostcodeConsistency,
+	applyRooftopConsistency,
 	applySpanRescore,
 	createNodeTraceRecorder,
 	DIAGNOSTIC_BANDS,
@@ -255,9 +256,12 @@ class WOFResolver implements Resolver {
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
 		}
 
+		// The postcode and rooftop passes hold a locality to the same distance from their point.
+		const consistencyThresholdKm = opts.postcodeConsistencyThresholdKm ?? 50
+
 		// Postcode/locality consistency pass (default on).
 		if (opts.postcodeConsistency) {
-			applyPostcodeConsistency(newRoots, opts.postcodeConsistencyThresholdKm ?? 50, opts.postcodeConsistencyMaxMoveKm)
+			applyPostcodeConsistency(newRoots, consistencyThresholdKm, opts.postcodeConsistencyMaxMoveKm)
 		}
 
 		// Optional exact address-point tier.
@@ -279,6 +283,11 @@ class WOFResolver implements Resolver {
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
 			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
+		}
+
+		// A rooftop row keyed by locality name can lie in a namesake of the selected locality.
+		if (opts.addressPoints && opts.postcodeConsistency) {
+			applyRooftopConsistency(newRoots, consistencyThresholdKm)
 		}
 
 		// Optional street-centroid tier runs last.

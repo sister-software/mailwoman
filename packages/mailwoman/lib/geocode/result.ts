@@ -43,17 +43,27 @@ function hierarchySourceNodeOf(node: AddressNode): HierarchySourceNode {
 }
 
 function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedComponent[] {
+	const unfollowed: UnfollowedComponent[] = []
+
 	const refusedKm = allNodes
 		.map((node) => node.metadata?.["postcode_move_refused_km"])
 		.find((km): km is number => typeof km === "number")
 
-	if (refusedKm === undefined) return []
-
 	const postcode = allNodes.find((node) => node.tag === "postcode")
 
-	if (!postcode) return []
+	if (refusedKm !== undefined && postcode) {
+		unfollowed.push({ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm })
+	}
 
-	return [{ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm }]
+	for (const node of allNodes) {
+		const outsideKm = node.metadata?.["rooftop_outside_locality_km"]
+
+		if (typeof outsideKm === "number") {
+			unfollowed.push({ tag: node.tag, value: node.value, reason: "rooftop_outside_locality", distance_km: outsideKm })
+		}
+	}
+
+	return unfollowed
 }
 
 /**
