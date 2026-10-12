@@ -34,6 +34,7 @@
  *   `@mailwoman/core/decoder`: the same functions the browser runtime calls, so this measures the real cascade.
  */
 
+import { CountryISO2 } from "@mailwoman/codex/country/codes"
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -192,7 +193,8 @@ export async function demoCascadeSmoke(
 
 	const postcodeBinaries = (
 		await Promise.all(
-			["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"].map(async (f) => {
+			Object.values(CountryISO2).map(async (cc) => {
+				const f = `postcode-${cc.toLowerCase()}.bin`
 				const p = STAGE(f)
 
 				return { p, exists: await pathExists(p) }

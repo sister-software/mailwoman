@@ -441,7 +441,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		hasFST: !!fstPath,
 		hasWOFDB: true,
 
-		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
+		hasAnchor: postcodeBins.length > 0,
+		postcodeAnchors: postcodeBins.map((localPath) => localPath.split("/").pop()!),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 		splitEmbeddings: splitEmbeddingFiles.length > 0,
 	}

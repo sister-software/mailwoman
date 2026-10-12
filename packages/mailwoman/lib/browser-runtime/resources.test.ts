@@ -14,7 +14,9 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, test } from "vitest"
 
+import { postcodeAnchorFilesOf } from "#browser-runtime/manifest"
 import {
+	assetURL,
 	neuralClassifierLoadURLs,
 	PAIR_INDEX_VERSION,
 	pairIndexBaseURL,
@@ -61,15 +63,34 @@ describe("the release loader owns no pair-index URL of its own", () => {
 
 describe("neuralClassifierLoadURLs — one configuration for the primary and comparison loads", () => {
 	test("requests every published pair index from the versioned base", () => {
-		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchor: "skip" })
+		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchors: [] })
 
 		expect(urls.pairIndexURLs).toEqual(pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION)))
 		expect(urls.postcodeBinaryURLs).toEqual([])
 	})
 
-	test("requests the postcode binaries only when the anchor assets load", () => {
-		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchor: "load" })
+	test("requests each postcode binary the release lists", () => {
+		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchors: ["postcode-gb.bin"] })
 
-		expect(urls.postcodeBinaryURLs).toHaveLength(3)
+		expect(urls.postcodeBinaryURLs).toEqual([assetURL("en-US", "v1", "postcode-gb.bin")])
+	})
+})
+
+describe("postcodeAnchorFilesOf", () => {
+	test("reads the entry's list", () => {
+		expect(postcodeAnchorFilesOf({ hasAnchor: true, postcodeAnchors: ["postcode-gb.bin"] })).toEqual([
+			"postcode-gb.bin",
+		])
+	})
+
+	test("reads an entry without a list as the files those releases shipped", () => {
+		expect(postcodeAnchorFilesOf({ hasAnchor: true })).toEqual([
+			"postcode-us.bin",
+			"postcode-de.bin",
+			"postcode-fr.bin",
+		])
+
+		expect(postcodeAnchorFilesOf({ hasAnchor: false })).toEqual([])
+		expect(postcodeAnchorFilesOf(null)).toEqual([])
 	})
 })
