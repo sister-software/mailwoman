@@ -139,13 +139,16 @@ export type AuthoritativeAssertion = z.infer<typeof AuthoritativeAssertionSchema
 /**
  * A parsed component that the answer's coordinate ignored.
  *
- * The only current `reason`, `postcode_move_refused`, means the postcode resolved
- * too far from the selected locality.
+ * - `postcode_move_refused`: the postcode resolved too far from the selected locality.
+ * - `rooftop_outside_locality`: the address-point row lies too far from the selected
+ *   locality, and no alternative locality lies near it.
+ *   The coordinate is the rooftop.
+ *   The hierarchy still holds the selected locality, which the rooftop contradicts.
  */
 export const UnfollowedComponentSchema = z.object({
 	tag: ComponentTagSchema,
 	value: z.string(),
-	reason: z.literal("postcode_move_refused"),
+	reason: z.enum(["postcode_move_refused", "rooftop_outside_locality"]),
 	/**
 	 * The distance in kilometers that following this component would have moved the answer.
 	 */

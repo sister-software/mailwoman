@@ -10,7 +10,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import type { AddressPointLookup, ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
 import { createWOFResolver, DEFAULT_POSTCODE_MAX_MOVE_KM } from "#resolve"
@@ -229,5 +229,62 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 
 		const loc = out.roots.find((n) => n.tag === "locality")!
 		expect(loc.placeID).toBe("wof:1")
+	})
+})
+
+describe("resolveTree + rooftop consistency", () => {
+	const rooftopAt = (lat: number, lon: number): AddressPointLookup => ({
+		find: () => ({ lat, lon, source: "test", release: "1", localityNorm: "saint-pierre", postcode: null }),
+	})
+
+	const addressTree = (): AddressTree => ({
+		raw: "12 Rue Haute, Saint-Pierre",
+		roots: [
+			node({ tag: "house_number", value: "12", start: 0, end: 2 }),
+			node({ tag: "street", value: "Rue Haute", start: 3, end: 12 }),
+			node({ tag: "locality", value: "Saint-Pierre", start: 14, end: 26 }),
+		],
+	})
+
+	it("re-picks the same-named locality nearest the rooftop", async () => {
+		const resolver = createWOFResolver(await makeBackend([SP_FAR, SP_NEAR]))
+
+		const out = await resolver.resolveTree(addressTree(), {
+			defaultCountry: { country: "FR", source: "caller" },
+			addressPoints: rooftopAt(48.91, 2.41),
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		expect(loc.placeID).toBe("wof:2")
+		expect(loc.metadata?.rooftop_repicked).toBe(true)
+	})
+
+	it("keeps the rooftop and records the distance when no same-named locality lies near it", async () => {
+		const resolver = createWOFResolver(await makeBackend([SP_FAR]))
+
+		const out = await resolver.resolveTree(addressTree(), {
+			defaultCountry: { country: "FR", source: "caller" },
+			addressPoints: rooftopAt(48.91, 2.41),
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		const street = out.roots.find((n) => n.tag === "street")!
+		expect(loc.placeID).toBe("wof:1")
+		expect(loc.lat).toBeCloseTo(44)
+		expect(loc.metadata?.rooftop_outside_locality_km).toBeGreaterThan(50)
+		expect(street.metadata?.resolution_tier).toBe("address_point")
+	})
+
+	it("leaves a locality near the rooftop untouched", async () => {
+		const resolver = createWOFResolver(await makeBackend([SP_NEAR]))
+
+		const out = await resolver.resolveTree(addressTree(), {
+			defaultCountry: { country: "FR", source: "caller" },
+			addressPoints: rooftopAt(48.91, 2.41),
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		expect(loc.metadata?.rooftop_outside_locality_km).toBeUndefined()
+		expect(loc.metadata?.rooftop_repicked).toBeUndefined()
 	})
 })

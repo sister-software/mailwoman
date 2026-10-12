@@ -480,6 +480,84 @@ async function recoverPostcodeNode(
 }
 
 /**
+ * Measures each resolved locality and dependent locality against `anchor`,
+ * a point the tree places the address at.
+ *
+ * A node farther than `thresholdKm` is re-picked to its nearest alternative
+ * within the threshold when one exists.
+ *
+ * Returns each node that lay beyond the threshold, with its distance before any re-pick.
+ * The caller decides what an unreconciled node means for its anchor.
+ */
+function reconcileLocalitiesToAnchor(
+	roots: readonly AddressNode[],
+	anchor: { lat: number; lon: number },
+	thresholdKm: number
+): Array<{ node: AddressNode; gapKm: number; repicked: boolean }> {
+	const far: Array<{ node: AddressNode; gapKm: number; repicked: boolean }> = []
+
+	for (const node of walkNodes(roots)) {
+		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
+
+		const gapKm = haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!)
+
+		if (gapKm <= thresholdKm) continue
+
+		const alts = (node.alternatives as ResolvedPlace[] | null) ?? []
+
+		const reconciling = alts
+			.filter((a) => a.lat !== 0 || a.lon !== 0)
+			.map((a) => ({ a, d: haversineKm(anchor.lat, anchor.lon, a.lat, a.lon) }))
+			.filter((x) => x.d <= thresholdKm)
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
+			.sort((x, y) => x.d - y.d)[0]
+
+		if (reconciling) {
+			const displaced: ResolvedPlace = {
+				...EMPTY_PLACE_FIELDS,
+				id: 0,
+				name: String(node.metadata?.["resolver_name"] ?? node.value),
+				placetype: "locality",
+				country: reconciling.a.country,
+				lat: node.lat!,
+				lon: node.lon!,
+				score: 0,
+			}
+
+			const rest = alts.filter((a) => a !== reconciling.a)
+			decorateNode(node, reconciling.a, [displaced, ...rest])
+		}
+
+		far.push({ node, gapKm, repicked: !!reconciling })
+	}
+
+	return far
+}
+
+/**
+ * Reconciles each resolved locality that lies farther than `thresholdKm` from the street's
+ * address-point coordinate, re-picking the nearest alternative within the threshold.
+ *
+ * A rooftop row is an observed point, so an unreconciled locality is never moved onto it.
+ * The node records the distance as `rooftop_outside_locality_km`, and the result
+ * reports the locality as a component the answer did not follow.
+ */
+export function applyRooftopConsistency(roots: readonly AddressNode[], thresholdKm: number): void {
+	const street = [...walkNodes(roots)].find(
+		(n) => n.tag === "street" && n.metadata?.["resolution_tier"] === "address_point"
+	)
+	const point = street?.metadata?.["address_point"] as { lat: number; lon: number } | undefined
+
+	if (!point) return
+
+	for (const { node, gapKm, repicked } of reconcileLocalitiesToAnchor(roots, point, thresholdKm)) {
+		node.metadata = repicked
+			? { ...node.metadata, rooftop_repicked: true }
+			: { ...node.metadata, rooftop_outside_locality_km: gapKm }
+	}
+}
+
+/**
  * The farthest distance, in kilometers, that {@link applyPostcodeConsistency}
  * moves a locality onto its postcode's point.
  */
@@ -507,36 +585,8 @@ export function applyPostcodeConsistency(
 
 	if (!anchor) return
 
-	for (const node of walkNodes(roots)) {
-		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
-
-		const gapKm = haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!)
-
-		if (gapKm <= thresholdKm) continue
-
-		const alts = (node.alternatives as ResolvedPlace[] | null) ?? []
-
-		const reconciling = alts
-			.filter((a) => a.lat !== 0 || a.lon !== 0)
-			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
-			.filter((x) => x.d <= thresholdKm)
-			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
-			.sort((x, y) => x.d - y.d)[0]
-
-		if (reconciling) {
-			const displaced: ResolvedPlace = {
-				...EMPTY_PLACE_FIELDS,
-				id: 0,
-				name: String(node.metadata?.["resolver_name"] ?? node.value),
-				placetype: "locality",
-				country: reconciling.a.country,
-				lat: node.lat!,
-				lon: node.lon!,
-				score: 0,
-			}
-
-			const rest = alts.filter((a) => a !== reconciling.a)
-			decorateNode(node, reconciling.a, [displaced, ...rest])
+	for (const { node, gapKm, repicked } of reconcileLocalitiesToAnchor(roots, anchor, thresholdKm)) {
+		if (repicked) {
 			node.metadata = { ...node.metadata, postcode_repicked: true }
 
 			continue
