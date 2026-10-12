@@ -445,9 +445,30 @@ describe("ExtractGeocodeResult — unit-grade postcodes lead the admin ladder ( 
 		expect(r.lon).toBeCloseTo(-0.130693, 4)
 	})
 
+	it("reports the postcode tier for the unit-postcode centroid, with no uncertainty for a point-only row", () => {
+		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree())
+		expect(r.resolution_tier).toBe("postcode")
+		expect(r.epistemic_status).toBe("derived")
+		expect(r.uncertainty_m).toBeNull()
+	})
+
+	it("derives the postcode tier's uncertainty from the row's stored extent", () => {
+		const tree = gbTree()
+		const postcode = tree.roots.find((n) => n.tag === "postcode")!
+
+		// About 222 m of latitude corner to corner.
+		postcode.metadata = {
+			...postcode.metadata,
+			resolver_bbox: { minLat: 51.549, maxLat: 51.551, minLon: -0.1307, maxLon: -0.1307 },
+		}
+
+		expect(extractGeocodeResult(tree.raw, tree).uncertainty_m).toBe(111)
+	})
+
 	it("keeps the locality centroid when the resolver only reached the OUTWARD stem", () => {
 		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree("N7"))
 		expect(r.lat).toBeCloseTo(51.500526, 4)
+		expect(r.resolution_tier).toBe("admin")
 	})
 
 	it("keeps the locality centroid for a US ZIP (area-class, the locality-first epoch convention)", () => {

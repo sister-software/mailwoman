@@ -9,7 +9,7 @@ verified-with: mailwoman 8.7.0
 
 Every geocode you have run so far answered `resolution_tier: "admin"` — a coordinate for the city rather than
 for the building. By the end of this page you'll have moved one address 1,521 m, from a city centroid to
-its rooftop, with a 127 MB download; you'll know what the six tiers are and which download reaches
+its rooftop, with a 127 MB download; you'll know what the seven tiers are and which download reaches
 which; and you'll know what `uncertainty_m` is measuring in each one. About twenty minutes.
 
 ## Prerequisites
@@ -163,20 +163,21 @@ hierarchy:
 `interpolated`, and a radius you can act on. The second database found the H St NE segment whose
 house-number range contains 620 and placed the point proportionally along it.
 
-## 5. Read the six tiers
+## 5. Read the seven tiers
 
-`resolution_tier` takes one of six values. The four in the ladder below are ordered best first; the
+`resolution_tier` takes one of seven values. The five in the ladder below are ordered best first; the
 last two come from a different route. Check it on every result; it is how a coordinate
 tells you what kind of coordinate it is.
 
-| Tier            | Source                                        | `uncertainty_m`                          |
-| --------------- | --------------------------------------------- | ---------------------------------------- |
-| `address_point` | the state's rooftop register (`situs.db`)     | `1` — a floor rather than a measurement  |
-| `interpolated`  | the TIGER street network (`interp.db`)        | the calibrated bracket, `141` above      |
-| `street`        | a national register's street centroids        | half the street's bounding-box diagonal  |
-| `admin`         | the gazetteer, `candidate.db`                 | `null` — no sub-locality estimate exists |
-| `venue`         | a matched named place in the POI layer        | the venue match's own radius             |
-| `plus_code`     | a plus code in the input, decoded to its cell | half the cell's diagonal, at least `1`   |
+| Tier            | Source                                        | `uncertainty_m`                                                |
+| --------------- | --------------------------------------------- | -------------------------------------------------------------- |
+| `address_point` | the state's rooftop register (`situs.db`)     | `1` — a floor rather than a measurement                        |
+| `interpolated`  | the TIGER street network (`interp.db`)        | the calibrated bracket, `141` above                            |
+| `street`        | a national register's street centroids        | half the street's bounding-box diagonal                        |
+| `postcode`      | the postcode's own row in `candidate.db`      | half the row's extent diagonal, or `null` for a point-only row |
+| `admin`         | the gazetteer, `candidate.db`                 | `null` — no sub-locality estimate exists                       |
+| `venue`         | a matched named place in the POI layer        | the venue match's own radius                                   |
+| `plus_code`     | a plus code in the input, decoded to its cell | half the cell's diagonal, at least `1`                         |
 
 Three notes on that table.
 
@@ -203,27 +204,7 @@ in a fixed order — locality, then dependent locality, then postcode, then regi
 takes the first with a coordinate. Which is why the DC address in step 1 returned Washington's centroid
 and not its ZIP Code's, even though both resolved.
 
-That ordering matters when the locality is missing. A bare postcode has no locality above it:
-
-```bash
-npx mailwoman geocode "20004" --format text
-```
-
-```
-input:            20004
-resolution_tier:  admin
-coordinate:       53.093382, 14.259291
-postcode:         20004
-```
-
-That is in Germany. `20004` is a valid postcode in at least Germany, Spain, the United States and
-Poland. This gazetteer holds a row for each — and a bare five-digit string carries no signal saying
-which. `--locale en-US` does not rescue it: with the candidate backend active the locale stops implying
-a country filter, which is the same design that lets a French address resolve in France while the locale
-still reads `en-US`. No filter scoped this query, so the global ranking decided it.
-
-A bare postcode is ambiguous across countries and the result will not warn you — so scope it, either
-with `--default-country` or by sending the city along with it:
+When the postcode supplies the coordinate, the tier says so. A bare postcode has no locality above it:
 
 ```bash
 npx mailwoman geocode "20004" --default-country US --format text
@@ -231,15 +212,19 @@ npx mailwoman geocode "20004" --default-country US --format text
 
 ```
 input:            20004
-resolution_tier:  admin
+resolution_tier:  postcode
 coordinate:       38.894885, -77.028638
+uncertainty_m:    926
 postcode:         20004
 ```
 
-Still `admin`, because a postcode centroid is an admin coordinate — but 102 m from the rooftop in step 4
-rather than 1,521 m. When the street databases are missing, a resolved postcode is a much better answer
-than a resolved city, and the tier label does not distinguish them. Read `hierarchy` when you need to
-know which one you got.
+The `postcode` tier is the postcode's own row: 102 m from the rooftop in step 4 rather than the city
+centroid's 1,521 m. Its `uncertainty_m` is half the diagonal of the extent stored for the postcode, and it
+is `null` when the source stores the postcode as a single point, as the UK's Code-Point Open does.
+
+`20004` is also a valid postcode in Germany, Spain and Poland, and a bare five-digit string carries no
+signal saying which. With the candidate backend active the locale stops implying a country filter, so
+scope a bare postcode with `--default-country` or send the city along with it.
 
 ## 7. Outside the US
 

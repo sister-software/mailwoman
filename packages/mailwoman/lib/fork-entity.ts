@@ -297,7 +297,7 @@ export function applyEntityTiers(
 		result.venue &&
 		result.lat !== null &&
 		result.lon !== null &&
-		(result.resolution_tier === "admin" || result.resolution_tier === "street")
+		(result.resolution_tier === "admin" || result.resolution_tier === "postcode" || result.resolution_tier === "street")
 	) {
 		const anchor = { lat: result.lat, lon: result.lon }
 

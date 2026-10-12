@@ -189,7 +189,8 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 }
 ```
 
-`candidate.db` alone can answer only at `resolution_tier: "admin"`. It carries locality and region
+`candidate.db` alone answers at `resolution_tier: "admin"` or, where a postcode locates less than its
+city, as UK and Dutch unit postcodes do, at `"postcode"`. It carries locality, postcode and region
 centroids, so the coordinate is New York's centroid instead of this building's rooftop. Street-level
 precision (`resolution_tier: "address_point"` or `"interpolated"`) needs a further per-country
 download (`mailwoman data pull us` or `mailwoman data pull fr`), which this page does not cover.

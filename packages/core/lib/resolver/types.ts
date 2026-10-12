@@ -92,6 +92,11 @@ export interface ResolvedPlace {
 	 * Optional marker for variant-alias exemption.
 	 */
 	variantAliasExempted?: true | null
+	/**
+	 * Optional stored extent.
+	 * A point-only row stores its coordinate as both corners.
+	 */
+	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 }
 
 /**

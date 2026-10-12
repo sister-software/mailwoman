@@ -176,13 +176,13 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
  * The coarsest tier that still uses each parsed component, compared with {@linkcode tierRank}.
  *
  * An interpolated point locates a house number, so `house_number` needs only `interpolated`.
- * A postcode centroid is street-grade in most address systems, so `postcode` needs only `street`.
+ * A coordinate taken from the postcode's own row locates the postcode, so `postcode` needs only `postcode`.
  * `unit` has no floor because no layer locates units.
  */
 const COMPONENT_TIER_FLOOR: ReadonlyArray<readonly [tag: string, floor: ResolutionTier]> = [
 	["house_number", "interpolated"],
 	["street", "street"],
-	["postcode", "street"],
+	["postcode", "postcode"],
 ]
 
 /**
