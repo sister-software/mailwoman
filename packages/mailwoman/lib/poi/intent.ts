@@ -60,28 +60,37 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 }
 
 /**
- * English determiners that open a category phrase rather than a name.
- */
-const ENGLISH_DETERMINERS: ReadonlySet<string> = new Set(["a", "an", "the", "some", "any"])
-
-/**
  * Looks a phrase up as a POI category (exact, then locale-normalized, then typo-tolerant),
  * then as a brand, then as a locale-restricted brand alias such as "mcdo".
  *
  * A phrase that matches both a category and a brand always resolves as the category.
+ * It reads no stopwords. {@link createStopwordPOIPhraseLookup} builds a lookup that does.
  */
-export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
+export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => lookupPOIPhrase(phrase, locale, EMPTY_STOPWORDS)
+
+const EMPTY_STOPWORDS: ReadonlySet<string> = new Set()
+
+/**
+ * Builds {@link poiTaxonomyLookup} with one language's single-word stopwords,
+ * as `readLibPostalSingleWordStopwords` reads them.
+ *
+ * A phrase that misses the category table is retried without a leading stopword,
+ * so `an art gallery` and `une pharmacie` reach `art gallery` and `pharmacie`.
+ */
+export function createStopwordPOIPhraseLookup(leadingStopwords: ReadonlySet<string>): POIPhraseLookup {
+	return (phrase, locale) => lookupPOIPhrase(phrase, locale, leadingStopwords)
+}
+
+function lookupPOIPhrase(phrase: string, locale: string | undefined, leadingStopwords: ReadonlySet<string>) {
 	let categoryHits = lookupPOICategory(phrase, locale)
+	const words = phrase.trim().split(/\s+/)
+
+	if (!categoryHits.length && words.length > 1 && leadingStopwords.has(words[0]!.toLowerCase())) {
+		words.shift()
+		categoryHits = lookupPOICategory(words.join(" "), locale)
+	}
 
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
-		const words = phrase.trim().split(/\s+/)
-
-		// A leading determiner opens a category phrase, as in "an art gallery".
-		if (words.length > 1 && ENGLISH_DETERMINERS.has(words[0]!.toLowerCase())) {
-			words.shift()
-			categoryHits = lookupPOICategory(words.join(" "), locale)
-		}
-
 		const tail = words.at(-1)
 
 		if (tail) {

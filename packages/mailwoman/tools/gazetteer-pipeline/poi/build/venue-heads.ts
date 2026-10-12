@@ -38,6 +38,7 @@ import type {
 	VenueHeadPosition,
 	VenueHeadTable,
 } from "@mailwoman/poi-taxonomy/venue-heads"
+import { isSpacelessScriptWord } from "@mailwoman/poi-taxonomy/venue-heads"
 
 /**
  * The minimum number of distinct venue names in which a head must appear before it gets an entry.
@@ -74,7 +75,6 @@ export const MIN_SUFFIX_STEMS = 3
 
 const MAX_SUFFIX_LENGTH = 8
 const MIN_ALPHABETIC_SUFFIX_LENGTH = 4
-const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
 
 /**
  * The placetypes whose single-word names are excluded as first-word
@@ -121,7 +121,7 @@ export function wordSuffixes(word: string): string[] {
 	for (let length = 1; length < characters.length && length <= MAX_SUFFIX_LENGTH; length++) {
 		const suffix = characters.slice(-length).join("")
 
-		if (length >= MIN_ALPHABETIC_SUFFIX_LENGTH || SPACELESS_SCRIPT_RE.test(suffix)) {
+		if (length >= MIN_ALPHABETIC_SUFFIX_LENGTH || isSpacelessScriptWord(suffix)) {
 			out.push(suffix)
 		}
 	}
@@ -248,7 +248,7 @@ const WORD_POSITIONS = ["first", "last"] as const satisfies readonly VenueHeadPo
  * or an article rather than a head.
  */
 function isSingleLetter(head: string): boolean {
-	return [...head].length === 1 && !SPACELESS_SCRIPT_RE.test(head)
+	return [...head].length === 1 && !isSpacelessScriptWord(head)
 }
 
 /**
@@ -293,7 +293,7 @@ export function scoreCountry(counts: CountryCounts): VenueHeadEntries {
 	for (const [suffix, { count, stems }] of suffixCounts(counts.venue.lastWords, counts.adminWords)) {
 		if (count < MIN_SUPPORT || stems < MIN_SUFFIX_STEMS) continue
 
-		if (!SPACELESS_SCRIPT_RE.test(suffix) && (counts.venue.lastWords.get(suffix) ?? 0) < MIN_SUPPORT) continue
+		if (!isSpacelessScriptWord(suffix) && (counts.venue.lastWords.get(suffix) ?? 0) < MIN_SUPPORT) continue
 
 		const bias = score(count, placeSuffixes.get(suffix)?.count ?? 0, streetSuffixes.get(suffix)?.count ?? 0)
 

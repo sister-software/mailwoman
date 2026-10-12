@@ -384,7 +384,10 @@ const LEADING_WORD_RETRY_MIN_REMAINDER = 2
  * Retries a venue of three or more words without its first word, as in
  * `The Manchester Art Gallery`, whose POI row is `Manchester Art Gallery`.
  *
- * The retry reads no article list, so it applies to any language's determiner.
+ * The retry reads no article list, so it applies to a leading determiner in any
+ * script that separates words with spaces.
+ * A name in a script without spaces is one word and never retried.
+ *
  * The remainder must still name a single venue within the anchor's radius.
  *
  * A remainder ending in a street-type word is refused.

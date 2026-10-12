@@ -12,6 +12,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
+import { BARE_SUBLOCALITY_BANDS } from "@mailwoman/resolver/bare-toponym-race"
 import { describe, expect, it } from "vitest"
 
 import { runBaselineArm, runResolverArm } from "#tools/eval-harness/same-data/arms"
@@ -69,7 +70,7 @@ function tree(raw: string, value: string): AddressTree {
 function lookupsFor(text: string, candidates: SameDataCandidate[]) {
 	const queries = [
 		{ text, placetype: "locality", limit: 5 },
-		...["country", "region", "borough", "macrohood", "neighbourhood", "microhood"].map((placetype) => ({
+		...["country", "region", ...BARE_SUBLOCALITY_BANDS].map((placetype) => ({
 			text,
 			placetype,
 			limit: 1,

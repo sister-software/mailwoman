@@ -19,6 +19,7 @@ import {
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import { startEarly } from "@mailwoman/core/promises"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
 import type {
@@ -141,9 +142,8 @@ let earlyManifest: Promise<ReleasesManifest | null> | null = null
  * Every later load fetches afresh.
  */
 export function prefetchReleasesManifest(): void {
-	earlyManifest ??= fetchReleasesManifest()
 	// The hook awaits and reports a failure, so the early promise must not report it a second time.
-	earlyManifest.catch(() => {})
+	earlyManifest ??= startEarly(fetchReleasesManifest())
 }
 
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {

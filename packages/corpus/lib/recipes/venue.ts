@@ -25,7 +25,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
+import { isSpacelessScriptWord, venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"
@@ -105,8 +106,6 @@ export interface VenueHeadSuffixLookup {
 	suffix(word: string): number | null
 }
 
-const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
-
 /**
  * Characters a spaceless-script name needs before it is written as a bare query.
  *
@@ -135,7 +134,7 @@ export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): bo
 	return (
 		Boolean(heads) &&
 		[...word].length >= MIN_SPACELESS_BARE_CHARACTERS &&
-		SPACELESS_SCRIPT_RE.test(word) &&
+		isSpacelessScriptWord(word) &&
 		heads!.suffix(word) !== null
 	)
 }
@@ -144,7 +143,7 @@ export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): bo
  * The comparison key for a name against the country's localities.
  */
 export function venueNameKey(name: string): string {
-	return name.normalize("NFC").trim().toLowerCase().replaceAll(/\s+/gu, " ")
+	return foldCaseWhitespace(name.normalize("NFC"))
 }
 
 /**

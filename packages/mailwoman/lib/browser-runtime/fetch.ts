@@ -8,6 +8,8 @@
  *   because a 404 is an answer the loaders interpret.
  */
 
+import { startEarly } from "@mailwoman/core/promises"
+
 const ATTEMPTS = 3
 
 const FIRST_RETRY_DELAY_MS = 500
@@ -160,9 +162,7 @@ export function prefetchingFetch(fetchImpl: typeof fetch, urls: readonly string[
 	const started = new Map<string, Promise<Response>>()
 
 	for (const url of urls) {
-		const response = fetchImpl(url)
-		response.catch(() => {})
-		started.set(url, response)
+		started.set(url, startEarly(fetchImpl(url)))
 	}
 
 	return (input, init) => {

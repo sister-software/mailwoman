@@ -15,6 +15,7 @@ import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { loneValueNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 
 /**
  * The tree's single value-containing node when it is locality-tagged, else null.
@@ -98,10 +99,32 @@ export async function bareCountryCandidate(
 	text: string,
 	scopedCountry: string | undefined
 ): Promise<ResolvedPlace | null> {
+	return probeBareRace(backend, text, "country", ["country"], scopedCountry)
+}
+
+/**
+ * The top exact row of one placetype band for a bare toponym, or null.
+ *
+ * Every side race shares these rules: one row, abbreviation and gloss aliases excluded,
+ * the locality query's scope, an exact match, and a located coordinate.
+ *
+ * The placetype check is required.
+ * A backend may ignore the filter, as test stubs or a partial implementation could,
+ * and hand a race a locality row that would then demote the real pick.
+ *
+ * A failed probe returns null, so a side race never aborts the primary lookup.
+ */
+async function probeBareRace(
+	backend: ResolverBackend,
+	text: string,
+	placetype: string,
+	accepted: readonly string[],
+	scopedCountry: string | undefined
+): Promise<ResolvedPlace | null> {
 	try {
 		const hits = await backend.findPlace({
 			text,
-			placetype: "country",
+			placetype,
 			limit: 1,
 			excludeNameRoles: BARE_RACE_EXCLUDED_NAME_ROLES,
 			...(scopedCountry ? { country: scopedCountry } : {}),
@@ -109,14 +132,10 @@ export async function bareCountryCandidate(
 
 		const top = hits[0]
 
-		// The placetype check is required.
-		// A backend may ignore the filter, as test stubs or a partial implementation could.
-		// It could then hand this race a locality row wearing a country costume,
-		// The repick would then demote the real pick.
-		return top && top.placetype === "country" && top.exactMatch !== false ? top : null
+		return top && accepted.includes(top.placetype) && top.exactMatch !== false && !(top.lat === 0 && top.lon === 0)
+			? top
+			: null
 	} catch {
-		// A failed side race must never abort the primary lookup.
-		// The locality answer stands.
 		return null
 	}
 }
@@ -143,29 +162,20 @@ export async function bareRegionCandidate(
 	text: string,
 	scopedCountry: string | undefined
 ): Promise<ResolvedPlace | null> {
-	try {
-		const hits = await backend.findPlace({
-			text,
-			placetype: "region",
-			limit: 1,
-			excludeNameRoles: BARE_RACE_EXCLUDED_NAME_ROLES,
-			...(scopedCountry ? { country: scopedCountry } : {}),
-		})
-
-		const top = hits[0]
-
-		return top && (top.placetype === "region" || top.placetype === "macroregion") && top.exactMatch !== false
-			? top
-			: null
-	} catch {
-		return null
-	}
+	return probeBareRace(backend, text, "region", ["region", "macroregion"], scopedCountry)
 }
 
 /**
- * The sub-locality placetypes {@link bareSublocalityCandidate} probes, coarse to fine.
+ * The sub-locality placetypes {@link bareSublocalityCandidate} probes, coarse to fine:
+ * every Who's On First placetype finer than `locality` through `microhood`.
  */
-const BARE_SUBLOCALITY_BANDS = ["borough", "macrohood", "neighbourhood", "microhood"] as const
+export const BARE_SUBLOCALITY_BANDS: readonly string[] = Object.entries(PLACETYPE_SPECIFICITY)
+	.filter(
+		([, rank]) =>
+			rank != null && rank > PLACETYPE_SPECIFICITY["locality"]! && rank <= PLACETYPE_SPECIFICITY["microhood"]!
+	)
+	.toSorted((a, b) => (a[1] as number) - (b[1] as number))
+	.map(([placetype]) => placetype)
 
 /**
  * The best sub-locality row for a bare toponym with no locality row, or null.
@@ -184,23 +194,9 @@ export async function bareSublocalityCandidate(
 	scopedCountry: string | undefined
 ): Promise<ResolvedPlace | null> {
 	for (const placetype of BARE_SUBLOCALITY_BANDS) {
-		try {
-			const hits = await backend.findPlace({
-				text,
-				placetype,
-				limit: 1,
-				excludeNameRoles: BARE_RACE_EXCLUDED_NAME_ROLES,
-				...(scopedCountry ? { country: scopedCountry } : {}),
-			})
+		const top = await probeBareRace(backend, text, placetype, [placetype], scopedCountry)
 
-			const top = hits[0]
-
-			if (top && top.placetype === placetype && top.exactMatch !== false && !(top.lat === 0 && top.lon === 0)) {
-				return top
-			}
-		} catch {
-			continue
-		}
+		if (top) return top
 	}
 
 	return null

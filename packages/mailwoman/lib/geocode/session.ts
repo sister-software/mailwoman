@@ -25,6 +25,7 @@ import {
 	type Resolver,
 	countriesFromPostcodeFormat,
 } from "@mailwoman/core/resolver"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
@@ -49,7 +50,7 @@ import type { CoastalErosionRoute } from "#observations/coastal-route"
 import type { AuthorityDesignationRoute } from "#observations/flood-route"
 import type { SoilCapabilityRoute } from "#observations/soil-route"
 import type { ZoningDesignationRoute } from "#observations/zoning-route"
-import { poiTaxonomyLookup } from "#poi/intent"
+import { createStopwordPOIPhraseLookup } from "#poi/intent"
 import {
 	capitalIndexFor,
 	type CapitalTier,
@@ -607,7 +608,11 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let bias: NonNullable<GeocodeDeps["bias"]>
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
-	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
+	const leadingStopwords = await readLibPostalSingleWordStopwords((options.locale ?? "en-US").split("-")[0]!)
+
+	const kindClassifierWithLexicon = createKindClassifier({
+		poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords),
+	})
 
 	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
 		kindClassifierWithLexicon(input, shape, {

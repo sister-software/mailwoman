@@ -8,7 +8,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import type { SearchRecord } from "@mailwoman/react/search/types"
+import { type SearchRecord, TABLE_ROW_LEVEL } from "@mailwoman/react/search/types"
 
 import type { SearchDatabase } from "./database.ts"
 
@@ -22,11 +22,6 @@ export const LEXICAL_ROWS = 40
  */
 const HEADINGS_WEIGHT = 10
 const CONTENT_WEIGHT = 1
-
-/**
- * The level the extractor gives a table row.
- */
-const TABLE_ROW_LEVEL = 5
 
 /**
  * The share of its `bm25` score a table row keeps.

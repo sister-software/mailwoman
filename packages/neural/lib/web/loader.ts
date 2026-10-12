@@ -6,6 +6,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { StageSource } from "@mailwoman/core/pipeline"
+import { startEarly } from "@mailwoman/core/promises"
 
 import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
@@ -592,18 +593,6 @@ async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promis
 	return fetchTolerantJSON(url, fetchImpl, (raw) =>
 		parseCountryLexicon(raw as Parameters<typeof parseCountryLexicon>[0])
 	)
-}
-
-/**
- * Mark a fetch started ahead of the await that reads it as handled, and return it unchanged.
- *
- * A rejection still reaches the later await.
- * Before that await, or when the result goes unused, it is not unhandled.
- */
-function startEarly<T>(load: Promise<T>): Promise<T> {
-	load.catch(() => {})
-
-	return load
 }
 
 async function fetchModelCardJSON(url: string, fetchImpl: typeof fetch): Promise<Record<string, unknown> | null> {
