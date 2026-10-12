@@ -52,6 +52,7 @@ import { osmDatabasePath } from "#paths"
 import { extractAddrPoints } from "#sdk/extract"
 import { buildStreetRecoveryIndex } from "#sdk/street/recovery"
 import { streetLocaleForCountry } from "#street-locale"
+import { streetNameForms } from "#tools/street-names"
 
 interface BuildArgs {
 	country: string
@@ -137,6 +138,7 @@ async function main(): Promise<void> {
 	let badCoord = 0
 	let noStreet = 0
 	let recovered = 0
+	let bilingual = 0
 	let total = 0
 	let written = 0
 
@@ -185,10 +187,17 @@ async function main(): Promise<void> {
 			// Per-surface locale routing.
 			// A French-lead surface folds under the fr rules regardless of the country default.
 			// and the probe side routes with the same shared function.
-			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
+			const streetNorms = [
+				...new Set(
+					streetNameForms(street)
+						.map((form) => normalizeStreetForKeyLocale(form, streetLocaleForSurface(form, locale)))
+						.filter((norm) => norm.length > 0)
+				),
+			]
+
 			const number = rec.housenumber.trim().toLowerCase()
 
-			if (!streetNorm || !number) {
+			if (!streetNorms.length || !number) {
 				noStreet++
 
 				continue
@@ -197,24 +206,33 @@ async function main(): Promise<void> {
 			const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
 			const locality = rec.suburb ?? rec.city
 
-			// Positional, in OSM_ADDRESS_POINT_COLUMNS order: the shared address columns, then h3_cell.
-			insert.run(
-				streetNorm,
-				canonicalizeRouteKey(streetNorm),
-				number,
-				null,
-				rec.postcode?.trim() || null,
-				locality ? normalizeLocalityForKey(locality) : null,
-				street,
-				rec.lat,
-				rec.lon,
-				rowSource,
-				args.release,
-				// OSM states no commune key and no certification flag.
-				null,
-				null,
-				h3Cell
-			)
+			// A bilingual street gets one row per language form, each keyed on that form,
+			// so a query in either language reaches the same rooftop.
+			// `street_raw` keeps the mapped value on every row.
+			for (const streetNorm of streetNorms) {
+				// Positional, in OSM_ADDRESS_POINT_COLUMNS order: the shared address columns, then h3_cell.
+				insert.run(
+					streetNorm,
+					canonicalizeRouteKey(streetNorm),
+					number,
+					null,
+					rec.postcode?.trim() || null,
+					locality ? normalizeLocalityForKey(locality) : null,
+					street,
+					rec.lat,
+					rec.lon,
+					rowSource,
+					args.release,
+					// OSM states no commune key and no certification flag.
+					null,
+					null,
+					h3Cell
+				)
+			}
+
+			if (streetNorms.length > 1) {
+				bilingual++
+			}
 
 			written++
 
@@ -269,6 +287,7 @@ async function main(): Promise<void> {
 		`[osm] DONE ${args.output}\n` +
 			`      total addr:housenumber features : ${total.toLocaleString()}\n` +
 			`      written total                    : ${written.toLocaleString()}  (of which recovered: ${recovered.toLocaleString()})\n` +
+			`      bilingual streets (one row per form): ${bilingual.toLocaleString()}\n` +
 			`      skipped (no addr:street)         : ${noStreet.toLocaleString()}  (${gap}% raw association gap)\n` +
 			`      skipped (bad coord)              : ${badCoord.toLocaleString()}\n` +
 			`      source                           : ${source}  release=${args.release}  recover=${args.recover}`
