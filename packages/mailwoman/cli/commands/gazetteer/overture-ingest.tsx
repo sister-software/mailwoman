@@ -16,10 +16,7 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-
-// Overture prunes old releases from its bucket, so a stale pin makes the default ingest fail.
-// Keep this pin in step with `DEFAULT_RELEASE` in `gazetteer-pipeline/poi/defaults.ts`.
-const DEFAULT_RELEASE = "2026-07-22.0"
+import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
