@@ -28,7 +28,7 @@ export const COUNTRY_SURFACE_FORMS = {
 	US: ["United States", "USA", "US", "U.S.A.", "U.S.", "United States of America", "America"],
 	DE: ["Germany", "Deutschland", "DE", "GER", "Federal Republic of Germany"],
 	FR: ["France", "FR", "FRA", "French Republic"],
-	GB: ["United Kingdom", "UK", "Great Britain", "Britain", "England", "GB", "U.K."],
+	GB: ["United Kingdom", "UK", "Great Britain", "Britain", "GB", "U.K."],
 	ES: ["Spain", "España", "Espana", "ES", "ESP"],
 	IT: ["Italy", "Italia", "IT", "ITA"],
 	NL: ["Netherlands", "Nederland", "The Netherlands", "Holland", "NL", "NLD"],

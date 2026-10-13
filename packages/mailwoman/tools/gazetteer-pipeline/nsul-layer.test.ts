@@ -77,12 +77,33 @@ function line(uprn: number | string, pcds: string): string {
 }
 
 describe("classifyNSULLine", () => {
-	it("reads UPRN and PCDS out of a wild line", () => {
-		expect(classifyNSULLine(WILD_LINE)).toEqual({ kind: "row", uprn: 14_000_003, pcds: "RG40 4HR" })
+	it("reads UPRN, PCDS and the constituent country out of a wild line", () => {
+		expect(classifyNSULLine(WILD_LINE)).toEqual({ kind: "row", uprn: 14_000_003, pcds: "RG40 4HR", ctry: "ENG" })
 	})
 
 	it("strips the CRLF terminator the wild file carries", () => {
-		expect(classifyNSULLine(`${WILD_LINE}\r`)).toEqual({ kind: "row", uprn: 14_000_003, pcds: "RG40 4HR" })
+		expect(classifyNSULLine(`${WILD_LINE}\r`)).toEqual({
+			kind: "row",
+			uprn: 14_000_003,
+			pcds: "RG40 4HR",
+			ctry: "ENG",
+		})
+	})
+
+	it("reads the Welsh country code as WLS", () => {
+		const parts = WILD_LINE.split(",")
+
+		parts[10] = "W92000004"
+
+		expect(classifyNSULLine(parts.join(","))).toMatchObject({ kind: "row", ctry: "WLS" })
+	})
+
+	it("rejects a CTRY25CD that identifies no constituent country", () => {
+		const parts = WILD_LINE.split(",")
+
+		parts[10] = ""
+
+		expect(classifyNSULLine(parts.join(","))).toEqual({ kind: "malformed" })
 	})
 
 	it("classes an empty PCDS as no-postcode, keeping the UPRN", () => {
@@ -91,7 +112,7 @@ describe("classifyNSULLine", () => {
 
 	it("accepts every unit-postcode shape, GIR 0AA included", () => {
 		for (const pcds of ["M1 1AA", "B33 8TH", "CR2 6XH", "DN55 1PT", "W1A 0AX", "EC1A 1BB", "GIR 0AA"]) {
-			expect(classifyNSULLine(line(1, pcds))).toEqual({ kind: "row", uprn: 1, pcds })
+			expect(classifyNSULLine(line(1, pcds))).toEqual({ kind: "row", uprn: 1, pcds, ctry: "ENG" })
 		}
 	})
 

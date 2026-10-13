@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { matchSubdivision, matchSubdivisionIn } from "#country"
+import { matchCountry, matchSubdivision, matchSubdivisionIn } from "#country"
 
 describe("matchSubdivision", () => {
 	it("expands a CA province abbreviation to its name + country (the Montreal QC path)", () => {
@@ -43,6 +43,19 @@ describe("matchSubdivision", () => {
 		expect(matchSubdivision("")).toBeNull()
 		expect(matchSubdivision(null)).toBeNull()
 		expect(matchSubdivision(null)).toBeNull()
+	})
+
+	it("resolves each UK constituent country to a subdivision of GB", () => {
+		expect(matchSubdivision("England")).toEqual({ code: "ENG", name: "England", country: "GB" })
+		expect(matchSubdivision("wales")).toEqual({ code: "WLS", name: "Wales", country: "GB" })
+		expect(matchSubdivision("Northern Ireland")?.code).toBe("NIR")
+		expect(matchSubdivisionIn("GB", "SCT")?.name).toBe("Scotland")
+	})
+
+	it("leaves the constituent countries out of the sovereign-state lookup", () => {
+		expect(matchCountry("England")).toBeNull()
+		expect(matchCountry("Wales")).toBeNull()
+		expect(matchCountry("United Kingdom")?.iso2).toBe("GB")
 	})
 })
 
