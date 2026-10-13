@@ -33,10 +33,11 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Two Wokingham UPRNs share `RG40 4HR`, and one Bognor Regis uprn is on `PO21 1HR`.
+ * The fixture rows exercise the one-to-many probe, its order and the key equivalence.
  *
- * They exercise the one-to-many probe, its order and the compact/spaced key equivalence.
- * Three uprns on the border postcode `SY10 7XX` lie in two countries.
+ * - Two Wokingham UPRNs share `RG40 4HR`.
+ * - One Bognor Regis uprn is on `PO21 1HR`.
+ * - Three uprns on the border postcode `SY10 7XX` lie in two countries.
  */
 const ROWS = [
 	{ uprn: 14_000_005, pcds: "RG40 4HR", ctry: "ENG", lat: 51.37416, lon: -0.86823 },

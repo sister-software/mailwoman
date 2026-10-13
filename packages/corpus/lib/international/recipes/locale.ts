@@ -19,6 +19,7 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { openConstituentCountryReader } from "#gb/constituent-country"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
@@ -47,6 +48,12 @@ export interface LocalePart {
 	 * The street combines `tipo_vial` with `nombre_via`.
 	 */
 	cnigRaw?: boolean
+	/**
+	 * Opens a reader that answers the row's region from its postcode, replacing the region column.
+	 *
+	 * A GB part answers the constituent country this way, and its county column is not read.
+	 */
+	regionOfPostcode?: () => (postcode: string) => string | null
 }
 
 /**
@@ -158,7 +165,18 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: defaultRecipeSource("synth-gb"),
 		register: SourceRegister.LandRegistryPricePaid,
 		corpusVersion: "0.9.9",
-		parts: [{ path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"), districtAsLocality: true }],
+		// The `REGION` column holds a county, so the constituent country is read from NSUL by postcode instead.
+		parts: [
+			{
+				path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"),
+				districtAsLocality: true,
+				regionOfPostcode: () => {
+					const countryOf = openConstituentCountryReader()
+
+					return (postcode) => countryOf(postcode).name
+				},
+			},
+		],
 	},
 }
 
@@ -224,6 +242,8 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	let header: string[] | null = null
 	let seen = 0
 	let dropped = 0
+	const regionOf = part.regionOfPostcode?.()
+	let regionUnknown = 0
 
 	try {
 		// The first row holds the column names.
@@ -304,12 +324,24 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				continue
 			}
 
+			const postcode = get(cells, cols.post)
+
+			let region = get(cells, cols.region) || part.region || ""
+
+			if (regionOf) {
+				region = (postcode && regionOf(postcode)) || ""
+
+				if (!region) {
+					regionUnknown++
+				}
+			}
+
 			const tuple: LocaleBaseTuple = {
 				house_number: get(cells, cols.num),
 				street,
 				locality,
-				region: get(cells, cols.region) || part.region || "",
-				postcode: get(cells, cols.post),
+				region,
+				postcode,
 				...(dependent_locality ? { dependent_locality } : {}),
 			}
 
@@ -332,6 +364,10 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	}
 
 	console.error(`  ${part.path ?? part.csv}: ${reservoir.length} sampled of ${seen} rows (${dropped} city-noise drops)`)
+
+	if (regionOf) {
+		console.error(`  ${part.path ?? part.csv}: ${regionUnknown} rows have no region for their postcode`)
+	}
 
 	return reservoir
 }
@@ -425,10 +461,8 @@ export const localeRecipe: CorpusRecipe = {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
 		}
 
-		// `COUNTRY_SOURCES` and `RECIPE_SOURCES` both use the retired spelling as their key.
-		// This lookup decides the vocabulary this recipe writes in one place
-		// rather than in twelve table entries.
-		const source = opts.sourceName ?? defaultRecipeSource(countrySource.source)
+		// Each `COUNTRY_SOURCES` entry already holds the current spelling from `defaultRecipeSource`.
+		const source = opts.sourceName ?? countrySource.source
 		const count = opts.count ?? 4000
 		// When unset, each part keeps its own setting.
 		// True also selects the ES pedanía parts.

@@ -204,13 +204,12 @@ export type NSULLineClass =
  *
  * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary
  * or the last column repeats it in every value (the G-NAF lesson).
- * A line is malformed in four cases.
+ * A line is malformed in four cases:
  *
- * Its field count is not {@link NSUL_COLUMN_COUNT}.
- * Its `uprn` is not a literal digit string within the safe-integer range.
- *
- * Its non-empty `pcds` does not have a unit-postcode shape.
- * Its `CTRY25CD` identifies no UK constituent country.
+ * - its field count is not {@link NSUL_COLUMN_COUNT}
+ * - its `uprn` is not a literal digit string within the safe-integer range
+ * - its non-empty `pcds` does not have a unit-postcode shape
+ * - its `CTRY25CD` identifies no UK constituent country
  *
  * A postcode-shaped column holding anything else is a defect to count.
  * It is never stored as a key.
