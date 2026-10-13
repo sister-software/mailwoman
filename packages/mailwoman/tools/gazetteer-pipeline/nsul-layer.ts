@@ -29,6 +29,7 @@
  * polygon the builder cannot tell empty moorland from Northern Ireland or open sea.
  */
 
+import { ukCountryForGSS, type UkCountryCode } from "@mailwoman/codex/gb/country"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
@@ -117,6 +118,7 @@ const NSUL_COLUMN_COUNT = 29
  */
 const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
+const CTRY_COLUMN = 10
 
 /**
  * The eleven nsul region files that together are Great Britain: the nine
@@ -193,7 +195,7 @@ const MONTHS: Record<string, { number: string; name: string }> = {
  * Exactly one class per line, so the five counters sum to the lines read.
  */
 export type NSULLineClass =
-	| { kind: "row"; uprn: number; pcds: string }
+	| { kind: "row"; uprn: number; pcds: string; ctry: UkCountryCode }
 	| { kind: "no-postcode"; uprn: number }
 	| { kind: "malformed" }
 
@@ -202,11 +204,16 @@ export type NSULLineClass =
  *
  * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary
  * or the last column repeats it in every value (the G-NAF lesson).
- * A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT},
- * when `uprn` is not a literal digit string within the safe-integer range, or
- * when a non-empty `pcds` does not have a unit-postcode shape.
+ * A line is malformed in four cases.
  *
- * A postcode-shaped column holding anything else is a defect to be counted rather than a key to be stored.
+ * Its field count is not {@link NSUL_COLUMN_COUNT}.
+ * Its `uprn` is not a literal digit string within the safe-integer range.
+ *
+ * Its non-empty `pcds` does not have a unit-postcode shape.
+ * Its `CTRY25CD` identifies no UK constituent country.
+ *
+ * A postcode-shaped column holding anything else is a defect to count.
+ * It is never stored as a key.
  */
 export function classifyNSULLine(line: string): NSULLineClass {
 	const parts = (line.endsWith("\r") ? line.slice(0, -1) : line).split(",")
@@ -227,7 +234,11 @@ export function classifyNSULLine(line: string): NSULLineClass {
 
 	if (!PCDS_SHAPE.test(pcds)) return { kind: "malformed" }
 
-	return { kind: "row", uprn, pcds }
+	const ctry = ukCountryForGSS(parts[CTRY_COLUMN]!)
+
+	if (!ctry) return { kind: "malformed" }
+
+	return { kind: "row", uprn, pcds, ctry }
 }
 
 /**
@@ -821,7 +832,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	// rather than aborting a 40M-row load.
 	// The accounting check then reports any as a defect.
 	const insert = kdb.prepare(
-		"INSERT OR IGNORE INTO uprn_postcode (uprn, pcds, pcds_compact, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?)"
+		"INSERT OR IGNORE INTO uprn_postcode (uprn, pcds, pcds_compact, ctry, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?, ?)"
 	)
 
 	const parentCell = (h3Cell: number): number =>
@@ -837,7 +848,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 			coordinateOf: (uprn) => (coordinateProbe.get(uprn) as NSULCoordinateRow | undefined) ?? null,
 			write: (line, point) =>
 				Number(
-					insert.run(line.uprn, line.pcds, compactPostcode(line.pcds), point.lat, point.lon, point.h3_cell).changes
+					insert.run(line.uprn, line.pcds, compactPostcode(line.pcds), line.ctry, point.lat, point.lon, point.h3_cell)
+						.changes
 				) > 0,
 			parentCell,
 			checkpoint: () => {
@@ -896,7 +908,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	await writeLayerManifest(kdb, {
 		name: "nsul-uprn-postcode-gb",
 		version: vintageLabel,
-		schemaVersion: 1,
+		// Version 2 adds `uprn_postcode.ctry`.
+		schemaVersion: 2,
 		tier: LayerTier.BuildLocal,
 		license: NSUL_LICENSE,
 		attribution,

@@ -39,6 +39,11 @@ export interface UPRNPostcodeTable {
 	 */
 	pcds_compact: string
 	/**
+	 * The ISO 3166-2:GB constituent country the UPRN lies in (`ENG`, `SCT`, `WLS`),
+	 * read from NSUL's `CTRY25CD` column.
+	 */
+	ctry: string
+	/**
 	 * WGS84 latitude, copied from `uprn.db` for the same UPRN.
 	 */
 	lat: number
@@ -78,6 +83,7 @@ export async function createUPRNPostcodeTable(db: Kysely<NSULDatabase>): Promise
 		.addColumn("uprn", "integer", (c) => c.primaryKey())
 		.addColumn("pcds", "text", (c) => c.notNull())
 		.addColumn("pcds_compact", "text", (c) => c.notNull())
+		.addColumn("ctry", "text", (c) => c.notNull())
 		.addColumn("lat", "real", (c) => c.notNull())
 		.addColumn("lon", "real", (c) => c.notNull())
 		.addColumn("h3_cell", "integer", (c) => c.notNull())

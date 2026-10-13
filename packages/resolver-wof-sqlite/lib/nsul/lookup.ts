@@ -24,6 +24,7 @@
  *   unknown, per the meaning-of-zero rule.
  */
 
+import type { UkCountryCode } from "@mailwoman/codex/gb/country"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import { compactPostcode, type NSULDatabase } from "#nsul/schema"
@@ -64,6 +65,22 @@ export interface NSULAssignedPoint {
  */
 export type NSULLookupOpts = SQLiteLookupOptions<NSULDatabase>
 
+/**
+ * The UPRNs of one unit postcode that lie in one constituent country.
+ */
+export interface NSULPostcodeCountry {
+	/**
+	 * The ISO 3166-2:GB constituent country (`ENG`, `SCT`, `WLS`).
+	 */
+	country: UkCountryCode
+	uprns: number
+}
+
+interface CountryRow {
+	ctry: UkCountryCode
+	uprns: number
+}
+
 interface PostcodeRow {
 	pcds: string
 	pcds_compact: string
@@ -84,6 +101,7 @@ interface PointRow {
 export class NSULLookup extends SQLiteLookup<NSULDatabase> {
 	readonly #postcodeProbe: (uprn: number) => PostcodeRow | null
 	readonly #pointsProbe: (pcdsCompact: string) => PointRow[]
+	readonly #countriesProbe: (pcdsCompact: string) => CountryRow[]
 
 	constructor(opts: NSULLookupOpts) {
 		super(opts)
@@ -97,6 +115,21 @@ export class NSULLookup extends SQLiteLookup<NSULDatabase> {
 			this.database,
 			"SELECT uprn, lat, lon, h3_cell FROM uprn_postcode WHERE pcds_compact = ? ORDER BY uprn"
 		)
+
+		this.#countriesProbe = prepareAll<[string], CountryRow, NSULDatabase>(
+			this.database,
+			"SELECT ctry, count(*) AS uprns FROM uprn_postcode WHERE pcds_compact = ? GROUP BY ctry ORDER BY uprns DESC, ctry"
+		)
+	}
+
+	/**
+	 * The constituent countries one unit postcode's UPRNs lie in, with the UPRN count in each, most first.
+	 *
+	 * A postcode on the England–Wales or England–Scotland border can return two entries.
+	 * An empty array means the register assigns no UPRN to the postcode.
+	 */
+	countriesForPostcode(postcode: string): NSULPostcodeCountry[] {
+		return this.#countriesProbe(compactPostcode(postcode)).map((row) => ({ country: row.ctry, uprns: row.uprns }))
 	}
 
 	/**

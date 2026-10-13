@@ -6,13 +6,26 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "#gb"
+import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry, ukCountryForGSS } from "#gb"
 
 describe("GB_COUNTRIES", () => {
 	it("covers the four constituent countries of the UK", () => {
 		expect(Object.keys(GB_COUNTRIES)).toHaveLength(4)
-		expect(GB_COUNTRIES.ENG).toEqual({ code: "ENG", name: "England" })
+		expect(GB_COUNTRIES.ENG).toEqual({ code: "ENG", name: "England", gss: "E92000001" })
 		expect(GB_COUNTRIES.NIR.name).toBe("Northern Ireland")
+	})
+})
+
+describe("ukCountryForGSS", () => {
+	it("maps each ONS country code to its constituent country", () => {
+		expect(ukCountryForGSS("W92000004")).toBe("WLS")
+		expect(ukCountryForGSS("s92000003")).toBe("SCT")
+		expect(ukCountryForGSS("E92000001")).toBe("ENG")
+	})
+
+	it("returns null for a code that identifies no constituent country", () => {
+		expect(ukCountryForGSS("K02000001")).toBeNull() // the United Kingdom itself
+		expect(ukCountryForGSS("")).toBeNull()
 	})
 })
 

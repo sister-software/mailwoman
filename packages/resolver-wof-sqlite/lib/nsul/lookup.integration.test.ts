@@ -33,13 +33,18 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis uprn on `PO21 1HR` — enough
- * to exercise the one-to-many probe, its ordering and the compact/spaced key equivalence.
+ * Two Wokingham UPRNs share `RG40 4HR`, and one Bognor Regis uprn is on `PO21 1HR`.
+ *
+ * They exercise the one-to-many probe, its order and the compact/spaced key equivalence.
+ * Three uprns on the border postcode `SY10 7XX` lie in two countries.
  */
 const ROWS = [
-	{ uprn: 14_000_005, pcds: "RG40 4HR", lat: 51.37416, lon: -0.86823 },
-	{ uprn: 14_000_003, pcds: "RG40 4HR", lat: 51.3742681, lon: -0.8682259 },
-	{ uprn: 100_062_353_961, pcds: "PO21 1HR", lat: 50.7876, lon: -0.6717 },
+	{ uprn: 14_000_005, pcds: "RG40 4HR", ctry: "ENG", lat: 51.37416, lon: -0.86823 },
+	{ uprn: 14_000_003, pcds: "RG40 4HR", ctry: "ENG", lat: 51.3742681, lon: -0.8682259 },
+	{ uprn: 100_062_353_961, pcds: "PO21 1HR", ctry: "ENG", lat: 50.7876, lon: -0.6717 },
+	{ uprn: 20_000_001, pcds: "SY10 7XX", ctry: "WLS", lat: 52.86, lon: -3.1 },
+	{ uprn: 20_000_002, pcds: "SY10 7XX", ctry: "WLS", lat: 52.861, lon: -3.1 },
+	{ uprn: 20_000_003, pcds: "SY10 7XX", ctry: "ENG", lat: 52.862, lon: -3.09 },
 ]
 
 let databasePath: PathBuilder
@@ -57,11 +62,11 @@ beforeAll(async () => {
 	await createLayerCoverageTable(kdb)
 
 	const insert = kdb.prepare(
-		"INSERT INTO uprn_postcode (uprn, pcds, pcds_compact, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?)"
+		"INSERT INTO uprn_postcode (uprn, pcds, pcds_compact, ctry, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?, ?)"
 	)
 
 	for (const row of ROWS) {
-		insert.run(row.uprn, row.pcds, compactPostcode(row.pcds), row.lat, row.lon, uprnH3Cell(row.lat, row.lon))
+		insert.run(row.uprn, row.pcds, compactPostcode(row.pcds), row.ctry, row.lat, row.lon, uprnH3Cell(row.lat, row.lon))
 	}
 
 	await createNSULIndexes(kdb)
@@ -129,6 +134,23 @@ describe("uprnsForPostcode", () => {
 
 	it("returns an empty array when no UPRN carries the postcode — absence is the claim", () => {
 		expect(lookup.uprnsForPostcode("SW1A 1AA")).toEqual([])
+	})
+})
+
+describe("countriesForPostcode", () => {
+	it("counts the UPRNs in each constituent country, most first", () => {
+		expect(lookup.countriesForPostcode("SY10 7XX")).toEqual([
+			{ country: "WLS", uprns: 2 },
+			{ country: "ENG", uprns: 1 },
+		])
+	})
+
+	it("answers one country for a postcode inside one", () => {
+		expect(lookup.countriesForPostcode("rg404hr")).toEqual([{ country: "ENG", uprns: 2 }])
+	})
+
+	it("returns an empty array when no UPRN carries the postcode", () => {
+		expect(lookup.countriesForPostcode("SW1A 1AA")).toEqual([])
 	})
 })
 
