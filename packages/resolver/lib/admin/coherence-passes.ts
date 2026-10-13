@@ -255,14 +255,16 @@ async function reconcileExplicitCountry(
 	localityNode: AddressNode,
 	backend: ResolverBackend
 ): Promise<void> {
-	const mc = matchCountry(countryNode.value)
+	// A span tagged `country` may hold a constituent country such as `England`.
+	// That is a subdivision of GB rather than a sovereign state, and it still fixes the country.
+	const iso2 = matchCountry(countryNode.value)?.iso2 ?? matchSubdivision(countryNode.value)?.country
 
-	if (!mc) return
+	if (!iso2) return
 
 	const scoped = await backend.findPlace({
 		text: localityNode.value,
 		placetype: "locality",
-		country: mc.iso2,
+		country: iso2,
 		limit: 3,
 	})
 

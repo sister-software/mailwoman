@@ -16,6 +16,10 @@
  *   into the full name it does contain. This is a soft prior rather than a routing decision. The gazetteer
  *   still does the geographic confirmation (per the registry-backed-soft-prior doctrine).
  *
+ *   The combined lookup also holds the names of the four UK constituent countries (`gb/country.ts`),
+ *   because England, Scotland, Wales and Northern Ireland are subdivisions of GB rather than countries in
+ *   ISO 3166-1.
+ *
  *   The US and Canadian code sets are disjoint. No two-letter code or full name collides between them, so the
  *   combined lookup below is unambiguous. `CA` resolves to California the
  *   US state (Canada's provinces have no `CA` subdivision code), never to Canada the country —
@@ -28,6 +32,7 @@
 
 import { AU_STATE_ABBREVIATIONS } from "#au/state"
 import { CA_PROVINCES } from "#ca/province"
+import { GB_COUNTRIES } from "#gb/country"
 import { foldName } from "#normalize"
 import { US_STATE_BY_ABBREVIATION } from "#us/state"
 
@@ -82,16 +87,24 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 		put(info.french, match)
 	}
 
+	// A constituent country of the United Kingdom is a first-level subdivision of GB.
+	// WOF records each one as a `macroregion`.
+	// Only the names are keyed, because address lines do not carry `ENG` or `WLS`.
+	for (const info of Object.values(GB_COUNTRIES)) {
+		put(info.name, { code: info.code, name: info.name, country: "GB" })
+	}
+
 	return out
 })()
 
 /**
- * Resolve a first-level subdivision surface form (ISO 3166-2 code, English name,
- * or co-official French name for CA. accents optional) to its `{ code, name, country }`.
+ * Resolve a first-level subdivision surface form to its `{ code, name, country }`.
  *
- * Case- and diacritic-insensitive.
- * Returns null for anything that isn't a US state or Canadian province/territory,
- * including bare country tokens (use {@link matchCountry} for those).
+ * The form may be an ISO 3166-2 code, an English name, or a Canadian co-official French name.
+ * The lookup ignores case and diacritics.
+ *
+ * A US state, a Canadian province or territory, and a UK constituent country each match.
+ * Anything else returns null, including a bare country token (use {@link matchCountry} for those).
  */
 export function matchSubdivision(token: string | null): SubdivisionMatch | null {
 	if (!token || typeof token !== "string") return null
@@ -144,6 +157,12 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
 		const match: SubdivisionMatch = { code, name, country: "AU" }
 		put("AU", code, match)
 		put("AU", name, match)
+	}
+
+	for (const info of Object.values(GB_COUNTRIES)) {
+		const match: SubdivisionMatch = { code: info.code, name: info.name, country: "GB" }
+		put("GB", info.code, match)
+		put("GB", info.name, match)
 	}
 
 	return byCountry

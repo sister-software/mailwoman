@@ -23,7 +23,7 @@ export function streetNameForms(street: string): string[] {
 	const forms = street
 		.split(NAME_FORM_SEPARATOR)
 		.map((form) => form.trim())
-		.filter(Boolean)
+		.filter((form) => form.length > 0)
 
 	return [...new Set([street, ...forms])]
 }

@@ -47,7 +47,16 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 		if (n.tag === "country") {
 			const matched = matchCountry(n.value)
 
-			if (!matched) continue
+			if (!matched) {
+				// A constituent country such as `England` tagged `country` still fixes its sovereign state.
+				const sub = matchSubdivision(n.value)
+
+				if (sub && SYSTEM_UNIVERSE.has(sub.country.toUpperCase())) {
+					out.add(sub.country.toUpperCase())
+				}
+
+				continue
+			}
 
 			const system = isUSStateAbbreviation(matched.iso2) ? "US" : matched.iso2.toUpperCase()
 
