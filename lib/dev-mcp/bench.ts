@@ -13,7 +13,7 @@
  *   Concurrency is fixed at 1 and reported. `session.run()` in `onnxruntime-node` blocks its thread.
  *   `geocode-stream.ts` records the measurement that settles the rest: on a shared multi-GB WOF SQLite, throughput
  *   peaked at 2 workers (~1.4×) and degraded beyond, because memory bandwidth and the shared database are the ceiling.
- *   A single-threaded number is the honest one to quote.
+ *   Quote the single-threaded number, because added workers do not scale throughput past that ceiling.
  */
 
 import { percentile } from "@mailwoman/core/stats"

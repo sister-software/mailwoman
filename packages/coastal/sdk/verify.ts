@@ -63,7 +63,7 @@ export interface AgreementRow {
 	serviceInside: boolean
 	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
+	 * Meters from the point to the nearest edge of any polygon the service returned for the query box.
 	 *
 	 * Every row stores this distance.
 	 * It separates a real defect from a difference caused by the two channels

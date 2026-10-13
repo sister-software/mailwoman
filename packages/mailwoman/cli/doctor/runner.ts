@@ -76,7 +76,7 @@ export interface DoctorDeps {
 	weightsPackageName(locale: string): string
 	dataRoot(): { path: string; fromEnv: boolean }
 	/**
-	 * The candidate.db the tools would actually use, with no convention-path fallback —
+	 * The candidate.db the tools would open, with no convention-path fallback —
 	 * the same precedence geocode and serve apply.
 	 */
 	envCandidatePath(): Promise<string | null>

@@ -8,7 +8,7 @@
  *   is not exercised here (gdal is not a test dependency) — but the GeoJSON feature literals below
  *   are not invented. They are the verbatim stdout of the system `ogr2ogr` (gdal 3.8.4) run against
  *   `fixtures/subvenue.osm` with the SQL {@link buildSubVenueSQL} produces, captured 2026-08-04.
- *   That is what makes the decoder test meaningful: it decodes bytes gdal actually emitted, including
+ *   That is what makes the decoder test meaningful: it decodes bytes gdal emitted, including
  *   the per-layer promoted/hstore split that the module docstring turns on.
  *
  *   Reproduce the capture with:

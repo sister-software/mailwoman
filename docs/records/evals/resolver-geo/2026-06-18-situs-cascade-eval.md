@@ -1,6 +1,6 @@
 # The shipped US coordinate is meter-grade, and the eval was grading the admin centroid (2026-06-18)
 
-## TL;DR
+## Summary
 
 `oa-resolver-eval` reported US coord **p50 3.3 km / p90 10 km** and we read that as the
 assembled-coordinate ceiling — the number behind "the US bottleneck is rural gazetteer coverage."
@@ -16,8 +16,8 @@ production coordinate.
 
 The eval builds a neural parse, resolves it through the WOF admin gazetteer, and takes the resolved
 place's centroid as the coordinate. That centroid is direct as far as it goes. A city centroid is
-legitimately tens of km from an edge address, which is exactly why we lead with admin-_match_ rate
-there rather than the coordinate. The trouble is we then carried the 3.3 km admin number into the
+legitimately tens of km from an edge address. For that reason we lead with admin-_match_ rate
+there rather than the coordinate. The defect is that we then copied the 3.3 km admin number into the
 head-to-head, the model card, and the docs as if it were the coordinate the product delivers.
 
 It isn't. The `geocode` CLI and the `/api/geocode` service both run `geocodeAddress`, which reads
@@ -25,7 +25,7 @@ the parsed region, picks that state's situs + interpolation extracts, and resolv
 cascade: an exact address-point (rooftop/parcel) when the house number is on file, a house-number
 interpolation along the street segment otherwise, and the admin centroid only when neither exists.
 The eval only called `resolveTree` with no extract options, so every row landed at the admin tier.
-`copy-weights` is skipped on CI and the per-state extracts are multi-GB, so nobody noticed the eval was
+`copy-weights` is skipped on CI and the per-state extracts are multi-GB, so no check detected that the eval was
 running a different, blunter path than production.
 
 `--cascade` closes that: it builds a multi-state `RegionDatabaseProvider` (per-row state selection), routes
@@ -57,8 +57,8 @@ recoverable with no new data, and two fixes from this diagnostic's follow-up lan
 verified `fr.house_number` flat). Re-measured: **address_point 79.8 → 83.5%, interpolated 8.2 →
 9.7%, admin 12.0 → 6.8%; within 100 m 85.9 → 90.0%, within 1 km 90.0 → 94.8%, cascade p99 18.3 →
 10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs extract theme-reselect
-(the SD/IL holes are in Overture's OpenAddresses theme, not the sparser NAD theme we ingested), not
-a coverage gap — #723.
+(the SD/IL holes are in Overture's OpenAddresses theme rather than the sparser NAD theme we ingested)
+rather than a coverage gap — #723.
 
 ## Why this matters
 
@@ -72,7 +72,7 @@ run what ships over them, grade that.
 
 It also retires "the US coordinate bottleneck is rural gazetteer coverage." The rural states aren't
 the laggards once you grade the cascade — SD and VT land their addresses at the address-point tier
-like everywhere else; their lower _locality-match_ (VT 93.8%, IA 95.8%) is a separate, mostly
+like everywhere else. Their lower _locality-match_ (VT 93.8%, IA 95.8%) is a separate, mostly
 naming-convention residual (civic suffixes like "Barre" vs "Barre Town", ~71% of the 2% miss) rather than a
 coordinate problem. The next US coordinate gain is point-data coverage for the 12% admin tail rather than a
 retrain and not more gazetteer breadth.
@@ -80,16 +80,16 @@ retrain and not more gazetteer breadth.
 ## Caveats
 
 - **The cascade needs the data layer.** The bare `@mailwoman/neural-weights-*` weights plus the admin
-  gazetteer give the admin centroid; the meter-grade coordinate requires the per-state situs +
+  gazetteer give the admin centroid. The meter-grade coordinate requires the per-state situs +
   interpolation extracts wired in (the server's `RegionDatabaseProvider`, the CLI's `--address-points` /
   `--interpolation`, or `--cascade` here). The extracts are not in the npm package. They are the data
   release the geocoder consumes.
 - **Ship-config parity is partial.** The eval feeds the postcode **anchor** (the dominant channel for
-  admin recovery, which reproduces the 98.0% headline) but builds the classifier manually, so it does
+  admin recovery, and the channel that reproduces the 98.0% headline) but builds the classifier manually, so it does
   not yet feed the gazetteer/conventions channels. The canonical `createScorer` path would
-  for full ship-config parity is a tracked follow-up; it does not affect the coordinate result here.
+  for full ship-config parity is a tracked follow-up. It does not affect the coordinate result here.
 - **Locality-match residual is separate.** The ~2% locality miss is mostly civic-suffix /
-  coincident-municipality naming, not absent places — a metric-fairness item, not a coverage hole.
+  coincident-municipality naming rather than absent places. It is a metric-fairness item rather than a coverage hole.
 
 Raw report: `oa-resolver-eval --cascade` self-emitted via `--out-md`. Reproduces the situs-cascade
 diagnostic run independently through `geocodeAddress` over the same rows (p50 0.0 / p90 1.0 / 85.9%

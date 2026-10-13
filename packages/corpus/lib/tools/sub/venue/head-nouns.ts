@@ -28,7 +28,8 @@ function asciiFold(text: string): string {
 }
 
 /**
- * How many leading characters two ascii-folded forms must share for one to count as the other's inflection.
+ * The number of leading characters two ascii-folded forms must share for one
+ * to count as the other's inflection.
  *
  * Five, or the id's own length when shorter.
  * A limit of six loses Spanish `satélite`.
@@ -44,7 +45,7 @@ const HEAD_NOUN_PREFIX_FLOOR = 5
 const NON_LATIN_HEAD_MIN_LENGTH = 2
 
 /**
- * How many head-noun candidates one non-Latin record+language group may contribute.
+ * The number of head-noun candidates one non-Latin record+language group may contribute.
  *
  * Six, capped because the substring lattice of a nine-character label is large
  * and no entry past the sixth attests more than two surfaces.
@@ -67,7 +68,7 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
 
 /**
  * Derive the head noun of every multi-part surface, so `terminal aeroportuaria`
- * contributes the form anyone actually writes on an envelope.
+ * contributes the form a sender writes on an envelope.
  *
  * Latin script uses a cognate test against the designator's own canonical id.
  * Han and Kana use a shared substring, because a token split finds no boundary there.

@@ -19,10 +19,10 @@
  *   lexicon covers. The extended arm is the one that reaches a locale the lexicon omits.
  *
  *   The extended arm sits out of distribution in the opposite direction. It feeds a positive feature
- *   where training fed zero. A row it fixes does not predict how many rows a retrain would fix. A row
+ *   where training fed zero. A row it fixes does not predict the number of rows a retrain would fix. A row
  *   it breaks does not refuse a retrain either. The count states whether the signal reaches the
- *   decision under the current weights. That answer decides whether a codex authoring pass and a
- *   training run are worth starting.
+ *   decision under the current weights. That answer decides whether to start a codex authoring pass and a
+ *   training run.
  *
  *   The probe lexicon is written under the scratch directory.
  *   `data/gazetteer/street-type-lexicon-v3.json` is an input to training and `lint-prose.ts` reads no

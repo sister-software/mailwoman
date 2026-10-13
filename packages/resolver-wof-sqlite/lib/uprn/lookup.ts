@@ -15,7 +15,7 @@ import type { PathBuilderLike } from "path-ts"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
- * Conservative floor, in meters, on the center distance one unit of res-9 grid distance buys,
+ * Conservative floor, in meters, on the center distance one unit of res-9 grid distance covers,
  * so multiplying a grid distance under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150

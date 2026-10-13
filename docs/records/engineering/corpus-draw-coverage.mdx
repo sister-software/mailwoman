@@ -27,8 +27,8 @@ Measured 2026-09-21 on `corpus-v0.5.0` in this machine's data root.
 
 A source's epoch draw was **17,269 rows**, recorded by the epoch-mixture audit in
 `corpus-python/src/mailwoman_train/audits/epoch_mixture/passes.py`. That reading was taken against a
-corpus carrying an `overture` source, which is not in this machine's data root — 715 of 718 train
-files for it live on the Modal volume. It is carried here as the audit recorded it rather than
+corpus with an `overture` source. That source is not in this machine's data root: 715 of 718 train
+files for it are stored on the Modal volume. This page reports it as the audit recorded it rather than
 re-measured.
 
 17,269 is 35% of one row-group. Whatever the file order, a draw that size never leaves the first
@@ -61,7 +61,7 @@ after this measurement.
 
 It moves which row-group a draw lands in, from the first file the seed happens to order first, to one
 drawn uniformly across the source. It does not widen the draw, because 17,269 rows still fit inside
-one 50,000-row row-group. Belgium, the case the audit named, still draws no rows in most runs.
+one 50,000-row row-group. Belgium, the case the audit cited, still draws no rows in most runs.
 
 It is also not free. `tests/mailwoman_train/data/test_loader_split_parity.py` pins the exact row
 sequence a seeded run produces, and the change moved it — 124 encoded examples against a committed 127. That test exists so a change that reshuffles what every run trains on is a deliberate act. A
@@ -73,7 +73,7 @@ Three ways to make a bounded draw a sample of its source. Each is stated with wh
 
 **Shuffle rows within a source at corpus build time.** Any row-group then is a representative sample,
 every reader gets a uniform draw with no loader change, and the cost is paid once by the writer.
-Memory and read cost at training time are unchanged. It needs a corpus rebuild, which is what makes
+Memory and read cost at training time are unchanged. It needs a corpus rebuild. The rebuild makes
 it the operator's decision rather than an implementation choice.
 
 **Hold several row-groups open and round-robin between them.** A draw then spreads across one
@@ -83,7 +83,7 @@ states that bound as one row-group per source, so this trades a stated invariant
 
 **Take a stride from each row-group and revisit.** Keeps memory at one row-group and spends I/O
 instead: covering 17,269 draws across 64 row-groups means reading 3,200,000 rows to emit 17,269. It
-also changes what a pass emits, which `test_source_sampler_stationarity.py` pins: today a pass emits
+also changes what a pass emits, and `test_source_sampler_stationarity.py` pins that behavior: today a pass emits
 every row of a source once, the epoch ends when every source has finished one, and the largest source
 is seen exactly once. Under a stride, a pass emits a fraction of the rows and the epoch shortens by
 the same fraction.

@@ -25,8 +25,8 @@
  *
  *   ## A link that does not resolve is reported
  *
- *   `resolved: false` with a reason, never a coordinate of `0,0` and never a silent drop. A batch that quietly loses
- *   rows produces a case file whose denominator cannot be reconstructed.
+ *   `resolved: false` with a reason, never a coordinate of `0,0` and never a silent drop. A batch that loses rows
+ *   without a report produces a case file whose denominator cannot be reconstructed.
  */
 
 import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"

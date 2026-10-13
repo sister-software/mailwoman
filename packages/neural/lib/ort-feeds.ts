@@ -245,8 +245,8 @@ export function packSoftChannelFeeds(
  *
  * The trainer sizes the hint embedding at one row per address system plus a last row for
  * "no hint", so the card's `address_systems.no_hint` is always the last index.
- * The exported graph reads the id with an ONNX `Gather`, which counts a negative index from the end,
- * so `-1` selects that last row without the runner knowing how many systems the model has.
+ * The exported graph reads the id with an ONNX `Gather`, which counts a negative index from
+ * the end, so `-1` selects that last row without the runner knowing the model's system count.
  */
 export const NO_LOCALE_HINT = -1
 

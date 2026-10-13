@@ -1,6 +1,6 @@
 ---
 title: The gazetteer prior
-description: The place lookup you already trust, made additive instead of decisive — what it can override, what it cannot, and why its absence is silent.
+description: The place lookup you already trust, added to the model's scores instead of overriding them. The page covers what it can override, what it cannot, and why its absence is silent.
 role: explanation
 ---
 
@@ -31,7 +31,7 @@ the parser needs to know "is this string used as a place name here". The first q
 world, and the second is about the sentence. The table can only answer the first.
 
 A better table would not fix this. The fix is to treat the table's answer as one piece of evidence and
-combine it with evidence about the sentence, which the per-piece scores already provide.
+combine it with evidence about the sentence. The per-piece scores already provide that evidence.
 
 ## The mechanism
 
@@ -68,7 +68,7 @@ part that is reduced.
 
 **A match in a street-like context gets no bonus.** When a matched name is in a street-name position,
 with a street-type word beside it or a house number to its left, the runtime pipeline withholds the
-positive bonus and keeps only the penalty. The index therefore does not pull a street named after a
+positive bonus and keeps only the penalty. The index therefore does not pull a street that takes its name from a
 town toward the town. `800 Washington Ave, Portland, OR` and `123 Madison Ave, New York, NY 10016`
 parse identically with and without the index. The penalty is never withheld, because the index
 provides evidence for a reading and against its competitors. It never penalizes a reading it has no
@@ -94,7 +94,7 @@ no bonus, because there is no label to apply the bonus to.
 would add several million entries, and the package does not ship one. A separate, much smaller
 vocabulary of generic street-type words (`avenue`, `rue`, `straße`) exists, but it is a different
 mechanism with its own wiring status. Venue names are open-ended and are not in any index. This matters
-because the hardest ambiguity in address parsing is a venue named after a place, and the index has
+because the hardest ambiguity in address parsing is a venue that takes its name from a place, and the index has
 the least information about that case.
 
 **It cannot override a confident model.** The bonus is capped, and the model's scores are not. If the
@@ -127,7 +127,7 @@ review. [Calibration and confidence](./calibration-and-confidence.mdx) covers ho
 **The index covers only what the gazetteer covers.** The prior cannot help with a town that is missing
 from the open data. That failure looks like an uncertain model instead of a missing record.
 
-**The index does not fix the venue-versus-place case, which the parser still gets wrong.**
+**The index does not fix the venue-versus-place case. The parser still gets that case wrong.**
 `Riverside Garden Center, Boston` comes back with two locality spans through the pipeline. The business
 name is labeled a locality across characters 0 to 22, and `Boston` is correctly read at 0.784. The town
 is labeled correctly. The parser fails to decide that the leading phrase is a venue instead of a

@@ -380,9 +380,9 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	// AE is deliberately absent.
 	// GeoNames publishes 178,171 rows for it, every one a `nnnnn nnnnn` pair at Dubai-area coordinates.
 	// These are Makani building codes rather than postcodes.
-	// The United Arab Emirates has no postal code system and mail goes to PO boxes,
-	// so ingesting these as `placetype = 'postalcode'` would claim 178,171 postcodes for a
-	// country with none and every coverage figure taken from that tier would inherit the claim.
+	// The United Arab Emirates has no postcode system and mail goes to PO boxes, so ingesting
+	// these as `placetype = 'postalcode'` would claim 178,171 postcodes for a country with none
+	// and every coverage figure taken from that tier would inherit the claim.
 	//
 	// The lookup itself would match, because the name law strips non-alphanumerics,
 	// so `28119 95762` keys as `2811995762`.

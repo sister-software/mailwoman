@@ -48,7 +48,7 @@ distribution, and each consumer needs a fact about _this result_.
 ## The tier is the grain
 
 The first half of a per-result answer is which method produced the coordinate. A geocoder does not
-have one way of placing a point; it has a ladder, and the rung it reached is the grain of the answer.
+have one way of placing a point. It has an ordered list of tiers, and the tier it reached is the grain of the answer.
 
 Mailwoman reports the rung in `resolution_tier`, with six values. Four form the ladder: a registered address point, an
 estimate interpolated along a street segment, a street centroid, and an administrative centroid — the
@@ -70,13 +70,13 @@ The second half is a number, and it is the one that gets misread.
 falls inside that radius about 90% of the time. It is not "the answer is off by this much". It is
 "draw this circle and the answer is inside it, nine times in ten".
 
-That distinction matters because a radius is only worth anything if it has been calibrated against
+That distinction matters because a radius is only useful if it has been calibrated against
 measured error. An uncalibrated radius — half the length of the matched street segment, say — sounds
 principled and is decoration if the truth falls outside it three times in ten. Mailwoman's
 interpolation radius is calibrated per region for exactly that reason, and the tutorial above shows
 the resulting numbers alongside the results they describe.
 
-Once the radius means what it says, "close enough" becomes arithmetic you can run:
+Once the radius means what it states, "close enough" becomes arithmetic you can run:
 
 > My tolerance is 50 m. This result reports a 90% radius of 141 m. That is not close enough — abstain,
 > or escalate this one.
@@ -88,7 +88,7 @@ Which is a far better position than trusting a bare coordinate that is secretly 
 Two absences look alike in a result and mean opposite things.
 
 At the top tier, Mailwoman reports `uncertainty_m: 1` — a floor rather than a measurement. A
-registered address point is a surveyed position; the 1 is there to say "this is as good as this
+registered address point is a surveyed position. The 1 is there to state "this is as good as this
 system's units get" rather than to claim millimeter knowledge.
 
 At the administrative tier it reports `uncertainty_m: null`, and that is not zero uncertainty. It is
@@ -96,21 +96,21 @@ the absence of an estimate: no finer method fired, so there is no number to pric
 a missing radius as a small radius has inverted the meaning of the field. Branch on the tier, then read
 the radius — not the other way round.
 
-## Precision is not the frontier; coverage is
+## Coverage limits accuracy more than precision does
 
 Where a fine tier fires, the accuracy is a property of the underlying register rather than of any
-model, and it is good. The interesting question is how much of your data a fine tier fires on at all,
-and that is decided by whether an address database covers the place — a data question, answered by downloads and
+model, and it is good. The open question is how much of your data a fine tier fires on at all.
+The answer depends on whether an address database covers the place — a data question, answered by downloads and
 by what open data exists for a country.
 
 This has a consequence for how you read a disappointing result. An administrative-tier answer in a
-country with rooftop coverage is worth investigating, because something upstream probably went wrong.
+country with rooftop coverage needs investigation, because something upstream probably went wrong.
 The same answer in a country with no rooftop register is the system working correctly and saying so.
 [Locales and tiers](../../reference/locales-and-tiers.mdx) is where the per-locale picture lives.
 
 ## The false confidence of decimals
 
-One habit worth breaking. A coordinate printed to eight decimal places looks authoritative — eight
+Do not trust printed decimal places. A coordinate printed to eight decimal places looks authoritative — eight
 decimals of latitude is about a millimeter of ground — and consumers treat it accordingly. But
 decimal places are a property of the number's formatting, and they survive every rounding of the
 truth beneath them. A city centroid printed to eight decimals is a city centroid.
@@ -119,7 +119,7 @@ The tier and the radius are the fields that state the precision. The coordinate 
 
 ## What it costs
 
-Report a grain and a radius instead of one score. The consumer can then make the decision, and that is a
+Report a grain and a radius instead of one score. The consumer can then make the decision. That decision has a
 real cost: you have to decide your own tolerance, in meters, and write the comparison. Systems that
 return a single confidence score are easier to consume and are answering a question they were never
 given the inputs for, because "close enough" is a comparison against a tolerance the geocoder was
@@ -132,5 +132,5 @@ never told.
   real output.
 - [Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx) — the parser's separate
   confidence number and how to act on it.
-- [Locales and tiers](../../reference/locales-and-tiers.mdx) — which locales carry which coverage.
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) — which locales have which coverage.
 - [Gazetteers](./gazetteers.mdx) — why the administrative tier exists everywhere.

@@ -2,7 +2,7 @@
 
 Night-4 of the #727 stage-2 arc (plan #1134), the phase the plan called "the whole ballgame": how
 much of the measured k-best headroom (oracle@5 0.723 vs seg@1 0.577 on parity) can evidence-based
-reranking collect? Two measurements, one redesign, one decisive result — all zero-GPU.
+reranking collect? This night produced two measurements, one redesign and one +8.7pp board result, all without GPU time.
 
 ## 1. The phase-4a zero: full-geocode tier evidence is the wrong instrument
 
@@ -16,9 +16,9 @@ fired on 1/267: fixed 0, broke 0
 evidence rate: 9/267 (3.4%) — tier census: 1308 admin / 25 address_point / 2 street
 ```
 
-**The rerank collected nothing — because it is evidence-starved rather than wrong.** The failing class is
+**The rerank collected +0 — because it is evidence-starved rather than wrong.** The failing class is
 context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to extract
-on), so every hypothesis ties at admin tier and the arbiter has nothing to prefer. Full-geocode tier
+on), so every hypothesis ties at admin tier and the arbiter has no basis to prefer one. Full-geocode tier
 is structurally blind exactly where the headroom lives.
 
 ## 2. The redesign, converged on twice in one night
@@ -33,7 +33,7 @@ and provenance-tracked.
 
 Falsifier at board scale (`/tmp/span-worktree/name-evidence-board.mjs`; the FR fragment board's four
 street classes, n=1600, v301 k=5, rerank policy = first hypothesis by parse rank whose street surface
-exists in BAN; positive evidence only, no scores blended):
+exists in BAN, using positive evidence only and blending no scores):
 
 | class              | n    | seg@1 | name-rerank@1 | delta       |
 | ------------------ | ---- | ----- | ------------- | ----------- |
@@ -51,14 +51,14 @@ collects it without a single training step.
 ## Caveats, stated
 
 - Measured on the **v301 span-head artifact** (the archived `feat/727-span-head` branch's k-best
-  surface) — the only model with exported span scores. The JS decoder is not on main; this result is
+  surface) — the only model with exported span scores. The JS decoder is not on main. This result is
   the consumer that justifies merging it.
 - **FR only** — the one locale with a complete street-name index on hand. Generalization needs
   per-country name sources (US TIGER/situs, NO Kartverket, PT/RO BAN-equivalents) behind one
   `StreetLocalityEvidence` interface (P1's spec).
-- The index is BAN and the board fixtures are BAN-derived — not circular (the index is a lookup rather than the model; production carries the same index and the eval surfaces are real streets), but the
+- The index is BAN and the board fixtures are BAN-derived — not circular, because the index is a lookup rather than the model. Production ships the same index, and the eval surfaces are real streets. But the
   coverage is by construction ideal. Foreign-locale generalization will be lower.
-- The 14 breaks are real street names outranking gold; a locality-scoped lookup (street × locality)
+- The 14 breaks are real street names outranking gold. A locality-scoped lookup (street × locality)
   should reduce them further. Unscoped membership was the v0 policy.
 
 ## Addendum — falsifier v2: the break audit + two guards (same night, 06:20)
@@ -67,7 +67,7 @@ The 14 breaks decompose into exactly two classes: **truncation wins** (10/14 —
 a sub-span of gold that is itself in the index, typically the bare type word `rue`/`chemin`) and
 **moved off a correct rank-1** (4/14 — gold at rank 1 but missing from the index on a
 hyphen/apostrophe fold, with the in-index pick 2–5 score units down). Two guards, pre-registered
-(breaks ≤6, fixes ≥135): G1 = no evidence credit for pure street-type vocabulary; G2 = evidence may
+(breaks ≤6, fixes ≥135). G1 gives no evidence credit for pure street-type vocabulary. Under G2, evidence may
 not promote a hypothesis more than 2.5 score units below rank 1. Result:
 
 | policy              | fixes   | breaks | street@1  | bare-street |
@@ -75,7 +75,7 @@ not promote a hypothesis more than 2.5 score units below rank 1. Result:
 | v1 (bare existence) | 140     | 14     | 0.706     | 0.860       |
 | **v2 (+G1 +G2)**    | **148** | **3**  | **0.711** | **0.875**   |
 
-Both bars cleared; G1 also lets evidence land on gold more frequently (fixes UP). One residual: G2 dips
+Both bars cleared. G1 also lets evidence land on gold more frequently (fixes UP). One residual: G2 dips
 street-housenumber 0.922 → 0.912 (blocks a few legitimate deep picks). The implementation spec with
 the interface + productionization plan is
 `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`.
@@ -87,5 +87,5 @@ the interface + productionization plan is
   a flag, isotonic ambiguity check on top-1/margin per the plan. The bare-fragment class no longer
   needs option C as the primary change — the arbiter beat the projected channel gains without
   touching the model.
-- The plan's discipline held: parse scores stayed in one probability space; the rerank signal is
-  measured atlas evidence only; rank-2-beats-rank-1 cases (140 of them) are loggable training data.
+- The plan's discipline held: parse scores stayed in one probability space. The rerank signal is
+  measured atlas evidence only. The rank-2-beats-rank-1 cases (140 of them) are loggable training data.

@@ -26,7 +26,7 @@
  *     figure describes every premises in an area, so it enters as an inferred claim on the network axis
  *     and never as a layer reading, an availability record or a check.
  *   - The UPRN-level release from Building Digital UK, May 2026 OMR and premises in BDUK plans, London archive:
- *     for each of a building's postcodes, the UPRNs the release lists with that postcode, how many of
+ *     for each of a building's postcodes, the UPRNs the release lists with that postcode, the count of
  *     them NSUL places within 50 m of the planning grid reference, and four counts over those within
  *     50 m: `current_gigabit` true, classed Gigabit White, classed Gigabit Under Review, and in BDUK's
  *     premises base. A listed premises belongs to the building only through the postcode's link and the
@@ -254,7 +254,7 @@ export interface LondonSite {
 	referral: { source: SourceRecordID; case: string; stage2: ISODate; totalUnits: number } | null
 	/**
 	 * Each postcode the record infers, with ONSPD's introduction month, NSUL's count of UPRNs
-	 * with the postcode, and how many of those UPRNs lie within 50 m of the grid reference.
+	 * with the postcode, and the count of those UPRNs that lie within 50 m of the grid reference.
 	 */
 	inferredPostcodes: readonly { postcode: string; introduced: string; uprns: number; within50m: number }[]
 	/**

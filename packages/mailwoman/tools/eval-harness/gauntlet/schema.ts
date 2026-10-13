@@ -164,7 +164,7 @@ export interface GauntletMetaTable {
 	 */
 	corpus_hash: string
 	/**
-	 * How many rows were written.
+	 * The number of rows written.
 	 *
 	 * Redundant with the hash for detection but required for the diagnosis, since "0 cases"
 	 * reads as an empty loader and "306 vs 192" as a corpus that moved under the artifact.
@@ -252,7 +252,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("expect_abstain", "integer")
 		.execute()
 
-	// The coverage-by-kind query reports how many kinds the corpus covers and which are thin.
+	// The coverage-by-kind query reports the number of kinds the corpus covers and which are thin.
 	await db.schema.createIndex("idx_gauntlet_kind").on("gauntlet_case").columns(["country", "address_kind"]).execute()
 }
 

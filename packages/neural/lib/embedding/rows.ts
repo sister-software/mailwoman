@@ -18,7 +18,7 @@
 const MAGIC = 0x31_45_57_4d
 
 /**
- * The status of a response that carries exactly the requested byte range.
+ * The status of a response whose body is exactly the requested byte range.
  */
 const PARTIAL_CONTENT = 206
 
@@ -36,7 +36,7 @@ export const EmbeddingLayout = {
 	 */
 	Full: 0,
 	/**
-	 * Ascending u32 ids, then their rows in the same order.
+	 * The file lists u32 ids in ascending order, then their rows in the same order.
 	 */
 	Subset: 1,
 } as const

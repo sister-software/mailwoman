@@ -12,8 +12,8 @@ import { effectiveKeyFor } from "#dev-mcp/engine/registry"
 import type { RoutedArtifactRecord } from "#dev-mcp/routed-mailwoman-arm"
 
 /**
- * Enumerates how cleanly a two-arm comparison isolates its declared configuration
- * variables: `clean` means only declared keys moved.
+ * Enumerates whether a two-arm comparison isolates its declared configuration variables:
+ * `clean` means only declared keys moved.
  *
  * `ambiguous` means undeclared keys also moved.
  * `no_variable` means no key moved.

@@ -85,7 +85,7 @@ export interface ThresholdReading {
 	a: number
 	b: number
 	/**
-	 * `b − a`, signed, so positive means arm B hit more often.
+	 * `b − a`, signed, so positive means arm B hit on more rows.
 	 */
 	delta_pp: number
 	of: number

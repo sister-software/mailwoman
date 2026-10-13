@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Springfield's 0.05 margin across 144 bearers is ambiguous while Paris's 1.9 is decisive only once
+ *   Springfield's 0.05 margin across 144 bearers is ambiguous while Paris's 1.9 clears the winning-margin threshold only once
  *   the coincident `locality`/`localadmin` twin collapses, so a broken collapse fires on every capital
  *   while the correctness tests still pass.
  */

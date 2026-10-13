@@ -129,7 +129,7 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 ])
 
 /**
- * License identifiers worth recognizing inside prose, with the spelling each one appears under.
+ * License identifiers this reader recognizes inside prose, with the spelling each one appears under.
  *
  * Ordered longest-first so `CC-BY-SA` is found before `CC-BY`.
  */
@@ -263,9 +263,8 @@ const LICENSE_FAMILY_WORDS =
  * The caller keeps the verbatim entry beside the result.
  */
 export function licenseNamedIn(entry: string): string | null {
-	// An entry often opens with a parenthetical belonging to the dataset's own name,
-	// such as "OpenAddresses PL — GUGiK / PRG (public, BDOT-derived)", so every
-	// parenthetical is read rather than the first.
+	// An entry can open with a parenthetical belonging to the dataset's own name, such as "OpenAddresses
+	// PL — GUGiK / PRG (public, BDOT-derived)", so every parenthetical is read rather than the first.
 	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
 		const inner = match[1]!.trim()
 

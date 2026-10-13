@@ -9,8 +9,8 @@ stratum and determines the result._
 `scripts/record-matcher/gold-set-sample.ts` over the full TX registry (geocode-free): find the
 hard pairs — co-located (same `addressFrequencyKey`), name-similar (token Jaccard ≥ 0.7),
 **distinct NPIs**, and **NOT** NPPES-flagged subparts of the same parent (so the programmatic entity
-truth can't already collapse them). **11,843** such pairs exist in TX; a stride-spread **120** were
-adjudicated "same real-world entity? yes/no" (LLM-as-judge — flagged as such; the frozen set is
+truth can't already collapse them). **11,843** such pairs exist in TX. A stride-spread **120** were
+adjudicated "same real-world entity? yes/no" (LLM-as-judge, flagged as such. The frozen set is
 `2026-06-16-dedup-gold-set-tx120.jsonl` for spot-checking).
 
 ## Result
@@ -29,15 +29,15 @@ Associates** (×3), county hospital districts and MHMR centers (×2 each), **UT 
 is two unrelated companies wrongly fused.
 
 And the programmatic entity-truth (subpart-flag + authorized-official) is itself **too conservative**:
-**44 of 120 (37%)** are the same org with a _different_ authorized official, which the heuristic reads
-as "distinct." A real entity-truth must collapse by **org-name + address**, not just the flag.
+**44 of 120 (37%)** are the same org with a _different_ authorized official. The heuristic reads those
+as "distinct." A real entity-truth must collapse by **org-name + address** in addition to the flag.
 
 ## What this means for #625
 
 1. **The over-merge "problem" is a measurement artifact.** The matcher's co-located merges are correct
-   org-resolution; NPI-truth (and even subpart-truth) scores them as errors. This is why the **A/B
+   org-resolution. NPI-truth (and even subpart-truth) scores them as errors. This is why the **A/B
    showed the corroboration features didn't move precision** — there is essentially no actual
-   over-merge to reduce. A precision objective here would optimize a phantom; cost-sensitive
+   over-merge to reduce. A precision objective here would optimize a phantom. Cost-sensitive
    training would only _hurt_ (un-merge correct same-org pairs).
 
 2. **The real dedup change is the YARDSTICK rather than the model.** A better entity-truth that collapses
@@ -46,7 +46,7 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, not 
    org-name-aware entity truth + re-scoring at that grain rather than more scorer features.
 
 3. **The model is already good at this.** Site-grain recall is ~96% and the over-merges are correct.
-   The dedup objective is closer to solved than NPI-truth's ~54% F1 suggests; that number is mostly
+   The dedup objective is closer to solved than NPI-truth's ~54% F1 suggests. That number mostly measures
    the yardstick.
 
 ## Caveats
@@ -54,5 +54,5 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, not 
 - LLM-adjudicated (one judge), TX, 120 pairs — a first frozen gold set rather than a multi-rater gold
   standard. The frozen JSONL is committed for the operator (or a second rater) to spot-check.
 - The ~6 Concentra-HQ pairs are same-**parent**, different operating brand at a shared corporate
-  address — judged same-entity at the org level; a stricter site/brand grain could split them. They do
+  address — judged same-entity at the org level. A stricter site/brand grain could split them. They do
   not change the headline (zero unrelated-org fusions).

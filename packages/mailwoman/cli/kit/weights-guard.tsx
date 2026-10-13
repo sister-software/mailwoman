@@ -10,7 +10,7 @@
  *
  *   Results handed to the render prop:
  *
- *   - `"neural"` — weights resolve (pre-existing, or just downloaded); render the real command.
+ *   - `"neural"` — weights resolve (pre-existing, or downloaded by this guard); render the real command.
  *   - `"declined"` — the user said no, the download failed, or `--degraded` was passed. the caller
  *       renders its degraded (encoder-less) mode.
  *   - `"unavailable"` — weights absent + non-interactive stdin and no flag. the caller keeps its

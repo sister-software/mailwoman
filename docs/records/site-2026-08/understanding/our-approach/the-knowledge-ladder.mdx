@@ -24,14 +24,14 @@ Each layer adds one kind of knowledge the layers below it cannot easily derive:
 | **1. Normalize**          | input preprocessing rules                                                          | Yes                                                                                                                                                                                                                               |
 | **2. Locale check**       | language / script family                                                           | Yes (rule-based)                                                                                                                                                                                                                  |
 | **2.5. Kind classifier**  | overall query category (postcode_only, structured_address, …)                      | Yes (rule-based)                                                                                                                                                                                                                  |
-| **2.7. Phrase grouper**   | **coherent input units (boundary discovery)**                                      | **Yes (rule-based, v0.5.0; 57 venue markers, unit check, positional prior)**                                                                                                                                                      |
-| **3. Token classify**     | per-token semantic type                                                            | Yes (neural; v4.3.0 ships the relabel-consistent 29M model)                                                                                                                                                                       |
+| **2.7. Phrase grouper**   | **coherent input units (boundary discovery)**                                      | **Yes (rule-based, v0.5.0, 57 venue markers, unit check, positional prior)**                                                                                                                                                      |
+| **3. Token classify**     | per-token semantic type                                                            | Yes (neural, v4.3.0 ships the relabel-consistent 29M model)                                                                                                                                                                       |
 | **3.2. Gazetteer anchor** | **known-surface clues (per-token candidate-tag sets, input layer)**                | Yes (v4.2.0): postcode anchor + the general candidate-tag channel (country/region/po_box/cedex/homograph, 5-dim) + train/inference-paired choreography ([#464](https://github.com/sister-software/mailwoman/issues/464))          |
 | **3.5. FST prior**        | **gazetteer-derived emission biases**                                              | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))**                                                                                                                    |
 | **4. Sequence correct**   | per-token BIO sequence validity                                                    | Yes (CRF with structural mask)                                                                                                                                                                                                    |
 | **4.2. Conventions mask** | **per-address-system grammar (which tags are grammatical in the detected system)** | **Yes (v4.3.0, increment 1): locale head exported (`locale_logits`) → codex conventions — `fr` forbids the USPS affix decomposition + pins the postcode shape ([#478](https://github.com/sister-software/mailwoman/issues/478))** |
 | **4.5. Grouper audit**    | **provisional nodes for all-O spans**                                              | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))**                                                                                                            |
-| **5. Reconcile**          | **joint-coherent interpretation across candidates**                                | Yes — default-on; resolver-backed concordance axes wired via `prefetchReconcileLookups` ([#478](https://github.com/sister-software/mailwoman/issues/478) step 2)                                                                  |
+| **5. Reconcile**          | **joint-coherent interpretation across candidates**                                | Yes — default-on, resolver-backed concordance axes wired via `prefetchReconcileLookups` ([#478](https://github.com/sister-software/mailwoman/issues/478) step 2)                                                                  |
 | **6. Resolve**            | world hierarchy (gazetteer)                                                        | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176))                                                                                                                                |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. The two layers complement each other. The phrase grouper feeds cleaner spans into the classifier, and the expanded reconciler picks coherent assignments out of the classifier's candidates.
@@ -40,11 +40,11 @@ The two emphasized rows are the layers that v0.4.0's mixed result exposed as mis
 
 ### Normalize — input preprocessing rules
 
-This layer performs Unicode normalization, locale-aware case folding, and whitespace collapsing. It carries no address-structure knowledge. It cleans bytes so downstream layers see canonical text. It is the right place to handle NFD-decomposed accents and the wrong place to decide whether a string contains an address.
+This layer performs Unicode normalization, locale-aware case folding, and whitespace collapsing. It holds no address-structure knowledge. It cleans bytes so downstream layers see canonical text. It is the right place to handle NFD-decomposed accents and the wrong place to decide whether a string contains an address.
 
 ### Locale check — language / script family
 
-This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2, which uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference could not read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it carries no knowledge of specific places.
+This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2. It uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference could not read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it holds no knowledge of specific places.
 
 ### Kind classifier — overall query category
 
@@ -83,7 +83,7 @@ The grouper's question ("do these tokens belong together?") is separate from "is
 
 ### Token classify — per-token semantic type
 
-This layer is the neural classifier, which does per-token BIO tagging today. It learns from training how tokens distribute over tag classes. The classifier has no world knowledge (such as which countries contain which regions), and corpus statistics do not readily teach it the gazetteer. A gazetteer task would consume capacity that could be spent on type discrimination.
+This layer is the neural classifier. It does per-token BIO tagging today. It learns from training how tokens distribute over tag classes. The classifier has no world knowledge (such as which countries contain which regions), and corpus statistics do not readily teach it the gazetteer. A gazetteer task would consume capacity that could be spent on type discrimination.
 
 v0.5.0's classifier (Thread C) ships two architectural changes to fit the wider ladder. **Phrase-prior conditioning:** the input layer takes a per-token feature row (BIE markers + `PhraseKind` one-hot from the Stage 2.7 phrase grouper), concatenates it onto the token+position embedding, and projects the result back to `hidden_size`. Boundary discovery moves to Stage 2.7. The classifier conditions on those proposals and answers the simpler question "what type is this proposed span?" It can still disagree when its evidence outweighs the grouper's confidence. **Top-k inference (`predict_top_k`):** the inference path emits the K most-probable tag sequences with calibrated log-probability scores under the CRF distribution, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses. Both sit behind config flags (`use_phrase_priors`, `predict_top_k(k=...)`) so the v0.4.0-style argmax-only encoder still works for ablation studies and back-compat.
 
@@ -103,11 +103,11 @@ and this rung applies it at the input layer.
 Three properties make this the right place to give the model knowledge of place names:
 
 - **The knowledge lives outside the weights, so the model does not overfit to it.**
-  If you add a place to the gazetteer tomorrow, the clue fires without a retrain.
+  If you add a place to the gazetteer, the clue fires without a retrain.
   The model learns to _use_ the clue rather than to memorize the list.
   (Putting every country and city in the token vocabulary would work against the tokenizer's job.
   It balloons the embedding table and destroys subword generalization on unseen places,
-  and a single vocab id still carries no disambiguating context.
+  and a single vocab id still holds no disambiguating context.
   Keep the subword tokenizer for generalization, and attach membership as a feature for knowledge.)
 - **The multi-hot encoding gives homograph awareness for free.**
   A token whose candidate set has more than one entry ("Georgia" → `[country, region]`) is marked as ambiguous by construction,
@@ -117,7 +117,7 @@ Three properties make this the right place to give the model knowledge of place 
   such as the country retrain that learned "trailing token ⇒ country."
   Homograph-contrast training rows label the same surface `country` in one context and `region` in another, with the clue firing both times.
   Those rows teach the model that the clue is a hint rather than a verdict.
-  In the country change, balanced contrast data alone took country from 0 to a working tag at **perfect precision and zero over-fire**.
+  In the country change, balanced contrast data, with no other change, took country from 0 to a working tag at **perfect precision and zero over-fire**.
   The anchor's remaining job is long-tail recall.
   The model can't recognize "Eswatini" from three training sightings, but the gazetteer can.
   See [closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
@@ -138,7 +138,7 @@ RUE is also an actual USPS Pub-28 suffix variant, so a model trained on consiste
 The v4.3.0 check measured this: it failed, the corrective change went in, and it passed.
 The conventions mask makes the model's own address-system detection essential.
 The detected system selects a row in the codex conventions,
-that row's forbidden tags are removed from the Viterbi vocabulary outright,
+that row's forbidden tags are removed from the Viterbi vocabulary,
 and the system's postcode shape enables the snap-only repair pass.
 Like the gazetteer anchor, this layer keeps its knowledge outside the weights.
 A new `de` or `gb` row in `codex/address-system-conventions.ts` applies the constraint without a retrain.
@@ -171,11 +171,11 @@ Each case is asserted in `core/pipeline/reconcile.test.ts` (grep for `kryptonite
 
 ### Resolve — world hierarchy
 
-This layer is WOF SQLite today (Phase 4.3). It knows place IDs, parent_id chains, placetypes, and lat/lon, and it returns candidates with scores. It carries no knowledge of input syntax.
+This layer is WOF SQLite today (Phase 4.3). It knows place IDs, parent_id chains, placetypes, and lat/lon, and it returns candidates with scores. It holds no knowledge of input syntax.
 
 ## Why this decomposition is bitter-lesson aligned
 
-The bitter lesson says that "general methods that use computation" win in the long run. It does not say to make one model do everything. It says not to hand-engineer domain knowledge where the system could learn it from data.
+Sutton's bitter-lesson essay argues that "general methods that use computation" prevail over the long run. It does not argue for one model that does everything. It argues against hand-engineering domain knowledge where the system could learn it from data.
 
 We want to learn two things from data: the per-token semantic type distribution (Stage 3) and structural transition validity (Stage 4, if a learned CRF replaces the structural mask).
 
@@ -190,7 +190,7 @@ The v0.4.0 ablation campaign's failure modes mapped almost directly to two missi
 | v0.4.0 failure                                                              | Absent layer                                                       | v0.5.0 fix                                                                              |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | **65% empty_pred** on mid-position postcodes (`Paris 75008`)                | Phrase grouper (Stage 2.7) — no boundary prior                     | `@mailwoman/phrase-grouper` proposes `75008` as a coherent unit before classification   |
-| **6% bio_slip** on `", 22220"` for `22220`                                  | Phrase grouper (Stage 2.7) — boundary-trimming is a downstream fix | Phrase grouper proposes `22220` as a span; the classifier never sees the `, `           |
+| **6% bio_slip** on `", 22220"` for `22220`                                  | Phrase grouper (Stage 2.7) — boundary-trimming is a downstream fix | Phrase grouper proposes `22220` as a span, so the classifier never sees the `, `        |
 | **Kryptonite cases** (`NY-NY Steakhouse`, `Paris, Texas`, `St. Petersburg`) | Reconcile (Stage 5) — no joint-coherence check                     | `reconcile.ts` beam search with WOF concordance scoring catches joint-incoherent parses |
 | **92% adversarial transliteration** on country FN                           | Tokenizer (separate concern)                                       | A1 tokenizer halves byte-fallback on multi-script eval (36.7% → 18.2%)                  |
 
@@ -208,7 +208,7 @@ because decode-time constraints compose freely when the decoder owns sequence st
 
 A later episode followed the same pattern. When affix recall hit a hard ceiling at 29M params,
 a probe ladder tested and falsified the capacity hypothesis: a 48M model landed at the identical equilibrium.
-The cause was a 1,000:1 label contradiction in the corpus, which relabeling fixed without an architecture change
+The cause was a 1,000:1 label contradiction in the corpus. A relabel fixed it without an architecture change
 ([#492](https://github.com/sister-software/mailwoman/issues/492) → [#511](https://github.com/sister-software/mailwoman/issues/511)).
 When a rung underperforms, audit what the data teaches it before resizing it.
 

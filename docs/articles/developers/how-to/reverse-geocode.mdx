@@ -63,7 +63,7 @@ Both database paths can come from flags instead of the environment: `--admin-db`
 ## 2. Read the containment field
 
 `containment` describes how the **deepest** place in the chain was confirmed, and it is the field that
-decides how much the answer is worth:
+decides how far you can trust the answer:
 
 ```bash
 mailwoman reverse 40.7128 -74.0060 --format text
@@ -86,9 +86,9 @@ chain.
 
 The mechanism: the geocoder pulls every place whose bounding box contains the point from the
 `place_bbox` R\*Tree, smallest-area-first, then ray-casts each one's real boundary against the polygon
-sidecar. The first polygon that contains the point wins, and that is `polygon`. A candidate whose
+sidecar. The first polygon that contains the point wins, with containment `polygon`. A candidate whose
 polygon exists but rejects the point is dropped as a bounding-box false positive. If no candidate is
-polygon-confirmed, the nearest centroid among the polygon-less candidates wins, and that is
+polygon-confirmed, the nearest centroid among the polygon-less candidates wins, with containment
 `approximate`.
 
 ## 3. Use it from the library
@@ -122,7 +122,7 @@ for (const [lat, lon] of [
 
 `reverseGeocode` is async sugar over `reverseGeocodeSync`, which does the same work on the calling
 thread — reach for the sync one inside another synchronous path. The instance holds open database
-handles, so `close()` matters; the class implements `Disposable`, so `using geocoder = new
+handles, so `close()` matters. The class implements `Disposable`, so `using geocoder = new
 WOFReverseGeocoder(...)` works where your runtime supports it.
 
 Three options shape a call: `placetypes` restricts which tiers are considered, `maxCandidates`
@@ -131,11 +131,11 @@ centroid-only step may reach while descending into finer tiers.
 
 ## Verify
 
-The third coordinate in that transcript is the check worth running, because it is the one that fails
+The third coordinate in that transcript is the check to run, because it is the one that fails
 in a way you have to design for.
 
 36°N 45°W is open ocean, roughly 3,700 km from anything. It returned `country: France`. France's
-bounding box spans its overseas departments, so the mid-Atlantic point falls inside it; with a US-only
+bounding box spans its overseas departments, so the mid-Atlantic point falls inside it. With a US-only
 polygon sidecar there was no boundary to reject the candidate, and the nearest-centroid fallback took
 it. The DE/FR sidecar changes the answer to `United States`: the French polygon now rejects the point,
 and the next bounding-box candidate wins the same way.

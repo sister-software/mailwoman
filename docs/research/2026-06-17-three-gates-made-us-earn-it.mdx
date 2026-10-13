@@ -39,7 +39,7 @@ The first version drew from a thin vocabulary of sixteen street names and a hand
 Twenty thousand rows from sixteen streets means the model sees `Country Club Rd` a thousand
 times, so it learns the word and not the boundary. We expected that. We did not expect the
 baseline result: the current model scored 48% on the suffix boundary and 70% on the French
-prefix against that thin data, which looked reasonable.
+prefix against that thin data. Those scores looked reasonable.
 
 We then tripled the vocabulary to a hundred streets and real cities, with every row unique, and
 the same model scored 41 and 48. The thin data had two effects. It taught the word instead of
@@ -52,7 +52,7 @@ To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, 
 Australian addresses. The base-consistency lint blocked it. In our training corpus the token
 `3000` appears thousands of times, always as a US house number, and the extract labeled it as an
 Australian postcode. A coverage extract cannot outweigh the base corpus it is added to. It can
-only conflict with the base corpus and degrade results slowly over one to three releases, which
+only conflict with the base corpus and degrade results slowly over one to three releases. That has
 happened to us before. The lint caught the conflict before we spent any GPU-hours on it. We
 removed Australia, the extract now covers base locales only, and the slash convention became a
 separate task that must also add base coverage for its locale.

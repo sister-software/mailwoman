@@ -99,7 +99,7 @@ function owningManifest(manifests: readonly PackageManifest[], file: string): Pa
 }
 
 /**
- * Text a file must contain before it is worth parsing for references to `move.from`.
+ * Text a file must contain before it is parsed for references to `move.from`.
  */
 function referenceProbes(move: ModuleMove, manifests: readonly PackageManifest[]): string[] {
 	const stem = basename(move.from).replace(SOURCE_STEM, "")
@@ -214,7 +214,7 @@ export async function planModuleMoves(
 
 		if (!text) return manifest
 
-		// A manifest this operation just spliced must parse.
+		// A manifest this operation spliced must parse.
 		// If it does not, the splice was wrong and the plan is void.
 		const parsed = parseJSONStrict<Pick<PackageManifest, "imports" | "exports">>(text)
 

@@ -6,7 +6,7 @@
  *   The postal-regime table's shape and the reading it makes legible: every regime it names is unmodeled
  *   or partial today.
  *
- *   That last assertion is the one worth keeping. When a regime starts being modeled, this test fails and whoever
+ *   That last assertion is the reason the test exists. When a regime starts being modeled, this test fails and whoever
  *   modeled it writes down which layout, lexicon, postcode shape or check now distinguishes it. A table without a matching test
  *   maintains reports the coverage of the day it was written.
  */

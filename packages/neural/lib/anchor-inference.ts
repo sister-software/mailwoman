@@ -157,7 +157,7 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 /**
  * The scan cap for {@linkcode countShapedOnlyKeys}.
  *
- * The error message needs to say only whether any keys exist and roughly how many.
+ * The error message needs to say only whether any keys exist and their approximate count.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 
@@ -191,8 +191,8 @@ export function shapedKeyerObligationViolation(
 }
 
 /**
- * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}, since a mispackaged
- * bundle is a property of the artifact set worth saying once per process.
+ * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}, since a mispackaged bundle
+ * is a property of the artifact set, so the warning prints once per process.
  */
 let warnedShapedObligation = false
 

@@ -10,7 +10,7 @@
  *   `https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf`
  *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row includes an organization name plus
  *   its mailing address. It complements `usgov-nppes` with a different venue population
- *   (non-profits vs healthcare providers) and, notably, a high share of PO-box addresses — useful
+ *   (non-profits vs healthcare providers) and a high share of PO-box addresses — useful
  *   `po_box`-tag signal (a tag with historically low recall).
  *
  *   Output: one row per record with a usable city + postcode. name → `venue`; the street line becomes
@@ -40,7 +40,7 @@ export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * PO box in its many written forms: "PO BOX 12", "P.O.
+ * PO box in each of its written forms: "PO BOX 12", "P.O.
  *
  * BOX 12", "P O BOX 12", "POB 12", "BOX 12".
  */

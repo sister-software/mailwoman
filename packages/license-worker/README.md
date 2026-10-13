@@ -25,15 +25,15 @@ only an `active` entry of the shipped register passes the self-test.
 | `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes                                                                        |
 | `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                                                                                          |
 | `LICENSE_SIGNING_KEY_PEM`                            | secret     | the worker's Ed25519 private key, PKCS#8 PEM                                                                                                                                      |
-| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone, as text and as HTML from the react-email template in `lib/email/template.tsx` |
+| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending. The license message goes out through it, from `EMAIL_FROM` on the zone, as text and as HTML from the react-email template in `lib/email/template.tsx` |
 | `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                                                                                                    |
 | `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                                                                                                  |
 | `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working                                                                            |
-| `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused                                                                                      |
+| `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts. An event or invoice from the other mode is refused                                                                                      |
 | `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                                                                                        |
 | `EMAIL_FROM`                                         | var        | the sender address                                                                                                                                                                |
 | `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                                                                                          |
-| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid and per client address, independently, for refresh and status                                                                              |
+| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims, and per lid and per client address, independently, for refresh and status                                                                          |
 
 If a production var still reads `REPLACE`, `readEnv` refuses every request with 503, so an unfilled deploy never
 mints. Secrets are set only through `wrangler secret put`. `.dev.vars.example` lists the four secrets for local
@@ -42,7 +42,7 @@ mints. Secrets are set only through `wrangler secret put`. `.dev.vars.example` l
 ## First deploy
 
 Two prerequisites must hold before the worker can mint anything. The worker's public key must be an `active` entry of
-`LICENSE_SIGNING_KEYS` in `@mailwoman/core`, and a mailwoman release that carries it must be published. No
+`LICENSE_SIGNING_KEYS` in `@mailwoman/core`, and a mailwoman release that contains it must be published. No
 installation accepts a token signed by a key that its release does not trust, so the self-test refuses to start
 before that.
 
@@ -106,8 +106,8 @@ The same steps with `-c wrangler.sandbox.toml` set up the sandbox on a key pair 
 claim, email, refresh. Verify a sandbox token with `verifyLicenseKey` against the sandbox public key, because no release
 trusts it.
 
-The renewal path needs a customer on a Stripe test clock, which a Payment Link cannot create. The rehearsal therefore
-builds the Checkout Session itself with the same collection the Link carries (`checkoutCollection` in
+The renewal path needs a customer on a Stripe test clock. A Payment Link cannot create one. The rehearsal therefore
+builds the Checkout Session itself with the same collection the Link configures (`checkoutCollection` in
 `lib/shop/catalog.ts`):
 
 ```bash
@@ -141,7 +141,7 @@ the rest.
 Each pass reads every license in the ledger in full, and mints its subscription's latest paid invoice if no token
 holds it, however old the invoice is. A subscription that the ledger has never seen, because its
 `checkout.session.completed` was lost and its success page was never visited, can be found only through Stripe's
-invoice list, which filters by creation time. Reconciliation therefore recovers it only while its first invoice is less
+invoice list. That list filters by creation time. Reconciliation therefore recovers it only while its first invoice is less
 than a week old. After that, resend the invoice's `invoice.paid` from the Stripe dashboard. A resend through
 Cloudflare's binding can deliver twice when the ledger fails to record an accepted send. Resend deduplicates on the
 invoice id.
@@ -152,11 +152,11 @@ invoice id.
 | ----------------- | --------------------------------------------- | -------------------- | -------------------------------------- |
 | full refund       | `revoked`                                     | `revoked`            | valid until its `expires`              |
 | dispute opened    | `revoked`                                     | `revoked`            | as above                               |
-| dispute won       | back to the subscription's state              | as Stripe says       | unchanged                              |
-| partial refund    | `review`                                      | `active`             | unchanged; the operator decides        |
+| dispute won       | back to the subscription's state              | as Stripe reports    | unchanged                              |
+| partial refund    | `review`                                      | `active`             | unchanged, and the operator decides    |
 | subscription ends | `lapsed` once the current token's date passes | `lapsed` on that day | expires with its 14-day grace, by date |
 
-Public status answers carry no reason, name, or date.
+Public status answers contain no reason, name, or date.
 
 ## Run it locally
 
@@ -176,8 +176,8 @@ Stripe cannot deliver a webhook to localhost. A local end-to-end test pays throu
 browser, reads the session id from the success URL, fetches the resulting events from `/v1/events`, and posts each to
 `/v1/webhooks/stripe` signed the way Stripe signs (`t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>" under the local
 webhook secret>`). The worker re-reads every object from Stripe by id, so only the delivery is simulated. A renewal
-needs a customer on a Stripe test clock, which a Payment Link cannot create. Build a Checkout Session through the API
-for that customer with the same price, custom field, consent and metadata that the Link carries. Pay it, advance the
+needs a customer on a Stripe test clock, and a Payment Link cannot create one. Build a Checkout Session through the API
+for that customer with the same price, custom field, consent and metadata that the Link configures. Pay it, advance the
 clock past the period end, and replay the renewal's `invoice.paid`. The launch plan's receipt records one such run.
 
 ## Tests
@@ -185,7 +185,7 @@ clock past the period end, and replay the renewal's `invoice.paid`. The launch p
 `yarn test:license-worker` runs the workspace's suite under `@cloudflare/vitest-pool-workers`. The suite uses
 Miniflare's D1 with the migrations applied per file, a Stripe client over a fetch stub that answers by method and path,
 and a signing pair minted per run. The root Vitest sweep excludes these files, and CI runs them as a separate step. Run
-`yarn compile` first, because the worker imports `@mailwoman/core` through its `default` export condition, which points
+`yarn compile` first, because the worker imports `@mailwoman/core` through its `default` export condition. That condition points
 to `out/`.
 
 The worker runs without `nodejs_compat`. The `bundle-graph` health check keeps the license subpaths free of Node

@@ -205,8 +205,8 @@ async function buildDatabase(
 	}
 
 	using kdb = new DatabaseClient<WOFDatabase>(outPath)
-	// Regenerated artifact: drop any prior table so a re-run with a different country set
-	// fully replaces it and synthetic ids restart cleanly without colliding with stale rows.
+	// Regenerated artifact: drop any prior table so a re-run with a different country set fully
+	// replaces it and synthetic ids restart from the first id without colliding with stale rows.
 	await kdb.schema.dropTable("spr").ifExists().execute()
 
 	// Schema mirrors postalcode-intl.db's `spr` exactly, as a drop-in `--postcodes` input for build-candidate.

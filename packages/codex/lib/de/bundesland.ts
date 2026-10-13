@@ -6,7 +6,7 @@
  *   The 16 German federal states (Bundesländer), keyed by their ISO 3166-2:DE subdivision code.
  *
  *   The US analog is `us/state.ts`. The informative difference: a US state's two-letter code (`CA`)
- *   is the USPS abbreviation people actually write in an address, whereas a German address almost
+ *   is the USPS abbreviation people write in an address, whereas a German address almost
  *   never includes the Bundesland. It is `PLZ City`, and the state is inferred. These
  *   codes matter for resolver region-matching and display rather than for parsing the surface string.
  */
@@ -72,7 +72,7 @@ export function isGermanStateCode(input: unknown): input is GermanStateCode {
 /**
  * Name (native German, English exonym, or common alias) → ISO 3166-2:DE code, lowercase-keyed.
  *
- * Includes the everyday aliases a parser actually meets: `NRW` for Nordrhein-Westfalen,
+ * Includes the everyday aliases a parser meets in input: `NRW` for Nordrhein-Westfalen,
  * `Bavaria` for Bayern, `Saxony` for Sachsen.
  * The resolver matches region surface forms from German parses.
  *

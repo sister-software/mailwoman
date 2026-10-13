@@ -27,8 +27,8 @@ export interface CORESRegistration {
 	 */
 	entityType: string | null
 	/**
-	 * The organization the registered contact belongs to, a genuinely independent name surface
-	 * from `entityName` because it is where the brand appears when it differs from the legal name.
+	 * The organization the registered contact belongs to, an independent name surface from
+	 * `entityName` because it is where the brand appears when it differs from the legal name.
 	 */
 	contactOrganization: string | null
 	contactName: string | null
@@ -118,9 +118,9 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 
 	// The page states one label/value pair per row.
 	// Read as a grid rather than by pattern: `/<td[^>]*>([\s\S]*?)<\/td>/` over a
-	// network-supplied page backtracks polynomially on a body with many `<td` repetitions
-	// and no closing partner (CodeQL `js/polynomial-redos`), and the parser answers the
-	// same question without a scan that can be made to spend the document.
+	// network-supplied page backtracks polynomially on a body with a long run of `<td`
+	// repetitions and no closing partner (CodeQL `js/polynomial-redos`), and the parser
+	// answers the same question without a scan that can be made to spend the document.
 	for (const rows of extractTableRows(html) ?? []) {
 		for (const row of rows) {
 			const label = row.find((cell) => cell.tag === "th")?.text

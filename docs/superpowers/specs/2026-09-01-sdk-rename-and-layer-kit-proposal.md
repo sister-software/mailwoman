@@ -6,7 +6,7 @@ This record answers two questions that were deliberately left out of the `sdk/` 
 decided on measurements rather than inside a file move. The first is whether the remaining ten `lib/sdk/`
 directories should be renamed. The second is whether `coastal`, `flood`, `soil` and `zoning` should be one
 package instead of four. §1 and §4 give both measurements with the commands that produced them. **Both
-results contradicted the intuitive answer**, so they are recorded here rather than acted on.
+results contradicted the expected answer**, so they are recorded here rather than acted on.
 
 ---
 
@@ -19,7 +19,7 @@ results contradicted the intuitive answer**, so they are recorded here rather th
    1b. **Do it when the next breaking release happens anyway.** Operator direction, 2026-09-01: a consumer
    should pay for renames once. That direction was given when a second rename, of the retired four-way
    vocabulary word, looked like it had to ship in the same release. Measurement showed it did not. That
-   rename carried **4** published subpaths against `sdk/`'s 83, so it was an internal refactor with a small
+   rename touched **4** published subpaths against `sdk/`'s 83, so it was an internal refactor with a small
    external edge, and it shipped continuously instead (§6). `sdk/` is therefore the only rename left, and it
    still waits for a release it can share.
 2. **If it is renamed anyway, the word is `acquire/`**, because `soil/lib/sdk/acquire.ts` already chose it,
@@ -27,7 +27,7 @@ results contradicted the intuitive answer**, so they are recorded here rather th
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
    **0.18% of their lines**. There is almost no code to de-duplicate, and a shared package would impose one
    abstraction over four implementations that differ substantially (§4).
-4. **A shared package may still be worth building for a different reason**, namely a single tested
+4. **A shared package may still be justified for a different reason**, namely a single tested
    interface for the ingest stages. That design argument must be made on its own evidence, and this record
    does not make it (§4.3).
 
@@ -78,15 +78,15 @@ repeat the first attempt.
   dependency rule could have caught it, and none did.
 - The `filer`/`bdc` "drift" was largely a measurement error. The audit's table of external importers
   (`frn` 6, `form499` 5, `common` 5) counts `#sdk/*` specifiers **inside the owning package**.
-- An edge check found the one actual architectural violation, which the naming argument could not have
-  detected. `mcp/lib/cli.ts` took four symbols from `@mailwoman/filer/sdk`, a barrel that `export *`s
+- An edge check found the one actual architectural violation. The naming argument could not have
+  detected it. `mcp/lib/cli.ts` took four symbols from `@mailwoman/filer/sdk`, a barrel that `export *`s
   seventeen modules. An MCP request path therefore loaded the SEC and CORES HTTP clients and the EDGAR
   ingest to reach three functions. The fix moved those three modules to the filer package root, without a
   rename.
 
 **`tools/` cannot serve as the destination**, although the audit assumed it could. The directory already
 has at least four meanings: build tooling (`core`, `codex`, `corpus`), MCP tool definitions (`dev-mcp`), a
-CLI command's library half (`filer`, `mailwoman`), and product analysis (`registry`, whose header says "THE
+CLI command's library half (`filer`, `mailwoman`), and product analysis (`registry`, with the header text "THE
 PRODUCT OUTPUT"). The folder-name form of the enforcement rule, "no code outside `tools/` may import
 `tools/`", was written first. It produced **38 violations, and every one was correct behavior**. 33 of
 them were `mailwoman/lib/commands/*` calling their own command's library half. That experiment is why the
@@ -101,7 +101,7 @@ already in use: seven of the ten packages have an `ingest.ts` inside `sdk/`, whi
 The rename requires all three of these conditions:
 
 1. **The enforcement rule ships in the same PR.** A rename without one repeats 2026-07-09 exactly.
-2. **Clean break without shims**, which is the established approach. CHANGELOG "Unreleased" carries the
+2. **Clean break without shims.** This is the established approach. CHANGELOG "Unreleased" lists the
    two breaks already made this way.
 3. **One package per commit**, largest last. `ban` (5 files / 3 subpaths) and `tiger` (5 / 2) go first,
    because they are small enough that a mistake is visible. `filer` (20 / 14) and `soil` (11 / 14) go last.
@@ -138,7 +138,7 @@ The instrument has two limits, and both caution against over-reading it:
   and still share a control-flow skeleton. The table below is evidence against a copy, and it makes no statement
   about a shared interface.
 
-The same-named files also differ in size:
+Files with the same name also differ in size:
 
 | file              | coastal | flood | soil | zoning |
 | ----------------- | ------: | ----: | ---: | -----: |
@@ -164,7 +164,7 @@ code they have in common, and that code is already extracted.
 
 `@mailwoman/core/layers` **is** the interface package. A fifth layer today already inherits
 `runIngestChunkScript`, `buildSealedArtifact`, `polygonLayerManifest`, `designatedCoverageCells`,
-`assertNoNegativeClaim` and `areaAgreementFrom` (with its witness type). The real question is what the
+`assertNoNegativeClaim` and `areaAgreementFrom` (with its witness type). The question to answer is what the
 existing package still lacks. `layer-kit` is the wrong answer for two reasons: it would duplicate an
 existing home, and it fails the de-duplication test in §4.1.
 
@@ -173,9 +173,9 @@ during #2041, and the fourth is tracked:
 
 | piece                                           | why it was left                               | the difference that blocks a naive merge                              |
 | ----------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
-| the `measureCellResolutions` driver             | per-product control flow                      | coastal measures per scenario; zoning narrows                         |
+| the `measureCellResolutions` driver             | per-product control flow                      | coastal measures per scenario, zoning narrows                         |
 | the coastal/zoning `resolveDesignations` bodies | one substantive difference rather than a copy | —                                                                     |
-| the verify-driver skeleton                      | tolerance is a product constant               | agree/disagree tally is shared; soil's tolerance is 1 m against 0.5 m |
+| the verify-driver skeleton                      | tolerance is a product constant               | agree/disagree tally is shared. Soil's tolerance is 1 m against 0.5 m |
 | the `schema-columns` rewire (#2046)             | adoption shifts stored column order           | four layer `schema.ts` files unrewired                                |
 
 **"What does a fifth layer cost?" can therefore be answered by counting rather than by a survey.** List the
@@ -197,7 +197,7 @@ driver hook). The work does not require a new package.
 ## 6. The other rename in flight — DONE, and it did not need the release
 
 §0.1b planned to ship this rename and the retired-vocabulary rename in one breaking release. That plan
-assumed the vocabulary change carried more public surface than `sdk/`'s 83 subpaths. Measurement showed the
+assumed the vocabulary change touched more public surface than `sdk/`'s 83 subpaths. Measurement showed the
 opposite, so the two renames no longer needed to ship together:
 
 |                           | `sdk/` | the retired word |
@@ -212,23 +212,23 @@ reverse**: an internal refactor with four subpaths attached. It never needed to 
 shipped continuously instead. Those four subpaths moved with their modules, and each move is recorded in
 CHANGELOG "Unreleased".
 
-The `sdk/` rename would now need a release of its own for 83 subpaths and no other change, which strengthens
+The `sdk/` rename would now need a release of its own for 83 subpaths and no other change. That cost strengthens
 §0.1. Bundle it with the next breaking change that has to happen anyway.
 
 ### 6.1 The completion criterion, and what it cost to state directly
 
 **Done: zero occurrences, enforced.** `repo-health`'s `bannedVocabulary` counter keeps the count at zero,
-with an allow-list that carries a reason beside every entry. Three findings are worth keeping, because
+with an allow-list that records a reason beside every entry. Three findings are recorded here, because
 each one could mislead the next vocabulary removal:
 
-1. **The instrument must read NUL-containing files.** Five tracked sources carry raw NUL bytes (#2018).
+1. **The instrument must read NUL-containing files.** Five tracked sources contain raw NUL bytes (#2018).
    `grep` treats them as binary and skips them without warning: it finds 3,481 occurrences with `-a` and
    3,427 without. A `grep`-based ratchet would have reported zero with 54 occurrences remaining. The counter
-   reads files through Node instead, which reads NUL-containing files like any other file.
+   reads files through Node instead. Node reads NUL-containing files like any other file.
 2. **A ratchet written in the language it polices is inside its own scope.** The case-preserving sweep
    renamed the counter and rewrote the pattern it counts with. The check then began measuring the
    replacement word while still reporting a falling number, and it stayed green throughout. The counter is
-   now named neutrally, its term lives in one constant, and `scripts/repo-health.ts` excludes itself.
+   now given a neutral name, its term lives in one constant, and `scripts/repo-health.ts` excludes itself.
    Without that exclusion the count could never reach zero, because the pattern has to spell what it bans.
 3. **The TypeScript-only scan under-reports substantially.** The first zero left **125** occurrences in
    prose, config, dictionaries and eval rows, including three sentences in `AGENTS.md` that told the next

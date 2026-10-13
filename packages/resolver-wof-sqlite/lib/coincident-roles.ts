@@ -5,7 +5,7 @@
  *
  *   `buildCoincidentRoles` derives the coincident-roles relation into the unified gazetteer.
  *
- *   Many places occupy multiple admin tiers under one name: German city-states (Berlin, Hamburg,
+ *   Some places occupy multiple admin tiers under one name: German city-states (Berlin, Hamburg,
  *   Bremen), Italian provinces whose names match their capital (Milano, Varese), Spanish
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals (Utrecht,
  *   Groningen), and Shanghai. When an address surfaces only the admin role because the parser

@@ -59,7 +59,7 @@ export function runtimeSupports(release: Pick<ReleaseInfo, "requiresRuntime">): 
 }
 
 /**
- * The postcode-anchor binaries published before entries carried `postcodeAnchors`.
+ * The postcode-anchor binaries published before entries had a `postcodeAnchors` field.
  * An entry that sets `hasAnchor` without the list held these.
  */
 const PRE_LIST_POSTCODE_ANCHORS: readonly string[] = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
@@ -105,7 +105,7 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
 	/**
-	 * The spelling the live 2026-08-11 manifest actually uses (WOF caps, lowercase b).
+	 * The spelling the live 2026-08-11 manifest uses (WOF caps, lowercase b).
 	 *
 	 * A wire key is a string interface.
 	 * Every spelling ever published must stay readable here.

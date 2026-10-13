@@ -60,7 +60,7 @@ import { readMailwomanManifest } from "#metadata"
 export const spec = {
 	name: "license",
 	description:
-		"Mint, issue, verify, adopt and refresh commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts; `register` prints the well-known key file the shipped register derives; `adopt <token> --secret <s>` writes a purchased key to $MAILWOMAN_CONFIG_ROOT/license/key and its refresh secret beside it; `refresh` fetches the current key after a renewal. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.",
+		"Mint, issue, verify, adopt and refresh commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id. `issue` signs a key for a licensee. `verify` checks a token offline against the public keys this build trusts. `register` prints the well-known key file the shipped register derives. `adopt <token> --secret <s>` writes a purchased key to $MAILWOMAN_CONFIG_ROOT/license/key and its refresh secret beside it. `refresh` fetches the current key after a renewal. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` reports which branch applies and why.",
 	positionals: [
 		{
 			name: "action",
@@ -79,7 +79,7 @@ export const spec = {
 			type: "string",
 			hint: "secret",
 			description:
-				"adopt: the refresh secret from the purchase page or the first email, stored beside the key; refresh: the secret, when not reading the credentials file.",
+				"adopt: the refresh secret from the purchase page or the first email, stored beside the key. refresh: the secret, when not reading the credentials file.",
 		},
 		licensee: {
 			type: "string",
@@ -257,9 +257,9 @@ function refusalFor(verification: LicenseKeyVerification): string | null {
 /**
  * The `lid` in a token, when the self-service worker issued it.
  *
- * For a token this build cannot verify the payload is read as written:
- * the license's public status is the one thing worth asking about such a token,
- * since it identifies whether the action is an upgrade or a purchase.
+ * For a token this build cannot verify the payload is read as written: the command
+ * asks only for the license's public status for such a token, since it identifies
+ * whether the action is an upgrade or a purchase.
  */
 function licenseIDOf(verification: LicenseKeyVerification, token: string): string | null {
 	const payload = "payload" in verification ? verification.payload : decodeLicenseKeyPayload(token)

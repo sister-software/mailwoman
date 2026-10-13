@@ -55,7 +55,7 @@ venue tags) and (b) the quick base legs (P0 fragment sample plus golden sample).
 
 ## Stop rules
 
-- If the main run misses V1, one contingency run is allowed, and only with a named mechanism (for
+- If the main run misses V1, one contingency run is allowed, and only with a stated mechanism (for
   example, the GB venue pool composition or the range-number rate). A second miss goes to an
   operator conversation, and there is no third launch.
 - If B1 misses at the chosen λ, do not ship. Report the conflict between λ and the target as the
@@ -80,7 +80,7 @@ the venue extract is about 1.4% of samples, so the run saw about 7k venue rows (
 steps at a fine-tune learning rate. The probe cannot test λ if the increment leaves the outputs unchanged, so the
 sweep result is void. It does not show that λ is unconstrained.
 
-**Named revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune feed,
+**Stated revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune feed,
 following the v3.8.x oversample precedent (the no-fragment run used 12.0 for its corrective
 extract). Re-run the identical 4-λ × 2k sweep as v4.1.2, with everything else unchanged. The λ pick
 rule applies at the revised weight. If the revised probe still shows no target movement, stop and
@@ -111,13 +111,13 @@ teaches none of them:
 
 1. _Typeless GB street names_ ("Minories", with no Road/St/Close token). Board street accuracy
    stayed near 29% at every weight, and the PPD tuples are overwhelmingly typed streets. Ye Three
-   Lords needs the model to accept a bare proper noun as a street from its position alone.
+   Lords needs the model to accept a bare proper noun as a street from its position without other cues.
 2. _The doubled bare venue_ ("Southfields Station, Southfields Station"). This is a venue-only
    fragment and does not match the extract's venue+address template.
 3. _Abbreviated internal directionals_ ("New N Rd") next to a venue that starts with a direction.
    "13 Gerrard St" also shows a digit-split oddity (house_number "Ger") that deserves its own look.
 
-Each can become named future work: a typeless-street extract leg, a venue-only doubled template in
+Each can become listed future work: a typeless-street extract leg, a venue-only doubled template in
 the no-street extract, and an abbreviation-augmentation pass over the GB leg. That is three
 mechanisms, and the envelope allows one contingency. **The run stopped per the pre-registration.
 The candidate (model 7.0.1-candidate, staged rather than promoted) and all receipts go to the
@@ -127,7 +127,7 @@ operator.** The six gauntlet fixtures stay `improvement_target`.
 
 ## Addendum 3 (2026-08-01) — the country-tail mechanism: BANKED AS CODE, run deferred
 
-The probe set's strongest named mechanism comes from the FR control row: a trailing country surface
+The probe set's strongest identified mechanism comes from the FR control row: a trailing country surface
 makes the whole venue template out of distribution. The synthesizer now covers it with
 `COUNTRY_APPEND_RATE = 0.3` across every template order. The appended surface is tagged `country`
 and drawn from per-country surface pools (including the UK/United Kingdom mix), and rate-band and
@@ -156,6 +156,6 @@ corrected gauntlet shows 0 newly passing fixtures and a conditional regression (
 The likely mechanism is that at fine-tune weight the model learns the new pattern by its easiest
 route (tail token → country). The added tail tokens then dilute the venue boundary signal instead
 of extending it. The extract change stays in the code, because a from-scratch base learns the joint
-pattern from step 0, and the run-2 lesson says composition behaves differently in base training.
+pattern from step 0, and the run-2 lesson shows that composition behaves differently in base training.
 The fine-tune route to this pattern is now recorded as a dead end. There are no further launches,
 and the staged 7.0.1 (v411, B1-clean) remains the best venue candidate.

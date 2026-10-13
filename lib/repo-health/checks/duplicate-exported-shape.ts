@@ -15,7 +15,7 @@
  *   `mailwoman/prefer-home` lint rule's concern and is left out here.
  *
  *   A single-member interface, a one-member union or an alias of a bare reference such as `type Id = string`
- *   are skipped: they agree by coincidence far more often than by copy. Member order is normalized one level
+ *   are skipped: they agree by coincidence more than by copy. Member order is normalized one level
  *   deep. A nested type literal keeps its written order.
  */
 

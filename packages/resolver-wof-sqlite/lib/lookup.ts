@@ -569,7 +569,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 	/**
 	 * Coordinate-first locality resolution: union the postcode's containing
-	 * and nearby localities with the FTS name candidates and soft-score them,
+	 * and closest neighboring localities with the FTS name candidates and soft-score them,
 	 * returning null when the postcode is not in the table.
 	 */
 	async #findLocalityCoordFirst(

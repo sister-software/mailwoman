@@ -88,8 +88,8 @@ export interface StreamMarkupOptions {
  * The elements matching `name`, each complete, in document order.
  *
  * A nested element of the same name is not yielded separately: capture starts at the
- * outermost occurrence and ends when that one closes, so one `ad:Address` arrives
- * once however many `ad:Address` elements its own subtree contains.
+ * outermost occurrence and ends when that one closes, so one `ad:Address` arrives once
+ * whatever the number of `ad:Address` elements its own subtree contains.
  *
  * Several names read one document once.
  * An INSPIRE collection writes the features an address references before the addresses
@@ -226,7 +226,7 @@ export async function* streamMarkupElements(
 	 * A caller that buffers a whole document and yields it once would otherwise
 	 * ask for a string past V8's maximum length.
 	 * The decoder's state persists across the pieces, so a multi-byte character spanning
-	 * a slice boundary survives, as it does across chunks.
+	 * a piece boundary survives, as it does across chunks.
 	 */
 	const decodePieces = (chunk: Uint8Array): string[] => {
 		if (chunk.length <= MAX_DECODED_CHUNK) return [decoder.decode(chunk, { stream: true })]

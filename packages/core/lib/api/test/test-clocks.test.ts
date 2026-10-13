@@ -56,7 +56,7 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 
 	it("measures its budget with performance.now, not the fakeable Date", async () => {
 		// Consumers freeze `Date` inside their describe blocks, so a budget reading `Date.now()`
-		// would never advance and genuinely stuck work would hang instead of reporting.
+		// would never advance and stuck work would hang instead of reporting.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 

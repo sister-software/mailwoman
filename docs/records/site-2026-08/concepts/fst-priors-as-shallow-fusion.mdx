@@ -28,18 +28,18 @@ with language models. This article explains the shallow-fusion analogy,
 and — since the two FSTs Mailwoman defines are at different stages of
 being wired up — is precise about which one runs where. The **admin FST**
 is wired into the production runtime pipeline and the CLI today. The
-**morphology FST** exists as a built artifact and runs in eval harnesses;
-it isn't wired into the default runtime pipeline yet. [FST gazetteer
+**morphology FST** exists as a built artifact and runs in eval harnesses.
+It isn't wired into the default runtime pipeline yet. [FST gazetteer
 prior](./fst-gazetteer-prior.mdx) is the full reference for the admin
-FST's mechanics; this page is the framing plus the morphology-FST detail
+FST's mechanics. This page is the framing plus the morphology-FST detail
 that page doesn't cover.
 
 ## The shallow-fusion pattern
 
 Speech recognition faces the same problem: a learned model
 (acoustic → phoneme sequences) needs world knowledge (which phoneme
-sequences are real words / valid sentences) it didn't learn from data
-alone. The solution that works in production: compute the acoustic
+sequences are real words / valid sentences) that its training data
+did not supply. The solution that works in production: compute the acoustic
 model's posterior over phoneme sequences, ADD a logit bias from an
 independent language model, decode the combined distribution.
 
@@ -55,7 +55,7 @@ world-knowledge source. They compose additively: the LM's bias amplifies
 acoustic decisions consistent with valid words and suppresses ones that
 aren't. Neither replaces the other — the acoustic model handles novel
 words the LM doesn't have, the LM handles ambiguous audio the acoustic
-model can't disambiguate alone.
+model can't disambiguate without it.
 
 ## The mailwoman mapping
 
@@ -81,7 +81,7 @@ The biases are capped at 3.0 logits (per the
 [FST gazetteer prior](./fst-gazetteer-prior.mdx) design). A confident
 encoder decision (raw logit > 5) is not overridden by a 3-logit bias.
 But when the encoder is uncertain (raw logit ~0), a 3-logit positive
-bias is decisive.
+bias determines the label.
 
 ## The admin FST
 
@@ -93,7 +93,7 @@ and a negative bias against competing tags (`B-street`,
 `B-house_number`, `B-venue`) on the same tokens, capped at 3.0 logits.
 [FST gazetteer prior](./fst-gazetteer-prior.mdx) has the full build,
 the `PlaceEntry` shape, and worked examples — that's the reference for
-this FST; this page only needs the summary above for the analogy.
+this FST. This page only needs the summary above for the analogy.
 
 This is the FST that's wired into production: `mailwoman parse`
 builds it from the WOF SQLite database whenever one is available
@@ -131,7 +131,7 @@ an address rather than a venue name):
 
 - Pass 1: `Avenue` matches the morphology FST. Bias `Avenue` toward
   `B-street_suffix` AND `B-street_prefix` (we don't know position
-  without context; the encoder + adjacent-token bias decide).
+  without context, so the encoder + adjacent-token bias decide).
 - Pass 2: `5th` (the adjacent token before `Avenue`) gets a positive
   bias toward `B-street` AND a NEGATIVE bias against
   `B-dependent_locality`.
@@ -139,14 +139,14 @@ an address rather than a venue name):
 The negative-bias-on-adjacent is the critical piece. It's what
 prevents the v0.6.1-style dep_loc hallucinations: when synth-street
 training pushed the model toward "decompose mode," the morphology
-prior at inference says "the token next to an affix is street-shaped rather than dep_loc-shaped." See
+prior at inference encodes "the token next to an affix is street-shaped rather than dep_loc-shaped." See
 [street-supplement-architecture.md](./street-supplement-architecture.mdx)
 for the layered design.
 
 ## What additive bias means in practice
 
 The bias is added to the encoder's raw logit before softmax. This is
-log-space addition, which is multiplication in probability space:
+log-space addition. Log-space addition is multiplication in probability space:
 
 ```
 P(label | token) ∝ exp(encoder_logit + bias)
@@ -202,7 +202,7 @@ FST walks off. No positive bias. The encoder's training signal
 (`Riverside Garden Center` was labeled venue in training data) wins.
 
 The priors don't fight the encoder. They contribute orthogonal
-evidence; the encoder is the final arbiter when the evidence is clear.
+evidence. The encoder is the final arbiter when the evidence is clear.
 
 ## When priors disagree
 
@@ -237,5 +237,5 @@ dictate.
   full detail, with worked Washington-DC example
 - [Street-supplement architecture](./street-supplement-architecture.mdx) —
   the layered street-side prior design
-- [WOF hierarchy gap](./wof-hierarchy-gap.mdx) — why the admin FST alone
+- [WOF hierarchy gap](./wof-hierarchy-gap.mdx) — why the admin FST by itself
   isn't enough at the street layer

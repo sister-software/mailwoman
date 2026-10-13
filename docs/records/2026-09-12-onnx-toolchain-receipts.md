@@ -1,6 +1,6 @@
 # ONNX toolchain receipts — onnxscript 0.7.2 and the onnxruntime producer/consumer gap
 
-Two pins that decide the shipped ONNX graph carried open questions. Both are now measured. The
+Two pins that decide the shipped ONNX graph had open questions. Both are now measured. The
 headline is that one of them did not answer the way the pin comment assumed.
 
 ## The rig
@@ -13,9 +13,9 @@ exporting the checkpoint at
 on 2026-07-03 by the Modal image, so the local rig is a faithful stand-in for the image and the only
 variable is the package under test.
 
-Without that control the comparison would be a local export against a months-old artifact, which
-conflates every pin that moved in between — which is the shape of receipt the previous bump took,
-and why it could only report a yes/no on bytes.
+Without that control the comparison would be a local export against a months-old artifact. That comparison
+conflates every pin that moved in between. The previous bump took a receipt of that shape,
+so it could only report a yes/no on bytes.
 
 ## 1. onnxscript 0.7.0 → 0.7.2 changes the graph
 
@@ -35,8 +35,8 @@ and the six initializers it adds are the folded constants. `opset` stays 17, `ir
 the input and output names are unchanged, and **no weight tensor changed**: of the 98 initializers
 present in both graphs, zero differ in bytes. The int8 graph shows the same delta exactly.
 
-The risk in a fold like that is folding a _dynamic_ dimension into a constant, which pins the graph
-to the length it was traced at and fails only at some other length. It did not:
+The risk in a fold like that is folding a _dynamic_ dimension into a constant. Such a fold pins the graph
+to the length it was traced at, and the graph fails only at some other length. It did not:
 
 | sequence     | fp32                    | int8                    |
 | ------------ | ----------------------- | ----------------------- |
@@ -50,14 +50,14 @@ with the same error.
 
 **Consequence for whoever rebuilds an artifact:** a rebuild of anything exported before this pin
 will differ in md5 and be correct. `REPRODUCIBILITY.md` said a differing md5 with a passing
-promotion eval meant toolchain drift; that instruction is now wrong on its own and has been
+promotion eval meant toolchain drift. That instruction is now wrong on its own and has been
 rewritten.
 
 ## 2. The producer/consumer gap: Python was behind its own consumer
 
 The memory note recorded this as "onnxruntime-web 1.29.0, current release 1.30.0, so the Python side
 is four minors behind." The npm half of that is wrong: `onnxruntime-web`'s `latest` dist-tag **is**
-1.29.0, and every 1.30.0 on npm is a `-dev.` prerelease. The browser was on current stable; the
+1.29.0, and every 1.30.0 on npm is a `-dev.` prerelease. The browser was on current stable. The
 Python side was pinned three minors behind the runtime executing its output.
 
 Python `onnxruntime` 1.26.0 → 1.29.0 is **graph-neutral**. One quantization run on a fixed
@@ -72,7 +72,7 @@ So the bump cannot move what ships.
 
 The two runtimes do **not** execute that graph identically. The shipped runtime
 `model-v440-suffix-boundary-v2-step-060000-int8.onnx` under each, on inputs written to disk once and
-read by both processes so the feed is provably the same:
+read by both processes so the feed is byte-identical:
 
 | probe                                 | worst logit Δ | argmax flips            |
 | ------------------------------------- | ------------- | ----------------------- |

@@ -28,7 +28,7 @@
  *   all) — proving the coverage join runs against whatever database the caller passes rather than poi.db's own
  *   coverage. One fixture's `layer_coverage` is left completely empty (every hit must report
  *   `coverage: undefined`, the meaning-of-zero rule); another has coverage written for exactly the res-6
- *   cells the hits actually land in (computed via the same `res9ShortCellToRes6Parent`
+ *   cells the hits land in (computed via the same `res9ShortCellToRes6Parent`
  *   {@link nearestInfrastructure} itself uses, cross-checked against a direct `readLayerCoverage` call).
  */
 
@@ -146,7 +146,7 @@ async function buildPOIFixture(path: PathBuilder, rows: readonly FixtureRow[]): 
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes
-	// dictionary lives alongside it and there's no standalone builder for just that table.
+	// dictionary lives alongside it and there's no standalone builder that writes only that table.
 	await createPOIStagingTables(kdb)
 	// POILookup's constructor unconditionally prepares a statement against `poi_search`.
 	// The FTS5 table must exist even though these tests never search by name.
@@ -277,9 +277,10 @@ describe("nearestInfrastructure", () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
 		using schemadb = await openemptyschemadb()
 
-		// Discover which res-6 cells the hits land in (via the same reconstruction nearestInfrastructure
-		// itself uses), then write coverage for exactly those cells — robust regardless of
-		// whether the fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
+		// Discover which res-6 cells the hits land in (via the same reconstruction
+		// nearestInfrastructure itself uses), then write coverage for exactly those cells.
+		// The test then holds whether the fixture's near/mid rows happen to share
+		// one res-6 parent or straddle a boundary.
 		const uncoveredHits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
@@ -311,7 +312,7 @@ describe("nearestInfrastructure", () => {
 				observedRows: 42,
 			})
 
-			// Cross-check against a direct readLayerCoverage call rather than just the wrapper's own math.
+			// Cross-check against a direct readLayerCoverage call rather than only the wrapper's own math.
 			const direct = await readLayerCoverage(schemadb, res9ShortCellToRes6Parent(hit.h3Cell))
 			expect(hit.coverage).toEqual(direct)
 		}

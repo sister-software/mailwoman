@@ -14,7 +14,7 @@
 # class weights, same CE-only/CRF-disabled setup per the NaN protocol, same LR
 # schedule, same 100K steps, same tokenizer v0.6.0-a0). This makes the comparison
 # against the v0.6.0 baseline (model-v060-step-100000) a clean attribution: any
-# delta is the label-smoothing effect, nothing else.
+# delta is the label-smoothing effect and only that effect.
 #
 # hypothesis / expected result:
 #   - Overconfidence (share of >0.9-confidence predictions) drops markedly

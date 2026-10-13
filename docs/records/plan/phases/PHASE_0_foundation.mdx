@@ -90,7 +90,7 @@ Before declaring Phase 0 done, verify the design handles Phase 6 (Japan) directl
 
 - [ ] Mentally add a `ja-JP` `LocaleProfile` with `componentsSupported: ['prefecture', 'municipality', 'district', 'block', 'sub_block', 'building_number', 'building_name', 'country', 'postcode']` (no `street`, no `house_number`).
 - [ ] Does any core code break? It shouldn't. If it does, the abstraction is wrong — fix it now rather than in Phase 6.
-- [ ] Verify by running the test suite with a hypothetical JP profile registered (you don't need actual JP classifiers; just verify the registration doesn't throw and the type system is happy).
+- [ ] Verify by running the test suite with a hypothetical JP profile registered (you don't need actual JP classifiers. Verify only that the registration doesn't throw and the type system is happy).
 
 ## Success criteria checklist
 
@@ -107,12 +107,12 @@ Before tagging `neural-phase-0-complete`:
 
 ## Things that look like Phase 0 but aren't
 
-These are tempting in Phase 0; resist:
+Do not do the following in Phase 0:
 
-- ❌ Writing any neural code. `packages/neural/` doesn't exist yet.
-- ❌ Building any corpus adapters. `packages/corpus/` doesn't exist yet.
-- ❌ Adding new rule classifiers for FR-specific concepts. That's Phase 1 work, after corpus exists to validate against.
-- ❌ Optimizing the solver. Don't change behavior in Phase 0; only refactor.
+- Do not write any neural code. `packages/neural/` doesn't exist yet.
+- Do not build any corpus adapters. `packages/corpus/` doesn't exist yet.
+- Do not add new rule classifiers for FR-specific concepts. That's Phase 1 work, after corpus exists to validate against.
+- Do not optimize the solver. Don't change behavior in Phase 0. Only refactor.
 
 ## When to call this phase done
 

@@ -20,7 +20,7 @@
  *       the Japanese equivalent of a US street suffix in the parsing sense: the token-final marker
  *       that tells you what kind of unit the preceding name is.
  *   - {@link JP_BLOCK_MARKERS} — the markers that close the numbered tail (丁目 / 番地 / 番 / 号), the part
- *       that actually does the "house number" job in the absence of streets.
+ *       that does the "house number" job in the absence of streets.
  *
  *   Note the reverse field order: the admin suffixes appear first in the string (prefecture leads),
  *   and the block markers last — the mirror image of a US line, where the house number leads and

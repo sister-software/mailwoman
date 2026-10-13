@@ -2,7 +2,7 @@
 #
 # the fourth shape, and the first that contains its own alternatives.
 #
-# Four trailing-region runs graded do-not-ship because the recipe output carried only admin segments and so
+# Four trailing-region runs graded do-not-ship because the recipe output contained only admin segments and so
 # damaged whichever class occupied the position it taught:
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
@@ -12,7 +12,7 @@
 #
 # `house-venue` was already emitting the surface those recipes were built to teach. Its default tail is
 # `${locality}, ${region} ${postcode}` — `Springfield, IL 02101` and `Bengaluru, Karnataka 560038` are
-# the same shape — and every row it emits carries a venue, a street and a house number. The surface is
+# the same shape — and every row it emits contains a venue, a street and a house number. The surface is
 # taught with its alternatives present rather than against them.
 #
 # what is added: 18,000 rows, IN/PT/MX, real (postcode, locality, region) triples from the GeoNames

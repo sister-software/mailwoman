@@ -15,7 +15,7 @@
  *   what stays here is what is zone-shaped. {@link FloodCellIndex} accumulates per zone code, because the
  *   question a reader asks of this layer is about the zone: a cell wholly inside any FZ3 polygon answers
  *   FZ3 whichever polygon that was. A soil layer accumulates per delineation and weights by covered area
- *   instead, so the accumulator is where the two layers genuinely differ and the classifier is where they
+ *   instead, so the accumulator is where the two layers differ and the classifier is where they
  *   do not.
  */
 
@@ -56,7 +56,7 @@ export interface CellIndexMeasurement {
 	 */
 	partialShare: number
 	/**
-	 * Whole cells after `compactCells` — the rows actually stored.
+	 * Whole cells after `compactCells` — the rows stored.
 	 */
 	compactedWholeCells: number
 	/**
@@ -68,7 +68,7 @@ export interface CellIndexMeasurement {
 	 */
 	coarsenedFeatures: number
 	/**
-	 * The resolutions actually present, finest last.
+	 * The resolutions present in the stored cells, finest last.
 	 */
 	resolutions: number[]
 	perZone: Array<{ zoneCode: string; wholeCells: number; compactedWholeCells: number; partialCells: number }>

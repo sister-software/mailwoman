@@ -59,7 +59,7 @@ model:
   label_smoothing: 0.0
   # v0.3.0 dual-loss recipe (per_sequence default + crf_loss_weight=0.05).
   crf_loss_weight: 0.05
-  # §3 class_weights on — the v0.4.0 change that actually helps at safe LR.
+  # §3 class_weights on — the v0.4.0 change that helps at safe LR.
   class_weights:
     O: 1.0
     B-country: 2.0

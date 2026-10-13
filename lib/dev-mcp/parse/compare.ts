@@ -10,7 +10,7 @@
  *   interface. That is the only like-for-like parse comparison available.
  *
  *   Both sides are expressed in libpostal's label vocabulary using the drop-in's own converter,
- *   `treeToParseMatches` + `toLibpostalComponents`, and that map is many-to-one — `neighbourhood` and
+ *   `treeToParseMatches` + `toLibpostalComponents`, and that map sends several tags to one label — `neighbourhood` and
  *   `dependent_locality` both become `suburb` — so label agreement is not tag agreement and the mailwoman side retains
  *   its original tag.
  *

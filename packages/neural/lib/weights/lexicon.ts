@@ -116,7 +116,7 @@ export async function resolveEvidenceLexicon(
 
 	const shipped = await shippedLexiconGenerations(packageDir, prefix)
 
-	// A package with no file of this family simply lacks the channel.
+	// A package with no file of this family lacks the channel.
 	if (!shipped.length) return null
 
 	throw new LexiconVersionMismatchError(

@@ -43,7 +43,7 @@ A missing or blank `address` or `query` answers `400 { error, detail }`; the POI
 | `locale`              | `string`          | Locale for the lazily-loaded weights + default per-call hint. Defaults to `"en-US"`.                               |
 | `prefix`              | `string`          | Fastify `register` prefix for all plugin routes (e.g. `"/geo"` exposes `POST /geo/v1/parse`).                      |
 
-Supply `pipeline` to inject your own pipeline; otherwise the plugin builds one lazily on the first request. Weights and gazetteer data resolve through `@mailwoman/neural`'s standard resolution — the same lookup the CLI and the drop-in servers use.
+Supply `pipeline` to inject your own pipeline. Otherwise the plugin builds one lazily on the first request. Weights and gazetteer data resolve through `@mailwoman/neural`'s standard resolution — the same lookup the CLI and the drop-in servers use.
 
 ## Decorator
 

@@ -25,15 +25,15 @@ direct-eval harness inverts almost for free. **Open question:** placetype granul
 biggest forward-geocoding coverage change (admin-centroid answers become street-accurate).
 
 **Data:** the address-point extract work (#475-era `build-address-point-extract.ts` +
-`AddressPointLookup` in `core/resolver/types.ts`) already gives exact-point hits; interpolation
-fills BETWEEN them. TIGER EDGES carries from/to house-number ranges per street segment (the same
+`AddressPointLookup` in `core/resolver/types.ts`) already gives exact-point hits. Interpolation
+fills BETWEEN them. TIGER EDGES stores from/to house-number ranges per street segment (the same
 files the intersection extract reads — already on disk) — the classic Pelias/libpostal approach,
 and our intersection extraction already parses the geometry. **Plan shape:** (1) segment table
 keyed by normalized street name + side-aware ranges (TIGER LFROMADD/LTOADD etc.) → (2) linear
 interpolation along segment geometry → (3) resolver tier between exact-point and
 locality-centroid, output flagged `interpolated`. **Eval:** hold out a subset of NAD address
 points, query their addresses, measure coord error vs truth — the direct-eval pattern at street
-grain. **Open questions:** odd/even side handling fidelity in TIGER; ZIP+4-assisted snapping
+grain. **Open questions:** odd/even side handling fidelity in TIGER, ZIP+4-assisted snapping
 (needs #525's ZCTA work as a prior); whether interpolation lives in `resolver-wof-sqlite` or a
 new `@mailwoman/resolver-interpolation` workspace (lean: new workspace — different data
 lifecycle, the slim/fat split the demo taught).

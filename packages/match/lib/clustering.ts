@@ -163,8 +163,8 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 		}
 	}
 
-	// Collect all valid links (not just above-threshold): connected components form from the
-	// above-threshold ones, but the average-linkage refinement needs the full sub-graph.
+	// Collect all valid links, including those below the threshold: connected components form
+	// from the above-threshold ones, but the average-linkage refinement needs the full sub-graph.
 	// A weak or disagreeing below-threshold edge between two sub-clusters is
 	// exactly what should pull them apart.
 	const allLinks: ScoredLink<R>[] = []

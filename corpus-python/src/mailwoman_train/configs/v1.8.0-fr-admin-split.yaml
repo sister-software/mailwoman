@@ -11,10 +11,10 @@
 # German wash was positional, leading-PLZ — scar is conditional rather than universal). (2) Pre-GPU self-
 # validation passed: splitting the département reduces collision-commune coordinate error -61%, merge
 # resolves 0% (docs/articles/evals/2026-06-19-fr-admin-split-prevalidation.md). use_conventions_loss_mask
-# stays off (absent here. would -inf the FR street_prefix the corpus carries -> loss explosion).
+# stays off (absent here. would -inf the FR street_prefix the corpus contains -> loss explosion).
 #
 # goal / check: grade the assembled anchor-on coordinate rather than label-F1. Live check: FR centroid-shift vs
-# v1.5.0 on the held-out commune set (mean <= 0.95x + significant) and US guardrail (mean regress <=1%
+# v1.5.0 on the held-out commune set (mean <= 0.95x + a passing significance test) and US guardrail (mean regress <=1%
 # rel, p90 <=0.1km) and #727 diacritic (Lozère -> region rather than "ère"). Not promoted without operator GO.
 # corpus: corpus-v0.5.0 (690 parquet files verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.8.0-fr-admin-split.yaml --resume none
@@ -43,7 +43,7 @@ data:
     synth-german: 6.0
     # the #560 recovery change: reversed-order (postcode-first) FR — teaches the post-postcode
     # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate. the
-    # recipe output carries both orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
+    # recipe output contains both orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
     # the step-2000 eval shows insufficient reversed-FR signal.
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0

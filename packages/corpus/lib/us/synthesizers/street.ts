@@ -33,7 +33,7 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   would hide the distribution behind a wall of identifiers. Decision thresholds in these files are
     extracted as constants above. */
 
 const STREET_NAMES = [
@@ -221,8 +221,8 @@ export function synthesizeStreetRow(
 	const random = opts.random ?? Math.random
 	const includeHN = opts.includeHouseNumberProb ?? 0.85
 
-	// The street vocabulary (`STREET_NAMES`, `STREET_SUFFIXES`, the directionals) is
-	// US English, which is why this synthesizer sits under `us/`.
+	// The street vocabulary (`STREET_NAMES`, `STREET_SUFFIXES`, the directionals) is US English.
+	// This synthesizer therefore sits under `us/`.
 	// The admin tail renders through the country's layout.
 	if (base.country !== "US") return null
 

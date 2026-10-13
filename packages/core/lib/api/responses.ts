@@ -247,10 +247,10 @@ function responseReason(status: number): string {
  * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching
  *   (404 → skip, 403 → abort) had to reach into `error.response`. 401's own message and URN changed too.
  *
- * The earlier claim that `econnaborted`/`etimedout`/`ERR_CANCELED` resolved the
- * chain with `undefined` was wrong for every shape axios actually produces: the old
- * `if (!response) throw` ran before that `switch`, and axios never attaches a `response`
- * to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 —
+ * The earlier claim that `econnaborted`/`etimedout`/`ERR_CANCELED` resolved the chain with
+ * `undefined` was wrong for every shape axios produces: the old `if (!response) throw` ran
+ * before that `switch`, and axios never attaches a `response` to a timeout
+ * or a cancellation, so a real one threw `axios:response:missing` 500 —
  * a misclassified 500 rather than a `TypeError` at the caller.
  * The `return` arms remained reachable through a constructed error shape.
  *
@@ -274,7 +274,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 		const { status } = response
 
 		// A success status that still produced an error means the status was fine and the body was
-		// not — Axios's `transformResponse` rejecting an unparseable JSON payload, most often.
+		// not — Axios's `transformResponse` rejecting an unparseable JSON payload, for example.
 		// That is a different failure from "the server said 500", and a different retry answer.
 		if (status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices) {
 			throw taggedResourceError(
@@ -348,7 +348,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 
 	// Everything left reached no response and wasn't cancelled: a dropped socket,
 	// a refused connection, a TLS failure, a body read that died mid-transfer.
-	// All network-class, all worth another attempt.
+	// Each of these is network-class and is retried.
 	throw taggedResourceError(
 		error,
 		HttpStatusCode.ServiceUnavailable,

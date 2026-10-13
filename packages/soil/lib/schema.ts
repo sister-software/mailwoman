@@ -67,7 +67,7 @@ export interface SoilMapUnitAreaTable {
 	 * SSURGO publishes no per-delineation key.
 	 * `mukey` identifies the map unit.
 	 *
-	 * Each map unit has many delineations.
+	 * A map unit can have more than one delineation.
 	 * The ordinal distinguishes each delineation row.
 	 *
 	 * Text allows the source to publish a non-numeric ID without a schema change.
@@ -145,7 +145,7 @@ export interface SoilMapUnitTable {
 	 */
 	niccdcd: string | null
 	/**
-	 * The share that class actually covers.
+	 * The share that class covers.
 	 *
 	 * The pair is the pattern this layer's cell reduction reproduces at cell grain,
 	 * so carrying both makes the two comparable.
@@ -280,7 +280,7 @@ export interface SoilCapabilityCellTable {
 	 */
 	weighting: string
 	/**
-	 * How many delineations reached this cell.
+	 * The count of delineations that reached this cell.
 	 *
 	 * Supplies the denominator behind each share above.
 	 * It also distinguishes a single-delineation cell from a crowded cell.

@@ -2,7 +2,7 @@
 
 What this file guards:
 - `pyproject.toml` pins match the Modal image pins.
-- Base requirements are actually installed in the Modal image.
+- Base requirements are installed in the Modal image.
 - Package names are parsed from real code only.
 - Export opset stays within the web/runtime compatibility limit.
 - Ruff is invoked as `uv run ruff` (no extra `uvx ruff@...` version pins).
@@ -39,8 +39,8 @@ def test_pyproject_and_modal_pins_agree():
 
 
 def test_every_base_requirement_is_installed_in_the_modal_image():
-    # A missing base dependency means the container fails on first import,
-    # often after a GPU has already been allocated.
+    # A missing base dependency means the container fails on first import.
+    # That failure can come after a GPU has already been allocated.
     vt = _load()
     missing = sorted(vt._base_requirements() - vt._modal_packages())
     assert not missing, f"the Modal image does not install: {missing}"

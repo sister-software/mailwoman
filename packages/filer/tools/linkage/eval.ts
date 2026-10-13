@@ -43,7 +43,7 @@ const EVAL_VALID_FROM = "2026-01-01"
 const EVAL_BUILD_SHA = "filer-linkage-eval"
 
 /**
- * Counts the ownership-bearing rows in a built artifact that still holds
+ * Counts the rows that record ownership in a built artifact that still holds
  * management-company `filer_family` rows.
  *
  * That count lets the report measure the withholding rather than describe it.

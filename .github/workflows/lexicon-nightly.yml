@@ -1,6 +1,6 @@
 # The full-scale locality-surface build, nightly, against the live data root.
 #
-# why A nightly and not just the path check: `test.yml`'s `lexicon-full` job catches a pull request
+# why a nightly run in addition to the path check: `test.yml`'s `lexicon-full` job catches a pull request
 # that changes the builder or its committed inputs. It cannot catch the other failure mode — the
 # gazetteer itself being rebuilt. That happens outside any pull request, so no path filter will ever
 # see it, and the first symptom would otherwise be a bad lexicon shipping at release.
@@ -8,8 +8,8 @@
 # This job is also the control FOR the fixture layer. Since 2026-08-02 the every-PR coverage of the
 # four-law selectivity is `evidence-lexicons.fixture.test.ts`, a seeded DB that by construction does
 # not move when the real data moves. That is what makes it cheap, and it is also its one weakness: a
-# fixture that stops representing reality is a check that passes while meaning nothing. This run is
-# what would say so.
+# fixture that stops representing reality is a check that passes without testing the real data. This run
+# reports that divergence.
 #
 # A failure here is a data finding rather than a broken build. Read it as "the gazetteer changed under the
 # lexicon", and check the gazetteer build log before assuming the test is wrong.

@@ -68,8 +68,8 @@ export function formatCapabilityGaps(gaps: readonly BackendCapabilityGap[]): str
 }
 
 /**
- * Backends already reported, so a process that builds many resolvers over one artifact — the eval
- * harness, the gauntlet, a batch worker — states the gap once rather than once per construction.
+ * Backends already reported, so a process that builds more than one resolver over one artifact — the
+ * eval harness, the gauntlet, a batch worker — states the gap once rather than once per construction.
  */
 const reported = new Set<string>()
 

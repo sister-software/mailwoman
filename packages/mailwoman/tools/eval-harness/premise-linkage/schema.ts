@@ -56,8 +56,8 @@ export const PREMISE_LINKAGE_SHAPE_CLASSES: ReadonlyArray<PremiseLinkageInputSha
 ]
 
 /**
- * Which components the input actually included, as booleans rather than values:
- * naming a postcode is a reporting axis, naming a full postcode is a licensed field.
+ * Which components the input included, as booleans rather than values: naming a postcode
+ * is a reporting axis, naming a full postcode is a licensed field.
  */
 export interface PremiseLinkagePresence {
 	hasUnit: boolean
@@ -239,7 +239,8 @@ export interface PremiseLinkageRates {
 }
 
 /**
- * One coordinate threshold and how many gradable rows met it, over a denominator smaller than the run.
+ * One coordinate threshold and the number of gradable rows that met it,
+ * over a denominator smaller than the run.
  */
 export interface PremiseLinkageCoordinateThreshold {
 	thresholdM: number
@@ -287,7 +288,7 @@ export interface PremiseLinkageReport {
 	 */
 	minCellSize: number
 	/**
-	 * How many cells the writer removed.
+	 * The number of cells the writer removed.
 	 *
 	 * Zero means the writer removed no cells.
 	 * The report includes this value to distinguish that result from a run that did not measure small cells.

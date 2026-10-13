@@ -73,7 +73,7 @@ function stamp<Pick extends { metadata?: Record<string, unknown> }>(
  * the parent fallback withheld, so a namesake ward or town outside the head is never admissible,
  * including one the backend re-admits through its own region-scope fallback (`regionScopeMiss`).
  *
- * A county head usually has no key.
+ * A county head can have no key.
  * The tail then probes under the parent the walk already holds.
  * Answers the tail when it hits, else the head, else null.
  *

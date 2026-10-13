@@ -150,8 +150,8 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer
 	// and conventions channels listed in the model-card `requires` block.
-	// This grades a `--model` candidate against the same configuration as the dev-weights default.
-	// createScorer fails closed in strict mode if a declared channel can't actually be fed.
+	// This grades a `--model` candidate against the same configuration as the dev-weights
+	// default. createScorer fails closed in strict mode if a declared channel can't be fed.
 	// `--no-strict` opts out of this check.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }

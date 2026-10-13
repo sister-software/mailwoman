@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Honest-eval harness (leakage-free geographic split + PIP-containment).
+ *   Leakage-free eval harness (geographic split + PIP-containment).
  *
  *   The yardstick the rest of the roadmap is graded on. Random OA evaluation flatters us: the model
  *   trains on a corpus that covers the same streets OA tests. The legacy locality name-match
@@ -16,18 +16,18 @@
  *
  *   Lead the scorecard with region-match + coord p50/p90 (fully checkable, transparent to polygon
  *   coverage). Treat locality-PIP as a coverage-adjusted secondary. See
- *   docs/articles/evals/experiments/2026-06-08-honest-eval.md.
+ *   the 2026-06-08 held-out geography report in docs/records/evals/experiments/.
  *
  *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
  *   Lozère/Creuse. Only US/VT clears the 1000-row trust floor in the current samples (FR held-out
  *   départements = 16 rows. DE has no manifest holdout). Abort/de-risk per the plan: a held-out
  *   set below 1000 rows is reported as untrusted rather than scored.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/honest-eval.run.ts\
+ *   Usage: node packages/mailwoman/tools/dev-tools/heldout-geography-eval.run.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
  *   [--tokenizer ...]\
  *   [--wof <admin.db>,<postcode.db>] # DB under test (default: canonical) [--label fixed] # a tag for
- *   the report [--out docs/articles/evals/experiments/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
+ *   the report [--out <report.md>] [--tmp /tmp/heldout-geography]
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -57,7 +57,7 @@ async function main() {
 	let WOF = WOF_DEFAULT
 	let LABEL = "run"
 	let OUT = ""
-	let TMP = tempRootPath("honest")
+	let TMP = tempRootPath("heldout-geography")
 
 	let cliValues: Record<string, string | boolean | undefined>
 

@@ -9,7 +9,7 @@
 #
 # Read-only-data note: point MAILWOMAN_CANDIDATE_DB at the candidate gazetteer file. Both backends
 # open SQLite read-only, so `:ro` is correct for either. only an explicit FTS index build opens
-# writable, and that is never a serve path. See docker/readme.md.
+# writable. No serve path runs that build. See docker/readme.md.
 
 services:
   # Native /v1 API — parse, geocode, batch, format, health, metrics. The default.
@@ -21,7 +21,7 @@ services:
       - ${MAILWOMAN_DATA_HOST:-./data}:/data:ro
     environment:
       # Set when your candidate.db is a symlink or lives under a non-default name. auto-detected at
-      # /data/wof/candidate.db otherwise. Leave unset (and mount nothing) for a parse-only first run.
+      # /data/wof/candidate.db otherwise. Leave unset (and mount no gazetteer) for a parse-only first run.
       MAILWOMAN_CANDIDATE_DB: /data/wof/candidate.db
 
   # Nominatim-compatible drop-in: GET /search /reverse /lookup /status. OpenCage-style annotations.

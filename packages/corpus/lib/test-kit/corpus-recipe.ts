@@ -70,7 +70,7 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 export const TEST_REGISTER = "test-harness"
 
 /**
- * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces.
+ * Bind a recipe and its seed to a runner the tests call with only the tuples and reserved surfaces.
  *
  * The seed is required because these suites assert on generated distributions.
  */

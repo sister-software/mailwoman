@@ -421,7 +421,7 @@ export interface ArtifactTermsObservation {
  * Artifacts are grouped by their recorded values, so a bundle of a hundred files
  * prints a line per distinct answer rather than per file.
  * A difference between an artifact's expression and the registry's expression
- * is the finding worth surfacing.
+ * is the finding this report prints.
  *
  * The artifact is authoritative for its expression.
  */

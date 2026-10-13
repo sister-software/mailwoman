@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   French postcodes (code postal): the branded type and shape, plus normalization rules.
- *   The module maps the first two digits to a département, the cleanest postcode-to-admin prior
- *   among the three systems.
+ *   The module maps the first two digits to a département. Of the three systems, this is the postcode-to-admin prior with the fewest
+ *   exceptions.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, and here:
  *

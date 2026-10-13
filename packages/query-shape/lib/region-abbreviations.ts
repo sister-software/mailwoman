@@ -56,7 +56,7 @@ export function detectRegionAbbreviations(
 	let t = 0
 
 	for (const seg of segments) {
-		// Advance on every segment rather than just the comma ones below.
+		// Advance on every segment rather than only the comma ones below.
 		// A non-comma segment between two comma segments still contains tokens.
 		// The walk desynchronizes if the pointer stays behind it.
 		while (t < tokens.length && tokens[t]!.span.start < seg.span.start) {

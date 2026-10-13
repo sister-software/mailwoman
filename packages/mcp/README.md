@@ -33,4 +33,4 @@ the `mailwoman data pull candidate` fix instead of an internal resolver error.
 }
 ```
 
-`--poi-db <path>` wires `mailwoman_poi_search` (and `mailwoman_parse`'s `poi: true` path) to a real database; omit it and those tools degrade gracefully to intent-only.
+`--poi-db <path>` wires `mailwoman_poi_search` (and `mailwoman_parse`'s `poi: true` path) to a real database. Without the flag, those tools return intent only.

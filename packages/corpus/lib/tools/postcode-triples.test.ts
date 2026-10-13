@@ -162,7 +162,7 @@ describe("applyLocalityQuota", () => {
 	})
 
 	it("bounds a hub locality WITHOUT deleting it", () => {
-		// A locality with many postcodes keeps up to the quota instead of being dropped.
+		// A locality with more postcodes than the quota keeps up to the quota instead of being dropped.
 		const triples = Array.from({ length: 100 }, (_, i) => make("Schwedt/Oder", String(i)))
 
 		const kept = applyLocalityQuota(triples, 24)
@@ -198,7 +198,7 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("bounds a country a per-locality quota cannot", () => {
-		// A country with many distinct localities can dominate even under a per-locality quota.
+		// A country with a large number of distinct localities can dominate even under a per-locality quota.
 		const triples = [
 			...Array.from({ length: 50 }, (_, i) => make("IN", `village-${i}`, String(i))),
 			...Array.from({ length: 5 }, (_, i) => make("FR", `commune-${i}`, String(i))),

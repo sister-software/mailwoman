@@ -7,7 +7,7 @@
  *   boundary-stress-eval and fr-admin-split-eval each grade a different board. mwdev_promotion_eval answers from the
  *   warm engine. The prose examples read naturally: the promotion eval refuses a regression, the parser is restricted
  *   to one locale, a release is published, a branch comes from origin/main, and the boundary between two packages is
- *   the PlaceLookup interface. Acronyms beside each other stay capitalised: the WOF FTS5 index, a BIO label, the ONNX
+ *   the PlaceLookup interface. Acronyms beside each other stay capitalized: the WOF FTS5 index, a BIO label, the ONNX
  *   graph, a USPS suffix. So do a SQL run such as NOT NULL, and a country list such as BE, NL, LU. A SQL fragment
  *   quoted in a comment stays quiet even though Vale reads the comment as plain text: SELECT id FROM t WHERE x = ? AND
  *   y = ?, spr.id IN (SELECT id FROM ancestors), a.pre <= d.pre AND d.post <= a.post, valid_from <= asOf AND (valid_to
@@ -25,6 +25,12 @@
  * Birling Gap is a place name.
  * Wyoming is a state name.
  * Nursing is a source category.
+ * East Gate is a street, and an airport gate or a boarding gate is a sub-venue designator.
+ * The board groups airport gates, boarding gates, gb-street-gate and gate-house-venue rows.
+ * Fort Worth is a city in Texas.
+ * The NPPES record lists 4004 WORTH ST, DALLAS, TX.
+ * The mailwoman corpus slice command, corpus align-slice and corpus split-slice write train files.
+ * The push URL holds the x-access-token user.
  */
 
 /**

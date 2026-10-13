@@ -19,7 +19,7 @@ West 26th Street, New York, NYC, 10010
 
 ## Step 1 — Tokenization
 
-The input string is split into **tokens**, which are single words or punctuation marks. Tokenization is more than `string.split(" ")` because Mailwoman keeps track of where each token came from in the original string.
+The input string is split into **tokens**: single words or punctuation marks. Tokenization is more than `string.split(" ")` because Mailwoman keeps track of where each token came from in the original string.
 
 ```mermaid
 flowchart LR
@@ -33,11 +33,11 @@ flowchart LR
     A --> H["10010"]
 ```
 
-Each token carries metadata: its character position in the original string, what kind of separator came before it (`comma`, `space`, `tab`, `newline`), and what other tokens it is grouped with. Mailwoman calls these groups **sections**. They matter because tokens separated by commas typically belong to different address components, so the solver treats them differently.
+Each token has metadata: its character position in the original string, what kind of separator came before it (`comma`, `space`, `tab`, `newline`), and what other tokens it is grouped with. Mailwoman calls these groups **sections**. They matter because tokens separated by commas typically belong to different address components, so the solver treats them differently.
 
 Tokenization also performs pre-processing: lowercase normalization, abbreviation expansion (`St.` → `Street`), and accent handling for non-English input.
 
-Deep dive: [`concepts/tokenization.md`](../../concepts/tokenization.mdx).
+Details: [`concepts/tokenization.md`](../../concepts/tokenization.mdx).
 
 ## Step 2 — Rule classifiers vote
 
@@ -58,12 +58,12 @@ Each classifier produces zero or more **classifications** for each token. A clas
 
 A single token can collect multiple classifications. For our example, `New` might collect:
 
-- `{ component: "locality", confidence: 0.4, source: "rule:whos_on_first" }` (because "New" alone matches a few WOF entries)
+- `{ component: "locality", confidence: 0.4, source: "rule:whos_on_first" }` (because "New" by itself matches a few WOF entries)
 - `{ component: "street_prefix", confidence: 0.1, source: "rule:street_prefix" }` (because "New" sometimes precedes a street name)
 
 Rule classifiers are intentionally allowed to be **uncertain and contradictory**. The next step resolves the contradiction.
 
-Deep dive: [`concepts/rule-based-classifiers.md`](../../concepts/rule-based-classifiers.mdx).
+Details: [`concepts/rule-based-classifiers.md`](../../concepts/rule-based-classifiers.mdx).
 
 ## Step 3 — The solver picks a winning combination
 

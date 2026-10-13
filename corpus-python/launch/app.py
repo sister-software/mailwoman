@@ -45,7 +45,7 @@ training_image = (
     .pip_install(
         # Pinned export/quant toolchain. These five drive the ONNX graph that ships to browsers.
         # The int8 graph (opset + quant op scheme) must stay within what the pinned
-        # `onnxruntime-web` native WebGPU EP runs on Metal (the JSEP int8-dequant slice bug), so a
+        # `onnxruntime-web` native WebGPU EP runs on Metal (the JSEP int8-dequant slicing bug), so a
         # bump that raises the opset or changes the quant scheme is a Safari decision rather than a
         # free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
         # `verify-toolchain` requires these pins agree with pyproject.
@@ -138,7 +138,7 @@ def _read_env_keys(keys: tuple[str, ...]) -> dict[str, str]:
 def _load_r2_env() -> dict[str, str]:
     """The R2 credentials, or a raise naming the file that did not supply them.
 
-    An empty secret is not a usable state and must not be built quietly: the container starts, rclone
+    An empty secret is not a usable state and must not be built without an error: the container starts, rclone
     reports `s3 provider "" not known`, and the operator reads a storage error for a missing file. So
     the absence is reported here, where the path is known, rather than a Modal app later.
     """

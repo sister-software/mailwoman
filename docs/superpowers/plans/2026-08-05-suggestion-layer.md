@@ -27,7 +27,7 @@ one would collide.
   answer is. This layer decides what to tell the user about the gap between their input and that
   answer. Do not name anything here `*Coherence`.
 - **`faults`** (`core/pipeline/types.ts:501`) is the shape to imitate. It is an always-present array
-  whose emptiness is a positive claim, and each entry carries a `stage`, a `name`, and a verbatim
+  whose emptiness is a positive claim, and each entry stores a `stage`, a `name`, and a verbatim
   `cause`. Its docstring states the rule in one line: report the degradation and do not change the
   answer.
 - **`transforms`** (`normalize/types.ts:16`) is the existing before/after record. It is a
@@ -46,9 +46,9 @@ together.
 
 ## Part A — Inventory
 
-Every row exists today. The last column says what the suggestion layer would have to add.
+Every row exists today. The last column states what the suggestion layer would have to add.
 
-### A.1 The round trip — the canonicalizer nobody has diffed
+### A.1 The round trip — the canonicalizer no test has diffed
 
 | Concept                 | Where                                       | Role                                                                                                                             |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -58,7 +58,7 @@ Every row exists today. The last column says what the suggestion layer would hav
 | `normalizeAddressToken` | `formatter/key.ts:63-79`                    | NFKD → strip marks → lowercase → drop apostrophes → non-alphanumeric to space → collapse. The only case-folder in the round trip |
 | `reconcileComponents`   | `formatter/format.ts:279`                   | A containment filter: drop a component whose value is absent from the rendered string. Used by the corpus adapters               |
 | `/v1/format`            | `api/routes.ts:214-222`, handler `:401-407` | POST, body `{components, country, options}` → `{formatted, canonicalKey}`. Takes a dict, never a raw string                      |
-| `PostalAddress`         | `record/address.ts:75`                      | Carries `raw` (`:95`), `formatted` (`:87`), `canonicalKey` (`:83`) side by side                                                  |
+| `PostalAddress`         | `record/address.ts:75`                      | Stores `raw` (`:95`), `formatted` (`:87`), `canonicalKey` (`:83`) side by side                                                   |
 | `createPostalAddressID` | `address-id/index.ts:128`                   | `<state>.<H3 cell>.<hash>`; `canonicalizeForHash` (`:100`) is the one place the full `normalize` pipeline runs before hashing    |
 
 **No code in the repo compares a render against the input it came from.** A grep over round-trip,
@@ -70,11 +70,11 @@ build a string from components and then use `reconcileComponents` as a containme
 lines: `docs/engineering/reference/ARCHITECTURE.mdx:352` and
 `docs/superpowers/plans/2026-07-22-placetype-pair-implementation.md:111`.
 
-**`formatter/README.md:30-52` documents a signature the code does not have**, which will mislead a
+**`formatter/README.md:30-52` documents a signature the code does not have**. That signature will mislead a
 reader. It shows `formatAddress(components: ClassificationMap, opts?)` and describes the key as
-"abbreviation-expanded", but `key.ts:16-19` says expansion is deliberately not done.
+"abbreviation-expanded", but `key.ts:16-19` states that expansion is deliberately not done.
 
-### A.2 The confidence and abstention substrate
+### A.2 The confidence and abstention fields
 
 | Concept                             | Where                                                                                         | State                                                                                                                   |
 | ----------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -107,21 +107,21 @@ layer can report the change.
 
 | Mechanism                              | Where                                                                         | Default                       | Records what it changed?                                                               | Survives to the caller?                     |
 | -------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `normalize` transforms                 | `normalize/compute.ts:18`, union at `normalize/types.ts:16`                   | 4 of 6 always on              | **Fully.** 6-member union; `expand_abbreviation` carries `{from,to,at}`                | **No** — see below                          |
+| `normalize` transforms                 | `normalize/compute.ts:18`, union at `normalize/types.ts:16`                   | 4 of 6 always on              | **Fully.** 6-member union; `expand_abbreviation` stores `{from,to,at}`                 | **No** — see below                          |
 | Word-consistency heal (#1132)          | `neural/word-consistency.ts:146`, ship default `core/pipeline/types.ts:367`   | **ON**                        | Before/after only when `traceRepairs` is set (`classifier.ts:1067`)                    | No                                          |
 | Case normalization (#690/#829)         | `neural/case-normalize.ts:140`, applied `classifier.ts:607`, `:668`           | **ON** (`!== false`)          | `trace.caseNormalized` only (`neural/trace.ts:122`)                                    | No                                          |
-| `@mailwoman/variant-aliases`           | `variant-aliases/lookup.ts:79`                                                | **Not wired**                 | n/a — `AliasLookupResult` already carries `{alias, confidence}`                        | n/a                                         |
+| `@mailwoman/variant-aliases`           | `variant-aliases/lookup.ts:79`                                                | **Not wired**                 | n/a — `AliasLookupResult` already stores `{alias, confidence}`                         | n/a                                         |
 | Trigram fuzzy tier                     | `resolver-wof-sqlite/candidate-lookup.ts:444-460`, scorer `name-score.ts:42`  | ON, name-only since #1480     | **No.** The Jaccard is computed at `:450` and discarded                                | No — `PlaceCandidate` has no `matchType`    |
 | Postal-city short-circuit (#741)       | `resolver-wof-sqlite/candidate-lookup.ts:316-335`                             | on when the side-index exists | **No.** Returns one synthetic candidate with `score: 1, exactMatch: true`              | No                                          |
 | Postal-city alias scorer (#475)        | `resolver-wof-sqlite/lookup.ts:1056-1105`                                     | Opt-in (env)                  | No — which alias matched is lost in a scalar                                           | No                                          |
 | `applyPostcodeConsistency` (#370/#945) | `resolver/resolve.ts:266`, called `:850`                                      | **ON**                        | Yes: `postcode_repicked` `:321`, `postcode_city_mismatch` + `coordinate_source` `:329` | Tree metadata only                          |
 | `postcodeCountryCoherence` (#42/#1477) | `resolver/postcode-country-coherence.ts:277-290`, called `resolve.ts:792-815` | **on** since 2026-08-05       | Yes: `postcode_country_scope`, `postcode_country_scope_km`                             | **Yes** — the only one that reaches the API |
 
-**The normalize finding is the cheapest fix in this document.** `NormalizedInput` carries the full
+**The normalize finding is the cheapest fix in this document.** `NormalizedInput` holds the full
 transform list. `NormalizedInputLite` (`core/pipeline/types.ts:112`) declares only
 `{raw, normalized, appliedLocale?}`. The array is still on `result.normalized` at runtime, because
 core never copies fields, but it is invisible at the type level, and reading it needs an unsafe
-cast. The geocode path discards it outright. `mailwoman/geocode-core.ts:560`, `:610` and `:628` are
+cast. The geocode path discards it entirely. `mailwoman/geocode-core.ts:560`, `:610` and `:628` are
 three copies of `normalize(input, {expandAbbreviations: true, locale: "und"}).normalized`, so every
 `geocodeAddress` call generates `expand_abbreviation` entries with full `{from, to, at}` and drops
 them. Across the repo, four lines read `.transforms`, all in the normalize package's own tests.
@@ -131,7 +131,7 @@ whose provenance survives all the way to the OpenAPI interface. It got there bec
 record of each firing before it could be graded, and a suggestion needs the same record to be
 auditable.
 
-### A.4 The entity-snap tier — batch-shaped, and that is the gap
+### A.4 The entity-snap tier — the tier runs only in batch
 
 `@mailwoman/match` has three stages, and every entry point takes a corpus:
 
@@ -163,18 +163,18 @@ corpus, so a single-record path must either ship a prebuilt table or drop the ad
 | Degenerate duplicate venue  | `cases/regression.ts:3214-3224`, `us-op3-island-lake-duplicate-degenerate` | 1         | `improvement_target`, and its note records the schema gap: the table cannot express "expect no coordinate" |
 | Metamorphic DIR             | `gauntlet/metamorphic.ts:420-434`, bases `:67-81`                          | **3**     | The removal of a 5-digit postcode must land within 5 km of the with-postcode anchor                        |
 
-The mailfail fixture's commit message says it was committed "so these cases can become a check".
-Nobody built that check. The repo has no `mailfail-board.ts` beside `digit-board.ts` /
+The mailfail fixture's commit message states that it was committed "so these cases can become a check".
+No commit has built that check. The repo has no `mailfail-board.ts` beside `digit-board.ts` /
 `fragment-board.ts` / `poi-board.ts`. The only related executable code is
 `core/pipeline/runtime-pipeline.test.ts:803-882`, which asserts the fault interface against
 synthetic throwing stubs and does not use the 105 rows.
 
 The Gauntlet's shared runner has no way to express abstention either. `GauntletResult`
-(`gauntlet/harness.ts:316-342`) carries resolved values only, `checkCase` has no must-not-resolve
+(`gauntlet/harness.ts:316-342`) holds resolved values only, `checkCase` has no must-not-resolve
 predicate, and `faults` never reaches `runOne`. The `us-op3-island-lake-duplicate-degenerate` note
 records this gap in its own text.
 
-### A.6 What the inventory says about the sketch
+### A.6 What the inventory shows about the sketch
 
 - **Half of the round trip is missing.** Parse, resolve and render all ship, but no code has ever
   computed the diff between the render and the input.
@@ -234,8 +234,8 @@ the 39 non-identical rows under the shipped default, re-split by cause:
    free bar.
 2. **`appendCountry` is a policy choice, and neither default is right.** With it off, 13 rows lose
    only the country line the user typed. With it on, 50 rows gain a country line the user did not
-   type. A suggestion layer must set the flag based on whether the input carried a country at all.
-   A grade for either setting alone measures the flag rather than the layer.
+   type. A suggestion layer must set the flag based on whether the input contained a country at all.
+   A grade for one fixed setting across every row measures the flag rather than the layer.
 3. **The canonicalization class is real and small (7 rows), and the fold hid a parse defect in one
    of the seven.** Six rows insert a comma the input omitted. Five insert it between locality and
    region (`4900 Airport Pkwy, Addison TX 75001` → `…, Addison, TX 75001`), and one between locality
@@ -271,7 +271,7 @@ Neusser Str. 12, Nippes, 50733 Köln
   has no slot for it, so the render drops it)
 ```
 
-Three of these carry `status=pass` and resolve to the correct rooftop. **The coordinate check cannot
+Three of these have `status=pass` and resolve to the correct rooftop. **The coordinate check cannot
 detect a venue/locality slot swap, and a single round-trip render shows it.** The last row is the
 opposite case and shows why attribution matters. `Park Slope` was parsed correctly and then lost in
 the render, because `DEPENDENT_LOCALITY_SLOTS.postRender` (`formatter/format.ts:83`) covers ES and
@@ -284,7 +284,7 @@ dropped it, the user learns to distrust correct input because of a formatter gap
 verbatim in the input (139 of 192). It geocodes each row twice: once as written (the anchor), and
 once with that exact substring deleted and the leftover separators cleaned up. The script uses a
 literal delete rather than a regex. A pattern-based stripper would delete house numbers in the
-4-digit postcode systems, which is the arc's M-1 finding in reverse.
+4-digit postcode systems. That failure is the arc's M-1 finding in reverse.
 
 ```
 eligible rows                              139
@@ -304,7 +304,7 @@ postcode-free arm re-emitted A postcode     16 / 139
 ...and it was the deleted one                0 / 139
 ```
 
-Per locale, which is the ablation map's first row:
+Per locale (the ablation map's first row):
 
 > **Correction 2026-08-05 (ablation run, PR #1500):** the GB row below was measured without the GB
 > weight artifacts. The S-2 worktree had neither `pair-index-gb` nor `fst-en-gb`, so GB was graded
@@ -331,14 +331,14 @@ Per locale, which is the ablation map's first row:
 
 1. **The postcode's value depends strongly on locale.** A US ZIP removal leaves 81.8% of rows
    inside 5 km. A GB postcode removal leaves 48.9% inside 5 km and sends 42.6% more than 100 km
-   away. On this board, the postcode-completion nudge is worth roughly four times as much in GB as in
-   the US. The ablation map is meant to produce this per-(component, locale) ranking, and S-2 is its
+   away. On this board, the postcode-completion nudge has roughly four times the effect in GB that it
+   has in the US. The ablation map is meant to produce this per-(component, locale) ranking, and S-2 is its
    first cell.
 2. **The three rows with a contradicting `defaultCountry` all land far away**
    (`fr-rivoli-us-scoped` 6,494 km, `gb-downing-us-scoped` 6,240 km, `de-linden-us-scoped`
    6,240 km), and two of them drop from rooftop to admin. The postcode is the only evidence #42's
    coherence pass can use to override a wrong country prior, so deleting it removes the override. A
-   completion nudge is therefore worth most where the country prior is least trustworthy.
+   completion nudge therefore has the largest effect where the country prior is least trustworthy.
 3. **Postcode removal does not leave the postcode slot empty.** 16 of 139 rows emit a different
    token as the postcode, and 0 of 139 recover the deleted one. The substitutes:
 
@@ -399,24 +399,24 @@ max span confidence reduce, applied to the 76
 
 1. **Three quarters of the garbage board produces a suggestion today.** The guards exist to suppress
    this population, and the zero-suggestions bar is written against this number.
-2. **A confidence reduce alone cannot reach zero, and the way it fails is informative.** At
+2. **A confidence reduce without a second condition cannot reach zero, and the way it fails is informative.** At
    `>= 0.95` the single survivor is `+1 (555) 867-5309` → `"1, 867-5309"` at **0.964**. This is the
    same phone number the 2026-08-04 review found at the top of its violation set. It is the
    highest-confidence row on the garbage board, higher than any real address on it. The fullwidth
    `３５０ ５ｔｈ Ａｖｅ`, which the layer should nudge to `350 5th Ave`, scores 0.923. Confidence
    ranks these two rows in the wrong order.
 3. **Confidence and corroboration together reach zero on the bars that matter.** 41 of the 76
-   suggestions carry a `no-resolve` or `no-component` bar (the true violations). Under
-   `maxSpanConfidence >= 0.918` alone, 1 survives. Under `componentCount >= 3` alone, 8 survive.
-   Under **both, 0 of 41 survive**. The three rows that pass both conditions all carry the weakest
+   suggestions fail a `no-resolve` or `no-component` bar (the true violations). Under
+   `maxSpanConfidence >= 0.918` by itself, 1 survives. Under `componentCount >= 3` by itself, 8
+   survive. Under **both, 0 of 41 survive**. The three rows that pass both conditions all fail the weakest
    bar (`no-throw`). Two of them are `﻿350 5th Ave, New York, NY` (leading BOM) and
-   `350 5th Ave⟨U+2028⟩New York⟨U+2029⟩NY`. Both render correctly, which is the intended behavior on
-   hostile but real input.
+   `350 5th Ave⟨U+2028⟩New York⟨U+2029⟩NY`. Both render correctly. Correct rendering is the intended
+   behavior on hostile but real input.
 4. **The corroboration condition has a measured cost, and the 2026-08-04 review warned about the
-   same cost.** 30 of the 90 Gauntlet `pass` rows carry fewer than 3 components. These are bare
+   same cost.** 30 of the 90 Gauntlet `pass` rows have fewer than 3 components. These are bare
    localities (`Toronto, Canada`, `Sydney, Australia`, `Beirut, Lebanon`), the map-search input this
    product is aimed at. A `componentCount >= 3` rule removes the nudge on a third of the real board.
-   It also removes the fullwidth-fold nudge, which has 2 components. The guard is therefore a stack
+   It also removes the fullwidth-fold nudge, a row with 2 components. The guard is therefore a stack
    of conditions with a stated cost rather than a single threshold, and the design must include the
    bare-locality exception from the start.
 
@@ -525,9 +525,9 @@ states that the layer checked.
 
 ### C.1 Mechanism 1 — the format nudge (free, offline)
 
-**Change shape.** This is a render-time change that leaves the model alone: `normalize` + parse +
+**Change shape.** This is a render-time change that leaves the model unchanged: `normalize` + parse +
 `formatAddress` + `codex`. It runs without a GPU, a retrain, or a gazetteer. This tier runs in a browser
-with only the weights, which is why it is the default tier.
+with only the weights. That is why it is the default tier.
 
 **Where it lives.** `suggest/format-nudge.ts` consumes `PipelineResult` and the formatter. It never
 calls the resolver.
@@ -536,7 +536,7 @@ calls the resolver.
 equality → `normalizeAddressToken` equality → token multiset), and emits only `canonicalize` and
 `drop` ops. These cover the classes S-1 found: the missing locality/region comma (7 rows), the
 fullwidth, NBSP and BOM folds, `Str.` → `Str`, `Av.` → `Avenue`, and the country line. The layer
-decides the country line from whether the input carried a country token and ignores the formatter's
+decides the country line from whether the input contained a country token and ignores the formatter's
 default.
 
 **Artifact.** None. The mechanism needs two interface changes, both additive:
@@ -548,7 +548,7 @@ default.
 - `PlaceCandidate` (`resolver-wof-sqlite/types.ts:48-93`) gains `matchType: "exact" | "alias" |
   "postal_city" | "fuzzy"`. The value is already computed at
   `candidate-lookup.ts:450` (the Jaccard) and `:328` (the postal-city short-circuit), then
-  discarded. `PostcodeAnchor` already carries this field under this name
+  discarded. `PostcodeAnchor` already declares this field under this name
   (`neural/postcode-anchor.ts:87`), so the name is settled.
 
 **D-rule.** The mechanism is opt-in behind `suggest` and off by default. It only reports and never
@@ -582,8 +582,8 @@ resolution accuracy. That needs a different set of checks and its own record.
 
 **Kill condition.** B1-1 cannot reach zero without a rule that also fails B1-5, because the only
 guards that silence garbage also silence bare localities. In that case the format nudge cannot ship
-as a default-visible surface. The allowed outcome is advisory metadata behind a flag, which is what
-the 2026-08-04 review recommended for Design B.
+as a default-visible surface. The allowed outcome is advisory metadata behind a flag. The 2026-08-04
+review recommended that outcome for Design B.
 
 ### C.2 Mechanism 2 — the postcode-completion nudge
 
@@ -595,11 +595,11 @@ most useful thing the layer can do is supply one.
 node's coordinate. It has three sources, in ascending order of what they can assert:
 
 1. **Reverse lookup at the resolved point.** When the parse resolved a locality or a street and
-   carries no postcode, the layer looks up the postcode covering that coordinate. Confidence comes
-   from the code's own dispersion, which the arc's PFX1 `radiusP95Km` provides
+   contains no postcode, the layer looks up the postcode covering that coordinate. Confidence comes
+   from the code's own dispersion. The arc's PFX1 `radiusP95Km` provides that dispersion
    (`2026-08-05-postcode-structure-arc.md`, Mechanism 3). A rooftop-tier resolve yields a unit code.
    An admin-tier resolve yields whatever level the dispersion supports, and when that is a district,
-   the suggestion says so.
+   the suggestion states that level.
 2. **The arc's B2 containment coherence**, for the case where a postcode is present and disagrees
    with the street. That mechanism produces "the nearest consistent completion", and this layer
    renders it as a `replace` op with the disagreement as its evidence.
@@ -648,8 +648,8 @@ kill conditions and stop.
 **Change shape.** This applies the matcher to one record instead of a corpus. It has the highest
 cost and the narrowest scope, and it comes last in the sequence.
 
-**Where it lives.** A new `snapRecord(record, index, model)` in `@mailwoman/match` runs blocking key
-→ candidate fetch → `scorePair` (`match/fellegi-sunter.ts:209`) → `decide` (`:251`). The suggestion
+**Where it lives.** A new `snapRecord(record, index, model)` in `@mailwoman/match` runs blocking key →
+candidate fetch → `scorePair` (`match/fellegi-sunter.ts:209`) → `decide` (`:251`). The suggestion
 layer calls it only when Mechanism 1 has produced a `canonicalForm` and Mechanism 2 has either
 completed or abstained. The snap either confirms the render against a known entity or declines.
 
@@ -663,8 +663,8 @@ customer's. That is a deployment question rather than a mechanism question. The 
 or drops the adjustment and declares that in the result.
 
 **D-rule.** The mechanism is opt-in behind `entitySnap`, off by default, and blocked until
-Mechanism 1 clears its bars. A snap on top of a wrong render produces a confident wrong answer, which
-is the failure this document is designed to avoid.
+Mechanism 1 clears its bars. A snap on top of a wrong render produces a confident wrong answer. This
+document is designed to avoid that failure.
 
 **Pre-registered bars.**
 
@@ -681,8 +681,8 @@ is the failure this document is designed to avoid.
   **zero rows where the snap moves an assembled coordinate outside its existing tolerance.**
 
 **Kill condition.** B3-2's precision cannot clear 90% without an abstention rate that makes the tier
-useless. In that case the entity tier stays a batch-only capability, which `resolveEntities` already
-covers, and the single-record path does not justify the added API surface.
+useless. In that case the entity tier stays a batch-only capability. `resolveEntities` already
+covers that capability, and the single-record path does not justify the added API surface.
 
 ### C.4 Diff attribution — the part that is not free
 
@@ -700,7 +700,7 @@ Three additive changes, cheapest first:
 2. **`PlaceCandidate` gains `matchType`** (`resolver-wof-sqlite/types.ts:48-93`). The fuzzy Jaccard
    (`candidate-lookup.ts:450`) and the postal-city short-circuit (`:328`) both know the match type and
    drop it. With this field, the layer can say "we read `Antioch` as `Nashville` because the
-   postal-city index says they share 37013" instead of showing a name the user never typed.
+   postal-city index lists them under 37013" instead of showing a name the user never typed.
 3. **A render-side slot report from the formatter.** `formatAddress` knows which
    `toOpenCageComponents` slots it populated and which the template ignored. The returned set lets
    the layer attribute a drop to a missing template slot instead of inferring it. This is the only
@@ -711,7 +711,7 @@ Each change makes one class of change attributable. None of them changes an answ
 ### C.5 The ablation map — the dual of this layer
 
 The operator filed the deletion-ablation runner the same day, and it is the dual of this layer:
-**the map ranks which completion is worth making, per locale.** Where deleting a component barely
+**the map ranks which completion changes the resolution most, per locale.** Where deleting a component barely
 moves the resolution, completing it is low-value advice. Where deleting it moves the result far
 away, completing it is the most valuable suggestion. S-2 is the map's first row, measured for
 `postcode` across 18 locales. It already separates GB (36.2% of rows over 100 km without the
@@ -767,21 +767,21 @@ interface AblationCell {
 
 The suggester ranks candidate completions by `brokenCount / support` in the query's locale. It skips
 any cell with `support: 0` rather than treating it as zero value. It refuses to emit a completion for
-a component whose `substitutedCount / support` exceeds the mechanism's own guard, which is B2-4
-expressed as data instead of as a board.
+a component whose `substitutedCount / support` exceeds the mechanism's own guard. That refusal is
+B2-4 expressed as data instead of as a board.
 
 The reverse map benefits the ablation runner and is out of scope here. A
 component with high `support` and near-zero `brokenCount` in a locale is one the resolver is not
-using. It is either a correct redundancy or a dead channel, and the two are worth telling apart.
+using. It is either a correct redundancy or a dead channel, and the runner should tell the two apart.
 
 ### C.6 What needs a retrain
 
 **No mechanism in this design needs a retrain.** Every mechanism above is a render-time or resolve-time
-change. The only model-side dependency is span confidence, which the shipped model already emits on
+change. The only model-side dependency is span confidence. The shipped model already emits it on
 every node (`core/decoder/types.ts:74`). The taxonomy in `CONTRIBUTING_MODEL_WORK.mdx` reserves a
 retrain for open-vocab distributional tags, and a diff between two strings is not one.
 
-Two model-adjacent items are listed here so that nobody mistakes them for part of this arc:
+Two model-adjacent items are listed here so that a reader does not mistake them for part of this arc:
 
 - The venue/locality slot swaps S-1b found (`MR & MRS CRAB` → locality `MR`) are parse defects. They
   make the diff noisier, and they are a corpus question rather than a suggestion-layer question.
@@ -797,16 +797,16 @@ Two model-adjacent items are listed here so that nobody mistakes them for part o
 
 1. **B1-1.** Build the mailfail board (`mailwoman/eval-harness/mailfail-board.ts`, beside
    `digit-board.ts`) and run the naive layer against it. The fixture is committed, the numbers are
-   in S-3, and this bar decides whether the layer can be built at all. The board is worth building
+   in S-3, and this bar decides whether the layer can be built at all. The board should be built
    even if the layer never ships, because the 105 committed rows have received no grade since
    2026-08-02.
 2. **The three attribution changes (C.4):** the `transforms` widening, `matchType`, and the slot
    report. All three are additive, none changes an answer, and no later bar can be graded without
    them.
 3. **B1-2 / B1-4:** inertness and reversibility, both against existing Gauntlet rows.
-4. **B1-5:** the bare-locality stratum, which decides the guard's shape before anyone writes the
+4. **B1-5:** the bare-locality stratum. It decides the guard's shape before anyone writes the
    guard.
-5. **The arc's Mechanism 1 shape exclusion**, which B2-4 requires. It lives in
+5. **The arc's Mechanism 1 shape exclusion**. B2-4 requires it. It lives in
    [the postcode-structure arc](./2026-08-05-postcode-structure-arc.md) rather than here.
 6. **B2-1 / B2-2 / B2-3:** the completion bars, after the shape guard.
 7. **The full ablation runner**, generalizing S-2 from `postcode` to every `ComponentTag`. S-2 is one

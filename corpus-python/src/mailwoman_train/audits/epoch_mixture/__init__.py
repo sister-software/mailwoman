@@ -1,6 +1,6 @@
 """Full-epoch requested-vs-realized source/country mixture audit.
 
-2026-08-09 training-substrate audit (HANDOFF-CODEX-TO-CLAUDE §6, action 7): the 250k-row
+2026-08-09 training-data audit (HANDOFF-CODEX-TO-CLAUDE §6, action 7): the 250k-row
 prefix audits ended before any source exhausted. They therefore missed the non-stationary
 sampler: a source can be deleted and the mixture can renormalize mid-epoch. This audit consumes
 one full row-limited epoch (the unit the trainer loops). It reports the mixture at two levels:

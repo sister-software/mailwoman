@@ -1,16 +1,16 @@
 ---
 name: eval-model
-description: Deciding whether a model change may ship. The shipping decision rests on the full regression board plus the promotion battery, run through the warm-engine mwdev tools; the six-address preset check is a SMOKE test for tag collapse and does not decide. Use before promoting any model, and read it before writing a probe script.
+description: Deciding whether a model change may ship. The shipping decision rests on the full regression board plus the promotion battery, run through the warm-engine mwdev tools. The six-address preset check is a SMOKE test for tag collapse and does not decide. Use before promoting any model, and read it before writing a probe script.
 ---
 
 ## Six addresses do not decide
 
 This skill used to open with six US presets and a v0.5.3 baseline, under the heading "release eval".
 It is kept below because it still catches what it was written to catch — a collapsed tagger, a
-tokenizer/model mismatch — and those failures are worth thirty seconds before anything expensive.
+tokenizer/model mismatch — and checking for those failures takes thirty seconds before any expensive run.
 
-It is not the shipping decision, and treating it as one ships a model graded on six US rows with no truth
-coordinates, no non-US locale, no geocoding, and a baseline from a model several majors old.
+It is not the shipping decision, and treating it as one ships a model graded on six US rows. Those rows lack truth
+coordinates, a non-US locale, and geocoding, and they use a baseline from a model several majors old.
 
 ## What decides
 
@@ -19,7 +19,7 @@ Three floors, all of which must hold:
 1. **Net improved-minus-regressed ≥ 0 on the full regression board.**
 2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not add one.
 3. **The promotion battery passes every floor declared by the eval spec**
-   (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped `weights_cache`). The command reports the passed and total floor counts; do not
+   (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped `weights_cache`). The command reports the passed and total floor counts. Do not
    copy a count into this runbook because adding a floor would make it stale.
 
 Run the first two with `mwdev_arc`, which also runs the controls that make the number mean anything:
@@ -40,7 +40,7 @@ launching a run rather than after grading one.
 
 Every tool below holds the engines in-process. A `for` loop spawning the CLI per address pays a cold
 model load each time and cannot see spans, confidence, provenance or retrieval — which is why probe
-scripts keep concluding that nothing changed.
+scripts keep concluding that no output changed.
 
 | Question                                                 | Tool                   |
 | -------------------------------------------------------- | ---------------------- |
@@ -55,7 +55,7 @@ scripts keep concluding that nothing changed.
 `mwdev_run` with no arguments grades the full regression board in about a minute. That is the right
 first command, and it is cheaper than the script you were about to write.
 
-## Reading the result
+## Read the result
 
 An aggregate is a summary of visible rows, never a replacement for them. `net -13` does not
 distinguish a destroyed venue from a boundary sliding one token, and those have different fixes.
@@ -92,17 +92,17 @@ done
 | Space Needle  | 400          | Broad St            | Seattle       | WA     | 98109    |
 | ZIP only      | —            | —                   | —             | —      | 90210    |
 
-**FAIL outright** on all-locality or all-`O` output, on garbage (tokenizer/model mismatch), or on
+**Fail the model** on all-locality or all-`O` output, on garbage (tokenizer/model mismatch), or on
 `grouper-audit` nodes appearing in the XML — the audit injecting where the model should cover is a
 coverage gap rather than a pass.
 
-Anything short of outright collapse is not a verdict. Six US rows cannot clear or condemn a model;
-take it to the board.
+A result short of total collapse is not a verdict. Six US rows cannot clear or condemn a model.
+Take it to the board.
 
 ## Related
 
 - `.agents/skills/training-arc/SKILL.md` — the protocol, and the controls that precede a number
-- `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals decide a change; iron rule 6 is the D-rule
+- `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals decide a change. Iron rule 6 is the D-rule
 - `packages/core/lib/pipeline/grouper-audit.test.ts` — the audit no-op test for the v0.5.3 collapse pattern
 - `docs/records/evals/model-versions/2026-05-27-v0.5.3-diagnostic-training-review.mdx` — the eval that
   produced the smoke presets

@@ -8,7 +8,7 @@
  *   length) and the exact address-point tier stamps no radius, since it is a real situs point assigned
  *   a fixed 10 m floor (building-centroid precision).
  *
- *   The heuristic radius is a prior. This script turns it into a provably-calibrated interval: the
+ *   The heuristic radius is a prior. This script turns it into a conformally calibrated interval: the
  *   conformal threshold Q̂ tells you "multiply the claimed radius by Q̂ and you now have a 90% coverage
  *   guarantee on held-out data."
  *
@@ -151,8 +151,8 @@ interface StreetHit {
 /**
  * Kept local because tree-hits' `findAddressPointHit` and `findInterpolatedHit` answer only a coordinate.
  *
- * This walk also needs the stamped `resolution_tier` and the interpolation
- * `uncertainty_m` to price the claimed radius.
+ * This walk also needs the stamped `resolution_tier` and the interpolation `uncertainty_m`
+ * to measure the claimed radius against the observed error.
  * The shared readers include neither.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {

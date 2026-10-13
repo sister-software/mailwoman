@@ -6,7 +6,7 @@ description: A Photon-compatible autocomplete API without the Elasticsearch clus
 
 # Migrate from Photon
 
-[Photon](https://photon.komoot.io) is a type-ahead geocoder that searches as you type and returns GeoJSON. It runs on an Elasticsearch cluster, which must load a Photon import before it can answer queries. Mailwoman serves the same `/api` interface from a SQLite file, so your autocomplete keeps working without the cluster.
+[Photon](https://photon.komoot.io) is a type-ahead geocoder that searches as you type and returns GeoJSON. It runs on an Elasticsearch cluster. The cluster must load a Photon import before it can answer queries. Mailwoman serves the same `/api` interface from a SQLite file, so your autocomplete keeps working without the cluster.
 
 **Try it first.** We host a live instance at [photon.mailwoman.ai](https://photon.mailwoman.ai), so you can test it without installing anything or waiting for an import. Open [`/api?q=berlin&limit=3`](https://photon.mailwoman.ai/api?q=berlin&limit=3) in a browser, or point your existing Photon client at the host, and check the GeoJSON it returns. When the results look right, the command below runs the same service on your own machine.
 

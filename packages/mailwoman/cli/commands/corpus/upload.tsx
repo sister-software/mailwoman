@@ -84,7 +84,7 @@ type UploadedCorpusManifest = Partial<
  * `overlay-manifest` rewrites this count on each merge.
  *
  * `total_rows` here counts the same labeled rows as the build manifest's `total_aligned_rows`,
- * so the two are comparable and their difference is what the overlays added.
+ * so the two are comparable and their difference is what the corpus overlays added.
  */
 interface AssembledCorpusManifest {
 	total_rows?: number

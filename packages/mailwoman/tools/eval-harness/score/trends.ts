@@ -54,7 +54,7 @@ const TAG_ORDER = [
 const LOCALES = ["us", "fr", "de"]
 
 /**
- * `%g`'s default precision: 6 significant digits.
+ * `%g`'s default precision: 6 digits, counted from the first nonzero digit.
  */
 const G_PRECISION = 6
 
@@ -223,11 +223,11 @@ export async function buildScoreTrends(options: ScoreTrendsOptions = {}): Promis
 		"# Per-tag score trends",
 		"",
 		"GENERATED from [`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json)",
-		"by `mailwoman eval score-trends` — do not hand-edit; regenerate after each ledger row.",
+		"by `mailwoman eval score-trends` — do not hand-edit. Regenerate it after each ledger row.",
 		"",
-		"Numbers are per-tag scores as recorded per release (eval sets, channels, and quantization",
-		"evolve across eras — adjacent columns are comparable, distant ones directional; the dated",
-		'ship-check docs carry each column\'s exact conditions). "—" = not measured that release.',
+		"Numbers are per-tag scores as recorded per release. Eval sets, channels, and quantization",
+		"evolve across eras. Adjacent columns are comparable, and distant ones are directional. The dated",
+		'ship-check docs record each column\'s exact conditions. "—" = not measured that release.',
 		"",
 	]
 

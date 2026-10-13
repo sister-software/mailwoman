@@ -5,7 +5,7 @@ the shipped pipeline degrades a parse, found the joint-reconcile path (#427's de
 Phase II) breaks the street + house-number geocode precondition on 77–84% of clean US addresses and
 fixes none. This report records the measurement, the mechanism, and the decision to de-promote it back
 to argmax. The destructive piece — the phrase grouper bundling the house number into the STREET_PHRASE
-— is filed separately as the real fix._
+— is filed separately as the fix for the cause._
 
 ## Why we looked
 
@@ -28,7 +28,7 @@ and `postcode` (the minimum the geocoder needs), on two **non-circular** US hold
 | OpenAddresses 7-state (n=700)    | 99.7%      | 22.9%              | **76.9%** (538)                        | 0%              |
 
 **Per-tag recall** — raw argmax vs the reconcile pipeline on golden v0.1.2 US+FR (n=4507, the eval
-family our parity scorecards use; loose value-match, identical for both columns so the delta is fair):
+family our parity scorecards use, loose value-match, identical for both columns so the delta is fair):
 
 | tag          | raw    | reconcile | delta       |
 | ------------ | ------ | --------- | ----------- |
@@ -51,7 +51,7 @@ For `3075 Hill Street, Round Rock, TX 78664`:
   `STREET_PHRASE = "350 5th Ave"`.
 - **`reconcileSpans`** takes that span and, from the aggregated span logits, types the whole thing as a
   single node — sometimes `house_number = "3075 Hill Street"`, sometimes `street = "109 Seminary Dr"`.
-  Either way the number and street name fuse; there is no separate `street`.
+  Either way the number and street name fuse, and the parse has no separate `street`.
 - **Raw neural** parses it correctly: nested `street = "Hill Street"` containing `house_number = "3075"`.
 
 This is structural rather than data-dependent: it fires on every "number + street name" pattern, i.e. nearly
@@ -65,7 +65,7 @@ street (`Müllerstraße 12` → raw `street = "Müllerstraße 1"`, truncated), r
 string intact (`"Müllerstraße 12"`). That lifts a **loose street-string-recall** metric. But neither
 path separates the house number on those inputs — neither produces a geocodable parse — and the re-check
 never measured the **geocode precondition** (clean street + separated house number) on standard US
-addresses. Our evals grade raw neural, so nothing downstream of the classifier was ever scored against
+addresses. Our evals grade raw neural, so no stage downstream of the classifier was ever scored against
 truth. The blind spot was the eval target rather than the math.
 
 ## The decision
@@ -73,16 +73,16 @@ truth. The blind spot was the eval target rather than the math.
 **Retire joint-reconcile as the default.** `jointReconcile` defaults to `false` (argmax) as of this
 change (`core/pipeline/runtime-pipeline.ts`). This:
 
-- Recovers street +25.6pp and house_number +23.1pp; loses nothing measurable (region/postcode/venue/unit
+- Recovers street +25.6pp and house_number +23.1pp with no measurable loss (region/postcode/venue/unit
   flat, locality +2.3pp).
 - Restores the pipeline to **byte-identical** with raw neural on both holdouts (Travis 100% precondition,
-  OA 99.7%, every street/HN tag identical) — confirming the grouper-audit venue rescue, which runs in
-  both paths, injects nothing spurious on fully-parsed addresses.
+  OA 99.7%, every street/HN tag identical). The grouper-audit venue rescue runs in both paths, so this
+  confirms it injects no spurious node on fully-parsed addresses.
 - Makes `parse` consistent with the already-fixed `geocode` CLI.
 
-The flag and the `reconcileSpans` code stay; the A/B harnesses still drive it with `jointReconcile: true`.
-This is the geocoder-sprint-correct default (US street-level is the DoD; multi-locale may degrade this
-sprint) rather than a deletion.
+The flag and the `reconcileSpans` code stay. The A/B harnesses still drive it with `jointReconcile: true`.
+This is the geocoder-sprint-correct default rather than a deletion. US street-level is the DoD, and
+multi-locale may degrade this sprint.
 
 ## Residual
 

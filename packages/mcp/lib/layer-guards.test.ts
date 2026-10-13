@@ -48,8 +48,8 @@ async function emptySqliteFile(name: string): Promise<PathBuilder> {
 }
 
 /**
- * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search` and queries
- * `poi_category_codes`, so the "file present" branch needs these tables to actually exist.
+ * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search`
+ * and queries `poi_category_codes`, so the "file present" branch needs these tables to exist.
  */
 async function poiFixtureFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")

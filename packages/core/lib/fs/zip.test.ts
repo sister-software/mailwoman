@@ -16,7 +16,7 @@ import { mulberry32 } from "#random"
 
 /**
  * Big and incompressible: a member that inflates in one pass is already finished
- * when the consumer breaks, so random bytes keep the stream genuinely open across the break.
+ * when the consumer breaks, so random bytes keep the stream open across the break.
  */
 const BIG = incompressibleBytes(12 * 1024 * 1024)
 

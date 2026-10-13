@@ -1,6 +1,6 @@
 """Choose the reps per row and derive the weight.
 
-The sampler allocates draw share by weight normalised across sources. Row count never enters, so a
+The sampler allocates draw share by weight normalized across sources. Row count never enters, so a
 source's per-row exposure is ``reps_per_row = (weight / total_weight) * total_samples / rows``, a unit
 configs do not express directly. ``source_reps`` lets a config set the exposure and derive the weight
 once the corpus is known.

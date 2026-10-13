@@ -27,7 +27,7 @@ const DEFAULT_MAX_EXPANSION_DEPTH = 2
 const DEFAULT_PER_BRANCH_LIMIT = 4
 
 /**
- * The BFS stops once `maxSuggestions ×` this many candidates are collected,
+ * The BFS stops once `maxSuggestions ×` this value in candidates are collected,
  * enough surplus for the final sort and dedupe without exhausting a wide trie.
  */
 const SUGGESTION_BUDGET_FACTOR = 4

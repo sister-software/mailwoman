@@ -7,8 +7,8 @@ gold country has a conventions row, the forbidden label columns are masked out o
 exist" instead of merely being decode-blocked. The v0.9.13 choreography report states the pairing is
 essential. this is the same discipline applied to grammar.
 
-MIRROR INTERFACE: the table below mirrors ``codex/address-system-conventions.ts`` (the provenance-
-carrying source of truth). Rows are added there first, with evidence. this mirror follows. Same
+MIRROR INTERFACE: the table below mirrors ``codex/address-system-conventions.ts`` (the canonical
+table, with provenance per row). Rows are added there first, with evidence. this mirror follows. Same
 never-drift discipline as ``LOCALE_COUNTRIES`` (labels.py) — the locale-id indexing depends on it.
 """
 

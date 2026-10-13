@@ -129,7 +129,7 @@ if (!wofPaths.length) {
 	const board = await loadHardCaseBoard(values.board)
 
 	// Board inputs and their probe surfaces: the input is what a user types,
-	// the surface is the token whose namesakes are actually in contention.
+	// the surface is the token whose namesakes are in contention.
 	// Both go through the ranking.
 	const queries = [...new Set([...board.map((c) => c.input), ...board.map((c) => c.probeSurface)])].toSorted()
 

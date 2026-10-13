@@ -2,12 +2,12 @@
 
 **Date:** 2026-09-05. **Task:** evidence-derivation plan Task 10
 (`docs/superpowers/plans/2026-08-21-evidence-derivation.md`). **Deliverable:** an answer rather than a coverage table.
-Nothing here writes `layer_coverage`.
+This probe does not write `layer_coverage`.
 
-## Verdict: DESIGNATED, per commune — the signal exists upstream and is RECOVERABLE; the current extract does not carry it
+## Verdict: designated, per commune — the signal exists upstream and is recoverable, but the current extract drops it
 
 `CoverageBasis`'s docstring uses BAN as its `designated` example ("BAN holding every address in a commune"). That is
-true of some communes and false of others, and the source says which.
+true of some communes and false of others, and the source records which.
 
 ## What was measured
 
@@ -16,7 +16,7 @@ true of some communes and false of others, and the source says which.
 | Streets in `ban/street-centroids-fr.db`            | 2,195,655                                                                         | `street_centroid`, `ban:fr` release 2026-05-18                                                              |
 | Distinct communes in the extract (`locality_base`) | 32,539                                                                            | same                                                                                                        |
 | Communes in France                                 | ~34,900                                                                           | so a blanket `designated` is false: about 2,400 communes hold no street here                                |
-| Columns the upstream per-département CSV carries   | 23, including `certification_commune` and `source_position`                       | header of `adresses-01.csv.gz`, fetched 2026-09-05 from `adresse.data.gouv.fr/data/ban/adresses/latest/csv` |
+| Columns in the upstream per-département CSV        | 23, including `certification_commune` and `source_position`                       | header of `adresses-01.csv.gz`, fetched 2026-09-05 from `adresse.data.gouv.fr/data/ban/adresses/latest/csv` |
 | Columns the extract keeps                          | `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `nom_ld`, `lon`, `lat` | `packages/ban/lib/sdk/extract.ts` `REQUIRED_COLUMNS`; `address_point` has no certification column           |
 
 One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
@@ -36,17 +36,17 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
 - Observation: BAN publishes a per-address certification flag, and its distribution is per commune: in Ain, 178
   communes are wholly certified, 102 wholly uncertified, 111 mixed.
 - Inference: `certification_commune = 1` marks an address the commune itself asserted through its Base Adresse Locale
-  (the upstream field name and the `source_position = commune` co-occurrence support this; the BAN documentation
-  states it as the field's meaning). A commune whose every address is certified has DESIGNATED its set; a mixed or
+  (the upstream field name and the `source_position = commune` co-occurrence support this, and the BAN documentation
+  states it as the field's meaning). A commune whose every address is certified has designated its set. A mixed or
   uncertified commune has not, and its rows are `source_present`.
-- Decision the plan asked for: the FR arm can carry a per-commune `designated` basis, but only after the extract keeps
+- Decision the plan asked for: the FR arm can record a per-commune `designated` basis, but only after the extract keeps
   `certification_commune` and the coverage build writes `designated` for wholly certified communes and
   `source_present` for the rest. Until then the FR layer is `source_present` everywhere, and `requireExclusionBasis`
   refuses every FR exclusion — which is the correct answer for a layer that has not yet said which communes are whole.
 
 ## Follow-up (not this task)
 
-1. `packages/ban/lib/sdk/extract.ts`: carry `certification_commune` (and `code_insee`, the stable commune key —
+1. `packages/ban/lib/sdk/extract.ts`: keep `certification_commune` (and `code_insee`, the stable commune key —
    `nom_commune` is a display name) into `address_point`.
 2. The street-centroid build writes `layer_coverage` per commune cell: `designated` where every address point in the
    commune is certified, `source_present` otherwise; `basis` never inferred from a share.
@@ -55,4 +55,4 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
 ## Not measured
 
 The national share. One département was read because the question was whether the signal exists and varies per
-commune rather than what the national rate is; the national rate is the follow-up's first number.
+commune rather than what the national rate is. The national rate is the follow-up's first number.

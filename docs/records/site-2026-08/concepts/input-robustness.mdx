@@ -14,7 +14,7 @@ The useful test is whether `1600 PENNSYLVANIA AVE NW,WASHINGTON DC` resolves to 
 
 ## The absorption stack
 
-The three layers are ordered from the cheapest and most certain transforms to the most learned. Each layer handles variation that the layer before it should leave alone.
+The three layers are ordered from the cheapest and most certain transforms to the most learned. Each layer handles variation that the layer before it should leave unchanged.
 
 ### Layer 1 — deterministic normalization
 
@@ -22,11 +22,11 @@ The first pass is plain code without a model, in [`@mailwoman/normalize`](https:
 
 - Unicode NFC, so a composed `é` and a decomposed `é` become the same string.
 - Punctuation folding.
-- Whitespace collapse, which reduces a run of spaces to one and trims a trailing `.`/`,`/`;`/`:` (`normalize/whitespace.ts`).
+- Whitespace collapse. It reduces a run of spaces to one and trims a trailing `.`/`,`/`;`/`:` (`normalize/whitespace.ts`).
 
 The trailing-punctuation trim fixed a real failure. A stray period attached to the final token (`…Washington DC.`) used to drop the street tier from `address_point` to `admin`, and trimming it costs no extra work.
 
-Every transform is offset-mapped. The normalized string carries a map back to the raw character positions, so a span the model finds in the clean text still points at the right bytes of the user's input. A normalization that corrupted the offsets would do more harm than good.
+Every transform is offset-mapped. The normalized string keeps a map back to the raw character positions, so a span the model finds in the clean text still points at the right bytes of the user's input. A normalization that corrupted the offsets would do more harm than good.
 
 This layer deliberately does **not** expand abbreviations at runtime. `normalize/abbreviations.ts` can turn `Rd` into `Road` and `Ave` into `Avenue`, and it is fully built. It is opt-in, and the runtime pipeline leaves it off (`normalize/compute.ts`). Abbreviation handling belongs to the model. A hard-coded `Ave → Avenue` rule in front of the parser would take a decision away from the model, and the model could not correct the rule if it proved wrong for a locale. See [What Mailwoman is](./what-mailwoman-is.mdx) for why hand-written knowledge stays out of the model's input path.
 
@@ -40,7 +40,7 @@ The detection is deliberately strict. Only an input that is entirely uppercase o
 
 The last layer is the training corpus rather than a pass. The parser learns to handle surface variation because the training data contains it. The corpus includes casing permutations (`corpus/src/extract-recipes/intersection.ts`, `locale.ts`) and abbreviation variants in both directions (`street-affix.ts`, the `unit.ts` designators from #454, `fr-bare-street.ts`). This layer teaches the model that `Ave` and `Avenue` are the same street. No rule rewrites one into the other. The model saw both forms in training and learned that they refer to the same place.
 
-Layer 3 is what makes it safe for Layer 1 to skip abbreviation expansion. Because the model trains on both forms, `normalize/` can leave abbreviations alone. The three layers divide the work. Deterministic code handles transforms with one right answer, the corpus handles variation whose meaning depends on context, and case normalization covers the systematic casing gap between them.
+Layer 3 is what makes it safe for Layer 1 to skip abbreviation expansion. Because the model trains on both forms, `normalize/` can leave abbreviations unexpanded. The three layers divide the work. Deterministic code handles transforms with one right answer, the corpus handles variation whose meaning depends on context, and case normalization covers the systematic casing gap between them.
 
 ## The checks
 
@@ -56,7 +56,7 @@ The check has three relation families, separated by how much a perturbation may 
 - **DIR (directional, ≤5km).** With the postcode removed, the result must still land within 5km of the result with the postcode. This keeps the #251 failure class, where the parser failed as soon as a user omitted the ZIP, as a permanent check.
 - **BAND (tolerance, ≤5km).** A _corrupting_ perturbation may change the parse, so requiring byte-identical output would be the wrong test. These perturbations are a single-character transposition or substitution, or a spelled-out ordinal or house number. The result must still land within a tolerance band of the clean coordinate. This family catches classes of input the pipeline never trained on.
 
-When a perturbation fails deterministically, it goes in `KNOWN_INV_XFAIL` or `KNOWN_BAND_XFAIL` with a tracking note. The failure stays visible without blocking the build, so the check fails only on _new_ regressions. An xfail that starts passing is flagged for removal. This prevents the list from growing stale the way Pelias's pass-list did, which this design was built to avoid.
+When a perturbation fails deterministically, it goes in `KNOWN_INV_XFAIL` or `KNOWN_BAND_XFAIL` with a tracking note. The failure stays visible without blocking the build, so the check fails only on _new_ regressions. An xfail that starts passing is flagged for removal. This prevents the list from growing stale the way Pelias's pass-list did. This design was built to avoid that outcome.
 
 The casing and spacing checks pass. The two normalizer changes above (#829's lowercase restore and the trailing-punctuation trim) fixed them without retraining. The EN suffix abbreviations also pass. The tracked xfails cover the rest:
 
@@ -64,7 +64,7 @@ The casing and spacing checks pass. The two normalizer changes above (#829's low
 - House-number spelling falls outside the band.
 - A single-character typo in a locality or street can lose the coordinate.
 
-The typo cases are measured with the anchor and gazetteer channels off, which is the harness default. In the shipped configuration, the gazetteer soft-feed is the mechanism that would recover a misspelled `Amsterdam`. Read these results as the anchor-off baseline. They do not measure production behavior.
+The typo cases are measured with the anchor and gazetteer channels off. That setting is the harness default. In the shipped configuration, the gazetteer soft-feed is the mechanism that would recover a misspelled `Amsterdam`. Read these results as the anchor-off baseline. They do not measure production behavior.
 
 ### Golden `graceful/*` sets — labeled adversarial cases
 
@@ -82,9 +82,9 @@ The table maps each perturbation class to the layers that handle it and the chec
 | -------------------------------------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |
 | Case normalization                           | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                                                                                    |
 | Whitespace                                   | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight] green                                                                           |
-| Abbreviation swap (Road↔Rd)                  | capable but off at runtime (deliberate)    | yes                  | INV[abbrev]: EN suffixes green; FR `Bd` tracked-xfail (resolver name-match gap)                           |
-| Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | BAND[num-ordinal] green; BAND[num-house] tracked-xfail (untrained)                                        |
-| Typos (single-char edit)                     | no                                         | no                   | BAND[typo-sub]: most bases green; tracked-xfail where a typo'd locality/street loses the pin (anchor-off) |
+| Abbreviation swap (Road↔Rd)                  | capable but off at runtime (deliberate)    | yes                  | INV[abbrev]: EN suffixes green, FR `Bd` tracked-xfail (resolver name-match gap)                           |
+| Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | BAND[num-ordinal] green, BAND[num-house] tracked-xfail (untrained)                                        |
+| Typos (single-char edit)                     | no                                         | no                   | BAND[typo-sub]: most bases green, tracked-xfail where a typo'd locality/street loses the pin (anchor-off) |
 | Transpositions                               | no                                         | no                   | BAND[transpose]: same anchor-off gaps as typo-sub                                                         |
 
 The casing and spacing checks pass. The runtime handles them, the corpus reinforces them, and a standing invariant passes on them. The bottom four rows used to be untested. They now run through the metamorphic check, and several of them already pass. The EN suffix abbreviations pass the strict one-meter invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even though no training data covers it. The gaps were smaller than expected, and the xfail maps list each one:
@@ -98,5 +98,5 @@ Each gap is a tracked line item that the check reports on every run.
 ## See also
 
 - [Eval discipline](./eval-discipline.mdx): the full Gauntlet, and why it grades the coordinate rather than the name string
-- [What Mailwoman is](./what-mailwoman-is.mdx): why hand-written knowledge stays outside the model, which is why Layer 1 skips abbreviation expansion
+- [What Mailwoman is](./what-mailwoman-is.mdx): why hand-written knowledge stays outside the model, and so why Layer 1 skips abbreviation expansion
 - [The pipeline interface](./staged-pipeline-interface.mdx): where the normalize stage fits in the runtime pipeline

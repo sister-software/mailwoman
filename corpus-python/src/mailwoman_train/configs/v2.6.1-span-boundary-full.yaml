@@ -1,6 +1,6 @@
 # v2.6.1-span-boundary-full — #727 stage-1 full run. One variable vs v2.6.0: 2000 -> 8000 steps.
 # v2.6.0 (2k probe) confirmed the span-boundary aux head shrinks the region->street absorption class
-# (US flip census 5 -> 2, gauntlet stable, aggregate parity street flat). This full run tests whether
+# (US flip census 5 -> 2, gauntlet stable, aggregate parity street flat). This 8000-step fine-tune tests whether
 # more training lowers the flip census further and lifts aggregate street. init_from the stable v257 (same
 # as v2.6.0), span_boundary_loss_weight 0.5 unchanged. Grade: flip census (does 2 -> lower?), parity
 # street (does the aggregate finally move?), gauntlet (stability). If street lifts -> this is the new

@@ -18,8 +18,8 @@ terminal. `@sister.software/asciify` (4.1.0, published, `./tui` entry) replaces 
 asciify entry is a damage-diffed cell renderer with a braille 2×4 subpixel mode and a `setCell`
 overlay path. This design reuses mapscii's concepts (vector-tile decode, styling, line and polygon
 rasterization into braille, and collision-avoiding label placement) and reimplements them
-clean-room against the protomaps basemap schema. No code is ported, so no MIT notice is carried.
-If an algorithm is later ported verbatim, its notice must be carried with it.
+clean-room against the protomaps basemap schema. No code is ported, so the package includes no MIT notice.
+If an algorithm is later ported verbatim, its notice must be copied with it.
 
 ## Decisions (operator-confirmed)
 
@@ -29,7 +29,7 @@ If an algorithm is later ported verbatim, its notice must be carried with it.
    where did it land": colored labeled spans, then tier / coordinate / uncertainty / hierarchy
    with attribution. Stage internals (query-shape, locale-hint, grouper hypotheses) are out of
    v1 scope.
-3. **Build order:** `@mailwoman/map-tui` bootstraps first as a library-only workspace; the debug
+3. **Build order:** `@mailwoman/map-tui` bootstraps first as a library-only workspace. The debug
    view is its first consumer. The standalone bin is phase 2. This order avoids building a
    throwaway map pane and extracting it later.
 4. **Input editing:** editable in v1. Enter re-geocodes without reloading the model or reopening
@@ -40,17 +40,17 @@ If an algorithm is later ported verbatim, its notice must be carried with it.
 
 ## Architecture: frame-first rendering
 
-`@mailwoman/map-tui`'s renderer produces a **frame value**, which is a cell grid convertible to
+`@mailwoman/map-tui`'s renderer produces a **frame value**: a cell grid convertible to
 ANSI-styled lines. The renderer never writes to the terminal. The consumer owns the terminal:
 
 | Consumer                                  | Presentation                                        |
 | ----------------------------------------- | --------------------------------------------------- |
-| `mw geocode --debug` (TTY)                | Ink app; map pane renders the frame as styled lines |
+| `mw geocode --debug` (TTY)                | Ink app, map pane renders the frame as styled lines |
 | `mw geocode --debug` (piped/Claude skill) | same component tree, one static frame to stdout     |
 | `npx map-tui` (phase 2)                   | full-screen `AsciifyTerminal`, damage-diffed        |
 
 The debug view is a pure Ink app (approach A of three considered). Ink repaints the whole map
-pane on each pan, which is acceptable at pane sizes of about 60×25 cells. In exchange, the screen
+pane on each pan. A full repaint is acceptable at pane sizes of about 60×25 cells. In exchange, the screen
 has exactly one writer, and the static path is the same code rendered once. Two alternatives were
 rejected. A hybrid where `AsciifyTerminal` owns the map region beside Ink would have two writers,
 every Ink reflow would overwrite the pane, and the code would need `invalidate()` coordination
@@ -92,7 +92,7 @@ Render note: solid fills pass through asciify's Bayer ordered dither, so a fill 
 luminance sets its stipple density. Water renders as a dim texture and roads as solid bright
 dots. The style table can tune this, so it is not a design risk.
 
-Attribution: `MapFrame.attribution` carries the tile archive's attribution string. The dump is
+Attribution: `MapFrame.attribution` holds the tile archive's attribution string. The dump is
 OSM-derived, so display attribution is required. Consumers render it, and the debug pane shows it
 bottom-right. No package ships tiles. The consumer always supplies the path.
 
@@ -102,8 +102,8 @@ Extract `runGeocode`'s dependency assembly (`mailwoman/commands/geocode.tsx`) in
 `createGeocodeSession(options)`, a sibling of `geocode-core.ts`. The session loads the
 classifier, opens the resolver backend, extract providers, placer, and poi deps once, and returns
 `{geocode(input), close()}`. `geocode(input)` returns the flat `GeocodeResult` **plus** the
-parsed tree and the classifier's labeled char spans (the sentencepiece native-offsets path
-carries offsets end to end; the exact accessor is plan-time verification item 1).
+parsed tree and the classifier's labeled char spans. The sentencepiece native-offsets path
+preserves offsets end to end. The exact accessor is plan-time verification item 1.
 
 The existing one-shot path becomes create → geocode → close in a try/finally and stays
 byte-identical. `geocode.test.ts` must pass unmodified. The #1577 requirement also stays in
@@ -112,10 +112,10 @@ place: no output on the non-debug success path renders through Ink, and output g
 
 ## 3. The debug view (mailwoman workspace)
 
-`--debug` on `geocode`. TTY stdout → interactive session; non-TTY → static frame (§4).
+`--debug` on `geocode`. TTY stdout → interactive session, non-TTY → static frame (§4).
 Components live in `mailwoman/debug-view/` (a sibling family to `cli-kit/`):
 
-- **Layout** — Ink flexbox: `InputBar` full-width on top; beneath it `OutputPane` (50%) beside
+- **Layout** — Ink flexbox: `InputBar` full-width on top. Beneath it sits `OutputPane` (50%) beside
   `MapPane` (50%). The session enters the alternate screen buffer and restores the screen on
   exit, so scrollback is never modified, as #1577 requires.
 - **`InputBar`** — an editable line (`ink-text-input`, pending the plan-time dependency check)
@@ -124,12 +124,12 @@ Components live in `mailwoman/debug-view/` (a sibling family to `cli-kit/`):
   shows while it runs (under a second once warm).
 - **`OutputPane`** — tier, coordinate, `uncertainty_m`, then hierarchy rows (tag, value,
   placeID, coord) colorized. ↑/↓ scrolls when focused.
-- **`MapPane`** — `MapRenderer` frame centered on the result; marker at the coordinate;
-  uncertainty ring when `uncertainty_m` is present; attribution bottom-right. When focused:
+- **`MapPane`** — `MapRenderer` frame centered on the result, with a marker at the coordinate,
+  an uncertainty ring when `uncertainty_m` is present, and attribution bottom-right. When focused:
   arrows pan, `+`/`-` zoom, `0` recenters on the result. Initial zoom by tier:
-  `address_point`/`interpolated` ≈ z15; `admin` by leaf placetype (locality z11, region z6,
+  `address_point`/`interpolated` ≈ z15, `admin` by leaf placetype (locality z11, region z6,
   country z4).
-- **Focus** — Tab cycles input → output → map; the focused pane gets the highlighted border.
+- **Focus** — Tab cycles input → output → map, and the focused pane gets the highlighted border.
   Esc and Ctrl+C always quit; `q` quits except while the input is focused.
 - **Degrade** — with no tile source, `MapPane` renders the marker on a graticule plus
   "no tiles: set `$MAILWOMAN_TILES` or `--tiles`". The pane distinguishes an unconfigured tile
@@ -176,7 +176,7 @@ pattern as the existing format-shorthand conflict in `resolveFormat`.
 - **mailwoman:** the session refactor's regression check is the existing `geocode.test.ts`
   passing unmodified. Debug-view component tests run via `ink-testing-library` with a stubbed
   session (no model load). A static-frame smoke test runs where weights + gazetteer exist and
-  asserts the frame carries the coordinate and braille content.
+  asserts the frame contains the coordinate and braille content.
 
 ## Plan-time verification items
 
@@ -187,7 +187,7 @@ pattern as the existing format-shorthand conflict in `resolveFormat`.
 3. Fixture `.pmtiles` size and extent before committing.
 4. Whether asciify's exported braille primitives suffice for RGBA→cell conversion in a
    frame-value context, or a thin `AsciifyTerminal` subclass is needed.
-5. Whether `tile-worker/` already carries z/x/y tile math worth hoisting into
+5. Whether `tile-worker/` already contains z/x/y tile math that could move into
    `@mailwoman/spatial` instead of writing new mercator code (duplication check).
 6. `ink-text-input` dependency hygiene (ESM, maintenance state) vs a hand-rolled input on
    `useInput`.

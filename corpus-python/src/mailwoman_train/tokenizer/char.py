@@ -1,8 +1,8 @@
 """Char-word tokenization for the CharCNN front-end (#825).
 
 The SentencePiece path (``tokenizer.py``) fragments diacritic-heavy tokens ("Čistá" -> [▁,Č,is,t,á])
-because the English-trained unigram vocab has no multi-char subwords containing diacritics — a 3.3x
-fertility tax on Slavic that breaks span boundaries and geocodes to the wrong city. The CharCNN front-end
+because the English-trained unigram vocab has no multi-char subwords containing diacritics. It splits Slavic
+text into 3.3x the pieces per word. That split breaks span boundaries and geocodes to the wrong city. The CharCNN front-end
 sidesteps that: tokenize into WORDS (whitespace tokens. one char per token for CJK later) and compose each
 word's embedding from its CHARACTERS, so the tokenizer never gets to isolate a diacritic into its own piece.
 

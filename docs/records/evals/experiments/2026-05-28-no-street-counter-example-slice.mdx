@@ -71,7 +71,7 @@ raw: South Park Children's Center, München, Bayern 80331
   labels: ['B-venue', 'I-venue', 'I-venue', 'I-venue', 'B-locality', 'B-region', 'B-postcode']
 ```
 
-The tokens `Street`, `Drive`, `Park` carry explicit `B-venue` / `I-venue` labels
+The tokens `Street`, `Drive`, `Park` have explicit `B-venue` / `I-venue` labels
 — the model sees direct evidence that these tokens are not street components in
 this surrounding context.
 
@@ -99,8 +99,8 @@ runnable:
   topic.
 - **Unit designator schema gap.** The Australian unit-notation tests
   (`Unit 12/345`, `Apt 12`) fail because the Stage 3 schema has no
-  `unit_designator` tag. This is a schema change requiring a separate retrain,
-  not a corpus tweak.
+  `unit_designator` tag. The fix is a schema change and needs a separate retrain.
+  A corpus edit cannot add the tag.
 - **Tokenization on non-ASCII.** Czech, Portuguese diacritics are destroying
   span boundaries in the harness output. Independent of the corpus path.
 

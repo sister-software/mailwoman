@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `useDebouncedValue` — returns a copy of `value` that only updates after `delayMs` of quiet. Used by
- *   the POI explorer to avoid re-classifying on every keystroke. The timer is a genuine external-sync
+ *   the POI explorer to avoid re-classifying on every keystroke. The timer is an external-sync
  *   effect (a scheduled clock), so it belongs in an effect.
  */
 

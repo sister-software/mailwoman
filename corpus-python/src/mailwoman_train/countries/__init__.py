@@ -3,7 +3,7 @@
 Each country has one directory for its own knowledge: its corpus builder, government register
 readers, source samplers, plus script-specific text handling. Two countries never share a file.
 
-Shared machinery stays in the role directories at the package root — `text/` for script normalization,
+Code that several countries share stays in the role directories at the package root — `text/` for script normalization,
 `corpora/` for the row builders, the record verifier and the country-agnostic address-point sampler,
 `tokenizer/` for encoding.
 

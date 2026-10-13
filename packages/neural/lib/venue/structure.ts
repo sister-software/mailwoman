@@ -24,7 +24,7 @@ import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst
 /**
  * WOF placetypes that name a structure inside a venue rather than a place on the map,
  * deliberately excluding `venue` itself and the `address`/`intersection` grammar anchors. typed
- * against {@link WhosOnFirstPlacetype} so the compiler enforces each entry is a genuine WOF term.
+ * against {@link WhosOnFirstPlacetype} so the compiler enforces each entry is a WOF placetype.
  */
 const WOF_VENUE_STRUCTURE_PLACETYPES = [
 	"arcade",
@@ -80,9 +80,10 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
 ]
 
 /**
- * Venue-interior designators that may be preceded by a {@link VENUE_STRUCTURE_MODIFIERS} term:
- * a subset of {@link VENUE_STRUCTURE_DESIGNATORS} that excludes `gate` and `building`, which form
- * ordinary street names in the modifier+designator shape ("East Gate", "Building Society Place").
+ * Venue-interior designators that may be preceded by a {@link VENUE_STRUCTURE_MODIFIERS}
+ * term: a subset of {@link VENUE_STRUCTURE_DESIGNATORS} that excludes `gate`
+ * and `building`, which form ordinary street names in the modifier+designator shape
+ * ("Building Society Place", and the compass-plus-`gate` names).
  *
  * An entry claims that no street uses the name "<modifier> <entry>".
  * Check before you add it.

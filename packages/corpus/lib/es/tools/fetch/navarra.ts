@@ -91,10 +91,10 @@ export const ES_NAVARRA_REQUEST_INTERVAL_MS = 250
 const SLUG = ES_NAVARRA_ADAPTER_ID
 
 /**
- * How many archives are written between two manifest writes.
+ * The number of archives written between two manifest writes.
  *
  * The manifest is what makes an interrupted harvest resumable.
- * At this interval an interruption re-fetches at most this many archives that are already on disk.
+ * At this interval an interruption re-fetches at most this number of archives that are already on disk.
  */
 const MANIFEST_INTERVAL = 25
 
@@ -217,7 +217,7 @@ export interface ESNavarraArchiveEntry extends SourceManifest {
  */
 export interface ESNavarraHarvestManifest extends SourceCollectionManifest {
 	/**
-	 * How many partitions the service document listed when this manifest was written.
+	 * The number of partitions the service document listed when this manifest was written.
 	 *
 	 * The denominator for `files`, read from the feed on each run rather than fixed here.
 	 */
@@ -238,7 +238,7 @@ export interface HarvestESNavarraOptions {
 	 */
 	partitions?: readonly string[]
 	/**
-	 * Stop after this many partitions, counting the ones already on disk.
+	 * Stop after this number of partitions, counting the ones already on disk.
 	 */
 	limit?: number
 	/**

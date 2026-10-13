@@ -16,10 +16,10 @@
  *   archives therefore reads every address in the province without its street, its postcode or
  *   its municipality. This harvest acquires both services into one directory for that reason.
  *
- *   Each component type is read in one request, and that is the only way this service serves it. Its
+ *   Each component type is read in one request. This service serves a type no other way. Its
  *   capabilities document states `ImplementsResultPaging` as `FALSE` and `CountDefault` as `1000`, so
  *   a reader that paged a type would receive the first page again. The harvest therefore asks
- *   `RESULTTYPE=hits` for the type's count and then asks for that many features in one `GetFeature`,
+ *   `RESULTTYPE=hits` for the type's count and then asks for that number of features in one `GetFeature`,
  *   and {@linkcode fetchBizkaiaComponentDocument} raises where the document returns fewer than the
  *   count. A truncated component document is the failure that would otherwise reach the adapter as
  *   an unresolved reference per address.
@@ -121,11 +121,11 @@ export const ES_BIZKAIA_REQUEST_INTERVAL_MS = 250
 const BODY_TIMEOUT_MS = 600_000
 
 /**
- * How many archives are written between two manifest writes.
+ * The number of archives written between two manifest writes.
  *
  * The manifest is what makes an interrupted harvest resumable, and writing it
  * after every archive would rewrite the whole document once per municipality.
- * At this interval an interruption re-fetches at most this many archives already on disk.
+ * At this interval an interruption re-fetches at most this number of archives already on disk.
  */
 const MANIFEST_INTERVAL = 25
 
@@ -306,7 +306,7 @@ export interface ESBizkaiaHarvestManifest extends SourceCollectionManifest {
 	 */
 	feed_updated: string | null
 	/**
-	 * How many municipalities the service document listed when this manifest was written.
+	 * The number of municipalities the service document listed when this manifest was written.
 	 *
 	 * The denominator for `files`, read from the feed on each run rather than fixed here.
 	 */
@@ -332,7 +332,7 @@ export interface HarvestESBizkaiaOptions {
 	 */
 	municipalities?: readonly string[]
 	/**
-	 * Stop after this many municipalities, counting the ones already on disk.
+	 * Stop after this number of municipalities, counting the ones already on disk.
 	 */
 	limit?: number
 	/**
@@ -390,7 +390,7 @@ async function archiveIsCurrent(
 /**
  * Reads one component feature type whole and writes it beside the archives.
  *
- * Two requests per type: `RESULTTYPE=hits` for the count, then one `GetFeature` for that many features.
+ * Two requests per type: `RESULTTYPE=hits` for the count, then one `GetFeature` for that number of features.
  * `COUNT` is asked one above the stated count, so a service whose hits response
  * undercounts its own matches answers with more features than it claimed
  * rather than with exactly the number the harvest asked for.

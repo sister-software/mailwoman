@@ -6,7 +6,7 @@
  *   `mailwoman wof graph <localRepoDir> <placetype>` — emit a node-link graph of the WOF placetype
  *   hierarchy rooted at the given placetype.
  *
- *   Use this instead of `wof tree` when the root has many shared descendants, because the graph shape
+ *   Use this instead of `wof tree` when the root has shared descendants, because the graph shape
  *   stays compact regardless of DAG topology — each node and edge appears exactly once. The output
  *   follows the d3-force / react-flow convention (`nodes`, `links` with `source`/`target`) so it drops
  *   into common html graph viewers without translation.

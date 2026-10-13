@@ -46,6 +46,9 @@
 ## tokens carry word boundaries, and a hyphen is a word boundary, so the
 ## remedy is the backticks, not a rename. Renaming an interface-tied
 ## identifier is a separate, operator-approved change.
+##
+## The gate token skips the proper names East Gate and Golden Gate, which are a street and a
+## strait, through a case-sensitive lookbehind. Lowercase "east gate" still fires.
 extends: existence
 message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb; backtick it if it is an identifier, path, or command."
 level: error
@@ -54,5 +57,5 @@ tokens:
   - seam(?:s)?
   - shard(?:s|ed|ing)?
   - cut(?:s|ting)?
-  - gat(?:e|es|ed|ing)
+  - (?<!(?-i:East|Golden) )gat(?:e|es|ed|ing)
   - lever(?:s)?

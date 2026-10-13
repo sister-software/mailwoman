@@ -71,7 +71,7 @@
  *
  * ## The street line
  *
- * `street` holds the whole street line as the participant typed it, usually but not always in the
+ * `street` holds the whole street line as the participant typed it, in most records but not all in the
  * country's own order: `THE WELLCOME TRUST LIMITED` writes `EUSTON ROAD 215 GIBBS BUILDING`, a
  * number-last line in a number-first country. The house number is therefore split off only on the
  * side the country's order puts it, and {@linkcode streetOrderForCountry} reads that side from codex's
@@ -110,11 +110,11 @@
  *
  * ## License
  *
- * The CORDIS legal notice at `https://cordis.europa.eu/about/legal`, read 2026-10-03, states:
- * "Unless otherwise noted (e.g. in individual copyright notices), the reuse of the editorial content on
- * this website owned by the EU is authorized under the Creative Commons Attribution 4.0 International
- * (CC BY 4.0) licence." The same notice records that "The Commission's reuse policy is implemented by
- * Commission Decision 2011/833/EU of 12 December 2011 on the reuse of Commission documents", and the
+ * The CORDIS legal notice at `https://cordis.europa.eu/about/legal`, read 2026-10-03, authorizes reuse
+ * of the EU-owned editorial content on the site under Creative Commons Attribution 4.0 International
+ * (CC BY 4.0), except where an individual copyright notice states otherwise. The same notice states
+ * that Commission Decision 2011/833/EU of 12 December 2011, on the reuse of Commission documents,
+ * implements the Commission's reuse policy, and the
  * data.europa.eu records for `cordisfp7projects`, `cordish2020projects` and
  * `cordis-eu-research-projects-under-horizon-europe-2021-2027` label each CSV distribution with that
  * decision (`COM_REUSE`). CC BY requires credit and a statement that changes were made, so every row
@@ -603,7 +603,7 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 	if (!aligned.street && !aligned.postcode) return { refused: CORDISRefusal.ComponentsTooFew, country }
 
 	// A layout with no slot for a component leaves it out of `raw`, as the United Arab Emirates'
-	// leaves the locality, and the count records how often a published value went unwritten.
+	// leaves the locality, and the count records the number of published values that went unwritten.
 	for (const tag of rendered.unplaced) {
 		discarded.push(`component:${tag}:unplaced`)
 	}
@@ -633,7 +633,7 @@ export interface CORDISRecordReading {
 /**
  * Every distinct published record under `inputPath`, read once each.
  *
- * A record is distinct on the five fields that reach a row, so an organization that took part in many
+ * A record is distinct on the five fields that reach a row, so an organization that took part in several
  * projects with one address is read once, and one whose address changed is read once per version.
  * `onDuplicate` is called once for every participation row a record already read covers.
  *

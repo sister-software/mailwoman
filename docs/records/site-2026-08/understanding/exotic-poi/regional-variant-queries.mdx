@@ -76,7 +76,7 @@ Some queries mix languages: `スタバ near Shibuya Station`. The brand name is 
 
 This is the right approach for a global-scale geocoder with query log data. It does not work for a geocoder without query logs — you cannot learn that "servo" means gas station if you've never seen an Australian user search for it.
 
-**Nominatim** does not handle regional variants. The search is against OSM tags and names, which use standard English categories. "Servo" returns no result unless an Australian mapper added `alt_name=servo` to a gas station — which almost none have.
+**Nominatim** does not handle regional variants. The search is against OSM tags and names. Those tags use standard English categories. "Servo" returns no result unless an Australian mapper added `alt_name=servo` to a gas station, and almost no gas stations have that tag.
 
 **Pelias** has the same limitation. The search matches text tokens against name fields. Regional variants don't match unless they appear in the data.
 
@@ -84,7 +84,7 @@ This is the right approach for a global-scale geocoder with query log data. It d
 
 1. **An alias table.** A mapping from regional terms to standard categories and brands. This is hand-curated data — about 200-500 entries for major global variants, maintained as a data file. It's the same kind of maintenance burden as a state abbreviation dictionary, just larger.
 
-2. **A locale signal.** The geocoder needs to know where the user is to disambiguate variants. "Chemist" means pharmacy in the UK and Australia but not in the US. The locale check (Stage 2) provides this signal for Mailwoman — it detects the script and format of the query, which is a proxy for the user's region.
+2. **A locale signal.** The geocoder needs to know where the user is to disambiguate variants. "Chemist" means pharmacy in the UK and Australia but not in the US. The locale check (Stage 2) provides this signal for Mailwoman. It detects the script and format of the query, and those act as a proxy for the user's region.
 
 3. **Fuzzy matching.** Some variants are informal and appear nowhere in formal databases. "Mickey D's" for McDonalds, regional colloquialisms for common amenities. Exact alias matching won't catch these. A fuzzy-matching layer that handles common informal variants requires training data — either query logs or hand-curated examples.
 

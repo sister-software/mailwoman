@@ -45,7 +45,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ ! -s sweep-body.md ]; then
-            echo "No pages past review-by — nothing to file."
+            echo "No pages past review-by — no issue filed."
             exit 0
           fi
           existing=$(gh issue list --state open --search '"Docs freshness sweep" in:title' --json number --jq '.[0].number // empty')

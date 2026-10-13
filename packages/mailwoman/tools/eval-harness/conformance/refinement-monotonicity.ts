@@ -31,7 +31,8 @@ export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
  * - `drop-trailing-segment` removes the last comma-separated segment.
  *   That segment represents the coarsest admin area when present.
  * - `drop-leading-numeric-token` removes the first whitespace-separated token when it contains a digit.
- *   It reaches a postcode or house number that a comma does not separate, as in many DE and FR addresses.
+ *   It reaches a postcode or house number that a comma does not separate, as in DE
+ *   and FR addresses that write the postcode before the locality.
  */
 export const REFINEMENT_STEPS = ["drop-leading-segment", "drop-trailing-segment", "drop-leading-numeric-token"] as const
 

@@ -16,7 +16,7 @@ Three shapes ship today.
 
 ## Nominatim
 
-`/search`, `/reverse` and `/status`, with `/lookup` routed but answering `501`. Results carry an
+`/search`, `/reverse` and `/status`, with `/lookup` routed but answering `501`. Results include an
 OpenCage-style `annotations` block the original does not have.
 
 ```bash
@@ -43,8 +43,8 @@ npx @mailwoman/libpostal serve
 
 ## What each one honors
 
-Compatibility is not the same as equivalence, and the difference is worth reading before you switch
-over. Every request parameter on all three surfaces carries one of three verdicts — **honored**,
+Compatibility is not the same as equivalence, and you should read the difference before you switch
+over. Every request parameter on all three surfaces receives one of three verdicts — **honored**,
 **accepted with no effect**, or **not read** — and the tables that assign them are on the swap
 tutorial, one per surface. They are read off the route handlers and then checked against a running
 server.
@@ -59,7 +59,7 @@ never set.
 
 ## Two things to settle before you switch over
 
-**Forward geocoding works from the gazetteer download; reverse geocoding does not.** `/reverse` on
+**Forward geocoding works from the gazetteer download. Reverse geocoding does not.** `/reverse` on
 the Nominatim and Photon shapes runs point-in-polygon over a full WOF distribution that
 `mailwoman data pull` does not ship, so it answers an empty result until you build one and put it
 there.

@@ -65,7 +65,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	)
 
 	const OUT_DB = options.out || wofDatabasePath(`postalcode-${CC.toLowerCase()}-overture.db`)
-	// The release comes from the parquet path so that each row's `source` matches the input actually read.
+	// The release comes from the parquet path so that each row's `source` matches the input the run read.
 	const RELEASE = /\d{4}-\d{2}-\d{2}\.\d+/u.exec(PARQUET.toString())?.[0] ?? "unknown"
 
 	// `@duckdb/node-api` is an optional peer dependency, so it loads only when this command runs.

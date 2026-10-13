@@ -10,7 +10,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
  * Reads little-endian values sequentially from a byte buffer, advancing `offset` after each read.
  *
  * A fixed-width read past the end throws the `DataView` `RangeError` that format readers
- * treat as truncation, but `bytes()` silently returns a shorter slice.
+ * treat as truncation, but `bytes()` silently returns fewer bytes than requested.
  */
 export class ByteCursor {
 	readonly #bytes: Uint8Array

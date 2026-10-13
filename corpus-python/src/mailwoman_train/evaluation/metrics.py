@@ -74,7 +74,7 @@ def cross_pollution(
     labels: torch.Tensor,
     row_locale_ids: torch.Tensor | None,
 ) -> dict[str, float]:
-    """How often a gold city or region START token is predicted as part of a postcode.
+    """The rate at which a gold city or region START token is predicted as part of a postcode.
 
     The direct readout of the failure self-conditioning exists to stop: a city's lead token bleeding
     into the postcode span. Overall, plus per-locale when ``row_locale_ids`` is supplied. The

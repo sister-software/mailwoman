@@ -8,7 +8,7 @@ verified-with: mailwoman 8.7.0
 # Read everything a parse returns
 
 [Install and first parse](../get-started/install-and-first-parse.mdx) prints a tree of tags, values and
-confidence scores, and stops there. Each of those nodes carries more than it prints, and the pipeline
+confidence scores, and stops there. Each of those nodes holds more than it prints, and the pipeline
 that produced them kept a record. By the end of this page you'll be reading the character span behind
 every component, what the confidence number measures and what moves it, the stage verdicts behind a
 surprising tag, and the places the resolver ranked second and third. About fifteen minutes.
@@ -22,7 +22,7 @@ surprising tag, and the places the resolver ranked second and third. About fifte
   discussion. Drop the pipe if you'd rather read the whole object.
 - **`candidate.db` on disk, for step 5 only.** Steps 1 through 4 need no gazetteer. Step 5 resolves place
   names against one, so run [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it)
-  first if you haven't; that page's download is the same file this one reuses.
+  first if you haven't. That page's download is the same file this one reuses.
 
 ## 1. Print every node
 
@@ -80,13 +80,13 @@ locality               [14, 21)   "Madison" conf 0.793
     street_suffix      [10, 13)   "Ave"     conf 0.681
 ```
 
-The word `madison` appears twice and carries a different tag each time. That is the case a flat record
+The word `madison` appears twice and receives a different tag each time. That is the case a flat record
 handles by luck: two keys happen to differ, so no key collides. The next section is about the field that
 makes it work by construction.
 
 ## 2. Read the spans
 
-Every node carries `start` and `end`. They are character offsets, half-open, and they index
+Every node has `start` and `end`. They are character offsets, half-open, and they index
 `tree.raw` — the repaired string — rather than the string you passed in. In the first parse the two
 `Madison` spans are `[2, 9)` and `[14, 21)`, which is what tells you the street one came first.
 
@@ -195,7 +195,7 @@ Four things in there answer "why did that token go where it went".
 
 **`knownFormats` is the structural read, and it is deliberately non-committal.** `53703` matches the US
 ZIP Code shape, the French postcode shape and the German postcode shape, all at 0.6, because a bare
-five-digit run is all three. This stage proposes; it does not pick.
+five-digit run is all three. This stage proposes. It does not pick.
 
 **`locale.source: "caller"` means the `locale-hint` stage was not consulted.** `mailwoman parse` defaults `--locale` to
 `en-US`, and a caller-pinned locale is taken as given — which is why the confidence reads 1 while the
@@ -206,7 +206,7 @@ sole alternative sits at 0.5. Pass a different `--locale` and this is the field 
 `intersection` — route the input down different paths, and `path: "full"` records which one ran.
 
 **`timing` is per stage, in milliseconds, for this call.** `token-classify` at 223 ms dominates because
-this is the first parse in a fresh process and the model is warming up; the steady-state number for a
+this is the first parse in a fresh process and the model is warming up. The steady-state number for a
 held pipeline is on the first-parse page. Everything before it costs about 4 ms combined.
 
 ## 5. See the places it did not pick
@@ -215,7 +215,7 @@ Names collide. Drop the state, and `Madison` has to be chosen rather than looked
 tree through the gazetteer and `--candidates` keeps the runners-up on each resolved node.
 
 This is the first step on the page that needs the gazetteer. Run `mailwoman doctor` and check that its
-`Admin gazetteer` line is green; if it is not, its `fix:` line is the download. No export step is needed.
+`Admin gazetteer` line is green. If it is not, its `fix:` line is the download. No export step is needed.
 `--resolve` finds `candidate.db` under your data root. Then:
 
 ```bash
@@ -258,13 +258,13 @@ npx mailwoman parse --resolve --candidates 3 "1 madison ave madison" | jq '.root
 
 The first line is the resolver announcing which backend answered, on standard error.
 
-The winner is Madison, Wisconsin, and the node now carries `placeID`, `lat` and `lon` alongside the tag
+The winner is Madison, Wisconsin, and the node now has `placeID`, `lat` and `lon` alongside the tag
 and the span. Read the three alternatives in order: the first is the same place at a coarser admin tier
-(`localadmin`, same coordinate); the second is Madison, Alabama; the third is Madison, Mississippi. The
+(`localadmin`, same coordinate). The second is Madison, Alabama. The third is Madison, Mississippi. The
 ranking is population-first, and this gazetteer's own population column puts those three at 280,305,
 59,031 and 27,987.
 
-That ordering is a default rather than a verdict. When your records carry a state, or a viewport, or a known
+That ordering is a default rather than a verdict. When your records include a state, or a viewport, or a known
 service area, you have evidence the resolver did not — so keep the alternatives, filter them yourself,
 and treat a same-name collision as something to disambiguate rather than something to accept.
 

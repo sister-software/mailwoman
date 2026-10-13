@@ -6,7 +6,7 @@
  *   `mailwoman corpus split-slice --input <parquet> --out-dir <dir>` — route one overlay parquet
  *   through the holdout policy the base build applies, writing a parquet per split it reaches.
  *
- *   An overlay is appended to a manifest as a train file, so a country whose only rows of a given
+ *   A corpus overlay is appended to a manifest as a train file, so a country whose only rows of a given
  *   kind live in an overlay has no held-out row of that kind. Pass the per-split outputs to
  *   `mailwoman corpus overlay-manifest --split` so the manifest records where each one belongs.
  */

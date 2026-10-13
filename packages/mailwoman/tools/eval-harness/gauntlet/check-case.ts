@@ -154,9 +154,9 @@ function missingRenderings(got: string, required: readonly string[]): string[] {
 }
 
 /**
- * The resolved place an `expect_place_id` / `expect_place_name` row grades against:
- * the most specific admin node the resolver decorated, where `hierarchy` is sorted locality
- * → dependent_locality → subregion → region → country; {@linkcode GauntletResult.locality}
+ * The resolved place an `expect_place_id` / `expect_place_name` row grades against: the most
+ * specific admin node the resolver decorated, where `hierarchy` is sorted in the order locality,
+ * dependent_locality, subregion, region, country. {@linkcode GauntletResult.locality}
  * would be wrong because it echoes the parsed query span, while `hierarchy[].name` is the
  * gazetteer's canonical `resolver_name`, the only field that can disagree with the input.
  */
@@ -241,7 +241,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 			issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
 		} else {
 			for (const [k, v] of Object.entries(exp)) {
-				// Superseded: the rendering interface owns this key outright.
+				// Superseded: the rendering interface is the only owner of this key.
 				if (renderinginterface && k in renderinginterface) continue
 
 				const got = componentOf(r, k)

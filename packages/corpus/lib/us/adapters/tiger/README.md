@@ -10,7 +10,7 @@ US coverage:
 
 1. **Public domain**: no ODbL share-alike obligations for US-only
    corpora. Compatible with every downstream training license model.
-2. **Coverage**: every named street segment + every incorporated place
+2. **Coverage**: every street segment with a name + every incorporated place
    and CDP across the 50 states, DC, and territories. Better rural
    coverage than OSM, especially for the rural Mountain West and Alaska.
 3. **Canonical naming**: street names match the USPS Pub-28 canonical
@@ -47,7 +47,7 @@ mailwoman tiger fetch --state 50 --level addrfeat --out tiger.db
 ```
 
 (Internally the CLI still shells out to `ogr2ogr` for the shapefile read +
-column mapping; it owns the discovery, schema, and idempotency.)
+column mapping. The CLI owns the discovery, schema, and idempotency.)
 
 The `WHERE FULLNAME IS NOT NULL` filter drops the small fraction of segment
 rows that have no name (typically unnamed alleys or parcel edges) — they
@@ -113,7 +113,7 @@ for consistency):
 
 ## License
 
-Every emitted row carries `license: "Public Domain"` per the Census
+Every emitted row has `license: "Public Domain"` per the Census
 Bureau's TIGER/Line terms. There is no per-row override — TIGER is
 single-license throughout.
 
@@ -124,14 +124,14 @@ Any other country value is rejected with a clear error.
 
 ## Known limitations
 
-- The adapter does **not** join streets to places (TIGER ADDRFEAT does
-  not carry a place_id directly — joining requires the FACES + EDGES
-  cross-reference, which is heavy). Street rows therefore lack a
-  `locality` component. The model still learns `street + region`
-  patterns which dominate US-style addressing; place-level signal
+- The adapter does **not** join streets to places. TIGER ADDRFEAT has
+  no place_id column, and a join requires the FACES + EDGES
+  cross-reference. That cross-reference is heavy. Street rows therefore lack a
+  `locality` component. The model still learns the `street + region`
+  patterns that dominate US-style addressing. Place-level signal
   arrives separately via the locality variants.
 - House-number ranges on `tiger_streets` are not consulted for synthetic
-  house numbers. Generating realistic synthetic house numbers from the
+  house numbers. Synthesis of realistic synthetic house numbers from the
   TIGER range columns (`LFROMADD` / `LTOADD` / `RFROMADD` / `RTOADD`) is
   scoped as a follow-up — for Phase 1.5 the adapter intentionally stays
   on the canonical-row interface without house-number synthesis.
@@ -140,6 +140,6 @@ Any other country value is rejected with a clear error.
 
 `fixtures/tiger/fixture.sql` — 7 hand-crafted street segments + 4
 places across Oregon, Vermont, Wyoming (held out for val/test under
-the default split policy), and California. All public-knowledge place
-names; LINEARID + GEOID values are illustrative rather than real TIGER
+the default split policy), and California. All place names are public
+knowledge. The LINEARID + GEOID values are illustrative rather than real TIGER
 records.

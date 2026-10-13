@@ -62,7 +62,7 @@ export interface ScenarioCellMeasurement {
 	 */
 	partialShare: number
 	/**
-	 * Whole cells after per-feature `compactCells` — the rows actually stored on the whole side.
+	 * Whole cells after per-feature `compactCells` — the rows stored on the whole side.
 	 */
 	compactedWholeCells: number
 	/**

@@ -72,7 +72,7 @@ export interface WeightsRecipe {
 	 * Whether the locale's package declares `mailwoman.baseWeights`.
 	 *
 	 * `resolveWeights` takes the declared base's graph over a file in the overlay directory,
-	 * so a `model.onnx` linked into such an overlay is never read and goes stale.
+	 * so a `model.onnx` linked into such a weights overlay is never read and goes stale.
 	 * The recipe lists no graph or tokenizer for it.
 	 */
 	inheritsBase: (locale: string) => boolean

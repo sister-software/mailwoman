@@ -1,6 +1,6 @@
 # CI selection
 
-## t;ldr
+## Summary
 
 - `test.yml` runs a `scope` job first: `yarn mwops ci-scope`.
 - That job decides which test suites to run.
@@ -28,7 +28,7 @@ Rules:
 - Computed imports fall back to manifest dependencies.
 - Literal paths under `corpus-python/` can also select JS workspaces that read those files.
 - Calls to `repoRootPath`, `resolvePath`, and `join` with consecutive literal segments are tracked as joined paths.
-- Referencing a directory means any change under that directory can select tests.
+- A reference to a directory means any change under that directory can select tests.
 
 ## When everything runs (full run)
 
@@ -50,7 +50,7 @@ Notes:
 ## Job-specific behavior
 
 - Fast and slow Vitest jobs receive selected test filenames as arguments.
-- Existing Vitest config exclusions and suite boundaries still apply.
+- The Vitest config exclusions and suite boundaries still apply.
 - These suites only run when selected:
   - react
   - planetary
@@ -64,7 +64,7 @@ Notes:
 - `opportunity` output controls browser tests for the private opportunity map app (inside the `react` job).
 - It is selected when `@mailwoman/opportunity-app` changes, or any workspace it depends on changes.
 
-### Packaging
+### Package builds
 
 - Uses published workspaces from `.release-it.json` plus release tooling.
 
@@ -81,7 +81,7 @@ Runs separate hosted Python checks (lint, type, security, tests) when:
 - anything under `corpus-python/` changes, or
 - a global/full-run trigger happens
 
-Caching:
+Cache keys:
 
 - uv download cache key uses root `uv.lock` and `pyproject.toml`.
 

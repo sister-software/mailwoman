@@ -23,7 +23,7 @@
  *
  *   DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of
  *   all descendant text. Use `Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n =>
- *   n.nodeValue).join('').trim()` or XPath `text()` to get just the parent's own value.
+ *   n.nodeValue).join('').trim()` or XPath `text()` to get only the parent's own value.
  */
 
 import type { AddressNode, AddressTree } from "#decoder/types"

@@ -8,7 +8,7 @@
  *   and its board rows.
  *
  *   The training numbers come from a run's realized-draws exposure report, the rows the trainer
- *   actually drew, rather than from a corpus census. A census counts rows a run may never sample.
+ *   drew, rather than from a corpus census. A census counts rows a run may never sample.
  */
 
 import {
@@ -92,7 +92,7 @@ export interface JurisdictionProperties {
 	 */
 	shape_forms: number
 	/**
-	 * Sources the register lists for the jurisdiction, and how many of them may enter a corpus.
+	 * Sources the register lists for the jurisdiction, and the number of them that may enter a corpus.
 	 */
 	sources: number
 	eligible_sources: number

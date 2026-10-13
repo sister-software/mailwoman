@@ -626,7 +626,7 @@ test(`POST /v1/parse: an address exactly at ${MAX_ADDRESS_LENGTH} chars is accep
 })
 
 test("POST /v1/batch: the length bound applies PER ROW, not just to the request", async () => {
-	// The row cap bounds how many addresses arrive.
+	// The row cap bounds the number of addresses that arrive.
 	// Without a per-element bound one request is still `batchMax` unbounded bodies.
 	const app = createMailwomanAPI(fullEngine)
 

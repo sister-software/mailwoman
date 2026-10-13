@@ -1,14 +1,14 @@
 # Address Data Sources for NER Training
 
-This page catalogs public-domain and openly licensed data sources that contain facility names and addresses, for use as raw material when training a token-classification (BIO-tagging) postal address parser. It complements the federal and aggregator sources (OpenAddresses, OSM, NAD, TIGER, NPI, IRS BMF, etc.). This list focuses on **state-level** sources, which add component-level variety, residential coverage, and venue-name-paired records that the federal sources lack.
+This page catalogs public-domain and openly licensed data sources that contain facility names and addresses, for use as raw material when training a token-classification (BIO-tagging) postal address parser. It complements the federal and aggregator sources (OpenAddresses, OSM, NAD, TIGER, NPI, IRS BMF, etc.). This list focuses on **state-level** sources. They add component-level variety, residential coverage, and venue-name-paired records that the federal sources lack.
 
 The canonical agency URLs were verified by web search. Some per-state entries in the Regulated Facilities section are based on known agency patterns rather than direct URL verification, and those entries say so inline.
 
 ## Why state sources matter for an address NER model
 
 1. **Component supervision is automatic.** State directories are typically already field-structured, with separate columns for street, city, postcode, etc. Each token's BIO tag comes from the column it was taken from, so no manual labeling is required.
-2. **Formats vary by state.** 50 states plus DC give 50+ schema variants, abbreviation conventions, and transcription styles, which are useful for training format robustness.
-3. **Venue+address pairs are common.** Every facility, professional, or establishment listing pairs an organization name with a structured address, which gives natural `B-venue` / `I-venue` training spans.
+2. **Formats vary by state.** 50 states plus DC give 50+ schema variants, abbreviation conventions, and transcription styles. That variety is useful for training format robustness.
+3. **Venue+address pairs are common.** Every facility, professional, or establishment listing pairs an organization name with a structured address. Each pair gives natural `B-venue` / `I-venue` training spans.
 4. **Residential coverage.** Real estate, contractor, cosmetology, notary, and license-lookup tools expose home and office addresses that federal facility datasets miss.
 
 ## Formats to watch for beyond CSV
@@ -50,18 +50,18 @@ For the safest licensing on published model weights, restrict training to US-fed
 
 Everything after this section is **corpus** material: address _strings_ and name/address pairs to train the BIO parser. This section covers the other half, the **gazetteer** that the resolver and the postcode anchor consume. These datasets turn a parsed span into a place and a coordinate. The requirements differ from the corpus, and this is where WOF's gaps cause problems (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
 
-WOF is an excellent **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve without Elasticsearch, and it is **CC0**, which made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL carry their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
+WOF is an excellent **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve without Elasticsearch, and it is **CC0**. Those two properties made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL have their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
 
 ### By gap layer
 
 - **Postcode → centroid.** **GeoNames postal** (`download.geonames.org/export/zip`, CC-BY 4.0, ~80+ countries) is a ready-made table of postcode → place + admin + lat/lon. It is the cheapest way to fill the DE/ES/IT gap and needs no point-cloud math, although it is coarser than OA in places and some records are locality-level. **OpenAddresses** point aggregation (median centroid per postcode) is more precise where we have the points. National authorities are the most accurate sources but are fragmented: UK **Code-Point Open** (OS, OGL), France **BAN**, and NL via PDOK.
-- **Street / rooftop coords.** **OpenAddresses** (primary), **OSM** `addr:*` on buildings (strong in DE/NL, patchy elsewhere), and national registries: France **BAN**, Australia **G-NAF** (CC-BY; backlog #31), and Sweden **Lantmäteriet** (the national address register). Lantmäteriet access requires **Geotorget** approval, so it is shelved until that approval arrives. It would fill the SE gap.
+- **Street / rooftop coords.** **OpenAddresses** (primary), **OSM** `addr:*` on buildings (strong in DE/NL, patchy elsewhere), and national registries: France **BAN**, Australia **G-NAF** (CC-BY, backlog #31), and Sweden **Lantmäteriet** (the national address register). Lantmäteriet access requires **Geotorget** approval, so it is shelved until that approval arrives. It would fill the SE gap.
 - **POIs / landmarks / salience** (the generalized-anchor and exotic-POI layer). **OSM** is the richest open POI source. **Wikidata / Wikipedia** is the right source for the data-driven _salience_ signal that the anchor guardrail requires (notability, coordinates, and multilingual names). We already pull `wikimedia-importance.csv` in `build-importance`, so this path has a precedent.
 - **Admin (the anchor).** Keep WOF. If it is ever reconsidered, the alternatives are GeoNames admin, **Overture Divisions**, and geoBoundaries.
 
 ### Probe: GeoNames vs the WOF postcode gap (2026-06-03)
 
-This probe measured GeoNames postal against the gap in the WOF postcode data (the postcodes WOF carries as members but cannot place). GeoNames has coordinates for **100%** of its DE/ES/IT records:
+This probe measured GeoNames postal against the gap in the WOF postcode data (the postcodes WOF lists as members but cannot place). GeoNames has coordinates for **100%** of its DE/ES/IT records:
 
 | locale | WOF placement              | GeoNames closes                                                 | result                                                                                                       |
 | ------ | -------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -90,15 +90,16 @@ theme, and the themes this repository reads differ:
 | OpenAddresses        | per-source, mostly open | per-source attribution tracking (we already do this)                                   |
 | GeoNames             | CC-BY 4.0               | attribution                                                                            |
 | Overture — Places    | CDLA-Permissive 2.0     | attribution                                                                            |
-| Overture — Addresses | per-source, per country | the theme declares no identifier of its own; each country's register states its terms  |
+| Overture — Addresses | per-source, per country | the theme declares no identifier of its own. Each country's register states its terms  |
 | Overture — Divisions | ODbL                    | attribution + share-alike, the same friction as OpenStreetMap                          |
-| OpenStreetMap        | ODbL                    | attribution + share-alike on derived databases — the highest risk; can impose copyleft |
+| OpenStreetMap        | ODbL                    | attribution + share-alike on derived databases — the highest risk. Can impose copyleft |
 
 The licenses favor **GeoNames + Overture Places + OpenAddresses** as the supplements. Use OSM and
 Overture Divisions with care, for derived signals rather than in the shipped DB.
 
 The Addresses row reads per-source because Overture's theme line for it is prose rather than an
-identifier: "The addresses data comes from a variety of sources. All carry permissive open licenses." The
+identifier. It states that the addresses data comes from more than one source and that each source has a permissive open
+license. The
 page then lists the upstream register per country, so an entry has to record theme, release and register
 rather than the word Overture. `COUNTRY_LICENSES` in `packages/mailwoman/lib/geocode/national-overture.ts`
 holds one entry per country for that reason.
@@ -111,7 +112,7 @@ under CC BY 4.0.
 
 The Divisions row matters because `candidate.db` derives from a gazetteer that reads that theme, and the
 share-alike consequence of it is unresolved. `docs/engineering/reference/artifact-rights-inventory.mdx`
-carries the current state.
+records the current state.
 
 ### Integrity discipline
 
@@ -130,40 +131,40 @@ Attach supplemental data as **attributes on WOF-keyed entities** (such as a cent
 ### State school directories
 
 - **Alabama** — ALSDE Education Directory — https://eddir.alsde.edu/siteinfo/ — Queryable directory of registered public/charter schools. Also annual "Directory of Alabama Public Schools" PDF at https://www.alabamaachieves.org/.
-- **Alaska** — DEED Online Directory / Alaskan Schools — https://education.alaska.gov/alaskan_schools — Queryable directory; bulk PDF list at https://education.alaska.gov/alaskan_schools/public/DistrictandSchoolIDs.pdf.
-- **Arizona** — AZ Dept of Education Public Data Sets — https://www.azed.gov/data/public-data-sets — Bulk downloads of public school/district data; report cards at https://azreportcards.azed.gov/.
+- **Alaska** — DEED Online Directory / Alaskan Schools — https://education.alaska.gov/alaskan_schools — Queryable directory. Bulk PDF list at https://education.alaska.gov/alaskan_schools/public/DistrictandSchoolIDs.pdf.
+- **Arizona** — AZ Dept of Education Public Data Sets — https://www.azed.gov/data/public-data-sets — Bulk downloads of public school/district data. Report cards at https://azreportcards.azed.gov/.
 - **Arkansas** — ADE Data Center School List — https://adedata.arkansas.gov/statewide/ReportList/State/SchoolList.aspx — Searchable + exportable directory. NCES ID directory at https://adedata.arkansas.gov/nid.
 - **California** — CDE Public Schools & Districts Downloadable Files — https://www.cde.ca.gov/ds/si/ds/pubschls.asp — Excel + tab-delimited bulk download of all active/pending/closed/merged public schools+districts. California School Directory UI: https://www.cde.ca.gov/schooldirectory/.
-- **Colorado** — CDE Education Directories — https://www.cde.state.co.us/cdegen/educationdirectory — Directory portal with downloadable files; SchoolView at https://www.cde.state.co.us/schoolview.
-- **Connecticut** — EdSight Public Portal — https://public-edsight.ct.gov/ — Find Schools tool: https://public-edsight.ct.gov/overview/find-schools. Directory is populated from the Directory Manager system; export available.
+- **Colorado** — CDE Education Directories — https://www.cde.state.co.us/cdegen/educationdirectory — Directory portal with downloadable files. SchoolView at https://www.cde.state.co.us/schoolview.
+- **Connecticut** — EdSight Public Portal — https://public-edsight.ct.gov/ — Find Schools tool: https://public-edsight.ct.gov/overview/find-schools. Directory is populated from the Directory Manager system. Export available.
 - **Delaware** — DE DOE Directory — https://directory.doe.k12.de.us/ — Queryable. Public School List: https://education.delaware.gov/families/k12/general-information/public-school-list/. Also Delaware Open Data: https://data.delaware.gov/w/p3ez-si4g/989r-3cju (downloadable).
 - **District of Columbia** — OSSE SLED LEA/School Directory — https://sled.osse.dc.gov/vPage/SchoolDirectory/298/91189 — Annually updated directory of all DC LEAs + schools (DCPS + public charter). Exportable from grid.
-- **Florida** — FLDOE Master School ID (MSID) — https://eds.fldoe.org/EDS/MasterSchoolID/ — Queryable per-school; addresses, administration, accountability sections. NWRDC bulk file requires district access.
+- **Florida** — FLDOE Master School ID (MSID) — https://eds.fldoe.org/EDS/MasterSchoolID/ — Queryable per-school. Addresses, administration, accountability sections. NWRDC bulk file requires district access.
 - **Georgia** — GOSA Downloadable Data Repository — https://download.gosa.ga.gov/ — Bulk district/school spreadsheet downloads. GaDOE Facilities DB UI: https://app3.doe.k12.ga.us/ows-bin/owa/main_pack_fcl099.entry_form.
 - **Hawaii** — Hawaii DOE School List (Excel) — https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx — Direct XLSX bulk download maintained by HIDOE. UI: https://hawaiipublicschools.org/enrolling-in-school/find-your-school/.
-- **Idaho** — Idaho SDE Schools / Districts — https://www.sde.idaho.gov/school-districts/ — Alphabetical district list. No published single bulk download from SDE; consider NCES CCD for bulk.
-- **Illinois** — ISBE Entity Profile System (EPS) — https://www.isbe.net/Pages/Entity-Profile-System.aspx — Bulk Excel workbook of all entity records updated nightly; public. Lookup UI: http://webprod1.isbe.net/isbedir/default.aspx.
+- **Idaho** — Idaho SDE Schools / Districts — https://www.sde.idaho.gov/school-districts/ — Alphabetical district list. No published single bulk download from SDE. Consider NCES CCD for bulk.
+- **Illinois** — ISBE Entity Profile System (EPS) — https://www.isbe.net/Pages/Entity-Profile-System.aspx — Bulk Excel workbook of all entity records updated nightly. Public. Lookup UI: http://webprod1.isbe.net/isbedir/default.aspx.
 - **Indiana** — IDOE Data Center & Reports — https://www.in.gov/doe/it/data-center-and-reports/ — Downloadable datasets. ESRI shapefile of schools available via state GIS at https://maps.indiana.edu/previewMaps/Infrastructure/Schools_IDOE.html.
 - **Iowa** — Iowa DOE Directories — https://educate.iowa.gov/directories — Annual XLSX directories: public district, public building, nonpublic building.
-- **Kansas** — KSDE Educational Directory — https://www.ksde.gov/Home/Quick-Links/Directories/Kansas-Educational-Directory — Online directory; customized PDF/Excel reports at https://uapps.ksde.org/Directory_Rpts/Default.aspx (raw-data downloads available).
-- **Kentucky** — Open House District & School Directory — https://openhouse.education.ky.gov/Home/Index — Searchable; Principals & Schools export at https://openhouse.education.ky.gov/Principals. SDCI: https://applications.education.ky.gov/sdci/.
-- **Louisiana** — LDOE School Finder — https://louisianaschools.com/ — Search UI; bulk-download links limited. Sponsor Site System background: https://leads13.doe.louisiana.gov/lug/SPS/SPS.htm. Investigate https://doe.louisiana.gov/ data library for SPS exports.
-- **Maine** — Maine DOE — https://www.maine.gov/doe/ — Site has printable directories; no obvious bulk download. Investigate manually for current XLSX/CSV.
-- **Maryland** — MSDE Directory — https://marylandpublicschools.org/about/pages/directory.aspx — Online directory; bulk download not published from MSDE. Maryland State Archives list by county: https://msa.maryland.gov/msa/mdmanual/01glance/html/edschools.html.
+- **Kansas** — KSDE Educational Directory — https://www.ksde.gov/Home/Quick-Links/Directories/Kansas-Educational-Directory — Online directory. Customized PDF/Excel reports at https://uapps.ksde.org/Directory_Rpts/Default.aspx (raw-data downloads available).
+- **Kentucky** — Open House District & School Directory — https://openhouse.education.ky.gov/Home/Index — Searchable. Principals & Schools export at https://openhouse.education.ky.gov/Principals. SDCI: https://applications.education.ky.gov/sdci/.
+- **Louisiana** — LDOE School Finder — https://louisianaschools.com/ — Search UI. Bulk-download links limited. Sponsor Site System background: https://leads13.doe.louisiana.gov/lug/SPS/SPS.htm. Investigate https://doe.louisiana.gov/ data library for SPS exports.
+- **Maine** — Maine DOE — https://www.maine.gov/doe/ — Site has printable directories. No obvious bulk download. Investigate manually for current XLSX/CSV.
+- **Maryland** — MSDE Directory — https://marylandpublicschools.org/about/pages/directory.aspx — Online directory. Bulk download not published from MSDE. Maryland State Archives list by county: https://msa.maryland.gov/msa/mdmanual/01glance/html/edschools.html.
 - **Massachusetts** — DESE School & District Profiles — https://profiles.doe.mass.edu/ — Directory + exportable data reports. DESE dataset directory at https://www.mass.gov/info-details/dese-directory-of-datasets-and-reports. MassGIS schools dataset: https://www.mass.gov/info-details/massgis-data-massachusetts-schools-pre-k-through-high-school.
 - **Michigan** — CEPI Educational Entity Master (EEM) — https://cepi.state.mi.us/eem/ — Public bulk datasets at https://cepi.state.mi.us/eem/publicdatasets.aspx. Customized list/export available.
 - **Minnesota** — MDE Districts, Schools & Educators — https://education.mn.gov/MDE/DSE/MDE074620 — Site Verification system at https://education.mn.gov/MDE/dse/datasub/SiteVerif/. MARSS Appendix A lists all districts.
 - **Mississippi** — MDE District Directory — https://www.mdek12.org/dd/ — District-level contact info. School-level data downloads via https://newreports.mdek12.org/.
 - **Missouri** — DESE School Directory Data Downloads — https://dese.mo.gov/school-directory/data-downloads — District + building directory files refreshed weekly, multiple formats.
-- **Montana** — OPI Montana Schools Directory — https://opi.mt.gov/Leadership/Management-Operations/Montana-Schools-Directory — Directory page with help link; downloadable directory available.
+- **Montana** — OPI Montana Schools Directory — https://opi.mt.gov/Leadership/Management-Operations/Montana-Schools-Directory — Directory page with help link. Downloadable directory available.
 - **Nebraska** — NDE Education Directory — https://www.education.ne.gov/dataservices/education-directory/ — NDE Directory Search (query + lists/data files): https://educdirsrc.education.ne.gov/. Printed directory discontinued.
-- **Nevada** — NDE Schools and Districts — https://doe.nv.gov/Schools_Districts/ — Schools/Districts landing. Resource page: https://doe.nv.gov/school-and-district-information/resources. Bulk download not published; query CCD or NDE directly.
+- **Nevada** — NDE Schools and Districts — https://doe.nv.gov/Schools_Districts/ — Schools/Districts landing. Resource page: https://doe.nv.gov/school-and-district-information/resources. Bulk download not published. Query CCD or NDE directly.
 - **New Hampshire** — NH DOE Bureau of Education Statistics — https://www.education.nh.gov/who-we-are/division-of-educator-and-analytic-resources/bureau-of-education-statistics/schools-and-sau-information — Public, chartered, non-public school directories.
 - **New Jersey** — NJ School Directory — https://homeroom6.doe.state.nj.us/directory/ — Public + nonpublic directory. Data portal: https://www.nj.gov/education/doedata/.
 - **New Mexico** — NMPED Public Schools Directory — https://web.ped.nm.gov/new-mexico-public-schools-directory/ — Downloadable CSV opens in Excel/Sheets.
 - **New York** — NYSED SEDREF Public Reports — https://www.p12.nysed.gov/irs/schoolDirectory/ — Downloadable Excel/XLS reports of public, nonpublic, charter, BOCES, state-operated schools/districts. Source page: https://www.nysed.gov/content/directory-public-and-non-public-schools-and-administrators-new-york-state.
 - **North Carolina** — NC DPI Education Directory (EDDIE) — https://ncpublicschools.org/nceddirectory — Districts, schools, charters, special/federal, postsecondary with addresses + downloads.
-- **North Dakota** — NDDPI Districts/Schools — https://www.nd.gov/dpi/districtsschools — LEA/School directory MIS01/MIS02 framework. Bulk download not linked from main page; investigate STARS reports.
+- **North Dakota** — NDDPI Districts/Schools — https://www.nd.gov/dpi/districtsschools — LEA/School directory MIS01/MIS02 framework. Bulk download not linked from main page. Investigate STARS reports.
 - **Ohio** — Ohio Educational Directory System (OEDS) — https://education.ohio.gov/Topics/Data/Ohio-Educational-Directory-System-OEDS — Public org search + DataExtract at https://oeds.ode.state.oh.us/dataextract — Excel exports.
 - **Oklahoma** — OSDE State School Directory — https://oklahoma.gov/education/resources/state-school-directory.html — Excel/text/CSV bulk download by district or site. Also Open Data sets: https://data.ok.gov/dataset/oklahoma-public-school-site-directory.
 - **Oregon** — ODE Institution Identification — https://www.oregon.gov/ode/schools-and-districts/pages/institution-identification-school-names.aspx — CSV download of public schools. Institution Lookup with daily-extract Excel: https://www.ode.state.or.us/instid/.
@@ -172,14 +173,14 @@ Attach supplemental data as **attributes on WOF-keyed entities** (such as a cent
 - **South Carolina** — SCDE School Directory — https://ed.sc.gov/districts-schools/schools/school-directory/ — Public school + private school listing (XLSX for privates). District info: https://ed.sc.gov/districts-schools/schools/school-directory/district-information/.
 - **South Dakota** — SD DOE Educational Directory — https://doe.sd.gov/ofm/edudir.aspx — Principal & School Info Excel list + Superintendent/Admin/District address list.
 - **Tennessee** — TN School Directory — https://tnschooldirectory.tnedu.gov/ — Excel download of all schools, districts, regions. Advanced search: https://tnschooldirectory.tnedu.gov/Advanced-Search/.
-- **Texas** — TEA AskTED — https://tealprod.tea.state.tx.us/tea.askted.web/Forms/Home.aspx — School/district directory; HTML/CSV/PDF reports through Reports & Directories menu. PDF Texas School Directory annually.
-- **Utah** — USBE Utah Schools / District Directory — https://schools.utah.gov/schooldistricts — Districts list. Data/Directories landing: https://schools.utah.gov/parent/dataschoollookupeducatorlookupcalendars. Single bulk CSV not linked; investigate manually.
-- **Vermont** — VT AOE Directories — https://education.vermont.gov/documents/directory-principals-by-school — Principals-by-school spreadsheet; independent schools PDF at https://education.vermont.gov/documents/independent-schools-directory; Vermont Education Dashboard Organizations: https://education.vermont.gov/data-and-reporting/vermont-education-dashboard/organizations.
-- **Virginia** — VDOE Virginia School Directories — https://www.doe.virginia.gov/about-vdoe/virginia-school-directories — Listings by division + region; staff listings by division.
+- **Texas** — TEA AskTED — https://tealprod.tea.state.tx.us/tea.askted.web/Forms/Home.aspx — School/district directory. HTML/CSV/PDF reports through Reports & Directories menu. PDF Texas School Directory annually.
+- **Utah** — USBE Utah Schools / District Directory — https://schools.utah.gov/schooldistricts — Districts list. Data/Directories landing: https://schools.utah.gov/parent/dataschoollookupeducatorlookupcalendars. Single bulk CSV not linked. Investigate manually.
+- **Vermont** — VT AOE Directories — https://education.vermont.gov/documents/directory-principals-by-school — Principals-by-school spreadsheet. Independent schools PDF at https://education.vermont.gov/documents/independent-schools-directory. Vermont Education Dashboard Organizations: https://education.vermont.gov/data-and-reporting/vermont-education-dashboard/organizations.
+- **Virginia** — VDOE Virginia School Directories — https://www.doe.virginia.gov/about-vdoe/virginia-school-directories — Listings by division + region. Staff listings by division.
 - **Washington** — OSPI Education Directory — https://eds.ospi.k12.wa.us/DirectoryEDS.aspx — School list: https://eds.ospi.k12.wa.us/schoollist.aspx. Note: Washington state law forbids commercial use of directory data.
 - **West Virginia** — WV School Directory — https://wvde.state.wv.us/ed_directory/ — Comma-delimited bulk address download available from the directory.
-- **Wisconsin** — DPI School Directory Public Portal — https://dpi.wi.gov/schooldirectory/public — Searchable; WISEdash files (statewide) at https://dpi.wi.gov/wisedash/download-files. Note: profile pages themselves are not exportable.
-- **Wyoming** — Wyoming DOE Online Directory — https://portals.edu.wyoming.gov/wyedpro/Pages/OnlineDirectory/OnlineDirectoryIndex.aspx — Online directory; annual PDF directory at https://edu.wyoming.gov/downloads/wde-resources/directory.pdf.
+- **Wisconsin** — DPI School Directory Public Portal — https://dpi.wi.gov/schooldirectory/public — Searchable. WISEdash files (statewide) at https://dpi.wi.gov/wisedash/download-files. Note: profile pages themselves are not exportable.
+- **Wyoming** — Wyoming DOE Online Directory — https://portals.edu.wyoming.gov/wyedpro/Pages/OnlineDirectory/OnlineDirectoryIndex.aspx — Online directory. Annual PDF directory at https://edu.wyoming.gov/downloads/wde-resources/directory.pdf.
 
 ## Libraries
 
@@ -195,13 +196,13 @@ Attach supplemental data as **attributes on WOF-keyed entities** (such as a cent
 - **Arkansas** — AR State Library Directory — https://library.arkansas.gov/services/arkansas-public-library-data/library-directory/ — Statewide public library directory grouped by city/county/system.
 - **California** — CA State Library Public Library Directories — https://www.library.ca.gov/services/to-libraries/library-directory/ — Headquarters Directory + Branch Directory (Excel files).
 - **Colorado** — Library Research Service (LRS) — https://www.lrs.org/ — LRS publishes CO public library statistics + directory (https://www.lrs.org/public/data/). CDE Public Libraries: https://www.cde.state.co.us/cdelib/publiclibraries.
-- **Connecticut** — CT State Library — https://portal.ct.gov/csl — CT Public Libraries Directory PDF published by Division of Library Development; help guide at https://libguides.ctstatelibrary.org/dld/help.
+- **Connecticut** — CT State Library — https://portal.ct.gov/csl — CT Public Libraries Directory PDF published by Division of Library Development. Help guide at https://libguides.ctstatelibrary.org/dld/help.
 - **Delaware** — Delaware Libraries (Consortium Libraries List) — https://lib.de.us/list-of-libraries/ — Official statewide public-library list. State agency: https://libraries.delaware.gov/.
 - **District of Columbia** — DC Public Library (sole district public library system) — https://www.dclibrary.org/ — Branches list. Also Open Data DC GIS dataset: https://opendata.dc.gov/datasets/DCGIS::libraries/about (downloadable shapefile/CSV).
-- **Florida** — DOS Division of Library & Information Services Public Library Homepages — https://dos.fl.gov/library-archives/research/florida-information/libraries/public-library-homepages/ — Lists FL public library systems + branches; interactive map. Use IMLS PLS for bulk outlet addresses.
+- **Florida** — DOS Division of Library & Information Services Public Library Homepages — https://dos.fl.gov/library-archives/research/florida-information/libraries/public-library-homepages/ — Lists FL public library systems + branches. Interactive map. Use IMLS PLS for bulk outlet addresses.
 - **Georgia** — GPLS Public Libraries Directory — https://georgialibraries.org/public-libraries-directory/ — 61 systems / 385 branches.
 - **Hawaii** — HSPLS All Branches — https://www.librarieshawaii.org/visit/branches/all-branches/ — All 51 branches statewide. State GIS layer: https://files.hawaii.gov/dbedt/op/gis/data/state_libraries.pdf.
-- **Idaho** — Idaho Commission for Libraries Directory — https://libraries.idaho.gov/idaho-library-directory/ — Filterable directory of all libraries; Public Library subset: https://libraries.idaho.gov/idaho-library-directory/categories/public-library/.
+- **Idaho** — Idaho Commission for Libraries Directory — https://libraries.idaho.gov/idaho-library-directory/ — Filterable directory of all libraries. Public Library subset: https://libraries.idaho.gov/idaho-library-directory/categories/public-library/.
 - **Illinois** — IL State Library — https://www.ilsos.gov/departments/library.html — Library Systems page: https://www.ilsos.gov/departments/library/libraries/libsystems.html. Use L2 directory or IMLS PLS for bulk address data.
 - **Indiana** — Indiana State Library Public Library Directory — https://www.in.gov/library/directory-of-indiana-libraries/pldirectory/ — Directory + city-indexed PDF at https://www.in.gov/library/files/cityindex.pdf.
 - **Iowa** — State Library of Iowa Library Directory — https://statelibraryofiowa.gov/resources/iowa-library-directory — Searchable directory with filtering by county/population/district.
@@ -209,37 +210,37 @@ Attach supplemental data as **attributes on WOF-keyed entities** (such as a cent
 - **Kentucky** — KDLA Kentucky Public Library Directory — https://kdla.ky.gov/Library-Support/Pages/Public-Library-Directory.aspx — Standards + statistics adjacent: https://kdla.ky.gov/Library-Support/plssd/Pages/default.aspx.
 - **Louisiana** — State Library of Louisiana Library Directory — https://library.la.gov/services/for-libraries-librarians/library-directory/ — Mirror: https://www.state.lib.la.us/public-libraries/library-directory.
 - **Maine** — Maine State Library Public Library Directory — https://www.maine.gov/msl/libs/directories/public.shtml — 250+ libraries searchable by town/library/director/county. By town: https://www.maine.gov/msl/mainelibs/pubtown.shtml.
-- **Maryland** — Maryland State Library Resource Center Directory — https://www.slrc.info/library-directory — Contact info for all MD public-library staff; links to library websites. State agency: https://msla.maryland.gov/.
-- **Massachusetts** — MBLC Library Directory — https://mblc.state.ma.us/directories/libraries/index.php — Searchable directory; printable PDF at https://mblc.state.ma.us/directories/libraries/ldap_printable.pdf.
-- **Michigan** — Library of Michigan — https://www.michigan.gov/libraryofmichigan — State library agency. Statewide Library Finder: https://milibraryfinder.org/. Annual "Michigan Public Library Directory & Statistics" issued historically; use IMLS PLS for bulk.
+- **Maryland** — Maryland State Library Resource Center Directory — https://www.slrc.info/library-directory — Contact info for all MD public-library staff. Links to library websites. State agency: https://msla.maryland.gov/.
+- **Massachusetts** — MBLC Library Directory — https://mblc.state.ma.us/directories/libraries/index.php — Searchable directory. Printable PDF at https://mblc.state.ma.us/directories/libraries/ldap_printable.pdf.
+- **Michigan** — Library of Michigan — https://www.michigan.gov/libraryofmichigan — State library agency. Statewide Library Finder: https://milibraryfinder.org/. Annual "Michigan Public Library Directory & Statistics" issued historically. Use IMLS PLS for bulk.
 - **Minnesota** — MDE State Library Services — https://mn.gov/library/sls.html — State library agency. CALCO directory PDF: https://mn.gov/library/PDF/directory.pdf. Multitype/cooperative info via MNLINK: https://mnlink.org/about/libraries.
-- **Mississippi** — Mississippi Library Commission Public Library Directory — https://www.mlc.lib.ms.us/mississippi-libraries-directory/mississippi-public-library-directory/ — Public library directory page; broader libraries directory at https://www.mlc.lib.ms.us/mississippi-libraries-directory/.
+- **Mississippi** — Mississippi Library Commission Public Library Directory — https://www.mlc.lib.ms.us/mississippi-libraries-directory/mississippi-public-library-directory/ — Public library directory page. Broader libraries directory at https://www.mlc.lib.ms.us/mississippi-libraries-directory/.
 - **Missouri** — MO Secretary of State Library Directory (MOLLI) — https://s1.sos.mo.gov/library/LibraryDirectory — Searchable directory of public, academic, school, special.
-- **Montana** — Montana State Library ASPeN Directory — https://msl.mt.gov/libraries/Montana-Library-Network — ASPeN is the MSL library directory; landing: https://msl.mt.gov/libraries/.
+- **Montana** — Montana State Library ASPeN Directory — https://msl.mt.gov/libraries/Montana-Library-Network — ASPeN is the MSL library directory. The landing page is https://msl.mt.gov/libraries/.
 - **Nebraska** — Nebraska Library Commission Directory — http://www.nlc.nebraska.gov/libraries/libdir/ — Directors + staff of all NE public/academic/school/special/institutional. Public-only list: https://nlc.nebraska.gov/libraries/list.asp?libtype=PL.
 - **Nevada** — NV State Library Find-a-Library — https://nsla.nv.gov/find-a-library-directory — Directory hosted by Nevada State Library, Archives and Public Records.
 - **New Hampshire** — NH Library Directory — https://directory.nhlibraries.org/ — Self-submitted statewide directory. State agency page: https://www.nhsl.dncr.nh.gov/services/library-directory.
 - **New Jersey** — NJ State Library Public Libraries Directory — https://www.njstatelib.org/services_for_libraries/library-development/new-jersey-public-libraries-directory/ — Organized by county.
-- **New Mexico** — NM State Library Directory — https://stlib.state.nm.us/directory/index.php?id=1154 — NM Library Directory; agency landing https://nmstatelibrary.org/.
+- **New Mexico** — NM State Library Directory — https://stlib.state.nm.us/directory/index.php?id=1154 — NM Library Directory. Agency landing https://nmstatelibrary.org/.
 - **New York** — NYSL Find Your Public Library — https://www.nysl.nysed.gov/find-your-public-library — Searchable directory of public libraries statewide. PLS index: https://www.nysl.nysed.gov/libdev/pls.
 - **North Carolina** — State Library of NC Library Directory — https://statelibrary.ncdcr.gov/library-directory — Public + academic library directory (mirror: https://library.nc.gov/nc-libraries/library-directory).
 - **North Dakota** — ND State Library Public Libraries — https://www.library.nd.gov/ndpubliclibraries — Includes downloadable Public Library Directory PDF: https://www.library.nd.gov/sites/www/files/documents/publications/publiclibrarydirectory.pdf.
-- **Ohio** — Ohio Public Library Directory (Ohio Library Council; the de facto OH directory) — https://members.olc.org/ohio-public-library-directory/FindStartsWith?term=B — State agency landing: https://library.ohio.gov/. OPLIN find-a-library: https://www.oplin.org/fal/.
+- **Ohio** — Ohio Public Library Directory (Ohio Library Council, the de facto OH directory) — https://members.olc.org/ohio-public-library-directory/FindStartsWith?term=B — State agency landing: https://library.ohio.gov/. OPLIN find-a-library: https://www.oplin.org/fal/.
 - **Oklahoma** — OK Department of Libraries Public Library Locator — https://oklahoma.gov/libraries/oklahomans/public-library-locator.html — Map UI. PDF directory: https://oklahoma.gov/content/dam/ok/en/libraries/documents/OK-Public-Libraries-Directory.pdf. Open Data: https://data.ok.gov/dataset/oklahoma-public-library-directory.
 - **Oregon** — State Library of Oregon Library Directory — http://libdir.osl.state.or.us/ — Public/academic/special/tribal/volunteer libraries, updated quarterly. Open Data mirror: https://catalog.data.gov/dataset/oregon-library-directory.
-- **Pennsylvania** — PA Office of Commonwealth Libraries Public Library Directory — https://pa.countingopinions.com/fdir.php — Live directory; agency page: https://www.pa.gov/agencies/statelibrary/librarydirectory.
+- **Pennsylvania** — PA Office of Commonwealth Libraries Public Library Directory — https://pa.countingopinions.com/fdir.php — Live directory. Agency page: https://www.pa.gov/agencies/statelibrary/librarydirectory.
 - **Rhode Island** — RI OLIS Public Libraries Directory — https://olis.ri.gov/directory/libraries/public — All 48 RI public library systems. Broader directory: https://olis.ri.gov/directory/index.php.
 - **South Carolina** — SC State Library Public Libraries — https://www.statelibrary.sc.gov/south-carolinians/south-carolina-public-libraries — Directory of county/regional public library systems.
 - **South Dakota** — SD State Library Libraries Directory — https://library.sd.gov/LIB/DIR/ — Public, school, academic, special.
 - **Tennessee** — TSLA Public Library Directory — https://tnsos.net/TSLA/PLD/index.php — Searchable by county/region/city.
 - **Texas** — TSLAC Library Development & Networking — https://www.tsl.texas.gov/ldn — TSLAC houses accreditation, directory & statistics. Use IMLS PLS for bulk Texas public library addresses.
-- **Utah** — Utah State Library Division Directory — https://library.utah.gov/directory/ — Bookmobiles, public, tribal, special; supports CSV export. Public-only: https://library.utah.gov/directory/categories/public/.
+- **Utah** — Utah State Library Division Directory — https://library.utah.gov/directory/ — Bookmobiles, public, tribal, special. Supports CSV export. Public-only: https://library.utah.gov/directory/categories/public/.
 - **Vermont** — VT Department of Libraries Public Library Directory — https://libraries.vermont.gov/sites/libraries/files/documents/PublicLibraryDirectory.pdf — Quarterly-updated PDF directory. Source page: https://libraries.vermont.gov/find-vermont-libraries. Reports portal: https://vtlibreports.vermont.gov/.
 - **Virginia** — Library of Virginia Public Library Directory — https://www.lva.virginia.gov/services/public-libraries/directory — Headquarters mailing list + lookup by county/city.
 - **Washington** — WA State Library Directory of Washington Libraries — https://www.directory.walibraries.org/ — Maintained by WA State Library (Office of Secretary of State) with IMLS funding.
 - **West Virginia** — WV Library Commission Library Directory — https://librarycommission.wv.gov/library_map/Pages/LibraryDirectory.aspx — Statewide directory with addresses + phone numbers.
-- **Wisconsin** — WI DPI Public Libraries — https://dpi.wi.gov/libraries/public-libraries — Public Library and Public Library System directory; addresses downloadable from DPI directory page.
-- **Wyoming** — Wyoming State Library Directory — https://library.wyo.gov/community/directory/ — All library types; public branches filter: https://library.wyo.gov/community/directory/single-category/public-branch/.
+- **Wisconsin** — WI DPI Public Libraries — https://dpi.wi.gov/libraries/public-libraries — Public Library and Public Library System directory. Addresses downloadable from DPI directory page.
+- **Wyoming** — Wyoming State Library Directory — https://library.wyo.gov/community/directory/ — All library types. Public branches filter: https://library.wyo.gov/community/directory/single-category/public-branch/.
 
 ---
 
@@ -286,11 +287,11 @@ This section lists state-level public databases of licensed professionals, with 
 - **New Hampshire OPLC License Lookup** — covers 54+ boards (medical, nursing, real estate, contractors limited) — https://www.oplc.nh.gov/license-lookup
 - **New Jersey DCA License Verification** — covers ~50 professions including medical, nursing, real estate — https://newjersey.mylicense.com/verification/
 - **New Mexico RLD Public Search** — covers medical, nursing, real estate, contractors (NM-PLUS) — https://nmrldlpi.my.site.com/bcd/s/rld-public-search
-- **Ohio eLicense** — covers Medical Board and others; OCILB + Commerce real estate on separate eLicense subsites — https://elicense.ohio.gov/oh_verifylicense
-- **Oregon (per-board portals; no single unified)** — see per profession
+- **Ohio eLicense** — covers Medical Board and others. OCILB + Commerce real estate on separate eLicense subsites — https://elicense.ohio.gov/oh_verifylicense
+- **Oregon (per-board portals without a single unified one)** — see per profession
 - **Pennsylvania PALS** — covers ~250 license types, all 29 BPOA boards (medical, nursing, real estate) — https://www.pals.pa.gov/
 - **South Carolina LLR Licensee Lookup** — covers medical, nursing, real estate, contractors, residential builders — https://verify.llronline.com/LicLookup/LookupMain.aspx
-- **Tennessee Verify (Commerce & Insurance / DCI)** — covers real estate, contractors and others; health pros separate at TN DOH — https://verify.tn.gov/
+- **Tennessee Verify (Commerce & Insurance / DCI)** — covers real estate, contractors and others. Health pros separate at TN DOH — https://verify.tn.gov/
 - **Tennessee DOH Licensure Verification** — physician, nursing — https://apps.health.tn.gov/Licensure/
 - **Vermont OPR "Find a Professional"** — covers medical, nursing, real estate, residential contractors — https://sos.vermont.gov/opr/find-a-professional
 - **Washington DOH Provider Credential Search** — health professions — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search
@@ -304,7 +305,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Medical: Alabama Board of Medical Examiners — https://www.albme.gov/consumers/licensee-search/ — query-only
 - Nursing: Alabama Board of Nursing — https://abn.alabama.gov/applications/LicenseLookup.aspx — query-only
-- Real estate: Alabama Real Estate Commission (AREC) — https://arec.alabama.gov/apps/LicenseSearch — query-only; bulk list request at https://arec.alabama.gov/apps/listrequest
+- Real estate: Alabama Real Estate Commission (AREC) — https://arec.alabama.gov/apps/LicenseSearch — query-only. Bulk list request at https://arec.alabama.gov/apps/listrequest
 - Contractor: Alabama Licensing Board for General Contractors — https://genconbd.alabama.gov/database-sql/roster.aspx — query-only
 
 #### Alaska
@@ -340,9 +341,9 @@ This section lists state-level public databases of licensed professionals, with 
 #### Colorado
 
 - Medical: Colorado DORA Medical Board (via DORA License Lookup) — https://apps2.colorado.gov/dora/licensing/lookup/licenselookup.aspx — query-only
-- Nursing: Colorado DORA Board of Nursing (same DORA Lookup) — https://apps2.colorado.gov/dora/licensing/lookup/licenselookup.aspx — query-only; also rosters at https://apps2.colorado.gov/dora/licensing/lookup/generateroster.aspx (bulk per board)
+- Nursing: Colorado DORA Board of Nursing (same DORA Lookup) — https://apps2.colorado.gov/dora/licensing/lookup/licenselookup.aspx — query-only. Also rosters at https://apps2.colorado.gov/dora/licensing/lookup/generateroster.aspx (bulk per board)
 - Real estate: Colorado Division of Real Estate eLicense — https://apps2.colorado.gov/dre/licensing/lookup/licenselookup.aspx — query-only
-- Contractor: Local-only — no state general contractor board (state regulates only certain trades; e.g. electrical/plumbing via DORA)
+- Contractor: Local-only — no state general contractor board (state regulates only certain trades, e.g. electrical/plumbing via DORA)
 
 #### Connecticut
 
@@ -357,7 +358,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: Delaware Board of Medical Licensure & Discipline (via DELPROS)
 - Nursing: Delaware Board of Nursing (via DELPROS)
 - Real estate: Delaware Real Estate Commission (via DELPROS)
-- Contractor: Local-only at general-contractor level; specialty trades (electrical, plumbing) licensed via DELPROS
+- Contractor: Local-only at general-contractor level. Specialty trades (electrical, plumbing) licensed via DELPROS
 
 #### District of Columbia
 
@@ -382,7 +383,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 #### Hawaii
 
-- All four via Hawaii DCCA PVL Search — https://mypvl.dcca.hawaii.gov/public-license-search/ — query-only; bulk PVL dataset listed at https://opendata.hawaii.gov/dataset/professional-and-vocational-licensing-pvl-search
+- All four via Hawaii DCCA PVL Search — https://mypvl.dcca.hawaii.gov/public-license-search/ — query-only. Bulk PVL dataset listed at https://opendata.hawaii.gov/dataset/professional-and-vocational-licensing-pvl-search
 - Medical: Hawaii Medical Board (via PVL)
 - Nursing: Hawaii Board of Nursing (via PVL)
 - Real estate: Hawaii Real Estate Commission (via PVL) — also https://cca.hawaii.gov/reb/check-out-a-business-online/
@@ -402,7 +403,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: IL Medical Board (via IDFPR)
 - Nursing: IL Board of Nursing (via IDFPR)
 - Real estate: IL Division of Real Estate (via IDFPR)
-- Contractor: Illinois does not have a statewide general contractor license — local-only at GC level; roofing & plumbing licensed via IDFPR
+- Contractor: Illinois does not have a statewide general contractor license — local-only at GC level. IDFPR licenses roofing & plumbing
 
 #### Indiana
 
@@ -424,14 +425,14 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: Kansas Board of Healing Arts — https://www.kansas.gov/ssrv-ksbhada/search.html — query-only
 - Nursing: Kansas State Board of Nursing — https://portal.egov.ksbn.ks.gov/verification/ — query-only
 - Real estate: Kansas Real Estate Commission — https://www.krec.ks.gov/resources/search — query-only
-- Contractor: Local-only — no state contractor license (state regulates only roofers via AG; specialty/trade licensure varies)
+- Contractor: Local-only — no state contractor license (state regulates only roofers via AG, and specialty/trade licensure varies)
 
 #### Kentucky
 
 - Medical: Kentucky Board of Medical Licensure — https://kbml.ky.gov/physician/Pages/Physician-Profile-Verification-of-Physician-License.aspx — query-only
 - Nursing: Kentucky Board of Nursing — https://kybn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Kentucky Real Estate Commission — https://secure.kentucky.gov/KREC/databasesearch — query-only
-- Contractor: Local-only at GC level; KY Dept. of Housing/Buildings & Construction licenses HVAC/plumbing/electrical separately
+- Contractor: Local-only at GC level. KY Dept. of Housing/Buildings & Construction licenses HVAC/plumbing/electrical separately
 
 #### Louisiana
 
@@ -444,7 +445,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Medical: Maine Board of Licensure in Medicine — https://www.maine.gov/md/licensure/license-verification — query-only
 - Nursing: Maine State Board of Nursing — https://www.maine.gov/boardofnursing/licensing/verifications.html — query-only (search via PFR licensee portal)
-- Real estate: Maine Real Estate Commission (via OPOR/PFR) — https://www.maine.gov/pfr/consumer/licensee-search — query-only; bulk download offered
+- Real estate: Maine Real Estate Commission (via OPOR/PFR) — https://www.maine.gov/pfr/consumer/licensee-search — query-only. Bulk download offered
 - Contractor: Local-only at GC level (no state contractor licensing board); some trades licensed via Maine OPOR
 
 #### Maryland
@@ -459,7 +460,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: Massachusetts Board of Registration in Medicine — findmydoctor: https://findmydoctor.mass.gov/ — query-only
 - Nursing: MA Board of Registration in Nursing — https://madph.mylicense.com/verification/ — query-only
 - Real estate: MA Board of Registration of Real Estate Brokers (via DPL eLicensing) — https://elicensing21.mass.gov/CitizenAccess/GeneralProperty/PropertyLookUp.aspx?isLicensee=Y — query-only
-- Contractor: MA Home Improvement Contractor (OCABR) Search — https://contractorhub.mass.gov/s/hic-contractor-search and https://services.oca.state.ma.us/hic/licenseelist.aspx — query-only; also OPSI Construction Supervisor License search via mass.gov
+- Contractor: MA Home Improvement Contractor (OCABR) Search — https://contractorhub.mass.gov/s/hic-contractor-search and https://services.oca.state.ma.us/hic/licenseelist.aspx — query-only. Also OPSI Construction Supervisor License search via mass.gov
 
 #### Michigan
 
@@ -474,7 +475,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: Minnesota Board of Medical Practice — https://mn.gov/boards/medical-practice/verify/index.jsp — query-only
 - Nursing: Minnesota Board of Nursing — https://mn.gov/boards/nursing/verify-a-license/index.jsp — query-only
 - Real estate: Minnesota Department of Commerce License Lookup — https://mn.gov/commerce/licensing/license-lookup/ — query-only
-- Contractor: Minnesota DLI License & Registration Lookup (residential contractors/remodelers/roofers) — https://www.dli.mn.gov/license-and-registration-lookup — query-only; **bulk: nightly downloadable spreadsheet of all CCLD licensees**
+- Contractor: Minnesota DLI License & Registration Lookup (residential contractors/remodelers/roofers) — https://www.dli.mn.gov/license-and-registration-lookup — query-only. **Bulk: nightly downloadable spreadsheet of all CCLD licensees**
 
 #### Mississippi
 
@@ -485,7 +486,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 #### Missouri
 
-- All via MO DPR Licensee Search — https://pr.mo.gov/licensee-search.asp — query-only; **bulk "Downloadable Listings" updated nightly** at https://pr.mo.gov/
+- All via MO DPR Licensee Search — https://pr.mo.gov/licensee-search.asp — query-only. **Bulk "Downloadable Listings" updated nightly** at https://pr.mo.gov/
 - Medical: Missouri Board of Registration for the Healing Arts (via DPR)
 - Nursing: Missouri State Board of Nursing (via DPR)
 - Real estate: Missouri Real Estate Commission (via DPR)
@@ -493,7 +494,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 #### Montana
 
-- All four via Montana DLI Licensee Lookup — https://ebizws.mt.gov/PUBLICPORTAL/home.jsp — query-only; bulk Licensee Mailing Lists at https://boards.bsd.dli.mt.gov/_global-pages/additional-license-information/licensee-mailing-lists
+- All four via Montana DLI Licensee Lookup — https://ebizws.mt.gov/PUBLICPORTAL/home.jsp — query-only. Bulk Licensee Mailing Lists at https://boards.bsd.dli.mt.gov/_global-pages/additional-license-information/licensee-mailing-lists
 - Medical: Montana Board of Medical Examiners (via DLI)
 - Nursing: Montana Board of Nursing (via DLI)
 - Real estate: Montana Board of Realty Regulation (via DLI)
@@ -531,7 +532,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 #### New Mexico
 
-- All four via NM RLD Public Search — https://nmrldlpi.my.site.com/bcd/s/rld-public-search — query-only; legacy verification at http://verification.rld.state.nm.us/
+- All four via NM RLD Public Search — https://nmrldlpi.my.site.com/bcd/s/rld-public-search — query-only. Legacy verification at http://verification.rld.state.nm.us/
 - Medical: New Mexico Medical Board (via RLD)
 - Nursing: New Mexico Board of Nursing (via RLD)
 - Real estate: New Mexico Real Estate Commission (via RLD)
@@ -546,7 +547,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 #### North Carolina
 
-- Medical: North Carolina Medical Board — https://portal.ncmedboard.org/verification/search.aspx — query-only; NCMB Roster (bulk-ish list)
+- Medical: North Carolina Medical Board — https://portal.ncmedboard.org/verification/search.aspx — query-only. NCMB Roster (bulk-ish list)
 - Nursing: North Carolina Board of Nursing — https://portal.ncbon.com/licenseverification/search.aspx — query-only
 - Real estate: North Carolina Real Estate Commission — https://license.ncrec.gov/ncrec/oecgi3.exe/O4W_LIC_SEARCH_NEW — query-only
 - Contractor: NC Licensing Board for General Contractors (NCLBGC) — https://portal.nclbgc.org/Public/Search — query-only
@@ -562,15 +563,15 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Medical: State Medical Board of Ohio (via eLicense) — https://elicense.ohio.gov/oh_verifylicense — query-only
 - Nursing: Ohio Board of Nursing (via eLicense) — https://elicense.ohio.gov/oh_verifylicense — query-only
-- Real estate: Ohio Division of Real Estate & Professional Licensing — https://elicense3.com.ohio.gov/lookup/licenselookup.aspx — query-only (note: site migrated Oct 2025; check https://com.ohio.gov/newsystem)
-- Contractor: Ohio Construction Industry Licensing Board (OCILB) — https://elicense4.com.ohio.gov/lookup/licenselookup.aspx — query-only (trades only; OH has no state GC license)
+- Real estate: Ohio Division of Real Estate & Professional Licensing — https://elicense3.com.ohio.gov/lookup/licenselookup.aspx — query-only (note: site migrated Oct 2025, check https://com.ohio.gov/newsystem)
+- Contractor: Ohio Construction Industry Licensing Board (OCILB) — https://elicense4.com.ohio.gov/lookup/licenselookup.aspx — query-only (trades only, OH has no state GC license)
 
 #### Oklahoma
 
 - Medical: Oklahoma State Board of Medical Licensure & Supervision — https://www.okmedicalboard.org/search — query-only (separate osteopathic (DO) board at https://oklahoma.gov/osboe.html)
 - Nursing: Oklahoma Board of Nursing — https://okbn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Oklahoma Real Estate Commission (OREC) — https://orec.us.thentiacloud.net/webs/orec/ — query-only
-- Contractor: Oklahoma Construction Industries Board (CIB) — https://okcibv7prod.glsuite.us/GLSuiteWeb/Clients/OKCIB/Public/LicenseeSearch/LicenseeSearch.aspx — query-only (trade-only; OK has no state GC license)
+- Contractor: Oklahoma Construction Industries Board (CIB) — https://okcibv7prod.glsuite.us/GLSuiteWeb/Clients/OKCIB/Public/LicenseeSearch/LicenseeSearch.aspx — query-only (trade-only, OK has no state GC license)
 
 #### Oregon
 
@@ -607,7 +608,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: SD Board of Medical & Osteopathic Examiners (SDBMOE) — https://sdbmoe.gov/ (Licensee Lookup) — query-only
 - Nursing: SD Board of Nursing — https://sdbon.boardsofnursing.org/licenselookup — query-only
 - Real estate: SD Real Estate Commission Licensee List — https://dlr.sd.gov/realestate/license_verification_system.aspx — query-only
-- Contractor: Local-only — no state general contractor license (specialty trades only via DLR boards; contractor excise-tax license via DOR)
+- Contractor: Local-only — no state general contractor license (specialty trades only via DLR boards, and a contractor excise-tax license via DOR)
 
 #### Tennessee
 
@@ -620,8 +621,8 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Medical: Texas Medical Board (LIST) — https://www.tmb.state.tx.us/resources/for-the-public/look-up-a-license and https://list.tmb.state.tx.us/ — query-only
 - Nursing: Texas Board of Nursing — https://www.bon.texas.gov/licensure_verification.asp — query-only
-- Real estate: Texas Real Estate Commission (TREC) — https://www.trec.texas.gov/license-search — query-only; **bulk: TREC High Value Data Sets** — https://www.trec.texas.gov/public/high-value-data-sets
-- Contractor: Texas Department of Licensing & Regulation (TDLR) — https://www.tdlr.texas.gov/LicenseSearch/ — query-only (TX has no state GC license; TDLR covers electricians/HVAC/etc.)
+- Real estate: Texas Real Estate Commission (TREC) — https://www.trec.texas.gov/license-search — query-only. **Bulk: TREC High Value Data Sets** — https://www.trec.texas.gov/public/high-value-data-sets
+- Contractor: Texas Department of Licensing & Regulation (TDLR) — https://www.tdlr.texas.gov/LicenseSearch/ — query-only (TX has no state GC license, TDLR covers electricians/HVAC/etc.)
 
 #### Utah
 
@@ -648,7 +649,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 #### Washington
 
-- Medical: Washington DOH Provider Credential Search — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search — query-only; **bulk: WA Health Care Provider Credential Data on data.wa.gov** — https://data.wa.gov/health/Health-Care-Provider-Credential-Data/qxh8-f4bd
+- Medical: Washington DOH Provider Credential Search — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search — query-only. **Bulk: WA Health Care Provider Credential Data on data.wa.gov** — https://data.wa.gov/health/Health-Care-Provider-Credential-Data/qxh8-f4bd
 - Nursing: Washington DOH (same provider credential search) — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search — query-only + bulk (above)
 - Real estate: Washington DOL Professional License Lookup — https://professions.dol.wa.gov/s/license-lookup — query-only
 - Contractor: Washington L&I Verify a Contractor — https://secure.lni.wa.gov/verify/ — query-only
@@ -681,10 +682,10 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### Notes on scope and quirks
 
-- Business entity searches: every state offers free name/agent query; only a minority offer bulk downloads (FL, OR partial via open data, LA via paid API, HI by-record paid). DE does not publish principal addresses. NV charges for some access; TX SOSDirect charges $1/search.
+- Business entity searches: every state offers free name/agent query. Only a minority offer bulk downloads (FL, OR partial via open data, LA via paid API, HI by-record paid). DE does not publish principal addresses. NV charges for some access. TX SOSDirect charges $1/search.
 - Notary registries: most states publish searchable directories. NH, TN, WY publish only PDF lists or none. GA notaries are commissioned by county clerks but indexed centrally by GSCCCA.
-- Charity registries: typically AG, but SoS in CO, GA, MD, MS, NC, ND, OK, PA, SC, TN, WA, WV; DBR in RI; DCP in CT; DLCP in DC; VDACS in VA; DPFR in ME; DFI in WI; FDACS in FL; DCP in UT (transitioning to DCCC). DE, ID, MT, SD, WY have no state-level charity registration (only fundraisers in some). AZ repealed charity registration in 2013 (veterans + fundraisers still register).
-- Lobbyist registries: SoS for most; Ethics Commission for AL, GA, HI, KS, MO, OK, SC, TN, TX, WI, WV; Legislature for IA, NE, NV; PIC for DE; APOC for AK; DLS Ethics Council for VA; PDC for WA; OGEC for OR; ELEC for NJ; BEGA for DC; JLEC/OLIG for OH; KLEC for KY; LREC/ILRC for IN; ME Ethics; MA SoC; NH SoS; MD SEC.
+- Charity registries: typically AG. The SoS holds the registry in CO, GA, MD, MS, NC, ND, OK, PA, SC, TN, WA and WV. Other registrars by state: DBR in RI, DCP in CT, DLCP in DC, VDACS in VA, DPFR in ME, DFI in WI, FDACS in FL, and DCP in UT (transitioning to DCCC). DE, ID, MT, SD, WY have no state-level charity registration (only fundraisers in some). AZ repealed charity registration in 2013 (veterans + fundraisers still register).
+- Lobbyist registries: SoS for most states. The Ethics Commission holds the registry for AL, GA, HI, KS, MO, OK, SC, TN, TX, WI and WV, and the Legislature holds it for IA, NE and NV. Single-state registrars: PIC for DE, APOC for AK, DLS Ethics Council for VA, PDC for WA, OGEC for OR, ELEC for NJ, BEGA for DC, JLEC/OLIG for OH, KLEC for KY, LREC/ILRC for IN, ME Ethics, MA SoC, NH SoS, and MD SEC.
 
 ### Per state
 
@@ -693,7 +694,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: Alabama Secretary of State — https://arc-sos.state.al.us/CGI/CORPNAME.MBR/INPUT — query-only — includes registered agent
 - Notary registry: Alabama Secretary of State — https://arc-sos.state.al.us/CGI/notename.mbr/input — query-only (also county-level browsing)
 - Charity registry: Alabama Attorney General — https://www.alabamaag.gov/licensing-registration/charitable-organizations/ (search: https://ago.igovsolution.net/online/Lookups/Business.aspx) — query-only
-- Lobbyist registry: Alabama Ethics Commission — https://ethics.alabama.gov/lobbyists.aspx — query-only; annual PDF list at https://ethics.alabama.gov/docs/LobbyList/2024LobbyistList.pdf
+- Lobbyist registry: Alabama Ethics Commission — https://ethics.alabama.gov/lobbyists.aspx — query-only. Annual PDF list at https://ethics.alabama.gov/docs/LobbyList/2024LobbyistList.pdf
 
 ### Alaska
 
@@ -704,42 +705,42 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### Arizona
 
-- Business entity search: Arizona Corporation Commission (eCorp) — https://ecorp.azcc.gov/EntitySearch/Index — query-only; database purchase available
+- Business entity search: Arizona Corporation Commission (eCorp) — https://ecorp.azcc.gov/EntitySearch/Index — query-only. Database purchase available
 - Notary registry: Arizona Secretary of State — https://apps.azsos.gov/apps/notary/search/default.aspx — query-only (by name/county/zip)
 - Charity registry: AZ repealed charity registration in 2013. Veterans charities only — Arizona Secretary of State — https://azsos.gov/business/other-services/veterans-charities-organizations — query-only
-- Lobbyist registry: Arizona Secretary of State — https://lobbying.az.gov/ — query-only; bulk DB purchasable ($25) at https://azsos.gov/services/database-purchasing
+- Lobbyist registry: Arizona Secretary of State — https://lobbying.az.gov/ — query-only. Bulk DB purchasable ($25) at https://azsos.gov/services/database-purchasing
 
 ### Arkansas
 
 - Business entity search: Arkansas Secretary of State — https://bcs.sos.arkansas.gov/search — query-only
 - Notary registry: Arkansas Secretary of State — https://bcs.sos.arkansas.gov/search/notary — query-only
-- Charity registry: Arkansas Secretary of State (oversight by SoS since 2018; AG focuses on enforcement) — https://www.sos.arkansas.gov/business-commercial-services-bcs/nonprofit-charitable-entities/charitable-entities — query-only
+- Charity registry: Arkansas Secretary of State (oversight by SoS since 2018, AG focuses on enforcement) — https://www.sos.arkansas.gov/business-commercial-services-bcs/nonprofit-charitable-entities/charitable-entities — query-only
 - Lobbyist registry: Arkansas Secretary of State / Ethics — https://ethics-disclosures.sos.arkansas.gov/public/lobbyist/lobbyistdata — query-only
 
 ### California
 
-- Business entity search: California Secretary of State (bizfile Online) — https://bizfileonline.sos.ca.gov/search/business — query-only; includes principal + agent addresses; free PDF copies
+- Business entity search: California Secretary of State (bizfile Online) — https://bizfileonline.sos.ca.gov/search/business — query-only. Includes principal + agent addresses. Free PDF copies
 - Notary registry: California Secretary of State — https://www.sos.ca.gov/notary/notary-public-listing — query-only (active commissions)
 - Charity registry: California Attorney General Registry of Charities and Fundraisers — https://rct.doj.ca.gov/Verification/Web/Search.aspx?facility=Y — query-only
-- Lobbyist registry: California Secretary of State (CAL-ACCESS) — https://cal-access.sos.ca.gov/Lobbying/ — query-only; bulk daily data downloads available
+- Lobbyist registry: California Secretary of State (CAL-ACCESS) — https://cal-access.sos.ca.gov/Lobbying/ — query-only. Bulk daily data downloads available
 
 ### Colorado
 
-- Business entity search: Colorado Secretary of State — https://www.sos.state.co.us/biz/BusinessEntityCriteriaExt.do — query-only; includes principal and registered agent
+- Business entity search: Colorado Secretary of State — https://www.sos.state.co.us/biz/BusinessEntityCriteriaExt.do — query-only. Includes principal and registered agent
 - Notary registry: Colorado Secretary of State — https://www.sos.state.co.us/notary/pages/public/verifyNotary.xhtml — query-only
 - Charity registry: Colorado Secretary of State (Charities and Fundraisers) — https://www.coloradosos.gov/ccsa/pages/search/basic.xhtml — query-only
-- Lobbyist registry: Colorado Secretary of State — https://www.sos.state.co.us/lobby/SearchLobbyist.do — query-only; PDF directories also published
+- Lobbyist registry: Colorado Secretary of State — https://www.sos.state.co.us/lobby/SearchLobbyist.do — query-only. PDF directories also published
 
 ### Connecticut
 
-- Business entity search: Connecticut Secretary of the State (business.ct.gov; CONCORD legacy) — https://service.ct.gov/business/s/onlinebusinesssearch — query-only
+- Business entity search: Connecticut Secretary of the State (business.ct.gov, CONCORD legacy) — https://service.ct.gov/business/s/onlinebusinesssearch — query-only
 - Notary registry: Connecticut Secretary of the State (eLicense) — https://www.elicense.ct.gov/Lookup/LicenseLookup.aspx — query-only (select Notary Public)
 - Charity registry: Connecticut Department of Consumer Protection (Public Charities Unit) — https://portal.ct.gov/dcp/charities/public-charities — query-only
 - Lobbyist registry: Connecticut Office of State Ethics — https://www.oseapps.ct.gov/NewLobbyist/security/loginhome.aspx — query-only
 
 ### Delaware
 
-- Business entity search: Delaware Division of Corporations — https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx — query-only — NOTE: Delaware does not publish full principal/officer addresses publicly, only registered agent; detailed status $10–$20/entity
+- Business entity search: Delaware Division of Corporations — https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx — query-only — NOTE: Delaware does not publish full principal/officer addresses publicly, only registered agent. Detailed status $10–$20/entity
 - Notary registry: Delaware Notary Public (Department of State) — https://notary.delaware.gov/ ; bulk dataset at https://data.delaware.gov/Licenses-and-Certifications/Notaries-Commissioned-in-Delaware/q8dr-mj6p — bulk available
 - Charity registry: Delaware does not require general charity registration. No public registry. Private foundations file 990-PF with AG. Investigate manually: https://attorneygeneral.delaware.gov/tag/charities/
 - Lobbyist registry: Delaware Public Integrity Commission (PIRS) — https://pirs.delaware.gov/ — query-only
@@ -756,7 +757,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: Florida Department of State, Division of Corporations (Sunbiz) — https://search.sunbiz.org/ — bulk download — Daily & quarterly via SFTP at https://dos.fl.gov/sunbiz/other-services/data-downloads/
 - Notary registry: Florida Department of State, Division of Corporations — https://notaries.dos.fl.gov/not001.html — query-only
 - Charity registry: Florida Department of Agriculture and Consumer Services (Check-A-Charity) — https://csapp.fdacs.gov/CSPublicApp/CheckACharity/CheckACharity.aspx — query-only
-- Lobbyist registry: Florida Lobbyist Registration Office (Joint Legislative/Executive portal) — https://www.floridalobbyist.gov/ — query-only; directories at /LobbyistInformation/RegisteredExecutiveLobbyists and /RegisteredLegislativeLobbyists
+- Lobbyist registry: Florida Lobbyist Registration Office (Joint Legislative/Executive portal) — https://www.floridalobbyist.gov/ — query-only. Directories at /LobbyistInformation/RegisteredExecutiveLobbyists and /RegisteredLegislativeLobbyists
 
 ### Georgia
 
@@ -767,10 +768,10 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### Hawaii
 
-- Business entity search: Hawaii Business Express / BREG (DCCA Business Registration Division) — https://hbe.ehawaii.gov/documents — query-only; bulk lists paid (5¢/record via List Builder)
+- Business entity search: Hawaii Business Express / BREG (DCCA Business Registration Division) — https://hbe.ehawaii.gov/documents — query-only. Bulk lists paid (5¢/record via List Builder)
 - Notary registry: Hawaii Department of the Attorney General — https://notary.ehawaii.gov/notary/public/publicsearch.html — query-only
 - Charity registry: Hawaii Department of the Attorney General (Tax & Charities Division) — https://ag.hawaii.gov/tax/ — query-only (Hawaii Charity Finder)
-- Lobbyist registry: Hawaii State Ethics Commission — https://hawaiiethics.my.site.com/public/s/ — query-only; bulk CSV at data.gov: https://catalog.data.gov/dataset/hawaii-state-ethics-commissions-lobbyist-registration-statements
+- Lobbyist registry: Hawaii State Ethics Commission — https://hawaiiethics.my.site.com/public/s/ — query-only. Bulk CSV at data.gov: https://catalog.data.gov/dataset/hawaii-state-ethics-commissions-lobbyist-registration-statements
 
 ### Idaho
 
@@ -784,13 +785,13 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: Illinois Secretary of State — https://apps.ilsos.gov/businessentitysearch/ — query-only
 - Notary registry: Illinois Secretary of State — https://apps.ilsos.gov/notarysearch/ — query-only
 - Charity registry: Illinois Attorney General (Charitable Trust Bureau) — https://charitable.illinoisattorneygeneral.gov/ — query-only (new portal launched Aug 2025)
-- Lobbyist registry: Illinois Secretary of State — https://apps.ilsos.gov/lobbyistsearch/index.jsp — query-only; bulk download via Illinois Data Portal
+- Lobbyist registry: Illinois Secretary of State — https://apps.ilsos.gov/lobbyistsearch/index.jsp — query-only. Bulk download via Illinois Data Portal
 
 ### Indiana
 
 - Business entity search: Indiana Secretary of State (INBiz) — https://bsd.sos.in.gov/publicbusinesssearch — query-only
 - Notary registry: Indiana Secretary of State (INBiz) — https://inbiz.in.gov/certification/notary — query-only
-- Charity registry: Indiana does not register charities themselves; only professional solicitors register with AG — https://www.in.gov/attorneygeneral/consumer-protection-division/charities-and-donors/charitable-fundraising/ — query-only for fundraisers
+- Charity registry: Indiana does not register charities themselves. Only professional solicitors register with AG — https://www.in.gov/attorneygeneral/consumer-protection-division/charities-and-donors/charitable-fundraising/ — query-only for fundraisers
 - Lobbyist registry: Indiana Lobby Registration Commission (ILRC) — https://www.in.gov/ilrc/ ; lobbying data at https://www.in.gov/ilrc/lobbying-data/ — query-only
 
 ### Iowa
@@ -798,7 +799,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: Iowa Secretary of State (Fast Track Filing) — https://sos.iowa.gov/search/business/search.aspx — query-only
 - Notary registry: Iowa Secretary of State — https://sos.iowa.gov/search/notary/search.aspx — query-only
 - Charity registry: IA has no general charity registration. Charitable trusts and professional fundraisers register with AG — https://www.iowaattorneygeneral.gov/for-businesses/professional-fundraisers-and-charity-information--registration — query-only
-- Lobbyist registry: Iowa Legislature — https://www.legis.iowa.gov/lobbyist — query-only; executive branch via Iowa Ethics & Campaign Disclosure Board: https://ethics.iowa.gov/ethics/executive-branch-lobbying
+- Lobbyist registry: Iowa Legislature — https://www.legis.iowa.gov/lobbyist — query-only. Executive branch via Iowa Ethics & Campaign Disclosure Board: https://ethics.iowa.gov/ethics/executive-branch-lobbying
 
 ### Kansas
 
@@ -811,14 +812,14 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Business entity search: Kentucky Secretary of State — https://sosbes.sos.ky.gov/BusSearchNProfile/search.aspx — query-only
 - Notary registry: Kentucky Secretary of State — https://web.sos.ky.gov/notaries/ — query-only (limited public search)
-- Charity registry: Kentucky Attorney General — https://www.ag.ky.gov/Resources/Consumer-Resources/charity/Pages/registration.aspx — registration program; query-only via 990 archive
+- Charity registry: Kentucky Attorney General — https://www.ag.ky.gov/Resources/Consumer-Resources/charity/Pages/registration.aspx — registration program. Query-only via 990 archive
 - Lobbyist registry: Kentucky Legislative Ethics Commission (KLEC) — https://apps.klec.ky.gov/ — query-only
 
 ### Louisiana
 
-- Business entity search: Louisiana Secretary of State (CORAWeb) — https://coraweb.sos.la.gov/commercialsearch/commercialsearch.aspx — query-only; paid Commercial API for bulk
-- Notary registry: Louisiana Secretary of State — https://coraweb.sos.la.gov/Notary/NotarySearch.aspx — query-only; bulk download referenced ("Notary Bulk Data")
-- Charity registry: Louisiana Attorney General — https://www.ag.state.la.us/Charities — query-only; only charities using professional solicitors must register
+- Business entity search: Louisiana Secretary of State (CORAWeb) — https://coraweb.sos.la.gov/commercialsearch/commercialsearch.aspx — query-only. Paid Commercial API for bulk
+- Notary registry: Louisiana Secretary of State — https://coraweb.sos.la.gov/Notary/NotarySearch.aspx — query-only. Bulk download referenced ("Notary Bulk Data")
+- Charity registry: Louisiana Attorney General — https://www.ag.state.la.us/Charities — query-only. Only charities using professional solicitors must register
 - Lobbyist registry: Louisiana Ethics Administration / Board of Ethics — https://ethics.la.gov/lobbyistdata/SearchByLobbyist.aspx — query-only
 
 ### Maine
@@ -838,7 +839,7 @@ This section lists state-level public databases of licensed professionals, with 
 ### Massachusetts
 
 - Business entity search: Massachusetts Secretary of the Commonwealth (Corporations Division) — https://corp.sec.state.ma.us/corpweb/CorpSearch/CorpSearch.aspx — query-only
-- Notary registry: Massachusetts does not publish a public notary search. Contact Public Records Division, Secretary of the Commonwealth — https://www.mass.gov/info-details/find-a-notary-public — Not searchable online; investigate manually
+- Notary registry: Massachusetts does not publish a public notary search. Contact Public Records Division, Secretary of the Commonwealth — https://www.mass.gov/info-details/find-a-notary-public — Not searchable online. Investigate manually
 - Charity registry: Massachusetts Attorney General (Non-Profit Organizations/Public Charities Division) — https://masscharities.my.site.com/FilingSearch/s/ — query-only
 - Lobbyist registry: Massachusetts Secretary of the Commonwealth (Lobbyist Division) — https://www.sec.state.ma.us/lobbyistpublicsearch/ — query-only
 
@@ -854,7 +855,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: Minnesota Secretary of State — https://mblsportal.sos.mn.gov/Business/Search — query-only
 - Notary registry: Minnesota Secretary of State — https://notary.sos.mn.gov/ — query-only
 - Charity registry: Minnesota Attorney General — https://www.ag.state.mn.us/Charity/Search/ — query-only
-- Lobbyist registry: Minnesota Campaign Finance and Public Disclosure Board — https://cfb.mn.gov/reports-and-data/viewers/lobbying/lobbyists/ — query-only; current lists at https://cfb.mn.gov/reports-and-data/searches-and-lists/other-reports-and-lists/current-lists/
+- Lobbyist registry: Minnesota Campaign Finance and Public Disclosure Board — https://cfb.mn.gov/reports-and-data/viewers/lobbying/lobbyists/ — query-only. Current lists at https://cfb.mn.gov/reports-and-data/searches-and-lists/other-reports-and-lists/current-lists/
 
 ### Mississippi
 
@@ -880,27 +881,27 @@ This section lists state-level public databases of licensed professionals, with 
 ### Nebraska
 
 - Business entity search: Nebraska Secretary of State — https://www.nebraska.gov/sos/corp/corpsearch.cgi — query-only — verified via https://sos.nebraska.gov/business-services/corporate-and-business
-- Notary registry: Nebraska Secretary of State — https://sos.nebraska.gov/business-services/notary-public — limited public search; manage by contacting (402) 471-2558; investigate further for searchable index
+- Notary registry: Nebraska Secretary of State — https://sos.nebraska.gov/business-services/notary-public — limited public search. Manage by contacting (402) 471-2558. Investigate further for searchable index
 - Charity registry: NE has no general charity registration with state agency. Charitable trust notice requirements via AG — https://protectthegoodlife.nebraska.gov/charitable-trusts — query/notice-only
 - Lobbyist registry: Nebraska Legislature / Clerk of the Legislature (Nebraska Accountability and Disclosure Commission for activity reports) — https://nebraskalegislature.gov/lobbyist/ ; NADC: https://nadc.nebraska.gov/view-campaign-filings-personal-financial-disclosures-potential-conflicts-lobbying-reports-and-more — query-only
 
 ### Nevada
 
-- Business entity search: Nevada Secretary of State (SilverFlume) — https://esos.nv.gov/EntitySearch/OnlineEntitySearch — query-only free; full document access has fees historically
+- Business entity search: Nevada Secretary of State (SilverFlume) — https://esos.nv.gov/EntitySearch/OnlineEntitySearch — query-only free. Full document access has fees historically
 - Notary registry: Nevada Secretary of State — https://esos.nv.gov/NotarySearchOnline/NotarySearchExternal — query-only
-- Charity registry: Nevada Secretary of State (Commercial Recording Division) — https://www.nvsos.gov/sos/licensing/charitable-organizations — query via Business Entity Search; bulk data download referenced
+- Charity registry: Nevada Secretary of State (Commercial Recording Division) — https://www.nvsos.gov/sos/licensing/charitable-organizations — query via Business Entity Search. Bulk data download referenced
 - Lobbyist registry: Nevada Legislature (Legislative Counsel Bureau) — https://www.leg.state.nv.us/lobbyist/ — query-only
 
 ### New Hampshire
 
 - Business entity search: New Hampshire Secretary of State (NH QuickStart) — https://quickstart.sos.nh.gov/online/BusinessInquire — query-only
-- Notary registry: NH has no public online notary search; the SoS publishes a roster (Spring 2023+) — https://www.sos.nh.gov/notary-public — Investigate manually
+- Notary registry: NH has no public online notary search. The SoS publishes a roster (Spring 2023+) — https://www.sos.nh.gov/notary-public — Investigate manually
 - Charity registry: New Hampshire Department of Justice (Charitable Trusts Unit) — https://www.doj.nh.gov/bureaus/charitable-trusts/registered-charities — query-only
-- Lobbyist registry: New Hampshire Secretary of State — https://www.sos.nh.gov/lobbyists — query-only; PDF/Excel lists for each session
+- Lobbyist registry: New Hampshire Secretary of State — https://www.sos.nh.gov/lobbyists — query-only. PDF/Excel lists for each session
 
 ### New Jersey
 
-- Business entity search: New Jersey Department of the Treasury, Division of Revenue and Enterprise Services — https://www.njportal.com/dor/businessnamesearch/ — query-only (free name search; status reports paid)
+- Business entity search: New Jersey Department of the Treasury, Division of Revenue and Enterprise Services — https://www.njportal.com/dor/businessnamesearch/ — query-only (free name search, status reports paid)
 - Notary registry: New Jersey Treasury, Division of Revenue — https://www.nj.gov/cgi-bin/treas/revenue/search5.pl — query-only
 - Charity registry: New Jersey Division of Consumer Affairs (Charities Registration & Investigation Section) — https://charportal.dca.njoag.gov/Charity-Registration/CHR-Public-Search-Page/ — query-only
 - Lobbyist registry: New Jersey Election Law Enforcement Commission (ELEC) — https://www.elec.nj.gov/publicinformation.htm — query-only
@@ -910,12 +911,12 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: New Mexico Secretary of State — https://enterprise.sos.nm.gov/search/business — query-only
 - Notary registry: New Mexico Secretary of State — https://enterprise.sos.nm.gov/search/notary — query-only
 - Charity registry: New Mexico Department of Justice (formerly AG) — https://secure.nmdoj.gov/CharitySearch/ — query-only
-- Lobbyist registry: New Mexico Secretary of State — https://www.cfis.state.nm.us/media/ReportLobbyistFilingPeriods.aspx ; legacy reports at https://portal.sos.state.nm.us/financialDisclosure/SearchLobbyist.aspx — query-only; downloadable CSV/PDF
+- Lobbyist registry: New Mexico Secretary of State — https://www.cfis.state.nm.us/media/ReportLobbyistFilingPeriods.aspx ; legacy reports at https://portal.sos.state.nm.us/financialDisclosure/SearchLobbyist.aspx — query-only. Downloadable CSV/PDF
 
 ### New York
 
-- Business entity search: New York Department of State, Division of Corporations — https://apps.dos.ny.gov/publicInquiry/ — query-only (owners/principals not publicly available; agent and entity info only)
-- Notary registry: New York Department of State — https://dos.ny.gov/search-commissioned-nys-notaries-public — query-only; bulk dataset at https://data.ny.gov/Economic-Development/Commissioned-NYS-Notaries-Public/rwbv-mz6z
+- Business entity search: New York Department of State, Division of Corporations — https://apps.dos.ny.gov/publicInquiry/ — query-only (owners/principals not publicly available, agent and entity info only)
+- Notary registry: New York Department of State — https://dos.ny.gov/search-commissioned-nys-notaries-public — query-only. Bulk dataset at https://data.ny.gov/Economic-Development/Commissioned-NYS-Notaries-Public/rwbv-mz6z
 - Charity registry: New York Attorney General (Charities Bureau) — https://charities-search.ag.ny.gov/RegistrySearch — query-only
 - Lobbyist registry: New York Commission on Ethics and Lobbying in Government (COELIG, successor to JCOPE) — https://ethics.ny.gov/ — query-only via Public Reporting (legal status under litigation)
 
@@ -929,9 +930,9 @@ This section lists state-level public databases of licensed professionals, with 
 ### North Dakota
 
 - Business entity search: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/business — query-only
-- Notary registry: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/notary — query-only; data list requests available
+- Notary registry: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/notary — query-only. Data list requests available
 - Charity registry: North Dakota Secretary of State — https://firststop.sos.nd.gov/search/charitable — query-only
-- Lobbyist registry: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/lobbyist — query-only; annual lists at https://firststop.sos.nd.gov/lists
+- Lobbyist registry: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/lobbyist — query-only. Annual lists at https://firststop.sos.nd.gov/lists
 
 ### Ohio
 
@@ -949,8 +950,8 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### Oregon
 
-- Business entity search: Oregon Secretary of State — https://sos.oregon.gov/business/Pages/find.aspx — query-only; some data via Oregon open data portal
-- Notary registry: Oregon Secretary of State — https://sos.oregon.gov/business/Pages/notary-public-directory.aspx — query-only; bulk Active Notaries dataset at https://data.oregon.gov/business/Active-Notaries/j2pk-zk6z
+- Business entity search: Oregon Secretary of State — https://sos.oregon.gov/business/Pages/find.aspx — query-only. Some data via Oregon open data portal
+- Notary registry: Oregon Secretary of State — https://sos.oregon.gov/business/Pages/notary-public-directory.aspx — query-only. Bulk Active Notaries dataset at https://data.oregon.gov/business/Active-Notaries/j2pk-zk6z
 - Charity registry: Oregon Department of Justice (Charitable Activities Section) — https://justice.oregon.gov/charities — query-only
 - Lobbyist registry: Oregon Government Ethics Commission — https://apps.oregon.gov/OGEC/EFS/Records — query-only
 
@@ -965,7 +966,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Business entity search: Rhode Island Department of State — https://business.sos.ri.gov/corpweb/corpsearch/corpsearch.aspx — query-only
 - Notary registry: Rhode Island Department of State — https://business.sos.ri.gov/PublicNotarySearch/Home — query-only
-- Charity registry: Rhode Island Department of Business Regulation (DBR) — https://dbr.ri.gov/banking-securities-and-charitable-organizations/securities-and-charities/charitable-organizations — query/file-only; no public search endpoint
+- Charity registry: Rhode Island Department of Business Regulation (DBR) — https://dbr.ri.gov/banking-securities-and-charitable-organizations/securities-and-charities/charitable-organizations — query/file-only. No public search endpoint
 - Lobbyist registry: Rhode Island Department of State (Lobby Tracker) — https://lobbytracker.sos.ri.gov/ — query-only
 
 ### South Carolina
@@ -979,35 +980,35 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Business entity search: South Dakota Secretary of State — https://sosenterprise.sd.gov/BusinessServices/Business/FilingSearch.aspx — query-only
 - Notary registry: South Dakota Secretary of State — https://sosenterprise.sd.gov/BusinessServices/Notary/NotarySearch.aspx — query-only
-- Charity registry: SD has no charity registration. Paid telephone solicitors register with AG Division of Consumer Protection — https://consumer.sd.gov/fastfacts/charity.aspx — minimal; investigate manually
+- Charity registry: SD has no charity registration. Paid telephone solicitors register with AG Division of Consumer Protection — https://consumer.sd.gov/fastfacts/charity.aspx — minimal. Investigate manually
 - Lobbyist registry: South Dakota Secretary of State — https://sosenterprise.sd.gov/BusinessServices/Lobbyist/LobbyistSearch.aspx — query-only
 
 ### Tennessee
 
 - Business entity search: Tennessee Secretary of State — https://tnbear.tn.gov/Ecommerce/FilingSearch.aspx (linked from https://sos.tn.gov/businesses) — query-only
-- Notary registry: Tennessee Secretary of State — https://sos.tn.gov/businesses/services/search-notary-commissions — query-only (notaries elected by county legislative body; commissioned by SoS)
+- Notary registry: Tennessee Secretary of State — https://sos.tn.gov/businesses/services/search-notary-commissions — query-only (notaries elected by county legislative body, commissioned by SoS)
 - Charity registry: Tennessee Secretary of State (Division of Charitable Solicitations and Gaming) — https://tncab.tnsos.gov/portal/registered-charities-search — query-only
 - Lobbyist registry: Tennessee Ethics Commission (Bureau of Ethics and Campaign Finance) — https://apps.tn.gov/ilobby/ — query-only
 
 ### Texas
 
-- Business entity search: Texas Secretary of State (SOSDirect) — https://direct.sos.state.tx.us/acct/acct-login.asp — query-only; $1/search; account required; free filing status at https://webservices.sos.state.tx.us/filing-status/status.aspx
-- Notary registry: Texas Secretary of State — https://direct.sos.state.tx.us/notaries/NotarySearch.asp — query-only; bulk data at https://data.texas.gov/dataset/Texas-Notary-Public-Commissions/gmd3-bnrd — bulk available
+- Business entity search: Texas Secretary of State (SOSDirect) — https://direct.sos.state.tx.us/acct/acct-login.asp — query-only; $1/search. Account required. Free filing status at https://webservices.sos.state.tx.us/filing-status/status.aspx
+- Notary registry: Texas Secretary of State — https://direct.sos.state.tx.us/notaries/NotarySearch.asp — query-only. Bulk data at https://data.texas.gov/dataset/Texas-Notary-Public-Commissions/gmd3-bnrd — bulk available
 - Charity registry: TX has no general charity registration. Specific categories (law enforcement telephone solicitors under LETSA, veterans, public safety) register with AG — https://www.texasattorneygeneral.gov/divisions/charitable-trusts/registration-and-filings
-- Lobbyist registry: Texas Ethics Commission — https://www.ethics.state.tx.us/search/lobby/ — query-only; PDF lists by cycle; data downloads back to 1993
+- Lobbyist registry: Texas Ethics Commission — https://www.ethics.state.tx.us/search/lobby/ — query-only. PDF lists by cycle. Data downloads back to 1993
 
 ### Utah
 
 - Business entity search: Utah Division of Corporations and Commercial Code — https://businessregistration.utah.gov/EntitySearch/OnlineEntitySearch — query-only
 - Notary registry: Utah Lieutenant Governor's Office — https://secure.utah.gov/notary/search.html — query-only
-- Charity registry: Transitioning: as of Jan 1 2025, nonprofits register with Utah Division of Corporations and Commercial Code (DCCC) — https://commerce.utah.gov/dcp/for-businesses/charities/ — DCP historical search; investigate manually for new DCCC integration
+- Charity registry: Transitioning: as of Jan 1 2025, nonprofits register with Utah Division of Corporations and Commercial Code (DCCC) — https://commerce.utah.gov/dcp/for-businesses/charities/ — DCP historical search. Investigate manually for new DCCC integration
 - Lobbyist registry: Utah Lieutenant Governor's Office — https://lobbyist.utah.gov/search/publicsearch — query-only
 
 ### Vermont
 
 - Business entity search: Vermont Secretary of State — https://bizfilings.vermont.gov/online/BusinessInquire — query-only
 - Notary registry: Vermont Secretary of State (Office of Professional Regulation) — https://sos.vermont.gov/opr/online-services — "Find a Professional"; downloadable roster available
-- Charity registry: Vermont Attorney General — https://ago.vermont.gov/attorney-generals-office-divisions-and-unit/charities-and-paid-fundraisers/paid-fundraisers — only paid fundraisers register; charities themselves not state-registered; investigate manually for charity list
+- Charity registry: Vermont Attorney General — https://ago.vermont.gov/attorney-generals-office-divisions-and-unit/charities-and-paid-fundraisers/paid-fundraisers — only paid fundraisers register. Charities themselves not state-registered. Investigate manually for charity list
 - Lobbyist registry: Vermont Secretary of State (Vermont Lobbying Information System) — https://lobbying.vermont.gov/Public/SearchByEmployer — query-only
 
 ### Virginia
@@ -1029,19 +1030,19 @@ This section lists state-level public databases of licensed professionals, with 
 - Business entity search: West Virginia Secretary of State — https://apps.wv.gov/sos/businessentitysearch/ — query-only
 - Notary registry: West Virginia Secretary of State — https://erls.wvsos.gov/NotarySearchOnline/NotarySearchExternal — query-only
 - Charity registry: West Virginia Secretary of State (Charitable Organizations Division) — https://erls.wvsos.gov/OnlineCharitiesSearch/Search — query-only
-- Lobbyist registry: West Virginia Ethics Commission — https://ethics.wv.gov/lobbyist-directories — searchable PDF directories of lobbyists and employers; registration portal at https://registerlobbyist.wv.gov/
+- Lobbyist registry: West Virginia Ethics Commission — https://ethics.wv.gov/lobbyist-directories — searchable PDF directories of lobbyists and employers. Registration portal at https://registerlobbyist.wv.gov/
 
 ### Wisconsin
 
 - Business entity search: Wisconsin Department of Financial Institutions (DFI) — https://apps.dfi.wi.gov/apps/corpsearch/search.aspx — query-only (note: DFI rather than SoS)
 - Notary registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch/SearchCriteria.aspx — query-only
-- Charity registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch is for notaries; charities at https://apps.dfi.wi.gov/ice/berg/Registration/OrganizationCredentialSearch.aspx (select Charitable Organizations 800) — query-only
+- Charity registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch is for notaries. Charities at https://apps.dfi.wi.gov/ice/berg/Registration/OrganizationCredentialSearch.aspx (select Charitable Organizations 800) — query-only
 - Lobbyist registry: Wisconsin Ethics Commission (Eye on Lobbying) — https://lobbying.wi.gov/ — query-only
 
 ### Wyoming
 
 - Business entity search: Wyoming Secretary of State — https://wyobiz.wyo.gov/business/filingsearch.aspx — query-only
-- Notary registry: Wyoming Secretary of State has no public online notary search. Notary info on commission only — https://sos.wyo.gov/services/notaries.aspx — Not searchable online; investigate manually
+- Notary registry: Wyoming Secretary of State has no public online notary search. Notary info on commission only — https://sos.wyo.gov/services/notaries.aspx — Not searchable online. Investigate manually
 - Charity registry: WY has no state-level charity registration. No public registry. Investigate manually
 - Lobbyist registry: Wyoming Secretary of State — https://lobbyist.wyo.gov/Lobbyist/LobbyistSearch.aspx?mode=initial — query-only
 
@@ -1051,25 +1052,25 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### State open data portals
 
-- **Alabama** — Alabama Geographic Information Office — https://data-algeohub.opendata.arcgis.com/ — ArcGIS Hub — primary geospatial portal; no unified statewide tabular open-data portal (open.alabama.gov hosts transparency/finance only).
+- **Alabama** — Alabama Geographic Information Office — https://data-algeohub.opendata.arcgis.com/ — ArcGIS Hub — primary geospatial portal. No unified statewide tabular open-data portal (open.alabama.gov hosts transparency/finance only).
 - **Alaska** — State of Alaska — https://data.alaska.gov/ — Socrata — tabular open data. Companion geoportal: https://gis.data.alaska.gov/ (ArcGIS Hub).
 - **Arizona** — Arizona Geographic Information Council (AGIC) / State Cartographer's Office — https://azgeo-open-data-agic.hub.arcgis.com/ — ArcGIS Hub — primary statewide portal (geospatial-led).
-- **Arkansas** — Arkansas GIS Office (ASDI) — https://gis.arkansas.gov/ — Custom + ArcGIS — geospatial clearinghouse; no unified statewide tabular portal.
-- **California** — CA Government Operations Agency — https://data.ca.gov/ — CKAN — statewide; companion CalHHS Open Data (https://data.chhs.ca.gov/) and CA State Geoportal.
+- **Arkansas** — Arkansas GIS Office (ASDI) — https://gis.arkansas.gov/ — Custom + ArcGIS — geospatial clearinghouse. No unified statewide tabular portal.
+- **California** — CA Government Operations Agency — https://data.ca.gov/ — CKAN — statewide. Companion CalHHS Open Data (https://data.chhs.ca.gov/) and CA State Geoportal.
 - **Colorado** — Colorado Office of Information Technology — https://data.colorado.gov/ — Socrata (Colorado Information Marketplace).
 - **Connecticut** — Office of Policy and Management — https://data.ct.gov/ — Socrata.
 - **Delaware** — Delaware Open Data Council — https://data.delaware.gov/ — Socrata.
 - **District of Columbia** — DC OCTO — https://opendata.dc.gov/ — ArcGIS Hub.
 - **Florida** — Florida Geographic Information Office — https://geodata.floridagio.gov/ — ArcGIS Hub. Also: Florida Geographic Data Library at https://fgdl.org/ (UF GeoPlan Center, bulk download).
-- **Georgia** — Georgia Geospatial Information Office (GIO) — https://data-hub.gio.georgia.gov/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
+- **Georgia** — Georgia Geospatial Information Office (GIO) — https://data-hub.gio.georgia.gov/ — ArcGIS Hub — geospatial-led. No unified statewide tabular portal.
 - **Hawaii** — State Office of Enterprise Technology Services — https://opendata.hawaii.gov/ — CKAN.
 - **Idaho** — Idaho Geospatial Office — https://gis-idaho.hub.arcgis.com/ — ArcGIS Hub. Also INSIDE Idaho clearinghouse: https://www.insideidaho.org/.
 - **Illinois** — State of Illinois — https://data.illinois.gov/ — CKAN.
 - **Indiana** — Management Performance Hub — https://hub.mph.in.gov/ — CKAN.
 - **Iowa** — Iowa Dept. of Management — https://data.iowa.gov/ — Socrata.
-- **Kansas** — DASC (Data Access and Support Center) — https://hub.kansasgis.org/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
+- **Kansas** — DASC (Data Access and Support Center) — https://hub.kansasgis.org/ — ArcGIS Hub — geospatial-led. No unified statewide tabular portal.
 - **Kentucky** — KyGovMaps / Kentucky Geography Network — https://opengisdata.ky.gov/ — ArcGIS Hub.
-- **Louisiana** — N/A — No unified statewide open data portal. Louisiana Transparency and Accountability Portal (https://wwwcfprd.doa.louisiana.gov/latrac/portal.cfm) covers finance only; GIS data scattered (e.g., https://atlas.ga.lsu.edu/).
+- **Louisiana** — N/A — No unified statewide open data portal. Louisiana Transparency and Accountability Portal (https://wwwcfprd.doa.louisiana.gov/latrac/portal.cfm) covers finance only. GIS data scattered (e.g., https://atlas.ga.lsu.edu/).
 - **Maine** — Maine GeoLibrary — https://mainegeolibrary-maine.hub.arcgis.com/ — ArcGIS Hub.
 - **Maryland** — State of Maryland — https://opendata.maryland.gov/ — Socrata. Companion geospatial: https://data.imap.maryland.gov/ (MD iMAP).
 - **Massachusetts** — MassGIS / EOTSS — https://gis.data.mass.gov/ (geospatial) and https://data.mass.gov/ (tabular) — ArcGIS Hub / Socrata.
@@ -1077,9 +1078,9 @@ This section lists state-level public databases of licensed professionals, with 
 - **Minnesota** — MnGeo (Geospatial Information Office) — https://gisdata.mn.gov/ — CKAN — Geospatial Commons.
 - **Mississippi** — MARIS / Mississippi Geospatial Data Catalog — https://opendata.gis.ms.gov/ — ArcGIS Hub. No unified statewide tabular portal.
 - **Missouri** — State of Missouri — https://data.mo.gov/ — Socrata (lightweight). Geospatial: https://data-msdis.opendata.arcgis.com/ (MSDIS).
-- **Montana** — Montana State Library — https://msl.mt.gov/geoinfo/ (portal) and https://geoinfo.msl.mt.gov/ (data hub) — ArcGIS Hub — geospatial-led; includes statewide parcels.
+- **Montana** — Montana State Library — https://msl.mt.gov/geoinfo/ (portal) and https://geoinfo.msl.mt.gov/ (data hub) — ArcGIS Hub — geospatial-led. Includes statewide parcels.
 - **Nebraska** — Office of the CIO Geographic Information Office — https://www.nebraskamap.gov/ — ArcGIS Hub.
-- **Nevada** — State of Nevada — https://open.nv.gov/ — Socrata (limited). No unified portal; GIS scattered.
+- **Nevada** — State of Nevada — https://open.nv.gov/ — Socrata (limited). No unified portal. GIS scattered.
 - **New Hampshire** — NH GRANIT (UNH) — https://granit.unh.edu/ + https://new-hampshire-geodata-portal-1-nhgranit.hub.arcgis.com/ — ArcGIS Hub.
 - **New Jersey** — NJ Office of Information Technology — https://data.nj.gov/ — Socrata. Geospatial: https://njogis-newjersey.opendata.arcgis.com/ (NJGIN).
 - **New Mexico** — NM RGIS (UNM) — https://rgis.unm.edu/ — Custom clearinghouse — no unified statewide tabular portal.
@@ -1090,20 +1091,20 @@ This section lists state-level public databases of licensed professionals, with 
 - **Oklahoma** — State of Oklahoma — https://data.ok.gov/ — CKAN.
 - **Oregon** — State of Oregon — https://data.oregon.gov/ (Socrata, limited) + https://geohub.oregon.gov/ (ArcGIS Hub, geospatial primary).
 - **Pennsylvania** — Commonwealth of PA — https://data.pa.gov/ — Socrata. Geospatial: https://www.pasda.psu.edu/ (Penn State, bulk).
-- **Rhode Island** — N/A unified — RIGIS (https://www.rigis.org/) for geospatial; data.ri.gov used for Municipal Transparency Portal only.
+- **Rhode Island** — N/A unified — RIGIS (https://www.rigis.org/) for geospatial. Data.ri.gov used for Municipal Transparency Portal only.
 - **South Carolina** — SCGIS (gis.sc.gov) — http://www.gis.sc.gov/data.html — Custom + ArcGIS portals — no unified statewide tabular portal.
-- **South Dakota** — SD Bureau of IT — https://gis-south-dakota-open-data-hub-sdbit.hub.arcgis.com/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
-- **Tennessee** — STS GIS Services — https://tn-tnmap.opendata.arcgis.com/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
+- **South Dakota** — SD Bureau of IT — https://gis-south-dakota-open-data-hub-sdbit.hub.arcgis.com/ — ArcGIS Hub — geospatial-led. No unified statewide tabular portal.
+- **Tennessee** — STS GIS Services — https://tn-tnmap.opendata.arcgis.com/ — ArcGIS Hub — geospatial-led. No unified statewide tabular portal.
 - **Texas** — Texas Department of Information Resources — https://data.texas.gov/ — Socrata. Geospatial: https://data.tnris.org/ (TxGIO/TNRIS).
 - **Utah** — State of Utah — https://opendata.utah.gov/ — Socrata. Geospatial (SGID) curated by UGRC: https://gis.utah.gov/products/sgid/.
 - **Vermont** — VCGI — https://geodata.vermont.gov/ — ArcGIS Hub. Tabular: https://data.vermont.gov/ — Socrata.
 - **Virginia** — Virginia Geographic Information Network (VGIN) — https://data.virginia.gov/ — Socrata + VGIN.
 - **Washington** — WaTech / OCIO — https://data.wa.gov/ — Socrata. Geospatial: https://geo.wa.gov/ (ArcGIS Hub).
 - **West Virginia** — WV GIS Technical Center (WVU) — https://wvgis.wvu.edu/ — Clearinghouse — no unified statewide tabular portal.
-- **Wisconsin** — N/A unified — multiple specialized portals; GeoData@Wisconsin (https://geodata.wisc.edu/) is the largest geospatial catalog.
-- **Wyoming** — Wyoming Geospatial Hub — https://data.geospatialhub.org/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
+- **Wisconsin** — N/A unified — multiple specialized portals. GeoData@Wisconsin (https://geodata.wisc.edu/) is the largest geospatial catalog.
+- **Wyoming** — Wyoming Geospatial Hub — https://data.geospatialhub.org/ — ArcGIS Hub — geospatial-led. No unified statewide tabular portal.
 
-License terms: most state ArcGIS Hub deployments default to Esri Open Data terms (effectively public-domain or attribution). Confirm the terms for each dataset. Socrata-hosted state portals generally publish under each state's open-data terms, which are typically attribution-only.
+License terms: most state ArcGIS Hub deployments default to Esri Open Data terms (effectively public-domain or attribution). Confirm the terms for each dataset. Socrata-hosted state portals generally publish under each state's open-data terms. Those terms are typically attribution-only.
 
 ---
 
@@ -1115,22 +1116,22 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: AL Dept. of Human Resources, Child Care Services — https://apps.dhr.alabama.gov/daycare/daycare_search — query-only.
 - Assisted living/nursing: AL Dept. of Public Health, Bureau of Health Provider Standards — https://www.alabamapublichealth.gov/providerstandards/directory.html — query-only directory.
-- Alcohol/ABC: AL ABC Board — https://alabcboard.gov/licensing-compliance — query-only; no public bulk download.
+- Alcohol/ABC: AL ABC Board — https://alabcboard.gov/licensing-compliance — query-only. No public bulk download.
 - Cannabis: N/A — Medical cannabis law passed but program/licenses not yet broadly public. Investigate AMCC (https://amcc.alabama.gov/) for updates.
 - Auto dealer: AL Dept. of Revenue Motor Vehicle Division — https://www.revenue.alabama.gov/division/motor-vehicle/ — Not found — investigate manually for public roster.
 
 ### Alaska
 
-- Child care: AK Dept. of Health, Child Care Program Office — https://health.alaska.gov/en/division-of-public-assistance/child-care-program-office/ — search tool; bulk not obvious.
+- Child care: AK Dept. of Health, Child Care Program Office — https://health.alaska.gov/en/division-of-public-assistance/child-care-program-office/ — search tool. Bulk not obvious.
 - Assisted living/nursing: AK Dept. of Health, Residential Licensing — https://health.alaska.gov/en/division-of-health-care-services/residential-licensing/ — query-only.
-- Alcohol/ABC + Cannabis: AK Alcohol & Marijuana Control Office (AMCO) — https://www.commerce.alaska.gov/web/amco — license search; status PDFs.
+- Alcohol/ABC + Cannabis: AK Alcohol & Marijuana Control Office (AMCO) — https://www.commerce.alaska.gov/web/amco — license search. Status PDFs.
 - Auto dealer: AK DMV — https://doa.alaska.gov/dmv/dealer/ — Current Dealer List in PDF/Excel (bulk download).
 
 ### Arizona
 
 - Child care: AZ Dept. of Health Services, Bureau of Child Care Licensing — https://geodata-adhsgis.hub.arcgis.com/datasets/state-licensed-childcare-facilities-in-arizona — bulk download (ArcGIS).
 - Assisted living/nursing: AZ DHS Bureau of Residential Facilities Licensing — https://azcarecheck.azdhs.gov/s/ — query-only (AZ Care Check).
-- Alcohol/ABC: AZ Dept. of Liquor Licenses & Control — https://liquor.az.gov/license-search — query-only; legacy lookup at https://www.azliquor.gov/query/query.cfm.
+- Alcohol/ABC: AZ Dept. of Liquor Licenses & Control — https://liquor.az.gov/license-search — query-only. Legacy lookup at https://www.azliquor.gov/query/query.cfm.
 - Cannabis: AZ DHS Marijuana Licensing — https://www.azdhs.gov/licensing/marijuana/ — query-only.
 - Auto dealer: AZ MVD Dealer Licensing — https://azdot.gov/mvd/services/professional-services/dealer-licensing — Not found — investigate manually for public roster.
 
@@ -1145,17 +1146,17 @@ Each state entry lists the following, where available: Child care licensing, Ass
 ### California
 
 - Child care: CA Dept. of Social Services, Community Care Licensing Division — https://www.ccld.dss.ca.gov/carefacilitysearch/ — query + open dataset at https://cdss.ca.gov/inforesources/cdss-programs/community-care-licensing/ccld-data.
-- Assisted living/nursing: CA CDPH "Cal Health Find" — https://www.cdph.ca.gov/Programs/CHCQ/LCP/CalHealthFind/pages/home.aspx — query; bulk via CHHS Open Data — https://data.chhs.ca.gov/dataset/healthcare-facility-locations.
+- Assisted living/nursing: CA CDPH "Cal Health Find" — https://www.cdph.ca.gov/Programs/CHCQ/LCP/CalHealthFind/pages/home.aspx — query. Bulk via CHHS Open Data — https://data.chhs.ca.gov/dataset/healthcare-facility-locations.
 - Alcohol/ABC: CA Dept. of Alcoholic Beverage Control — https://www.abc.ca.gov/licensing/licensing-reports/ — bulk download (CSV, refreshed daily).
 - Cannabis: CA Dept. of Cannabis Control — https://search.cannabis.ca.gov/ — search + license summary report.
 - Auto dealer: CA DMV Occupational License Lookup — https://www.dmv.ca.gov/portal/vehicle-industry-services/occupational-licensing/occupational-license-lookup/ — query-only.
 
 ### Colorado
 
-- Child care: CO Dept. of Early Childhood — https://apps.colorado.gov/apps/cdhs/childcare/lookup/index.jsf (Colorado Shines) — query; bulk via CDPHE ArcGIS: https://data-cdphe.opendata.arcgis.com/datasets/ba8161673d734074a081006adc7ea496.
+- Child care: CO Dept. of Early Childhood — https://apps.colorado.gov/apps/cdhs/childcare/lookup/index.jsf (Colorado Shines) — query. Bulk via CDPHE ArcGIS: https://data-cdphe.opendata.arcgis.com/datasets/ba8161673d734074a081006adc7ea496.
 - Assisted living/nursing: CDPHE Health Facilities — https://cdphe.colorado.gov/find-and-compare-facilities — query-only.
-- Alcohol/ABC: CO Dept. of Revenue, Liquor Enforcement Division — https://sbg.colorado.gov/liquor-license-lists — monthly PDFs/Excel; open data: https://data.colorado.gov/Business/CO-Liquor-Licenses/ptf9-yh8v.
-- Cannabis: CO Marijuana Enforcement Division — https://med.colorado.gov/licensee-information-and-lookup-tool — search; licensed facilities list page.
+- Alcohol/ABC: CO Dept. of Revenue, Liquor Enforcement Division — https://sbg.colorado.gov/liquor-license-lists — monthly PDFs/Excel. Open data: https://data.colorado.gov/Business/CO-Liquor-Licenses/ptf9-yh8v.
+- Cannabis: CO Marijuana Enforcement Division — https://med.colorado.gov/licensee-information-and-lookup-tool — search. Licensed facilities list page.
 - Auto dealer: CO Auto Industry Division — https://sbg.colorado.gov/active-facility-license-listings-auto-industry-division — bulk listings + https://codor.mylicense.com/AID_Verification/.
 
 ### Connecticut
@@ -1163,30 +1164,30 @@ Each state entry lists the following, where available: Child care licensing, Ass
 - Child care: CT Office of Early Childhood — https://www.211childcare.org/ + state license search at https://www.elicense.ct.gov/ — query-only.
 - Assisted living/nursing: CT Dept. of Public Health Facility Licensing & Investigations Section — https://portal.ct.gov/dph/health-care-quality-and-safety/the-facility-licensing--investigations-section/facility-licensing--investigations-section — query.
 - Alcohol/ABC: CT Dept. of Consumer Protection, Liquor Control — https://data.ct.gov/Business/Liquor-Permits/wbja-pumr — Socrata bulk download.
-- Cannabis: CT DCP, Cannabis program — https://portal.ct.gov/dcp/medical-marijuana-program/licenses-and-applications — list of licensees; also https://data.ct.gov.
+- Cannabis: CT DCP, Cannabis program — https://portal.ct.gov/dcp/medical-marijuana-program/licenses-and-applications — list of licensees. Also https://data.ct.gov.
 - Auto dealer: CT DMV — https://portal.ct.gov/dmv/dealers/dealers/dealers-and-repairers — Not found — investigate manually for bulk roster.
 
 ### Delaware
 
 - Child care: DE Office of Child Care Licensing (DSCYF) — https://kids.delaware.gov/occl/ — query-only.
 - Assisted living/nursing: DE Division of Health Care Quality — https://dhss.delaware.gov/dhcq/ — query.
-- Alcohol/ABC: DE Alcoholic Beverage Control Commission — https://date.delaware.gov/OABCC/ — license search; data available on DE open data portal (https://data.delaware.gov/).
+- Alcohol/ABC: DE Alcoholic Beverage Control Commission — https://date.delaware.gov/OABCC/ — license search. Data available on DE open data portal (https://data.delaware.gov/).
 - Cannabis: DE Office of the Marijuana Commissioner — https://marijuana.delaware.gov/ — license list (program launching 2024–2026).
 - Auto dealer: DE DMV — https://www.dmv.de.gov/services/dealer_services/index.shtml — Not found — investigate manually.
 
 ### District of Columbia
 
-- Child care: DC Office of the State Superintendent of Education (OSSE) — https://osse.dc.gov/service/child-care-licensing-and-monitoring — query; bulk via Open Data DC.
+- Child care: DC Office of the State Superintendent of Education (OSSE) — https://osse.dc.gov/service/child-care-licensing-and-monitoring — query. Bulk via Open Data DC.
 - Assisted living/nursing: DC Dept. of Health, Health Regulation and Licensing Administration — https://dchealth.dc.gov/service/health-care-facility-and-laboratory-licensing — query.
-- Alcohol/ABC: DC Alcoholic Beverage and Cannabis Administration (ABCA) — https://abra.dc.gov/page/abra-licensee-search — query; bulk via Open Data DC.
-- Cannabis: DC ABCA — https://abca.dc.gov/page/cannabis-licensing — license list (medical cannabis legal; recreational limited).
+- Alcohol/ABC: DC Alcoholic Beverage and Cannabis Administration (ABCA) — https://abra.dc.gov/page/abra-licensee-search — query. Bulk via Open Data DC.
+- Cannabis: DC ABCA — https://abca.dc.gov/page/cannabis-licensing — license list (medical cannabis legal, recreational limited).
 - Auto dealer: DC DMV — https://dmv.dc.gov/service/business-services — Not found — investigate manually.
 
 ### Florida
 
 - Child care: FL Dept. of Children and Families, Child Care Provider Search — https://cares.myflfamilies.com/PublicSearch/ — query-only.
-- Assisted living/nursing: FL Agency for Health Care Administration (AHCA), FloridaHealthFinder — https://www.floridahealthfinder.gov/facilitylocator/FacilitySearch.aspx — query; bulk via https://ahca.myflorida.com/health-care-policy-and-oversight/health-quality-assurance/health-facility-regulation.
-- Alcohol/ABC: FL Dept. of Business and Professional Regulation, Division of ABT — https://www.myfloridalicense.com/wl11.asp?mode=0&SID= — license search; bulk via FL DBPR data downloads.
+- Assisted living/nursing: FL Agency for Health Care Administration (AHCA), FloridaHealthFinder — https://www.floridahealthfinder.gov/facilitylocator/FacilitySearch.aspx — query. Bulk via https://ahca.myflorida.com/health-care-policy-and-oversight/health-quality-assurance/health-facility-regulation.
+- Alcohol/ABC: FL Dept. of Business and Professional Regulation, Division of ABT — https://www.myfloridalicense.com/wl11.asp?mode=0&SID= — license search. Bulk via FL DBPR data downloads.
 - Cannabis: FL Office of Medical Marijuana Use — https://knowthefactsmmj.com/mmtc/ — list of medical marijuana treatment centers.
 - Auto dealer: FL Dept. of Highway Safety and Motor Vehicles — https://services.flhsmv.gov/MVDLLicenseSearch/ — query-only license search.
 
@@ -1210,15 +1211,15 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: ID Dept. of Health and Welfare, Child Care Licensing — https://healthandwelfare.idaho.gov/services-programs/children-families/child-care-licensing — query.
 - Assisted living/nursing: ID Dept. of Health and Welfare, Residential Assisted Living Facilities — https://healthandwelfare.idaho.gov/providers/facility-and-resident-care/residential-care-or-assisted-living-facilities — Not found — investigate manually for public roster.
-- Alcohol/ABC: ID State Liquor Division — https://liquor.idaho.gov/ — control state; ID State Police Alcohol Beverage Control issues retail licenses — https://isp.idaho.gov/abc/. Not found — investigate manually for downloadable roster.
+- Alcohol/ABC: ID State Liquor Division — https://liquor.idaho.gov/ — control state. ID State Police Alcohol Beverage Control issues retail licenses — https://isp.idaho.gov/abc/. Not found — investigate manually for downloadable roster.
 - Cannabis: N/A — recreational and medical cannabis illegal in Idaho.
 - Auto dealer: ID Transportation Dept., Dealer Operations — https://itd.idaho.gov/dmv/dealer-licensing/ — Not found — investigate manually for public roster.
 
 ### Illinois
 
 - Child care: IL Dept. of Children and Family Services (DCFS) — https://www.dcfs.illinois.gov/safe-kids/parents/find-licensed-child-care.html — query-only.
-- Assisted living/nursing: IL Dept. of Public Health, Health Care Facility Profiles — https://hfsrs.illinois.gov/ — query; bulk via data.illinois.gov.
-- Alcohol/ABC: IL Liquor Control Commission — https://www2.illinois.gov/sites/ilcc/Pages/default.aspx — license search; bulk via data.illinois.gov.
+- Assisted living/nursing: IL Dept. of Public Health, Health Care Facility Profiles — https://hfsrs.illinois.gov/ — query. Bulk via data.illinois.gov.
+- Alcohol/ABC: IL Liquor Control Commission — https://www2.illinois.gov/sites/ilcc/Pages/default.aspx — license search. Bulk via data.illinois.gov.
 - Cannabis: IL Dept. of Financial and Professional Regulation, Cannabis — https://idfpr.illinois.gov/profs/adultusecan.html — list of approved licensees published.
 - Auto dealer: IL Secretary of State, Dealer Licensing — https://www.ilsos.gov/departments/vehicles/dealer/home.html — Not found — investigate manually for public roster.
 
@@ -1226,7 +1227,7 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: IN Family and Social Services Administration, Child Care Finder — https://www.in.gov/fssa/carefinder/ — query.
 - Assisted living/nursing: IN State Dept. of Health — https://gateway.in.gov/welcome/welcome — Not found — investigate manually for facility search.
-- Alcohol/ABC: IN Alcohol and Tobacco Commission — https://www.in.gov/atc/ — license search; bulk available on Indiana Data Hub: https://hub.mph.in.gov/.
+- Alcohol/ABC: IN Alcohol and Tobacco Commission — https://www.in.gov/atc/ — license search. Bulk available on Indiana Data Hub: https://hub.mph.in.gov/.
 - Cannabis: N/A — recreational and medical cannabis illegal in Indiana (low-THC only).
 - Auto dealer: IN Secretary of State, Auto Dealer Services — https://www.in.gov/sos/dealer/ — license verification: https://inbiz.in.gov/.
 
@@ -1234,7 +1235,7 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: IA Dept. of Health and Human Services, Child Care — https://ccmis.dhs.state.ia.us/ChildCareProvider — query (search & resource referral).
 - Assisted living/nursing: IA Dept. of Inspections, Appeals and Licensing, Health Facilities — https://dia-hfd.iowa.gov/facilities — query.
-- Alcohol/ABC: IA Alcoholic Beverages Division — https://abd.iowa.gov/ — license search; bulk via data.iowa.gov: https://data.iowa.gov/browse?category=Alcohol+%26+Drugs.
+- Alcohol/ABC: IA Alcoholic Beverages Division — https://abd.iowa.gov/ — license search. Bulk via data.iowa.gov: https://data.iowa.gov/browse?category=Alcohol+%26+Drugs.
 - Cannabis: IA Dept. of Health and Human Services, Office of Medical Cannabidiol — https://hhs.iowa.gov/programs/programs-and-services/medical-cannabidiol — limited program, dispensary list published.
 - Auto dealer: IA Dept. of Transportation, Motor Vehicle Enforcement — https://iowadot.gov/mvd/motor-vehicle-enforcement — Not found — investigate manually.
 
@@ -1242,14 +1243,14 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: KS Dept. of Health and Environment, Child Care Licensing — https://www.kdhe.ks.gov/192/Child-Care-Licensing — query at https://childcareapp.kdhe.state.ks.us/.
 - Assisted living/nursing: KS Dept. for Aging and Disability Services (KDADS) — https://www.kdads.ks.gov/commissions/survey-certification-credentialing-commission — Not found — investigate manually.
-- Alcohol/ABC: KS Dept. of Revenue, Alcoholic Beverage Control — https://www.ksrevenue.gov/abcindex.html — license search; bulk not obvious.
+- Alcohol/ABC: KS Dept. of Revenue, Alcoholic Beverage Control — https://www.ksrevenue.gov/abcindex.html — license search. Bulk not obvious.
 - Cannabis: N/A — recreational and medical cannabis illegal in Kansas.
 - Auto dealer: KS Dept. of Revenue, Division of Vehicles — https://www.ksrevenue.gov/dovindex.html — Not found — investigate manually.
 
 ### Kentucky
 
 - Child care: KY Cabinet for Health and Family Services, Division of Regulated Child Care — https://prdweb.chfs.ky.gov/ChildCare/SearchChildCare.aspx — query.
-- Assisted living/nursing: KY Office of Inspector General, Long Term Care Facilities — https://chfs.ky.gov/agencies/os/oig/dhc/Pages/default.aspx — query; bulk not obvious.
+- Assisted living/nursing: KY Office of Inspector General, Long Term Care Facilities — https://chfs.ky.gov/agencies/os/oig/dhc/Pages/default.aspx — query. Bulk not obvious.
 - Alcohol/ABC: KY Dept. of Alcoholic Beverage Control — https://abc.ky.gov/Pages/default.aspx — license search.
 - Cannabis: KY Office of Medical Cannabis (launching 2025) — https://kymedcan.ky.gov/ — license list emerging.
 - Auto dealer: KY Motor Vehicle Commission — https://mvc.ky.gov/Pages/default.aspx — license verification: https://mvc.ky.gov/Pages/Look-up-a-Salesperson-or-Dealership.aspx.
@@ -1259,30 +1260,30 @@ Each state entry lists the following, where available: Child care licensing, Ass
 - Child care: LA Dept. of Education, Early Childhood — https://www.louisianabelieves.com/early-childhood — query at https://childcaremap.la.gov/.
 - Assisted living/nursing: LA Dept. of Health, Health Standards Section — https://ldh.la.gov/page/256 — query.
 - Alcohol/ABC: LA Office of Alcohol and Tobacco Control — https://atc.louisiana.gov/ — license search at https://atc.la.gov/atc/permits.
-- Cannabis: LA Dept. of Health, Medical Marijuana program — https://ldh.la.gov/page/medical-marijuana — limited dispensary list; LDAF licenses producers.
-- Auto dealer: LA Used Motor Vehicle Commission — https://www.lumvc.com/ — query; LA Motor Vehicle Commission (new dealers): https://lmvc.la.gov/.
+- Cannabis: LA Dept. of Health, Medical Marijuana program — https://ldh.la.gov/page/medical-marijuana — limited dispensary list. LDAF licenses producers.
+- Auto dealer: LA Used Motor Vehicle Commission — https://www.lumvc.com/ — query. LA Motor Vehicle Commission (new dealers): https://lmvc.la.gov/.
 
 ### Maine
 
 - Child care: ME Dept. of Health and Human Services, Child Care Licensing — https://www.maine.gov/dhhs/ocfs/provider-resources/child-care-licensing-information — query at https://www.maine.gov/dhhs/ocfs/provider-resources/find-child-care.
 - Assisted living/nursing: ME DHHS, Division of Licensing and Certification — https://www.maine.gov/dhhs/ocfs/provider-resources/licensing — query.
 - Alcohol/ABC: ME Bureau of Alcoholic Beverages and Lottery Operations (control state for off-premise) + Bureau of Licensing — https://www.maine.gov/dafs/bablo/ — Not found — investigate manually for retail licensee list.
-- Cannabis: ME Office of Cannabis Policy — https://www.maine.gov/dafs/ocp/open-data/adult-use — adult-use bulk data downloads; medical: https://www.maine.gov/dafs/ocp/open-data/medical.
+- Cannabis: ME Office of Cannabis Policy — https://www.maine.gov/dafs/ocp/open-data/adult-use — adult-use bulk data downloads. Medical: https://www.maine.gov/dafs/ocp/open-data/medical.
 - Auto dealer: ME Bureau of Motor Vehicles — https://www.maine.gov/sos/bmv/licenses/dealerinfo.html — Not found — investigate manually for public roster.
 
 ### Maryland
 
 - Child care: MD State Dept. of Education, Office of Child Care — https://earlychildhood.marylandpublicschools.org/child-care-providers/office-child-care-locate-child-care — query at https://ccvalidate.msde.maryland.gov/.
 - Assisted living/nursing: MD Dept. of Health, Office of Health Care Quality — https://health.maryland.gov/ohcq/Pages/Home.aspx — query.
-- Alcohol/ABC: MD Alcohol and Tobacco Commission — https://atc.maryland.gov/ — license search; county boards also issue.
+- Alcohol/ABC: MD Alcohol and Tobacco Commission — https://atc.maryland.gov/ — license search. County boards also issue.
 - Cannabis: MD Cannabis Administration — https://cannabis.maryland.gov/Pages/Licensee-Search.aspx — licensee search.
 - Auto dealer: MD Motor Vehicle Administration, Business Licensing & Consumer Services — https://mva.maryland.gov/businesses/Pages/dealer.aspx — Not found — investigate manually for public roster.
 
 ### Massachusetts
 
 - Child care: MA Dept. of Early Education and Care — https://www.mass.gov/info-details/find-a-licensed-program-or-search-a-licensed-program-s-history — query at https://eeclead.force.com/EEC_ChildCareSearch.
-- Assisted living/nursing: MA Dept. of Public Health + Executive Office of Elder Affairs (assisted living) — https://www.mass.gov/info-details/find-an-assisted-living-residence — query; nursing homes at https://www.mass.gov/info-details/find-a-nursing-home.
-- Alcohol/ABC: MA Alcoholic Beverages Control Commission — https://www.mass.gov/orgs/alcoholic-beverages-control-commission — license search via local licensing authorities; MA Open Checkbook for ABCC.
+- Assisted living/nursing: MA Dept. of Public Health + Executive Office of Elder Affairs (assisted living) — https://www.mass.gov/info-details/find-an-assisted-living-residence — query. Nursing homes at https://www.mass.gov/info-details/find-a-nursing-home.
+- Alcohol/ABC: MA Alcoholic Beverages Control Commission — https://www.mass.gov/orgs/alcoholic-beverages-control-commission — license search via local licensing authorities. MA Open Checkbook for ABCC.
 - Cannabis: MA Cannabis Control Commission — https://masscannabiscontrol.com/open-data/ — bulk open data (Socrata).
 - Auto dealer: MA Registry of Motor Vehicles — https://www.mass.gov/lists/motor-vehicle-business-and-supplier-information — Not found — investigate manually for bulk roster.
 
@@ -1306,7 +1307,7 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: MS State Dept. of Health, Child Care Facilities — https://msdh.ms.gov/page/30,0,183.html — query at https://msdh.ms.gov/childcaresearch/.
 - Assisted living/nursing: MS State Dept. of Health, Health Facilities Licensure and Certification — https://msdh.ms.gov/page/30,0,82.html — query.
-- Alcohol/ABC: MS Dept. of Revenue, Alcoholic Beverage Control — https://www.dor.ms.gov/abc — license search; MS is a control state.
+- Alcohol/ABC: MS Dept. of Revenue, Alcoholic Beverage Control — https://www.dor.ms.gov/abc — license search. MS is a control state.
 - Cannabis: MS State Dept. of Health, Medical Cannabis — https://msdh.ms.gov/page/30,0,431.html — license list.
 - Auto dealer: MS Motor Vehicle Commission — https://www.mmvc.ms.gov/ — Not found — investigate manually.
 
@@ -1330,8 +1331,8 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: NE DHHS, Child Care Licensing — https://dhhs.ne.gov/Pages/Child-Care-Licensing.aspx — query at https://dhhs.ne.gov/Pages/Child-Care-Roster.aspx (downloadable roster).
 - Assisted living/nursing: NE DHHS, Division of Public Health, Licensure Unit — https://dhhs.ne.gov/Pages/Healthcare-Facility-and-Provider-Look-up.aspx — query.
-- Alcohol/ABC: NE Liquor Control Commission — https://lcc.nebraska.gov/ — license search; downloadable lists available.
-- Cannabis: N/A — recreational and medical cannabis illegal in Nebraska (limited program approved 2024; not yet operational).
+- Alcohol/ABC: NE Liquor Control Commission — https://lcc.nebraska.gov/ — license search. Downloadable lists available.
+- Cannabis: N/A — recreational and medical cannabis illegal in Nebraska (a limited program approved in 2024 has yet to begin operating).
 - Auto dealer: NE Motor Vehicle Industry Licensing Board — https://www.mvib.nebraska.gov/ — license verification.
 
 ### Nevada
@@ -1346,7 +1347,7 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: NH DHHS, Child Care Licensing Unit — https://www.dhhs.nh.gov/programs-services/licensing-residential-care-and-child-care — query at https://nhpublichealth.force.com/nhccsearch/s/.
 - Assisted living/nursing: NH DHHS, Health Facilities Administration — https://www.dhhs.nh.gov/programs-services/health-care-licensing/health-facilities-licensing-and-certification — query.
-- Alcohol/ABC: NH Liquor Commission — https://www.nh.gov/liquor/ — control state; license search at https://www.liquorandwineoutlets.com/.
+- Alcohol/ABC: NH Liquor Commission — https://www.nh.gov/liquor/ — control state. License search at https://www.liquorandwineoutlets.com/.
 - Cannabis: NH Therapeutic Cannabis Program (medical only) — https://www.dhhs.nh.gov/programs-services/health-care/therapeutic-cannabis-program — list of ATCs (Alternative Treatment Centers).
 - Auto dealer: NH DMV — https://www.nh.gov/safety/divisions/dmv/dealers/ — Not found — investigate manually for public roster.
 
@@ -1354,7 +1355,7 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: NJ Dept. of Children and Families, Office of Licensing — https://www.nj.gov/dcf/providers/licensing/laws/CCCmanual.html — query at https://www.childcarenj.gov/.
 - Assisted living/nursing: NJ Dept. of Health, Health Facility Survey and Field Operations — https://www.nj.gov/health/healthfacilities/ — facility search.
-- Alcohol/ABC: NJ Division of Alcoholic Beverage Control — https://www.nj.gov/oag/abc/ — license search; data available via data.nj.gov.
+- Alcohol/ABC: NJ Division of Alcoholic Beverage Control — https://www.nj.gov/oag/abc/ — license search. Data available via data.nj.gov.
 - Cannabis: NJ Cannabis Regulatory Commission — https://www.nj.gov/cannabis/businesses/ — licensee list.
 - Auto dealer: NJ Motor Vehicle Commission, Business Licensing Services Bureau — https://www.nj.gov/mvc/business/dealer.htm — Not found — investigate manually.
 
@@ -1369,16 +1370,16 @@ Each state entry lists the following, where available: Child care licensing, Ass
 ### New York
 
 - Child care: NY Office of Children and Family Services (OCFS) — https://ocfs.ny.gov/programs/childcare/looking/ — query at https://ocfs.ny.gov/programs/childcare/looking/lookup.php.
-- Assisted living/nursing: NY State Dept. of Health, Nursing Home Profile — https://profiles.health.ny.gov/nursing_home/ — query; assisted living: https://profiles.health.ny.gov/adult_care.
-- Alcohol/ABC: NY State Liquor Authority — https://sla.ny.gov/ — license search via https://www.tax.ny.gov/research/liquor.htm; bulk on data.ny.gov: https://data.ny.gov/Economic-Development/Liquor-Authority-Quarterly-List-of-Active-Licenses/hrvs-fxs2.
-- Cannabis: NY Office of Cannabis Management — https://cannabis.ny.gov/license-verification — license verification; data on data.ny.gov.
+- Assisted living/nursing: NY State Dept. of Health, Nursing Home Profile — https://profiles.health.ny.gov/nursing_home/ — query. Assisted living: https://profiles.health.ny.gov/adult_care.
+- Alcohol/ABC: NY State Liquor Authority — https://sla.ny.gov/ — license search via https://www.tax.ny.gov/research/liquor.htm. Bulk on data.ny.gov: https://data.ny.gov/Economic-Development/Liquor-Authority-Quarterly-List-of-Active-Licenses/hrvs-fxs2.
+- Cannabis: NY Office of Cannabis Management — https://cannabis.ny.gov/license-verification — license verification. Data on data.ny.gov.
 - Auto dealer: NY DMV — https://dmv.ny.gov/business-services/find-business — query at https://dmv.ny.gov/find-business.
 
 ### North Carolina
 
-- Child care: NC DHHS, Division of Child Development and Early Education — https://ncchildcaresearch.dhhs.nc.gov/ — query; bulk via NC.gov data.
+- Child care: NC DHHS, Division of Child Development and Early Education — https://ncchildcaresearch.dhhs.nc.gov/ — query. Bulk via NC.gov data.
 - Assisted living/nursing: NC DHHS, Division of Health Service Regulation — https://info.ncdhhs.gov/dhsr/reports.htm — facility reports + downloads.
-- Alcohol/ABC: NC ABC Commission — https://abc.nc.gov/ — license search; NC is partial control state.
+- Alcohol/ABC: NC ABC Commission — https://abc.nc.gov/ — license search. NC is partial control state.
 - Cannabis: N/A — recreational and medical cannabis illegal in North Carolina (limited hemp/CBD only).
 - Auto dealer: NC Division of Motor Vehicles, License and Theft Bureau — https://www.ncdot.gov/dmv/license-id/dealers/Pages/default.aspx — Not found — investigate manually.
 
@@ -1392,9 +1393,9 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 ### Ohio
 
-- Child care: OH Dept. of Children and Youth, Child Care Search — https://childcaresearch.ohio.gov/ — query; bulk available.
+- Child care: OH Dept. of Children and Youth, Child Care Search — https://childcaresearch.ohio.gov/ — query. Bulk available.
 - Assisted living/nursing: OH Dept. of Health, Bureau of Survey and Certification — https://odh.ohio.gov/know-our-programs/long-term-care/long-term-care — query at https://gw.odh.ohio.gov/eLicense/.
-- Alcohol/ABC: OH Dept. of Commerce, Division of Liquor Control — https://com.ohio.gov/divisions-and-programs/liquor-control/about — license lookup; OH is partial control state.
+- Alcohol/ABC: OH Dept. of Commerce, Division of Liquor Control — https://com.ohio.gov/divisions-and-programs/liquor-control/about — license lookup. OH is partial control state.
 - Cannabis: OH Division of Cannabis Control — https://com.ohio.gov/divisions-and-programs/cannabis-control — license list.
 - Auto dealer: OH Bureau of Motor Vehicles, Dealer Licensing — https://bmv.ohio.gov/dealer-licensing.aspx — Not found — investigate manually.
 
@@ -1410,14 +1411,14 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: OR Dept. of Early Learning and Care — https://oregonearlylearning.com/ — query at https://oregonchildcare.org/.
 - Assisted living/nursing: OR Dept. of Human Services, Aging and People with Disabilities — https://www.oregon.gov/odhs/providers-partners/ltc-providers/Pages/default.aspx — facility search at https://ltclicensing.oregon.gov/Facilities.
-- Alcohol/ABC: OR Liquor and Cannabis Commission (OLCC) — https://www.oregon.gov/olcc/ — license search; bulk download available.
+- Alcohol/ABC: OR Liquor and Cannabis Commission (OLCC) — https://www.oregon.gov/olcc/ — license search. Bulk download available.
 - Cannabis: OLCC — https://www.oregon.gov/olcc/marijuana/Pages/default.aspx — licensee data downloads.
 - Auto dealer: OR DMV, Business Regulation — https://www.oregon.gov/odot/dmv/pages/business/vehicledealer.aspx — Not found — investigate manually.
 
 ### Pennsylvania
 
 - Child care: PA Dept. of Human Services, Office of Child Development and Early Learning — https://www.findchildcare.pa.gov/ — query.
-- Assisted living/nursing: PA Dept. of Health, Health Facility Locator — https://sais.health.pa.gov/commonpoc/content/PublicWeb/NHLocator2.asp — query; PA DHS for assisted living: https://www.dhs.pa.gov/Services/Assistance/Pages/Assisted-Living-Residences.aspx.
+- Assisted living/nursing: PA Dept. of Health, Health Facility Locator — https://sais.health.pa.gov/commonpoc/content/PublicWeb/NHLocator2.asp — query. PA DHS for assisted living: https://www.dhs.pa.gov/Services/Assistance/Pages/Assisted-Living-Residences.aspx.
 - Alcohol/ABC: PA Liquor Control Board (control state) + PA State Police Bureau of Liquor Control Enforcement — https://www.lcb.pa.gov/Licensing/Pages/default.aspx — license search at https://www.lcbapps.lcb.state.pa.us/Licensing/PublicLicenseeInfo/.
 - Cannabis: PA Dept. of Health, Medical Marijuana Program — https://www.health.pa.gov/topics/programs/Medical%20Marijuana/Pages/Medical%20Marijuana.aspx — list of dispensaries.
 - Auto dealer: PA State Board of Vehicle Manufacturers, Dealers and Salespersons — https://www.pa.gov/agencies/dos/programs/professional-licensing/boards-commissions/state-board-of-vehicle-manufacturers-dealers-and-salespersons.html — license verification at https://www.pals.pa.gov/.
@@ -1474,16 +1475,16 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 - Child care: VT Dept. for Children and Families, Child Development Division — https://dcf.vermont.gov/cdd/find-child-care — query at https://www.brightfutures.dcf.state.vt.us/.
 - Assisted living/nursing: VT Dept. of Disabilities, Aging and Independent Living, Division of Licensing and Protection — https://dail.vermont.gov/about-dail/divisions/licensing-and-protection — facility list.
-- Alcohol/ABC: VT Dept. of Liquor and Lottery — https://liquorcontrol.vermont.gov/ — control state; license search at https://liquorcontrol.vermont.gov/licensees.
+- Alcohol/ABC: VT Dept. of Liquor and Lottery — https://liquorcontrol.vermont.gov/ — control state. License search at https://liquorcontrol.vermont.gov/licensees.
 - Cannabis: VT Cannabis Control Board — https://ccb.vermont.gov/ — licensee list at https://ccb.vermont.gov/licenses/list.
 - Auto dealer: VT DMV, Motor Vehicle Dealers — https://dmv.vermont.gov/dealers — Not found — investigate manually for public roster.
 
 ### Virginia
 
 - Child care: VA Dept. of Education, Office of Child Care Health and Safety — https://www.doe.virginia.gov/programs-services/early-childhood — query at https://www.dss.virginia.gov/facility/search/cc2.cgi.
-- Assisted living/nursing: VA Dept. of Health, Office of Licensure and Certification — https://www.vdh.virginia.gov/licensure-and-certification/ — query; VDSS for assisted living: https://www.dss.virginia.gov/facility/search/alf.cgi.
+- Assisted living/nursing: VA Dept. of Health, Office of Licensure and Certification — https://www.vdh.virginia.gov/licensure-and-certification/ — query. VDSS for assisted living: https://www.dss.virginia.gov/facility/search/alf.cgi.
 - Alcohol/ABC: VA ABC Authority (control state) — https://www.abc.virginia.gov/ — license search at https://www.abc.virginia.gov/licensees.
-- Cannabis: VA Cannabis Control Authority — https://cca.virginia.gov/ — limited program; medical cannabis processor list.
+- Cannabis: VA Cannabis Control Authority — https://cca.virginia.gov/ — limited program. Medical cannabis processor list.
 - Auto dealer: VA Motor Vehicle Dealer Board — https://www.mvdb.virginia.gov/ — license search at https://mvdbportal.dpor.virginia.gov/Lookup/Index.
 
 ### Washington
@@ -1524,31 +1525,31 @@ Each state entry lists the following, where available: Child care licensing, Ass
 
 This list includes only states that aggregate parcels statewide, beyond per-county data. License notes are included where the terms were visible.
 
-- **Arkansas** — AR GIS Office — https://gis.arkansas.gov/product/parcels/ — statewide parcels aggregated; public domain.
-- **Connecticut** — CT Office of Policy and Management / CT ECO — https://cteco.uconn.edu/data/parcels/ — statewide parcels by town; public.
-- **Delaware** — DE FirstMap — https://firstmap.delaware.gov/ — statewide cadastral; public.
-- **Maine** — Maine GeoLibrary — https://mainegeolibrary-maine.hub.arcgis.com/datasets/maine::maine-parcels-organized-towns/ — statewide parcels for organized towns; public.
-- **Maryland** — MD iMAP / MD Dept. of Planning — https://planning.maryland.gov/Pages/OurProducts/PropertyMapProducts/MDPropertyViewProducts.aspx — statewide MdProperty View; bulk download.
-- **Massachusetts** — MassGIS — https://www.mass.gov/info-details/massgis-data-property-tax-parcels — statewide standardized assessor parcels; public domain / CC0 (MassGIS terms).
-- **Minnesota** — MN Geospatial Commons — https://gisdata.mn.gov/dataset/plan-parcels-open — statewide compiled from opt-in counties; public.
-- **Montana** — Montana State Library, Cadastral — https://msl.mt.gov/geoinfo/msdi/cadastral/ — statewide cadastral framework; public.
-- **New Hampshire** — NH GRANIT, NH Parcel Mosaic — https://granit.unh.edu/pages/b7974e6c63b543d68a323efa7e86aede — statewide parcel mosaic; public.
-- **North Carolina** — NC OneMap — https://www.nconemap.gov/datasets/nconemap::north-carolina-parcels-polygons — statewide aggregated from all 100 counties + Eastern Band of Cherokee; public.
-- **Rhode Island** — RIGIS — https://www.rigis.org/datasets/edc::e-911-sites-rhode-island/ + statewide parcels — https://www.rigis.org/maps/parcels/ — statewide; public.
-- **Tennessee** — TN Comptroller (assessment data) + TN GIS Services parcel viewer — https://tnmap.tn.gov/assessment/ — statewide parcels; public.
-- **Utah** — UGRC State Geographic Information Database (SGID) — https://gis.utah.gov/products/sgid/cadastre/parcels/ — statewide parcels; public domain.
-- **Vermont** — VCGI Vermont Parcel Program — https://geodata.vermont.gov/pages/parcels — statewide parcels; public.
-- **Virginia** — VGIN — https://data.virginia.gov/dataset/virginia-parcels-vgin-feature-service — statewide parcels feature service; public.
-- **Wyoming** — WyoGeoHub — https://data.geospatialhub.org/datasets/wyoming-cadastre/ — statewide cadastre; public.
+- **Arkansas** — AR GIS Office — https://gis.arkansas.gov/product/parcels/ — statewide parcels aggregated. Public domain.
+- **Connecticut** — CT Office of Policy and Management / CT ECO — https://cteco.uconn.edu/data/parcels/ — statewide parcels by town. Public.
+- **Delaware** — DE FirstMap — https://firstmap.delaware.gov/ — statewide cadastral. Public.
+- **Maine** — Maine GeoLibrary — https://mainegeolibrary-maine.hub.arcgis.com/datasets/maine::maine-parcels-organized-towns/ — statewide parcels for organized towns. Public.
+- **Maryland** — MD iMAP / MD Dept. of Planning — https://planning.maryland.gov/Pages/OurProducts/PropertyMapProducts/MDPropertyViewProducts.aspx — statewide MdProperty View. Bulk download.
+- **Massachusetts** — MassGIS — https://www.mass.gov/info-details/massgis-data-property-tax-parcels — statewide standardized assessor parcels. Public domain / CC0 (MassGIS terms).
+- **Minnesota** — MN Geospatial Commons — https://gisdata.mn.gov/dataset/plan-parcels-open — statewide compiled from opt-in counties. Public.
+- **Montana** — Montana State Library, Cadastral — https://msl.mt.gov/geoinfo/msdi/cadastral/ — statewide cadastral framework. Public.
+- **New Hampshire** — NH GRANIT, NH Parcel Mosaic — https://granit.unh.edu/pages/b7974e6c63b543d68a323efa7e86aede — statewide parcel mosaic. Public.
+- **North Carolina** — NC OneMap — https://www.nconemap.gov/datasets/nconemap::north-carolina-parcels-polygons — statewide aggregated from all 100 counties + Eastern Band of Cherokee. Public.
+- **Rhode Island** — RIGIS — https://www.rigis.org/datasets/edc::e-911-sites-rhode-island/ + statewide parcels — https://www.rigis.org/maps/parcels/ — statewide. Public.
+- **Tennessee** — TN Comptroller (assessment data) + TN GIS Services parcel viewer — https://tnmap.tn.gov/assessment/ — statewide parcels. Public.
+- **Utah** — UGRC State Geographic Information Database (SGID) — https://gis.utah.gov/products/sgid/cadastre/parcels/ — statewide parcels. Public domain.
+- **Vermont** — VCGI Vermont Parcel Program — https://geodata.vermont.gov/pages/parcels — statewide parcels. Public.
+- **Virginia** — VGIN — https://data.virginia.gov/dataset/virginia-parcels-vgin-feature-service — statewide parcels feature service. Public.
+- **Wyoming** — WyoGeoHub — https://data.geospatialhub.org/datasets/wyoming-cadastre/ — statewide cadastre. Public.
 
-States not included here either lack state-level parcel aggregation (county-only) or only publish partial datasets: AL, AK, AZ, CA, CO, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, MI, MS, MO, NE, NV, NJ, NM, NY, ND, OH, OK, OR, PA, SC, SD, TX, WA, WV, WI. Some of these (e.g., NJ, TX, WI, OR) maintain statewide indexes pointing to county data but do not redistribute parcels as a unified statewide layer at no cost.
+States not included here either lack state-level parcel aggregation (county-only) or only publish partial datasets: AL, AK, AZ, CA, CO, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, MI, MS, MO, NE, NV, NJ, NM, NY, ND, OH, OK, OR, PA, SC, SD, TX, WA, WV, WI. Some of these (e.g., NJ, TX, WI, OR) maintain statewide indexes pointing to county data but do not redistribute parcels as a unified statewide layer without a fee.
 
 ---
 
 ### Notes on bulk vs. query, and license terms
 
-- ArcGIS Hub-hosted state portals (Esri Open Data) generally allow CSV/GeoJSON/SHP downloads with attribution; Esri terms are public-domain-equivalent by default but each dataset may override.
+- ArcGIS Hub-hosted state portals (Esri Open Data) generally allow CSV/GeoJSON/SHP downloads with attribution. Esri terms are public-domain-equivalent by default but each dataset may override.
 - Socrata-hosted portals (data.ca.gov, data.ny.gov, opendata.maryland.gov, etc.) expose SODA APIs for query and CSV/JSON bulk export per dataset.
-- Regulator websites (DMV dealer lookups, liquor license search portals) are query-only; bulk acquisition requires a FOIA/public records request unless an open-data dataset is also published.
+- Regulator websites (DMV dealer lookups, liquor license search portals) are query-only. Bulk acquisition requires a FOIA/public records request unless an open-data dataset is also published.
 - Cannabis: included only where state has a legal commercial program and publishes a licensee list. States marked N/A either prohibit cannabis or only permit narrow medical/CBD programs without a meaningful public dispensary roster.
-- Always check per-state terms of use; CC-BY and CC0 are common but not universal.
+- Always check per-state terms of use. CC-BY and CC0 are common but not universal.

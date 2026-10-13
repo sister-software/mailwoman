@@ -76,7 +76,7 @@ export function isJpPostalCode(input: unknown): input is PostalCode {
  * postal-routing rather than administrative.
  *
  * Use it as a weak prior, never as a hard region assignment.
- * The full code is what actually anchors the address.
+ * The full code is what anchors the address.
  *
  * Approximate — the labels below are illustrative routing regions rather than precise prefecture sets.
  */

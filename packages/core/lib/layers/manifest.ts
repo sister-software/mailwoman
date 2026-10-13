@@ -51,7 +51,7 @@ export interface LayerManifest {
 	spineKeys: SpineKeys
 	createdAt: string
 	/**
-	 * How many records each input publisher supplied to this build, keyed by the publisher's own name.
+	 * The number of records each input publisher supplied to this build, keyed by the publisher's own name.
 	 *
 	 * The count is of the input rather than the rows the artifact kept.
 	 * It is recorded here because it cannot be recovered afterwards.
@@ -71,7 +71,7 @@ export interface CoverageCell {
 	h3Cell: number
 	completeness: number
 	/**
-	 * Evidence basis for completeness.
+	 * The evidence basis of `completeness`.
 	 *
 	 * @defaultValue `SourcePresent`
 	 */

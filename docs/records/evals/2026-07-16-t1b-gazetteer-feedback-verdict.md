@@ -1,10 +1,10 @@
-# T1b — the gazetteer feedback loop: real ingredients, no measured effect
+# T1b — the gazetteer feedback loop: real ingredients without a measured effect
 
 **Question (pre-registered, 2026-07-16 review Tier 1b):** famous streets sit in WOF as _places_, so the
 gazetteer channel injects the locality vote on `Rue Montmartre`, the model takes it, and the resolver
 reinforces it — a learned feedback loop, the Pelias trap in soft form. Is it live?
 
-**Verdict: the ingredients are real; the effect is nil. The hypothesis is FALSIFIED as a cause of the
+**Verdict: the ingredients are real. The effect is nil. The measurement falsifies the hypothesis as a cause of the
 target class.** The model's locality reading is its own.
 
 |         |                                                                |
@@ -18,7 +18,7 @@ target class.** The model's locality reading is its own.
 
 ## 1. The ingredients are unambiguously present
 
-The shipped FST returns **43 distinct surfaces across the 63 fixtures; 37 would fire an
+The shipped FST returns **43 distinct surfaces across the 63 fixtures. Of those, 37 would fire an
 emission bias** (`PLACETYPE_TO_BIO` covers country/region/locality/postalcode; `impBias = importance *
 biasScale * maxBias`).
 
@@ -38,10 +38,10 @@ biasScale * maxBias`).
 | `hugo`                   | locality 0.295                       | `Avenue Victor Hugo`        |
 | `12`, `2`, `14`, `21`, … | localadmin 0.05–0.15                 | bare house numbers          |
 
-Three findings worth naming:
+The table supports three findings:
 
-1. **Street furniture is in the gazetteer.** `rue`, `boulevard`, `place` all carry live importance.
-   The operator flagged this from the FST months ago; this is the confirmation.
+1. **Street furniture is in the gazetteer.** `rue`, `boulevard` and `place` all have nonzero importance.
+   The operator flagged this from the FST months ago. This probe confirms it.
 2. **The French particles are the strongest hits on the board.** `la` at 0.850 locality and `du` at
    0.650 region sit inside exactly the phrases the arc targets — `Rue de la Paix`,
    `Rue du 11-Novembre-1918`. If any surface were going to drag a street reading toward locality, it
@@ -88,7 +88,7 @@ fragments are rare and bare localities are not.
 
 **This is a positive result for the plan rather than a null one.** It removes the last inference-time
 explanation standing between the evidence and the training-distribution hypothesis. T2 (the BAN
-bare-street extract) was already ranked highest-EV by all three reviewers; it is now the only live
+bare-street extract) was already ranked highest-EV by all three reviewers. It is now the only live
 explanation with a change attached.
 
 **Opens — the harness does not run production's configuration.** Found while setting this up:
@@ -98,28 +98,28 @@ explanation with a change attached.
   the queryShape prior.
 - `oracle-k.ts`, `parity-corpus.ts`, and the arc's scratchpad probes call
   `parse(input, { postcodeRepair, enforceWordConsistency })` — **neither prior**.
-- `parity-corpus.ts` can wire the street-morphology prior, but only behind `--street-morphology`,
-  which defaults to **false** and is labeled "Probe 0".
+- `parity-corpus.ts` can wire the street-morphology prior, but only behind `--street-morphology`.
+  That flag defaults to **false** and is labeled "Probe 0".
 
 So the standing parity floors and the whole span-head arc grade a configuration production does not
-run. On this fixture the FST half of that gap measures **+0**, which bounds the concern for Paris —
-but it is unmeasured for parity and every other locale. Tracked as its own item; the fix is a
-measurement rather than a guess.
+run. On this fixture the FST half of that gap measures **+0**. That bounds the concern for Paris,
+but the gap is unmeasured for parity and every other locale. It is tracked as its own item. The fix
+is a measurement rather than a guess.
 
 Note the shape of the miss: this is the #718 channel-starvation class one layer up. Phase 1's +7.9pp
-headline was corrected for channel starvation in the _Python_ harness; the "channels fed" JS harness
+headline was corrected for channel starvation in the _Python_ harness. The "channels fed" JS harness
 that replaced it is itself missing two priors production has. A registered baseline
 (`baselines.json`) cannot catch this — a baseline registered against the starved config is
 self-consistent. **The registry pins reproducibility rather than validity.**
 
-## 4. Also worth a look later
+## 4. An open question for later
 
 `applyBias` collects `allPieceIndices` across every word group and applies the winning per-tag bias to
 **all of them** — the bias is global to the input rather than positional. That may be why 37 firing surfaces
-move two fixtures. Not chased here; noted because it bears on whether the FST prior is doing anything
-useful at all, which is a different question from whether it is doing harm.
+move two fixtures. This probe did not test it. It bears on whether the FST prior is useful at all.
+That is a different question from whether the prior does harm.
 
 ---
 
 **Reproduce:** `node scratchpad/t1b-gazetteer-feedback.mjs` (needs `fst-global-priority.bin` under
-`$MAILWOMAN_DATA_ROOT/db/wof/`; the artifact is dated 2026-05-28 — the staleness #1142 flagged).
+`$MAILWOMAN_DATA_ROOT/db/wof/`. The artifact is dated 2026-05-28 — the staleness #1142 flagged).

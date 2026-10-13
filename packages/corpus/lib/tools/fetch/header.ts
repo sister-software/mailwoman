@@ -6,7 +6,7 @@
  * This module reads a delimited file's header line and refuses one that drops a column an adapter
  * indexes.
  *
- * A fetch module checks the file it just wrote against the columns its adapter reads by name,
+ * A fetch module checks the file it has written against the columns its adapter reads by name,
  * because a renamed column reaches the adapter as an empty string on every row rather than as an
  * error. The check belongs here rather than in each publisher's module: every caller needs the same
  * two steps, and each one that wrote them again would also be a second answer to how the file is

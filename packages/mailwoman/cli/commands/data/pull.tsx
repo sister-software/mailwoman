@@ -76,7 +76,7 @@ export const spec = {
 		"dry-run": {
 			type: "boolean",
 			default: false,
-			description: "Print the download plan; touch no network and write no data",
+			description: "Print the download plan without network access or data writes",
 		},
 		only: {
 			type: "string",
@@ -102,8 +102,8 @@ export const spec = {
 			multiple: true,
 			choices: OBLIGATION_REFUSALS,
 			description:
-				`Decline a bundle whose recorded expression carries this class of obligation (${OBLIGATION_REFUSALS.join(", ")}); ` +
-				"repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS",
+				`Decline a bundle whose recorded expression has this class of obligation (${OBLIGATION_REFUSALS.join(", ")}). ` +
+				"Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS",
 		},
 	},
 } as const satisfies CommandSpec

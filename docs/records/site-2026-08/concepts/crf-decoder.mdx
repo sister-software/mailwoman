@@ -14,7 +14,7 @@ tags:
 
 # CRF decoder
 
-A **Conditional Random Field (CRF)** is a structured-prediction layer that finds the best **whole-sequence** label assignment instead of picking each token's label independently. Mailwoman's model card carries `crf_at_inference: true` — but what that flag names today is narrower than the textbook CRF: a Viterbi search over a frozen, hand-coded validity table, with no learned transition scores anywhere in the loop. This page explains what ships, and how it got here.
+A **Conditional Random Field (CRF)** is a structured-prediction layer that finds the best **whole-sequence** label assignment instead of picking each token's label independently. Mailwoman's model card sets `crf_at_inference: true` — but what that flag names today is narrower than the textbook CRF: a Viterbi search over a frozen, hand-coded validity table, with no learned transition scores anywhere in the loop. This page explains what ships, and how it got here.
 
 ## What ships
 
@@ -24,7 +24,7 @@ That table is not learned. It's built once from the label vocabulary and never u
 
 ## Why there's no learned CRF
 
-Mailwoman v3.0.0 shipped with a trainable CRF: a learned transition matrix, backpropagated jointly with the per-token cross-entropy loss. That dual loss was unstable — the CRF's sequence-level negative log-likelihood dwarfed the per-token CE loss, and summing them at a fixed weight let CRF gradients destabilize the encoder. v0.4.0 replaced the hand-tuned weight with per-token normalization, which helped but didn't end the story: the recipe first went CE-only (`crf_loss_weight: 0.0`) at v0.5.0, reactivation attempts for the Stage 3 label set diverged three more times, and after a last labeled fp32-precision diagnostic run (v0.6.2, briefly back at `crf_loss_weight: 0.5` to isolate the NaN cause), every config from v0.6.3 on has stayed at `0.0` — today's included. At zero weight, `model.py`'s CRF forward-backward pass never fires; the module sits in the graph but gets no gradient, and training falls through to CE-only. The full diagnostic story is in [Dual-loss curvature conflict](./dual-loss-curvature-conflict.mdx); this page only needed the outcome.
+Mailwoman v3.0.0 shipped with a trainable CRF: a learned transition matrix, backpropagated jointly with the per-token cross-entropy loss. That dual loss was unstable — the CRF's sequence-level negative log-likelihood dwarfed the per-token CE loss, and summing them at a fixed weight let CRF gradients destabilize the encoder. v0.4.0 replaced the hand-tuned weight with per-token normalization. That change helped but did not fix the instability. The recipe first went CE-only (`crf_loss_weight: 0.0`) at v0.5.0. Reactivation attempts for the Stage 3 label set diverged three more times. A last labeled fp32-precision diagnostic run (v0.6.2) briefly went back to `crf_loss_weight: 0.5` to isolate the NaN cause. Every config from v0.6.3 on, today's included, has stayed at `0.0`. At zero weight, `model.py`'s CRF forward-backward pass never fires. The module sits in the graph but gets no gradient, and training falls through to CE-only. The full diagnosis is in [Dual-loss curvature conflict](./dual-loss-curvature-conflict.mdx). This page only needs the outcome.
 
 ## Where this lives in the code
 
@@ -36,7 +36,7 @@ For the decode step in the context of a full parse, see [How Mailwoman parses an
 
 ## See it in action
 
-The demo below shows the general argmax-vs-Viterbi idea using an example transition matrix with soft preferences like `+1.5`, to make the mechanism easy to follow. The shipped decoder's actual table only carries `0` and `-∞` — no soft scores.
+The demo below shows the general argmax-vs-Viterbi idea using an example transition matrix with soft preferences like `+1.5`, to make the mechanism easy to follow. The shipped decoder's actual table only holds `0` and `-∞` — no soft scores.
 
 import { CRFDiff } from "@site/src/components/CRFDiff/CRFDiff"
 

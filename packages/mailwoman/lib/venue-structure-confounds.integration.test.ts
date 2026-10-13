@@ -5,10 +5,10 @@
  *
  *   The venue-structure confound board, run as a check.
  *
- *   `venueStructureBiasScale` pushes venue-interior designators ("concourse", "terminal", "gate",
+ *   `venueStructureBiasScale` pushes venue-interior designators ("concourse", "terminal", "boarding gate",
  *   "wing") toward `unit` harder than the postal designators they share a vocabulary with. That
  *   risks false units on surfaces where one of those words appears without being a designator: GB
- *   `-gate` street names, "Gate House" venues and "Terminal" industrial estates.
+ *   street names such as Briggate, gatehouse venues and "Terminal" industrial estates.
  *   It also includes "Wing" as a personal or business name and designators used as street names.
  *
  *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was

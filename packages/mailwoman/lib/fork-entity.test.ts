@@ -225,7 +225,7 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 
 	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
 		// The query's decoration exists on no row (the exact leg abstains), and the folded
-		// head matches both metro branches — a genuine ambiguity.
+		// head matches both metro branches — an ambiguity in the data.
 		// A query naming an existing branch verbatim is the exact leg's win rather than this leg's problem.
 		const lookup = stubLookup([
 			{ name: "The North Face - Covent Garden", lat: 51.512, lon: -0.123, country: "GB" },

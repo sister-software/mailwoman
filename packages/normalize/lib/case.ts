@@ -21,7 +21,7 @@ import { isLowerCase, isUpperCase, titleCase } from "spliterator/casing"
 const MIN_CASED_LETTERS = 3
 
 /**
- * Runs of this many Latin letters or fewer are abbreviations in address text.
+ * Runs of this number of Latin letters or fewer are abbreviations in address text.
  *
  * State codes NY/DC, directionals N/NW/SE, suffixes ST/RD and the NL postcode
  * suffix LG all read best uppercase.

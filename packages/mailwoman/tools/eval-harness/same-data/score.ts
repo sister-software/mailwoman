@@ -73,8 +73,7 @@ export function mcnemarExactP(b: number, c: number): number {
  * A rate with the numerator and denominator that produced it.
  *
  * Renderers print these counts directly.
- * A rate's denominator often differs from the row count `n`, so the counts
- * cannot be recovered from the rate.
+ * A rate's denominator can differ from the row count `n`, so the counts cannot be recovered from the rate.
  */
 export interface Ratio {
 	numerator: number

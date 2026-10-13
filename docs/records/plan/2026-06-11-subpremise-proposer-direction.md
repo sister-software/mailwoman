@@ -10,7 +10,7 @@ PO Box 123 · Apt 4B · Suite 500 · Unit 9 · Level 12 · 3rd Floor · Private 
 61547 · CMB B99 — every one is **DESIGNATOR + IDENTIFIER**: a closed-vocabulary leader (now
 provenance-tracked across `codex/us|fr|ca|au|nz`) followed by a short id with per-designator
 shape rules. Postal standards treat them as one family too (USPS "secondary unit
-designators"; AU's subpremise forms in the same AMAS table the #517 recipes mined; NZ Post's
+designators", AU's subpremise forms in the same AMAS table the #517 recipes mined, NZ Post's
 delivery-service types). The model currently learns each tag's instances separately
 (`unit` extract, `po_box/cedex` extract) and shares no representation across the family.
 
@@ -28,11 +28,11 @@ The architecture has rightful homes for this instinct, in escalating order of am
 1. **Input-layer clue (knowledge ladder rung 3.2 — cheapest, partially built).** The gazetteer
    channel's 5 dims already include a `po_box` bit. The nexus version: a **subpremise clue
    dimension** that fires on any codex designator (unit, level, po_box-class, all locales) —
-   one bit + the designator's tag-class, the same multi-hot pattern. The model conditions; it
-   never obeys. Cost: a lexicon rebuild + a channel-dim bump (retrain-coupled — rides a
-   scheduled run rather than its own).
+   one bit + the designator's tag-class, the same multi-hot pattern. The model conditions on it but
+   never obeys it. Cost: a lexicon rebuild + a channel-dim bump. The change needs a retrain, so it
+   trains in a scheduled run rather than its own.
 2. **Stage 2.7 phrase proposal (the operator's instinct, structurally).** The phrase grouper
-   already carries a "unit check"; the generalization is a **sub-premise proposer**: one rule
+   already runs a "unit check". The generalization is a **sub-premise proposer**: one rule
    layer over all codex designator tables emitting typed span proposals
    (`{span: "PO Box 123", kind: PO_BOX_PHRASE, confidence}`), consumed as phrase priors today —
    the classifier conditions on the boundary hypothesis and can still disagree. This also
@@ -40,7 +40,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
    one proposer, two cue families (designators + paired delimiters).
 3. **Stage 5 second emitter (#478's capstone — where this is ultimately heading).** Codex
    matchers emit full CANDIDATES (`po_box="P.O. Box 19"` at chars 0–11, conf from matcher
-   precision) into reconcile's beam alongside the classifier's top-K; arbitration picks per
+   precision) into reconcile's beam alongside the classifier's top-K, and arbitration picks per
    evidence. This is "the rules system lives on as a candidate source". The model-first
    answer to v0's remaining edge-format wins (the postal arena's label formats are exactly
    where v0 still beats neural).
@@ -49,7 +49,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
 
 Slot 2 is the natural first build: it needs no retrain (priors are inference-side), its
 implementation is shared with the #518 revival verdict, and the v0.5.0 char-offset format makes its
-proposals directly storable as supervision later. Slot 1 rides whichever retrain comes after
+proposals directly storable as supervision later. Slot 1 trains in whichever retrain comes after
 v0.5.0. Slot 3 is #478's existing capstone. This note adds the sub-premise family as its
 first candidate-emitter vocabulary, with the proposer (slot 2) as its dress rehearsal.
 

@@ -50,7 +50,7 @@ describe("bridgePunctuationGaps", () => {
 
 	it("does NOT merge across separator punctuation (the FR comma class)", () => {
 		// "…47110, 9016…" — the model double-labels the house number as a second postcode fragment.
-		// The comma is the only thing keeping the spans honest.
+		// The comma is the only token that keeps the two spans separate.
 		// Never bridge it.
 		const text = "47110, 9016"
 		const input = [tok("47110", 0, "B-postcode"), tok(",", 5, "O"), tok("9016", 7, "B-postcode")]

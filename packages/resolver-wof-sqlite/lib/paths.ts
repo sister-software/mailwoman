@@ -85,7 +85,7 @@ export const nsulDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("n
  * It defaults to `$MAILWOMAN_DATA_ROOT`, and callers may pass `--data-root`.
  * Returns a fresh array each call.
  *
- * Callers usually filter with `existsSync`, so missing files are skipped.
+ * A caller can filter with `existsSync`, so missing files are skipped.
  *
  * This runtime list is intentionally smaller than `DEFAULT_POSTCODE_DATABASES`
  * (`mailwoman/gazetteer-pipeline/index.ts`), because these databases are attached live at boot.

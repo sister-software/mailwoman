@@ -47,9 +47,9 @@ export interface RunnerProgress {
 export const DEFAULT_DEDUP_SLOTS_LOG2 = 27
 
 /**
- * How many distinct dedup keys a `Set`-backed run holds before it stops adding new ones.
+ * The number of distinct dedup keys a `Set`-backed run holds before it stops adding new ones.
  *
- * A V8 `Set` refuses a 16,777,216th entry outright, so this cap was a real bound rather than a preference.
+ * A V8 `Set` throws on a 16,777,216th entry, so this cap was a real bound rather than a preference.
  * It applies only to a run that opts out of the fingerprint table
  * through {@linkcode RunAdapterOptions.dedupMaxSize}.
  */
@@ -78,7 +78,7 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Hold dedup keys in a V8 `Set` capped at this many, rather than in a fingerprint table.
+	 * Hold dedup keys in a V8 `Set` capped at this number of keys, rather than in a fingerprint table.
 	 *
 	 * The cap is what the fingerprint table replaces.
 	 * A run that sets this reproduces the pre-2026-09-28 behavior.

@@ -130,7 +130,7 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 }
 
 function inferSourceFromFilename(filename: string): string {
-	// Many corpus builds write part-<source>-<n>.parquet or part-<n>.parquet.
+	// Some corpus builds write part-<source>-<n>.parquet or part-<n>.parquet.
 	// The latter (current build at corpus-v0.3.0) gives no source signal in the filename.
 	// See manifestScan() for the authoritative path.
 	// Return "<unknown>" so the caller flags this case.

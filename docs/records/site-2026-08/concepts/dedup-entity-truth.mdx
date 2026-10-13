@@ -59,7 +59,7 @@ Taub Lp Ste 100` key apart as strings yet geocode to one point, so this collapse
   the same-building same-org pairs the string key leaves split. It is the
   geocode-first key, and the tightest ruler of the four.
 
-The same 2757-record sample carries **1000 NPI** classes → **1456 site** → **956
+The same 2757-record sample contains **1000 NPI** classes → **1456 site** → **956
 org-name** → **928 org-name (coord)**. The class count first _expands_ (site splits
 multi-address NPIs) and then _contracts_ below the NPI count (org-name fuses the
 co-located subparts, and the coordinate key fuses a few more). That pattern shows
@@ -82,7 +82,7 @@ org-name collapse was validated against a frozen gold set: the hardest
 stratum — co-located, name-similar, **distinct** NPIs that are **not** flagged
 subparts — adjudicated one pair at a time. The verdict was unanimous:
 [**120 of 120**](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md) were the same
-real-world organization; **zero** were two unrelated companies wrongly fused.
+real-world organization. **Zero** were two unrelated companies wrongly fused.
 Every hard pair the matcher merges at a shared address is a correct merge that
 NPI-truth was scoring as an error.
 
@@ -98,7 +98,7 @@ Report the number that matches the entity you are resolving. For NPPES
 organization dedup that is the **org-name F1 — ~60.7% by the address-string key,
 ~68.1% by the geocode-first building key** — not the NPI-level 53.6%, which mostly
 measures NPI over-segmentation, a property of the registry rather than of the matcher.
-State the ruler next to the number every time. A dedup F1 without a named
+State the ruler next to the number every time. A dedup F1 without a stated
 truth-grain cannot be interpreted.
 
 The rest of the system follows the same principle: [grade the pipeline against
@@ -109,9 +109,9 @@ distinct organizations that no address-based signal can separate.
 
 A closing note on framing: NPI-as-truth is _conservative_ in the direction that
 matters. A cluster fusing two NPIs is a candidate "same entity, two registrations"
-**surfaced for review** rather than an adjudicated error; an NPI split across distant
-addresses is geocode-first behaving correctly. We resolve and report the join;
-what it _means_ is the consumer's call.
+**surfaced for review** rather than an adjudicated error. An NPI split across distant
+addresses is geocode-first behaving correctly. We resolve and report the join.
+What it _means_ is the consumer's call.
 
 _Measurements: [`2026-06-16-dedup-dual-level-benchmark`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md)
 (the four-grain table), [`2026-06-16-dedup-gold-set-tx120`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md)

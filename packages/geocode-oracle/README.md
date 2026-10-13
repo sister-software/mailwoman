@@ -12,9 +12,9 @@ answer with `@mailwoman/record`'s `PostalAddress` — a `ComponentTag`-keyed dic
 `canonicalKey`, a coordinate, and a `ResolutionTier` — so the comparison is field-to-field.
 
 It is **not** truth and **not** a check that anything must pass. Google and the Census Bureau disagree with each other, with the
-postal authority, and with the address as written; both will confidently return a coordinate for an
+postal authority, and with the address as written. Both will confidently return a coordinate for an
 address that does not exist. A human reads the answer and decides what to pin.
-`OracleGeocodeResult.raw` always carries the provider's untouched response for that reading.
+`OracleGeocodeResult.raw` always holds the provider's untouched response for that reading.
 
 ## Usage
 
@@ -28,10 +28,10 @@ await using census = createCensusGeocoderClient() // no credential — free and 
 const [match] = await census.lookupAddress("4600 Silver Hill Rd, Washington, DC 20233")
 ```
 
-Both are `@mailwoman/core/api` `APIClient`s, so both carry request pacing, an on-disk response cache,
+Both are `@mailwoman/core/api` `APIClient`s, so both provide request pacing, an on-disk response cache,
 bounded retry honoring `Retry-After`, and `ResourceError` mapping. Every failure is a `ResourceError`
 — branch on `error.status` and `isTransientResourceError(error)`, never on message prose. Each client's
-file header carries its full result table.
+file header contains its full result table.
 
 ## The two providers, and how they differ
 
@@ -57,13 +57,13 @@ permanently broken address.
 
 ## The API key
 
-Never logged, never in a cache key, never in a filename. It is carried as an Axios instance-level
-`params` default rather than concatenated into the URL, so what `APIClient` logs and what
-`ResourceError` interpolates is key-free; `geocodeCacheKey` then strips it before the cache key is
-built, which also means rotating the key does not orphan the cache.
+The key is never logged and never appears in a cache key or a filename. The client stores it as an Axios
+instance-level `params` default rather than concatenating it into the URL, so what `APIClient` logs and what
+`ResourceError` interpolates is key-free. `geocodeCacheKey` then strips it before the cache key is
+built. A rotated key therefore leaves the existing cache entries usable.
 
 ## Lineage
 
 Ported from the operator's isp-nexus project (`universe/mailwoman/sdk/google/`, `.../sdk/census/`). The
-domain logic was salvaged; the plumbing was rewritten onto this repo's own implementation. Each module's
+domain logic was salvaged, and the plumbing was rewritten onto this repo's own implementation. Each module's
 header names what was kept, what was dropped, and why — including the defects found in the originals.

@@ -12,7 +12,7 @@
 /**
  * The mount options the data-root volume is mounted with.
  *
- * `compress` rather than `compress-force`, and the difference is load-bearing.
+ * `compress` rather than `compress-force`, and the choice changes which files are compressed.
  * `compress-force` overrides the per-directory `compression=none` property, so the database subtrees
  * would be compressed anyway and every 4 KiB SQLite page read would decompress a 128 KiB extent.
  *

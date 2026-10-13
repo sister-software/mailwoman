@@ -1,7 +1,7 @@
 # Test suite performance — design
 
 **Date:** 2026-08-02
-**Status:** design approved; e2 spike run and CLOSED NEGATIVE; plan not yet written
+**Status:** design approved, e2 spike run and CLOSED NEGATIVE, plan not yet written
 **Optimizing for:** PR wall-clock (time to green). Machine-cost, local dev loop, and split
 durability are secondary and only picked up where they ride along free.
 **Deliverable:** PR wall-clock 6m29s → ~2m00–2m15s (projected from measured per-step numbers), and
@@ -19,7 +19,7 @@ which of it scales with the data.
 
 All numbers below are from probes run 2026-08-02 — CI run `30757682542` (main, all legs green) via
 the Actions API, and local runs on the lab host (16 cores, 29 GB, load ~4). Estimates are labeled
-as such; everything else is measured.
+as such. Every other number is measured.
 
 ### CI budget
 
@@ -77,8 +77,8 @@ branch, same day:
 | 30756381558 | 16:20 | 56.4s (MISS) |          ~78s |
 | 30757682542 | 16:54 | 61.0s (MISS) |          ~83s |
 
-The 16:54 run's Setup Node log says `yarn cache is not found` outright. That is a ~59s coin-flip on
-each of three hosted legs. No part of the yarn configuration is wrong. There is no room.
+The 16:54 run's Setup Node log prints `yarn cache is not found`. Whether the cache hits or misses therefore
+moves install time by ~59s on each of three hosted legs. No part of the yarn configuration is wrong. There is no room.
 
 Note the Link step is a flat **20.7–22.7s regardless** of cache state: yarn writing 74,244 files and
 10,444 directories.
@@ -97,7 +97,7 @@ is the "~5 min" the cache exists to avoid rather than the copy.
 
 ### The runner
 
-`vitest 4.1.10`, `forks` pool, `isolate: false` (already applied; the config docstring records the
+`vitest 4.1.10`, `forks` pool, `isolate: false` (already applied, and the config docstring records the
 8m23s → 1m30s win it bought).
 
 Fast leg, 327 files, worker count swept:
@@ -111,8 +111,8 @@ Fast leg, 327 files, worker count swept:
 
 `isolate: false` amortizes the module graph **per fork** rather than per run, so import + transform scale
 linearly with fork count while wall stays flat. `import('@mailwoman/core')` under plain node is
-0.15s; the same graph under Vite is ~2.6s per worker (42s ÷ 16 forks; 10.45s ÷ 4 forks — it divides
-exactly). Relevant because four legs share the lab's 16 cores: `unit-slow` ran at 281% CPU.
+0.15s. The same graph under Vite is ~2.6s per worker (42s ÷ 16 forks, and 10.45s ÷ 4 forks, both
+divide exactly). Relevant because four legs share the lab's 16 cores: `unit-slow` ran at 281% CPU.
 
 `--pool=threads` measured 5.80s vs 6.00s — no win, and it would put `node:sqlite` and the ONNX
 native addon in shared-process land. Not pursued.
@@ -134,7 +134,7 @@ agent-worktree flake rather than a CI cost.
 
 ## Design
 
-Six pieces. (e2) was spiked first at the operator's direction and is closed negative; its receipt is
+Six pieces. (e2) was spiked first at the operator's direction and is closed negative. Its receipt is
 kept here so it is not re-proposed.
 
 ### e2 — `nodeLinker: pnpm` — CLOSED NEGATIVE
@@ -152,13 +152,13 @@ Spiked in this worktree off `origin/main` (9b46c82e), warm global cache:
 It loses on both metrics it was meant to win. Yarn's global cache already makes Fetch 0.4s, so Link
 is the whole cost, and yarn's pnpm linker still materializes a real `.store` plus 7,719 symlinks
 rather than hardlinking a machine-wide store. It also warns that the pnpm linker cannot provide
-different peer-dependency versions to workspaces, which is a live constraint at 41 workspaces.
+different peer-dependency versions to workspaces. That limit applies today at 41 workspaces.
 
-The 7 failures are a separate latent bug worth fixing regardless: `vitest.config.ts:82` hardcodes
+The 7 failures are a separate latent bug that should be fixed in either case: `vitest.config.ts:82` hardcodes
 `resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` instead of resolving the
 specifier, so it breaks under any layout change.
 
-**This does not bear on migrating to pnpm the package manager**, which is a different mechanism —
+**This does not bear on migrating to pnpm the package manager**. pnpm is a different mechanism with
 its own resolver and lockfile, and a machine-wide content-addressed store with hardlinks rather than
 a per-project `.store`. That migration is approved on ecosystem-direction grounds and has its own
 spec: `2026-08-02-pnpm-migration-design.md`. It is **not** justified on speed (Fetch is already 0.4s
@@ -187,17 +187,17 @@ rather than copies. The yarn measurements stand as the control the pnpm form has
 Drop `cache: yarn` from `setup-node` on `static`, `unit-fast`, `react`. Replace with `actions/cache`
 on `node_modules`, key = runner OS + Node version + `yarn.lock` + `.yarnrc.yml` + every workspace
 `package.json`, plus `restore-keys` so PR branches read main's entry (and therefore do not each save
-their own 612 MB copy — that alone is the 3024 MB line in Finding 3).
+their own 612 MB copy). Those per-branch copies account for the whole 3024 MB line in Finding 3.
 
 Measured: the archive is **736 MB** and extracts in **3.59s** for 74,226 files. On a hosted runner
-that is roughly 3–8s download plus 3.6s extract ≈ **10s, deterministic**, replacing the 24s-warm /
-83s-cold coin-flip. It removes both Fetch and Link in one move.
+that is roughly 3–8s download plus 3.6s extract ≈ **10s, deterministic**, replacing an install that
+takes 24s on a warm cache and 83s on a cold one. It removes both Fetch and Link in one move.
 
 **Hosted only.** At the lab's measured 1.6 MB/s to the cache service (Finding 4), a 736 MB restore
 would take ~7 minutes there. The two `mailwoman-data` legs keep `yarn install --immutable` against
-the local global cache, which is already 16s.
+the local global cache. That install already takes 16s.
 
-Risk: a `node_modules` cache carries built native artifacts. The key must include runner OS and Node
+Risk: a `node_modules` cache contains built native artifacts. The key must include runner OS and Node
 version. `ONNXRUNTIME_NODE_INSTALL: skip` is already set repo-wide, and Playwright browsers live
 outside `node_modules` (`~/.cache/ms-playwright`), so neither is captured.
 
@@ -216,7 +216,7 @@ using `gh cache list --json` → `gh cache delete`:
 accessed within the last hour so it cannot race a live write.
 
 **Decision taken:** keep newest CodeQL overlay-base per language rather than deleting all of them.
-They are CodeQL's incremental-analysis cache; pruning to zero reclaims another ~240 MB and costs
+They are CodeQL's incremental-analysis cache. A prune to zero reclaims another ~240 MB and costs
 CodeQL time on every run. Revisit only if quota gets tight again.
 
 ### b — weights from the data root rather than GitHub's
@@ -235,7 +235,7 @@ grows a derived-artifact store at `$MAILWOMAN_DATA_ROOT/derived/weights/<key>/`:
   applied one level deeper than the workflow could reach.
 
 48–54s → ~2s on the critical-path leg, and 2870 MB of quota returned. Self-hosted runners have a
-persistent filesystem, so the store is durable across runs; this matches the repo's
+persistent filesystem, so the store is durable across runs. This matches the repo's
 sealed-immutable-artifact convention for the data root.
 
 The path must stay correct when the derived store is cold: first run after a key change pays the
@@ -245,38 +245,38 @@ The path must stay correct when the derived store is cold: first run after a key
 
 Four layers because there are four distinct failure classes and no single check covers them.
 
-| layer                  | when                                                                                  | catches                                                                                |           cost |
-| ---------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------: |
-| fixture                | every PR                                                                              | law logic regressions                                                                  |          `<1s` |
-| full, path-conditional | PRs touching `mailwoman/gazetteer-pipeline/**`, `data/gazetteer/**`, the FST curation | builder code changes                                                                   | ~130s, own job |
-| full, nightly          | `schedule`, on `mailwoman-data`                                                       | **data drift** — the gazetteer is rebuilt outside any PR, which no path filter can see |          ~130s |
-| full, release          | `publish.yml` prepare                                                                 | final check                                                                            |          ~130s |
+| layer                  | when                                                                                  | catches                                                                                 |           cost |
+| ---------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------: |
+| fixture                | every PR                                                                              | law logic regressions                                                                   |          `<1s` |
+| full, path-conditional | PRs touching `mailwoman/gazetteer-pipeline/**`, `data/gazetteer/**`, the FST curation | builder code changes                                                                    | ~130s, own job |
+| full, nightly          | `schedule`, on `mailwoman-data`                                                       | **data drift** — the gazetteer is rebuilt outside any PR, and no path filter can see it |          ~130s |
+| full, release          | `publish.yml` prepare                                                                 | final check                                                                             |          ~130s |
 
 The fixture follows the established `resolver-wof-sqlite/candidate-lookup.test.ts` idiom: a tiny
 admin DB built with the production DDL, seeded rows, and the **real** `buildLocalitySurfaceLexicon`
-driven through `opts.dbPath` (the parameter already exists). Seeds carry every flip row the current
+driven through `opts.dbPath` (the parameter already exists). Seeds include every flip row the current
 assertions name — paris/lyon/rennes/joseph, washington/wyoming/vermont/missouri/north dakota,
 east/west/north/south/northeast/southwest, east nashville, mount washington,
 fargo/minot/rutland/plainfield/cheyenne — plus the `place_population` and `ancestors` rows that
 drive the prominence and parent-inheritance math.
 
-The scale assertions do not migrate; they get stronger. A seeded below-floor row lets the fixture
+The scale assertions do not migrate. They get stronger. A seeded below-floor row lets the fixture
 assert `skippedProminence === 1` where real data only supports `> 0`. `built.entries > 10_000` stays
 a full-build assertion, because that is a claim about the gazetteer rather than about the laws.
 
 Memoize `computeSurfaceCountryCounts` and `loadPersonNameSurfaces` by `dbPath` + mtime so the FR and
 US builds in one process share the scan: 237s → ~130s (estimate) wherever the full build runs.
 
-**Decision taken:** when the path-conditional full build does not run, `unit-slow`'s step summary must say
-so, in the style of the existing PARTIAL CHECK annotation. Otherwise the leg reports the same while
-meaning less, which is the thing `test.yml`'s header explicitly refuses.
+**Decision taken:** when the path-conditional full build does not run, `unit-slow`'s step summary must report
+the skip, in the style of the existing PARTIAL CHECK annotation. Otherwise the leg reports the same while
+meaning less. `test.yml`'s header explicitly refuses that outcome.
 
 ### d — `neural/test/weights.test.ts` session reuse
 
-96.6s across 14 tests; five in the pair-prior block each pay a full
+96.6s across 14 tests. Five in the pair-prior block each pay a full
 `loadFromWeights({locale: "en-gb"})` at 12–13s while varying only decode-time configuration
-(`placetypePair`, `pairIndexPath`, `transitionBeta`) rather than the session. Hoist the session for those;
-keep independent loads for the tests that are _about_ load behavior — `resolveWeights` auto-resolve,
+(`placetypePair`, `pairIndexPath`, `transitionBeta`) rather than the session. Hoist the session for those.
+Keep independent loads for the tests that are _about_ load behavior — `resolveWeights` auto-resolve,
 the tolerant-loader paths, the error cases.
 
 The file contains no `vi.mock`, so the `isolate: false` reset interface documented in the root config
@@ -296,7 +296,7 @@ Key = a hash of workspace `.ts` sources plus the tsconfigs. Lands after (a) so t
 
 - Vitest excludes for `**/.venv/**` and `**/scratchpad/**` — fixes Finding 6. Local-only benefit.
 - Cap workers on the lab legs. Two concurrent legs × 16 forks on 16 cores is part of why `unit-slow`
-  sat at 281% CPU; on the fast leg, 8 workers cost ~0.9s wall and returned 40% of the CPU. **Measure
+  sat at 281% CPU. On the fast leg, 8 workers cost ~0.9s wall and returned 40% of the CPU. **Measure
   before setting a number** — this must land after (c), because `unit-slow` today is dominated by a
   single file and capping workers there would be measuring the wrong thing. Once (c) lands the leg
   runs 87 files at 4.2× parallelism and the cap becomes meaningful.
@@ -307,24 +307,24 @@ migration spec — it has to be fixed before the layout changes rather than afte
 ## Sequence the work
 
 `e2` is done (negative). The pnpm migration is a **sibling project** rather than a step here — it touches
-the publish pipeline, which is orthogonal to test performance and is the most-scarred surface in the
-repo. It checks only (e1).
+the publish pipeline. The publish pipeline is orthogonal to test performance and has had more
+incidents than any other part of the repo. It checks only (e1).
 
 This section orders the remaining work by the certainty of its expected benefit:
 
-1. **a** — cache prune. Config only; unblocks quota for (e3).
+1. **a** — cache prune. Config only. It unblocks quota for (e3).
 2. **b** — weights from the data root.
 3. **c** — evidence-lexicons four-layer split. The only piece with real design content, the largest
    single wall-clock win, and the only one that stops the gazetteer making this worse over time.
 4. **d** — weights.test session reuse.
 5. **e3** — `out/` cache.
 
-**(e1) is out of scope** — deferred with the migration. (a) already removes the coin-flip and lands
-install at a reliable ~24s warm; (e1)'s remaining ~14s is not worth building twice against two
-different layouts.
+**(e1) is out of scope** — deferred with the migration. (a) already removes the cache hit-or-miss variance and lands
+install at a reliable ~24s warm. (e1)'s remaining ~14s does not justify building it twice against
+two different layouts.
 
 Free items ride along with whichever step touches the same file — except the `vitest.config.ts:82`
-`onnxruntime-web` fix, which moves into the migration spec (it must land before the layout changes rather than after).
+`onnxruntime-web` fix. That fix moves into the migration spec (it must land before the layout changes rather than after).
 
 All five steps are independent of the deferred migration. When it is picked back up, (e1) comes with
 it and the only shared file is `test.yml`.
@@ -338,11 +338,11 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   Projection from the per-step numbers is ~2m00–2m15s **without** (e1); the criterion is set at 3m00s
   because job queuing and runner startup are not in that projection.
 - Hosted-leg install ≤ 30s on all three legs across those same three runs — the point is that the
-  coin-flip is gone rather than that one run was fast. (e1) later tightens this to ≤ 15s.
+  cache hit-or-miss variance is gone rather than that one run was fast. (e1) later tightens this to ≤ 15s.
 - `active_caches_size_in_bytes` < 8 GB.
 - `unit-slow` test step ≤ 120s on a PR that does not touch the gazetteer pipeline.
 - The full-scale locality-surface build still runs, and still asserts `entries > 10_000`, in at least
-  the nightly and release layers. A run that skips it says so in its step summary.
+  the nightly and release layers. A run that skips it reports the skip in its step summary.
 - `evidence-lexicons.test.ts` on the PR path is invariant to gazetteer size — re-running it after a
   gazetteer rebuild produces no change.
 - No net loss of assertions. Every law currently asserted is still asserted somewhere that runs on
@@ -357,19 +357,20 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 - The pnpm migration. Approved, but its own project with its own driver (ecosystem direction rather than
   speed) — `2026-08-02-pnpm-migration-design.md`. It checks only (e1).
 - Make the fast/slow split declarative (vitest projects instead of the hand-maintained exclude list
-  in `package.json`). Worth doing, does not serve wall-clock, deliberately deferred.
+  in `package.json`). The change is useful but does not reduce wall-clock time, so it is deliberately
+  deferred.
 
 ## Risks
 
 - **(e1) stale native artifacts.** A `node_modules` cache can serve binaries built for a different
-  runner image. Mitigated by keying on runner OS + Node version; if a third-party postinstall starts
+  runner image. Mitigated by keying on runner OS + Node version. If a third-party postinstall starts
   depending on something else, this is where it bites.
 - **(b) stale derived bins.** The existing weights-cache key already shipped this bug once
   (2026-08-02: the currency-filter change produced new artifacts while the cache served old ones,
   and the pair-index↔card parity guard failed with `expected 47878 to be 49033`). The derived-store
   key must include the generating CLI modules, and the parity guard stays as the backstop.
 - **(c) fixture drift.** A fixture that stops representing the real data is a check that passes while
-  asserting no fact. The nightly full build is the control for exactly this; if it is disabled, the
-  fixture layer alone is not sufficient.
+  asserting no fact. The nightly full build is the control for exactly this. If the nightly build is disabled,
+  the fixture layer is not sufficient by itself.
 - **(a) pruning something live.** The prune skips caches accessed within the last hour, and deletes
   no entry whose key prefix is unrecognized.

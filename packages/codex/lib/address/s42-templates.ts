@@ -11,8 +11,8 @@
  *   template with that country's own representative, tests it against representative address forms, and has the
  *   country approve it before publication.
  *
- *   That procedure is why a template is worth more to this repository than an international formatting
- *   recommendation would be. For a jurisdiction in {@linkcode S42_TEMPLATE_JURISDICTIONS} there exists a
+ *   Because of that procedure, this repository prefers a template over an international formatting
+ *   recommendation. For a jurisdiction in {@linkcode S42_TEMPLATE_JURISDICTIONS} there exists a
  *   crosswalk of that country's own address semantics which the country approved, whether or not anybody in that
  *   country posts mail by it. A jurisdiction absent from the list has no such crosswalk. That differs from
  *   a crosswalk this repository has not yet read.

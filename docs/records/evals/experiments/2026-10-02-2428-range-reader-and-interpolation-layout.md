@@ -59,7 +59,7 @@ the new reader.
 | `100 Main St`, no postcode        |                  192 |                   15 |              10,332 ms |                 774 ms |
 
 Both layouts returned the same result for all four lookups. The file grew from 779,284,480 bytes to
-794,361,856 bytes, which is 1.9%.
+794,361,856 bytes, a growth of 1.9%.
 
 ## Limits
 

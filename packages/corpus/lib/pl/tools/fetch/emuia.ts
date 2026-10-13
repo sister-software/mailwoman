@@ -155,7 +155,7 @@ export interface HarvestEMUiAOptions {
 	 */
 	pageSize?: number
 	/**
-	 * Stop once the manifest holds this many pages, for a probe rather than a full harvest.
+	 * Stop once the manifest holds this number of pages, for a probe rather than a full harvest.
 	 */
 	maxPages?: number
 	/**
@@ -165,7 +165,7 @@ export interface HarvestEMUiAOptions {
 	 * The measurement costs about 2·log2(n) requests — 51 for a register of this size — and the
 	 * harvest does not need it: paging to the first empty page reads the type whole either way.
 	 *
-	 * It buys a denominator for the progress lines and a figure for the manifest,
+	 * It supplies a denominator for the progress lines and a figure for the manifest,
 	 * and it rests on the monotone-presence assumption this module's header states.
 	 */
 	measureCount?: boolean

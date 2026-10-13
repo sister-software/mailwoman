@@ -13,8 +13,8 @@
  *   1. **Reversed ordering** — region → county → locality → block → house_number "東京都世田谷区南町1-2-3" not
  *        "1-2-3 Minamicho, Setagaya, Tokyo"
  *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighborhood"
- *        placetype (丁目) is the closest analog to a street but is actually a grid cell.
- *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-nnnn`.
+ *        placetype (丁目) is the closest analog to a street but is a grid cell.
+ *   3. **Postcode-first convention** — addresses can be prefixed with `〒NNN-nnnn`.
  *
  *   Schema mapping to ComponentTags (subset of Stage 3 + JP-specific Phase 6 tags):
  *

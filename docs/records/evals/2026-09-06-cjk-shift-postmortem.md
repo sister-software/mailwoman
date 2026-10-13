@@ -4,29 +4,29 @@ The shift that made `@mailwoman/neural-weights-cjk` real: the served path, the r
 kana-register run that replaced the base. Direct-to-main after local checks (root `yarn health`, the affected
 suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), one Modal run (`v8-cjk-kana`,
 24,000 steps, pre-registered in its config header before launch). Work window: 02:00–08:50 UTC of a shift the
-operator set to end at 13:00 UTC; the last four hours held nothing that did not need a decision listed below.
+operator set to end at 13:00 UTC. Every task left for the last four hours needed one of the decisions listed below.
 
 ## What shipped
 
-- **The served JP path resolves** (ba46cc6d9). A correct JP parse answered no coordinate: the placetype map carried no
-  entry for `prefecture` / `municipality` / `district`, the admin ladder named no JP rung, and the normalizer stripped
+- **The served JP path resolves** (ba46cc6d9). A correct JP parse answered no coordinate: the placetype map had no
+  entry for `prefecture` / `municipality` / `district`, the admin ladder listed no JP rung, and the normalizer stripped
   the `〒` the character model was trained with. All three measured on 300 board rows (0 → 271 accepted @15 km) and
-  shipped; the Latin board did not move (0 of 674 rows, run `8eb39d63`).
+  shipped. The Latin board did not move (0 of 674 rows, run `8eb39d63`).
 - **The compound municipality resolves as a scoped pair** (3dbff6ab5, #2175). `神戸市西区` and `猿島郡五霞町` have no single
-  key; the unscoped split lost rows (251 of 300) because a bare ward answers a namesake elsewhere. The head resolves
+  key. The unscoped split lost rows (251 of 300) because a bare ward answers a namesake elsewhere. The head resolves
   first, the tail probes as its child with the parent fallback withheld and a region-scope re-admission refused: 271 →
   282 of 300, 1,823 → 1,889 of 2,000 (94.5%). Latin board 0 of 674 (run `4adaa780`).
 - **The result hierarchy admits the JP tiers** (e24bcb710): Miyakonojō and Miyazaki with their WOF ids on a JP result.
-- **`postalcode-jp.db` joins the postcode-database recipe** (a214ba990, #2176): 637 of 2,000 rows carry a code the
-  walk probed and never found; the located codes sit 0.52 km (p50) from the entrance point. The candidate rebuild that
-  carries it is the operator's.
+- **`postalcode-jp.db` joins the postcode-database recipe** (a214ba990, #2176): 637 of 2,000 rows contain a code the
+  walk probed and never found. The located codes sit 0.52 km (p50) from the entrance point. The candidate rebuild that
+  includes it is the operator's.
 - **The kana-register run is the CJK base** (d363d1955, #2165 closed). Pre-registered board, same scorer both arms:
-  0.9924 blended against 0.9653, municipality macro 0.9821 against 0.9757, `かすみがうら市` 0 of 823 failed against 598;
-  CN `locality_unit` 11 of 14; ONNX parity 6.4e-6. One trade, `中新川郡上市町` 66 → 121 failed rows (#2178).
+  0.9924 blended against 0.9653, municipality macro 0.9821 against 0.9757, `かすみがうら市` 0 of 823 failed against 598,
+  CN `locality_unit` 11 of 14, ONNX parity 6.4e-6. One trade, `中新川郡上市町` 66 → 121 failed rows (#2178).
 - **Korean is one command from a probe** (1197b9544, 764a14ff6, 3fee0a4ce): `build_kr_slice.py` renders the 6,173,505
   juso rows on the `stage3-cjk` head with no new tag (2,000,000 / 20,000 / 20,000 rows, 27 held-out 시군구, 0 dropped),
   the overlay takes it as an extra corpus (vocabulary 3,165), both are staged to R2 with a Modal sync, and the probe
-  and full configs carry their pre-registration. The untrained base reads 0.0000 on the KR board. The launch is the
+  and full configs record their pre-registration. The untrained base reads 0.0000 on the KR board. The launch is the
   operator's (spec §6, decision 4).
 - **The Hugging Face leg learned the family shape** (de5e8c28f): the fetch read every object flat from
   `en-us/v<version>/` by basename, so the cjk `model.onnx` would have been refused or, worse, materialized as the Latin
@@ -56,15 +56,15 @@ operator set to end at 13:00 UTC; the last four hours held nothing that did not 
 
 ## What could have gone better
 
-- A precomposed-Hangul glob over NFD-stored keys read 0 of 52,894; the count contradicted a row already seen, and the
+- A precomposed-Hangul glob over NFD-stored keys read 0 of 52,894. The count contradicted a row already seen, and the
   re-measure in Python read 87.3%. The fourth instance of a measuring-tool false negative this quarter.
-- The Modal log stream stalled after two heartbeat failures, so the monitor that watched it emitted nothing after
-  step 4,000; the volume listing was the signal that worked. Watch the artifact rather than the log.
+- The Modal log stream stalled after two heartbeat failures, so the monitor that watched it emitted no output after
+  step 4,000. The volume listing was the signal that worked. Watch the artifact rather than the log.
 - One push went out with the root health suite red (2aac2de38: the ambiguous-noun counter and a double cast): the
-  shell ran `yarn health` and then committed and pushed regardless of its exit. Chain the push on the exit code; the
+  shell ran `yarn health` and then committed and pushed regardless of its exit. Chain the push on the exit code. The
   correction landed four minutes later (3486a25fa).
 - The Korean builder's `COUNTRY_TOKEN = "대한민국"` read as a hardcoded password to bandit (B105) and failed the `static`
-  CI job on 3486a25fa; the local `yarn lint:python` had reported it too, and its exit code went unread. Renamed to
+  CI job on 3486a25fa. The local `yarn lint:python` had reported it too, and its exit code went unread. Renamed to
   `COUNTRY_NAME`. Read the exit code rather than the tail of the output.
 - `zsh` does not word-split an unquoted variable: a loop that passed `"$1 $2 $3"` as one argument ran four silent
   no-ops before the shape was noticed.
@@ -72,13 +72,13 @@ operator set to end at 13:00 UTC; the last four hours held nothing that did not 
 ## Decisions made autonomously
 
 - The three JP tags join `DEFAULT_PLACETYPE_MAP` and the admin ladders (only the character model emits them).
-- `NormalizeOpts.postalMark` keeps `〒` for a `char`-encoded classifier; the default stays `strip`.
-- `release.config.json` `charWeights.cjk` points at the kana run; the package is still held out of the release list.
+- `NormalizeOpts.postalMark` keeps `〒` for a `char`-encoded classifier, and the default stays `strip`.
+- `release.config.json` `charWeights.cjk` points at the kana run, and the package is still held out of the release list.
 
 ## Open for the operator
 
 1. The release-list move for `packages/neural-weights-cjk` and the `ja-jp` / `zh-cn` overlays (#2164 step 7).
 2. The candidate rebuild carrying `postalcode-jp.db` (#2176) — and the WOF county fixes (#2128, #2129) with it.
-3. The named slots (`locality`, `region`) on a JP result stay null while `components` and `hierarchy` carry the tiers.
+3. The top-level slots (`locality`, `region`) on a JP result stay null while `components` and `hierarchy` hold the tiers.
 4. Korean: the four decisions in the spec (package, KOGL text, the `subregion` route, when to spend the probe).
 5. #2178: whether a 市-inside-name register warrants a run.

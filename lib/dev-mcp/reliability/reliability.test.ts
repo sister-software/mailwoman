@@ -58,7 +58,7 @@ describe("reliabilityCurve", () => {
 
 	it("KEEPS empty bins", () => {
 		// A model whose confidences never enter the low bins is itself the finding.
-		// An empty-row filter turns "this model is never unsure" into a table that simply starts at 0.8.
+		// An empty-row filter turns "this model is never unsure" into a table that starts at 0.8.
 		// That result describes fewer bins than the full confidence range.
 		const curve = reliabilityCurve(at(0.95, 10, 9), 10)
 

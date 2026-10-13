@@ -5,7 +5,7 @@
  * @file Writes Parquet files and the manifest that describes their contents.
  *
  *   This module exposes two writers. {@linkcode writeParquetFile} writes one file from rows already in memory.
- *   {@linkcode writeParquetSplits} streams per-split row iterables into as many files as the row cap requires. It
+ *   {@linkcode writeParquetSplits} streams per-split row iterables into the number of files the row cap requires. It
  *   returns the manifest. Both writers create their parent directory, as `@mailwoman/core/fs` writers do
  *   encode rather than repeat at each call site.
  *
@@ -212,7 +212,7 @@ export interface WriteParquetSplitsOptions {
 	 * A descriptor is appended only after its `.parquet` file closes, so each recorded file is complete.
 	 *
 	 * A resumed run rereads each descriptor's size.
-	 * It discards that many rows from the front of each split's iterable and opens the next file index.
+	 * It discards that number of rows from the front of each split's iterable and opens the next file index.
 	 *
 	 * The caller therefore has to supply the same iterables in the same order.
 	 * For `buildCorpus` that means the same labeled files and the same shuffle seed.

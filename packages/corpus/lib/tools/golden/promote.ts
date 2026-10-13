@@ -13,7 +13,7 @@
  *   3. Applies filters that drop candidates unlikely to be human-typed:
  *
  *        - Components-glued-without-commas (5+ components but <2 separators → freeform jumble)
- *        - Postcode-at-start with many other components (US/UK conventions put postcode last. FR puts it
+ *        - Postcode-at-start with several other components (US/UK conventions put postcode last. FR puts it
  *                 before locality only)
  *        - Suspicious-token signals (unmatched brackets, control chars, etc.)
  *   4. Dedupes by normalized raw (case-insensitive, whitespace-collapsed)
@@ -47,7 +47,7 @@ import type { GoldenCandidateEntry as GoldenEntry } from "#utils/golden"
 // ── Types ──────────────────────────────────────────────────────────────────
 
 /**
- * Components a candidate needs before it is rich enough to be worth a golden-set slot.
+ * Components a candidate needs before it qualifies for a golden-set slot.
  */
 const MIN_GOLDEN_COMPONENTS = 5
 
@@ -153,7 +153,7 @@ function isSuspicious(entry: GoldenEntry): boolean {
 
 	if (raw.split('"').length > MAX_QUOTE_SEGMENTS) return true
 
-	// too many quote marks
+	// more quote marks than MAX_QUOTE_SEGMENTS admits
 	return false
 }
 

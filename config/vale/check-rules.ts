@@ -15,7 +15,7 @@
  *   leaking banned words out of a fence/import/JSX/details block into real alerts, shows up here as
  *   the wrong fixture producing the wrong verdict.
  *
- *   `dirty.md` also carries negative assertions, each checked only by its line staying quiet:
+ *   `dirty.md` also holds negative assertions, each checked only by its line staying quiet:
  *
  *   - The phrase "full-text search" sits in plain prose and must not trip `Terms.yml`'s
  *     `text search` swap. That swap is guarded precisely so the FTS5 vocabulary this repo ships
@@ -106,7 +106,7 @@ interface StyleLeg {
 	ruleChecks: string[]
 	/**
 	 * Read the clean fixture's verdict from the JSON rather than the exit code
-	 * when the style carries warning-severity rules: Vale's exit code only reflects errors,
+	 * when the style includes warning-severity rules: Vale's exit code only reflects errors,
 	 * so a plain run would pass a clean file that trips a warning.
 	 */
 	cleanCountsEverySeverity: boolean

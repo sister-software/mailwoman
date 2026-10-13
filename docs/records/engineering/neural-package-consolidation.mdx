@@ -89,12 +89,12 @@ This is a **major**. Three breaks, none subtle:
 
 ## The resolution question, answered
 
-Export conditions do carry the boundary. The confusion was about which compiler was failing.
+Export conditions do express the boundary. The confusion was about which compiler was failing.
 
 Docusaurus builds two bundles. The **client** resolves under `browser` and picked the counterpart
 correctly from the first attempt. The **server** (SSR) resolves under `node`, correctly, because it
 targets Node — and that is the compile that failed. Its aggregated `[ERROR] Failed to compile` names
-neither side; the only signal is a `[webpackbar]` line two rows above reading
+neither side. The only signal is a `[webpackbar]` line two rows above reading
 `Client: Compiled successfully`.
 
 ```
@@ -103,12 +103,12 @@ neither side; the only signal is a `[webpackbar]` line two rows above reading
 ```
 
 No export condition can distinguish "webpack building for SSR" from "real Node", so the SSR bundle
-needs a config-side change: a targeted alias for the one specifier, which
-`docs/plugins/runtime-assets/plugin.ts` now carries under `isServer`. The `browser` entry on the server's
+needs a config-side change: a targeted alias for the one specifier.
+`docs/plugins/runtime-assets/plugin.ts` now defines that alias under `isServer`. The `browser` entry on the server's
 `conditionNames` also works and is far broader — it flips every browser-conditioned package in
 `node_modules` for SSR, and `@mailwoman/neural` is the only workspace carrying such a condition.
 
-Two things that cost four wrong diagnoses, worth carrying forward:
+Two lessons cost four wrong diagnoses, and both apply to later work:
 
 - **A stale resolve cache.** `docs/node_modules/.cache/webpack` is not evicted when
   plugin-contributed `resolve` config changes: `buildDependencies.config` covers
@@ -116,7 +116,7 @@ Two things that cost four wrong diagnoses, worth carrying forward:
   pre-merge options encoding neither aliases nor `conditionNames`. It had reached 1.4 GB. **Clear it
   before any resolve-affecting build**, or the build reports the previous run's resolution.
 - **The webpack aliases are not the boundary.** The removal of `aliases["@mailwoman/neural/browser"]`
-  leaves the build passing — package exports already carry it. That alias serves dev hot-reload only.
+  leaves the build passing — package exports already declare it. That alias serves dev hot-reload only.
 
 ## Order of work
 
@@ -140,11 +140,11 @@ addresses was invisible to the other four.
 
 Plus, at step 3, a clean-install smoke of both shapes: a Node project with only `onnxruntime-node`
 installed, and a bundled project with only `onnxruntime-web`. The point of optional peers is that
-each works without the other, and that is not true until it is tested.
+each works without the other. That claim is unverified until it is tested.
 
 ## Where the shim ended
 
 Break 2 above kept `@mailwoman/neural-web` as a deprecated re-export shim, to be removed a major later. It was
-removed on 2026-09-07 instead, before any major: the workspace re-exported another package's names, which
-`mailwoman/no-cross-package-reexport` refuses everywhere else, and no package in the repository imported it. 9.3.0 is
-its last publish; a consumer on it imports from `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`.
+removed on 2026-09-07 instead, before any major: the workspace re-exported another package's names.
+`mailwoman/no-cross-package-reexport` refuses that everywhere else, and no package in the repository imported it. 9.3.0 is
+its last publish. A consumer on it imports from `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`.

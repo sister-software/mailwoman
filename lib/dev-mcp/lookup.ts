@@ -178,7 +178,7 @@ export function lookupFST(
 }
 
 /**
- * A single-token question, so a multi-word query is a caller error worth naming.
+ * A single-token question, so a multi-word query is a caller error, and the tool reports it as one.
  */
 export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupRow[] {
 	return queries.map((query) => {

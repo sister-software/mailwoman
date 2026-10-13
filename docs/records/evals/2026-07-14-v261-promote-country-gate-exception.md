@@ -36,7 +36,7 @@ The −6.6pp golden country recall fired the 2pp pre-publish check. A falsifier 
 | v261           | 3/4                        | 0.7%                               |
 
 **Identical across the whole fragment lineage.** The −6.6pp is entirely on the non-postal WOF-admin
-distribution; on real addresses country recall and precision are unchanged. The check over-weighted a
+distribution. On real addresses country recall and precision are unchanged. The check over-weighted a
 subset that is 98% synthetic hierarchy rows. The v261 promotion does not regress country on production
 input.
 
@@ -45,7 +45,7 @@ input.
 Country is a closed, enumerable class (~250 surfaces, in `@mailwoman/codex` COUNTRY_SURFACE_FORMS).
 Pelias handles it as a position-independent DICTIONARY phrase-lookup (`WhosOnFirstClassifier`) rather than a
 learned tag — i.e. country is atlas rather than grammar. The right permanent fix (per the consult) is a
-country-lexicon **soft-feed channel** mirroring the existing gazetteer channel, which recovers
+country-lexicon **soft-feed channel** mirroring the existing gazetteer channel. That channel recovers
 WOF-admin/resolver country without a data counterweight. That work is tracked on the
 `feat/country-lexicon-channel` branch and `docs/superpowers/plans/2026-07-14-country-lexicon-channel.md`.
 

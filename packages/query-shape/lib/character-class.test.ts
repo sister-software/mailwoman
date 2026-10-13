@@ -169,8 +169,8 @@ describe("tokenizeForClass", () => {
 
 describe("scriptForCodepoint", () => {
 	/**
-	 * Unicode's own script property, against which every codepoint the hand ranges
-	 * claim is checked, keeping the table honest as Unicode moves.
+	 * Unicode's own script property, against which every codepoint the hand ranges claim
+	 * is checked, so a new Unicode release that reassigns a codepoint fails this test.
 	 */
 	const UNICODE_SCRIPT: ReadonlyArray<[ScriptCode, RegExp]> = [
 		["Hira", /\p{Script=Hiragana}/u],

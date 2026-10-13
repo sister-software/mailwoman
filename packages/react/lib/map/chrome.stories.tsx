@@ -147,7 +147,8 @@ export const Compass: StoryObj = {
 }
 
 /**
- * Many chips, to show the row scrolls on one line rather than wrapping into a block that eats the map.
+ * More chips than fit the width, to show the row scrolls on one line
+ * rather than wrapping into a block that covers the map.
  */
 export const ChipsOverflow: StoryObj = {
 	render: () => (

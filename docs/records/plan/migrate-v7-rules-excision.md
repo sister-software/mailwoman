@@ -1,7 +1,7 @@
 # Migration to v7.0.0 — the legacy rules-parser excision
 
-v7.0.0 removes the legacy rule-based parser and its shared substrate. The neural sequence
-labeler has been the primary parse path since v3; v7 deletes the dead rules engine that sat
+v7.0.0 removes the legacy rule-based parser and the shared code beneath it. The neural sequence
+labeler has been the primary parse path since v3. v7 deletes the dead rules engine that sat
 behind it. If you use the `mailwoman` CLI or the high-level library API, **behavior is unchanged**. The neural pipeline is unaffected. The breaking changes below only touch consumers that imported
 the low-level rule-classifier packages directly.
 
@@ -14,7 +14,7 @@ implementation) is gone from the monorepo and deprecated on npm.
   the supported path and is unchanged.
 - **If you used the full rule parser (`createAddressParser`):** pin `mailwoman@6`. Verified to
   construct and parse cold outside the workspace (`createAddressParser().parse(…)` returns the
-  expected components). Frozen; there is no v7 equivalent — the capability moved into the neural model.
+  expected components). It is frozen. There is no v7 equivalent — the capability moved into the neural model.
 - **If you imported classifier classes from `@mailwoman/classifiers` directly:** pin
   `@mailwoman/classifiers@6` **and add `zx` to your dependencies**. The 6.x `@mailwoman/core` has an
   undeclared `zx` import, so a bare `@mailwoman/classifiers@6` install crashes on load; `mailwoman@6`

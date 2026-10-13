@@ -63,7 +63,7 @@ beforeAll(async () => {
 			node(6, "BT36 4RU,", 54.68, -5.95),
 			// No coordinate at all, counted rather than assumed away.
 			{ type: "relation", id: 7, tags: { "addr:postcode": "BT47 1AA" } },
-			// An element with no postcode tag at all, to prove `tagged` is not just `elements`.
+			// An element with no postcode tag at all, to prove `tagged` differs from `elements`.
 			{ type: "node", id: 8, lat: 54.5, lon: -6, tags: { amenity: "bench" } },
 		],
 	}

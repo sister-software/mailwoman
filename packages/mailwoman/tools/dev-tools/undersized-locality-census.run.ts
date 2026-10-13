@@ -27,8 +27,8 @@ const { values: args } = parseArguments({
 const RATIO = Number(args.ratio ?? 10)
 
 /**
- * At or below this many same-name localities in the country, a tiny population under a
- * huge same-name parent reads as a mis-recorded settlement rather than a village.
+ * At or below this count of same-name localities in the country, a tiny population under
+ * a huge same-name parent reads as a mis-recorded settlement rather than a village.
  */
 const RARE_NAME_MAX = Number(args.bearers ?? 3)
 
@@ -103,7 +103,7 @@ const candidates = db
 
 const sameName = candidates.filter((row) => nameKey(row.name) === nameKey(row.parentName))
 
-// How many reported rows include the `gn:id` link a second register would be read through,
+// The number of reported rows that include the `gn:id` link a second register would be read through,
 // counted rather than followed because the GeoNames population file is a separate download.
 const wanted = new Set(sameName.map((row) => row.id))
 

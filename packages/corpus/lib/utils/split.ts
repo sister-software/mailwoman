@@ -110,7 +110,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			regions: ["Cornwall"],
 		},
 		// The eight countries below enter training through OpenStreetMap rows. Most hold no
-		// region and many no postcode, so each holdout matches its place three ways: the region an
+		// region and some no postcode, so each holdout matches its place three ways: the region an
 		// admin row holds, the postcode prefix, and the city as the OSM rows spell it. The spellings
 		// are the ones the 2026-10-02 extracts write.
 		CN: {
@@ -212,7 +212,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 export const HOLDOUT_COMPONENT_TAGS: ReadonlySet<string> = new Set(["venue", "region", "postcode", "locality"])
 
 /**
- * One place in this many is held out in a country without a {@link defaultHoldouts} entry.
+ * One place in this number is held out in a country without a {@link defaultHoldouts} entry.
  */
 export const HASHED_PLACE_HOLDOUT_DIVISOR = 50
 

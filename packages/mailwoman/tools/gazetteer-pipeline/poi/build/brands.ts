@@ -131,8 +131,9 @@ interface RawBrandAggregate {
  *
  * QIDs whose modal name covers less than `dominance` of the total
  * (default {@link DEFAULT_DOMINANCE} = 0.5) are also dropped entirely.
- * A modal share under the floor means the QID is systematically mistagged across many unrelated names
- * rather than one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
+ * A modal share under the floor means the QID is systematically mistagged across
+ * several unrelated names rather than one real chain with noisy spelling variants,
+ * so no single name/alias split is trustworthy.
  *
  * The final list is sorted by `rows` descending, ties broken by QID.
  *

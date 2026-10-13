@@ -9,7 +9,7 @@ role: explanation
 ## The question
 
 Write a parser against US addresses and it will do well on US addresses. Point it at a German one and
-the house number has moved to the end of the street line; point it at a Japanese one and there is no
+the house number has moved to the end of the street line. Point it at a Japanese one and there is no
 street at all. Is there a universal address grammar underneath, with local spellings on top? Or is the
 US shape one option among several, with no privileged status?
 
@@ -30,7 +30,7 @@ systems that grew at different times under different constraints.
 ## The tour
 
 **Number then street.** `350 5th Ave` — the US, the UK, Canada, Australia. The type word (`Ave`,
-`Street`, `Road`) sits at the end, which is where suffix-matching parsers learned to look for it.
+`Street`, `Road`) sits at the end. That is where suffix-matching parsers learned to look for it.
 
 **Street then number.** `Hauptstraße 5` in Germany, `Kornetintie 6` in Finland. Same components, order
 reversed. And the type word does not have to be a suffix at all: French, Spanish and Italian put it in
@@ -38,28 +38,28 @@ front (`rue de Rivoli`, `Calle Mayor`, `Via Roma`), while German fuses it onto t
 (`Hauptstraße`). A rule that strips a trailing type word finds no suffix to strip in three of these and
 mutilates the fourth.
 
-**Coarse to fine.** Written in Japanese, an address starts with the prefecture and works inward,
-which is the reverse of the English-language convention of starting with the unit and working outward
+**Coarse to fine.** Written in Japanese, an address starts with the prefecture and works inward.
+That is the reverse of the English-language convention of starting with the unit and working outward
 ([Japan Post](https://www.post.japanpost.jp/int/use/writing/normal_en.html)).
 
 **Blocks instead of streets.** Japanese addresses identify a district, then a chōme, then a block,
 then a building within that block — `1-1-1` is three levels of nesting, and none of the three is a
 house number in the Western sense. There is no street name because the street is not the unit of
 division. Mannheim runs a grid of lettered and numbered blocks on the same principle, and writes
-`R 5, 6-13` where a German address elsewhere would carry a street.
+`R 5, 6-13` where a German address elsewhere would have a street.
 
-**No postcode.** Hong Kong's domestic mail carries none. Ireland had none until Eircode launched in 2015. Where a postcode does exist, its grain varies by two orders of magnitude: an Eircode identifies
+**No postcode.** Hong Kong's domestic mail uses none. Ireland had none until Eircode launched in 2015. Where a postcode does exist, its grain varies by two orders of magnitude: an Eircode identifies
 one delivery point, a French five-digit code covers a commune. The Universal Postal Union publishes a
-per-country description of these systems, which is the reference to reach for before assuming a shape
+per-country description of these systems. Consult that reference before assuming a shape
 ([UPU addressing solutions](https://www.upu.int/en/postal-solutions/programmes-services/addressing-solutions)).
 
 **Landmarks and directions.** In parts of Central America an address is a route: a known building,
-then a distance and a direction. It resolves for a local carrier and for nobody else. Michael Tandy's
+then a distance and a direction. Only a local carrier can resolve it. Michael Tandy's
 [catalogue of address falsehoods](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 collects the examples that make this concrete, and they are the ones that break form validators first.
 
 **Collection instead of delivery.** In places where door-to-door delivery is thin, the box at the post
-office is the address rather than a fallback from one, which makes
+office is the address rather than a fallback from one. That makes
 [PO boxes and other non-street addresses](./po-boxes-and-alternatives.mdx) a primary case rather than
 an edge case.
 
@@ -69,8 +69,8 @@ There is no universal address grammar, so a parser cannot hold one. What exists 
 per-country conventions, each with its own component order, its own type-word position, its own
 postcode shape, and its own set of components that do not appear anywhere else.
 
-A model can learn those conventions from data, one locale at a time, which turns "does this parser
-work?" into a question that only has per-locale answers. Which locales carry a measured claim, what
+A model can learn those conventions from data, one locale at a time. That turns "does this parser
+work?" into a question that only has per-locale answers. Which locales have a measured claim, what
 that claim covers, and where the gaps are is on
 [Locales and tiers](../../reference/locales-and-tiers.mdx).
 
@@ -78,7 +78,7 @@ that claim covers, and where the gaps are is on
 
 Per-locale learning is per-locale work. A convention that no training data covers is a convention the
 model has not seen, and its output on that input is a structural guess from position and punctuation
-rather than a read. That produces plausible components rather than visibly broken ones, which is the
+rather than a read. That produces plausible components rather than visibly broken ones. Plausible components are the
 harder failure to notice.
 
 The second cost is data rather than modeling. A parser can read a Japanese address without finding

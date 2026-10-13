@@ -53,9 +53,10 @@ export interface GauntletLayerOptions {
 	 *
 	 * Any other value is a declared ablation.
 	 * The choreography pairs with the train-time half, so a board run under `"off"`
-	 * measures what the channel is worth on every tag at once.
+	 * measures the channel's effect on every tag at once.
 	 *
-	 * This is the only way to price the locality it recovers against the postcode it was added to guard.
+	 * This is the only way to count the locality rows it recovers against the
+	 * postcode rows it was added to guard.
 	 */
 	suppressGazetteerNearPostcode?: GauntletDepsOptions["suppressGazetteerNearPostcode"]
 	/**
@@ -138,7 +139,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	const withheld: string[] = []
 	let counted = 0
 	// The receipts record whether the mechanism fired.
-	// An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
+	// An unchanged verdict means "harmless" only if the mechanism ran on some row.
 	// Otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
 
@@ -183,8 +184,8 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			// its pair index and dependent-locality prior.
 			// That is not the production path, so a pass on it is not evidence the production path passes.
 			// Promotion would write a base-only result into the board as a regression guard.
-			// Reported rather than dropped, since an invisible withholding is indistinguishable
-			// from a row that simply kept failing.
+			// Reported rather than dropped, since an invisible withholding is
+			// indistinguishable from a row that kept failing.
 			withheld.push(`  · ${c.id} [${c.status}${ref}] passes, but ${overlayCountry} graded BASE-ONLY — not promotable`)
 		} else {
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)

@@ -5,8 +5,8 @@
 Written by `node packages/mailwoman/tools/dev-tools/data/published-bundles.run.ts`, which sends a HEAD
 request for every artifact in `BUNDLES` (`lib/data/bundles.ts`) and records the `content-length` the
 bucket reports, then reads the `layer_manifest` of the local copy under `$MAILWOMAN_DATA_ROOT` for its
-tier and flat license expression. Generated, **not hand-edited**: rerun the command and commit the
-result.
+tier and flat license expression. The command generates the file. To change it, rerun the command and commit the
+result rather than editing it by hand.
 
 A reader checks it with `yarn mwops health published-bundles`, which compares each artifact's
 `contentLength` against the registry's `approxBytes` and reports a bundle the snapshot does not cover.
@@ -14,8 +14,8 @@ A reader checks it with `yarn mwops health published-bundles`, which compares ea
 this file.
 
 A manifest recorded as `unmeasured` names the reason: no local copy, or a local copy whose size differs
-from the published artifact's, which means the copy is another build and its manifest says nothing
-about the published one. Each bundle's `rights` record, the database-level license and the
+from the published artifact's. A size difference means the copy is another build, and its manifest
+describes that build rather than the published one. Each bundle's `rights` record, the database-level license and the
 per-component list counsel asked for, is written as unmeasured and empty until a reader can measure
 it. Neither is derived from the flat expression.
 

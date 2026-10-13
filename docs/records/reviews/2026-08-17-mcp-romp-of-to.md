@@ -1,7 +1,7 @@
 # MCP romp, part 1 — what `Of` and `to` surfaced
 
 Two lookups, run through `mwdev_lookup` against the live lab artifacts. Both started as casual probes
-("testing something", "I suspect this will have bad results") and both turned up something worth a second
+("testing something", "I suspect this will have bad results") and both turned up a defect that needed a second
 look.
 
 ## Read this first: what state these findings describe
@@ -10,13 +10,13 @@ look.
 produced them are in progress, and a finding here describes one build rather than judging a design.
 Specifically:
 
-| Artifact                       | Identity                                       | Note                                                                                                   |
-| ------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `wof/admin-global-priority.db` | built 2026-08-04                               | carries **no `layer_manifest`** — it predates the interface, so it cannot say which recipe produced it |
-| `wof/candidate.db`             | symlink → `candidate-global-2026-08-15-icu.db` | also unmanifested; the `-icu` suffix suggests an in-progress fold change                               |
+| Artifact                       | Identity                                       | Note                                                                                                 |
+| ------------------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `wof/admin-global-priority.db` | built 2026-08-04                               | has **no `layer_manifest`** — it predates the interface, so it cannot state which recipe produced it |
+| `wof/candidate.db`             | symlink → `candidate-global-2026-08-15-icu.db` | also unmanifested. The `-icu` suffix suggests an in-progress fold change                             |
 
-Neither artifact can state its own provenance, which is the exact gap phase 3 closes going forward. So
-where this document says "the gazetteer does X", read it as "this build does X". A rebuild may already
+Neither artifact can state its own provenance. Phase 3 closes that gap going forward. So
+where this document states "the gazetteer does X", read it as "this build does X". A rebuild may already
 have changed it, and there is currently no way to tell from the file.
 
 Three evidence markers are used throughout:
@@ -32,8 +32,8 @@ Three evidence markers are used throughout:
 
 ### The question
 
-`Of` is a real district and town in Trabzon Province, Turkey. It is also an English function word, which is
-what made it worth probing.
+`Of` is a real district and town in Trabzon Province, Turkey. It is also an English function word. That
+overlap is why it was probed.
 
 ### What the sources say
 
@@ -58,7 +58,7 @@ matching — **not a build gap.**
 
 ### The finding: a tie the ranker cannot break
 
-Both candidate rows carry **identical population (44,212)** and therefore identical `referential`
+Both candidate rows have **identical population (44,212)** and therefore identical `referential`
 (0.392759559505463), because `referentialFromPopulation` is a pure function of population.
 
 | Name | Placetype | `spr_id`      | Population |
@@ -72,7 +72,7 @@ competing places. With `neg_rank` equal to the bit, their order fell out of the 
 
 ### Root cause, and a correction to my own first answer
 
-I initially reported this as a WOF data property. **It is not.** Both ids are ≥ 8e12, which is
+I initially reported this as a WOF data property. **It is not.** Both ids are ≥ 8e12. That value is
 `OVERTURE_ID_BASE`. Turkey has no WOF repo cloned, so the Overture `divisions` backfill serves it.
 `fold-overture.ts` copies `d.population` per row with no parent→child propagation, so the duplication
 arrived from Overture's own data.
@@ -97,14 +97,14 @@ population outranks other placetypes. Both checks are required and were measured
 
 - A plain "finer placetype wins" moved the top slot on **11,377** keys, of which only **722** were the
   seat/district duplicate. The rest were contests between distinct places — 2,885 `locality → neighbourhood`
-  (a bare city name losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality`.
+  (a bare city name losing to a hood with the same name), 2,973 `region → county`, 2,662 `postalcode → locality`.
 - **7,179 of the 11,377** sat at population 0, where a tie means _no evidence_ rather than equal evidence.
 - Narrowed, the term moves **3,896** top slots, every one promoting a populated place over a same-population
   duplicate.
 
 **The end-to-end effect is unverified.** The 3,896 is measured at the **ranker**. The 558-row regression board is
 byte-identical before and after, and three inverted probes — the term itself, `compareReferential`, and the
-candidate `ORDER BY` — changed no end-to-end result on four inputs the sweep says move. A deliberate `throw`
+candidate `ORDER BY` — changed no end-to-end result on four inputs the sweep reports as moved. A deliberate `throw`
 confirmed the harness reads the edits, so the pipeline decides those answers **downstream of candidate
 ordering**, somewhere not yet identified.
 
@@ -121,7 +121,7 @@ cross-_country_ name collisions, since `name_key` groups globally. The two probl
 ### The FTS route: the stopword problem, larger
 
 `to` returns **976 row-hits** across the extracts. Same mechanism as `Of`, more of it. The rows that come back
-first are actual — `Tô` (BF), `Tó` (PT), `To` (NO ×3) — so bm25 ranks exact-ish matches sensibly; the 976
+first are actual — `Tô` (BF), `Tó` (PT), `To` (NO ×3) — so bm25 ranks exact-ish matches sensibly. The rest of the 976
 is the tail.
 
 ### The candidate route: a different and more interesting failure
@@ -134,18 +134,18 @@ is the tail.
 | Row                                     | Why it is under key `to`                                        | Verdict     |
 | --------------------------------------- | --------------------------------------------------------------- | ----------- |
 | **Toledo**, ES — region, pop 707,109    | `names` row `TO`, `privateuse=abbr` — the Spanish province code | **correct** |
-| `Tô` BF, `Tó` PT, `To` NO ×3            | places named that                                               | **correct** |
+| `Tô` BF, `Tó` PT, `To` NO ×3            | places whose name is that string                                | **correct** |
 | **Lake** County, Minnesota — pop 10,855 | `Tó`, language `hun` — **Hungarian for "lake"**                 | **wrong**   |
 
 ### The mechanism
 
-**Observation.** Lake County carries **364 `names` rows**, which are the translated common noun _lake_ in
+**Observation.** Lake County has **364 `names` rows**. They are the translated common noun _lake_ in
 every language WOF has: `Meer` (afr), `بحيرة` (ara), `Laco` (arg), `Quta` (aym), `Göl` (aze), `Sø` (dan),
 `See` (deu), `Lac` (fra), `adagun`, `aintzira`, `Tó` (hun). These are dictionary entries for the word rather than
 names of a county in Minnesota.
 
 The candidate build indexes every alt-name as a `name_key`, so the place becomes reachable under **134
-distinct keys**. A bare Hungarian `Tó` retrieves it; so, by the same route, will Dutch `Meer` or French
+distinct keys**. A bare Hungarian `Tó` retrieves it. By the same route, so will Dutch `Meer` or French
 `Lac`.
 
 ### Scale
@@ -181,7 +181,7 @@ The split of 4,000 records on that basis is:
 | total ≥50 keys                                   | 4,000     |
 
 **Inference rather than observation:** the 3,233 are _predominantly_ this defect class. I sampled the head rather than the
-whole set, and some will be actual (a small but historically measured town can carry several exonyms).
+whole set, and some will be actual (a small but historically measured town can have several exonyms).
 
 ### A discriminator I proposed and falsified
 
@@ -202,14 +202,14 @@ is not. Any change based on it needs a board to measure it, rather than a decisi
 
 ### Why this survived
 
-Three reasons worth stating, because they generalize:
+Three reasons, each of which applies beyond this case:
 
 1. **The fan-out is invisible per query.** Queries do not report a place's key count, so 19 rows for `to`
    looks like a busy key rather than a data problem.
-2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
+2. **The bad rows are shaped exactly like the good ones.** Both are alt-names with a language code and
    `privateuse=preferred`. Toledo shows why the alias rows are required: abbreviation aliases are how
    `TO` → Toledo works. `is_primary=0` rows therefore cannot be dropped wholesale.
-3. **It is not the stopword problem**, which is what I expected going in. That problem belongs to the FTS
+3. **It is not the stopword problem.** I expected the stopword problem going in. That problem belongs to the FTS
    route (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking
    alias data. The small count makes the failure harder to see.
 
@@ -218,7 +218,7 @@ Three reasons worth stating, because they generalize:
 ## Status
 
 No item here is filed. The `Of` half produced a shipped fix (seat preference) whose end-to-end reach is
-still unverified; the `to` half is unfixed and undiagnosed past the mechanism above.
+still unverified. The `to` half is unfixed and undiagnosed past the mechanism above.
 
 Both rest on two artifacts that cannot state their own provenance. That gap is the most likely way for
 this document to go stale without anyone noticing.

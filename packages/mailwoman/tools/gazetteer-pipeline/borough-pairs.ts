@@ -144,17 +144,17 @@ const DEFAULT_PAIR_PLACETYPES: {
 }
 
 /**
- * Shortest parent alias worth indexing.
+ * Shortest parent alias the index admits.
  *
  * WOF's `eng` variants include airport and agency codes ("BLR", "bbmp" for Bangalore).
- * Three letters or fewer usually identifies that class rather than a name anyone writes in an address.
+ * This module treats three letters or fewer as that class rather than a name anyone writes in an address.
  *
  * A short key is also likely to collide with an unrelated word.
  */
 const MIN_ALIAS_LENGTH = 3
 
 /**
- * A surface this Latin-script model could actually read: letters (including accented and extended Latin),
+ * A surface this Latin-script model could read: letters (including accented and extended Latin),
  * digits, spaces and the punctuation found in place names.
  *
  * A string with a character outside that range is a non-Latin rendering of the same place
@@ -211,8 +211,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		// The existing surface-expansion probe (`pair-index-hierarchy-probe.ts`) checks
 		// on `official = 1`; that is right for name-exactness checks but too strict here,
 		// because it is exactly the rows a rename leaves behind.
-		// Positive evidence only: an extra parent key can only create a match
-		// where the writer actually used that name.
+		// Positive evidence only: an extra parent key can only create a match where the writer used that name.
 		const aliasRows = !expandParentAliases
 			? []
 			: (db
@@ -232,9 +231,9 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		for (const { canonical, alias, language } of aliasRows) {
 			if (!canonical || !alias || canonical === alias) continue
 
-			// The writer's language decides which alias is worth carrying: the country's
+			// The writer's language decides which aliases the index keeps: the country's
 			// own official languages, plus English as the lingua franca.
-			// WOF's preferred name is often neither.
+			// WOF's preferred name can be in neither.
 			// It stores `Rome` (eng) for a city Italians write `Roma` (ita),
 			// and `Bangalore` for one Indians write `Bengaluru`.
 			// A query restricted to `eng`, as this was when India motivated it,

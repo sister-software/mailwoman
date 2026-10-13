@@ -10,7 +10,7 @@ source-of-truth: package.json across the published workspaces, release.config.js
 ## Scope
 
 This page is curated rather than exhaustive. Mailwoman is 75 workspaces and 60 of them are on npm, but
-most arrive as a dependency of something else and are never named in an install command. Listed here
+most arrive as a dependency of something else and never appear in an install command. Listed here
 are the packages a consumer installs on purpose.
 
 For the full workspace inventory, including the build tooling and the pipeline stages this page
@@ -46,7 +46,7 @@ and the pipeline stages behind it, so you do not name them.
 Each adds a locale to a running install. All of them overlay the `en-us` encoder rather than replacing
 it, so installing several costs locale data rather than several models.
 
-| Package                           | Locale        | What the overlay adds                              |
+| Package                           | Locale        | What the weights overlay adds                      |
 | --------------------------------- | ------------- | -------------------------------------------------- |
 | `@mailwoman/neural-weights-en-us` | United States | The base model, the tokenizer, and US locale data  |
 | `@mailwoman/neural-weights-fr-fr` | France        | Postcode anchors, a pair index, a locale gazetteer |
@@ -77,7 +77,7 @@ The gazetteer database itself is a separate download and is in no package. Run
 
 | Package                        | What it is                                                                  | Install it when                                            |
 | ------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `@mailwoman/neural`            | Carries the browser runtime too, at `./web-loader` and `./web-onnx-runner`  | You parse client-side. WebGPU, with a WebAssembly fallback |
+| `@mailwoman/neural`            | Contains the browser runtime too, at `./web-loader` and `./web-onnx-runner` | You parse client-side. WebGPU, with a WebAssembly fallback |
 | `onnxruntime-web`              | The inference runtime itself — an **optional peer**, so install it yourself | You parse client-side                                      |
 | `@mailwoman/resolver-wof-wasm` | The browser gazetteer backend                                               | You also geocode client-side                               |
 
@@ -130,7 +130,7 @@ a library, and `mailwoman serve` is its command. The endpoint tables are on
 
 The three lookup packages read databases built like the gazetteer, so each needs its data file as
 well as its package. `@mailwoman/annotations` is the interface the drop-in servers already use, so a
-Nominatim-shaped response carries these without your installing anything.
+Nominatim-shaped response includes these without your installing anything.
 
 ## Errors
 
@@ -139,22 +139,22 @@ Nominatim-shaped response carries these without your installing anything.
 | `Could not resolve @mailwoman/neural-weights-<locale>`         | The weights package for that locale is not installed      | Install it, or run `mailwoman parse --download-weights`                          |
 | `ERR_REQUIRE_ESM` or a `require()` failure                     | Every package is ESM only                                 | Use `import`, or a dynamic `import()` from CommonJS                              |
 | A `503` from a geocoding endpoint                              | The resolver package or the gazetteer database is missing | Install `@mailwoman/resolver-wof-sqlite` and run `mailwoman data pull candidate` |
-| Versions differ across `@mailwoman/*` packages after an update | The release is lockstep; a partial update is a mixed tree | Update them together, or run `mailwoman doctor`                                  |
+| Versions differ across `@mailwoman/*` packages after an update | The release is lockstep. A partial update is a mixed tree | Update them together, or run `mailwoman doctor`                                  |
 
 ## Rationale
 
 Lockstep versioning means one number answers "which release do I have" across every package at once.
 The cost is that the release number makes no statement about the model: most releases are code-only, so
-consecutive releases can carry the same model. Each weights package carries its own model card
+consecutive releases can ship the same model. Each weights package includes its own model card
 with the lineage.
 
 The pipeline stages are published but unlisted here because naming them in an install is a signal you
-are building a pipeline rather than using one. They are real packages with real interfaces; they are
-just not the install surface.
+are building a pipeline rather than using one. They are real packages with real interfaces. They are
+not the install surface.
 
 ## See also
 
 - [Footprints](./footprints.mdx) — measured sizes for everything on this page.
-- [Locales and tiers](./locales-and-tiers.mdx) — what each locale bundle carries a claim for.
+- [Locales and tiers](./locales-and-tiers.mdx) — what each locale bundle makes a claim for.
 - [What ships today](../status.mdx) — the current release and its limits.
 - [Install and first parse](../get-started/install-and-first-parse.mdx) — the two-package install, executed.

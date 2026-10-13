@@ -87,7 +87,8 @@ export interface CapitalsReference {
 		/**
 		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country.
 		 *
-		 * These are worth a read rather than a failure: multi-capital countries and spelling drift land here.
+		 * These are reported for review rather than as a failure: multi-capital countries
+		 * and spelling drift land here.
 		 */
 		capital_name_mismatches: string[]
 	}

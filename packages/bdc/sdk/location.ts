@@ -18,7 +18,7 @@ export const BROADBAND_SERVICABLE_LOCATION_INPUT_PATTERN = /^\d{10}$/
  *
  * The BSL ID remains persistent version to version when newer evidence indicates the
  * position of the serviceable location or the presence of a serviceable location on a
- * single location parcel is not significantly changed as compared to the prior version.
+ * single location parcel is not substantially changed as compared to the prior version.
  *
  * - While IDs persist across Fabric versions does not mean that the latitude and longitude are unchanged.
  * - An ID will remain consistent across versions when a different building is selected on a single parcel.

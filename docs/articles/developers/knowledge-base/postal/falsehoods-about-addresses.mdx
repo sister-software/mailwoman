@@ -17,8 +17,8 @@ wrong, and how wrong?
 
 Michael Tandy has maintained a
 [catalogue of address falsehoods](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
-since 2013, and the UK and Dutch counterexamples below are drawn from it. The framing worth keeping is
-his: these are the cases a rule set fails on first, and they arrive in production data at a rate that
+since 2013, and the UK and Dutch counterexamples below are drawn from it. This page keeps his
+framing: these are the cases a rule set fails on first, and they arrive in production data at a rate that
 makes them ordinary rather than exotic.
 
 Each line is one assumption and one address that breaks it.
@@ -41,21 +41,21 @@ Each line is one assumption and one address that breaks it.
 ## Streets
 
 - **A street name ends in a type word.** `Piccadilly`, `Broadway`, `Strand`. Three of the
-  best-known streets in the English-speaking world carry no suffix.
+  best-known streets in the English-speaking world have no suffix.
 - **There is exactly one type word, and it comes last.** `rue de Rivoli` puts it first.
   `Avenue Road` in Toronto is built from two of them, so a suffix-stripping pass leaves no name behind.
-- **A street name contains no digits.** `Plein 1944` in Nijmegen is named after a year, and it takes
+- **A street name contains no digits.** `Plein 1944` in Nijmegen takes its name from a year, and it takes
   house numbers after that year.
 - **A street name is unique within a city.** London has sixteen streets whose name is some form of
   High Street — plain in several postcodes, with a place folded in elsewhere, like Islington High
-  Street and Camden High Street — so `High Street, London` alone never picks out a single one.
+  Street and Camden High Street — so `High Street, London` by itself never picks out a single one.
 - **Every address has a street.** Japanese addresses number blocks rather than streets. Mannheim
   writes `R 5, 6-13`, where `R 5` is a block in a lettered grid.
 
 ## Numbers
 
 - **A building number must be a positive integer.** `0 Egmont Road, Middlesbrough` exists. So do hyphenated
-  ranges such as `4-5 Bonhill Street, London`, and half-numbers, which appear as `43 1/2`, `43.5` or
+  ranges such as `4-5 Bonhill Street, London`, and half-numbers. A half-number appears as `43 1/2`, `43.5` or
   `43½` depending on which database you are reading.
 - **A number at the front of the address is the building number.** `Minusone Priory Road, Newbury` has
   no building number. The word is part of the street name.
@@ -83,7 +83,7 @@ Each line is one assumption and one address that breaks it.
 
 ## Hierarchy
 
-- **Every address has a state.** No UK, French or Japanese address carries a level that corresponds to
+- **Every address has a state.** No UK, French or Japanese address has a level that corresponds to
   one.
 - **Every address has a county.** UK addresses have not formally required one since 1996, when
   automated postcode sorting made it redundant
@@ -93,8 +93,8 @@ Each line is one assumption and one address that breaks it.
   distinct places called Springfield: 86 of them across 33 states, and six with no state recorded
   against them at all — an absence in the gazetteer rather than a fact about those six places.
   `Springfield` on its own is a 92-way question.
-- **The postal town is the municipality.** Brooklyn is a postal city that the Postal Service accepts;
-  the municipality is New York. Both are correct, for different readers.
+- **The postal town is the municipality.** Brooklyn is a postal city that the Postal Service accepts.
+  The municipality is New York. Both are correct, for different readers.
 - **Administrative boundaries hold still.** The county of Gwent was abolished. Annexation moves a
   building into a new municipality without moving the building, and the postal town can lag the legal
   one by years.
@@ -107,9 +107,9 @@ set has to name each case, and the cases combine — a Cyrillic street name, in 
 with an apostrophe in it, in a town that was renamed last year.
 
 Models have the same limit, and we must state it explicitly. A model that has seen
-no fractional house numbers will not invent the category; it will assign the pieces to whatever labels
+no fractional house numbers will not invent the category. It will assign the pieces to whatever labels
 its training distribution makes likely. The counterexamples above are useful to a model only insofar
-as the training corpus contains their shapes, which is why locale claims here are made per locale and
+as the training corpus contains their shapes. For that reason locale claims here are made per locale and
 measured rather than asserted for the world
 ([Locales and tiers](../../reference/locales-and-tiers.mdx)).
 
@@ -120,4 +120,4 @@ measured rather than asserted for the world
 - [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — the postcode section, at length.
 - [Two addresses, one building](./two-addresses-one-building.mdx) — the hierarchy section, at length.
 - [Handle messy input](../../how-to/handle-messy-input.mdx) — what the pipeline repairs today, and
-  what it leaves alone.
+  what it leaves unchanged.

@@ -39,7 +39,7 @@ wikimedia-importance.csv.gz (19M rows, ~250 MB compressed)
 
 1. `build-importance.ts` writes `place_importance` table into the WOF SQLite
 2. `fst-builder.ts` reads `place_importance` (falls back to `place_population` → pseudo-importance)
-3. `PlaceEntry.importance` carries the score through serialization (Float32 in the binary FST)
+3. `PlaceEntry.importance` stores the score through serialization (Float32 in the binary FST)
 4. `fst-prior.ts` computes bias: `importance × biasScale × maxBias` (linear, capped at 3.0 logits)
 
 ## Why not population

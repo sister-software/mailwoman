@@ -1,6 +1,6 @@
 # Runs the test suite on PRs, pushes to main, and release branches.
 #
-# The `test` job aggregates every leg. The ruleset on main requires a check named `test`, and
+# The `test` job aggregates every leg. The ruleset on main requires the check `test`, and
 # publish.yml auto-merges the release PR on it, so do not rename that job.
 #
 # The legs split by what they need.
@@ -12,7 +12,7 @@
 #
 # Each lab runner exports MAILWOMAN_DATA_ROOT from its own `.env`. Do not set it in a job-level
 # `env:` block from a secret. That block overrides the inherited value, and a missing secret expands
-# to an empty string, which then resolves relative to the checkout.
+# to an empty string. An empty path then resolves relative to the checkout.
 #
 # publish.yml's prepare phase dispatches this workflow on the release branch because a PR opened
 # with GITHUB_TOKEN does not trigger `on: pull_request`.
@@ -123,9 +123,9 @@ jobs:
           # The `.runners | type == "array"` test is required rather than defensive noise. Every API
           # failure — bad credentials, 403, 404 — returns a JSON object with a `message` and no
           # `runners` key, so a tolerant expression like `.runners // []` counts it as zero online
-          # runners and reports the fleet down. A count of zero cannot tell "nothing is online" from
-          # "nobody answered the question"; only the shape of the response can. Anything that is not
-          # an array yields a non-numeric sentinel, which the guard below turns into fail-closed.
+          # runners and reports the fleet down. A count of zero cannot tell "zero runners are online" from
+          # "the API refused the request". Only the shape of the response can. Anything that is not
+          # an array yields a non-numeric sentinel. The guard below fails closed on that sentinel.
           online=$(curl -sS --max-time 30 \
             -H "Authorization: Bearer ${PROBE_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
@@ -181,7 +181,7 @@ jobs:
       - name: Enable Corepack (yarn 4)
         run: corepack enable
 
-      # This is the only install that uses Yarn's hardened mode, which checks the lockfile against
+      # This is the only install that uses Yarn's hardened mode. Hardened mode checks the lockfile against
       # the registry. `.yarnrc.yml` turns it off elsewhere so lab installs stay on the global cache.
       - name: Install dependencies
         run: yarn install --immutable
@@ -298,7 +298,7 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # The dev-mcp symbol index shells out to ripgrep, which the hosted image lacks.
+      # The dev-mcp symbol index shells out to ripgrep. The hosted image lacks ripgrep.
       - name: Install ripgrep (dev-mcp symbol index)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
 
@@ -479,7 +479,7 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # `--with-deps` installs the Chromium system libraries with sudo, which hosted runners allow.
+      # `--with-deps` installs the Chromium system libraries with sudo. Hosted runners allow sudo.
       - name: Install Playwright chromium (react browser tests)
         if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true'
         run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
@@ -549,7 +549,7 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # `--with-deps` installs the Chromium system libraries with sudo, which hosted runners allow.
+      # `--with-deps` installs the Chromium system libraries with sudo. Hosted runners allow sudo.
       - name: Install Playwright chromium (Earth smoke)
         run: yarn workspace @mailwoman/earth exec playwright install --with-deps chromium
 

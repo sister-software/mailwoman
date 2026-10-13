@@ -127,8 +127,8 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 }
 
 /**
- * What a confidence floor at each threshold would actually buy, since a well-calibrated
- * surface can still have no threshold worth setting.
+ * The precision a confidence floor reaches at each threshold and the correct answers it discards,
+ * since a well-calibrated surface can still have no threshold that keeps enough correct answers to set.
  *
  * Both columns of the trade are reported because a precision figure by itself
  * hides the correct answers the check throws away.

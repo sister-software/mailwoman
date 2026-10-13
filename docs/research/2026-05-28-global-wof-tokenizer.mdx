@@ -13,7 +13,7 @@ Today we fixed that.
 
 ## The data
 
-Who's On First ships one GitHub repo per country, each containing GeoJSON files for every administrative place. Every place carries localized name variants — "New York" has a `name:zho` of "纽约", a `name:jpn` of "ニューヨーク", a `name:kor` of "뉴욕", and dozens more.
+Who's On First ships one GitHub repo per country, each containing GeoJSON files for every administrative place. Every place has localized name variants — "New York" has a `name:zho` of "纽约", a `name:jpn` of "ニューヨーク", a `name:kor` of "뉴욕", and dozens more.
 
 We cloned 7 priority countries (US, FR, JP, CN, KR, DE, GB) — 1.74 million GeoJSON files — and built them into a unified SQLite database using our WAL + Freeze pipeline:
 

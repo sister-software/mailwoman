@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Builds the map credits from the build manifest, so they list the sources and the nomenclature
- *   snapshot date that the build actually used.
+ *   snapshot date that the build used.
  */
 
 import type { PlanetaryBuildManifest } from "@mailwoman/astrogeology/schema/manifest"

@@ -38,7 +38,7 @@ interface NPPESRow {
 	"Provider Second Line Business Practice Location Address": string
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
-	// This is the publisher's exact column name, so it must keep the words "Postal Code".
+	// This is the publisher's exact column name, so the string keeps the publisher's spelling.
 	"Provider Business Practice Location Address Postal Code": string
 }
 

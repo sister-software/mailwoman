@@ -136,7 +136,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * The entries accepting at a state, highest rank first (the stored order — no query-time sort).
 	 *
-	 * `limit` caps how many are decoded.
+	 * `limit` caps the number decoded.
 	 * An out-of-range state yields `[]`.
 	 */
 	entriesAt(stateID: number, limit?: number): AncestrieRecord[] {

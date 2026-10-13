@@ -6,7 +6,7 @@ A third-party review synthesizing the project's documentation, blog posts, retro
 
 Mailwoman is on the right strategic track. The strongest idea in the project is the Knowledge Ladder — a staged decomposition that assigns structural priors (phrase grouping, kind classification, locale detection) to cheap rule-based layers, semantic tagging to a small neural model, sequence validity to a CRF with a frozen structural transition mask, cross-component coherence to a joint-decoding reconciler, and world hierarchy to a WOF gazetteer. This is the correct line. It is better than "rules forever" or "one model does everything."
 
-The current work is a measured step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset product checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a measured step forward as architecture and instrumentation, but the model-quality claim is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset product checks before spending H100/LLM/human-labeling budget at scale.
 
 **Recommended posture: continue, but narrow the next cycle.** Treat the next spend as validation of the pipeline hypothesis rather than as a release train.
 
@@ -26,18 +26,18 @@ This is the correct historical synthesis. A geocoder combines NLP and database l
 
 The staged pipeline is the project's strongest intellectual contribution:
 
-| Layer                | What it knows                                                    | Shipped today                                            |
-| -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
-| 1. Normalize         | Unicode, whitespace, case folding, reversible offsets            | Yes                                                      |
-| 2. Locale check      | Language / script family                                         | Yes (rule-based workspace; not wired as factory default) |
-| 2.5. Kind classifier | Overall query category (postcode-only, structured, intersection) | Yes (rule-based)                                         |
-| 2.7. Phrase grouper  | Coherent input units — boundary discovery                        | Yes (rule-based, v0.5.0)                                 |
-| 3. Token classify    | Per-token semantic type distribution                             | Yes (neural, 9M-param encoder + CRF)                     |
-| 4. Sequence correct  | BIO sequence validity (orphan-I veto)                            | Yes (CRF with frozen structural mask)                    |
-| 5. Reconcile         | Joint-coherent interpretation across candidates                  | Opt-in; mocked top-k in tests                            |
-| 6. Resolve           | World hierarchy — WOF gazetteer                                  | Yes (WOF SQLite)                                         |
+| Layer                | What it knows                                                    | Shipped today                                             |
+| -------------------- | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| 1. Normalize         | Unicode, whitespace, case folding, reversible offsets            | Yes                                                       |
+| 2. Locale check      | Language / script family                                         | Yes (rule-based workspace. The factory default omits it.) |
+| 2.5. Kind classifier | Overall query category (postcode-only, structured, intersection) | Yes (rule-based)                                          |
+| 2.7. Phrase grouper  | Coherent input units — boundary discovery                        | Yes (rule-based, v0.5.0)                                  |
+| 3. Token classify    | Per-token semantic type distribution                             | Yes (neural, 9M-param encoder + CRF)                      |
+| 4. Sequence correct  | BIO sequence validity (orphan-I veto)                            | Yes (CRF with frozen structural mask)                     |
+| 5. Reconcile         | Joint-coherent interpretation across candidates                  | Opt-in. Mocked top-k in tests.                            |
+| 6. Resolve           | World hierarchy — WOF gazetteer                                  | Yes (WOF SQLite)                                          |
 
-This decomposition is consistent with the bitter lesson. The bitter lesson says "general methods that use computation win over hand-engineered domain knowledge." It argues against hand-engineering what the system could learn from data, and it does not require one model to do everything. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup rather than a learning problem; boundary discovery is structural rather than semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
+This decomposition is consistent with the bitter lesson. The bitter lesson states "general methods that use computation win over hand-engineered domain knowledge." It argues against hand-engineering what the system could learn from data, and it does not require one model to do everything. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup rather than a learning problem, and boundary discovery is structural rather than semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
 
 ### 2. Parse/resolve split stays intact
 
@@ -88,7 +88,7 @@ The remaining suspects in v0.5.0 are the **A1 tokenizer** (new 48K vocab) and **
 
 The plan explicitly rejects fine-tuning from pretrained BERT because "address vocabulary is too narrow and too unlike natural language for that pretraining to help." This is a reasonable intuition, but the empirical record of 9 diverging runs is evidence it needs testing. A `distilbert-base-uncased` checkpoint with a CRF head, fine-tuned on corpus-v0.3.0, costs ~2 GPU hours to set up and run. If it trains stably on the first try while the from-scratch model has diverged 9 times, the intuition was wrong — and the project saves months. If it diverges too, the problem is deeper and the from-scratch approach is vindicated.
 
-A secondary concern: 9M params for 21 BIO classes across 2 locales is aggressive. spaCy's `ja_core_news_trf` uses 110M for general Japanese NER. The divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — resembles a model finding memorization more stable than generalization, which is a capacity-to-diversity signature.
+A secondary concern: 9M params for 21 BIO classes across 2 locales is aggressive. spaCy's `ja_core_news_trf` uses 110M for general Japanese NER. The divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — resembles a model finding memorization more stable than generalization. That pattern is a capacity-to-diversity signature.
 
 ### 4. Eval evidence is still too weak for a large spend
 
@@ -96,8 +96,8 @@ The model metrics are not yet a green light:
 
 - v0.3.0 gained `house_number`, `street`, and `venue` capability, but coarse labels regressed badly (region 0.83 → 0.18).
 - v0.4.0 produced small fine-label gains (street 0.27 → 0.30, house_number 0.78 → 0.79) but postcode regressed 0.76 → 0.69 and full-parse exact match fell 0.107 → 0.082.
-- Aggregate macro F1 improved in one framing, but the component-level story is mixed.
-- Confidence is reported mostly per token; product users need parse-level and candidate-level calibration.
+- Aggregate macro F1 improved in one framing, but the component-level results are mixed.
+- Confidence is reported mostly per token. Product users need parse-level and candidate-level calibration.
 - Golden v0.1.2 (4,535 entries) includes adversarial transliteration rows the model was not trained for — useful as a stress test but misleading as a headline denominator unless separately weighted. The set is also small enough that adversarial weighting effects dominate eval deltas (92% of country FN from transliteration).
 
 ### 5. Synthetic corpus validation catches alignment rather than semantics
@@ -116,13 +116,13 @@ LLM data is useful for kryptonite cases, but it should enter as a weighted adver
 
 Specific conflicts found:
 
-| Doc                            | Claims                                                | Reality                                                        |
-| ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------- |
-| `TODO.md`                      | v0.5.0 threads A–E are **pending**                    | `v0-5-0-shipped.md` says most **shipped** or partially shipped |
-| `STAGES.md` header             | Stages 1/2/2.5/candidate-list **unbuilt**             | Later sections say they **shipped**                            |
-| `ARCHITECTURE.md`              | Describes **47-label** schema, old `packages/` layout | Shipped uses **21-label** Tier 2 subset                        |
-| `runtime-pipeline.ts` comments | Locale check/kind classifier are **stubbed**          | Kind is wired; locale-hint exists as workspace                 |
-| `tokenization.md`              | Describes v0.1 **16K** tokenizer as current           | v0.5.0 docs discuss **48K** A1 tokenizer                       |
+| Doc                            | Claims                                                | Reality                                                         |
+| ------------------------------ | ----------------------------------------------------- | --------------------------------------------------------------- |
+| `TODO.md`                      | v0.5.0 threads A–E are **pending**                    | `v0-5-0-shipped.md` lists most **shipped** or partially shipped |
+| `STAGES.md` header             | Stages 1/2/2.5/candidate-list **unbuilt**             | Later sections say they **shipped**                             |
+| `ARCHITECTURE.md`              | Describes **47-label** schema, old `packages/` layout | Shipped uses **21-label** Tier 2 subset                         |
+| `runtime-pipeline.ts` comments | Locale check/kind classifier are **stubbed**          | Kind is wired. Locale-hint exists as workspace.                 |
+| `tokenization.md`              | Describes v0.1 **16K** tokenizer as current           | v0.5.0 docs discuss **48K** A1 tokenizer                        |
 
 When next steps are expensive, stale status can burn GPU cycles on the wrong premise.
 
@@ -197,9 +197,9 @@ Run the next cheap-but-informative experiments before any full retrain:
 
 Decision:
 
-- If A1 + v0.3.0 trains directly: ship tokenizer win without B2 mass; defer transliteration training.
+- If A1 + v0.3.0 trains directly: ship tokenizer win without B2 mass, and defer transliteration training.
 - If v0.1 + v0.4.0 diverges: corpus composition is the blocker. Stratify B2 rows and test per-family.
-- If only A1 diverges: investigate vocab/embedding frequency; consider reducing vocab or initializing from A0 differently.
+- If only A1 diverges: investigate vocab/embedding frequency, and consider reducing vocab or initializing from A0 differently.
 - If all combinations diverge: the destabilizer is the dual-loss interaction under sustained peak LR. Try CE-only training as a control.
 
 ### Step 2 — Wire real joint decode behind a feature flag

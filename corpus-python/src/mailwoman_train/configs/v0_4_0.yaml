@@ -20,7 +20,7 @@
 
 data:
   # Reuses corpus-v0.3.0 — issue #116 §6 confirms the corpus need not be rebuilt
-  # unless §4 source weights change significantly. Source weights have changed, but
+  # unless §4 changes which parquet files exist. Source weights have changed, but
   # the underlying parquet files are unchanged. the loader's source_weights filter does
   # the rebalancing at sampling time.
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
@@ -33,7 +33,7 @@ data:
   # - usgov-nad dropped 2.0 → 1.0 (its 57.9M-row volume + venue+street+house_number
   #   coverage pushed the corpus into a fine-label-heavy mix. let it be 1× instead of 2×)
   # - wof-admin + wof-postalcode bumped 1.0 → 2.0 (re-prioritize coarse-only rows)
-  # - ban + tiger unchanged (they carry both fine and coarse signal)
+  # - ban + tiger unchanged (their rows hold both fine and coarse labels)
   source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0
@@ -67,7 +67,7 @@ model:
   label_smoothing: 0.0
   # v0.4.0 §1: per-token CRF NLL normalization. CRF NLL is now scaled per-token,
   # matching CE's natural magnitude — the dual loss is self-balancing. The
-  # ``crf_loss_weight`` knob below can be 1.0 cleanly. if training is stable, the
+  # ``crf_loss_weight`` knob below can be 1.0. If training is stable, the
   # hand-tuning saga from v0.3.0 (1.0 → 0.1 → 0.05) is over.
   crf_normalization: per_token
   crf_loss_weight: 1.0
@@ -109,7 +109,7 @@ train:
   eval_batch_size: 40
   grad_accum_steps: 4
   # v0.4.0 §2: lr back up to 5e-4 (v0.2.0 baseline). The per-token CRF norm + class
-  # weights should let this run cleanly. If divergence recurs by step 2000, bisect
+  # weights should let this run without divergence. If divergence recurs by step 2000, bisect
   # down to 3e-4 first. v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
   # masked the dual-loss instability.
   learning_rate: 5.0e-4

@@ -204,7 +204,7 @@ export interface PhraseCollisionCensus {
 		/**
 		 * Names that match a probe token for token but differ after activity-phrase normalization.
 		 *
-		 * Punctuation or diacritics usually cause the difference.
+		 * Punctuation or diacritics are the expected cause of the difference.
 		 * The report lists each pair so a reader can inspect it.
 		 */
 		foldOnlyMatches: Array<{ probe: string; name: string }>

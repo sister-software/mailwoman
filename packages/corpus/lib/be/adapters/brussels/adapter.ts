@@ -51,7 +51,7 @@
  * Nine addresses write `<ad:component xlink:href=""/>` in the postal-zone slot, so those nine state
  * no postcode: `BE.BRUSSELS.BRIC.ADM.ADPT.220623`, `.220631`, `.220635`, `.256972`, `.257005` and
  * four more, in Bruxelles and Schaerbeek. `componentHrefs` skips an empty href, so an unwary reader
- * yields those rows with the postcode simply missing. This adapter refuses them and
+ * yields those rows with no postcode and no error. This adapter refuses them and
  * counts them under {@link Refusals.noPostcode}, because a postcode the publisher left unstated is
  * not a postcode this repository may read as absent from the address.
  *
@@ -224,7 +224,7 @@ const COMPONENT_TYPES = ["ad:ThoroughfareName", "ad:PostalDescriptor", "ad:Admin
  * An address reaching the reader with fewer readable references has written one of them empty.
  *
  * That count is how the nine postcode-less addresses are told apart from an
- * address whose reference simply does not resolve.
+ * address whose reference does not resolve.
  */
 const COMPONENTS_PER_ADDRESS = 7
 

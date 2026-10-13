@@ -7,10 +7,10 @@ title: "2026-05-28 Layer 1 morphology FST eval"
 
 Applied the newly-landed [street-morphology FST](../../site-2026-08/concepts/street-supplement-architecture.mdx)
 as a decoder-only fix on the v0.6.1 weights and re-ran the 4561-entry golden set. Goal: measure
-whether the morphology prior alone suppresses v0.6.1's 1066 `dependent_locality` hallucinations
+whether the morphology prior, applied without any other change, suppresses v0.6.1's 1066 `dependent_locality` hallucinations
 without retraining.
 
-**TL;DR:** It does not. The mechanism is structurally correct (dep_loc hallucinations drop
+**Summary:** It does not. The mechanism is structurally correct (dep_loc hallucinations drop
 monotonically as the penalty is strengthened) but the model's overconfidence on
 synth-street-induced predictions is too high for any practical decoder-time bias to flip. The
 right deployment of Layer 1 is **alongside a v0.6.2 retrain** that adds O-tagged street slots
@@ -20,7 +20,7 @@ to the negative-example corpus.
 
 - **Model:** `model-v061-step-100000-int8.onnx` (the experimental v0.6.1 weights with synth-street
   extract, weight 2.0, that produced the original 1066 dep_loc regression)
-- **Tokenizer:** `v0.6.0-a0` (multi-script; matches the model's training tokenizer)
+- **Tokenizer:** `v0.6.0-a0` (multi-script, matches the model's training tokenizer)
 - **Admin FST:** `fst-en-us.bin` (the production admin FST)
 - **Morphology FST:** built in-process from the 60 libpostal `street_types.txt` dictionaries
   (`core/data/libpostal/dictionaries/{locale}/street_types.txt`)
@@ -42,7 +42,7 @@ Tuned: `maxAffixBias=1.0`, `maxNeighbourStreetBias=1.0`, `dependentLocalityPenal
 
 ## Findings
 
-### Admin FST does nothing for street-side errors
+### Admin FST leaves street-side errors unchanged
 
 `v0.6.1 neural-only` vs `v0.6.1 + admin FST only` is essentially a no-op (1066 vs 1063 dep_loc
 hallucinations). Confirms the structural diagnosis from the
@@ -60,7 +60,7 @@ legitimate decisions on other tokens.
 
 The model's confidence on its synth-street-induced dep_loc predictions is high. Per
 the v0.6.1 calibration probe design: when the hallucinations
-are high-confidence, **retraining is required, not just a decoder-time threshold or bias**.
+are high-confidence, **retraining is required, because a decoder-time threshold or bias is insufficient**.
 
 ### Default morphology bias is over-aggressive and causes collateral street_suffix damage
 
@@ -94,8 +94,8 @@ and the [street-supplement architecture doc](../../site-2026-08/concepts/street-
    that pushed the model into overconfident dep_loc predictions.
 2. **Explicit O-tags on street slots in non-street corpus rows** — the negative-example
    counter-distribution that synth-street is currently missing.
-3. **Layer 1 prior at inference** — the morphology FST as an additive anchor; meaningful on top
-   of a corrected backbone, insufficient on its own.
+3. **Layer 1 prior at inference** — the morphology FST as an additive anchor. It is meaningful on top
+   of a corrected backbone and insufficient without one.
 
 The morphology FST infrastructure landed in this shift is exactly the inference plumbing v0.6.2
 will use.

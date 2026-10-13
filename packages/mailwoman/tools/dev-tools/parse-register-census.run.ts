@@ -1,5 +1,5 @@
 /**
- * How often each parse register fires, across the populations the model is trained and graded on.
+ * The firing count of each parse register, across the populations the model is trained and graded on.
  *
  * The name includes `parse-` because `register` means two unrelated things in this directory:
  * `register-board.ts` projects a query into a letter case (`asis`, `lower`, `upper`), while this

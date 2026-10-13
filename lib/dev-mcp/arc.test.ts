@@ -102,7 +102,7 @@ describe("decideArc", () => {
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 2, 8),
-			// NL is tier 2 and unprotected, so its regressions are priced by the net rather than refused outright.
+			// NL is tier 2 and unprotected, so its regressions are priced by the net rather than refused on their own.
 			leg("candidate", 30, 6, { regressedByCountry: { NL: 6 } }),
 			PROTECTIONS
 		)

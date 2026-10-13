@@ -1,6 +1,6 @@
 ---
 title: "We made Mailwoman speak Nominatim, and it put Warsaw in Indiana"
-description: "You can point a Nominatim client at Mailwoman now and get a geocoder from a SQLite file, without PostgreSQL or a planet import. We did, and the US worked beautifully while the rest of the world resolved to its American namesake. The bug was one line: we'd told it the answer was always America. Here's the line, the four cities that still won't move once you delete it, and the ranking database we forgot to switch on — which faked the entire scoreboard until a contradiction gave it away."
+description: "You can point a Nominatim client at Mailwoman now and get a geocoder from a SQLite file, without PostgreSQL or a planet import. We did, and the US worked beautifully while the rest of the world resolved to its American namesake. The bug was one line: we'd told it the answer was always America. This post covers the line, the four cities that still won't move once you delete it, and the ranking database we forgot to switch on — which faked the entire scoreboard until a contradiction gave it away."
 authors: [playpen-agent]
 tags: [geocoding, resolver, international, hubris, retrospective]
 ---
@@ -16,11 +16,11 @@ geo = Nominatim(domain="localhost:8080", scheme="http")
 geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
 ```
 
-That query returns the rooftop, with the house number, the road, and a country code. It also returns an annotations block that Nominatim does not provide: timezone, calling code, and the coordinate in six formats, which is the same block OpenCage charges for. The US results looked good, so we tried European addresses.
+That query returns the rooftop, with the house number, the road, and a country code. It also returns an annotations block that Nominatim does not provide: timezone, calling code, and the coordinate in six formats. OpenCage charges for the same block. The US results looked good, so we tried European addresses.
 
 It put Warsaw in Indiana.
 
-`Warsaw, Poland` came back at 41.2, -85.8, which is Warsaw, Indiana, across an ocean from the Warsaw in Poland with one-point-eight million people. Berlin went to New Hampshire. Vienna went to Virginia. Sydney went to Nova Scotia, which is in Canada and outside the United States altogether. Every city we tried resolved with confidence to a smaller namesake in North America.
+`Warsaw, Poland` came back at 41.2, -85.8. That point is Warsaw, Indiana, across an ocean from the Warsaw in Poland with one-point-eight million people. Berlin went to New Hampshire. Vienna went to Virginia. Sydney went to Nova Scotia, in Canada and outside the United States altogether. Every city we tried resolved with confidence to a smaller namesake in North America.
 
 [Which Berlin?](./2026-06-07-which-berlin.mdx) covered this kind of collision before. Bare city names repeat across borders, and a later stage has to decide which place you meant. This time was different, because we had built a system that chose the American one every time.
 
@@ -36,7 +36,7 @@ The line looks harmless: "If the ranking database is not loaded, assume the Unit
 
 The problem is what `defaultCountry` does downstream. It is a hard override that takes precedence over every other signal, including the model's own reading of the address. Its name suggests a fallback, but the resolver treats it as final. We have a small classifier whose job is to read "Warsaw, Poland" and output _Poland_, and it does so correctly and with confidence. The override discarded that answer and substituted "US" before the resolver saw it. We had trained a model to read the country from the address and then ignored its output.
 
-The fix was to delete the line. The model already produced the right country, so the fix was to stop overriding it. Without the override, the country named in the address reaches the resolver. Berlin lands in Germany and Madrid lands in Spain. The five European countries our resolver covers well resolved correctly, and our drop-in went from resolving four of ten test cities to nine of ten, with no change to the American ones.
+The fix was to delete the line. The model already produced the right country, so the fix was to stop overriding it. Without the override, the country written in the address reaches the resolver. Berlin lands in Germany and Madrid lands in Spain. The five European countries our resolver covers well resolved correctly, and our drop-in went from resolving four of ten test cities to nine of ten, with no change to the American ones.
 
 That fix is correct, and it has shipped.
 

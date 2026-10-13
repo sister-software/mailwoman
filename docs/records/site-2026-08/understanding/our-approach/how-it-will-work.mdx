@@ -44,7 +44,7 @@ The v0.5.0 "fresh-slate" bundle shipped five of six planned threads to `main`:
 | Thread | Component                                                             | Status                                                       |
 | ------ | --------------------------------------------------------------------- | ------------------------------------------------------------ |
 | A0     | Tokenizer harness + A0 baseline weights                               | Shipped                                                      |
-| A1     | Tokenizer retrain on corpus-v0.4.0                                    | Trained; not yet used in stable classifier                   |
+| A1     | Tokenizer retrain on corpus-v0.4.0                                    | Trained, awaiting use in stable classifier                   |
 | B      | Kryptonite catalogue (4,771 adversarial rows)                         | Shipped                                                      |
 | B2     | Transliteration pairs (~73K US/FR → CJK/Cyrillic/Hangul/Han/Armenian) | Shipped                                                      |
 | C-s    | Classifier code path (top-k inference + phrase-prior conditioning)    | Scaffolded in `main`; full train (C-train) pending stability |
@@ -58,7 +58,7 @@ The A1 tokenizer halved byte-fallback on multi-script addresses (36.7% → 18.2%
 
 The C-train — the full classifier training run that would produce v0.5.0 weights — has not converged. Four training attempts using the v0.5.0 recipe all diverged with the same fingerprint seen in v0.4.0: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate.
 
-The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE term** by 8-20× in gradient magnitude. This is the opposite of what the v0.4.0 campaign assumed (it hypothesized CRF gradient collapse rather than CRF gradient dominance). The current experiment is **CE-only training**: remove the CRF loss term entirely, train on cross-entropy alone, keep the CRF as an inference-time structural decoder with the frozen mask.
+The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE term** by 8-20× in gradient magnitude. This is the opposite of what the v0.4.0 campaign assumed (it hypothesized CRF gradient collapse rather than CRF gradient dominance). The current experiment is **CE-only training**: remove the CRF loss term entirely, train on cross-entropy only, keep the CRF as an inference-time structural decoder with the frozen mask.
 
 Resolution path:
 

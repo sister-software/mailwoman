@@ -9,7 +9,7 @@
  *   The UK's top-level admin tier is itself the first oddity of this system. France has régions,
  *   Germany has Bundesländer and the US has states as a single flat layer.
  *   The UK has constituent _countries_ within the country. An address rarely names its constituent
- *   country directly. It usually has a `street, town, postcode` shape. The postcode area provides a
+ *   country directly. Its common shape is `street, town, postcode`. The postcode area provides a
  *   useful signal for inferring the constituent country, with documented exceptions in `postcode-area.ts`.
  *   This file provides the coarse admin label. The postcode area provides the geographic signal.
  */

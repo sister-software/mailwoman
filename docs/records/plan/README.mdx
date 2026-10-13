@@ -12,11 +12,11 @@ directory historical on 2026-07-02).
 
 What follows below this note is the plan that drove the neural classifier work from Phase 0
 through the release train, preserved as written. It declared a US + France v1 with Japanese as a
-Phase 6 stress test; the shipped reality (a multi-locale geocoder with drop-in API surfaces and a
+Phase 6 stress test. The shipped reality (a multi-locale geocoder with drop-in API surfaces and a
 record-matching workstream) outgrew it — which is what plans are for. Read it, and the
 `phases/*` + `reference/*` files it indexes, for design rationale and the reasoning behind
 decisions that still bind (`docs/engineering/reference/SCHEMA.mdx` remains the live authoritative record for the
-`ComponentTag` union; [CONTRIBUTING_MODEL_WORK](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) remains the live
+`ComponentTag` union, and [CONTRIBUTING_MODEL_WORK](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) remains the live
 model-work runbook).
 
 ## The plan as written (2026-05, status notes through 2026-06-11)
@@ -69,5 +69,5 @@ By end of Phase 3: `@mailwoman/neural@0.1.0` on npm, loading a quantized ONNX mo
 `ClassificationProposal` objects through the existing solver, beating rule-based Mailwoman on the
 held-out golden set for `country` and `region`. By end of Phase 6: the same architecture supports
 Japanese addresses with schema additions but no core refactor. Both happened — the second via the
-postcode-route resolver rather than parser training, which is its own validation of the
-schema-first bet.
+postcode-route resolver rather than parser training. That outcome validates the schema-first
+bet.

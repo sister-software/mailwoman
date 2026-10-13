@@ -237,7 +237,7 @@ export interface HarvestSKInspireTypeOptions {
 	 */
 	pageSize?: number
 	/**
-	 * Stop once the manifest holds this many pages, for a probe rather than a full harvest.
+	 * Stop once the manifest holds this number of pages, for a probe rather than a full harvest.
 	 */
 	maxPages?: number
 	signal?: AbortSignal
@@ -314,7 +314,7 @@ export interface FetchSKInspireOptions extends BaseFetchOptions {
 	 */
 	pageSize?: number
 	/**
-	 * Stop each type once its manifest holds this many pages, for a probe rather than a full harvest.
+	 * Stop each type once its manifest holds this number of pages, for a probe rather than a full harvest.
 	 */
 	maxPages?: number
 	signal?: AbortSignal
@@ -339,7 +339,7 @@ export function skInspireInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBu
  * for `mailwoman corpus fetch sk-inspire`.
  *
  * Each type is reported separately and a type that fails does not stop the rest, because the
- * documents are read together by the adapter and a partial directory is still worth resuming.
+ * documents are read together by the adapter and a resumed run completes a partial directory.
  * Re-runnable per type: a complete harvest whose file still hashes to its manifest's digest
  * makes no request, and an interrupted one resumes at the page after the last that reached disk.
  */

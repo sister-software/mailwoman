@@ -41,7 +41,7 @@ import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 
 /**
- * How many times `health fix` re-takes a plan before giving up.
+ * The number of times `health fix` re-takes a plan before giving up.
  * See {@link runFix} for why one pass is not enough.
  */
 const MAXIMUM_FIX_PASSES = 8
@@ -128,7 +128,7 @@ interface OperationView<TContext extends OperationContext> {
 	registry: ReadonlyArray<Operation<string, TContext>>
 	context: (base: OperationContext, io: DispatchIO) => TContext
 	/**
-	 * The exit code an output earns.
+	 * The exit code an output produces.
 	 * A view without one exits 0.
 	 */
 	exitCode?: (output: unknown) => number

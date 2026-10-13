@@ -38,7 +38,7 @@ export interface POISubjectBase {
 	matchedPhrase: string
 	confidence: number
 	/**
-	 * The rest of the query after the subject, usually the location anchor such as "near Springfield".
+	 * The rest of the query after the subject, such as the location anchor "near Springfield".
 	 */
 	remainder: string
 }

@@ -1,5 +1,5 @@
 ---
-title: "#727 Phase 4a — rerank built; the measurement was INVALID and is not a verdict"
+title: "#727 Phase 4a — rerank built, but the measurement was invalid and is not a verdict"
 ---
 
 # Phase 4a — the reranker exists, its first measurement was confounded, and I nearly shipped the false negative
@@ -17,8 +17,8 @@ top-5:
 | plausibility guard (veto country-centroids) | 3/267  | 0     | 0     | 0.5768 → 0.5768 (**+0**)  |
 | resolution specificity (prefer finer tier)  | 44/267 | 2     | 18    | 0.5768 → **0.5169** (−16) |
 
-The obvious write-up: _"resolution evidence cannot collect the oracle headroom; one signal is inert,
-the other is actively harmful."_ That would have been a tidy, plausible, **wrong** negative — and it
+The obvious write-up: _"resolution evidence cannot collect the oracle headroom. One signal is inert,
+and the other is actively harmful."_ That would have been a tidy, plausible, **wrong** negative — and it
 would have undercut the entire Phase-4 thesis on a bad instrument.
 
 ## What the check found
@@ -35,8 +35,8 @@ finest-resolved tier across the 267 parity fixtures (admin + postcode DBs only):
 ```
 
 **The harness resolver had no street-level data.** I constructed it as
-`WOFSQLitePlaceLookup({ databasePath: [admin-global-priority.db, postcode-locality-intl.db] })` — no
-situs, no interpolation, no BAN/OSM rooftop. It cannot distinguish a correct street parse from a
+`WOFSQLitePlaceLookup({ databasePath: [admin-global-priority.db, postcode-locality-intl.db] })`. It had
+no situs, interpolation or BAN/OSM rooftop data. It cannot distinguish a correct street parse from a
 wrong one because **it never resolves streets at all**.
 
 Both results are explained by the confound rather than by the thesis:
@@ -55,7 +55,7 @@ The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/d
 ## What is supported
 
 - `resolver/rerank.ts` — `rerankByResolution`, deliberately minimal: **veto implausible resolutions,
-  otherwise keep the model's ranking**. No score blend, no per-class weights. The reason for that
+  otherwise keep the model's ranking**. It has no score blend and no per-class weights. The reason for that
   austerity is in the file: the moment it grows a hand-tuned ladder we have rebuilt Pelias's dictionary
   overrides with extra steps (94 of 276 lines, each resolving a collision by hand).
 - **7 unit tests**, including the three that encode the judgement calls: rank-2 promotes over a
@@ -68,19 +68,19 @@ The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/d
 ## What Phase 4a still owes
 
 1. **Re-run on the geocode cascade with street-level extracts.** Until then there is no evidence either
-   way about resolution reranking. The headroom (seg@1 0.577 → oracle@5 0.723) is measured and real;
-   whether _this_ signal collects it is untested.
+   way about resolution reranking. The headroom (seg@1 0.577 → oracle@5 0.723) is measured and real.
+   Whether _this_ signal collects it is untested.
 2. Expect the answer to be **locale-split**: the US has situs/TIGER street coverage, so the resolver
-   can adjudicate there; CZ/FR/PT bare fragments resolve to a locality centroid regardless, so the
+   can adjudicate there. CZ/FR/PT bare fragments resolve to a locality centroid regardless, so the
    evidence may in fact not exist for them. A rerank that helps US and is inert intl would be a
    perfectly good result — but it has to be measured, per-locale rather than assumed.
 3. Only then: the isotonic ambiguity check (4b) and option C (4c).
 
-## The lesson, which is the same one twice in two days
+## The same lesson twice in two days
 
 The v3.0.0 probe looked like a falsified architecture and was a mis-specified LR. This looked like a
 falsified rerank and was an unwired resolver. **Both times the tell was a number that could not
-reproduce something already known** — there, `token@1` 0.348 against a known 0.573; here, a resolver
+reproduce something already known** — there, `token@1` 0.348 against a known 0.573. Here, it was a resolver
 that never once produced the tier the whole experiment depends on.
 
-Check the instrument before the hypothesis. The aggregate is not the verdict; the evidence is.
+Check the instrument before the hypothesis. The per-fixture evidence decides the verdict, and the aggregate does not.

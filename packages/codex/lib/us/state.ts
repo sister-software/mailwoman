@@ -181,8 +181,8 @@ export const US_STATE_NAMES: readonly string[] = Object.values(US_STATE_BY_ABBRE
 /**
  * Folded state/territory name, or the abbreviation itself, → the USPS abbreviation.
  *
- * Built diacritic-insensitive so a source that writes the name plainly resolves
- * the same as one that does not.
+ * Built diacritic-insensitive so a source that writes the name without diacritics
+ * resolves the same as one that does not.
  */
 const US_STATE_NAME_TO_ABBREVIATION: ReadonlyMap<string, USStateAbbreviation> = (() => {
 	const out = new Map<string, USStateAbbreviation>()

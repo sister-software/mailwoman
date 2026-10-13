@@ -71,9 +71,10 @@ export interface SubVenueHarvestRow {
 /**
  * Classify an OSM `ref` into an {@link IdentifierShape} class.
  *
- * The classes are the ones Berlin's gates actually produced, plus the two aviation forms
+ * The classes are the ones Berlin's airport gates produced, plus the two aviation forms
  * the corpus task names (`Terminal 2F` is digit-letter, `Concourse B` is letter).
- * `range` covers both separators OSM uses for a gate serving more than one stand: `16-18` and `0/1`.
+ * `range` covers both separators OSM uses for a boarding gate serving more
+ * than one stand: `16-18` and `0/1`.
  */
 export function classifyIdentifier(ref: string): string {
 	const value = ref.trim()
@@ -92,10 +93,10 @@ export function classifyIdentifier(ref: string): string {
 }
 
 /**
- * How many real `ref` values each {@link IdentifierShape} keeps.
+ * The number of real `ref` values each {@link IdentifierShape} keeps.
  *
  * Eight rather than "all" and not one.
- * The field exists so a recipe author can see what a class actually contains.
+ * The field exists so a recipe author can see what a class contains.
  *
  * GB's `other` class turned out to be semicolon multi-values (`1.2.3`, `13.14`),
  * which one example would have hidden and which the class name does not say.
@@ -128,7 +129,7 @@ export interface HarvestOptions {
 /**
  * Harvest attested phrases and identifier shapes out of a source's rows.
  *
- * `index` gates the name harvest.
+ * `index` decides whether the name harvest runs.
  * A name contributes only when it contains a phrase already in the table.
  *
  * That filter is the whole reason this function is safe to run over raw OSM:

@@ -11,10 +11,10 @@
  *   surface. `censusCoverage` in `mailwoman/coverage` reads only the train split and reports rows and
  *   street rows per country, so it cannot separate a source from a surface or a component from a row.
  *
- *   Three outputs stay separate because they count different things. A row-level count answers how many
- *   rows a stratum holds. A component-level count answers how many spans hold a tag, and those overlap
- *   within a row, so the two never sum to each other. A file-level record answers which inputs the pass
- *   actually read.
+ *   Three outputs stay separate because they count different things. A row-level count gives the number
+ *   of rows a stratum holds. A component-level count gives the number of spans that hold a tag. Those
+ *   spans overlap within a row, so the two counts never sum to each other. A file-level record lists
+ *   the inputs the pass read.
  *
  *   The recorded `surface` is reported exactly as the corpus stores it. Three adapters declared
  *   `attested` while rendering the line until `d397d140a`, so a row in a corpus built before that commit

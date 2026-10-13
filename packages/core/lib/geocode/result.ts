@@ -5,7 +5,7 @@
  *
  * The geocode result: the data shape one geocoded input projects to.
  *
- * The schemas here are the source of truth and each type is inferred from its schema.
+ * The schemas here define the shapes, and each type is inferred from its schema.
  * The `mailwoman` package computes the result and the HTTP surfaces serve it.
  */
 
@@ -143,7 +143,8 @@ export type AuthoritativeAssertion = z.infer<typeof AuthoritativeAssertionSchema
  * - `rooftop_outside_locality`: the address-point row lies too far from the selected
  *   locality, and no alternative locality lies near it.
  *   The coordinate is the rooftop.
- *   The hierarchy still holds the selected locality, which the rooftop contradicts.
+ *   The hierarchy still holds the selected locality.
+ *   The rooftop contradicts that locality.
  */
 export const UnfollowedComponentSchema = z.object({
 	tag: ComponentTagSchema,

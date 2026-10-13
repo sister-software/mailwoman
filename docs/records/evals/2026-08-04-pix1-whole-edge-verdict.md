@@ -17,8 +17,8 @@ ruled for a format change instead, and the shipped mechanism reads the parent's 
 > Bar: **byte-identical output on every case whose fired child tag has ≥2 allowed parents.** A single
 > diff falsifies the construction argument above and the design goes back for a per-tag δ.
 
-**VACUOUS on the preregistered instrument.** Every shipped pair index asserts `dependent_locality`
-and nothing else, and `WESTERN_PARENT_OF.dependent_locality` is `["locality"]` — exactly one allowed
+**VACUOUS on the preregistered instrument.** Every shipped pair index asserts only
+`dependent_locality`, and `WESTERN_PARENT_OF.dependent_locality` is `["locality"]` — exactly one allowed
 parent. So the bar's population is empty by construction:
 
 | board                      | rows | fired tags                 | ≥2-allowed-parents rows |
@@ -46,11 +46,11 @@ Byte-identical at 2.5× the shipped child δ. The write is not silently absent �
 `+δ` lands on all three allowed parent labels of a `locality` child, and the gauntlet ON/OFF diff
 below shows the mechanism moving real cases.
 
-**Verdict: PASS, with the vacuity of the preregistered instrument on the record.**
+**Verdict: pass, with the vacuity of the preregistered instrument on the record.**
 
 ## B-2 — the positive side
 
-> Bar: **≥70% whole-edge-correct** … Report the child-only rate beside it; if the parent bias does
+> Bar: **≥70% whole-edge-correct** … Report the child-only rate beside it. If the parent bias does
 > not move it, the mechanism is not doing what this document claims.
 
 Two boards, both `<neighbourhood>, <city>, <state>`, no postcode, held out from R5's graded 60 and
@@ -63,8 +63,8 @@ drawn on a fresh seed. Gold from the admin gazetteer's own ancestry.
 |         OFF | 118/120 (98.3%) | 118/120 (98.3%) |
 |        4–20 | 118/120 (98.3%) | 118/120 (98.3%) |
 
-**The parent bias moves nothing here**, and the eval record predicted exactly that: on an ordinary
-`<neighbourhood>, <city>, <state>` row the parent already reads `locality` because nothing pulls it
+**The parent bias leaves every row of this board unchanged**, and the eval record predicted exactly that: on an ordinary
+`<neighbourhood>, <city>, <state>` row the parent already reads `locality` because no later segment pulls it
 elsewhere. The defect lives in the tail.
 
 **Sub-board, 60 rows, city surface is also a US state name** — the `brooklyn, new york, ny` class:
@@ -77,10 +77,10 @@ elsewhere. The defect lives in the tail.
 |           5 | 59/60 (98.3%) | 59/60 (98.3%) |
 |        6–20 | 59/60 (98.3%) | 59/60 (98.3%) |
 
-Child-only is flat across the whole sweep; only the parent moves. That is the mechanism doing what
-the document claims, and it is worth naming that the general board would have hidden it.
+Child-only is flat across the whole sweep. Only the parent moves. That is the mechanism doing what
+the document claims, and a reading of the general board without the sub-board would have hidden it.
 
-**Verdict: PASS** (≥70% on both boards at parentDelta ≥ 4).
+**Verdict: pass** (≥70% on both boards at parentDelta ≥ 4).
 
 ## B-3 — the confound the parent bias creates
 
@@ -89,13 +89,13 @@ the document claims, and it is worth naming that the general board would have hi
 Graded as the FPs the parent bias CREATES — a row correct with the bias off and wrong with it on.
 A row already wrong at off is a pre-existing child-side defect rather than this bar's business.
 
-**Broad homonym board (120 rows,** including the five named rows: `Buffalo, New York`,
+**Broad homonym board (120 rows,** including these five rows: `Buffalo, New York`,
 `Springfield, Washington`, `Vancouver, Washington`, `Kansas City, Kansas`,
-`Oklahoma City, Oklahoma`**): the pair prior fires on 0/120.** 0.00% FP, and vacuously so — nothing
-to amplify.
+`Oklahoma City, Oklahoma`**): the pair prior fires on 0/120.** 0.00% FP, and vacuously so, because no
+child bias fires for the parent bias to amplify.
 
 **Amplification stratum (56 rows, 56/56 fire).** Built from index entries whose parent fold is a US
-state name and whose child fold also names a locality in that same state, so `<child>, <state>` reads
+state name and whose child fold is also the name of a locality in that same state, so `<child>, <state>` reads
 as city-in-state and the child bias fires anyway:
 
 | parentDelta | parent-bias FP   |
@@ -104,9 +104,9 @@ as city-in-state and the child bias fires anyway:
 
 Disclosure: this stratum is 56/56 WRONG at parentDelta=OFF. `Arlington, New York` already parses as
 `dependent_locality=Arlington, locality=New York` on the shipped child-only mechanism — R5's known
-residual FP class. The parent bias adds nothing to it at any δ through 20.
+residual FP class. The parent bias adds zero false positives to it at any δ through 20.
 
-**Verdict: PASS** (0.00% vs ≤2%).
+**Verdict: pass** (0.00% vs ≤2%).
 
 ## B-4 — parent δ is calibrated rather than inherited
 
@@ -116,7 +116,7 @@ parentDelta ∈ [5, 20] clears B-2 (98.3% ≥ 70% on both boards) and B-3 (0.00%
 clears both too (83.3% / 0.00%); δ=2 fails B-2's sub-board at 45.0%. **δ=5 is the smallest that
 saturates B-2**, and the curve is flat from there to 20. The choice is not knife-edge.
 
-**Verdict: PASS.**
+**Verdict: pass.**
 
 ## D-rule
 
@@ -162,9 +162,9 @@ postcode from the probe KEY but leaves `pieceIndices` spanning the segment, so a
 |        8–20 | **0/80 (0.0%)**         | 77/80      |
 
 `loc=[12210 Montpeyroux]` on every failing row — the child was right the whole time. A D-rule
-regression on a tier-1 locale, invisible below δ=6, which is one notch under the δ the sub-board
+regression on a tier-1 locale, invisible below δ=6. That is one notch under the δ the sub-board
 wanted. Fixed by recording the stripped range as `CandidateWindow.keyPieceIndices` and writing the
-parent bias over it; the child write still spans the whole segment, unchanged. Two unit tests pin
+parent bias over it. The child write still spans the whole segment, unchanged. Two unit tests pin
 both the FR leading-postcode and GB trailing-postcode shapes.
 
 must be explicit: the general B-2 board, the broad B-3 board and the preregistered B-1
@@ -186,25 +186,25 @@ The board builders and graders are gitignored scratchpad scripts (`scripts/scrat
 ## Postscript — PIX2 (schema 3) and the ship, 2026-08-04
 
 The operator ruled against the derivation this page graded. `WESTERN_PARENT_OF` answers _which parents
-the tree builder will accept for a tag_, which is not the question a retrieval index is asking, and the
+the tree builder will accept for a tag_. A retrieval index asks a different question, and the
 two diverge in both directions:
 
 - It cannot express an edge the extraction observed. The US WOF source admits `borough` as a
-  parent placetype, so `pair-index-us.bin` carries ("park slope", "brooklyn") — a `dependent_locality`
+  parent placetype, so `pair-index-us.bin` stores ("park slope", "brooklyn") — a `dependent_locality`
   under a `dependent_locality`. Containment gives `dependent_locality` exactly one allowed parent,
   `locality`. The derived mechanism biased the wrong label on every such row.
-- Where its set has several members it biased them all equally, which is what B-1 called "inert" — a
-  `locality` child moved `subregion`/`region`/`country` alike and. Therefore, moved nothing.
+- Where its set has several members it biased them all equally. B-1 called that "inert": a
+  `locality` child moved `subregion`/`region`/`country` alike and therefore changed no argmax.
 
 **The format now records both ends.** PIX1 schema 3 adds one byte per pair, `parentTagIdx`, indexing
 the same header `tagTable`. Schemas 1 AND 2 are refused with rebuild guidance — a v2 record stops after
 `tagIdx`, so decoding one as v3 would swallow the next record's `childLen`. Every builder states its
 parent tag from its own source: the PPD/LINZ `DISTRICT` column and the curated GB JSONL sets are the
 post-town slot (`locality`); BAN's parent is the commune (`locality`); the WOF extractions read the
-parent ROW's placetype through `PLACETYPE_PROJECTION` (`locality`/`localadmin` → `locality`, `borough`
-→ `dependent_locality`); the hierarchy probe declares `region` in its own header.
+parent ROW's placetype through `PLACETYPE_PROJECTION` (`locality`/`localadmin` → `locality`,
+`borough` → `dependent_locality`); the hierarchy probe declares `region` in its own header.
 
-**Shipped default-on at δ=5 for us/gb/nz/fr**, carried in the artifact header (`PairIndexHeader.parentDelta`)
+**Shipped default-on at δ=5 for us/gb/nz/fr**, stored in the artifact header (`PairIndexHeader.parentDelta`)
 exactly as `delta` and `transitionBeta` are, so the classifier auto-wires it with no code that knows
 which locale is which. `de`/`in`/`es`/`it` ship without the key: no board has graded the parent side
 there, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an inherited magnitude.
@@ -223,12 +223,12 @@ ON:  === Gauntlet · regression (54/55 counted cases pass, 61 tracked) ===
 
 The two runs are **byte-identical end to end** — `diff` over the whole transcript is empty, both legs
 `FAIL regression / PASS metamorphic` on the pre-existing `si-sentinel-apace` case. Zero newly-failing
-cases anywhere: the D-rule clears. Note the difference from the δ=6 derived-mechanism run above, which
-promoted `gb-op2-nine-elms-bare`; the per-record mechanism at δ=5 does not move that case either way.
+cases anywhere: the D-rule clears. The δ=6 derived-mechanism run above differs here because it
+promoted `gb-op2-nine-elms-bare`. The per-record mechanism at δ=5 does not move that case either way.
 
 The gauntlet not moving is not the mechanism failing to fire. Rebuilt brooklyn-class sub-board, 60 rows,
 `<neighbourhood>, <city>, <state-abbrev>` drawn on seed 42 from `pair-index-us.bin` entries whose parent
-fold names a US state, gold from the admin gazetteer's ancestry:
+fold is a US state name, gold from the admin gazetteer's ancestry:
 
 | parentDelta         | whole-edge       | child-only   |
 | ------------------- | ---------------- | ------------ |
@@ -239,6 +239,6 @@ Child-only is flat across both legs — only the parent moves, the same shape th
 (11/60 → 59/60). This is a REBUILD rather than a replay: the original board builders were gitignored scratchpad
 scripts and no longer exist, so the row set differs and the two numbers are not strictly comparable.
 
-The named row, directly: `brooklyn, new york, ny` parses `dependent_locality=Brooklyn, locality=New York,
+The defect record's row, directly: `brooklyn, new york, ny` parses `dependent_locality=Brooklyn, locality=New York,
 region=NY` with the header's δ=5, and `dependent_locality=Brooklyn, locality=(none), region=New York`
 with `MAILWOMAN_PAIR_PARENT_DELTA=0`. That is the defect the arc was opened for, closed.

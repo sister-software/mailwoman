@@ -41,7 +41,7 @@ data:
     # Change 2 (#487, probe-passed): real-tiger crossings.
     synth-intersection: 1.0
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Every proven change runs at its solo-validated weight.
     synth-unit: 1.5
     # Change 3 (probe: cedex passed, po_box answered by this run's exposure). Old synth-po-box retired (see header).
     synth-po-box-cedex: 1.5

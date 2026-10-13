@@ -32,7 +32,7 @@ flowchart LR
     S6 --> O["Top-k places"]
 ```
 
-✅ marks stages with shipped implementations as of 2026-05-23.
+In the diagram, ✅ marks stages with shipped implementations as of 2026-05-23.
 
 The interfaces between stages matter as much as the stages themselves. Each handoff is a typed boundary that can be evaluated, versioned, and rolled back independently.
 
@@ -45,9 +45,9 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 - Tokenization and whitespace traps ([#3 in the failure catalogue](../why-its-hard/addresses-that-break-geocoders.mdx#3-tokenization-and-whitespace-traps)): `"12 1/2 Main St"` and `"12½ Main St"` collapse to a canonical form before the tokenizer sees them.
 - The encoding half of Unicode/transliteration traps ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)): NFC ensures the resolver does not miss `"São"` because the input was NFD-encoded.
 
-**Today.** The `@mailwoman/normalize` workspace shipped 2026-05-23. Its public `normalize(raw, opts?)` function always applies NFC, punctuation normalization, and whitespace collapse, and optionally applies case folding and abbreviation expansion. The output carries an `offsetMap` so downstream stages can map normalized spans back to raw characters.
+**Today.** The `@mailwoman/normalize` workspace shipped 2026-05-23. Its public `normalize(raw, opts?)` function always applies NFC, punctuation normalization, and whitespace collapse, and optionally applies case folding and abbreviation expansion. The output includes an `offsetMap` so downstream stages can map normalized spans back to raw characters.
 
-**Future.** Share dictionaries with corpus synthesis, which runs in the inverse direction. Add locale-aware case folding for Turkish `İ` and Greek final sigma. Make the offset map bidirectional.
+**Future.** Share dictionaries with corpus synthesis. Corpus synthesis runs in the inverse direction. Add locale-aware case folding for Turkish `İ` and Greek final sigma. Make the offset map bidirectional.
 
 ## Stage 2 — Locale check (small ML)
 
@@ -58,9 +58,9 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 - The script-handling half of Unicode/transliteration traps ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)): the check picks the right tokenizer and weights for the script.
 - Language-switch hybrids ([#7](../why-its-hard/addresses-that-break-geocoders.mdx#7-language-switch-hybrids)): when the input mixes scripts, the check either picks a hybrid-trained weights package or falls back to a multi-locale ensemble.
 
-**Today.** Stage 2 is a caller-trust stub. The runtime coordinator accepts the caller's locale hint at confidence 1.0, or `und` with confidence 0.0 if the caller gives none. The companion **QueryShape sub-system** (`@mailwoman/query-shape`) shipped 2026-05-23. It provides character-class detection, punctuation-bounded segmentation, and known postcode/PO-box format hits, which are the structural priors a future locale detector would consume. The **kind classifier** (Stage 2.5, `@mailwoman/kind-classifier`) also shipped. It categorizes inputs as `postcode_only` / `locality_only` / `structured_address` / `intersection` / `po_box` / `landmark` / `vague` and drives fast-path routing in the coordinator.
+**Today.** Stage 2 is a caller-trust stub. The runtime coordinator accepts the caller's locale hint at confidence 1.0, or `und` with confidence 0.0 if the caller gives none. The companion **QueryShape sub-system** (`@mailwoman/query-shape`) shipped 2026-05-23. It provides character-class detection, punctuation-bounded segmentation, and known postcode/PO-box format hits. A future locale detector would consume these structural priors. The **kind classifier** (Stage 2.5, `@mailwoman/kind-classifier`) also shipped. It categorizes inputs as `postcode_only` / `locality_only` / `structured_address` / `intersection` / `po_box` / `landmark` / `vague` and drives fast-path routing in the coordinator.
 
-**Future.** A small fast model (~100 KB) would read the first 200 characters of input and emit a locale tag plus a confidence. Below a threshold, the stage would fall back to ensembling across multiple locales' weights, which is expensive but correct.
+**Future.** A small fast model (~100 KB) would read the first 200 characters of input and emit a locale tag plus a confidence. Below a threshold, the stage would fall back to ensembling across multiple locales' weights. The ensemble is expensive but correct.
 
 ## Stage 3 — Token classify (transformer encoder)
 
@@ -72,14 +72,14 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Today.** Shipped at v3.0.0. The model is small (~9M parameters) and that is by design. Address parsing is not a problem where bigger LLMs help.
 
-**Future.** The planned changes are a larger context window (128 tokens today; 256 would cover longer addresses without truncation), more locales, and continued corpus expansion. The model itself does not need to change fundamentally. It needs better data and better decoding.
+**Future.** The planned changes are a larger context window (128 tokens today, while 256 would cover longer addresses without truncation), more locales, and continued corpus expansion. The model itself does not need to change fundamentally. It needs better data and better decoding.
 
 ## Stage 4 — Sequence correct (CRF + span re-reader)
 
 **What it does.** This stage has two parts:
 
 - **CRF** ([CRF decoder](../../concepts/crf-decoder.mdx)) enforces BIO structural validity at decode time. It ships today.
-- **Span re-reader** is future work. When stage 3 emits a low-confidence span or two overlapping high-confidence proposals, the re-reader would re-run the encoder on that span alone with extra structural conditioning, using the neighboring labels as additional context. It adds new alternatives rather than narrowing existing ones, so a failure leaves the earlier alternatives intact.
+- **Span re-reader** is future work. When stage 3 emits a low-confidence span or two overlapping high-confidence proposals, the re-reader would re-run the encoder on only that span with extra structural conditioning, using the neighboring labels as additional context. It adds new alternatives rather than narrowing existing ones, so a failure leaves the earlier alternatives intact.
 
 **Failures it owns.**
 
@@ -112,9 +112,9 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 - Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)): `"Springfield"` without a region produces 41 candidates. The resolver should surface the list rather than pretend one is correct.
 
-**Today.** The [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) and surfaces runner-ups in the `alternatives` field, which shipped 2026-05-23. Consumers can now see Springfield-class ambiguity without any change to the `resolveTree` return type.
+**Today.** The [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) and surfaces runner-ups in the `alternatives` field. That field shipped 2026-05-23. Consumers can now see Springfield-class ambiguity without any change to the `resolveTree` return type.
 
-**Future.** Add language-prior and user-location-prior factors to the candidate scoring, which today uses only match × population. The scoreBreakdown reserves `regionalPriorFromLanguage` and `regionalPriorFromUserLocation` slots for them.
+**Future.** Add language-prior and user-location-prior factors to the candidate scoring. The scoring currently uses only match × population. The scoreBreakdown reserves `regionalPriorFromLanguage` and `regionalPriorFromUserLocation` slots for them.
 
 ## Why six stages and not one
 
@@ -140,9 +140,9 @@ The stages have a cost. Each handoff can drop signal, and each interface needs v
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 — Normalize                         | Shipped 2026-05-23 (`@mailwoman/normalize`). Future: shared dicts with corpus synthesis, locale-aware case folding.                                  |
 | 2 — Locale check                      | Caller-trust stub today. QueryShape sub-system + kind classifier (Stage 2.5) shipped. Future: small detector model (v0.6.0+).                        |
-| 3 — Token classify                    | v3.0.0 today. v0.4.0 improves CE/CRF balance; v0.5.0 expands vocabulary.                                                                             |
+| 3 — Token classify                    | v3.0.0 today. v0.4.0 improves CE/CRF balance, and v0.5.0 expands vocabulary.                                                                         |
 | 4 — Sequence correct (CRF)            | Viterbi shipped to JS runtime 2026-05-23 (structural mask). Learned transitions pending a future weights release.                                    |
-| 4 — Sequence correct (span re-reader) | Future. Earliest v0.6.0; needs an ambiguity-annotated corpus recipe.                                                                                 |
+| 4 — Sequence correct (span re-reader) | Future. Earliest v0.6.0, and needs an ambiguity-annotated corpus recipe.                                                                             |
 | 5 — Cross-component reconcile         | Shipped in v1.                                                                                                                                       |
 | 6 — Resolve with candidates           | Alternatives shipped 2026-05-23 (`AddressNode.alternatives`). Coordinator (`@mailwoman/core/pipeline` + `createRuntimePipeline`) shipped 2026-05-23. |
 

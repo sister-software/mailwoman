@@ -7,7 +7,7 @@
  *   The module also defines a first-digit → Leitzone geographic prior.
  *
  *   The US analog is `us/zipcode.ts`, and the contrast is the informative part. A US ZIP's first
- *   digit maps cleanly to a band of states (`StateAbbreviationZipCodePrefixRecord`). A German PLZ's
+ *   digit maps to exactly one band of states (`StateAbbreviationZipCodePrefixRecord`). A German PLZ's
  *   first digit maps to a **Leitzone** — a postal routing region that deliberately **crosses
  *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland and Mainz
  *   in Rheinland-Pfalz). The PLZ prior narrows geography to a postal routing region.
@@ -80,8 +80,8 @@ export interface LeitzoneInfo {
  *
  * A coarse, postal-routing prior: these zones cross Bundesland borders, so the label is
  * "which corner of Germany", not "which state".
- * Anchor cities are the safe, well-known way to pin a zone without over-claiming a
- * boundary the routing geography does not actually follow.
+ * Anchor cities are the safe, well-known way to pin a zone without over-claiming
+ * a boundary the routing geography does not follow.
  */
 export const PLZ_LEITZONEN = {
 	0: { digit: 0, region: "Sachsen / Ostthüringen", cities: ["Leipzig", "Dresden", "Chemnitz"] },

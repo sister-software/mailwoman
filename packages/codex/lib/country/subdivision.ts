@@ -89,7 +89,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 
 	// A constituent country of the United Kingdom is a first-level subdivision of GB.
 	// WOF records each one as a `macroregion`.
-	// Only the names are keyed, because address lines do not carry `ENG` or `WLS`.
+	// Only the names are keyed, because address lines do not contain `ENG` or `WLS`.
 	for (const info of Object.values(GB_COUNTRIES)) {
 		put(info.name, { code: info.code, name: info.name, country: "GB" })
 	}

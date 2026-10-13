@@ -11,7 +11,7 @@
  *
  *   The builder reads geometry from shapefiles via DuckDB's spatial extension (raw `ST_Read`, see
  *   agents.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
- *   insert (a county's worth of edges) stays raw. Its column list derives from
+ *   insert (every edge in a county) stays raw. Its column list derives from
  *   {@link STREET_SEGMENT_COLUMNS} so it cannot drift from the DDL.
  */
 

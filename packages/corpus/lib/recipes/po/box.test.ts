@@ -48,8 +48,7 @@ describe("po-box military rows", () => {
 		// These tuples name a country the Spanish po-box template omits from the line,
 		// so every tuple-driven row quarantines on `component-not-found:country`
 		// and reaches the output as a skip rather than a row.
-		// The variants flag is therefore visible in `skipped`, and the written
-		// rows stay the military rows alone.
+		// The variants flag is therefore visible in `skipped`, and the written rows hold only the military rows.
 		const zero = await run(TUPLES, [], { variants: 0, militaryRatio: 1 })
 		const one = await run(TUPLES, [], { variants: 1, militaryRatio: 1 })
 

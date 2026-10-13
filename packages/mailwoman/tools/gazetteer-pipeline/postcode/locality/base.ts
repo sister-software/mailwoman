@@ -5,7 +5,7 @@
  *
  *   Build the postcode → containing-locality candidate table offline: for every postcode,
  *   point-in-polygon its centroid against the WOF locality polygons and record the containing
- *   locality plus a few nearby ones for the abutting-postcode candidate set, with WOF alt-name
+ *   locality plus a few of the closest others for the abutting-postcode candidate set, with WOF alt-name
  *   aliases.
  *
  *   The resolver consumes this at resolve time: postcode → candidate localities → soft-score by

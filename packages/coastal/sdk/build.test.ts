@@ -359,7 +359,7 @@ describe("the area cross-check", () => {
 			9,
 			FIXTURE_SCENARIOS.noIntervention,
 			[[rectangleRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]],
-			// Twice the area the rings actually cover.
+			// Twice the area the rings cover.
 			// The shape a hole read as an exterior ring produces.
 			{ sourceAreaM2: 2 * 1_200_000 }
 		)

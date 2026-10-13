@@ -2,17 +2,17 @@
 
 #473 asked for two CJK unblocks from Overture: the TW postcode→admin table #294 was parked on, and an
 independent Overture-based eval gold for the shipped JP resolver. Both shipped — but not the way the
-issue specced them, because the spec's data premise is false: **Overture release 2026-06-17.0 carries
+issue specced them, because the spec's data premise is false: **Overture release 2026-06-17.0 contains
 zero postcodes for both TW (0/9,732,009) and JP (0/19,587,926)** (re-verified on the pinned release
-after the 2026-05-20.0 probe in the issue comments; `fill-rates.md` now carries both rows). What
-Overture does carry — 29.3M points with coordinates, admin attribution, and (divisions theme) real
+after the 2026-05-20.0 probe in the issue comments, and `fill-rates.md` now lists both rows). What
+Overture does contain — 29.3M points with coordinates, admin attribution, and (divisions theme) real
 district polygons — supplied the geometry both halves needed.
 
 ## TW — postcode-route resolution, check PASS
 
 **Source key** (the postal authority, since Overture/GeoNames have no TW postcodes): Chunghwa
 Post's 3-digit postal-code → district table with official district centers (data.gov.tw dataset
-25489, OGDL v1; 371 rows, all county-prefixed). The 3-digit code is the admin-granularity key. The
+25489, OGDL v1, 371 rows, all county-prefixed). The 3-digit code is the admin-granularity key. The
 "+3" tail is road-segment level, and the full 3+3 file has been account-conditional at fpp.post.gov.tw
 since 2025. Sub-district resolution is therefore out of reach for now (noted rather than chased).
 
@@ -29,18 +29,18 @@ release-pinned by `scripts/eval/fetch-tw-division-polygons.ts`) → WOF row, tie
 | name + proximity (JP/KR-style fallback)              |         8 |
 | containing-city (region) fallback                    |        22 |
 
-The name-only JP/KR recipe topped out at 63% here: WOF's `county`-tier TW districts carry **no
+The name-only JP/KR recipe topped out at 63% here: WOF's `county`-tier TW districts have **no
 Chinese names at all**, and the Kaohsiung/Taichung urban cores are `neighbourhood` or missing
 entirely. The polygon bridge + Overture's en names ("Wanhua District" ↔ WOF "Wanhua") closed most of
-the gap; the 22 districts WOF only has no row for (三民區, 鹽埕區, the Taichung/Tainan directional
+the gap. The 22 districts WOF only has no row for (三民區, 鹽埕區, the Taichung/Tainan directional
 districts, offshore islands) map to their containing city — true containment, coarser granularity,
 directly recorded in the meta.
 
 Two ladder-ordering findings, both measured (n=3,000, seed 42): name-confirmed district-tier must
-outrank bare containment (Zhongshan's WOF point sits inside 中正區 — bare containment alone picks
+outrank bare containment (Zhongshan's WOF point sits inside 中正區 — bare containment without the name check picks
 the wrong namesake), and bare containment must outrank the wikidata bridge (wd-first dropped PIP
 86.4→85.2% — WOF's TW wd concordances are themselves misattached, e.g. 890468273 "Zhongzheng Qu"
-carries Keelung's Q712871 while its point sits in Taipei).
+has Keelung's Q712871 while its point sits in Taipei).
 
 **Check** (`scripts/eval/tw-postcode-route-eval.ts`, pre-registered from #288 Phase 1: postcode-route
 PIP ≥~85%): held-out Overture address points, query = (district text + 3-digit postcode) against the
@@ -55,10 +55,10 @@ is a Point, so WOF polygons cannot grade this).
 | + city-level containment       |           95.1% |          95.1% |
 | coord p50 / p90 km             |    2.54 / 14.13 |   2.55 / 17.91 |
 
-**PASS** (86.4% ≥ ~85%, stable across seeds). Failures concentrate exactly where WOF lacks district
-rows (東區/北區/三民區/南區 …) — a WOF coverage gap rather than a routing defect; the city-level containment
+The route passes (86.4% ≥ ~85%, stable across seeds). Failures concentrate exactly where WOF lacks district
+rows (東區/北區/三民區/南區 …) — a WOF coverage gap rather than a routing defect. The city-level containment
 line is the direct ledger for those. Split note: the builder consumes no Overture address points
-(inputs: postal table, WOF, division polygons), so every sampled point is held-out by construction;
+(inputs: postal table, WOF, division polygons), so every sampled point is held-out by construction,
 the polygon layer is shared between the builder's bridge and the eval's truth.
 
 `address_levels` agreement with polygon truth: 98.6% — the NLSC admin attribution and the divisions
@@ -91,18 +91,18 @@ The raw delta vs the shipped number is **+3.2pp — over the pre-registered 2pp 
 re-running the unchanged KEN_ALL harness against today's shipped DBs gives **98.5%**, i.e. the
 94.9% is a stale baseline (the admin DB has been rebuilt several times since 2026-06-05 — ancestry
 backfill #832/#836, GeoNames aliases, coverage expansion). Against the contemporaneous baseline the
-Overture gold diverges by **-0.4pp — within the band**. The two gold sources agree; the shipped JP
+Overture gold diverges by **-0.4pp — within the band**. The two gold sources agree, and the shipped JP
 resolver's current operating point is ~98%, and `postcode-locality-jp.db`'s meta `match_rate` should
 be re-stamped at its next rebuild. Coord p50/p90 vs the Overture point: 4.69 / 13.21 km
 (municipality-centroid scale, as expected).
 
 **Refresh-source note (for the convention-table provenance):** Overture is not viable as a JP
 postcode refresh source (0% fill). KEN_ALL (rescued copy at `$MAILWOMAN_DATA_ROOT/KEN_ALL_ROME`)
-remains the only keying source; Overture serves as the independent admin + coordinate gold.
+remains the only keying source, and Overture serves as the independent admin + coordinate gold.
 
 ## KR — explicitly out of scope
 
-Unchanged from the issue: KR is absent from Overture's addresses theme; Juso remains the blocked
+Unchanged from the issue: KR is absent from Overture's addresses theme, and Juso remains the blocked
 path. Noted rather than chased.
 
 ## Artifacts
@@ -112,8 +112,8 @@ path. Noted rather than chased.
   whosonfirst-data-admin-tw via `build-unified-wof.ts`, beside the KR/JP siblings)
 - `$MAILWOMAN_DATA_ROOT/db/wof/conventions.db` (new — first compiled convention asset, 1 row)
 - `$MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/addresses-{tw,jp}.parquet` + `divisions-tw-admin.jsonl`
-  (release-pinned; fill-rates report regenerated with all 22 countries)
+  (release-pinned, with the fill-rates report regenerated with all 22 countries)
 - `$MAILWOMAN_DATA_ROOT/tw-postal/district-centroids.xml` (Chunghwa Post source file)
 - `data/eval/external/jp-overture-gold.jsonl` (checked in)
 
-No canonical DB was replaced; every artifact is new beside the canonicals (night-shift policy).
+No canonical DB was replaced. Every artifact is new beside the canonicals (night-shift policy).

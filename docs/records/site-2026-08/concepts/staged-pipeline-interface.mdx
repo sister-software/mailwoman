@@ -10,7 +10,7 @@ tags:
 
 # The pipeline interface
 
-You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`createRuntimePipeline`) accepts each pipeline stage as an injectable function or interface; an integrator can swap any of them for a custom implementation without forking the core.
+You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`createRuntimePipeline`) accepts each pipeline stage as an injectable function or interface. An integrator can swap any of them for a custom implementation without forking the core.
 
 This article is the practical "how do I plug in" companion to:
 
@@ -43,22 +43,23 @@ Every stage is **optional**. When you omit one, the coordinator either substitut
 
 ### Decode-time constraint layers (v4.3.0+)
 
-The neural classifier carries two constraint layers configured at construction rather than as pipeline
-stages — they run inside `classifier.parse` and are part of the SHIP CONFIG interface (the model
+The neural classifier has two constraint layers configured at construction rather than as pipeline
+stages. They run inside `classifier.parse` and are part of the SHIP CONFIG interface (the model
 card's notes name the required settings per release):
 
 - **Conventions mask** (`addressSystemConventions: "auto" | SystemCode`, v4.3.0+): the model's
-  exported locale head detects the address system; the codex conventions row removes that
+  exported locale head detects the address system. The codex conventions row removes that
   system's ungrammatical tags from the Viterbi vocabulary and arms the postcode-shape snap
-  repair. Threshold-conditional (0.8) — never fires on a guess; undetected systems parse unmasked.
+  repair. The mask is threshold-conditional (0.8), so it never fires on a guess. Undetected
+  systems parse unmasked.
 - **Span bridge** (`bridgePunctuationGaps: true`, REQUIRED from v4.4.0): merges same-tag
   fragments split at unlabeled intra-token punctuation ("P.O. Box" decoding as `P`+`O`+`Box`) —
   the corpus label format cannot express punctuation inside spans, so the bridge is decode-side
-  containment. Separator punctuation (commas) never bridges; space-only gaps never bridge.
+  containment. Separator punctuation (commas) never bridges, and space-only gaps never bridge.
 
 When a v4.4.0+ model omits these settings, the measured checks fail (po_box 60.4 vs
-89.1 with the bridge; the FR digit-split class without conventions) — they are not optional
-enhancements for those weights, they are the decode interface.
+89.1 with the bridge, and the FR digit-split class without conventions). These settings are not
+optional enhancements for those weights. They are the decode interface.
 
 ## Replace a stage
 
@@ -86,16 +87,16 @@ Same pattern for any stage. The defaults you don't override (e.g. `@mailwoman/no
 
 Not every stage failure is treated the same. The coordinator distinguishes **graceful** stages (failure produces a degraded but valid result) from **non-graceful** stages (failure surfaces to the caller).
 
-| Stage                  | If it throws                                                                                                                                       |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `normalize`            | Propagates. Input preprocessing is a contract; a crash is a bug.                                                                                   |
-| `computeQueryShape`    | Propagates. Same rationale.                                                                                                                        |
-| `detectLocale`         | Propagates. A locale detector that crashes signals a real fault rather than noise.                                                                 |
-| `classifyKind`         | Propagates. Kind classification runs on the QueryShape wecomputed — there's no external input that can poison it.                                  |
-| `classifier.parse`     | **Swallowed.** Returns an empty `AddressTree`; pipeline continues. The classifier runs against external weights / arbitrary user input; defensive. |
-| `resolver.resolveTree` | **Swallowed.** Returns the classifier's tree unchanged. Backend may be unavailable; we surface what we have rather than fail the whole call.       |
+| Stage                  | If it throws                                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `normalize`            | Propagates. Input preprocessing is a contract, so a crash is a bug.                                                                                                       |
+| `computeQueryShape`    | Propagates. Same rationale.                                                                                                                                               |
+| `detectLocale`         | Propagates. A locale detector that crashes signals a real fault rather than noise.                                                                                        |
+| `classifyKind`         | Propagates. Kind classification runs on the QueryShape we computed — there's no external input that can poison it.                                                        |
+| `classifier.parse`     | **Swallowed.** Returns an empty `AddressTree`, and the pipeline continues. The classifier runs against external weights / arbitrary user input, so the wrap is defensive. |
+| `resolver.resolveTree` | **Swallowed.** Returns the classifier's tree unchanged. Backend may be unavailable, so we surface what we have rather than fail the whole call.                           |
 
-This asymmetry is intentional. Stages 1, 2, 2.5 are pure functions over the input; if they crash, something is wrong with the request shape and the caller needs to know. Stages 3 and 6 are wrapped because their dependencies (ONNX model, SQLite database, network) are points where production failures legitimately happen and degrading gracefully beats taking the whole query down.
+This asymmetry is intentional. Stages 1, 2, 2.5 are pure functions over the input. If they crash, something is wrong with the request shape and the caller needs to know. Stages 3 and 6 are wrapped because their dependencies (ONNX model, SQLite database, network) are points where production failures legitimately happen and degrading gracefully beats taking the whole query down.
 
 ## Cancellation
 
@@ -121,16 +122,16 @@ An abort before any stage runs throws immediately. An abort between stages skips
 
 `PipelineResult.timing` records per-stage wall time in milliseconds. The keys present depend on the path the coordinator took:
 
-| Key               | Always present                        | Notes                                                   |
-| ----------------- | ------------------------------------- | ------------------------------------------------------- |
-| `normalize`       | yes                                   |                                                         |
-| `query-shape`     | yes                                   |                                                         |
-| `locale-hint`     | yes                                   |                                                         |
-| `kind-classifier` | yes                                   |                                                         |
-| `token-classify`  | full path only, when classifier wired | Absent on fast-path; absent when no classifier injected |
-| `resolve`         | when resolver wired                   | Present on both full and fast-path                      |
+| Key               | Always present                        | Notes                                                       |
+| ----------------- | ------------------------------------- | ----------------------------------------------------------- |
+| `normalize`       | yes                                   |                                                             |
+| `query-shape`     | yes                                   |                                                             |
+| `locale-hint`     | yes                                   |                                                             |
+| `kind-classifier` | yes                                   |                                                             |
+| `token-classify`  | full path only, when classifier wired | Absent on fast-path, and absent when no classifier injected |
+| `resolve`         | when resolver wired                   | Present on both full and fast-path                          |
 
-The `path` field tells you which branch ran: `"full"` (stages 3-5 ran) or `"fast-path"` (kind classifier + QueryShape agreed on a trivial input, stages 3-5 skipped, tree built from QueryShape alone).
+The `path` field tells you which branch ran: `"full"` (stages 3-5 ran) or `"fast-path"` (kind classifier + QueryShape agreed on a trivial input, stages 3-5 skipped, tree built from QueryShape only).
 
 Use `mailwoman parse --benchmark <N>` for percentile breakdowns over several iterations against a real input.
 
@@ -144,7 +145,7 @@ The coordinator short-circuits stages 3-5 when:
    - `postcode_only` → QueryShape has a postcode `knownFormats` hit
    - `locality_only` → `totalLength ≤ 30` AND `characterClass === "alpha"`
 
-The fast-path tree is built from QueryShape's format hit alone — useful even without a resolver wired (a consumer whowants the parsed structure for `"10118"` shouldn't pay for the classifier).
+The fast-path tree is built from QueryShape's format hit only. It is useful even without a resolver wired (a consumer who wants the parsed structure for `"10118"` shouldn't pay for the classifier).
 
 ## When to swap a stage
 
@@ -153,7 +154,7 @@ Common reasons:
 - **Custom locale detector** — replace `detectLocale` with a fastText / cld3 / commercial detector when you have a specific traffic profile
 - **In-process resolver** — swap `resolver` for an embedded WOF SQLite or in-memory gazetteer
 - **Different classifier** — your own ONNX model, a rule-based classifier, a remote inference endpoint
-- **Test fakes** — every stage takes a vi.fn() / sinon stub directly; no special harness needed
+- **Test fakes** — every stage takes a vi.fn() / sinon stub directly, with no special harness
 
 You should **not** swap a stage to bypass it cheaply. If you want the pipeline without locale detection, pass `{ locale: "en-US" }` on every call — the default `detectLocale` is already a sub-microsecond caller-trust stub. The performance you'd reclaim by swapping is rounding error against the neural classifier's milliseconds.
 

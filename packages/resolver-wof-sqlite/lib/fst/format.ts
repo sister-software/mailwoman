@@ -59,7 +59,7 @@ export const NARROW_STATE_ENTRY_SIZE = 12
 
 /**
  * First format version carrying the trailing metadata block.
- * Older files simply have none.
+ * Older files have none.
  */
 export const VERSION_WITH_METADATA = 3
 

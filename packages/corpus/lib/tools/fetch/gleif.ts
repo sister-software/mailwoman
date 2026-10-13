@@ -14,7 +14,7 @@
  *
  * 1. **The API's `size` is the archive's length.** It stated 507,006,221 and the host answered a
  *    `HEAD` with `content-length` 507,006,221 and a one-byte range with `Content-Range: bytes
- *    0-9/507006221`. The transfer is checked against the API's figure, so a body cut short or a
+ *    0-9/507006221`. The transfer is checked against the API's figure, so a truncated body or a
  *    publish replaced mid-transfer is refused rather than recorded.
  * 2. **The host honors `Range`.** An interrupted transfer resumes through
  *    {@linkcode resumableDownload}. The request names `accept-encoding: identity`, because the host

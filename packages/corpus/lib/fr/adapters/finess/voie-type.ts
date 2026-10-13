@@ -41,7 +41,7 @@ import { decomposeFrStreet } from "#fr/street-decompose"
  *
  * `VAL` keeps the code as its word.
  * TRE-R35 displays it as `Vallée, vallon`, two words the code does not choose between,
- * and `Val` is itself the written word of many French place names.
+ * and `Val` is itself the written word in French place names such as `Val-d'Isère`.
  */
 export const TRE_R35_VOIE_TYPES: Readonly<Record<string, string | null>> = {
 	ANSE: "anse",

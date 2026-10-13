@@ -41,7 +41,7 @@ Build adapters in this order. Each must have:
 
 - [ ] Input: WOF SQLite distributions (`whosonfirst-data-admin-us-latest.spatial.db`, `-fr`)
 - [ ] Emit one row per WOF record, with synthesized `raw` strings using country-appropriate templates
-- [ ] Walk the ancestry chain — emit hierarchical variants (city alone, city+region, city+region+country)
+- [ ] Walk the ancestry chain — emit hierarchical variants (city only, city+region, city+region+country)
 - [ ] License: WOF is CC0
 - [ ] Expected output: ~50k US localities, ~36k FR communes, plus regions/countries
 
@@ -54,7 +54,7 @@ Build adapters in this order. Each must have:
 #### 3c. `osm-places` (P1, coarse corroboration)
 
 - [ ] Input: OSM PBF file, filtered to `place=city|town|village|hamlet|suburb|neighbourhood`
-- [ ] Emit rows for each named place, with admin hierarchy from `is_in:*` tags or reverse-geocoded from WOF
+- [ ] Emit rows for each place that has a `name` tag, with admin hierarchy from `is_in:*` tags or reverse-geocoded from WOF
 - [ ] License: ODbL — tag in `license` field
 - [ ] Use `osm-pbf-parser-node` or equivalent (verify maintenance before committing)
 
@@ -137,7 +137,7 @@ The tokenizer is trained on the corpus rather than picked off the shelf.
   - State abbreviation vs full (`OR` ↔ `Oregon`)
   - Directional abbreviation (`SE` ↔ `Southeast`)
   - ZIP+4 with and without dash
-- [ ] Each augmented row carries `synth.method` and `synth.base_source_id`.
+- [ ] Each augmented row records `synth.method` and `synth.base_source_id`.
 
 ### 7. Parquet output
 
@@ -166,7 +166,7 @@ The tokenizer is trained on the corpus rather than picked off the shelf.
 - [ ] Cover: residential, commercial, PO boxes, intersections, venues, edge cases (single-line, multi-line, abbreviations, typos)
 - [ ] Check into git. This is the interface for "what good looks like."
 
-▶ Drafting the golden set takes real time. Start it in week 1 of Phase 1 even while building adapters. Don't leave it for the end.
+The golden set takes real time to draft. Start it in week 1 of Phase 1 even while building adapters. Don't leave it for the end.
 
 ### 10. Corpus build pipeline
 
@@ -189,11 +189,11 @@ The tokenizer is trained on the corpus rather than picked off the shelf.
 
 ## Common pitfalls
 
-- ❌ Splitting train/test randomly. Locality holdout or it doesn't count.
-- ❌ Retraining the tokenizer after some alignment has been done. Tokens shift, labels become wrong.
-- ❌ Skipping the quarantine pile. The alignment failures are where future bugs hide.
-- ❌ Forgetting to record the license per source. You'll regret this when someone asks if they can use a derived model commercially.
-- ❌ Letting OSM dominate by row count. Stratified sampling at training time, but warn now if one source is > 60% of rows.
+- Do not split train/test randomly. Locality holdout or it doesn't count.
+- Do not retrain the tokenizer after some alignment has been done. Tokens shift, labels become wrong.
+- Do not skip the quarantine pile. The alignment failures are where future bugs hide.
+- Record the license per source. You'll regret a missing license when someone asks if they can use a derived model commercially.
+- Do not let OSM dominate by row count. Stratified sampling at training time, but warn now if one source is > 60% of rows.
 
 ## When to call this phase done
 

@@ -11,7 +11,7 @@ tags:
 
 # Falsehoods programmers believe about geocoded precision and frontages
 
-_"Close enough" is a statement about your use case rather than about the coordinate. A geocode that is correct for statistical aggregation may be catastrophically wrong for emergency dispatch. And the coordinate itself answers a question — "the front door" — that nobody bothered to define._
+_"Close enough" is a statement about your use case rather than about the coordinate. A geocode that is correct for statistical aggregation may be catastrophically wrong for emergency dispatch. And the coordinate itself answers a question, "the front door", that the geocoder's designers rarely define._
 
 ## Falsehoods
 
@@ -57,10 +57,10 @@ A geocoder returns a coordinate at "95% confidence." The consumer assumes this m
 The "front door" is ambiguous even when the building has exactly one street-facing entrance:
 
 - A corner building has two street-facing entrances. Which one is "the front door"?
-- A building with a front entrance on a named street and a delivery entrance on an alley has two entrances. The address label says the street name. The delivery driver uses the alley.
+- A building with a front entrance on a street and a delivery entrance on an alley has two entrances. The address label gives the street name. The delivery driver uses the alley.
 - A strip mall has a dozen storefronts along a parking lot. Each store has a different entrance. A geocode for the strip mall's address places the pin at the center of the building — 50 meters from any actual store entrance.
 - A hospital has a main entrance, an emergency entrance, a loading dock, and a staff entrance. The address label is the same for all four. A geocode that returns "the front door" for the hospital places the pin at the main entrance. An ambulance routed to the main entrance instead of the emergency entrance loses minutes.
-- A multi-building campus (university, corporate headquarters, hospital complex) has one mailing address and dozens of building entrances. "123 University Ave" geocodes to the campus entrance or the administration building. A delivery to "123 University Ave, Engineering Building" needs the engineering building's entrance, which is 500 meters from the campus entrance.
+- A multi-building campus (university, corporate headquarters, hospital complex) has one mailing address and dozens of building entrances. "123 University Ave" geocodes to the campus entrance or the administration building. A delivery to "123 University Ave, Engineering Building" needs the engineering building's entrance. That entrance is 500 meters from the campus entrance.
 
 ### "The building entrance faces the street in the address."
 
@@ -103,7 +103,7 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 ## What Mailwoman still can't do
 
 - **Frontage-level coordinates.** WOF stores one coordinate per record — typically a centroid. Mailwoman's resolver returns that coordinate. Multiple coordinates per address (entrance, delivery, parcel centroid) require a gazetteer that stores them and a resolver that exposes them. No open gazetteer does this at global scale.
-- **Precision metadata.** The resolver does not return a `location_type` equivalent (ROOFTOP vs GEOMETRIC_CENTER vs APPROXIMATE). WOF records don't consistently encode how the coordinate was derived. The planned resolver output includes a precision signal, which is not yet implemented.
+- **Precision metadata.** The resolver does not return a `location_type` equivalent (ROOFTOP vs GEOMETRIC_CENTER vs APPROXIMATE). WOF records don't consistently encode how the coordinate was derived. The planned resolver output includes a precision signal. That signal is not yet implemented.
 - **Reverse geocoding.** The resolver forward-geocodes — text → coordinate. Reverse geocoding (coordinate → text) is a different problem with different infrastructure (spatial index rather than text index). Mailwoman does not do reverse geocoding.
 
 ## References

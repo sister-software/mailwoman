@@ -64,8 +64,8 @@ function col(label: string): number {
 }
 
 /**
- * The path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are
- * "shoreditch"'s fused street run, row 3 a decisive "london" locality.
+ * The path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are "shoreditch"'s
+ * fused street run, row 3 a "london" locality whose logit dominates the row.
  * Rows past the real pieces stay zero.
  */
 function fusedLatticeSession(): void {

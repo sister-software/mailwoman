@@ -24,7 +24,7 @@ import { TextSpliterator } from "spliterator"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#repo-health/check"
 
 /**
- * How many `tsc` invocations to keep in flight.
+ * The number of `tsc` invocations to keep in flight.
  *
  * Each is single-threaded and mostly CPU-bound.
  */

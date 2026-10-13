@@ -43,7 +43,7 @@ import type { ResolveOpts } from "#resolver/types"
 const SHORT_CIRCUIT_MIN_CONFIDENCE = 0.95
 
 /**
- * A locality-only input longer than this many characters takes the full pipeline.
+ * A locality-only input longer than this number of characters takes the full pipeline.
  */
 const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
 

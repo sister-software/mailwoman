@@ -2,7 +2,7 @@
 #
 # The only change from v3.3.0 is the recipe flag --bare-street-prob, raised from 0.30 to 0.70. That flag
 # moves bare-street rows from 21% to 49% of the recipe output. A bare street without a number teaches the
-# model that a street is distinct from a locality, which it cannot learn by leaning on a following digit.
+# model that a street is distinct from a locality. The model cannot learn that distinction by leaning on a following digit.
 #
 # The target is board 3 bare-street-hn, such as "Hallingrudveien 32". The guards are postcode recall on
 # bare-pc, the other Norwegian house-number classes, the FR fragment board and the golden set.

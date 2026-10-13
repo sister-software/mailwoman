@@ -1,4 +1,4 @@
-# Mailwoman deep dive: Codex review
+# Mailwoman detailed review: Codex
 
 **Date:** 2026-06-11 · **Scope:** follow-up review against Claude's
 [`2026-06-10-deep-dive-review.md`](./2026-06-10-deep-dive-review.md), the current
@@ -33,7 +33,7 @@ decision. If the new floors show po_box or perturb still below the line, do not 
 Main is at `177cb41 eval(check): teach the runner+verdict the v4.4.0 floor keys`. There are no open
 PRs. The open issue queue is now well aligned with Claude's review: #513 tracks the v4.3.0 boundary
 regression, #487 tracks intersections, #481 tracks parser hardening, #480 tracks training
-reproducibility, and #483/#484/#485 carry the resolver/service table-stakes work.
+reproducibility, and #483/#484/#485 track the resolver/service table-stakes work.
 
 The shipped release is 4.3.0. `docs/articles/status.mdx` has been refreshed to that release and
 the 2026-06-11 parity scorecard exists. The active v4.4.0 candidate is
@@ -47,11 +47,11 @@ surfaces: po_box punctuation truncation and the perturb arena floor.
 
 ## Findings
 
-### 1. #481 is stale as an issue; only `core/utils/repo.ts` and smaller cleanup remain
+### 1. #481 is stale as an issue, and only `core/utils/repo.ts` and smaller cleanup remain
 
 Claude's top parser findings were valid when written, but main has already absorbed most of that
 bundle. `neural/classifier.ts` now has one `#decode()` path used by both public decode methods,
-and its comment explicitly says reconcile should see the same repaired tokens users see.
+and its comment explicitly states that reconcile should see the same repaired tokens users see.
 `core/resources/libpostal.ts` now lazy-loads languages. `core/policy/registry.test.ts` covers
 `rule_preferred`, `neural_preferred`, merged proposals, and threshold-before-preference behavior.
 
@@ -70,7 +70,7 @@ The remaining edge is explicit in `corpus-python/src/mailwoman_train/test_extrac
 declared extracts and still train from `corpus_dir/<split>/*.parquet`. That may be needed for legacy
 corpora, but for versioned overlay corpora it is exactly the shape of "measured the wrong data."
 The fix does not have to be a big-bang removal. Add an explicit manifest mode or config flag:
-legacy glob is allowed only when the manifest says it is legacy, or when no manifest exists.
+legacy glob is allowed only when the manifest declares it legacy, or when no manifest exists.
 
 Curriculum stamping also remains open. The current v4.4.0 config has `gazetteer_curriculum: false`,
 so it is not an immediate ship blocker tonight, but the resume-assertion gap still matters for any
@@ -78,19 +78,19 @@ future ramped run.
 
 ### 3. The v4.4.0 check is much better than yesterday's check discipline, but the parser is brittle to scorer output
 
-`scripts/eval/promotion-check.sh` now encodes the standard battery and carries the right lore:
+`scripts/eval/promotion-check.sh` now encodes the standard battery and these checks:
 tokenizer comparability, recompile warnings, gazetteer flags, conventions mode, affix scoring from
 the unfolded scorer, int8 delta enforcement, and arena.perturb when the spec declares it.
 
 The brittle point is `scripts/eval/promotion-check-verdict.ts`: it extracts numbers from markdown
-tables with regexes. It fails closed when a declared floor is missing, which is the right default,
-but this still means harmless scorer formatting changes can turn into check failures. That is
+tables with regexes. It fails closed when a declared floor is missing. That default is correct,
+but the regex extraction still means harmless scorer formatting changes can turn into check failures. That is
 acceptable for tonight. Longer-term, the scorers should emit JSON sidecars and the markdown should
 be presentation only.
 
 ### 4. The status docs are refreshed, but now conflict with the runtime pipeline on reconcile defaults
 
-`core/pipeline/runtime-pipeline.ts` says joint reconcile is default-on when the phrase grouper and
+`core/pipeline/runtime-pipeline.ts` states that joint reconcile is default-on when the phrase grouper and
 `parseWithLogits` classifier are present:
 
 ```ts
@@ -108,13 +108,13 @@ back to argmax otherwise," and the API docs should prefer `jointReconcile` while
 
 ### 5. The status page points at the 2026-06-10 scorecard while the 2026-06-11 scorecard is the live truth
 
-`docs/articles/status.mdx` correctly says the release is 4.3.0 and links the v4.3.0 ship check, but
+`docs/articles/status.mdx` correctly states the release is 4.3.0 and links the v4.3.0 ship check, but
 the per-tag health section links `parity-scorecard-2026-06-10.md`. The latest scorecard is
-`parity-scorecard-2026-06-11.md` and carries the v4.3.0 arena dip, affix closeout, and FR region
+`parity-scorecard-2026-06-11.md` and records the v4.3.0 arena dip, affix closeout, and FR region
 tail. This is a one-line fix, but it is the first page readers will use to understand the release.
 
-There is also a small size mismatch: the model table says 29.8 MB int8, while the browser demo
-section says 28.4 MB. If both are true for different served artifacts, say so; otherwise pick the
+There is also a small size mismatch: the model table lists 29.8 MB int8, while the browser demo
+section lists 28.4 MB. If both are true for different served artifacts, state that. Otherwise pick the
 release artifact number.
 
 ### 6. The v4.4.0 plan's highest-risk new floor is po_box rather than intersection
@@ -123,13 +123,13 @@ The intersection change looks comparatively clean: #487 now has real rows, the r
 `intersection-real`/VT watch material, and the config header reports 100/100 probe behavior with
 zero false fires. The floor is conservative at 50.
 
-po_box is more delicate. The v4.4.0 config says the rebuilt extract passed cedex but the po_box probe
-was still 57.5 because of punctuation truncation, and the full run is expected to answer that with
+po_box is more delicate. The v4.4.0 config records that the rebuilt extract passed cedex but the po_box probe
+was still 57.5 because of punctuation truncation, and the complete v4.4.0 training run is expected to answer that with
 more exposure. That is a reasonable experiment, but it should be treated as an experiment. If
-po_box misses the 70 floor, do not reinterpret it as "close enough" just because cedex passed; it
+po_box misses the 70 floor, do not reinterpret it as "close enough" just because cedex passed. A miss
 means the punctuation class needs its own corrective.
 
-### 7. The v4.3.0 arena dip is now properly tracked; keep it as a hard v4.4.0 constraint
+### 7. The v4.3.0 arena dip is now properly tracked, so keep it as a hard v4.4.0 constraint
 
 The v4.3.0 ship check and 2026-06-11 scorecard characterize the perturb drop well: fused
 region+postcode tokens dominate the regression, with post-directional and unit-junction boundary
@@ -177,7 +177,7 @@ postmortem and one single-variable corrective rather than a widened release.
 
 ## Context for the next phase
 
-What currently keeps Mailwoman from v0 parser parity is not raw model capacity anymore. The recent affix work in practice proved that: the model was not too small to learn street-prefix/suffix boundaries; the corpus was teaching contradictory
+What currently keeps Mailwoman from v0 parser parity is not raw model capacity anymore. The recent affix work in practice proved that: the model was not too small to learn street-prefix/suffix boundaries. The corpus was teaching contradictory
 labels. The blocker is now the long tail of component-specific boundary conventions and rare address shapes where v0’s hand-built rules still have very sharp local knowledge.
 
 The main remaining parser-parity gaps look like this:
@@ -190,7 +190,7 @@ The main remaining parser-parity gaps look like this:
    streets,” but “can it hold all neighboring boundaries simultaneously under degraded input.”
 
 3. Locale convention leakage
-   v0 has country-specific assumptions baked into rules. The model is now getting a cleaner equivalent through address-system conventions, but only the first increment has shipped. FR got a useful mask; DE/GB and transition masks still need
+   v0 has country-specific assumptions baked into rules. The model is now getting a cleaner equivalent through address-system conventions, but only the first increment has shipped. FR got a useful mask. DE/GB and transition masks still need
    evidence-driven rows and tests.
 
 4. Some v0 wins come from deterministic special cases
@@ -201,7 +201,7 @@ The main remaining parser-parity gaps look like this:
    The model-first approach does not require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
    That is why #478 matters: parity may come from learned parsing plus disciplined arbitration rather than from forcing the neural model to imitate every v0 trick.
 
-My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
+My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for one identified class. I would not wait for perfect parser
 parity.
 
 The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Further polish on parser tail cases has diminishing returns unless
@@ -215,8 +215,8 @@ Immediately after v4.4.0: do a short hygiene pass: issue/docs sync, strict repro
 
 Then start geocoder table stakes in parallel with parser tail work. The first serious beyond-parser targets should be:
 
-- House-number interpolation: biggest forward-geocoding coverage jump; closes the admin-centroid gap.
-- Reverse geocoding: WOF polygons/PIP already exist; this is assembly more than research.
+- House-number interpolation: biggest forward-geocoding coverage jump. It closes the admin-centroid gap.
+- Reverse geocoding: WOF polygons/PIP already exist. This is assembly more than research.
 - Autocomplete as a product: use the FST tier for prefixes, bring the parser in after enough signal exists.
 - Batch/service hardening: needed for peer comparison, benchmarks, and real usage.
 

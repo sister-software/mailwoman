@@ -4,7 +4,7 @@
 
 Every number here was re-derived on `main` at `dcfd5f106`; §6 has the commands. Four of the operator's
 figures were confirmed exactly and four surrounding claims needed correcting — §5 lists both, because a record
-that only reports agreement is not worth re-reading.
+that only reports agreement gives a later reader no claim to check.
 
 ---
 
@@ -15,7 +15,7 @@ together, as §4.1 asked, because the directory structure is the new export list
 
 | workspace             |                                            subpaths |
 | --------------------- | --------------------------------------------------: |
-| `dev-mcp`             | 51 → 4 (wildcard; private, so no consumer to break) |
+| `dev-mcp`             | 51 → 4 (wildcard. Private, so no consumer to break) |
 | `resolver-wof-sqlite` |                                             61 → 45 |
 | `mailwoman`           |                                             55 → 45 |
 | `neural`              |                                             40 → 31 |
@@ -27,7 +27,7 @@ of this record now.
 ### §0.2 — `sideEffects: false` is correct, but not for the reason given
 
 Landed on the **43 of 59** published packages that warrant it, by walking each module's top-level statement
-list (an expression statement, a bare `import "x"` or a top-level await runs; a declaration does not). The
+list (an expression statement, a bare `import "x"` or a top-level await runs, and a declaration does not). The
 16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
 
 The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
@@ -38,7 +38,7 @@ defense in depth. **It does not.** Measured after landing it: repointing one dem
 catches it is a five-minute `docusaurus build`.
 
 _(A first pass at the audit reported 13 clean packages. It used a regex, and `^` under the `m` flag matches
-an indented statement inside a function exactly as happily as a top-level one. It also flagged `neural`,
+an indented statement inside a function exactly as it matches a top-level one. It also flagged `neural`,
 which already declared the field — that contradiction is what exposed it.)_
 
 ### §0.4 — the docs alias map must not be derived from `exports`
@@ -51,13 +51,13 @@ express the preference — it is an editorial judgment about the BROWSER, and th
 from the browser's point of view.
 
 What the hand-list needed was not derivation but a refusal: `requireAlias` now throws on an entry that
-resolves to no target, which caught three real breaks during the fold (`resolver-wof-sqlite/geo` and
+resolves to no target. That refusal caught three real breaks during the fold (`resolver-wof-sqlite/geo` and
 `core/kysley/dialect`, both long dead, and `resolver/resolve` the moment it became a directory).
 
 ### Still open
 
 - An **array-valued** `sideEffects` naming the entry files would let the other 16 packages shake their
-  library halves. Worth doing; not done.
+  library halves. This change is recommended and not yet made.
 - `core` (80) and `codex` (54) are now the two largest surfaces and neither was folded — no prefix families
   at their roots, so the reduction there is a different exercise.
 
@@ -68,9 +68,9 @@ resolves to no target, which caught three real breaks during the fold (`resolver
 1. **Directory-level entries rather than file-level.** Each prefix fold becomes one export: `./geocode` →
    `lib/geocode/index.ts`, `./eval-harness` → its barrel. Internal reach stays free through `#*`, which is the
    map that was doing the real work all along.
-2. **Keep the deliberate isolation leaves, and MARK them** — each needs its reason in its own docstring, which
-   today only one of three has (§2). Add `"sideEffects": false` to every published package so barrel imports
-   tree-shake and the leaf list stops growing for bundle reasons; today exactly **one** package declares it.
+2. **Keep the deliberate isolation leaves, and mark them.** Each needs its reason in its own docstring. Today
+   only one of three has it (§2). Add `"sideEffects": false` to every published package so barrel imports
+   tree-shake and the leaf list stops growing for bundle reasons. Today exactly **one** package declares it.
 3. **Wildcards only where the surface is not public.** Five of the 64 workspaces are private.
 4. **Derive the mirrors.** The docs alias map hand-copies subpaths, and that list is **already stale** (§2.2).
 
@@ -79,7 +79,7 @@ resolves to no target, which caught three real breaks during the fold (`resolver
 ## 1. The census
 
 **727 export subpaths** across the 64 workspaces, excluding `./package.json`. **654 of them are in published
-packages**; 73 sit in the five private ones.
+packages**, and 73 sit in the five private ones.
 
 | package               | subpaths | wildcard | visibility  |
 | --------------------- | -------: | -------: | ----------- |
@@ -113,7 +113,7 @@ are side-effect-free **and** every Node-only dependency sits behind its own entr
 ### 2.1 The reasons are not written down
 
 **Two of those three modules do not state why they are a separate entry.**
-`sqlite/lib/introspection.ts` says only "`@file` Questions asked of `sqlite_master`";
+The docstring of `sqlite/lib/introspection.ts` reads only "`@file` Questions asked of `sqlite_master`".
 `neural/lib/viterbi.ts` describes the CRF decoder. Only `core/lib/trust-policies.ts` mentions jsdom.
 
 That is how a deliberate leaf gets tidied away: a future agent collapsing the surface reads three modules,
@@ -128,7 +128,7 @@ made to prevent. **Each docstring must explain the reason before the exports can
 `lib/geo.ts` is gone with it).
 
 It has not been noticed because it fails softly: `resolvePackageFile` returns `null` for a missing target and
-`existingCompiledFile` logs "alias skipped". A derived map cannot go stale this way, which is the argument for
+`existingCompiledFile` logs "alias skipped". A derived map cannot go stale this way. That is the argument for
 §0.4 stated as a defect rather than as a preference.
 
 ## 3. Where the count would land
@@ -137,7 +137,7 @@ It has not been noticed because it fails softly: `resolvePackageFile` returns `n
 `./strings`, `./layers`, `./api`, `./decoder` and the rest. The exact figure is not predictable before the
 folds are drawn. The directory structure is the new export list. A second drawing would repeat the work.
 
-`dev-mcp` is the single largest cheap win — **51 subpaths, private**, so a `./*` wildcard there breaks no
+`dev-mcp` removes the most explicit subpaths for the least risk — **51 subpaths, private**, so a `./*` wildcard there breaks no
 consumer because no consumer outside this monorepo installs it. `docs` (12, already 4 wildcards),
 `geocode-oracle` (9) and `neural-weights-base-latn` (1) are the rest of the private set; `tile-worker` is
 private but exports no subpath at all, so it is not in scope.
@@ -147,7 +147,7 @@ private but exports no subpath at all, so it is not in scope.
 1. **Fold the collapse into the hierarchy arc's second half** rather than before it.
 2. **Take the subpath removals in the same breaking release as the `sdk/` rename** — one CHANGELOG entry per
    package listing every removed path, rather than two rounds of consumer churn. See
-   `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6, which sizes what is left to bundle.
+   `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6. That section sizes what is left to bundle.
 3. **`sideEffects: false` and the leaf docstrings land first**, before any collapse. Both are prerequisites:
    without the flag a barrel import stops tree-shaking, and without the docstrings the leaves get collapsed by
    someone who cannot see why they exist.
@@ -159,16 +159,16 @@ private but exports no subpath at all, so it is not in scope.
 Confirmed exactly: **727** total; `core` 80, `resolver-wof-sqlite` 61, `mailwoman` 55, `codex` 54,
 `dev-mcp` 51, `neural` 40.
 
-| claim                               | measured                    | note                                                  |
-| ----------------------------------- | --------------------------- | ----------------------------------------------------- |
-| "the 53 published packages"         | **59 published, 5 private** | of the 64 workspaces                                  |
-| "today's arc added roughly a dozen" | **−2**                      | today's two PRs took 729 → 727                        |
-| —                                   | **+9**                      | #2041 took 720 → 729; the "dozen" belongs to that arc |
-| "add `sideEffects`"                 | **1 of 59 declares it**     | only `packages/neural`, `false`                       |
-| "each has a stated reason"          | **1 of 3 does**             | §2.1                                                  |
+| claim                               | measured                    | note                                                      |
+| ----------------------------------- | --------------------------- | --------------------------------------------------------- |
+| "the 53 published packages"         | **59 published, 5 private** | of the 64 workspaces                                      |
+| "today's arc added roughly a dozen" | **−2**                      | today's two PRs took 729 → 727                            |
+| —                                   | **+9**                      | #2041 took 720 → 729, and the "dozen" belongs to that arc |
+| "add `sideEffects`"                 | **1 of 59 declares it**     | only `packages/neural`, `false`                           |
+| "each has a stated reason"          | **1 of 3 does**             | §2.1                                                      |
 
 The `lib/` move (#2051) was deliberately subpath-neutral — it changed only the dev-only `node` condition — so
-neither of today's PRs is a source of growth. The growth is real; itbelongs to the dedup arc.
+neither of today's PRs is a source of growth. The growth is real. It belongs to the dedup arc.
 
 ## 6. How to reproduce each number
 

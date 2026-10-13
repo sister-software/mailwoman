@@ -13,13 +13,13 @@
  *
  *   - Requires every term to include a non-empty `tags` array whose keys are registered in
  *     `docs/tags.yml` (build error otherwise — same spirit as the docs `onInlineTags: "throw"`).
- *   - Emits `tagMeta`: the tags.yml entries actually used by glossary terms, in declaration order,
+ *   - Emits `tagMeta`: the tags.yml entries used by glossary terms, in declaration order,
  *     with per-tag term counts. The page renders these as filter toggles + category sections.
  *   - Emits `backlinks`: for each term, the docs pages that reference it (title + permalink),
  *     computed in `allContentLoaded` from the docs plugin's loaded content. The scan mirrors the
  *     remark auto-linker's matching rules (term + aliases, word boundaries with plural allowance,
  *     case-insensitive, proper-noun guard, homonym guard — see remark.ts) so the backlink list
- *     tracks the pages that actually render tooltips for the term. The homonym guard shares
+ *     tracks the pages that render tooltips for the term. The homonym guard shares
  *     `isSuppressedSurface` with remark.ts rather than re-implementing it: a suppressed surface that
  *     still produced a backlink would advertise a tooltip the page does not render.
  */

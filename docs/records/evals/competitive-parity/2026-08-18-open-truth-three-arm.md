@@ -19,11 +19,11 @@ Pre-registered before the first import as §4 of
 - Haversine distance (R = 6371 km) from the top result to the row's reference coordinate.
 - Thresholds 1 / 5 / 25 km. **No result = a miss at every threshold.** A low-confidence fallback
   counts as a result.
-- Arms queried in a fixed per-row order, rows in panel order; the scorer is deterministic. The
+- Arms queried in a fixed per-row order, rows in panel order. The scorer is deterministic. The
   Pelias and Photon captures were each run twice with byte-identical A/B output (checksums in the
   receipts); the Mailwoman capture is a single run of the same harness.
 - Results reported per `truth_type` stratum, never blended silently. Every row in this record is the
-  `rooftop` stratum. The withheld strata are named below.
+  `rooftop` stratum. The next section lists the withheld strata.
 
 ## What is published, and what is withheld
 
@@ -45,27 +45,27 @@ coordinates on 2026-08-17 confirmed all of them within each row's pre-assigned t
 scores below were produced against the original coordinates, so the rows stay out). The internally
 curated cases are withheld because their coordinates do not trace to a register.
 
-The **en-gb lane is withheld in full**: two of its rows carry licensed-source reference coordinates,
+The **en-gb lane is withheld in full**: two of its rows have licensed-source reference coordinates,
 and the lane's reference set is under separate review. Its open-register remainder is not printed
 here.
 
 What remains is **297 rows across six lanes**, all `rooftop` truth, published in full — the per-lane
-denominators below state exactly how many of each lane's 60 rows survived the provenance filter. The
+denominators below state the count of each lane's 60 rows that survived the provenance filter. The
 internal 420-row aggregate is not restated here, because part of its reference set cannot be
-published; this record's numbers are computed only over rows whose truth a third party can check.
+published. This record's numbers are computed only over rows whose truth a third party can check.
 
 ## The three arms
 
 | arm       | engine                                                                                                                                                                                               | index / data footprint                                                                                                                                                                                                                                             | captured         |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
 | Mailwoman | repo `main` as of 2026-08-12 (through #1635/#1636); model = the shipped npm model **v4.4.0-suffix-boundary-v2 step-60000 (int8)**, published as `@mailwoman/neural-weights-en-us@9.1.0` (2026-08-11) | candidate gazetteer `2026-08-12a` (the same artifact the public demo serves), plus rooftop layers: G-NAF AU (16,025,856 points), LINZ NZ, BAN FR, US open address points + TIGER interpolation, and OSM-derived address points (DE, NL)                            | 2026-08-12       |
-| Pelias    | `pelias/docker` @ `3dfa07d5`, images pinned by digest (Elasticsearch 7.17.27; `pelias/api:master@sha256:cec95697…`)                                                                                  | scoped local build, 12 countries (US FR DE GB AU NZ AT CH CZ DK BE NL): OpenAddresses (311 source files, countrywide for FR/AU/NZ), per-country OSM extracts, Who's On First, polylines + interpolation; built 2026-08-07/08, source checksums in the rig manifest | 2026-08-09 (UTC) |
+| Pelias    | `pelias/docker` @ `3dfa07d5`, images pinned by digest (Elasticsearch 7.17.27; `pelias/api:master@sha256:cec95697…`)                                                                                  | scoped local build, 12 countries (US FR DE GB AU NZ AT CH CZ DK BE NL): OpenAddresses (311 source files, countrywide for FR/AU/NZ), per-country OSM extracts, Who's On First, polylines + interpolation. Built 2026-08-07/08, source checksums in the rig manifest | 2026-08-09 (UTC) |
 | Photon    | komoot/photon **1.3.0**                                                                                                                                                                              | the public pre-built **planet** index, vintage 2026-08-03 (OpenStreetMap)                                                                                                                                                                                          | 2026-08-09 (UTC) |
 
 The footprints are deliberately different, and the comparison is behavioral rather than
-index-for-index: Photon answers from an OSM planet index; Pelias and Mailwoman answer from local
+index-for-index: Photon answers from an OSM planet index. Pelias and Mailwoman answer from local
 builds scoped to the panel countries. This helps Photon wherever OSM has the address and hurts it
-wherever OSM does not; it is stated here rather than corrected for.
+wherever OSM does not. This record states the difference rather than correcting for it.
 
 One arm-configuration caveat: Mailwoman's `eu-mixed` rows ran under the production default `en-US`
 locale (no EU-mixed weights package exists), so that lane measures the unconstrained fallback path rather than a locale-tuned configuration.
@@ -84,7 +84,7 @@ threshold and are included in every denominator.
 | Pelias    | 45/49 (91.8%) | 45/49 (91.8%) | 49/49 (100.0%) | 0         |
 | Photon    | 48/49 (98.0%) | 48/49 (98.0%) | 48/49 (98.0%)  | 1         |
 
-Photon leads this lane at 1 km; Mailwoman trails both arms at 1 km.
+Photon leads this lane at 1 km. Mailwoman trails both arms at 1 km.
 
 ### en-au — Australia (n = 56 of 60)
 
@@ -102,7 +102,7 @@ Photon leads this lane at 1 km; Mailwoman trails both arms at 1 km.
 | Pelias    | 43/57 (75.4%)  | 43/57 (75.4%)  | 43/57 (75.4%)  | 0         |
 | Photon    | 57/57 (100.0%) | 57/57 (100.0%) | 57/57 (100.0%) | 0         |
 
-Mailwoman and Photon both resolve every row; the 14 Pelias misses all land beyond 25 km
+Mailwoman and Photon both resolve every row. The 14 Pelias misses all land beyond 25 km
 (wrong-place answers rather than near-misses).
 
 ### en-us — United States (n = 45 of 60)
@@ -113,7 +113,7 @@ Mailwoman and Photon both resolve every row; the 14 Pelias misses all land beyon
 | Pelias    | 44/45 (97.8%) | 44/45 (97.8%) | 44/45 (97.8%)  | 0         |
 | Photon    | 34/45 (75.6%) | 38/45 (84.4%) | 38/45 (84.4%)  | 7         |
 
-Pelias leads at 1 km; Mailwoman trails it by 3 rows there.
+Pelias leads at 1 km. Mailwoman trails it by 3 rows there.
 
 ### eu-mixed — AT / CH / CZ / DK / BE / NL (n = 45 of 60)
 
@@ -135,7 +135,7 @@ see the caveat above — but the loss prints regardless of the explanation.)
 | Pelias    | 42/45 (93.3%) | 43/45 (95.6%) | 45/45 (100.0%) | 0         |
 | Photon    | 25/45 (55.6%) | 33/45 (73.3%) | 35/45 (77.8%)  | 9         |
 
-Pelias leads at 1 km by 6 rows; Mailwoman leads at 5 km by 1 row.
+Pelias leads at 1 km by 6 rows. Mailwoman leads at 5 km by 1 row.
 
 ### Pooled over all 297 published rows
 
@@ -146,7 +146,7 @@ Pelias leads at 1 km by 6 rows; Mailwoman leads at 5 km by 1 row.
 | Photon    | 255/297 (85.9%) | 273/297 (91.9%) | 276/297 (92.9%) | 20        |
 
 Pooled, **Pelias leads at 1 km** (91.9% vs Mailwoman's 86.9%); **Mailwoman leads at 5 km and
-25 km**. Photon's pooled numbers carry 20 no-result rows.
+25 km**. Photon's pooled numbers include 20 no-result rows.
 
 ### Uncertainty (paired bootstrap, Mailwoman − Pelias)
 
@@ -178,20 +178,20 @@ should be read with that in view:
   likewise partly recall of shared upstream data. Its de-de and eu-mixed answers draw on
   OSM-derived address points and the admin gazetteer rather than on the registers the truth came from —
   which is visible in the numbers.
-- **Photon's index is OpenStreetMap only** — no OpenAddresses, no national-register feed. Its @1 km
+- **Photon's index is OpenStreetMap only** — it indexes neither OpenAddresses nor a national-register feed. Its @1 km
   column is closest to a measure of independent coverage, and its no-result and beyond-25 km rows
   are OSM address-coverage gaps.
 
 So the summary sentence is narrow: on register-rooftop queries in these six lanes, all three
-engines are in the same band at 1 km pooled (85.9–91.9%), Pelias ahead; Mailwoman degrades least beyond
-1 km (96.3% at 5 km, 99.3% at 25 km, one no-result in 297 rows), which is its designed behavior —
-resolve to the right place at some tier rather than return nothing.
+engines are in the same band at 1 km pooled (85.9–91.9%), with Pelias ahead. Mailwoman degrades least beyond
+1 km (96.3% at 5 km, 99.3% at 25 km, one no-result in 297 rows). That is its designed behavior:
+resolve to the right place at some tier rather than return no result.
 
 ## Truth sources and attribution
 
 Every published reference coordinate comes from an open address register via the
 [OpenAddresses](https://openaddresses.io/) collections. Per-row provenance is in the committed
-panel's `source` field; per-source licenses are in the OpenAddresses source manifests.
+panel's `source` field. Per-source licenses are in the OpenAddresses source manifests.
 
 | lane     | register / upstream                                                                                      | license                             |
 | -------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------- |
@@ -200,7 +200,7 @@ panel's `source` field; per-source licenses are in the OpenAddresses source mani
 | en-nz    | LINZ — Toitū Te Whenua Land Information New Zealand (OpenAddresses `nz/countrywide`)                     | CC BY 4.0                           |
 | en-us    | US county and state address-point files (OpenAddresses `us` collection)                                  | per-source (open); see OA manifests |
 | eu-mixed | national open address registers for AT / CH / CZ / DK / BE / NL, incl. ČÚZK RÚIAN for CZ (OpenAddresses) | per-source (open); see OA manifests |
-| fr-fr    | BAN — Base Adresse Nationale (DINUM / IGN; OpenAddresses `fr/countrywide`)                               | Licence Ouverte 2.0                 |
+| fr-fr    | BAN — Base Adresse Nationale (DINUM / IGN, OpenAddresses `fr/countrywide`)                               | Licence Ouverte 2.0                 |
 
 Photon's answers derive from OpenStreetMap (© OpenStreetMap contributors, ODbL); Pelias's from the
 sources listed in its footprint above.
@@ -232,7 +232,7 @@ The claim decomposes into two checks, one offline and one live:
    You supply the engines: a Pelias build (the original's source scope and checksums are in the rig
    manifest), a Photon planet index, and a compiled Mailwoman with its data pulled
    (`mailwoman data pull`). Index vintages will differ from the August 2026 captures, so expect
-   row-level drift; the protocol and panel do not change.
+   row-level drift. The protocol and panel do not change.
 
 Lab-internal receipts (not published, referenced for lineage): the full 420-row panel
 (`$MAILWOMAN_DATA_ROOT/pelias-rig/panel/panel-v2.jsonl`, sha256 `e2db3180…`), the Mailwoman capture

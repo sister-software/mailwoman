@@ -12,7 +12,7 @@ tags:
 
 # How it works now — the staged pipeline
 
-Mailwoman runs addresses through a **staged pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Two models are involved rather than one: a small **coarse-placer** that guesses the country up front (Stage 1.5), and the main **neural classifier** that labels the tokens (Stage 3). Rule classifiers run alongside the neural classifier, and a **policy registry** decides whose vote wins for each address component. Outside knowledge — postcodes, the gazetteer — reaches the model as soft hints called **anchors**, which inform a decision but never override it.
+Mailwoman runs addresses through a **staged pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Two models are involved rather than one: a small **coarse-placer** that guesses the country up front (Stage 1.5), and the main **neural classifier** that labels the tokens (Stage 3). Rule classifiers run alongside the neural classifier, and a **policy registry** decides whose vote wins for each address component. Outside knowledge — postcodes, the gazetteer — reaches the model as soft hints called **anchors**. Anchors inform a decision but never override it.
 
 This article assumes you have read [How it used to work](./how-it-used-to-work.mdx). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.mdx).
 
@@ -41,11 +41,11 @@ flowchart TD
 
 ### Stage 1 — Normalize
 
-Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. Carries no address-structure knowledge. Cleans bytes so downstream layers see canonical text.
+Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. This stage holds no address-structure knowledge. It cleans bytes so downstream layers see canonical text.
 
 ### Stage 1.5 — Coarse-placer
 
-A separate, small model (#244) reads the whole normalized string and guesses its country, with a confidence. It is **on by default,** and it is the second model in the system. It has exactly one job: a fast, coarse country guess. It does _not_ feed the main classifier. Its guess is held back and handed to the resolver (Stage 6), where it gently boosts in-country candidates when two places share a name. A confident "this looks French" never forces a French reading; it only tips the scale at resolution time. This is the same discipline as the anchors below: knowledge informs, it never overrides.
+A separate, small model (#244) reads the whole normalized string and guesses its country, with a confidence. It is **on by default,** and it is the second model in the system. It has exactly one job: a fast, coarse country guess. It does _not_ feed the main classifier. Its guess is held back and handed to the resolver (Stage 6), where it gently boosts in-country candidates when two places share a name. A confident "this looks French" never forces a French reading. It only tips the scale at resolution time. This is the same discipline as the anchors below: knowledge informs, it never overrides.
 
 ### Stage 2 — Locale check
 
@@ -83,16 +83,16 @@ The v0.5.0 classifier (Thread C-s) adds two architectural changes blocked behind
 - **Phrase-prior conditioning.** The input layer takes per-token features from the Stage 2.7 phrase grouper (BIE markers + `PhraseKind` one-hot), concatenated onto the token+position embedding. The classifier conditions on proposed boundaries rather than discovering them from scratch.
 - **Top-k inference.** The inference path emits the K most-probable tag sequences with calibrated log-probability scores, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses.
 
-Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect).
+Both are scaffolded and tested in `main`. The training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect).
 
 ### How outside knowledge reaches the model — anchors
 
-The classifier never memorizes the world's place names; that is the gazetteer's job. Instead, knowledge from the databases is retrieved at inference time and fed in as soft input features — **anchors** — alongside the tokens:
+The classifier never memorizes the world's place names. That is the gazetteer's job. Instead, knowledge from the databases is retrieved at inference time and fed in as soft input features — **anchors** — alongside the tokens:
 
 - **Postcode-anchor.** A postcode is looked up and the result ("this is probably in the United States") is fed in as a soft signal on the surrounding tokens.
 - **Gazetteer-anchor.** Each token is flagged with what the gazetteer knows about it — whether it matches a known country, region, PO box, or _homograph_ place-name (a place whose name also looks like something else, like "Paris" or "Reading").
 
-Both are optional and both are soft: they shift the model's probabilities, they never replace its reading. This is the one discipline that keeps the system from sliding back into a rule engine. We let a lookup table _override_ the model exactly once, for `country`, and reversed it within a day when a homograph eval caught the regression. Knowledge informs; it never overrides. For the mechanism, see [FST priors as shallow fusion](../../concepts/fst-priors-as-shallow-fusion.mdx) and [What Mailwoman is](../../concepts/what-mailwoman-is.mdx).
+Both are optional and both are soft: they shift the model's probabilities, they never replace its reading. This is the one discipline that keeps the system from sliding back into a rule engine. We let a lookup table _override_ the model exactly once, for `country`, and reversed it within a day when a homograph eval caught the regression. Knowledge informs, and it never overrides. For the mechanism, see [FST priors as shallow fusion](../../concepts/fst-priors-as-shallow-fusion.mdx) and [What Mailwoman is](../../concepts/what-mailwoman-is.mdx).
 
 The forward pass itself runs **once** per address. The anchors and the phrase prior are folded into the per-token scores, then a single decode (Stage 4) picks the labels. There is no loop, and no second neural read of the model's own output.
 
@@ -118,7 +118,7 @@ Joint decode is **opt-in**, off by default. It was briefly the default and then 
 
 Looks up parsed components against the WOF SQLite gazetteer. Returns place IDs, coordinates, parent chains, and alternate names. The resolver surfaces top-K candidates per administrative span (locality, region) so downstream systems can handle ambiguity.
 
-This is where "which Paris?" gets answered — never by the model, which only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a tie does population break it — "Paris" with no other signal resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
+This stage answers "which Paris?". The model never answers it, because the model only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a tie does population break it — "Paris" with no other signal resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
 
 ## The Ship-of-Theseus dial
 

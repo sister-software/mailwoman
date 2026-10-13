@@ -100,7 +100,7 @@ export interface ConformanceSummary {
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows were admitted and decided, the denominator the pass count needs before it means anything.
+	 * The number of rows admitted and decided, the denominator the pass count needs before it means anything.
 	 */
 	decided: number
 	pass: boolean

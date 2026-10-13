@@ -36,7 +36,7 @@ import { carriesShareAlike, LicenseResolution, readLicenseRecord } from "#licens
  * `private` makes no claim about the license.
  *
  * @param subject The tier and license expression about to be stamped.
- * @param context Names the build in the error message.
+ * @param context The build the error message identifies.
  * @param detail Appended to the message where the caller knows why the license reads as it does.
  * @throws When the tier and the license disagree.
  */

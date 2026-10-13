@@ -404,9 +404,9 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 			.where("geoid", "=", GEOID_DIVERGENT)
 			.executeTakeFirstOrThrow()
 
-		// Prove this is a genuinely divergent point before trusting the rest of the test:
-		// the independent `latLngToCell(centroid, 6)` derivation, taken without reference to
-		// the stored res-9 cell, disagrees with the reader's hierarchy-parent derivation here.
+		// Prove this is a divergent point before trusting the rest of the test: the independent
+		// `latLngToCell(centroid, 6)` derivation, taken without reference to the stored
+		// res-9 cell, disagrees with the reader's hierarchy-parent derivation here.
 		// If this assertion ever stops holding (an h3-js upgrade changing cell boundaries), re-select the point.
 		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6) as H3Cell)
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)

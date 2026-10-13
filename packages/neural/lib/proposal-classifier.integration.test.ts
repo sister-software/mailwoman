@@ -40,7 +40,7 @@ const haveModel = assets !== null
 const COARSE_TAGS: readonly ComponentTag[] = ["region", "locality", "postcode"]
 
 /**
- * Minimal stub that just returns a canned tree, ignoring the input text.
+ * Minimal stub that returns a canned tree, ignoring the input text.
  */
 function stubClassifier(tree: AddressTree): NeuralProposalClassifierConfig["classifier"] {
 	return { parse: async () => tree }

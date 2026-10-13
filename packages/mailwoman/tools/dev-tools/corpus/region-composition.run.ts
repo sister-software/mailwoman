@@ -28,7 +28,7 @@ const { values } = parseArguments({
 		split: { type: "string", default: "train" },
 		"out-json": { type: "string" },
 		/**
-		 * Sets how many of the largest and of the smallest pooled regions the region table prints.
+		 * Sets the number of the largest and of the smallest pooled regions the region table prints.
 		 */
 		detail: { type: "string", default: "12" },
 		"memory-limit": { type: "string", default: "8GB" },
@@ -125,7 +125,7 @@ const streetShapes = new Map<
 		bareAdmin: number
 		/**
 		 * Counts rows that write the region as its two-letter code.
-		 * Also counts how many of those rows are bare admin rows.
+		 * Also counts the bare admin rows among those rows.
 		 *
 		 * The model sees `Arkansas` and `AR` as different strings, so the code form gets its own count.
 		 */

@@ -78,7 +78,7 @@ export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 }
 
 /**
- * How many single-character rungs open the ladder before token boundaries take over,
+ * The number of single-character rungs that open the ladder before token boundaries take over,
  * past which a per-character rung adds latency samples without adding a decision.
  */
 export const FIRST_KEYSTROKE_RUNGS = 3
@@ -140,7 +140,7 @@ export interface RowArmReading {
 	 */
 	firstHitFraction: number | null
 	/**
-	 * After the first hit, how many later rungs lost the truth again.
+	 * After the first hit, the number of later rungs that lost the truth again.
 	 *
 	 * `0` is a stable row; `null` when it never hit.
 	 */

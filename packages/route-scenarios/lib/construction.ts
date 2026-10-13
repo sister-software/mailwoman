@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Construction cost, charged once per asset. A selection of buildings pays for each distinct route segment
- *   its buildings need once, however many of them share it. Mobilization and shared engineering are project
+ *   its buildings need once, regardless of the count of buildings that share it. Mobilization and shared engineering are project
  *   costs, charged once when the selection holds any building. Each selected building adds its own works in
  *   the months they are paid. Per-customer activation belongs to the monthly cash flow.
  *

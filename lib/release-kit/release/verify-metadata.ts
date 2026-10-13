@@ -102,7 +102,7 @@ export interface SurfaceResult {
 
 /**
  * Read the shipped model version from the `version` field of the weights bundle's model card
- * rather than npm package.json, so a code-only release is judged against the model it actually ships.
+ * rather than npm package.json, so a code-only release is judged against the model it ships.
  */
 async function readModelVersion(cardPath: string): Promise<string> {
 	const card = await readLocalJSONFile<{ version?: string }>(cardPath)

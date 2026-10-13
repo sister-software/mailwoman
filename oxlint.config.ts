@@ -271,9 +271,9 @@ export default {
 		"mailwoman/comment-reflow": ["warn", { printWidth: 120, targetWidth: 90, tabWidth: 2, paragraphSentences: 2 }],
 		"guard-for-in": "error",
 		// Type-aware adoption (oxlint-config v14): `return-await` is enforced and fixed.
-		// The remaining type-aware rules that the correctness category now activates
-		// are grandfathered off pending a measured adoption pass — 894 sites across
-		// 11 rules on adoption day, too many to sweep blind.
+		// The remaining type-aware rules that the correctness category now activates are
+		// grandfathered off pending a measured adoption pass — 894 sites across 11 rules
+		// on adoption day, more than one change could sweep without review.
 		"typescript/restrict-template-expressions": "off",
 		"typescript/no-base-to-string": "off",
 		"typescript/no-floating-promises": "off",

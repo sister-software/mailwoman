@@ -228,7 +228,7 @@ for (const [name, bucket] of shapes) {
 }
 
 /**
- * Below this many rows a word is not reported per word: a rate over fewer places
+ * Below this row count a word is not reported per word: a rate over fewer places
  * reads the draw rather than the word.
  */
 const MIN_ROWS_PER_WORD = 10

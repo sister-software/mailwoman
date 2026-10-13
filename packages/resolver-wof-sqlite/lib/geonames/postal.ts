@@ -122,8 +122,8 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * and a multi-member group is one of its members.
  * The bound applies only while the members are distinct, so duplicate points are collapsed first.
  *
- * Separate counts for N rows at one coordinate would weight that value by how many settlements
- * inherited it. {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
+ * Separate counts for N rows at one coordinate would weight that value by the count of settlements that
+ * inherited it. {@link MedoidSupport.distinctPoints} reports the count of points the answer rested on.
  *
  * Distance is squared-Euclidean in degrees rather than haversine.
  * At the scale a postcode spans, both methods produce the same ranking.
@@ -194,7 +194,7 @@ export interface GeonamesPostalIngestResult {
 	/**
 	 * Per-country count of inserted codes the dump listed on several rows that all refer to one point.
 	 *
-	 * The coordinate rests on a single value no matter how many settlements sit under the code.
+	 * The coordinate rests on a single value regardless of the count of settlements under the code.
 	 * Reported because the point is still the best the source offers.
 	 *
 	 * A consumer weighing postal coverage needs to know how much of it is this.

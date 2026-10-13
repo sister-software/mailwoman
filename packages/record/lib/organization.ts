@@ -56,7 +56,7 @@ export interface CanonicalizeOptions {
 	/**
 	 * Ingest domain that keeps domain-specific abbreviations in organization names.
 	 *
-	 * The `healthcare` domain leaves `pt` in the name.
+	 * The `healthcare` domain leaves `pt` in an organization name.
 	 * It also leaves `sca` and `scs`.
 	 * These rules take precedence over jurisdiction packs.
 	 */

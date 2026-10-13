@@ -109,7 +109,7 @@ Notes:
 - **Easy fixes.** A regex bug takes a one-line fix, while a bug in a neural model takes a retraining run.
 - **No training data.** A rule classifier ships in code. The dictionary classifiers ship a few MB of dictionaries rather than a multi-GB model.
 - **Speed.** Pattern matching takes microseconds per address, and the whole parse runs in milliseconds.
-- **Explainability.** Every proposal carries a `source_id`. A consumer that sees `rule:postcode:us` on a wrong proposal knows exactly where to look.
+- **Explainability.** Every proposal includes a `source_id`. A consumer that sees `rule:postcode:us` on a wrong proposal knows exactly where to look.
 
 ## What rule classifiers are bad at
 

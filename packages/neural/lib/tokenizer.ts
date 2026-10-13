@@ -5,7 +5,7 @@
  *
  *   SentencePiece tokenizer wrapper over `@mailwoman/sentencepiece-wasm`.
  *
- *   The native offsets are UTF-8 byte positions and the decoder wants JS string (UTF-16 code-unit)
+ *   The native offsets are UTF-8 byte positions and the decoder reads JS string (UTF-16 code-unit)
  *   ranges, so this layer converts once per encode and trims the whitespace a `▁`-prefixed piece
  *   consumes from its native span.
  */

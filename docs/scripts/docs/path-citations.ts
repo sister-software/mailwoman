@@ -5,7 +5,7 @@
  *
  *   Finds repository paths in markdown inline code spans that do not exist on disk.
  *
- *   Many backticked strings that contain a slash are not file paths, so {@linkcode refusalFor} sorts them into refusal classes before resolution.
+ *   A backticked string that contains a slash is not always a file path, so {@linkcode refusalFor} sorts them into refusal classes before resolution.
  */
 
 // This file is imported by `check/docs-structure.ts`, which the Docs workflow runs

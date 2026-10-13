@@ -11,7 +11,7 @@ import regenerate from "regenerate"
 
 /**
  * A pattern matching combining diacritical marks, variation selectors and other
- * characters that are often used in text normalization.
+ * characters that text normalization commonly targets.
  */
 const CombiningDiacriticalPattern = regenerate()
 	.add(0x20_0d) // zero WIDTH JOINER (U+200D)

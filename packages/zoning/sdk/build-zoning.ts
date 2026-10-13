@@ -154,7 +154,7 @@ export interface BuildZoningResult {
 	storedPartialShare: number
 	/**
 	 * Features forced coarser than `indexResolution`, and the resolutions the stored
-	 * cell rows are actually at, reported rather than smoothed over.
+	 * cell rows are at, reported rather than smoothed over.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
@@ -188,12 +188,12 @@ export interface BuildZoningResult {
 	 */
 	area: AreaAgreementReading & { signedKM2: number }
 	/**
-	 * The vocabulary census, per scheme: how many codes the artifact holds
-	 * and how many of them the publisher never declared.
+	 * The vocabulary census, per scheme: the count of codes the artifact holds
+	 * and the count of those codes the publisher never declared.
 	 */
 	vocabulary: Array<{ scheme: string; codes: number; undeclared: number; undeclaredCodes: string[] }>
 	/**
-	 * (authority, local code) pairs and how many take more than one generic type,
+	 * (authority, local code) pairs and the count of pairs that take more than one generic type,
 	 * the measurement that keeps `zoning_crosswalk_edge` empty.
 	 */
 	crosswalk: {

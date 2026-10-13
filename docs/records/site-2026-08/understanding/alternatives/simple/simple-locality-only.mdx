@@ -16,7 +16,7 @@ A locality-only geocoder parses only the locality (the city, town, or village) a
 ## The approach
 
 1. **Find the locality.** Tokenize the input. Try each token and bigram against a gazetteer of locality names. "Springfield" matches. "New York" matches as a bigram. "West 26th" does not match and is ignored. The approach is a targeted version of gazetteer-first geocoding that skips everything except locality names.
-2. **Disambiguate if possible.** If the input also contains a state abbreviation or postcode, use it to filter candidates. `Springfield, IL` → Springfield, IL. `Springfield` alone → 34 candidates, ranked by population.
+2. **Disambiguate if possible.** If the input also contains a state abbreviation or postcode, use it to filter candidates. `Springfield, IL` → Springfield, IL. `Springfield` with no qualifier → 34 candidates, ranked by population.
 3. **Return the locality centroid.** The centroid is the geographic center of the city. It is off by up to several miles for large cities (Los Angeles is 500 square miles) and within a few hundred meters for small towns.
 4. **Ignore the rest.** City-level geocoding does not need the street, building number, apartment, or venue. The raw input keeps them for display.
 
@@ -28,7 +28,7 @@ This is the minimum viable geocoder: city-level accuracy from a gazetteer lookup
 - **Regional routing.** To route a delivery to the Los Angeles warehouse, you need to know that the address is in Los Angeles, and the building does not matter. The street address serves the last mile, and the locality serves the regional sort.
 - **Market analysis.** To count the customers in the Bay Area, city-level geocoding places customers in San Francisco, Oakland, San Jose, and other cities. Street-level accuracy adds detail but doesn't change the regional answer.
 - **Gazetteer coverage is good for localities.** WOF has ~200,000 locality records globally. OSM has millions of place nodes. GeoNames has ~12 million populated places. For most of the world's population, the locality they live in is in a gazetteer.
-- **You serve countries without street-level addressing.** Japan uses block-based addressing without named streets. Rural India, sub-Saharan Africa, and informal settlements use descriptive addresses without standard street names. Locality-only geocoding works where street-level geocoding has no street data to work with.
+- **You serve countries without street-level addressing.** Japan uses block-based addressing without street names. Rural India, sub-Saharan Africa, and informal settlements use descriptive addresses without standard street names. Locality-only geocoding works where street-level geocoding has no street data to work with.
 - **You need global coverage fast.** One gazetteer and one lookup strategy cover every country without per-country regexes or per-locale rules. You add a country by adding its gazetteer data.
 
 ## What you lose
@@ -41,9 +41,9 @@ This is the minimum viable geocoder: city-level accuracy from a gazetteer lookup
 
 ## Where Mailwoman fits
 
-Mailwoman's resolver uses locality as the primary search key, constrained by region and postcode. The resolver returns top-K candidates per administrative span. The reconciler picks the coherent candidate from the joint parse. This is locality-only geocoding with more constraints. The system takes the region and postcode from the parser, so it doesn't need to disambiguate 34 Springfields from population alone.
+Mailwoman's resolver uses locality as the primary search key, constrained by region and postcode. The resolver returns top-K candidates per administrative span. The reconciler picks the coherent candidate from the joint parse. This is locality-only geocoding with more constraints. The system takes the region and postcode from the parser, so it doesn't need to disambiguate 34 Springfields by population only.
 
-A system that starts with locality-only geocoding can add Mailwoman as a **refinement pass.** Locality-only geocoding gives you city-level accuracy. Mailwoman adds the street and building number, which feed a more precise resolver query. The two approaches share the same gazetteer infrastructure, and the resolver is the same code queried with more or fewer constraints.
+A system that starts with locality-only geocoding can add Mailwoman as a **refinement pass.** Locality-only geocoding gives you city-level accuracy. Mailwoman adds the street and building number. Those components feed a more precise resolver query. The two approaches share the same gazetteer infrastructure, and the resolver is the same code queried with more or fewer constraints.
 
 ## See also
 

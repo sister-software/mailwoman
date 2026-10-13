@@ -6,7 +6,7 @@
 
 **Architecture:** Fetchers under `lib/sdk/` cache pinned sources under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/`. `normalize.ts` turns a source row into a `PlanetaryNomenclatureFeature` with east-positive longitude in −180..180, a bounding box that survives the 0/360 wrap, and the stable id from the source's `link` column. The vector build writes NDJSON with tippecanoe hints and runs `tippecanoe`; the hillshade build runs `gdaldem` on the source grid with the body's meters-per-degree, then warps the shaded image for XYZ tiling and converts MBTiles to PMTiles with `pmtiles convert`. `pmtiles edit` injects the `mailwoman:*` metadata. A `zod` manifest is the reproducibility record. `@mailwoman/spatial` gains a body radius before any distance is computed.
 
-**Tech Stack:** TypeScript under Node; `zod`; GDAL (`ogr2ogr`, `gdaldem`, `gdalwarp`, `gdal_translate`, `gdaladdo`), `tippecanoe` 2.80, the `pmtiles` CLI, all present on the lab; `@mailwoman/ancestrie` for the search artifact; `mailwoman/cli-kit` for the bin; vitest.
+**Tech Stack:** TypeScript under Node; `zod`; GDAL (`ogr2ogr`, `gdaldem`, `gdalwarp`, `gdal_translate`, `gdaladdo`), `tippecanoe` 2.80, the `pmtiles` CLI, all present on the lab. `@mailwoman/ancestrie` for the search artifact, `mailwoman/cli-kit` for the bin, and vitest.
 
 **Spec:** `docs/superpowers/specs/2026-09-06-astrogeology-pipeline-design.md`
 
@@ -18,16 +18,16 @@
 - Coordinates in every emitted artifact: east-positive longitude in [−180, 180], latitude in [−90, 90]; the source convention is recorded in the manifest, never inferred in a consumer.
 - No pin drifts silently: a cached source whose size or SHA-256 differs from the lock file fails the build naming both values.
 - A test sits beside the module it covers and imports its own package through the `#` imports map.
-- The fixture build runs as `lib/fixture-build.integration.test.ts` (the `unit-slow` leg runs on the lab's self-hosted runners, which carry GDAL, tippecanoe and pmtiles; a missing tool fails the test with the tool's name).
-- Comments state invariants; the measurements below go in the source table rather than in prose.
+- The fixture build runs as `lib/fixture-build.integration.test.ts` (the `unit-slow` leg runs on the lab's self-hosted runners. Those runners have GDAL, tippecanoe and pmtiles installed, and a missing tool fails the test with the tool's name).
+- Comments state invariants. The measurements below go in the source table rather than in prose.
 - Branch: `git fetch origin main && git checkout -b feat/astrogeology origin/main`.
 
 ## Sources, measured 2026-09-07
 
 | Source                                 | URL                                                                                           | Bytes         | Last-Modified        | Notes                                                                                                                            |
 | -------------------------------------- | --------------------------------------------------------------------------------------------- | ------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Moon nomenclature (center points, SHP) | `https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MOON_nomenclature_center_pts.zip` | 23,842,450    | regenerated nightly  | 9,086 points; lon 0.0039..359.9936; `GCS_Moon_2000`, sphere 1,737,400 m; control network LOLA 2011; public domain (`<useconst>`) |
-| Mars nomenclature (center points, SHP) | `https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MARS_nomenclature_center_pts.zip` | 5,413,387     | regenerated nightly  | 2,052 points; lon 0.0014..360.0; `GCS_Mars_2000`, ellipsoid 3,396,190 m, 1/f 169.894; control network MDIM 2.1; public domain    |
+| Moon nomenclature (center points, SHP) | `https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MOON_nomenclature_center_pts.zip` | 23,842,450    | regenerated nightly  | 9,086 points. lon 0.0039..359.9936. `GCS_Moon_2000`, sphere 1,737,400 m. Control network LOLA 2011. Public domain (`<useconst>`) |
+| Mars nomenclature (center points, SHP) | `https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MARS_nomenclature_center_pts.zip` | 5,413,387     | regenerated nightly  | 2,052 points. lon 0.0014..360.0. `GCS_Mars_2000`, ellipsoid 3,396,190 m, 1/f 169.894. Control network MDIM 2.1. Public domain    |
 | LOLA global DEM, 118 m                 | `https://planetarymaps.usgs.gov/mosaic/Lunar_LRO_LOLA_Global_LDEM_118m_Mar2014.tif`           | 8,494,203,833 | 2022-11-08T23:01:12Z | GeoTIFF, redirects once (follow)                                                                                                 |
 | MOLA global DEM, 463 m                 | `https://planetarymaps.usgs.gov/mosaic/Mars_MGS_MOLA_DEM_mosaic_global_463m.tif`              | 2,125,771,142 | 2022-11-10T03:31:07Z | GeoTIFF, redirects once (follow)                                                                                                 |
 
@@ -141,7 +141,7 @@ export function greatCircleDistance(
 }
 ```
 
-`prefer-home` reports an Earth radius typed outside `@mailwoman/spatial`; both new literals are inside it. Export the three names from `packages/spatial/lib/index.ts`. Run the spatial tests; expected: pass.
+`prefer-home` reports an Earth radius typed outside `@mailwoman/spatial`. Both new literals are inside it. Export the three names from `packages/spatial/lib/index.ts`. Run the spatial tests. Expected: pass.
 
 - [ ] **Step 3: The workspace manifest**
 
@@ -345,7 +345,7 @@ test("featureFromSourceRow projects Tycho", () => {
 })
 ```
 
-Drop the `min_lat_unused` key when writing the test; it is here only so the row literal is copied whole from `ogrinfo` output and then trimmed. `lib/schema/schema.test.ts` accepts the Tycho feature and an Olympus Mons feature (`body: "mars"`), refuses `body: "venus"`, a latitude of 91, a longitude of 181, and a missing `id`. `lib/bodies.test.ts` asserts `BODIES.moon.metresPerDegree` is within 1 of 30,323 and `BODIES.mars.metresPerDegree` within 1 of 59,159, and that both `coordinates.longitudeRange` read `"0..360"`.
+Drop the `min_lat_unused` key when writing the test. It is here only so the row literal is copied whole from `ogrinfo` output and then trimmed. `lib/schema/schema.test.ts` accepts the Tycho feature and an Olympus Mons feature (`body: "mars"`), refuses `body: "venus"`, a latitude of 91, a longitude of 181, and a missing `id`. `lib/bodies.test.ts` asserts `BODIES.moon.metresPerDegree` is within 1 of 30,323 and `BODIES.mars.metresPerDegree` within 1 of 59,159, and that both `coordinates.longitudeRange` read `"0..360"`.
 
 - [ ] **Step 2: Run to see them fail, then write the modules**
 
@@ -573,7 +573,7 @@ export function featureFromSourceRow(body: BuildableBodyID, row: NomenclatureSou
 }
 ```
 
-The Marco Polo P test expects `minLon` −0.8023 from 359.1977 and `maxLon` 0.1643 from 360.1643; check `normalizeBBox` against it before moving on. `diameter ?? undefined` converts the shapefile's null to absence, which is what the schema's optional means; a zero diameter stays zero. Read `blankAsAbsent` in `packages/core/lib/env/utils.ts` before relying on it: it must map `""` to `undefined` and leave a non-blank string alone; if it also trims, the test rows above still pass.
+The Marco Polo P test expects `minLon` −0.8023 from 359.1977 and `maxLon` 0.1643 from 360.1643. Check `normalizeBBox` against it before moving on. `diameter ?? undefined` converts the shapefile's null to absence, and absence is what the schema's optional means. A zero diameter stays zero. Read `blankAsAbsent` in `packages/core/lib/env/utils.ts` before relying on it: it must map `""` to `undefined` and return a non-blank string unchanged. If it also trims, the test rows above still pass.
 
 - [ ] **Step 3: Run, lint, commit**
 
@@ -608,7 +608,7 @@ Three fetchers stream a response to a `.tmp` sibling and rename. If `packages/co
 
 - [ ] **Step 2: The source table and the lock**
 
-`lib/sdk/sources.ts` carries the four rows of the measured table as `SOURCES`, each with `url`, `expectedBytes` (the DEM byte counts; `null` for the nightly archives), `pinned: "snapshot"` for nomenclature and `"product"` for the DEMs, and `license: "public-domain"`. `lib/schema/manifest.ts` carries `SourcesLockSchema` and `PlanetaryBuildManifestSchema`:
+`lib/sdk/sources.ts` holds the four rows of the measured table as `SOURCES`, each with `url`, `expectedBytes` (the DEM byte counts; `null` for the nightly archives), `pinned: "snapshot"` for nomenclature and `"product"` for the DEMs, and `license: "public-domain"`. `lib/schema/manifest.ts` holds `SourcesLockSchema` and `PlanetaryBuildManifestSchema`:
 
 ```ts
 export const PlanetaryBuildManifestSchema = z.object({
@@ -705,7 +705,7 @@ node packages/astrogeology/out/cli.js fetch --body mars --kind nomenclature
 cat packages/astrogeology/sources.lock.json
 ```
 
-Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB; run on the lab rather than in CI). The `fetch` command is written in Task 7; for this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
+Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB, so run them on the lab rather than in CI). The `fetch` command is written in Task 7. For this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
 
 ```bash
 git add packages/astrogeology
@@ -727,7 +727,7 @@ git commit -m "feat(astrogeology): pinned sources, the lock, and the streaming f
 
 - [ ] **Step 1: Rows from the archive**
 
-`ogr2ogr` reads the shapefile straight out of the zip and writes newline-delimited GeoJSON, which `JSONSpliterator` consumes without loading 23 MB of attributes at once:
+`ogr2ogr` reads the shapefile straight out of the zip and writes newline-delimited GeoJSON. `JSONSpliterator` consumes that output without loading 23 MB of attributes at once:
 
 ```ts
 export async function* readNomenclatureRows(archivePath: string, layer: string): AsyncIterable<NomenclatureSourceRow> {
@@ -742,7 +742,7 @@ export async function* readNomenclatureRows(archivePath: string, layer: string):
 }
 ```
 
-The layer names are `MOON_nomenclature_center_pts` and `MARS_nomenclature_center_pts`; put them on the source records. Read `temporaryDirectory`'s interface in `packages/core/lib/fs/temporary.ts` for the field that carries the path.
+The layer names are `MOON_nomenclature_center_pts` and `MARS_nomenclature_center_pts`. Put them on the source records. Read `temporaryDirectory`'s interface in `packages/core/lib/fs/temporary.ts` for the field that holds the path.
 
 - [ ] **Step 2: NDJSON with declutter hints, then tippecanoe**
 
@@ -790,7 +790,7 @@ const args = [
 ]
 ```
 
-`-r1` turns off tippecanoe's point dropping, which would otherwise thin the layer by density; the per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`. This package runs it through `runFile`. Its argument list serves a different layer with different flags, so there is no shared shape to extract.
+`-r1` turns off tippecanoe's point dropping. Point dropping would otherwise thin the layer by density. The per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`. This package runs it through `runFile`. Its argument list serves a different layer with different flags, so there is no shared shape to extract.
 
 - [ ] **Step 3: Metadata**
 
@@ -811,7 +811,7 @@ export const PMTilesMetadataSchema = z.object({
 })
 ```
 
-`applyPMTilesMetadata(archivePath, block)` validates the block, reads the archive's current metadata (`pmtiles show <archive> --metadata`), merges the keys over it, writes the merged JSON to a scratch file and runs `pmtiles edit <archive> --metadata <file>`. Confirm the flag name first with `pmtiles edit --help`; the lab's binary lists `edit <input>` under "Edit JSON metadata or parts of the header". Then read it back with `pmtiles show <archive> --metadata` and assert the block round-trips; that read-back is the verify step's check.
+`applyPMTilesMetadata(archivePath, block)` validates the block, reads the archive's current metadata (`pmtiles show <archive> --metadata`), merges the keys over it, writes the merged JSON to a scratch file and runs `pmtiles edit <archive> --metadata <file>`. Confirm the flag name first with `pmtiles edit --help`. The lab's binary lists `edit <input>` under "Edit JSON metadata or parts of the header". Then read it back with `pmtiles show <archive> --metadata` and assert the block round-trips. That read-back is the verify step's check.
 
 - [ ] **Step 4: The fixture and the integration test**
 
@@ -844,7 +844,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 })
 ```
 
-Compute the z4 tile for Tycho with the standard XYZ formula before pinning `7, 9`: `x = floor((lon + 180) / 360 · 16)`, `y = floor((1 − ln(tan(lat) + sec(lat)) / π) / 2 · 16)` with `lat` in radians; write the two numbers you get. A missing `tippecanoe` or `pmtiles` makes `runFile` throw `ENOENT` naming the tool, which is the failure the spec wants.
+Compute the z4 tile for Tycho with the standard XYZ formula before pinning `7, 9`: `x = floor((lon + 180) / 360 · 16)`, `y = floor((1 − ln(tan(lat) + sec(lat)) / π) / 2 · 16)` with `lat` in radians. Write the two numbers you get. A missing `tippecanoe` or `pmtiles` makes `runFile` throw `ENOENT` naming the tool. The spec wants that failure.
 
 - [ ] **Step 5: Run and commit**
 
@@ -940,7 +940,7 @@ export async function buildHillshadePMTiles(options: {
 }
 ```
 
-`gdal_translate -of MBTILES` needs the input in a geographic or Web Mercator CRS and does the Mercator warp itself; read `gdal_translate --formats | grep -i mbtiles` and `gdal_translate --format MBTILES` for the exact creation options this GDAL build supports (`TILE_FORMAT`, `ZOOM_LEVEL_STRATEGY`, `MAXZOOM` are the documented names) and adjust before the first run. The `commands` array is appended to the manifest's `transformations`.
+`gdal_translate -of MBTILES` needs the input in a geographic or Web Mercator CRS and does the Mercator warp itself. Read `gdal_translate --formats | grep -i mbtiles` and `gdal_translate --format MBTILES` for the exact creation options this GDAL build supports (`TILE_FORMAT`, `ZOOM_LEVEL_STRATEGY`, `MAXZOOM` are the documented names) and adjust before the first run. The `commands` array is appended to the manifest's `transformations`.
 
 - [ ] **Step 2: The fixture DEM and its test**
 
@@ -953,9 +953,9 @@ import numpy, sys
 " 2>/dev/null || true
 ```
 
-`gdal_create` writes a flat raster; a flat DEM shades to a uniform image, which proves the chain runs but not that shading sees relief. Add relief with a second command that GDAL provides: `gdal_calc.py -A dem-64.tif --outfile=dem-64.tif --calc="(A*0)+ (numpy.indices((64,64))[0]*40)" --overwrite` gives a north–south ramp of 40 m per row. If `gdal_calc.py` is not on the lab, write the ramp with `gdal_translate -scale` over a gradient PNG, or with `@mailwoman/core`'s own GeoTIFF writer if one exists (`grep -rln "GeoTIFF\|geotiff" packages/core/lib`); the point is a small committed raster with a gradient, and the command that made it goes in the test file's header.
+`gdal_create` writes a flat raster. A flat DEM shades to a uniform image. That image proves the chain runs but not that shading sees relief. Add relief with a second command that GDAL provides: `gdal_calc.py -A dem-64.tif --outfile=dem-64.tif --calc="(A*0)+ (numpy.indices((64,64))[0]*40)" --overwrite` gives a north–south ramp of 40 m per row. If `gdal_calc.py` is not on the lab, write the ramp with `gdal_translate -scale` over a gradient PNG, or with `@mailwoman/core`'s own GeoTIFF writer if one exists (`grep -rln "GeoTIFF\|geotiff" packages/core/lib`). The point is a small committed raster with a gradient, and the command that made it goes in the test file's header.
 
-The test builds `dem-64.tif` to `hillshade.pmtiles` with `maxZoom: 2`, asserts the archive exists, that `pmtiles tile out.pmtiles 0 0 0` returns a PNG (the first eight bytes are `89 50 4E 47 0D 0A 1A 0A`), and that the tile at z1 differs from a uniform image (at least two distinct byte values in the decoded PNG is enough; decode with `sharp`, which is in the workspace, or compare two tiles' bytes for inequality).
+The test builds `dem-64.tif` to `hillshade.pmtiles` with `maxZoom: 2`, asserts the archive exists, that `pmtiles tile out.pmtiles 0 0 0` returns a PNG (the first eight bytes are `89 50 4E 47 0D 0A 1A 0A`), and that the tile at z1 differs from a uniform image (at least two distinct byte values in the decoded PNG is enough. Decode with `sharp` from the workspace, or compare two tiles' bytes for inequality).
 
 - [ ] **Step 3: Run and commit**
 
@@ -986,7 +986,7 @@ sed -n 1,80p packages/ancestrie/README.md
 grep -n "export interface AncestrieEntry\|export interface AncestrieBuilderOptions\|export type AncestrieEntry" -A12 packages/ancestrie/lib/*.ts | head -40
 ```
 
-The builder takes entries with a path of tokens, a rank and a payload, and the reader answers `autocomplete(trie, tokens)`. `buildSearchIndex` adds one entry per feature for `name`, one per alias when `cleanName` differs from `name`, ranks by `diameterKm ?? 0` so a larger feature sorts first at equal prefix, and stores `{ id, body, featureType, centerLon, centerLat }` as the payload; it then writes the builder's bytes with `writeLocalFile`. Tokens are the lowercased words of the name; the reader's own tokenizer, if it exports one, is the one to use so the app tokenizes the query the same way (`grep -n "export function tokenize" packages/ancestrie/lib/*.ts`).
+The builder takes entries with a path of tokens, a rank and a payload, and the reader answers `autocomplete(trie, tokens)`. `buildSearchIndex` adds one entry per feature for `name`, one per alias when `cleanName` differs from `name`, ranks by `diameterKm ?? 0` so a larger feature sorts first at equal prefix, and stores `{ id, body, featureType, centerLon, centerLat }` as the payload. It then writes the builder's bytes with `writeLocalFile`. Tokens are the lowercased words of the name. The reader's own tokenizer, if it exports one, is the one to use so the app tokenizes the query the same way (`grep -n "export function tokenize" packages/ancestrie/lib/*.ts`).
 
 - [ ] **Step 2: The manifest**
 
@@ -1023,7 +1023,7 @@ sed -n 40,120p packages/libpostal/lib/cli.ts
 grep -n "^export" packages/mailwoman/lib/cli-kit/index.ts | head -c 4000
 ```
 
-`packages/libpostal/lib/cli.ts` is a package with its own `bin` over `mailwoman/cli-kit`; `tiles/publish.tsx` is the command shape (`spec` with `options`, a `ParsedCommandComponent` rendering `CommandTaskResult` over `useCommandTask`). The astrogeology `cli.ts` selects one of four command modules by the first positional through `parseArguments` from `@mailwoman/core/scripting/arguments` and renders it with Ink the way `libpostal`'s does; if cli-kit exports a runner that takes a command table (`grep -n "runCommand\|selectCommand" packages/mailwoman/lib/cli-kit/*.ts`), use it rather than writing the dispatch.
+`packages/libpostal/lib/cli.ts` is a package with its own `bin` over `mailwoman/cli-kit`, and `tiles/publish.tsx` is the command shape (`spec` with `options`, a `ParsedCommandComponent` rendering `CommandTaskResult` over `useCommandTask`). The astrogeology `cli.ts` selects one of four command modules by the first positional through `parseArguments` from `@mailwoman/core/scripting/arguments` and renders it with Ink the way `libpostal`'s does. If cli-kit exports a runner that takes a command table (`grep -n "runCommand\|selectCommand" packages/mailwoman/lib/cli-kit/*.ts`), use it rather than writing the dispatch.
 
 - [ ] **Step 2: Move `publishTiles`**
 
@@ -1045,7 +1045,7 @@ node packages/astrogeology/out/cli.js verify --body moon
 ls -la "$MAILWOMAN_DATA_ROOT/astrogeology/moon/build"
 ```
 
-Expected: `moon.pmtiles` (a few MB), `moon-hillshade.pmtiles` (zoom 6 over the whole body is 4,096 tiles at z6 plus overviews, tens of MB), `moon-search.ancestrie`, `manifest.json`; `verify` passes. Then the same three commands for `mars`. Record the four sizes and the wall-clock of each build in the commit message; those numbers decide the max zoom for the first publish.
+Expected: `moon.pmtiles` (a few MB), `moon-hillshade.pmtiles` (zoom 6 over the whole body is 4,096 tiles at z6 plus overviews, tens of MB), `moon-search.ancestrie`, `manifest.json`, and `verify` passes. Then the same three commands for `mars`. Record the four sizes and the wall-clock of each build in the commit message. Those numbers decide the max zoom for the first publish.
 
 - [ ] **Step 5: Commit**
 
@@ -1070,11 +1070,11 @@ curl -s https://tiles.mailwoman.ai/mars.json | head -c 300
 curl -sI "https://public.mailwoman.ai/planetary/moon/<the printed version>/search.ancestrie" | head -1
 ```
 
-Expected: `200` for the TileJSON, the z0 hillshade tile and the search artifact, and the Mars TileJSON naming the `nomenclature` layer. The printed versions and URLs go into the PR description; the planetary app's body configs pin them. The R2 credentials are the ones `mailwoman tiles publish` already reads from the private environment.
+Expected: `200` for the TileJSON, the z0 hillshade tile and the search artifact, and the Mars TileJSON naming the `nomenclature` layer. The printed versions and URLs go into the PR description. The planetary app's body configs pin them. The R2 credentials are the ones `mailwoman tiles publish` already reads from the private environment.
 
 - [ ] **Step 2: README**
 
-`packages/astrogeology/README.md` carries the source table, the pin policy (snapshot for the nightly gazetteer, product for the DEMs), the four commands, the data-root layout, the tool prerequisites (GDAL 3.x with the MBTiles driver, tippecanoe, pmtiles), and the attribution lines the app renders.
+`packages/astrogeology/README.md` contains the source table, the pin policy (snapshot for the nightly gazetteer, product for the DEMs), the four commands, the data-root layout, the tool prerequisites (GDAL 3.x with the MBTiles driver, tippecanoe, pmtiles), and the attribution lines the app renders.
 
 - [ ] **Step 3: Preflight and PR**
 

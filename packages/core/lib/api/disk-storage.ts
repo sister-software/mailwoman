@@ -61,9 +61,9 @@ export interface DiskStorageOptions {
 }
 
 /**
- * Whether a storage value is one worth persisting: `loading` is an in-flight marker with no reusable
- * body, so it belongs in the in-process overlay (see {@linkcode buildDiskStorage}) rather than in
- * a file that would outlive the process that wrote it and block every later request for that key.
+ * Whether a storage value is persisted to disk: `loading` is an in-flight marker with no reusable body,
+ * so it belongs in the in-process overlay (see {@linkcode buildDiskStorage}) rather than in a
+ * file that would outlive the process that wrote it and block every later request for that key.
  */
 function isPersistableState(value: NotEmptyStorageValue): boolean {
 	return value.state !== "loading"
@@ -192,7 +192,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const serialized = serializeIfValid(key, value)
 
 			if (!serialized) {
-				// Drop any older entry too: the interceptor is telling us this key's content just changed.
+				// Drop any older entry too: the interceptor is telling us this key's content changed.
 				// A superseded body would turn this changed response into a stale cache hit.
 				await removeEntry(key)
 

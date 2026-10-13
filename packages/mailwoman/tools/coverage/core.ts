@@ -20,8 +20,8 @@ import { stringifyJSON } from "@mailwoman/core/json";
 import { TextSpliterator } from "spliterator"
 
 /**
- * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely
- * wrap more than half the globe — the standard heuristic for splitting a bbox at ±180.
+ * Longitude span above which a ring is assumed to cross the antimeridian rather than wrap
+ * more than half the globe — the standard heuristic for splitting a bbox at ±180.
  */
 const ANTIMERIDIAN_SPAN_DEGREES = 180
 
@@ -71,7 +71,7 @@ export interface CoverageBuildOptions {
 	 */
 	postcodeCeiling: number
 	/**
-	 * Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor.
+	 * Minimum place importance (∈ [0,1]) for the layer to flag a place as settled — the noise floor.
 	 */
 	salienceFloor: number
 	/**
@@ -375,7 +375,7 @@ export async function buildCoverageTiles(
 	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
 	//     US is excluded — the rooftop fine map above already covers it at street level.
 	// Only cells with residual fog (uncovered salient places) are emitted, so the layer
-	// is just the holes — covered + empty stay clear (basemap).
+	// holds only the holes — covered + empty stay clear (basemap).
 	// Same `coverage` layer + fog props as the US tier, so the demo renders it unchanged,
 	// at res-domainRes [onset…max] + a res-4 low-zoom rollup.
 	if (opts.geonamesPostalFile && opts.wofDB) {

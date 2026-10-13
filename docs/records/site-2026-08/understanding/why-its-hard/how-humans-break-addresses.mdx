@@ -42,7 +42,7 @@ USPS accepts borough names as "preferred last line" cities for several New York 
 | `Jersey City → New York`     | Different state, different city                    |
 | `Oakland → San Francisco`    | Separated by a bay and a century of rivalry        |
 
-The human typed what they think of as "the metro area." The gazetteer disagrees. A well-trained parser will place Cambridge in Middlesex County, MA. A human would say "close enough — it's right across the river." Which answer is correct depends on whether the use case is delivery routing or statistical aggregation. The parser cannot know the use case from the input alone.
+The human typed what they think of as "the metro area." The gazetteer disagrees. A well-trained parser will place Cambridge in Middlesex County, MA. A human would say "close enough — it's right across the river." Which answer is correct depends on whether the use case is delivery routing or statistical aggregation. The parser cannot know the use case from the input text.
 
 ### Colloquial vs. official names
 
@@ -53,7 +53,7 @@ The human typed what they think of as "the metro area." The gazetteer disagrees.
 | Peking     | Beijing          |
 | Kiev       | Kyiv             |
 
-Both names in each pair are legitimate, used by millions; the speaker's choice between them frequently carries political or generational weight. A parser that rejects `Bombay` is rejecting real usage. A parser that silently converts `Bombay → Mumbai` is making a political choice the user didn't ask for. The correct behavior is to recognize both and surface the ambiguity.
+Both names in each pair are legitimate, used by millions. The speaker's choice between them frequently signals a political or generational position. A parser that rejects `Bombay` is rejecting real usage. A parser that silently converts `Bombay → Mumbai` is making a political choice the user didn't ask for. The correct behavior is to recognize both and surface the ambiguity.
 
 ### Postal city ≠ municipal city
 
@@ -150,7 +150,7 @@ The mixed-script case is the hardest: the human typed the city in the script the
 | `Quebec`       | Province of Quebec   | Quebec City?                                    |
 | `Mexico`       | Mexico (the country) | Mexico City?                                    |
 
-The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital, as opposed to the state or the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
+The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital, as opposed to the state or the university. The parser has to guess from statistical priors. The correct answer is "it depends on the rest of the address, and sometimes you need to ask."
 
 ### Addresses across metro areas / border cities
 

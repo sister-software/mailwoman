@@ -30,7 +30,7 @@ export interface SpanResolution {
 	lat: number | null
 	lon: number | null
 	/**
-	 * How many candidates the retrieval considered.
+	 * The number of candidates the retrieval considered.
 	 *
 	 * Breadth rather than correctness.
 	 * A span that won from 40 is less settled than one that won from 2, even when both picked the same place.
@@ -62,7 +62,7 @@ export interface SpanGeoDelta {
 export interface GeocodeDiff {
 	input: string
 	/**
-	 * The span-level parse story.
+	 * The span-level difference between the two parses.
 	 *
 	 * When `parse.identical` is false the resolver was asked a different question and is not the suspect.
 	 */
@@ -252,7 +252,8 @@ export function renderGeocodeDiff(diff: GeocodeDiff): string {
 		}
 	}
 
-	// The parse story last, because when attribution is `parse-changed` it is the explanation and the reader needs it.
+	// The parse difference prints last, because when attribution is `parse-changed`
+	// it is the explanation and the reader needs it.
 	if (!diff.parse.identical) {
 		for (const span of diff.parse.spans.filter(isChange)) {
 			lines.push(`  · parse: ${describeSpan(span)}`)

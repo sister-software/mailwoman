@@ -28,19 +28,19 @@ The model knew. It tagged Austria as a country, directly, every time — Austral
 
 ## Forty-five Viennas and a popularity contest
 
-The resolver's job is to take the word "Vienna" and decide which Vienna. Our gazetteer knows about forty-five of them in the United States alone, plus the real one in Austria, plus a few others. Faced with that pile, the resolver did the reasonable-sounding thing: it picked the most prominent match by population and name — and then it threw the `country` token away. It never asked the one question the address had already answered for it.
+The resolver's job is to take the word "Vienna" and decide which Vienna. Our gazetteer knows about forty-five of them in the United States, plus the real one in Austria, plus a few others. Faced with that pile, the resolver did the reasonable-sounding thing: it picked the most prominent match by population and name — and then it threw the `country` token away. It never asked the one question the address had already answered for it.
 
-So `Vienna` resolved on its own merits, the populous American candidates outranked the Austrian one in the bag, and `Austria` sat there in the parse, ignored, like a return address nobody read. The model had said _which country_ in plain text, and the resolver wasn't listening.
+So `Vienna` resolved on its own merits, the populous American candidates outranked the Austrian one in the bag, and `Austria` sat there in the parse, ignored, like an unread return address. The model had said _which country_ in plain text, and the resolver wasn't listening.
 
-The direct version of the bug: the parse and the resolve each made a locally sensible decision, and nobody checked that they agreed.
+The direct version of the bug: the parse and the resolve each made a locally sensible decision, and no stage checked that they agreed.
 
 ## The fix we didn't make
 
-There's a tempting shortcut here, and it's worth naming because we've watched it sink geocoders before. You could keep a list. "If the address says Austria, force the country to AT." It would work for Vienna, and Sydney, and Zurich. It would also be the first paving stone on the road to a thousand-entry exception table that someone maintains forever and nobody trusts — the same road that turned older rules-based geocoders into archaeology. We don't pin, and we don't keep lists of special cases the model is supposed to defer to.
+There's a tempting shortcut here, and we've watched it sink geocoders before. You could keep a list. "If the address contains Austria, force the country to AT." It would work for Vienna, and Sydney, and Zurich. It would also be the first paving stone on the road to a thousand-entry exception table that someone maintains forever and no user trusts — the same road that turned older rules-based geocoders into archaeology. We don't pin, and we don't keep lists of special cases the model is supposed to defer to.
 
-The fix instead asks the parse and the resolve to be consistent with _each other_. When the address carries an explicit country and the locality it resolved to lives somewhere else, re-pick the locality to the one that sits inside the country the address named. The country code comes from the model's own `country` emission, normalized through an ISO table we already had on the shelf; the gazetteer's own `country` column does the rest. No list. No prior. It generalizes to every country at once, because it isn't about any particular country — it's about the address agreeing with itself.
+The fix instead asks the parse and the resolve to be consistent with _each other_. When the address includes an explicit country and the locality it resolved to lives somewhere else, re-pick the locality to the one that sits inside the country the address states. The country code comes from the model's own `country` emission, normalized through an ISO table we already had. The gazetteer's own `country` column does the rest. No list. No prior. It generalizes to every country at once, because it isn't about any particular country — it's about the address agreeing with itself.
 
-There's a guard rail worth mentioning, because it's where this kind of fix typically goes wrong. It only fires when the country is the nearest thing the address says about geography. Write `Springfield, IL, USA` and the state is right there doing the disambiguating, so the new pass stays out of the way and Springfield stays in Illinois — not the largest Springfield in America. The fix warrants its keep precisely by knowing when not to act.
+The fix has a guard rail, because this kind of fix typically goes wrong at that point. It only fires when the country is the most specific geographic evidence in the address. Write `Springfield, IL, USA` and the state is right there doing the disambiguating, so the new pass stays out of the way and Springfield stays in Illinois — not the largest Springfield in America. The fix warrants its keep precisely by knowing when not to act.
 
 ## What it bought, and what it cost
 
@@ -53,12 +53,12 @@ We measure these things against coordinates rather than labels, because a name-m
 
 Forty-five countries that used to need a hint and now don't, a twenty-four-point jump on the query shape people use, and the cost on the GPU meter was zero. The thing we'd budgeted a retrain for was a hundred-odd lines in the resolver.
 
-The cost it does carry is the direct kind: it can only re-pick to a place the gazetteer has. Where we don't carry a city, the country in the address can't summon a place the gazetteer lacks, and the fix correctly declines to guess. That's a coverage problem, and it's a different change for a different day.
+The fix does have a direct cost: it can only re-pick to a place the gazetteer has. Where the gazetteer lacks a city, the country in the address can't summon a place the gazetteer lacks, and the fix correctly declines to guess. That's a coverage problem, and it's a different change for a different day.
 
-## The part worth keeping
+## The lesson
 
 We almost retrained a model to fix a bug the model didn't have. The diagnostic that saved us was thirty seconds of parsing seven addresses and reading the output — cheaper than the issue we'd written, never mind the GPU hours behind it.
 
-The reflex says train. The discipline says look first. The model knew it was Austria the whole time; wehad to teach the rest of the system to listen.
+The reflex is to train. The discipline is to look first. The model knew it was Austria the whole time. We had to teach the rest of the system to listen.
 
-(One more for the honesty file: the test that proves Sydney now lands in Australia failed the first time I ran it — by 7,532 kilometers. The fix was fine. I'd dropped the minus sign on Sydney's latitude and parked it in the northern hemisphere. The check caught my typo before it caught a real regression, which is exactly the order you want.)
+(One more for the honesty file: the test that proves Sydney now lands in Australia failed the first time I ran it — by 7,532 kilometers. The fix was fine. I'd dropped the minus sign on Sydney's latitude and parked it in the northern hemisphere. The check caught my typo before it caught a real regression. That is exactly the order you want.)

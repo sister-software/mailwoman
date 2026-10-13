@@ -1,6 +1,6 @@
 # Mechanism accounts — diagnosis implementation for mailwoman
 
-**Date:** 2026-08-17 · **Status:** design of record; first increments landed (see §8) · **Epic:** #1716
+**Date:** 2026-08-17 · **Status:** design of record, first increments landed (see §8) · **Epic:** #1716
 **Origin:** the 2026-08-16 design conversation, the #1711 investigation that motivated it, and two
 claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 
@@ -9,7 +9,7 @@ claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 Diagnosis of this system today depends on whoever is reasoning about it at the time. The operator
 described the cost: after every context reset, someone has to re-learn how addresses behave from a
 narrow view, so the assistant's in-context reasoning has become a required part of improving the
-product. Nobody wants that dependency.
+product. The project should not depend on that reasoning.
 
 Aggregate metrics cause that dependency. Distance-from-truth discards diagnostic information. The
 #1711 city-only stratum reported `89.1% vs 96.9%, p = 0.084`, which read as underpowered with no finding
@@ -39,8 +39,8 @@ level up. Two commitments prevent it:
 ## 3. The account
 
 An account is generated per row on every run from facts the system already computes. It records what
-the parse produced, what each evidence channel fed, what retrieval returned, which constraints were
-applied, which checks fired, and what won on which score terms. It also records the smallest
+the parse produced, what each evidence channel fed, what retrieval returned, the constraints the
+decoder applied, the checks that fired, and what won on which score terms. It also records the smallest
 counterfactual that flips the row. Every line can be checked against execution, and the account
 contains no narrative.
 
@@ -91,8 +91,8 @@ error ("features, never overrides"), so a test that asserts outcomes cannot dete
 | check                                                 | asserts                                                   | catches                                                                                 | status                                                                           |
 | ----------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | must not activate (no-component / no-resolve / no-throw)  | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
-| **activation census** (#1719, `mwdev_census`)         | must activate somewhere (L0 ran / L1 signaled / L2 moved) | inert mechanisms — the house's most-repeated failure class (#1699, #1703, #1349, R5)    | L0/L1 shipped; first run found 2 inert, both verified deliberate and allowlisted |
-| **fragile-pass ledger** (#1720)                       | activated for the right reason                            | compensated defects (XOR signature: fixing one of a canceling pair turns the board red) | designed; needs accounts                                                         |
+| **activation census** (#1719, `mwdev_census`)         | must activate somewhere (L0 ran / L1 signaled / L2 moved) | inert mechanisms — the house's most-repeated failure class (#1699, #1703, #1349, R5)    | L0/L1 shipped, first run found 2 inert, both verified deliberate and allowlisted |
+| **fragile-pass ledger** (#1720)                       | activated for the right reason                            | compensated defects (XOR signature: fixing one of a canceling pair turns the board red) | designed, needs accounts                                                         |
 
 Census rules: zero at L1 across the set is a failure unless the mechanism is allowlisted with a reason
 a reader can check. If an allowlisted mechanism fires, its reason is stale, and the census reports it
@@ -161,7 +161,7 @@ than prevent them), RRR gradient penalties, and attention-as-explanation.
   describes. The scoring layer arrives with the v2 conformal calibration. That calibration gives a posterior's
   numbers their meaning. Version 1 exposed a coverage limit: the resolver-interior trace (#1721)
   records only the walk's own `#lookupAndPick`. A row answered by the post-walk span-rescore
-  therefore carries a resolved coordinate beside an empty lookup list. Accounts report that case
+  therefore returns a resolved coordinate beside an empty lookup list. Accounts report that case
   explicitly so the empty list is not read as "no retrieval happened".
 
 ## 9. Sequence

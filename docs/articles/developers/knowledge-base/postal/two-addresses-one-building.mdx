@@ -17,43 +17,43 @@ the address, and what should a geocoder hand back when it is asked about the oth
 Ask four people for a building's address and you get four answers, because each is answering for a
 different organization.
 
-The postal service answers with the form its address file accepts, which is the form that gets mail
-sorted. Emergency dispatch answers with the entrance a vehicle can reach, which is a different door on
-a different street when the building takes a corner. A tax assessor answers with the parcel, which may
-carry a number from before the building existed. A visitor answers with the name on the front — and a
-name works as an address for a courier who has been there and for nobody's sorting machine.
+The postal service answers with the form its address file accepts. That form gets mail
+sorted. Emergency dispatch answers with the entrance a vehicle can reach. When the building takes a
+corner, that entrance is a different door on a different street. A tax assessor answers with the parcel,
+and the parcel may have a number from before the building existed. A visitor answers with the name on
+the front. A name works as an address for a courier who has been there, and for no sorting machine.
 
 There is no fifth answer underneath these four that the four are approximating. The address is
 selected by the asker.
 
 ## Where the copies come from
 
-**Corner frontages.** A building on the corner of two named streets has two street frontages and can
-be numbered on either. The postal address takes one; the other stays a valid way to describe the same
+**Corner frontages.** A building on the corner of two streets has two street frontages and can
+be numbered on either. The postal address takes one. The other stays a valid way to describe the same
 door, and it is the one a caller reports when they walked in from that side.
 
 **Names used as addresses.** A building with a name is addressed by that name in the register of
 things people say, and by a number in the register a postal file accepts. The two coexist for the same
-structure, and the name-shaped one carries prestige, which is why it survives being useless to a
+structure, and the name-shaped one confers prestige. That is why it survives being useless to a
 sorting machine.
 
 **Unit numbering.** One street address and two hundred delivery points is the normal condition for an
-apartment block or an office tower. The building's footprint is one polygon; the addresses are two
+apartment block or an office tower. The building's footprint is one polygon. The addresses are two
 hundred labels attached to it, distinguished by a component that has no geometry of its own — a floor,
 a suite, a letter.
 
 **Boundaries under the building.** A structure can sit across a municipal line, so its legal
 municipality and its postal town disagree by design. It can be in an annexed area whose postal town
-still carries the annexing town's name. Brooklyn is a postal city that the Postal Service accepts, and
-the legal municipality is New York; both appear in real records, and a system that treats one as a
+still uses the annexing town's name. Brooklyn is a postal city that the Postal Service accepts, and
+the legal municipality is New York. Both appear in real records, and a system that treats one as a
 misspelling of the other loses information.
 
 ## What a geocoder owes you
 
-The behavior worth asking for is that the result state what kind of answer it is, rather than
+Ask for a result that states what kind of answer it is, rather than
 flattening four kinds into one coordinate.
 
-A Mailwoman geocode carries that in the result: `resolution_tier` names the data that answered,
+A Mailwoman geocode reports that in the result: `resolution_tier` names the data that answered,
 `uncertainty_m` bounds it, and `hierarchy` gives the administrative chain the components resolved
 through. With the US address data installed, `350 5th Ave, New York, NY 10118` returns
 `resolution_tier: "interpolated"` with `uncertainty_m: 64` — a position estimated along the block from
@@ -79,8 +79,8 @@ administrative choice on the user's behalf, and the useful version of that choic
 this pipeline stores the postal form, this map shows the entrance, and the join between them is a
 place identifier rather than a string.
 
-There is a data-side limit worth stating too. A postal town resolves only if the gazetteer carries it
-as a place under that name, at a rank the resolver treats as a locality; a name filed under a
+There is also a data-side limit. A postal town resolves only if the gazetteer stores it
+as a place under that name, at a rank the resolver treats as a locality. A name filed under a
 different rank, or under a canonical form that differs from the postal one, can miss even when the
 place exists. Read `hierarchy` on the result to see which place answered, instead of assuming
 the name in your input is the name that matched.

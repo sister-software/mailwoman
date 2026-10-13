@@ -8,7 +8,7 @@
  *
  *   A Geofabrik extract is clipped to a polygon drawn around the country with a margin, so it holds
  *   addresses on the far side of every land border: the China extract holds Zabaykalsk and
- *   Blagoveshchensk in Russia. The extract's own boundary relation is often incomplete in the file, so
+ *   Blagoveshchensk in Russia. The extract's own boundary relation can be incomplete in the file, so
  *   the outline comes from a separate source and this module tests points against it.
  *
  *   A full country outline has tens of thousands of vertices, and a ray cast per point over twelve

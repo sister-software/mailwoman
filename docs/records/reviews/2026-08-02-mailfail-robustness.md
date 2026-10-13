@@ -1,7 +1,7 @@
 # mailfail — robustness on garbage, malformed and hostile input
 
 **Date:** 2026-08-02 · **Scope:** what the shipped stack does with input that is not an address.
-Read-only investigation; no production code changed. 111 probe inputs across seven classes, run on
+Read-only investigation. No production code changed. 111 probe inputs across seven classes, run on
 four paths, with the fixture committed at
 `mailwoman/eval-harness/fixtures/mailfail.jsonl` so these cases can become a regression test.
 
@@ -28,7 +28,7 @@ real coordinate somewhere in the world, with a resolver score indistinguishable 
 
 ## What was measured, and on which path
 
-Four paths, because they behave differently and carry different risk:
+Four paths, because they behave differently and pose different risk:
 
 | Path         | How it was driven                                                                                                                                                                                 | Who is on it                                                |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -37,17 +37,17 @@ Four paths, because they behave differently and carry different risk:
 | **pipeline** | `createRuntimePipeline({ classifier })`, no resolver.                                                                                                                                             | `mailwoman parse`                                           |
 | **resolve**  | `createRuntimePipeline({ classifier, resolver })` over `admin-global-priority.db` (5.2 GB, FTS backend).                                                                                          | `mailwoman parse --resolve`                                 |
 
-The raw classifier defaults `enforceWordConsistency` to off; every measurement here passes
+The raw classifier defaults `enforceWordConsistency` to off. Every measurement here passes
 `WORD_CONSISTENCY_SHIP_DEFAULT` so it reflects what a consumer runs.
 
-**Measurement skepticism.** The first resolve run reported zero garbage-to-coordinates, which would
+**Measurement skepticism.** The first resolve run reported zero garbage-to-coordinates. That would
 have been a headline "clean" result. It was wrong: the walker looked for `node.resolved.latitude`,
 and resolved coordinates land on `node.lat` / `node.lon`. A positive control — a real
 address that must resolve — caught it. The control is now the first row of every resolve run, and
 the 35 hits below are from the run where it passed. Two of those hits were re-confirmed through
 the shipped CLI (`mailwoman parse --resolve`) rather than the eval script.
 
-A second eval-script bug is worth recording because it produced a number that briefly went into this
+A second eval-script bug is recorded here because it produced a number that briefly went into this
 report. The 1 MB run was watched with a shell loop whose own command line contained the string
 `mailfail-e2e`, so `pgrep -f mailfail-e2e` matched **the watcher rather than the job** — and
 `ps -o etimes` was reporting the watcher's age as if it were the measurement. That is how ">5.5
@@ -136,7 +136,7 @@ because a long query "would exceed the model's input window." The cap is roughly
 throw sites and stops `query-shape-prior.ts` / `span-proposal-prior.ts` allocating
 `pieces.length × labels.length` matrices whose tail rows `addEmissionMatrix` discards anyway. It
 also makes the truncation _visible_ — today a 400-character address is silently parsed from its
-first ~320 characters with no signal to the caller, which is its own reportable defect. A tighter
+first ~320 characters with no signal to the caller. The silent truncation is its own reportable defect. A tighter
 `MAX_QUERY_LEN` of ~300 would bound the worst case on two of the four servers but remains a
 mitigation rather than the fix.
 
@@ -179,7 +179,7 @@ for (const seg of segments) {
 At 1 MB that is 60,609 × 212,170 ≈ 12.9 billion iterations.
 
 A comma-dense input with no whitespace (`"a,"` repeated) hits the same quadratic through segment
-count alone: 3.8 ms → 103.4 ms across a 16× size increase.
+count, with no other growth factor: 3.8 ms → 103.4 ms across a 16× size increase.
 
 **Suggested fix.** Both arrays are position-sorted, so a two-pointer merge makes this O(S + T) with
 no behavior change. A cheaper partial mitigation filters tokens by `REGION_ABBREV_RE` and class
@@ -231,14 +231,14 @@ advance `i` past the consumed run, or memoize the run-end per start index.
 
 Where the two quadratics and the 128-piece throw can be reached:
 
-| Surface                                     | Length guard                                                                                                                   | Exposed to                                                          |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `@mailwoman/api` `/v1/parse`, `/v1/geocode` | 2 MiB body limit (`api/app.ts:23`); **no per-string cap** — `address: z.string()` at `api/schema.ts:38,68` carries no `.max()` | both quadratics, the 128-piece throw                                |
-| `@mailwoman/api` `/v1/batch`                | 2 MiB body, 500 rows (`api/routes.ts:49`)                                                                                      | both quadratics × up to 500 rows                                    |
-| `@mailwoman/libpostal` `/parse`             | 100 KB body (`libpostal/app.ts:24`); no per-query cap                                                                          | both quadratics (bounded at 100 KB ≈ 19 s), the 128-piece throw     |
-| `@mailwoman/nominatim` `/search`            | `MAX_QUERY_LEN = 512` (`nominatim/cli.ts:67`)                                                                                  | 128-piece throw only — quadratics are bounded harmless at 512 chars |
-| `@mailwoman/photon` `/api`                  | `MAX_QUERY_LEN = 512` (`photon/cli.ts:60`)                                                                                     | same                                                                |
-| CLI / library                               | none                                                                                                                           | all three                                                           |
+| Surface                                     | Length guard                                                                                                               | Exposed to                                                          |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `@mailwoman/api` `/v1/parse`, `/v1/geocode` | 2 MiB body limit (`api/app.ts:23`); **no per-string cap** — `address: z.string()` at `api/schema.ts:38,68` has no `.max()` | both quadratics, the 128-piece throw                                |
+| `@mailwoman/api` `/v1/batch`                | 2 MiB body, 500 rows (`api/routes.ts:49`)                                                                                  | both quadratics × up to 500 rows                                    |
+| `@mailwoman/libpostal` `/parse`             | 100 KB body (`libpostal/app.ts:24`); no per-query cap                                                                      | both quadratics (bounded at 100 KB ≈ 19 s), the 128-piece throw     |
+| `@mailwoman/nominatim` `/search`            | `MAX_QUERY_LEN = 512` (`nominatim/cli.ts:67`)                                                                              | 128-piece throw only — quadratics are bounded harmless at 512 chars |
+| `@mailwoman/photon` `/api`                  | `MAX_QUERY_LEN = 512` (`photon/cli.ts:60`)                                                                                 | same                                                                |
+| CLI / library                               | none                                                                                                                       | all three                                                           |
 
 The single highest-value mitigation is a `.max()` on the API `address` field. It closes the
 quadratics on the most exposed surface without touching the parser.
@@ -276,7 +276,7 @@ The `num-very-long-digits` row exposes a second, unrelated issue: the emitted `h
 which recomputes `this.end` from the truncated body — so the span's offsets no longer point at the
 input it came from.
 
-**Suggested fix.** The Finding 1 fix removes the throw, which removes most of this. Independently,
+**Suggested fix.** The Finding 1 fix removes the throw. That removal eliminates most of this. Independently,
 when `safeClassify` swallows every error with a bare `catch {}`, a model fault is
 indistinguishable from a clean no-match. A `classifierError` field on `PipelineResult`
 (or a `path` marker) would cost no extra work and make this class self-reporting.
@@ -289,7 +289,7 @@ indistinguishable from a clean no-match. A `classifierError` field on `PipelineR
 currently unmitigated.
 
 35 of 110 probes produced at least one coordinate on the `--resolve` path. The mechanism is
-mundane: WOF contains small populated places named `Null`, `Drop`, `Boom`, `Quote`, `Home`, `Aug`,
+mundane: WOF contains small populated places with the names `Null`, `Drop`, `Boom`, `Quote`, `Home`, `Aug`,
 `Amet`, `All`, `Hello`, `Apt`, `Ave`, `A`, `x`, `Purwa 0`, `Zona 1`. Any input containing one of
 those tokens can be tagged `locality` and resolved.
 
@@ -311,7 +311,7 @@ those tokens can be tagged `locality` and resolved.
 
 Two of these were re-confirmed through the shipped CLI rather than the eval script. `+1 (555)
 867-5309` under `--resolve` (which applies `defaultCountry=US` from `--locale en-US`) lands on a
-Nebraska place named `1` at 41.4345, −96.0268 instead of Guatemala — different point, same defect.
+Nebraska place with the name `1` at 41.4345, −96.0268 instead of Guatemala — different point, same defect.
 
 **The confidences do not flag these, and neither does the resolver score.** Model confidence on the
 emitted components:
@@ -345,8 +345,8 @@ following threw, hung, or emitted anything:
 
 - **Degenerate input is clean.** Empty string, single/multiple spaces, tab, newline, CRLF, only
   newlines, `.`, `,`, ten commas, `,` interleaved with spaces, `-`, `"`, `\` — every one returns
-  `{}` with no throw. Single alphanumerics (`a`, `X`, `7`, `0`) emit one component, which is
-  defensible for a single-token query; only `a` resolves.
+  `{}` with no throw. Single alphanumerics (`a`, `X`, `7`, `0`) emit one component. That output is
+  defensible for a single-token query. Only `a` resolves.
 - **Emoji.** Single emoji, ten building emoji, ZWJ family sequences, skin-tone modifiers,
   regional-indicator flags — all emit no component. Keycap sequences (`1️⃣2️⃣3️⃣`) emit
   `{"locality":"3","street":"2","house_number":"1"}`, which is the digits inside them being read rather than an emoji failure.
@@ -363,7 +363,7 @@ following threw, hung, or emitted anything:
   SSN-shaped digits, scientific notation, credit-card-shaped digits — none resolve. The bare
   latitude/longitude pair `40.748817, -73.985428` correctly yields no coordinate.
 
-One untidy case worth a line: `\\x01\\x02\\x03\\x07\\x1b[31m` (control characters plus an ANSI
+One untidy case: `\\x01\\x02\\x03\\x07\\x1b[31m` (control characters plus an ANSI
 color escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
 have been stripped in Stage 1.
 
@@ -371,7 +371,7 @@ have been stripped in Stage 1.
 `neural/span-proposer-lexicon.ts:138` as polynomial-ReDoS-shaped — `\s*#?\s*` before a required
 digit, on a default-ON path. Measured against `"PO Box" + " ".repeat(n) + "x"` for n up to 8,000,
 the time is flat at 0.1–0.6 ms with no growth. The concern is ruled out, and it is recorded here so
-nobody re-derives it.
+a later reviewer does not re-derive it.
 
 ---
 
@@ -392,9 +392,10 @@ nobody re-derives it.
   population-first and may behave differently on Finding 5.
 - **The 1 MB end-to-end pipeline case never completed.** It ran for **~2,220 s (37 minutes)** and
   was killed by a 2,400 s wall-clock cap without producing a result, so the defensible statement is
-  ">37 minutes," not a figure. That is 20× the 110.6 s `computeQueryShape` cost, which says the
-  stages after query-shape also degrade badly at 60,609 segments — worth its own measurement, but
-  not one I have. The 1 MB row in Finding 2 is the stage-level number, which stands on its own.
+  ">37 minutes," not a figure. That is 20× the 110.6 s `computeQueryShape` cost. The gap indicates that the
+  stages after query-shape also degrade badly at 60,609 segments. That degradation needs its own
+  measurement, and I do not have one. The 1 MB row in Finding 2 is the stage-level number, and it
+  stands on its own.
 - **Not a security review.** SQL-injection- and FTS-syntax-shaped strings were probed for _parser_
   behavior. Neither reached a query engine in a way this investigation examined, and no claim is
   made about injection safety.
@@ -417,14 +418,14 @@ Classes: `degenerate` 18, `numeric` 16, `symbolic` 14, `script` 21, `size` 3, `s
 
 `expect` records the bar the row _should_ meet rather than today's behavior — 19 rows currently violate
 it, and those are exactly Findings 4 and 5. Control characters, NUL and lone surrogates are
-JSON-escaped; the file was verified to round-trip line-by-line through `JSON.parse` with every
+JSON-escaped. The file was verified to round-trip line-by-line through `JSON.parse` with every
 `raw` byte-identical to its source.
 
 ---
 
 ## Ranked actions
 
-1. **Truncate `pieces` to `fixedSeqLen`** (`neural/classifier.ts:662`). One line; removes both
+1. **Truncate `pieces` to `fixedSeqLen`** (`neural/classifier.ts:662`). One line. It removes both
    throw sites and the 500s on valid 325+ character addresses. Consider surfacing the truncation
    rather than performing it silently.
 2. **Add `.max()` to the API `address` field** (`api/schema.ts:38,68`). Closes both quadratics on
@@ -437,4 +438,4 @@ JSON-escaped; the file was verified to round-trip line-by-line through `JSON.par
 6. **Investigate a population floor for uncorroborated single-token localities** — measured against
    the fragment boards first, since it trades recall for precision.
 7. **Tighten `MAX_QUERY_LEN` from 512 to ~300** on the nominatim and photon drop-ins. Mitigation
-   only; item 1 is the fix.
+   only. Item 1 is the fix.

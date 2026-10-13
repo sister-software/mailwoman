@@ -1,6 +1,6 @@
 # punctuation-stress.jsonl — gold conventions (#518)
 
-200 hand-curated rows across the punctuation classes our government-data evals never carry.
+200 hand-curated rows across the punctuation classes our government-data evals never contain.
 Each row: `{raw, components, class}`. Graded by `scripts/eval/score-punctuation-stress.ts`
 (per-class component accuracy + parse-survival), runnable against both engines.
 
@@ -10,10 +10,10 @@ Gold conventions, decided once here:
    `Big Company HQ`) — matching the January Chevrotain experiment's strip behavior and how a
    geocoder would consume the value.
 2. **Parenthetical annotations** (`(rear entrance)`, `(2nd floor)`) are not components — gold
-   omits them; the row grades whether neighbors survive the annotation. When paren content is a
+   omits them, and the row grades whether neighbors survive the annotation. When paren content is a
    component (`(Australia)` → country), it is labeled as that component, delimiters excluded.
-3. **c/o & attention lines**: the schema has no `attention`/`care_of` tag the current model emits;
-   the c/o phrase is left UNLABELED in gold and the row grades the neighbors. These rows measure
+3. **c/o & attention lines**: the schema has no `attention`/`care_of` tag the current model emits.
+   The c/o phrase is left UNLABELED in gold and the row grades the neighbors. These rows measure
    poisoning rather than c/o extraction (that capability is a separate future change).
 4. **Unbalanced delimiters** (operator ruling 2026-06-11): a stray, unpaired delimiter is
    excluded from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
@@ -25,7 +25,7 @@ Gold conventions, decided once here:
 6. **Half addresses** (`123 1/2`) follow USPS convention: the fraction belongs to house_number.
 7. Locale defaults US; `class` field drives the per-class report. Rows seeded from: the January
    experiment's tests (commit 10195ea), the v4.4.0 evaluation's measured classes, arena leftovers
-   (Eduard-Sueß), and real-world named places chosen for their punctuation (Coeur d'Alene,
+   (Eduard-Sueß), and real-world place names chosen for their punctuation (Coeur d'Alene,
    Winston-Salem, Saint-Louis-du-Ha! Ha!). The 2026-06-11 expansion (62→120) weighted the two
    v0-win quadrants (bracketed, hyphen), the under-5-row classes, and FR/DE/AU/NZ surfaces
    (dotted abbreviations, CEDEX, unit designators). The 2026-06-12 expansion (120→200) deepened
@@ -39,7 +39,7 @@ grew 120→200 on 2026-06-12, deliberately deepening slash, bracketed, and mixed
 where v0 ties or where the depth decision needed more signal. Per-class numbers shifted relative to
 the 120-row run because the MIX changed (more challenging slash/mixed-hard rows were added) rather than
 because either engine's behavior changed. Do not read this table as a model regression or
-improvement vs the 120-row baseline; it is a different population.
+improvement vs the 120-row baseline. It is a different population.
 
 | class            |                  v0 |     neural (v4.4.0) | Δ             |
 | ---------------- | ------------------: | ------------------: | ------------- |

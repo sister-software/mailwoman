@@ -77,7 +77,7 @@ build variable and the custom domain:
 | Deploy command | `npx wrangler deploy`                                                                                |
 | Watch paths    | `packages/planetary/**`, `packages/react/**`, `packages/cartographer/**`, `packages/astrogeology/**` |
 
-`build.json` carries `body`, `revision`, `buildTime`, and the tileset versions from the pipeline
+`build.json` records `body`, `revision`, `buildTime`, and the tileset versions from the pipeline
 manifests the build was pointed at.
 
 ### Style
@@ -172,7 +172,7 @@ is always visible.
 - Both are separate installable PWAs built from one source, with distinct identities and caches.
 - No application Worker script, docs import, or new tile server exists.
 - `packages/planetary` is registered in the root `workspaces`, both `tsconfig.json` reference pairs, and
-  `SANCTIONED_RELEASE_ABSENCES`; the tile worker CORS list carries both origins.
+  `SANCTIONED_RELEASE_ABSENCES`; the tile worker CORS list includes both origins.
 
 ## Out of scope
 

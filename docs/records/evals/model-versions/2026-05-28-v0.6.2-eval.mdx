@@ -18,8 +18,8 @@ pipeline (`scripts/eval-v062-checkpoint.sh`) completes.
 ## Setup
 
 - **Model:** v0.6.2 (`model-v062-step-100000-int8.onnx`)
-- **Corpus:** v0.4.0 base + synth-no-street extract (122K rows; 112K US + 10K
-  DE/GB; 35% venue-adversarial)
+- **Corpus:** v0.4.0 base + synth-no-street extract (122K rows: 112K US + 10K
+  DE/GB, of which 35% are venue-adversarial)
 - **Source-weight delta from v0.6.1:** `synth-street` 2.0 → 0.5; `synth-no-street` 1.0 (new)
 - **Tokenizer:** v0.6.0-a0
 - **Inference:** admin FST `fst-en-us.bin` + morphology FST (libpostal street_types,
@@ -104,8 +104,8 @@ Apply DeepSeek turn 7's promotion decision tree:
   region=0.725, street=0.984, house_number=0.999, postcode=1.000 → step 12000
   macro_f1=0.413.
 - No NaN. CE-only training is stable (as expected — the bf16-NaN issue from the
-  postmortem only affected CRF, which v0.6.2 leaves disabled per the NaN protocol).
-- Early-eval check at step 20K: **TBD** (dep_loc hallucination ceiling 100; abort + bump
+  postmortem only affected CRF. v0.6.2 leaves CRF disabled per the NaN protocol).
+- Early-eval check at step 20K: **TBD** (dep_loc hallucination ceiling 100. Abort + bump
   synth-no-street size if exceeded).
 
 ## See also

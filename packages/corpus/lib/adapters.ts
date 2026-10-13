@@ -19,7 +19,7 @@
  *   what the adapter reads: BAN covers France and ten overseas jurisdictions, Matrikkelen covers
  *   Norway and Svalbard, and Ryhti's one national file covers Åland beside the Finnish mainland.
  *
- *   Flanders is the counter-case worth stating. Its adapter sits under `be` and covers the Flemish
+ *   Flanders is the counter-case. Its adapter sits under `be` and covers the Flemish
  *   Region only, because Brussels and Wallonia publish the INSPIRE theme through their own
  *   services, so Belgium needs three adapters rather than one.
  *
@@ -88,7 +88,7 @@ import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
 /**
  * Built-in adapters.
  *
- * Order is significant, because `corpus build` iterates this list to drive every adapter in turn.
+ * Order matters, because `corpus build` iterates this list to drive every adapter in turn.
  * The order runs coarse-first (admin, then postcode), then street-level
  * (BAN FR, tiger US, OpenAddresses global), then adversarial-source (FCC BDC US, HRSA fqhc US).
  *

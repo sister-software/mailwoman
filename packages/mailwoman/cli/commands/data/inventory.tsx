@@ -25,7 +25,7 @@ import {
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
-	"the interface (docs/engineering/reference/layer-interface.mdx); this says how much of the root implements it."
+	"the interface (docs/engineering/reference/layer-interface.mdx). This report shows how much of the root implements it."
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -36,14 +36,14 @@ export const spec = {
 	options: {
 		"data-root": { type: "string", description: "Override the data root" },
 		depth: { type: "string", description: "Directory levels to walk. Default 2" },
-		all: { type: "boolean", default: false, description: "List every artifact; the default shows only the summary" },
+		all: { type: "boolean", default: false, description: "List every artifact. The default shows only the summary" },
 		json: { type: "boolean", default: false, description: "Emit the report as JSON" },
 	},
 } as const satisfies CommandSpec
 
 /**
- * The rollup is the actionable view: one builder's identical defect across many artifacts
- * reads as one problem per directory rather than one problem per file.
+ * The rollup is the actionable view: one builder's identical defect across several
+ * artifacts reads as one problem per directory rather than one problem per file.
  */
 function rollup(entries: readonly InventoryEntry[]): string[] {
 	const by = new Map<string, { total: number; manifested: number; bytes: number }>()

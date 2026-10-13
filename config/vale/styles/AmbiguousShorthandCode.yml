@@ -36,7 +36,22 @@ ignorecase: true
 ## words (`@mailwoman/locale-hint`, `mwdev_promotion_eval`, `promotion-eval.ts`, ...). Add an entry
 ## only
 ## when a new interface must carry one, and say why here.
-exceptions: []
+##
+## The gate entries admit the address-designator sense of the word, which names a real place
+## rather than a check. `gb-street-gate` and `gate-house-venue` are confound-board category ids
+## copied into `BOARD_RESERVED_SURFACES`. `East Gate` is a street name, the Golden Gate is a strait and a bridge, and an airport or boarding
+## gate is the sub-venue designator. The gate token takes one optional leading word from that
+## fixed set, and the `-house-venue` suffix, so the match is the whole phrase. A bare `gate` still
+## fires.
+exceptions:
+  - gb-street-gate
+  - gate-house-venue
+  - East Gate
+  - Golden Gate
+  - airport gate
+  - airport gates
+  - boarding gate
+  - boarding gates
 tokens:
   ## The hyphenated prefix REPEATS, because a real filename carries more than one segment:
   ## `v1-parse-eval`, `boundary-stress-eval`, `fr-admin-split-eval`. A single optional prefix
@@ -50,7 +65,7 @@ tokens:
   ## artifact here is spelled `<something>-cut`.
   ## The optional extension lets a filename match as a whole — `gate.tsx` rather than `gate` — so an
   ## exception can name it. Without it the match stops at the word and the exception never applies.
-  - '(?:[\w@/.]+-)*gat(?:e|es|ed|ing)(?:\.[a-z]+)?'
+  - '(?:(?:east|airport|boarding|golden) )?(?:[\w@/.]+-)*gat(?:e|es|ed|ing)(?:-house-venue|\.[a-z]+)?'
   - '(?:[\w@/.]+-)*seam(?:s)?'
   - '(?:[\w@/.]+-)*shard(?:s|ed|ing)?'
   - 'cut(?:s|ting)?'

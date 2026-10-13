@@ -8,8 +8,8 @@ next model promotion ships the evidence bundle end to end.
 
 The recipe is retrieval-augmented encoding on v385's lineage. Two evidence channels enter as learned
 input features: `street_type` (1-dim, codex street vocabulary) and `locality_surface` (2-dim
-`[locality, locality_homograph]`, WOF-derived). They are trained under the **absence curriculum**,
-which zeroes them out per row on a ramp with independent draws per channel. The lexicons use
+`[locality, locality_homograph]`, WOF-derived). They are trained under the **absence curriculum**.
+That curriculum zeroes them out per row on a ramp with independent draws per channel. The lexicons use
 **three-law selectivity**:
 
 1. **Degenerate exclusion** removes function words, street-type words, and compositions made only of
@@ -68,7 +68,7 @@ has the most value in the register users type.
   check changes the trained bundle subsumes, and retire each one it beats. This reduces the number
   of decode-time mechanisms.
 
-## Open research items (named rather than blocking Phases 1–2)
+## Open research items (listed rather than blocking Phases 1–2)
 
 - **Street channel × lowercase × house-number** (the −0.19 class): candidate changes are a larger
   feed case-augmentation rate, presence noise on the street channel, and `normalizeCase` for

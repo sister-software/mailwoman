@@ -1,13 +1,13 @@
 # The meaning of zero
 
-> **A magnitude never carries its own absence.**
+> **A magnitude never encodes its own absence.**
 
 When `0` means both "we don't know" and "we measured zero", no consumer can tell them apart — and
 both readings look like a number, so no error fires and no log line appears while the mechanism
 takes no action. This page is the invariant and the audit behind it.
 
-The operator named this after it bit twice in one day. That is what promotes a coincidence to a bug
-class.
+The operator stated this rule after the defect appeared twice in one day. Two occurrences in one day
+made it a bug class rather than a coincidence.
 
 ## The rule
 
@@ -34,7 +34,7 @@ question.
 **Re-encoding the domain does not fix it.** A proposal to move `importance` to `[-1, 1]` with `0` as
 the default and `-1` as "unknown" was considered and rejected against the data: it still collapses
 absence onto the value axis, and 82% of places would land on `-1`, so the axis would encode mostly
-one thing. The split is the fix; the range is a detail.
+one thing. The split is the fix. The range is a detail.
 
 ## The audit
 
@@ -54,12 +54,12 @@ So `confidence: 0` means **either**:
 - `27` is not a postcode at all, **or**
 - `75008` absolutely is a postcode, and it exists in most countries that the posterior is uniform.
 
-Those are opposite claims. The first says "ignore this token"; the second says "this is a postcode,
+Those are opposite claims. The first means "ignore this token". The second means "this is a postcode,
 just don't trust the country."
 
-The type already carries the discriminator — `matchType: "exact" | "outward" | "fuzzy" | "none"`,
+The type already has the discriminator — `matchType: "exact" | "outward" | "fuzzy" | "none"`,
 where `"none"` is exactly "in no gazetteer". **No consumer reads it.** `soft-features.ts` builds the
-channel from `anchor.confidence` alone, so the model is fed one number and cannot recover the
+channel from `anchor.confidence` with no other input, so the model is fed one number and cannot recover the
 difference. The bit exists, travels as far as the type boundary, and is dropped on the floor.
 
 This is the most expensive instance, because the anchor channel is how the model learns about
@@ -115,12 +115,12 @@ When you add a numeric channel, score, rate, bias, or weight, ask **one** questi
 > Can this field's zero mean "absent"?
 
 If yes, add the bit. If the bit already exists somewhere in the type, **check that the consumer reads
-it** — site 1 above is the reminder that a discriminator nobody uses is the same as no discriminator,
+it** — site 1 above is the reminder that an unread discriminator is the same as no discriminator,
 and it is harder to spot because the type looks correct.
 
-The tell, every time: the docstring says "`0` when …". Grep for it.
+The tell, every time: the docstring reads "`0` when …". Grep for it.
 
-## Why this is worth a page
+## Why this rule has its own page
 
 Every instance costs a wrong verdict or a dead change, and none of them announce themselves. Phase 4a's
 rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a resolver with

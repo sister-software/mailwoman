@@ -20,7 +20,7 @@ The input is the operator's hardest test case:
 
 > `NY-NY Steakhouse, Houston, TX`
 
-Every earlier version of Mailwoman parsed this string wrong. On its own, the token `NY` looks exactly like the abbreviation for New York, and a per-token classifier reads it that way. The only reading that makes sense for the whole string is that `NY-NY` is part of a venue name, the city is Houston, and the region is Texas. No single layer can reach that conclusion alone, and joint decoding is the layer that combines their evidence.
+Every earlier version of Mailwoman parsed this string wrong. On its own, the token `NY` looks exactly like the abbreviation for New York, and a per-token classifier reads it that way. The only reading that makes sense for the whole string is that `NY-NY` is part of a venue name, the city is Houston, and the region is Texas. No single layer can reach that conclusion from its own evidence, and joint decoding is the layer that combines their evidence.
 
 Read [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) first. This article assumes you know the six stages by name.
 
@@ -50,10 +50,10 @@ For our input it produces these proposals. The scores come from [`phrase-grouper
 Three details in this output matter:
 
 1. **`NY-NY` and `NY-NY Steakhouse` both appear**, with the same start position. The grouper does not choose between them. It proposes both and leaves the decision to Stage 5. A `HYPHENATED_COMPOUND` is one structural unit, and a `VENUE_PHRASE` ending in a known venue marker (`Steakhouse`) is another. Both are coherent readings of the same prefix.
-2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. `TX` sits at the end of the string after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalized word that _could_ be a locality, but the grouper has no dictionary. It only knows that the word has the structure of a `LOCALITY_PHRASE`.
+2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. `TX` sits at the end of the string after a comma. That position is a strong structural signal for a region abbreviation. `Houston` is a capitalized word that _could_ be a locality, but the grouper has no dictionary. It only knows that the word has the structure of a `LOCALITY_PHRASE`.
 3. **No span covers `,` or whitespace.** The grouper proposes spans only over real input tokens. The character offsets in the span column refer to the original input string.
 
-The grouper does _not_ know that `NY` abbreviates New York, that Houston is in Texas, or that "Steakhouse" suggests a venue. That is world knowledge, and the grouper deliberately avoids it. It supplies only structural priors, which keeps this layer consistent with the [bitter lesson](../understanding/our-approach/the-knowledge-ladder.mdx#why-this-decomposition-is-bitter-lesson-aligned).
+The grouper does _not_ know that `NY` abbreviates New York, that Houston is in Texas, or that "Steakhouse" suggests a venue. That is world knowledge, and the grouper deliberately avoids it. It supplies only structural priors. That restriction keeps this layer consistent with the [bitter lesson](../understanding/our-approach/the-knowledge-ladder.mdx#why-this-decomposition-is-bitter-lesson-aligned).
 
 ## Stage 3 — classifier emits top-k tag sequences
 
@@ -75,7 +75,7 @@ The `venue` interpretation is close behind. The classifier considers a venue pla
 
 ## Stage 4 — sequence corrector
 
-Stage 4 is the CRF decoder. It enforces the BIO grammar on the tag sequence, which forbids an `I-*` tag without a preceding `B-*`. This example has no orphan BIO labels, so the CRF passes the top-k candidates through unchanged. [CRF decoder](./crf-decoder.mdx) shows a case where Stage 4 _does_ change the output, `Saint Petersburg` → `Petersburg`.
+Stage 4 is the CRF decoder. It enforces the BIO grammar on the tag sequence. The grammar forbids an `I-*` tag without a preceding `B-*`. This example has no orphan BIO labels, so the CRF passes the top-k candidates through unchanged. [CRF decoder](./crf-decoder.mdx) shows a case where Stage 4 _does_ change the output, `Saint Petersburg` → `Petersburg`.
 
 ## Stage 5 — reconcile picks the joint-coherent interpretation
 
@@ -111,7 +111,7 @@ TX               → region   (0.95 × ?)
 
 This reading has one venue, one locality, and one region. The resolver _can_ satisfy it: `parent_id(Houston) = Texas`. The venue does not need to be in the gazetteer, because venues are user-supplied free text.
 
-Interpretation Y is **joint-coherent**, and Interpretation X is not. The classifier alone cannot tell them apart, because it scores each span in isolation. Stage 5 sees all the spans together.
+Interpretation Y is **joint-coherent**, and Interpretation X is not. The classifier by itself cannot tell them apart, because it scores each span in isolation. Stage 5 sees all the spans together.
 
 ### How the scoring works
 
@@ -123,14 +123,14 @@ score = phrase_confidence × classifier_confidence × resolver_score × concorda
 
 The `concordance_bonus` is the new factor. For each candidate parse tree, Stage 5 looks up the `parent_id` chain in the Who's On First gazetteer (see [Resolver and WOF](./resolver-and-wof.mdx)) and checks whether the chain agrees with the tags:
 
-- Interpretation X says `region: NY` and `locality: Houston`. WOF records `Houston → Texas`, not `Houston → New York`, so the chain disagrees. The bonus drops to ~0, which nearly eliminates the interpretation.
-- Interpretation Y says `venue: NY-NY Steakhouse, locality: Houston, region: TX`. The chain `Houston → Texas → United States` is intact, so the bonus is ~1.0.
+- Interpretation X assigns `region: NY` and `locality: Houston`. WOF records `Houston → Texas`, not `Houston → New York`, so the chain disagrees. The bonus drops to ~0, and that drop nearly eliminates the interpretation.
+- Interpretation Y assigns `venue: NY-NY Steakhouse, locality: Houston, region: TX`. The chain `Houston → Texas → United States` is intact, so the bonus is ~1.0.
 
 The product favors Y by a wide margin, even though its individual span scores are lower. The consistency check dominates because downstream consumers cannot use an incoherent parse.
 
 ### The empty-parse trap
 
-The first version of the reconciler used a purely multiplicative score. In testing, the score was _maximized_ by emitting **no spans**. Every factor is in `[0, 1]`, so fewer factors produce a higher product, and the empty parse won every comparison. Stage 5 fixes this by adding a fixed log-bonus for each accepted slot, which makes accepting a high-confidence span a net gain. See [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) for the full failure. This bonus is the only non-obvious setting in the joint decoder.
+The first version of the reconciler used a purely multiplicative score. In testing, the score was _maximized_ by emitting **no spans**. Every factor is in `[0, 1]`, so fewer factors produce a higher product, and the empty parse won every comparison. Stage 5 fixes this by adding a fixed log-bonus for each accepted slot. The bonus makes accepting a high-confidence span a net gain. See [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) for the full failure. This bonus is the only non-obvious setting in the joint decoder.
 
 ## Stage 6 — resolver looks up coordinates
 
@@ -159,7 +159,7 @@ The full v0.5.0 output for `NY-NY Steakhouse, Houston, TX` is:
 }
 ```
 
-The confidence is the product of the winning interpretation's per-stage scores. It is modest (0.42) because the underlying signals are modest. For example, `Houston` got only 0.65 from the phrase grouper, and the venue tag was the classifier's second choice. The parse is still _correct_, which was the v0.5.0 goal for this input.
+The confidence is the product of the winning interpretation's per-stage scores. It is modest (0.42) because the underlying signals are modest. For example, `Houston` got only 0.65 from the phrase grouper, and the venue tag was the classifier's second choice. The parse is still _correct_, and a correct parse was the v0.5.0 goal for this input.
 
 ## Why this was impossible before v0.5.0
 

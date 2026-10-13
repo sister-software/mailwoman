@@ -6,11 +6,11 @@ packages/mailwoman/lib/eval-harness/semantic-utility/baseline-receipt.json`. **P
 `df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c`. **DB:**
 `$MAILWOMAN_DATA_ROOT/db/poi/poi.db`, `layer_manifest` `poi 2026-07-22.0` (vintage 2026-07-22.0).
 **Weights:** en-US 9.1.0. **Resolver:** candidate-table backend. **Tree:** working tree at
-`2b5fa6193` carrying this pull request's harness, which adds no pipeline behaviour.
+`2b5fa6193` with this pull request's harness. The harness adds no pipeline behaviour.
 
 This is the frozen ruler for the geographic-model utility decision (#1930) and the pre-injection
 measurement it compares against. #1929 supplies one semantic observation and runs the same command
-with a different `--arm`; it changes no row, no comparator, no metric and no threshold.
+with a different `--arm`. It leaves every row, comparator, metric and threshold unchanged.
 
 ## Route
 
@@ -18,11 +18,11 @@ Route (a) of the boundaries record §5.5 — commit the target rows first, grade
 
 Route (b) pre-registers on the §5.3 recall gap, and it cannot be executed against the frozen
 first increment: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see needs a
-**second** establishment class asserting the affordance, which §4 forbids ("no sibling class is
+**second** establishment class asserting the affordance. §4 forbids that ("no sibling class is
 minted") and stop condition 5 makes an explicit amendment rather than a probe. It would also need a
 recall metric the committed grader does not have (§5.5's second bound). Route (a) needs neither: the
 comparator already exists and is committed, the anchors and expectations are copied byte-for-byte
-from committed board rows, and the semantic arm is reachable from the frozen increment alone — activity
+from committed board rows, and the semantic arm is reachable from the frozen increment without additions: activity
 phrase → `obtain_medication` → the concepts that afford it → POI category `pharmacy` through the
 committed mapping.
 
@@ -38,7 +38,7 @@ board family for a GO decision.
 nearest returned coordinate against the row's committed anchor. Outcomes only.
 
 **Target rows (4).** Each pairs an activity phrase attested in §5.1 with an anchor taken byte-for-byte
-from the committed control row named beside it. No row carries a `locale`, matching its control, so
+from the committed control row listed beside it. No row has a `locale`, matching its control, so
 the anchor, the country prior and the weights package are held constant and the subject phrase is the
 only thing that varies.
 
@@ -67,11 +67,11 @@ everything would leave all three `same_category` rows green.
 
 - `target_answer_rate` — target rows passing the comparator, over **4** registered target rows.
 - `target_poi_routing_rate` — target rows whose outcome shape is not `no_poi_branch`, over the same
-  **4**. This is the structured mechanism metric the DIAGNOSTIC-ONLY decision requires; it reads the
+  **4**. This is the structured mechanism metric the DIAGNOSTIC-ONLY decision requires. It reads the
   closed POI outcome-shape vocabulary, never free-form prose.
 - `control_hold_rate` — control rows still passing, over **6**.
 
-A row that errors, returns nothing, or never reaches the POI branch counts as not answered and stays
+A row that errors, returns no result, or never reaches the POI branch counts as not answered and stays
 in its denominator.
 
 **Thresholds.** Both metrics are asked for three of the four target rows. Each delta bar is
@@ -98,19 +98,19 @@ form of the same query is not a result the program can act on.
 
 | role    | id              | shape                | pass | detail                                                                    |
 | ------- | --------------- | -------------------- | ---- | ------------------------------------------------------------------------- |
-| target  | `sem-act-us-01` | `no_poi_branch`      | ✗    | `path=full`, no poi intent                                                |
-| target  | `sem-act-us-02` | `no_poi_branch`      | ✗    | `path=full`, no poi intent                                                |
-| target  | `sem-act-fr-01` | `poi_intent_results` | ✗    | nearest 211.75 km > 25; top category `womens_clothing_store` ≠ `pharmacy` |
-| target  | `sem-act-mx-01` | `no_poi_branch`      | ✗    | `path=full`, no poi intent                                                |
-| control | `cat-us-05`     | `poi_intent_results` | ✓    | 20 results, nearest 0.41 km, top `pharmacy`                               |
-| control | `cat-mx-02`     | `poi_intent_results` | ✓    | 20 results, nearest 1.05 km, top `pharmacy`                               |
-| control | `cat-fr-03`     | `poi_intent_results` | ✓    | 20 results, nearest 0.12 km, top `pharmacy`                               |
-| control | `syn-01`        | `poi_intent_results` | ✓    | 20 results, nearest 1.12 km, top `hospital`                               |
-| control | `cat-us-04`     | `poi_intent_results` | ✓    | 20 results, nearest 3.04 km, top `bank`                                   |
-| control | `abstain-05`    | `poi_abstain`        | ✓    | `anchor_required`                                                         |
+| target  | `sem-act-us-01` | `no_poi_branch`      | no   | `path=full`, no poi intent                                                |
+| target  | `sem-act-us-02` | `no_poi_branch`      | no   | `path=full`, no poi intent                                                |
+| target  | `sem-act-fr-01` | `poi_intent_results` | no   | nearest 211.75 km > 25, top category `womens_clothing_store` ≠ `pharmacy` |
+| target  | `sem-act-mx-01` | `no_poi_branch`      | no   | `path=full`, no poi intent                                                |
+| control | `cat-us-05`     | `poi_intent_results` | yes  | 20 results, nearest 0.41 km, top `pharmacy`                               |
+| control | `cat-mx-02`     | `poi_intent_results` | yes  | 20 results, nearest 1.05 km, top `pharmacy`                               |
+| control | `cat-fr-03`     | `poi_intent_results` | yes  | 20 results, nearest 0.12 km, top `pharmacy`                               |
+| control | `syn-01`        | `poi_intent_results` | yes  | 20 results, nearest 1.12 km, top `hospital`                               |
+| control | `cat-us-04`     | `poi_intent_results` | yes  | 20 results, nearest 3.04 km, top `bank`                                   |
+| control | `abstain-05`    | `poi_abstain`        | yes  | `anchor_required`                                                         |
 
 **Recorded decision for this arm: STOP-REDESIGN** — the baseline compared against its own frozen
-baseline moves nothing, which is the self-check that the decision function is not vacuously
+baseline moves no metric. That result is the self-check that the decision function is not vacuously
 permissive.
 
 ### One measured surprise, and why the row stays
@@ -122,7 +122,7 @@ branch, and the reason is not the category lexicon: `matchPOISubject` returns `n
 `womens_clothing_store` rows in Lyon and Paris — so the name lexicon claims the query and the branch
 answers a clothing store 211.75 km from Toulouse.
 
-That makes this row's baseline a confident wrong answer rather than a miss, which is a worse starting
+That makes this row's baseline a confident wrong answer rather than a miss. That is a worse starting
 point than the other three rather than a better one. The row is kept: its form is attested in §5.1, and
 swapping it out after measuring would be exactly the row selection this pre-registration exists to
 prevent. It is the reason the diagnostic baseline is 1 rather than 0, and therefore the reason the
@@ -137,5 +137,5 @@ node packages/mailwoman/out/cli.js eval semantic-utility-probe --arm baseline --
 
 The loader refuses the pre-registration if its content hash has moved from
 `packages/mailwoman/lib/eval-harness/semantic-utility/probe-freeze.json`, so a run that produces a
-receipt has provably read the ruler recorded here. `packages/mailwoman/lib/commands/eval/semantic-utility-probe.test.ts`
+receipt has read the ruler recorded here. `packages/mailwoman/lib/commands/eval/semantic-utility-probe.test.ts`
 holds the freeze, the refusals, the arithmetic, and this receipt's agreement with the frozen numbers.

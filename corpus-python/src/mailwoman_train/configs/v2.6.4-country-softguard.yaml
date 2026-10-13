@@ -7,7 +7,7 @@
 # unchanged from v263. check (package-shaped, eval check --weights-cache): country-homograph F1 recovers
 # toward 89.8 from v263's 82.6 while golden WOF-admin country recall holds ~89.3% and the held-out US/FR
 # coordinate stays flat (the #566 ship check) + the real-postal board does not regress. Grade package-shaped, never
-# --model alone (#718 country-off trap).
+# --model by itself (#718 country-off trap).
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

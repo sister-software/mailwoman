@@ -6,7 +6,7 @@
 
 Quantization runs here rather than locally because the dynamo-exported graph trips onnx shape
 inference in some local onnxruntime builds, while the training image's pinned one quantizes it
-cleanly. The push exists because this volume's container and CLI views are fully divergent —
+without error. The push exists because this volume's container and CLI views are fully divergent —
 `modal volume get` cannot pull a container-written file — so an artifact leaves the way the corpus
 arrived.
 """

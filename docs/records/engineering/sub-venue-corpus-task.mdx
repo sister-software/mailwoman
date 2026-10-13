@@ -25,16 +25,16 @@ needed a bias scale of 5.90 to win the decode. That shipped: `venueStructureBias
 | Upper Concourse |           9.65 |
 | North Terminal  |      **10.65** |
 
-Only the first clears the shipped 6.0, which is exactly the one that parses today.
+Only the first clears the shipped 6.0. It is exactly the one that parses today.
 
 Class closure by weight would take a scale near 11 — **nearly double what the stronger evidence
-needed**. A positional word before a designator is a shape ordinary street names also take; an
+needed**. A positional word before a designator is a shape ordinary street names also take. An
 identifier after one is nearly unambiguous. A higher price for the weaker cue inverts the evidence
 ordering, and at 11 nats a prior stops being a prior: it overrides the model wherever it fires, on
 the strength of a six-row confound board.
 
-The distribution is the tell. 5.87 is a model that half-believes; 10.65 is a model confidently
-believing something else. That is the signature of a tag it was never taught, and it matches the
+The distribution is the tell. 5.87 is a model with a weak score for the correct tag. 10.65 is a model
+confident in a different tag. That is the signature of a tag it was never taught, and it matches the
 campaign's aliveness finding — `B-unit` ranks 11th–15th of 25 in raw pre-prior logits across every
 locale, at 0.15–0.42% even for `Apt` and `Suite`.
 
@@ -64,7 +64,7 @@ Teach the tag instead of outvoting it. Synthesize lines of the shape
 <sub-venue>, <venue>, <street>, <locality>, <postcode>
 ```
 
-where the sub-venue carries both forms:
+where the sub-venue appears in both forms:
 
 - designator + identifier — `Terminal 5`, `Check 12`, `Concourse B`, `Wing B`, `Building 43`
 - modifier + designator — `West Wing`, `North Terminal`, `Upper Concourse`, `Main Building`
@@ -86,19 +86,19 @@ varied in ways an invented list will not be — `Concourse B`, `Terminal 2F`, `P
 This is also the class of query a geocoder is expected to answer and currently answers badly. "Which
 terminal" is a real user intent with a real coordinate attached.
 
-Sources worth pulling, roughly in order of value:
+Sources to pull, roughly in order of value:
 
 - **OSM `aeroway=terminal` / `aeroway=check`** — already the provenance for `terminal` and `check` in
   the designator vocabulary, and `osm/sdk` already fetches and splits OSM into per-country files. The extraction path
-  exists; this is a new extractor over data we can already reach.
+  exists. This is a new extractor over data we can already reach.
 - **OSM `public_transport=station` + `railway=station`** with their platform and concourse children —
-  the rail equivalent, and the naming conventions differ enough from aviation to be worth having
-  both.
+  the rail equivalent, and the naming conventions differ enough from aviation that the corpus
+  needs both.
 - **OurAirports** (public domain) — every airport worldwide with IATA/ICAO codes and coordinates.
   Good for the venue side of each pair, weaker on interior structure.
 - **Overture Places** — already ingested for `poi.db`; filter to transport categories for venue names
   with coordinates.
-- **Wikidata** — terminal and concourse entities carry multilingual labels, which is the cheapest
+- **Wikidata** — terminal and concourse entities have multilingual labels. They are the cheapest
   route to non-English sub-venue naming (`Terminal Sur`, `Halle 2`, `ターミナル1`).
 
 The interior structure is the scarce part. Airport `terminal` and `check` data is the densest source of it

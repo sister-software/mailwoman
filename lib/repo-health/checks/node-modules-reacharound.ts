@@ -81,7 +81,7 @@ const ALLOWED: Record<string, string> = {
 	// when the implementation is wrong, so this file spells the path independently.
 	"packages/neural/lib/weights/cache.integration.test.ts":
 		"pins the cache layout independently of the helper that builds it",
-	// Probes a foreign scratch project it just created with `npm install`, reading the install
+	// Probes a foreign scratch project it created with `npm install`, reading the install
 	// layout from outside because `import.meta.resolve` would answer from the monorepo's graph.
 	"lib/release-kit/release/smoke/clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",

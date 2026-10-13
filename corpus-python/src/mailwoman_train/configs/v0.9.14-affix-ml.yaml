@@ -1,7 +1,7 @@
 # This recipe is v0.9.8-affix.yaml trained on a multi-locale affix corpus.
 # The v0.4.11-affix-ml corpus is v0.4.6-affix with the synth-affix rows replaced. The new rows come
-# from packages/corpus/lib/recipes/street/affix.ts: 50,000 US affix splits, which match the v0.9.8
-# exposure, plus 40,000 FR, DE, IT and NL rows in native component order without affix splits.
+# from packages/corpus/lib/recipes/street/affix.ts: 50,000 US affix splits (matching the v0.9.8
+# exposure), plus 40,000 FR, DE, IT and NL rows in native component order without affix splits.
 # The added rows restore the postcode-before-locality order that US-only affix rows diluted in FR.
 #
 # The per-locale F1 scorer folds affixes into `street`, so the affix split needs a separate scorer.

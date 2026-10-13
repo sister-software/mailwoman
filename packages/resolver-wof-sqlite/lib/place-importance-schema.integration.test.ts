@@ -138,7 +138,8 @@ describe("splitLegacyImportance", () => {
 
 	it("still separates a real Wikipedia score that is merely SMALL", () => {
 		// The tolerance must not become a bucket.
-		// A genuine low score sits many orders of magnitude outside 8 ULP of the population curve.
+		// A low score that is not a bucket artifact sits orders of magnitude outside
+		// 8 ULP of the population curve.
 		const population = 21_299
 		const nearby = referentialFromPopulation(population) + 1e-6
 

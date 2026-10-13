@@ -16,8 +16,8 @@ def fold_halfwidth_kana(text: str) -> str:
     """Fold half-width katakana (U+FF61–FF9F) to full width, composing the dakuten.
 
     Targeted rather than blanket NFKC: NFKC would also fold full-width digits to ASCII.
-    The two-register chōme convention needs those registers kept apart. The fold is LENGTH-CHANGING (ﾃﾞ → デ, 2 chars
-    → 1), which is safe here only because it runs on field values before they are concatenated and
+    The two-register chōme convention needs those registers kept apart. The fold is LENGTH-CHANGING (ﾃﾞ becomes デ, 2 chars
+    become 1), which is safe here only because it runs on field values before they are concatenated and
     their spans recorded. 14,739 ``number`` values in the source need it.
     """
     if not any(0xFF61 <= ord(c) <= 0xFF9F for c in text):
@@ -29,7 +29,7 @@ def fold_halfwidth_kana(text: str) -> str:
 def kanji_to_int(text: str) -> int | None:
     """Parse a JP numeral (either register) to an int. Returns None if it is not one.
 
-    Handles the forms a chōme actually takes: bare digits (ASCII or full-width), the digit-string
+    Handles the forms a chōme takes in the source: bare digits (ASCII or full-width), the digit-string
     kanji register (〇一二…), and the positional kanji register up to 百 (一丁目 … 二十三丁目).
     """
     if not text:

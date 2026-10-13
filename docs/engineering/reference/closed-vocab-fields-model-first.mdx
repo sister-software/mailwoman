@@ -64,11 +64,11 @@ substitution in the parser, and it provides the same safety.
 The night-9 split of "open-vocab → train / closed-vocab → deterministic" was too coarse. The
 useful partition is by _what the field needs to learn_:
 
-| Tier                                                 | Fields                                   | Treatment                                                                                                                                               |
-| ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage recipe + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                   |
-| **Closed-vocab, without homographs, starved**        | `po_box`, `cedex`                        | also a coverage recipe — they were starved rather than unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
-| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage recipe **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature       |
+| Tier                                                 | Fields                                   | Treatment                                                                                                                                                 |
+| ---------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage recipe + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                     |
+| **Closed-vocab, without homographs, starved**        | `po_box`, `cedex`                        | also a coverage recipe — they were starved rather than unlearnable. "PO Box"/"CEDEX" are unambiguous, so an anchor is unnecessary. Train them like `unit` |
+| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage recipe **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature         |
 
 None of the tiers uses a deterministic _override_.
 
@@ -130,7 +130,7 @@ must contain:
 **Acceptance (per-tag no-regression):** `country` improves, and `region`/`locality` stay
 flat. Run DeepSeek's A/B/C control: the current model, the soft feature on the old corpus,
 and the soft feature on the balanced corpus. The control shows whether the _feature_ or the
-_data_ improves `country`, so we can skip the feature if balanced data alone is enough.
+_data_ improves `country`, so we can skip the feature if balanced data without the feature is enough.
 
 ## How the field handles this (prior art)
 
@@ -141,22 +141,22 @@ Current systems follow one of two approaches:
 - **Index-time disambiguation** does not commit to a parse and lets retrieval decide
   (Airmail).
 
-| System                     | Approach to `country` / closed-vocab                                                                                                      | Lexicon used as                                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **libpostal**              | `country`/`po_box` are _learned_ labels, same footing as everything                                                                       | input feature + training-data generator (end-to-end; inherits the over-fire risk) |
-| **deepparse**              | learned labels, configurable tag set                                                                                                      | — (no overlay)                                                                    |
-| **Pelias Parser**          | dictionary classifiers + cartesian solver                                                                                                 | fully deterministic (no ML to inform)                                             |
-| **Pelias Placeholder**     | deterministic WoF hierarchy resolution downstream of the parse                                                                            | a resolution layer rather than span re-tagging                                    |
-| **Nominatim**              | `countrycodes` is a hard filter; special phrases                                                                                          | deterministic overlays on search                                                  |
-| **Google libaddressinput** | per-ISO-country deterministic metadata                                                                                                    | validation/format engine without free-text parsing                                |
-| **Airmail**                | parserless by default; small BERT to aid malformed queries; country baked into a flat content field at index time, S2 cells for hierarchy | OSM `key=value` as a separate deterministic _index-time_ tag channel              |
+| System                     | Approach to `country` / closed-vocab                                                                                                        | Lexicon used as                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **libpostal**              | `country`/`po_box` are _learned_ labels, same footing as everything                                                                         | input feature + training-data generator (end-to-end, inherits the over-fire risk) |
+| **deepparse**              | learned labels, configurable tag set                                                                                                        | — (no overlay)                                                                    |
+| **Pelias Parser**          | dictionary classifiers + cartesian solver                                                                                                   | fully deterministic (no ML to inform)                                             |
+| **Pelias Placeholder**     | deterministic WoF hierarchy resolution downstream of the parse                                                                              | a resolution layer rather than span re-tagging                                    |
+| **Nominatim**              | `countrycodes` is a hard filter, plus special phrases                                                                                       | deterministic overlays on search                                                  |
+| **Google libaddressinput** | per-ISO-country deterministic metadata                                                                                                      | validation/format engine without free-text parsing                                |
+| **Airmail**                | parserless by default, a small BERT to aid malformed queries, country baked into a flat content field at index time, S2 cells for hierarchy | OSM `key=value` as a separate deterministic _index-time_ tag channel              |
 
 **Where we sit.** Current systems fall into two groups. libpostal and deepparse learn every
-label and carry the over-firing risk. Pelias, Nominatim and libaddressinput treat country
+label and share the over-firing risk. Pelias, Nominatim and libaddressinput treat country
 deterministically, but none of them is an ML parser. Our position is to _keep the model
 authoritative for every field and feed it the gazetteer as a soft feature_. We call this
 the **model-first synthesis**: the lexicon informs the model without overriding it. The
-closest related design is Airmail, which gives closed categorical vocabulary a
+closest related design is Airmail. Airmail gives closed categorical vocabulary a
 deterministic _channel_ (its OSM tags) alongside the fuzzy path. Airmail applies that
 channel at index time, however, and takes the _opposite_ approach to label granularity. It
 merges labels and tolerates confusion, while we add labels and make them more precise.

@@ -25,7 +25,7 @@ const STUB_STYLE: MapCanvasStyle = {
 }
 
 /**
- * A real-extent box, so `fitBounds` computes a genuine flight rather than the degenerate short-path branch.
+ * A real-extent box, so `fitBounds` computes a full flight rather than the degenerate short-path branch.
  */
 const BOUNDS_TARGET: MapCameraTarget = {
 	kind: "bounds",

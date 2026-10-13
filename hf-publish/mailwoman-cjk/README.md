@@ -72,7 +72,7 @@ register (주소DB) in seven registers (official, with the building name, withou
 unspaced, and the lot-number form); 2,000,000 Taiwanese rows from Overture Maps addresses in five registers
 (official, without the 村里, spaced, without the 縣市, with a floor unit); 1,666,000 typed business addresses from
 three government registries (Korean permits, Taiwanese companies, Japanese corporate numbers), each aligned exactly
-against the register above before it trained; plus 126 Chinese organizational-unit rows. Korean and Taiwanese add no
+against the register above before it trained. The corpus also has 126 Chinese organizational-unit rows. Korean and Taiwanese add no
 tag: 시/도 and 縣市 are `region`, 시군구 and 鄉鎮市區 are `subregion`, 읍면동/리 and 村里 are `dependent_locality`, the
 road or street name is `street`, the building or house number `house_number`, a floor or sub-number `unit`.
 
@@ -105,17 +105,30 @@ Who's On First. Japanese corporate-number register from 国税庁 法人番号�
 Publication Site); the three published fields are free for anyone to use under the site's 利用規約.
 
 Korean road-name address data (주소DB) from 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr),
-under 공공누리 제1유형 (KOGL Type 1): attribution required; commercial use, derivatives and redistribution permitted.
+under 공공누리 제1유형 (KOGL Type 1). That license requires attribution and permits commercial use, derivatives and
+redistribution.
 Korean permit registry from 행정안전부, 지방행정인허가데이터 (localdata.go.kr), 이용허락범위 제한 없음.
 
 Taiwanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0), from OpenAddresses under the
-政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution: New Taipei
-City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil
-Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan
-City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government;
-Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil
-Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs
-Office (Overture release 2026-06-17.0). Taiwanese company register from 經濟部商業發展署 (Ministry of Economic
+政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0). That license requires this attribution:
+
+- New Taipei City Government Civil Affairs Bureau
+- Taichung City Government Civil Affairs Bureau
+- Kaohsiung City Government Civil Affairs Bureau
+- Taipei City Government Civil Affairs Bureau
+- Taoyuan City Government Civil Affairs Bureau
+- Tainan City Government Civil Affairs Bureau
+- Changhua County Government Civil Affairs Office
+- Pingtung County Government
+- Yunlin County Government
+- Hsinchu County Civil Affairs Office
+- Miaoli Civil Affairs Office
+- Hsinchu City Civil Affairs Office
+- Keelung City Government Civil Affairs Bureau
+- Penghu County Government
+- Kinmen County Civil Affairs Office
+
+The Taiwanese address data comes from Overture release 2026-06-17.0. Taiwanese company register from 經濟部商業發展署 (Ministry of Economic
 Affairs, Administration for Commerce Development) under the same license.
 
 The model weights are AGPL-3.0-only OR LicenseRef-Commercial.

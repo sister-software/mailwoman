@@ -63,7 +63,7 @@ export function toMercator(lat: number, lon: number): { x: number; y: number } {
 const KAABA = { lat: 21.4225, lon: 39.8262 }
 
 /**
- * Initial great-circle bearing (degrees from true north) from a coordinate toward the Kaaba.
+ * Initial great-circle direction, in degrees clockwise from true north, from a coordinate toward the Kaaba.
  */
 export function qiblaBearing(lat: number, lon: number): number {
 	const phi1 = toRad(lat)

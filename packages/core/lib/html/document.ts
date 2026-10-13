@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Narrows a document to the markup worth reading before downstream code parses it.
+ *   Narrows a document to the markup that holds content before downstream code parses it.
  *   An archive can wrap its payload in an envelope element. Its `<head>` title can contain a filename.
  *   Its `<script>` and `<style>` blocks do not contain document content.
  *   Downstream strategies should read the same narrowed window instead of deriving their own.

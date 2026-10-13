@@ -114,7 +114,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		}
 
 		// A graph linked into an overlay that declares a base is never read and goes stale.
-		// Remove one left by an earlier recipe, so the directory says what the resolver does.
+		// Remove one left by an earlier recipe, so the directory holds the files the resolver reads.
 		if (recipe.inheritsBase(locale)) {
 			for (const stale of ["model.onnx", "tokenizer.model"]) {
 				const path = resolvePath(dir, stale)
@@ -165,7 +165,8 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 
 		// Report these artifacts.
 		// The per-locale `link-dev-weights.ts` scripts build them into the overlay.
-		// Each channel degrades to `undefined` at resolve time, so absence is only visible if it is said here.
+		// Each channel degrades to `undefined` at resolve time, so this step reports
+		// an absent channel because resolution does not.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

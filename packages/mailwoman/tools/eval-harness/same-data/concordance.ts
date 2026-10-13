@@ -5,8 +5,8 @@
  *
  *   Maps GeoNames gold entities to sets of WOF IDs through the WOF concordance table.
  *
- *   The benchmark grades by identity through this join because distance cannot tell two nearby
- *   places that share a name apart. A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of
+ *   The benchmark grades by identity through this join because distance cannot tell apart two
+ *   close-together places that share a name. A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of
  *   IDs. The join admits a set only when every member passes the name, country and distance checks in
  *   {@link readGoldSets}.
  */

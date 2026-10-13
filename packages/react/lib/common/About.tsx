@@ -13,7 +13,7 @@ export interface AboutProps {
 	 * Wraps the prose in its own `<details>` disclosure.
 	 *
 	 * Set false where the host is already the disclosure, because a summary repeating
-	 * an About button's words is one control too many.
+	 * an About button's words adds a control with no new content.
 	 *
 	 * @defaultValue `true`
 	 */

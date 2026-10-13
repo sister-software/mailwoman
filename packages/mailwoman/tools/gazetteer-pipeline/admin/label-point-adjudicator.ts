@@ -19,7 +19,8 @@ import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 export const LABEL_GEOM_DISAGREEMENT_KM = 5
 
 /**
- * How many times closer to the anchor one point must be for the anchor to decide.
+ * The distance ratio by which one point must be closer to the anchor than the
+ * other for the anchor to decide.
  */
 export const ANCHOR_DECISIVE_RATIO = 2
 

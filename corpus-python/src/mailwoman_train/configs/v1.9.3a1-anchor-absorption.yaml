@@ -1,5 +1,5 @@
 # This probe is v1.9.3-anchor-absorption.yaml with the synth-anchor-absorption source added.
-# It trains on the v0.9.3-anchor-absorption corpus, which overlays that source on the v1.9.2 corpus.
+# It trains on the v0.9.3-anchor-absorption corpus. That corpus overlays the source on the v1.9.2 corpus.
 # It resumes the v1.9.2 checkpoint at step 40000 and trains 2000 more steps.
 #
 # At inference, the postcode anchor fires on every postcode-shaped span. Training painted it only on
@@ -78,11 +78,11 @@ data:
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   # anchor_paint_mode accepts gold, the default, or shaped.
   anchor_paint_mode: shaped
-  # The anchor value keeps the country posterior, which separates five-digit US, DE and FR postcodes.
+  # The anchor value keeps the country posterior. The posterior separates five-digit US, DE and FR postcodes.
   # No training code reads anchor_value_mode or region_centroids_path yet.
   anchor_value_mode: posterior_latlon
   # region_centroids_path: /data/anchor/region-centroids.json
-  # Anchor dropout comes from the curriculum in train/noise.py, which zeroes the anchor on up to 15% of
+  # Anchor dropout comes from the curriculum in train/noise.py. The curriculum zeroes the anchor on up to 15% of
   # rows. The ramp ends at half of max_steps, so a run resumed at step 40000 starts at full strength.
 
 model: # These match v1.9.2.

@@ -351,8 +351,8 @@ export interface ElectedLicense {
 	 * Creative Commons permits that.
 	 *
 	 * Where that happens, {@linkcode ElectedLicense.spdx} records the one a build filters on
-	 * and this records what the publisher actually said, so a later reviewer reads
-	 * the conflict rather than one reading presented as settled.
+	 * and this records what the publisher said, so a later reviewer reads the conflict
+	 * rather than one reading presented as settled.
 	 *
 	 * The engineering policy elects the strictest grant for what a released corpus may include.
 	 * It does not establish which grant governs, and `electedBecause` states

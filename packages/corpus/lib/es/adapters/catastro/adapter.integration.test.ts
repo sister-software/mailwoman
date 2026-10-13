@@ -27,7 +27,7 @@ import { createESCatastroAdapter } from "#es/adapters/catastro/adapter"
 import { LIVE_PUBLISHER_TESTS } from "#test-kit"
 
 /**
- * How many of the fixture's rows to put against the service.
+ * The number of the fixture's rows to put against the service.
  */
 const SAMPLE = 6
 
@@ -43,7 +43,7 @@ const fixture = workspacePath("corpus", "fixtures", "es-catastro", "A.ES.SDGC.AD
 /**
  * What the Cadastre holds for one cadastral reference.
  *
- * A reference can have many units, each with its own `dir`: `9548010TE8794N`
+ * A reference can have more than one unit, each with its own `dir`: `9548010TE8794N`
  * answers eleven, at numbers 45 through 55.
  * The GML writes one address per number, so each field is read as the set the
  * service answers rather than as its first block.

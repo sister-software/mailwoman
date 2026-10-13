@@ -133,7 +133,7 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
-		// Every member needs a tag rather than just one: a union emitted from the subset that
+		// Every member needs a tag rather than only one: a union emitted from the subset that
 		// happens to include `osmTag` is a narrower query than the one the POI branch ran.
 		// The printed result would hide that difference.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)

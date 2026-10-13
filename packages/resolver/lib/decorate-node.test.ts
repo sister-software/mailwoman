@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file `0,0` is the gazetteer's unlocated sentinel. A node must represent that value as absence.
  *
- *   The shipped extracts contain many `0,0` sentinels. They occur in 48,216 of 142,604 JP postcodes,
+ *   The shipped extracts contain `0,0` sentinels. They occur in 48,216 of 142,604 JP postcodes,
  *   86,377 GB postcodes, 9,708 international postcodes and 414 US postcodes. A stamped `0,0` passes
  *   every downstream `lat != null` check, including the admin ladder in `extractGeocodeResult`.
- *   ZIP `51349` is the worked case. The extract cannot place this real Iowa ZIP. The null check accepts
+ *   ZIP `51349` is the worked case. The extract cannot place this real Iowa ZIP. The `lat != null` check accepts
  *   the Gulf of Guinea coordinate. That point lies 10,450 km from the ZIP's address.
  */
 
@@ -58,7 +58,7 @@ describe("decorateNode and the unlocated sentinel", () => {
 
 		expect(n.lat).toBeUndefined()
 		expect(n.lon).toBeUndefined()
-		// The place is resolved — it simply cannot say where it is.
+		// The place is resolved, and it has no coordinate.
 		// The removed identity would discard the one fact the extract does know.
 		expect(n.placeID).toBe("wof:538966645")
 		expect(n.metadata?.["resolver_name"]).toBe("51349")

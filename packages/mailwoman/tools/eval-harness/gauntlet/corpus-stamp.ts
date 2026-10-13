@@ -8,7 +8,7 @@
  *   grades against the DB refuses when the stamp disagrees with the corpus on disk right now.
  *
  *   Two guards deliberately differ in kind: content (`corpus_hash` against the live {@linkcode regressionCorpusHash})
- *   catches a stale artifact, while emptiness refuses a zero-row corpus outright ({@linkcode assertCorpusIsNonEmpty}),
+ *   catches a stale artifact, while emptiness refuses a zero-row corpus before any grading ({@linkcode assertCorpusIsNonEmpty}),
  *   because an empty loader agrees with itself and a hash comparison cannot see it.
  */
 
@@ -33,7 +33,7 @@ export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" |
 /**
  * Refuse a corpus with no rows, naming the directory that produced none.
  *
- * A compiled tree pointing at a `cases/` directory with no country dirs loads cleanly
+ * A compiled tree pointing at a `cases/` directory with no country dirs loads without error
  * and builds a valid empty DB that grades 0/0 and passes.
  * A hash comparison cannot catch that case.
  */

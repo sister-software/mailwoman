@@ -1,6 +1,6 @@
 # 2026-07-13 day — the campaign hits its fork: data changes exhausted at the twin↔recall trade
 
-Day session (conn 06:50–15:00 UTC, operator on sponsorship work; standing grant for
+Day session (conn 06:50–15:00 UTC, operator on sponsorship work, standing grant for
 promote/merge/publish). Continues the night-1 postmortem. Three more one-variable runs (v254,
 v255 + the v253 checks), the gold triage, two codex deliverables, and the treadmill guard's first
 firing of the campaign.
@@ -18,30 +18,30 @@ NPM-promote bar); the full gauntlet.
 | v254 (extract-v4) | +comma-free context, +famous twins  | .76/.99/.588                  | −2.5 / −2.5                       | **PASS**                                   |
 | v255 (extract-v5) | +US admin pairs, +directional twins | .78/.96/**.5955**@2k          | flips 63→21 / 46→20 (repaired)    | **fail** (Dublin pin re-broke, both ckpts) |
 
-The oscillation — twins fix bare-locality robustness and erode US admin recall; the counterweight
-repairs US recall and re-breaks bare-locality — is a capacity/stability constraint at 29M params
-under the 5e-5/8k fine-tune idiom, not an extract-composition problem. Per the treadmill guard: no
-seventh solo run; the fork goes to the operator (documented on #1102):
+The twins fix bare-locality robustness and erode US admin recall. The counterweight
+repairs US recall and re-breaks bare-locality. That oscillation is a capacity/stability constraint at 29M params
+under the 5e-5/8k fine-tune idiom rather than an extract-composition problem. Per the treadmill guard, a
+seventh solo run does not follow, and the fork goes to the operator (documented on #1102):
 (a) dynamics probe (v255 composition, gentler LR/warmup, 2k steps), (b) ship v254 experimental
-(the only gauntlet-green candidate; default blocked by the 2pp check), (c) the #727 span-head arc,
+(the only gauntlet-green candidate, with default blocked by the 2pp check), (c) the #727 span-head arc,
 (d) hold for night-2.
 
 ## What the day banked besides the fork
 
-- **Gold triage applied** (33 tombstones, dual-number reporting everywhere; triaged street
-  denominator 267). Proposal + borderlines-kept documented; operator ratifies any default flip.
-- **Flip census tooling** (`us-recall-flip-census.run.ts`) — named both erosion mechanisms
-  (region absorbed into locality 40/63; exotic-script + directional-prefixed localities dropped
+- **Gold triage applied** (33 tombstones, dual-number reporting everywhere, triaged street
+  denominator 267). Proposal + borderlines-kept documented, and the operator ratifies any default flip.
+- **Flip census tooling** (`us-recall-flip-census.run.ts`) — identified both erosion mechanisms
+  (region absorbed into locality 40/63, and exotic-script + directional-prefixed localities dropped
   42/46) and proved the v255 counterweight repaired them.
 - **#1100 secondary-address epic: both data deliverables shipped** — Pub-28 C2 extension
-  (requires-range flags + matchers; the table itself already existed, salvage-first via subagent)
-  and the new per-locale level-semantics table (11 lexicons + IMDF ordinals, 40 tests; codex now
+  (requires-range flags + matchers, where the table itself already existed, salvage-first via subagent)
+  and the new per-locale level-semantics table (11 lexicons + IMDF ordinals, 40 tests, codex now
   338 tests).
-- **#1101 filed + scoped** (punctuation-drop augmentation; whitespace-only measured at 64% of
+- **#1101 filed + scoped** (punctuation-drop augmentation, whitespace-only measured at 64% of
   parity gold — operator-elevated to first-class, gauntlet `*_undelimited` kinds + metamorphic
   invariant in scope).
 - **#1102 filed** (the promote blocker, now carrying the fork).
-- Issues #1093/#901 closed with receipts; #444/#376/#456/#996 updated; backlog triaged (59 open,
+- Issues #1093/#901 closed with receipts, #444/#376/#456/#996 updated, backlog triaged (59 open,
   categorized).
 
 ## The fork resolved: option (a) ran, verdict is SCHEDULE (15:00 UTC probe)
@@ -61,19 +61,19 @@ cheapest falsifier. **v256-dynamics-probe**: v255's exact composition, gentle dy
 **Schedule rather than capacity.** The gentle LR + longer warmup held both the US admin-recall repair and
 bare-locality robustness at 2k steps — the two objectives that oscillated under 5e-5/8k. The
 oscillation was an optimization-dynamics artifact rather than a 29M-param ceiling. Street 0.4833 is low
-only because 2k ≪ 8k; the diagnostic wasn't a candidate.
+only because 2k ≪ 8k, and the diagnostic wasn't a candidate.
 
 Residual (persists under gentle schedule): the 5 flips are all postcode-adjacent VT cases where
-"VT" absorbs into the street span — the **#727 boundary-digit-absorption class**, which schedule
-does not touch and is now the named last change.
+"VT" absorbs into the street span — the **#727 boundary-digit-absorption class**. The schedule
+change does not touch that class, and #727 is now the last remaining change.
 
 **Caveat RESOLVED (same day):** the coordinate-level check was the open question — "pins clean"
 was PARSE-level, and the v255 FAIL was a COORDINATE assertion. Rather than the #718-trap `--model`
 path or a destructive package swap, a `--weights-cache` path was added to the gauntlet (#9, commit
-e0ab8b32; mirrors `eval parity --weights-cache`, resolves the candidate package-shaped). v256
+e0ab8b32). It mirrors `eval parity --weights-cache` and resolves the candidate package-shaped. v256
 graded through it (md5-confirmed the cache model loaded rather than the shipped one) and **PASSED the
 regression layer 30/30 counted cases — including the Dublin bare-city coordinate pin** that broke
-v255. The schedule verdict is now confirmed at the coordinate level, not just the parse level.
+v255. The schedule verdict is now confirmed at both the parse level and the coordinate level.
 
 **Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but not
 launched — the full 8k run at v256's gentle schedule. Expected to recover street toward 0.55–0.60
@@ -95,7 +95,7 @@ loss 0.75→0.70) and graded package-shaped. It is the campaign's **first stable
 
 v257 trades ~6pp of v255's unstable street peak for full gauntlet stability + preserved US recall —
 the schedule fix at 8k scale. It does **not** clear the SWAPS street floor (0.90), so the v7 swaps
-stay conditional; the residual is the #727 boundary-absorption class (golden confused-tags confirm it:
+stay conditional. The residual is the #727 boundary-absorption class (golden confused-tags confirm it:
 "05770 VT DELONG LN" → street got "VT Delong"). **not promoted:** doesn't unblock v7, needs card
 regen, and the golden 2pp check is schema-confounded (golden v0.1.2 uses the flat pre-split street
 schema — parity is the schema-correct check). Promote-as-strict-improvement is a clean operator call.
@@ -105,8 +105,8 @@ Full grade: `models/candidates/v257-fragment-v5-gentle-full/MANIFEST.md`.
 
 Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did not
 exercise the promote/publish grant: v253/v254 fail the 2pp default check, v255 fails the gauntlet
-— experimental-shipping a blocked-for-default artifact adds nothing the fork decision doesn't
-supersede. Treadmill compliance outranked grant flexing.
+— experimental-shipping a blocked-for-default artifact would be superseded by the fork decision
+in every case. Treadmill compliance outranked grant flexing.
 
 ## Numbers
 
@@ -118,4 +118,4 @@ supersede. Treadmill compliance outranked grant flexing.
 | Campaign street   | 0.3967 → **0.5955** peak (triaged; +20pp in ~30h)                                 |
 | number→postcode   | 21.8% → under 1%                                                                  |
 | Promote state     | BLOCKED (2pp check / gauntlet, per candidate — see matrix)                        |
-| v7 excision state | swaps still floor-conditional; everything non-model staged and waiting            |
+| v7 excision state | swaps still floor-conditional, everything non-model staged and waiting            |

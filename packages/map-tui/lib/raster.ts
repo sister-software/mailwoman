@@ -84,7 +84,7 @@ function stampSquare(grid: RGBAGrid, x: number, y: number, color: RGB, width: nu
  *
  * Coordinates are floored on entry.
  * Every plotted point routes through `grid.setPixel`, so segments that run partly
- * or fully off-grid clip for free.
+ * or fully off-grid clip with no separate clipping step.
  */
 function drawSegment(grid: RGBAGrid, x0: number, y0: number, x1: number, y1: number, color: RGB, width: number): void {
 	let x = Math.floor(x0)

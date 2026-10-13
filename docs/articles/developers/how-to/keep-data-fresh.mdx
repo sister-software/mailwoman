@@ -34,7 +34,7 @@ mailwoman data status candidate
 PASS (1/1 checks)
 ```
 
-With no bundle named, `data status` reports on all four (`candidate`, `poi`, `fr`, `us`) and prints one
+When you pass no bundle, `data status` reports on all four (`candidate`, `poi`, `fr`, `us`) and prints one
 line per artifact — 106 lines, because the `us` bundle is 103 files. Name the bundle you care about.
 
 The check is a byte-count comparison against the size recorded for the published artifact, so it catches
@@ -107,15 +107,15 @@ mailwoman data status candidate --check-remote
 PASS (1/1 checks)
 ```
 
-The visible difference is one word in the stale line — `(live)` where the offline run says `(recorded)`.
+The visible difference is one word in the stale line — `(live)` where the offline run prints `(recorded)`.
 Only artifacts already on disk are probed, so the flag stays cheap even against the `us` bundle: a
 missing file is reported from the registry without a request.
 
 Two limits on what this proves. No bundle publishes an md5 sidecar today, so the comparison is byte
-count, with no stronger check; a rebuild that landed at the same size would pass. And the remote path is
+count, with no stronger check. A rebuild that landed at the same size would pass. And the remote path is
 dated and immutable (the transcripts above show `gazetteer/2026-07-07a/candidate.db`; the current build is
 `gazetteer/2026-08-25b/candidate.db` at 2.88 GB), so a live `HEAD` confirms your copy of _that_ artifact
-rather than that a newer artifact exists. A new build is a new path, which arrives in a new release of the
+rather than that a newer artifact exists. A new build is a new path. That path arrives in a new release of the
 `mailwoman` package.
 
 ## 4. There is no refresh cadence
@@ -168,8 +168,7 @@ versions: {"address-points":"2026-05-20.0"}
 dc address points open: true
 ```
 
-**A pinned version whose file is absent falls back to the unversioned name and gives no warning.** That is
-the trap worth knowing. Above, a run against a data root holding both `address-points-us-dc.db` and
+**A pinned version whose file is absent falls back to the unversioned name and gives no warning.** Above, a run against a data root holding both `address-points-us-dc.db` and
 `address-points-us-dc-2026-05-20.0.db`, pinned to a third version that was never published:
 
 ```
@@ -190,8 +189,8 @@ after deploy rather than assuming the pin took.
 
 The reason to run the manifest at all is `reload()`. Write the new database files alongside the old, then
 write `releases.json` — one atomic file write — then `await extracts.reload()`. Any database whose resolved
-path changed is reopened; any whose path is unchanged keeps its open handle. Retired handles close
-on the _next_ reload, which gives in-flight reads a generation of grace.
+path changed is reopened. Any database whose path is unchanged keeps its open handle. Retired handles close
+on the _next_ reload, so in-flight reads have one reload generation to finish.
 
 ```js
 // A long-running server, on a signal or a poll.
@@ -220,7 +219,7 @@ data OK
   yourself from [the US dataset tutorial](../tutorials/build-the-us-dataset.mdx) fails the check by
   construction, because its byte count is not the published one. That page explains the case.
 - **The four bundles are the whole published set.** There is no timezone, NUTS or UN/LOCODE artifact in
-  the bucket; those packages build their data locally. `mailwoman data pull` with any other name exits 1
+  the bucket. Those packages build their data locally. `mailwoman data pull` with any other name exits 1
   and lists the four.
 - **`releases.json` addresses the per-state families only.** The versioned scheme covers
   `address-points` and `interpolation`. `candidate.db`, `poi.db` and the French rooftop register are addressed by

@@ -11,7 +11,7 @@
 # v0.3.0 successfully shipped at lr=1.5e-4 with crf_loss_weight=0.05 (the
 # hand-weighted dual-loss workaround). The v0.4.0 per_token CRF normalization keeps
 # the dual gradients comparably scaled at crf_loss_weight=1.0, so peak LR at 1.5e-4
-# never crosses the destabilization band — warmup ends just below it.
+# never crosses the destabilization band — warmup ends below it.
 #
 # Effective gradient magnitude vs v0.3.0:
 #   v0.3.0:  CE_uniform × 1.0 + per_seq_NLL × 0.05  ≈ unit-scale aggregate at lr=1.5e-4

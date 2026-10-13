@@ -9,7 +9,7 @@ The battery is the promotion use the v6→v8.2 arcs built run by run, packaged a
 procedure with two consumers:
 
 1. **Our own promotes** — every candidate model (the v8.3.0 from-scratch retrain is the first
-   consumer of the packaged form; its exit criterion is this battery).
+   consumer of the packaged form, and its exit criterion is this battery).
 2. **A fine-tune engagement (B11)** — the same battery, instantiated per customer, run at
    delivery. "Your fine-tune cannot break core parsing" is this battery passing at the calibrated
    EWC λ rather than a promise.
@@ -26,10 +26,10 @@ floor policy, the standard eval set); read that first if you are promoting a mod
 | Golden floors (per-locale, noise-aware margins)                    | the shipped baseline everywhere                                               | `mailwoman eval promote` + `mailwoman/eval-harness/specs/*.json` |
 | P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                     | eval-harness fragment boards                                     |
 | Invariance suite vs the shipped reference                          | no silent behavior drift                                                      | `--baseline` legs of `mailwoman eval promote`                    |
-| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness; label-preserving perturbations must not move the coordinate | `mailwoman eval gauntlet`                                        |
+| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness: label-preserving perturbations must not move the coordinate | `mailwoman eval gauntlet`                                        |
 | Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model must not launder capability through a retrieval channel             | standing since the v3.16 curriculum work                         |
 | Ablated-vs-fed columns (per channel)                               | what each evidence channel contributes                                        | the capability manifest + the Modal per-channel contrast         |
-| Canary fixtures with receipts                                      | named past failures stay fixed (zero-flip)                                    | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)          |
+| Canary fixtures with receipts                                      | recorded past failures stay fixed (zero-flip)                                 | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)          |
 | Presets byte-check + demo smoke                                    | the user-visible surface                                                      | `mailwoman eval preset-compare` + the demo smoke                 |
 | Capability manifest (register-pinned)                              | the card's published capability block is measured rather than asserted        | `mailwoman eval capability-manifest`                             |
 | Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                      | the release choreography                                         |
@@ -43,20 +43,20 @@ never drift on promotes (see the floor policy in the contributor runbook).
 1. **Pre-register.** The acceptance sheet — every bar, every baseline identity (model md5, tokenizer,
    lexicon versions, register) — is written into the run's config header or plan doc **before**
    any GPU spend. Bars are bars: a below-bar number is a miss to confront (re-baseline with a
-   stated reason, or iterate), never a quiet pass; a deviation from the sheet is recorded, never
+   stated reason, or iterate), never a quiet pass. A deviation from the sheet is recorded, never
    silently re-read.
 2. **Run the battery on the candidate artifact production will load** (the int8 export,
    through the ship-config channels — a scorer invoked without the declared channels grades a
-   crippled model; the zero-fill trap has bitten twice).
+   crippled model. A scorer with zero-filled channels has produced a wrong grade twice.)
 3. **Verdict.** PASS → ledger-append + the dated eval report. FAIL → the pre-registered
-   contingency (a named, single-delta fix and one re-run), then stop-and-report.
+   contingency (a specified, single-delta fix and one re-run), then stop-and-report.
 
 ## Instantiate the battery for a fine-tune engagement (B11)
 
 A customer engagement adds three things to the standing battery and leaves every other part unchanged:
 
 1. **Customer canaries.** Golden rows drawn from the customer's own address stock (they nominate
-   or we sample; they confirm the gold labels). These become gauntlet fixtures with receipts —
+   or we sample, and they confirm the gold labels). These become gauntlet fixtures with receipts —
    the customer-facing zero-flip set. Noise-aware margins need support: below ~200 rows per
    class, the margin is the binomial half-width and will be wide — say so in the report rather
    than pretending precision.
@@ -67,13 +67,13 @@ A customer engagement adds three things to the standing battery and leaves every
 3. **The Fisher guarantee check.** The fine-tune trains with the base model's Fisher artifact
    (`fisher-diag-v1.npz`, shipped beside the base checkpoint) as an EWC brake at the calibrated λ
    (`train.ewc_lambda` / `ewc_fisher_path` / `ewc_reference`). The parameter-space brake and this
-   behavior-space battery are the guarantee **together**; neither alone is. A battery
+   behavior-space battery are the guarantee **together**. Neither one is the guarantee by itself. A battery
    failure at the calibrated λ is a finding about the customer data, surfaced before delivery —
    the product working rather than failing.
 
 λ calibration happens once, on our own next fine-tune: sweep λ ∈ {0, 1e2, 1e4, 1e6} on a 2k-step
 probe, keep the largest λ that leaves the increment's target metric within noise of λ=0. That λ
-is the template default; an engagement inherits it and revisits only on a battery failure.
+is the template default. An engagement inherits it and revisits only on a battery failure.
 
 ## What stays out (for now)
 

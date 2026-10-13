@@ -208,7 +208,7 @@ async function main() {
 	const adminCoherencePin = pin("admin-coherence", "no-admin-coherence")
 	const normalizeCasePin = pin("normalize-case", "raw-case")
 	const postalCompoundPin = pin("postal-compound-recovery", "no-postal-compound-recovery")
-	// `--default-country none` = truly unscoped resolution (no country prior at all).
+	// `--default-country none` = unscoped resolution (no country prior at all).
 	// The namesake legs need it.
 	// An empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = args["default-country"] || "FR"

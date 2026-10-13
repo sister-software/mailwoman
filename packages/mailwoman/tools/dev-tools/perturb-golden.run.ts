@@ -55,7 +55,7 @@ async function main(): Promise<void> {
 	 * Per class: cases written plus rows the class could not change.
 	 *
 	 * A class that covers one country reports a large unperturbed count here
-	 * rather than looking like a class that simply produced fewer cases.
+	 * rather than looking like a class that produced fewer cases.
 	 */
 	const emitted = new Map<string, number>()
 	const unperturbed = new Map<string, number>()

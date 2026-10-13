@@ -81,7 +81,7 @@ export interface POISearchQuery {
 	 */
 	center?: { latitude: number; longitude: number }
 	/**
-	 * Ring budget: how many res-9 k-rings to expand before giving up.
+	 * Ring budget: the count of res-9 k-rings to expand before giving up.
 	 *
 	 * Counts ring 0, so k reaches `maxRings - 1`.
 	 *
@@ -251,7 +251,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		// `ring` starts at 0 (the origin cell itself), so this loop's k reaches `maxRings - 1`.
 		for (let ring = 0; ring < maxRings; ring++) {
 			// gridDisk(origin, ring) returns the whole disk out to `ring`, so diffing against
-			// the already-probed set derives just this ring's new cells.
+			// the already-probed set derives only this ring's new cells.
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells = diskCells.filter((cell) => !seenCells.has(cell))
 

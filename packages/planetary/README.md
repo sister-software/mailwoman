@@ -31,7 +31,7 @@ glyph and search-artifact fetches, so labels never draw and search never loads. 
 
 ## Routes
 
-`/` is the globe. `/feature/<id>` is the globe with one named feature selected, where the id is the pipeline's
+`/` is the globe. `/feature/<id>` is the globe with the feature `<id>` identifies selected, where the id is the pipeline's
 stable feature id from the USGS gazetteer. A click pushes the path, and a deep link restores the feature from the
 search artifact. `?lon=&lat=&z=` sets the opening viewport. Any other path shows the not-found view.
 

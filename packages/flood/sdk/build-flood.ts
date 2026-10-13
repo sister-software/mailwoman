@@ -272,7 +272,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 }
 
 /**
- * What the whole ingest produced, however many processes it took.
+ * What the whole ingest produced, whatever the number of processes it took.
  */
 interface StreamResult {
 	features: number

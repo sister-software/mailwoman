@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Decision 6 layer-absent guards — kept out of `cli.ts` in their own importable module so the
- *   branching itself has direct unit coverage (`layer-guards.test.ts`), not just
+ *   branching itself has direct unit coverage (`layer-guards.test.ts`), beyond
  *   "the tool handler passes an abstain through" (`tools.test.ts`'s stub-level dispatch tests). `cli.ts`
  *   top-level-`await`s a real stdio transport connection at import time, so IT can't be imported by vitest. These
  *   three functions have no such dependency (pure existence-check + open, or a thrown Error), so they live here and
@@ -54,7 +54,7 @@ export async function openBDCDatabaseIfPresent(
  * physical-plant categories can't be searched.
  *
  * `POILookup` is dynamically imported (matching `cli.ts`'s existing `resolver-wof-sqlite` laziness)
- * since it's only ever needed when a caller actually wires a poi.db.
+ * since it's only ever needed when a caller wires a poi.db.
  * `lookup` and `schemadb` share one `DatabaseSync` handle
  * (the agents.md "one connection, shared" convention) — a real poi.db's rows
  * and its `layer_manifest`/`layer_coverage` tables live in the same file in production,

@@ -21,7 +21,7 @@ from ..juso import alias_key_index, empty_key_index, index_label_row, iter_label
 from ..registers import KeyIndex
 from .rows import eligible, permit_alignment, unit_key
 
-#: How many permit points are projected in one `gdaltransform` process.
+#: The number of permit points are projected in one `gdaltransform` process.
 PROJECTION_BATCH = 200_000
 
 

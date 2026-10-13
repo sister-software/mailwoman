@@ -9,17 +9,17 @@ tags:
 
 # EU qualified-name recall — measuring #734's collision-risky change
 
-Two threads this shift kept pointing at the same thing. The span-rescore investigation (#370, PR #777) found its swap tail full of Portuguese localities the model emitted as `Santa Eulália Viz` and `Nogueira Do Cravo Ohp`. And #734, profiling the candidate gazetteer's EU recall, had already named the pattern: OpenAddresses writes the locality in its **qualified** form — `Hart b.Graz`, `Roche VD`, `Lenk im Simmental`, `Santa Eulália Viz` — while the gazetteer holds the base name. #734 proposed a base-name normalization to close the gap and flagged it: _"collision-risky, measure first."_
+Two threads this shift kept pointing at the same thing. The span-rescore investigation (#370, PR #777) found its swap tail full of Portuguese localities the model emitted as `Santa Eulália Viz` and `Nogueira Do Cravo Ohp`. And #734, profiling the candidate gazetteer's EU recall, had already identified the pattern: OpenAddresses writes the locality in its **qualified** form — `Hart b.Graz`, `Roche VD`, `Lenk im Simmental`, `Santa Eulália Viz` — while the gazetteer holds the base name. #734 proposed a base-name normalization to close the gap and flagged it: _"collision-risky, measure first."_
 
 This measures it.
 
 ## The setup
 
-For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate** rather than string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery; a far hit is a same-name collision where the strip ate too much and matched a different place. A string-only score would count both as wins, which is exactly the failure mode "measure first" guards against.
+For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate** rather than string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery. A far hit is a same-name collision where the strip removed too much and matched a different place. A string-only score would count both as wins. "Measure first" guards against exactly that failure mode.
 
 Two normalization tiers, measured separately because their risk is not the same:
 
-- **Structural** — strip `/X`, ` b.X` (German _bei_), ` im/an der/ob der X`. Unambiguous Austrian/Swiss disambiguation suffixes; the base token survives intact.
+- **Structural** — strip `/X`, ` b.X` (German _bei_), ` im/an der/ob der X`. Unambiguous Austrian/Swiss disambiguation suffixes. The base token survives intact.
 - **Trailing-token** — additionally strip a trailing short capitalized token (`VD`, `S`, `Viz`, `Ohp`), bounded to ≤3 characters. This is the one #734 called risky: it recovers `Roche VD` but could eat a real name part (`Santa Cruz` → `Santa`).
 
 ## The result
@@ -34,7 +34,7 @@ Two things flip the intuition.
 
 First, the headline recall is **90.8% rather than the recorded 88%** — confirming #734's read that the old number was depressed by a Lithuanian eval-extraction artifact rather than a real coverage hole. (Lithuania isn't in this panel, so it can't drag the number here.)
 
-Second, the **risky change is the safe one, and the safe change does nothing.** The structural suffixes (`b.`, `im`) recover zero rows here — those are Austrian/Swiss forms that don't appear in this panel (an AT/CH panel would be needed to measure them). The trailing-token strip, the one flagged collision-risky, recovers **14 Portuguese localities at zero collisions**:
+Second, the **risky change is the safe one, and the safe change recovers zero rows.** The structural suffixes (`b.`, `im`) recover zero rows here — those are Austrian/Swiss forms that don't appear in this panel (an AT/CH panel would be needed to measure them). The trailing-token strip, the one flagged collision-risky, recovers **14 Portuguese localities at zero collisions**:
 
 ```
 "Ferreiros Amr"        → "Ferreiros"        (0 km)
@@ -45,12 +45,12 @@ Second, the **risky change is the safe one, and the safe change does nothing.** 
 "Paradela Mdr"         → "Paradela"         (0 km)
 ```
 
-These are Portuguese _freguesia_/_concelho_ abbreviations — a 3-letter administrative code OA appends for disambiguation (`Viz` = Viseu, `Amr` = Amares, `Ohp`…). The base name resolves on top of the truth point. And the collision the "risky" framing feared — eating `Cruz` off `Santa Cruz` — doesn't happen, because the **≤3-character bound** separates the codes (`Viz`, `Ohp`) from real name parts (`Cravo`, `Chão`, `Cruz`, all ≥4). The bound is the whole game; without it the change would be risky, with it the measured collision rate is 0/14.
+These are Portuguese _freguesia_/_concelho_ abbreviations — a 3-letter administrative code OA appends for disambiguation (`Viz` = Viseu, `Amr` = Amares, `Ohp`…). The base name resolves on top of the truth point. And the collision the "risky" framing feared — eating `Cruz` off `Santa Cruz` — doesn't happen, because the **≤3-character bound** separates the codes (`Viz`, `Ohp`) from real name parts (`Cravo`, `Chão`, `Cruz`, all ≥4). The safety rests on the bound. Without it the change would be risky. With it the measured collision rate is 0/14.
 
-## What this says
+## What the measurement shows
 
 - The candidate gazetteer's EU locality recall is **already ~91% on this panel** (matching #734's "real ~93%"); the qualified-name gap is real but small.
-- A trailing-token base-name normalization bounded to **≤3-char codes** is a clean, collision-free change worth **+1.4 pp** here — almost entirely Portuguese freguesia codes. It is the resolver-side twin of what #370's span-rescore (PR #777) does parse-side: both recover the same `Santa Eulália Viz` rows.
+- A trailing-token base-name normalization bounded to **≤3-char codes** is a collision-free change that adds **+1.4 pp** here — almost entirely Portuguese freguesia codes. It is the resolver-side twin of what #370's span-rescore (PR #777) does parse-side: both recover the same `Santa Eulália Viz` rows.
 - The structural suffixes (`b.`, `im`, `an der`) are unmeasured here for lack of an AT/CH panel; #734's examples suggest they exist, so a follow-up should grade them on Austrian/Swiss holdouts before building.
 - **Don't widen this past ≤3 chars without re-measuring** — the safety is entirely in the bound, and a 4-char allowance would start eating `Cruz`.
 

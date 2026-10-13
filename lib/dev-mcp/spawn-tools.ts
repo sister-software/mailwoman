@@ -330,7 +330,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				return {
 					...summary,
-					// A running job still reports what it has produced so far, clearly marked,
+					// A running job still reports what it has produced so far, marked as partial,
 					// because a partial log is useful and a silent "not ready" is not.
 					partial: job.state === "running",
 					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing

@@ -20,19 +20,19 @@
  *   Two reports come out of it.
  *
  *   The canonical-field report covers every row source. It groups the rows by `canonicalDedupKey` and
- *   counts, per `CanonicalRow` field outside the key, how many collapsed groups hold more than one
+ *   counts, per `CanonicalRow` field outside the key, the number of collapsed groups that hold more than one
  *   value of that field. The fields the runner stamps after the adapter yields — `addressRole`,
  *   `register`, `surface`, `corpus_version` — are the adapter's constants under `--adapter`, so they
  *   read as identical whatever the build wrote.
  *
  *   The source-column report needs `--source-csv` and `--id-column`. It joins each collapsed group
- *   back to the publisher's own records and counts, per source column, how many groups hold more than
+ *   back to the publisher's own records and counts, per source column, the number of groups that hold more than
  *   one value of that column. The join is on `source_id`: the tool hashes `<id-prefix><id-column
  *   value>` and looks for that hash among the `source_id` values of the rows in collapsed groups,
  *   where `--id-prefix` defaults to `<adapter>-`. An adapter that composes `source_id` some other way
- *   needs its own prefix. The tool reports how many source records joined and refuses a run where
+ *   needs its own prefix. The tool reports the number of source records that joined and refuses a run where
  *   none did, so a wrong prefix shows up as an error rather than as an empty answer. Beside each
- *   column's group count it reports how many records of the whole file hold a non-empty value there,
+ *   column's group count it reports the number of records in the whole file that hold a non-empty value there,
  *   because a column that differs in no group may be constant within every group or empty throughout.
  *
  *   **Hashes rather than keys.** The distinct-key count of a national register exceeds what a V8
@@ -86,7 +86,7 @@ const TRACKED_FIELDS = [
 ] as const
 
 /**
- * How many group sizes the size table prints before summarizing the tail.
+ * The number of group sizes the size table prints before summarizing the tail.
  */
 const SIZE_ROWS = 15
 

@@ -23,8 +23,7 @@ interface WiringEcho {
 	cols: number
 }
 
-// The fake worker smuggles the echo through the `address` slot, so the value
-// genuinely is not a `PostalAddress`.
+// The fake worker smuggles the echo through the `address` slot, so the value is not a `PostalAddress`.
 // Read the slot as what it is on this wire — unknown JSON — and assert once from there.
 const echoOf = (record: SourceRecord): WiringEcho => (record as { address?: unknown }).address as WiringEcho
 

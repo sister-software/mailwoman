@@ -31,7 +31,7 @@ export type Group = Piece[]
 /**
  * The case and punctuation style of a rendered row.
  *
- * Users often type addresses in lowercase, so every recipe output includes lowercase rows.
+ * Some users type addresses in lowercase, so every recipe output includes lowercase rows.
  */
 export const Register = {
 	Canonical: "canonical",

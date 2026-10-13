@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer anchor-lexicon`: build the gazetteer-anchor lexicon (knowledge-ladder rung
- *   3.2). One generated artifact, codex as the single source of truth, consumed by both the
+ *   3.2). One generated artifact, built only from codex, consumed by both the
  *   Python trainer (gazetteer_anchor.py) and the TS inference side, so the two matchers cannot
  *   drift (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
  *
@@ -134,7 +134,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 		for (const map of [entries, codeEntries]) {
 			for (const [key, bits] of map) {
 				if (bits & BIT.country && bits & BIT.region) {
-					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union rather than a mistyped logical or
+					// oxlint-disable-next-line oxc/bad-bitwise-operator -- an intended bit-set union rather than a mistyped logical or
 					map.set(key, bits | BIT.homograph)
 				}
 			}

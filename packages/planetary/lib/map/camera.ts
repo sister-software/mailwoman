@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Where the camera goes when a feature is selected. The zoom is the inverse of the pipeline's declutter rule: a
- *   feature first appears at the zoom its diameter earns. The camera lands one or two levels past that so the
+ *   feature first appears at the zoom that its diameter determines. The camera lands one or two levels past that so the
  *   selected label is on screen with its neighbors rather than by itself.
  */
 

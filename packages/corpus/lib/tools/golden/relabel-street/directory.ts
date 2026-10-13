@@ -36,7 +36,8 @@ import {
 export type GoldenRelabelCounts = Record<GoldenRelabelClass, number>
 
 /**
- * One line of the review deck: what a changed (or notably unchanged) row looked like before and after.
+ * One line of the review deck: what a changed row, or an unchanged row the deck
+ * lists for review, looked like before and after.
  */
 export interface GoldenRelabelDeckEntry {
 	file: string

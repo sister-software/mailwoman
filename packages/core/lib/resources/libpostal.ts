@@ -24,7 +24,8 @@ import type { Alpha2LanguageCode } from "#resources/languages/types.gen"
 export type LibPostalLanguageCode = Alpha2LanguageCode | "all"
 
 /**
- * The surfaces of one dictionary line, which is `canonical|variant|variant…`.
+ * The surfaces of one dictionary line.
+ * A line reads `canonical|variant|variant…`.
  */
 export function libpostalLineSurfaces(line: string): string[] {
 	return TextSpliterator.from(line, { delimiter: "|" }).toArray()

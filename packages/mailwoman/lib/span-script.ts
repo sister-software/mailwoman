@@ -24,7 +24,7 @@ import { classifyTokens, scriptForRange } from "@mailwoman/query-shape"
  *
  * The tokens are classified here rather than read off the pipeline's `QueryShapeLite`,
  * whose per-token `script` is optional and typed as a plain string: narrowing that back
- * to `ScriptCode` would be a cast asserting what this call can simply compute.
+ * to `ScriptCode` would be a cast asserting what this call can compute.
  * It is one codepoint scan of an address-length string, next to a model inference.
  */
 export function stampSpanScripts(tree: AddressTree, text: string): void {

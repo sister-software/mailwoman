@@ -192,8 +192,8 @@ owner: operations
 # What this repository has, per jurisdiction
 
 One row per jurisdiction, over ${sorted.length} of them: every ISO 3166-1 alpha-2 code in
-\`@mailwoman/codex/country\` plus the non-ISO operational codes \`@mailwoman/codex/postal-regimes\`
-carries. Regenerate with:
+\`@mailwoman/codex/country\` plus the non-ISO operational codes that \`@mailwoman/codex/postal-regimes\`
+defines. Regenerate with:
 
 \`\`\`sh
 node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
@@ -219,8 +219,8 @@ ${newlyAdmitted.length} it adds are listed below the table.`
 
 ## What the columns separate
 
-**Corpus rows** counts rows in the training corpus. **Street rows** counts those carrying a \`street\`
-or \`house_number\` label, which are the rows that teach an address rather than a name: a jurisdiction
+**Corpus rows** counts rows in the training corpus. **Street rows** counts those with a \`street\`
+or \`house_number\` label. Those rows teach an address rather than a name. A jurisdiction
 can hold millions of rows while its street-row count reads 0. CN reads 11,357,947 and 0.
 
 **Admission** is \`country_weights\` in the training config, a hard filter. A code absent from it
@@ -230,11 +230,11 @@ no rows either, by the other route.
 **Gazetteer** counts admin places available to resolve, and \`rooftop\` marks the two jurisdictions
 whose rooftop database a consumer can obtain. Every other rooftop database is build-local.
 
-**Weights package** existing is not training. One model graph serves every locale; the other packages
+**Weights package** existing is not training. One model graph serves every locale. The other packages
 are data-only overlays over it.
 
 **Board** counts rows that check rather than merely track, over rows present. A jurisdiction reading
-\`—\` has no board row, which is unmeasured rather than failing.
+\`—\` has no board row. That jurisdiction is unmeasured rather than failing.
 
 ## Counts
 
@@ -249,7 +249,7 @@ are data-only overlays over it.
 | declined by every shipped config | ${notAdmitted.length} |
 | absent from every layer | ${absent.length} |
 | rooftop geocoding a consumer can obtain | ${rooftop.length} |
-| carries a weights package | ${packaged.length} |
+| has a weights package | ${packaged.length} |
 
 ## Every jurisdiction
 
@@ -265,7 +265,7 @@ ${droppedWithRows.map((code) => `\`${code}\` (${measured.get(code)!.corpusRows.t
 
 Each of these holds corpus rows and appears in neither shipped graph's \`country_weights\`, so those
 rows train no shipped model. This is the mechanism that left Norway untaught while its rows sat in
-the corpus. A jurisdiction here that also carries a weights package is served by a data-only overlay
+the corpus. A jurisdiction here that also has a weights package is served by a data-only overlay
 over a graph that was never taught it.
 
 `

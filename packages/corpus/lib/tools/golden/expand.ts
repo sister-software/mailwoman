@@ -231,7 +231,7 @@ async function loadSeeds(
 
 	// Stratified sampling: read all rows from all parquet files, group by source.
 	// Bounded by per-source reservoir: keep at most max(2*count, 5000) rows per source
-	// so we don't blow memory on train parquet files (1M rows × many files).
+	// so we don't blow memory on train parquet files (1M rows per file, across every file).
 	// Later samples are uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
 	const PER_SOURCE_CAP = Math.max(2 * count, 5000)

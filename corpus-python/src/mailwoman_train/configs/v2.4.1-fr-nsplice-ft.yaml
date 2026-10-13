@@ -3,9 +3,9 @@
 #
 # Why (the #1047 mechanism finding): the training-free vocab-splice that fixed CZ/PL/SK/SI (#884) and
 # Nordic (#912 change-4) is falsified for FR streets. The en-US line was trained from scratch on v0.7.1
-# with abundant FR `é→O`, so `é` carries a strong, well-trained O-signal. FVT mean-init of a merged FR
+# with abundant FR `é→O`, so `é` has a strong, well-trained O-signal. FVT mean-init of a merged FR
 # piece — E(▁René) = mean(E[▁Ren], E[é]) — inherits that O pull, so the whole merged token tags O and
-# the word drops (`Place René Cassin` → `place cassin`), NET-worse than the baseline dropping just the é
+# the word drops (`Place René Cassin` → `place cassin`), NET-worse than the baseline dropping only the é
 # (mangle 23.5%→26.4%). Mean-init-only can't teach the merged pieces. that needs gradient steps. This
 # config supplies them: init_from the mean-init candidate, fine-tune on the v0.8.0-fr-nsplice vocab.
 #
@@ -32,7 +32,7 @@
 data:
   # v230's corpus verbatim (v0.10.1-nl-postcode = the v0.10.0 boundary-family base + synth-nl-postcode,
   # 699 parquet files). Stored as raw text + char-offset spans → RE-tokenized through the spliced tokenizer at
-  # load, so the FR diacritic pieces actually fire and receive gradient. No corpus rebuild needed.
+  # load, so the FR diacritic pieces fire and receive gradient. No corpus rebuild needed.
   corpus_dir: /data/corpus/versioned/v0.10.1-nl-postcode/corpus-v0.10.1-nl-postcode
   tokenizer_dir: /data/models/tokenizer/v0.8.0-fr-nsplice
   max_length: 128

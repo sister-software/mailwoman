@@ -1,4 +1,4 @@
-# v2.5.7-fragment-v5-gentle-full — the full run the v256 probe greenlit (#1102 fork option (a)
+# v2.5.7-fragment-v5-gentle-full — the 8000-step fine-tune the v256 probe greenlit (#1102 fork option (a)
 # confirmed: the twin<->US-recall trade was schedule rather than capacity). Same v255 composition + same
 # gentle dynamics as v256 (lr 1e-5, warmup 500), but the full 8000-step budget instead of the 2k
 # diagnostic. Hypothesis: street climbs back toward/past 0.55-0.60 (v255 territory) without the

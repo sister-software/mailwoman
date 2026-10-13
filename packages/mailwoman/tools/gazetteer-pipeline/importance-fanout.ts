@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Which WOF place does a Wikidata id actually mean?
+ * Which WOF place does a Wikidata id mean?
  *
  * `gazetteer importance` joins Wikipedia importance onto WOF through `concordances`.
  * That join can map one Wikidata id to several current WOF places. Each place receives the
  * same score. The FST bias is linear in importance. The rule is coincident → keep all, else
- * decisive population → keep the winner, else drop, with coincidence checked first because WOF does
+ * a population lead above the margin → keep the winner, else drop, with coincidence checked first because WOF does
  * not populate every role's row.
  *
  * A wrong concordance with fan-out of one is invisible here: catching it needs evidence the TSV does

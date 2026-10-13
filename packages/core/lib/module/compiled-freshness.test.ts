@@ -170,7 +170,8 @@ describe("checkCompiledFreshness", () => {
 	)
 
 	it("takes the newest source and emit ACROSS the named workspaces", async () => {
-		// A caller that names too few workspaces buys a `fresh` it has not earned, so the walk must span the set.
+		// A caller that names too few workspaces receives a `fresh` that unchecked
+		// sources may contradict, so the walk must span the set.
 		const root = fixtures.use(await temporaryDirectory("mw-compiled-multi-")).path
 		const first = root("packages/one")
 		const second = root("packages/two")

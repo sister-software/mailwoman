@@ -108,7 +108,7 @@ describe("constraint census", () => {
 			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["some_retry"], picked: false }]
 		}
 
-		// A second check fires just as often but does pick sometimes.
+		// A second check fires the same number of times but accompanies some picks.
 		// It must not be called inert.
 		byInput["alive"] = [
 			{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["live_check"], picked: true },

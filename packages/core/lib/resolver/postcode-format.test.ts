@@ -56,7 +56,7 @@ describe("countriesFromPostcodeFormat", () => {
 	it("excludes a US house number plus a directional, which matches the NL shape", () => {
 		// `recognizeBarePostcode` reads this list, so a street fragment must not imply NL.
 		// A caller applies this function only to a tree that is already a bare postcode, where `1234 NE`
-		// as a whole tree is genuinely ambiguous, and the ZIP+4 shape claims `2737 CA` by longest match.
+		// as a whole tree is ambiguous, and the ZIP+4 shape claims `2737 CA` by longest match.
 		expect(countryFromPostcodeFormat("1234 NE")).toBeNull()
 	})
 })

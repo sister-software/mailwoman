@@ -233,8 +233,9 @@ export interface FoldOptions {
 }
 
 /**
- * How many dropped country codes the coverage-loss error names before eliding. a dozen
- * plus the count makes the shape of the mistake obvious on one terminal line.
+ * The number of dropped country codes the coverage-loss error names before eliding.
+ *
+ * A dozen plus the count makes the shape of the mistake obvious on one terminal line.
  */
 const DROPPED_COUNTRIES_SHOWN = 12
 
@@ -371,7 +372,7 @@ export interface BuildOptions {
 	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
 	 *
 	 * Off by default, so a build that could reach a publish includes only folds whose tier allows it.
-	 * The manifest records how many such folds were included, as `build-local-folds`.
+	 * The manifest records the number of such folds included, as `build-local-folds`.
 	 */
 	includeBuildLocalFolds?: boolean
 	onProgress?: (phase: string, message: string) => void

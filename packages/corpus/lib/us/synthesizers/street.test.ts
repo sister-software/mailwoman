@@ -32,7 +32,7 @@ describe("synthesizeStreetRow", () => {
 	})
 
 	it("emits Stage 3 decomposed components when applicable", () => {
-		// Generate many variants and check that at least some get decomposed
+		// Generate a batch of variants and check that at least some get decomposed
 		let hasPrefix = 0
 		let hasSuffix = 0
 		const rng = makeLcg(42)

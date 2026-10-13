@@ -44,7 +44,7 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
  */
 export interface OvertureCountryLicense {
 	/**
-	 * The SPDX expression, where one document settles it.
+	 * The SPDX expression, where one document states it.
 	 */
 	expression?: string
 	/**

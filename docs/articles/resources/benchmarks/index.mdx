@@ -13,13 +13,13 @@ are published there too, so you can re-run the code yourself.
 Two panels are published so far. Each page presents a small panel and states that its result is not
 a national accuracy figure.
 
-## I want to see what a national register buys
+## I want to see the accuracy a national register produces
 
 France has a national register, the Base Adresse Nationale (BAN), and the French rooftop tier is built
 from it. The panel renders a hundred BAN addresses in two surface forms and grades them against BAN's
 own coordinates. In the canonical order, 96 of 100 land within a kilometer. With the postcode moved to
 the front, 97 of 100 do. Four rows lose part of the street name in the parse, and two land on a
-same-named street in a neighboring commune.
+street with the same name in a neighboring commune.
 
 The page states next to the score that the test is circular. A BAN-backed tier graded against BAN
 measures parsing and routing. It does not measure coordinate accuracy.
@@ -28,11 +28,11 @@ measures parsing and routing. It does not measure coordinate accuracy.
 
 ## I want to see what happens without one
 
-Belgium has no rooftop register and no locale of its own; it sits in tier 2 on the global candidate
-gazetteer alone. The panel runs thirty
+Belgium has no rooftop register and no locale of its own. It sits in tier 2, served only by the global candidate
+gazetteer. The panel runs thirty
 bilingual Belgian address lines through the global candidate gazetteer in three configurations. With
 default settings, 24 of 30 land in Belgium. With the country pinned, 30 of 30 do. Without the pin,
-six rows go wrong. Five of them fail because a country prior filters out the right answer before
+six rows go wrong. Five of them fail because a country prior filters out the correct answer before
 ranking runs.
 
 [Belgium — 30 addresses, three configurations](./belgium-panel.mdx)
@@ -64,7 +64,7 @@ bash run-all.sh ./benchmark-data
 ```
 
 The Belgian panel needs only the first bundle. To skip the 6.95 GB of French rooftop data, run the
-Belgian panel alone with `node be-panel.mjs`.
+Belgian panel by itself with `node be-panel.mjs`.
 
 Your numbers will differ from ours where the versions differ. A newer BAN release moves rows, a newer
 gazetteer changes rankings, and a newer model changes parses. Each result file has a `versions` block

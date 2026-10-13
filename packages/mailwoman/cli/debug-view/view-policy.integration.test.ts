@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 import { initialZoomForTier } from "#cli/debug-view/view-policy"
 
 /**
- * A result at `tier` whose hierarchy runs deepest-first, the order the geocoder actually produces.
+ * A result at `tier` whose hierarchy runs deepest-first, the order the geocoder produces.
  */
 function resultOf(tier: GeocodeResult["resolution_tier"], tags: string[]): GeocodeResult {
 	return {

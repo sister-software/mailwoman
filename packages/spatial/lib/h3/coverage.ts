@@ -29,7 +29,7 @@ export interface CoverageRowProbe {
  *
  * A caller must treat it as an unknown value, separate from `{completeness: 0}`.
  *
- * The shared mapping owns the NULL-basis rule.
+ * The shared mapping owns the rule for a `basis` column that holds NULL.
  * A NULL column means the artifact predates `basis`.
  *
  * It recorded source presence and no stronger basis than the builder had.

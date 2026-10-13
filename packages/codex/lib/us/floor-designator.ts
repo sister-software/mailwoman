@@ -15,8 +15,8 @@
  *   C2.
  *
  *   Appendix C2 explicitly marks floor, basement as requiring a secondary number (alongside APT,
- *   bldg, etc.) while penthouse and lobby may appear without another designator. PH and lbby are kept here (not just in
- *   {@link ./unit-designator.ts}) because the span proposer treats them as level-class hints.
+ *   bldg, etc.) while penthouse and lobby may appear without another designator. PH and lbby are kept here as well as in
+ *   {@link ./unit-designator.ts} because the span proposer treats them as level-class hints.
  *   "Lobby" and "PH" identify specific floor analogs. The prior map routes `LEVEL_PHRASE` to `unit`.
  *   The schema has no separate `level` tag.
  *
@@ -76,7 +76,7 @@ export type USFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"
 
 /**
  * Inverse lookup: every surface form (canonical name, approved abbreviation, or Appendix C2 variant)
- * → its canonical designator name.
+ * maps to its canonical designator name.
  *
  * Lowercase-keyed for case-insensitive matching: `"fl"` → `"floor"`,
  * `"bsmt"` → `"basement"`, `"ph"` → `"penthouse"`.

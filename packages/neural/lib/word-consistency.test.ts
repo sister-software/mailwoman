@@ -78,7 +78,7 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 
 	it("never flips a single-piece word (no intra-word inconsistency exists)", () => {
 		// `▁Broadway` B-street via viterbi.
-		// Local mass prefers O. A one-piece word is trivially consistent.
+		// Local mass prefers O. A one-piece word has one label, so it is consistent.
 		// The heal must not override the decoder.
 		// (The `East Broadway` golden regression.)
 		const r = enforceWordConsistency([{ piece: "▁Broadway" }], [peak(0, 8)], LABELS, [1])
@@ -138,7 +138,8 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 		// After a bare `▁` separator, `Ave` arrives with no sentinel and the following `,`
 		// would join its group as a continuation — its O label manufactures a fake disagreement
 		// and the vote kills the suffix (`1st Ave,` → Ave:O, the 2026-07-15 golden class).
-		// As a separator the comma leaves `Ave` a trivially-consistent single-piece word → untouched.
+		// As a separator the comma leaves `Ave` a single-piece word with one label,
+		// so the heal leaves it untouched.
 		const pieces = [{ piece: "Ave" }, { piece: "," }]
 		const emissions = [peak(1, 1), peak(0, 9)] // weak street mass on Ave, huge O mass on the comma
 		const unrestricted = enforceWordConsistency(pieces, emissions, LABELS, [1, 0])

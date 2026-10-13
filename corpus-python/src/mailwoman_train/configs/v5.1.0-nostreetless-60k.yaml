@@ -1,5 +1,5 @@
 # v5.1.0 differs from v5.0.0 in one variable. It drops CN, JP, KR and TW, the four admitted countries
-# whose corpus rows contain no street, which leaves 130 admitted countries. The corpus, the other
+# whose corpus rows contain no street. The run admits the remaining 130 countries. The corpus, the other
 # weights, seed 42 and the 60k-step schedule are unchanged.
 #
 # The hypothesis is that street-less rows teach the model to end a street span early and split

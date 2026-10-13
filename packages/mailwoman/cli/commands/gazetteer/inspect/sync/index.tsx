@@ -52,7 +52,7 @@ import {
 const CONCURRENCY = 8
 
 /**
- * Above this many repositories the final list is summarized instead of printed in full.
+ * Above this repository count the final list is summarized instead of printed in full.
  *
  * The `▸` lines above it are complete either way.
  * This bounds the closing frame rather than the record.

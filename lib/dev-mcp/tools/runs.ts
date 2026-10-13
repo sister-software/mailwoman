@@ -56,7 +56,7 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		const limit = (args["limit"] as number | null) ?? 25
 		const sameTree = all.filter((run) => run.fingerprint_matches_now).length
 
-		// One measurement often writes several runs in the same second against the same tool,
+		// One measurement can write several runs in the same second against the same tool,
 		// input set and tree — a burst of arms rather than several comparisons.
 		// Listed row by row, these fill the reply with rows that differ only in `run_id` and byte count.
 		// They push older runs with different results past the limit.

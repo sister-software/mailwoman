@@ -149,8 +149,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first.
 	 *
-	 * Many Korean localities share a name across the country, so a Hangul name
-	 * match must be constrained to nearby candidates.
+	 * Korean localities in different parts of the country share names, so a Hangul name
+	 * match must be constrained to candidates within MATCH_RADIUS_KM.
 	 * A global match followed by nearest-homonym selection can land hundreds of km away.
 	 */
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
@@ -194,8 +194,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				provinceOk++
 			}
 
-			// Hangul name confirmation: a name-matched locality that is also nearby, the same
-			// proximity-constrained match the JP builder uses. is_containing=1 marks the precise tier.
+			// Hangul name confirmation: a name-matched locality that is also within MATCH_RADIUS_KM, the
+			// same proximity-constrained match the JP builder uses. is_containing=1 marks the precise tier.
 			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
 			const named = nb.find(({ pid }) => nameIDs.has(pid))
 

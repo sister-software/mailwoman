@@ -8,7 +8,7 @@
  *   `\d{5}(-\d{4})?`, `ca` accepts `A1A 1A1`, `jp` accepts `NNN-nnnn`, …); this is the single place
  *   that asks all of them at once and collects the matches.
  *
- *   It is the shared source of truth for "which systems can this shape be", consumed by the postcode
+ *   It is the one shared answer to "which systems can this shape be", consumed by the postcode
  *   anchor to narrow which systems' street vocabularies it checks. Callers depend on this pure
  *   function, never on each other.
  *
@@ -138,14 +138,14 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | nu
 }
 
 /**
- * Address systems whose area-grade postal code is still finer than the locality containing it —
+ * Address systems whose area-grade postcode is still finer than the locality containing it —
  * the third granularity tier, between {@link UNIT_GRADE_POSTCODE} and the locality-first default.
  *
  * Whether a postal zone is coarser than its locality depends on the country's administrative geography.
- * Postal code length does not predict it.
+ * Postcode length does not predict it.
  *
  * FR and DE both use five-digit codes, but those codes fall on opposite sides of this comparison.
- * France has ~35,000 communes and one code postal often spans several, so the commune is finer.
+ * France has ~35,000 communes and one code postal can span several, so the commune is finer.
  *
  * A German Gemeinde can be enormous (Berlin is one WOF locality), so the PLZ is finer by a wide margin.
  *
@@ -162,7 +162,7 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | nu
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 
 /**
- * True when this country's area-grade postal code outranks its locality.
+ * True when this country's area-grade postcode outranks its locality.
  *
  * An absent or unknown country gives false, so the locality-first convention is what an unscoped query gets.
  */

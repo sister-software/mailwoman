@@ -40,7 +40,7 @@
  *   regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
- *   locale × tag rather than just violations) for the release record. All narration goes through the
+ *   locale × tag rather than only violations) for the release record. All narration goes through the
  *   `report` sink (stderr by default), and `promotion-eval.ts` captures it into
  *   `<out-dir>/mask-regression.md`.
  */

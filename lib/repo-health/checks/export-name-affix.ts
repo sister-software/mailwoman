@@ -9,7 +9,7 @@
  *   The sibling {@linkcode findPrivateNameShadows} compares names for equality. It finds a copy only when both
  *   authors chose the same word. This check compares camelCase component runs to expose an affix.
  *
- *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
+ *   scoped across packages on purpose. Two names inside one package are treated as a deliberate family
  *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocalityBase`); across packages, the shorter name has a public home the
  *   longer one could have imported.
  *
@@ -31,7 +31,7 @@ import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#repo-health/tracked-s
 const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
 
 /**
- * How many camelCase components a shared run must include.
+ * The number of camelCase components a shared run must include.
  *
  * One-component runs are the vocabulary of the tree — `read`, `build`, `file` —
  * so a floor of one reports nearly every name against nearly every other.

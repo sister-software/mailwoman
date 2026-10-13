@@ -123,11 +123,11 @@ export const CZ_CUZK_REQUEST_INTERVAL_MS = 250
 const ZIP_SIGNATURE = "PK"
 
 /**
- * How many archives are written between two manifest writes.
+ * The number of archives written between two manifest writes.
  *
  * The manifest is what makes an interrupted harvest resumable, and writing it
  * after every archive would rewrite a 6,258-entry document 6,258 times.
- * At this interval an interruption re-fetches at most this many archives that are already on disk.
+ * At this interval an interruption re-fetches at most this number of archives that are already on disk.
  */
 const MANIFEST_INTERVAL = 25
 
@@ -352,7 +352,7 @@ export interface CzCuzkHarvestManifest extends SourceCollectionManifest {
 	 */
 	projection: CzCuzkProjection
 	/**
-	 * How many municipalities the service document listed when this manifest was written.
+	 * The number of municipalities the service document listed when this manifest was written.
 	 *
 	 * The denominator for `files`, read from the feed on each run rather than fixed here.
 	 */
@@ -379,7 +379,7 @@ export interface HarvestCzCuzkOptions {
 	 */
 	municipalities?: readonly string[]
 	/**
-	 * Stop after this many municipalities, counting the ones already on disk.
+	 * Stop after this number of municipalities, counting the ones already on disk.
 	 *
 	 * A bounded run rather than all 6,258.
 	 */

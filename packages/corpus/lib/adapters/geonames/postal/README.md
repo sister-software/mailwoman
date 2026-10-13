@@ -23,7 +23,7 @@ npx mailwoman corpus run geonames-postal --input $MAILWOMAN_DATA_ROOT/geonames-p
 ```
 
 **Prefer non-US countries.** This adapter emits postcode-FIRST (international) order — correct for
-DE/FR/most of the world. US postcodes are postcode-LAST and are already covered by TIGER/WOF; don't
+DE/FR/most of the world. US postcodes are postcode-LAST and are already covered by TIGER/WOF. Don't
 ingest US through this adapter.
 
 ## Output
@@ -40,6 +40,6 @@ avoid `"X X"` noise. `source_id` = component-hash + variant.
 
 ## Format reference
 
-12 tab-separated columns, no header: `country, postcode, place, admin1_name, admin1_code,
+12 tab-separated columns without a header: `country, postcode, place, admin1_name, admin1_code,
 admin2_name, admin2_code, admin3_name, admin3_code, latitude, longitude, accuracy`. This adapter reads
 `country, postcode, place, admin1_name`. Full layout: the [export readme](https://download.geonames.org/export/zip/readme.txt).

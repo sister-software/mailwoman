@@ -66,7 +66,7 @@ export interface SearchHit {
 export interface SearchResponse {
 	query: string
 	/**
-	 * The text actually searched when a token was corrected against the vocabulary.
+	 * The text the search ran on when a token was corrected against the vocabulary.
 	 * It is `null` when no token was.
 	 */
 	corrected: string | null

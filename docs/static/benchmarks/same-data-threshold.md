@@ -5,11 +5,11 @@ threshold. No resolver is re-run, so the walk is held fixed and the curve is an 
 threshold over this signal can provide at the final selection.
 
 **Exploratory, and outside the frozen pre-registration.** Every threshold here was read off results that
-were already visible, which is the one thing the registered rule forbids. The decision column below says
-what the registered rule would have read at each threshold; it does not re-decide the frozen verdict, and
+were already visible. The registered rule forbids exactly that. The decision column below records
+what the registered rule would have read at each threshold. It does not re-decide the frozen verdict, and
 no threshold warrants a claim until it is registered ahead of a panel it has not seen.
 
-28 of 75 of Mailwoman's withheld-gold selections carry the maximum margin, because the
+28 of 75 of Mailwoman's withheld-gold selections have the maximum margin, because the
 lookup that produced them considered one candidate. No threshold at or below 1 can withhold those.
 
 The baseline reads 45.3% accuracy and 57.0% false selection. 6 of 15 thresholds beat it on both axes at once, from 0.01 (59.5% accuracy, 48.0% false selection) to 0.30 (46.2% accuracy, 33.0% false selection).

@@ -22,11 +22,11 @@ grid square — `137 J4` — and you turned to page 137 and found the square and
 map yourself. Two things happened there, and they are still the two things a geocoder does.
 
 The first is identification: the index decided which `Church Street` you meant, out of the ones the
-atlas carried. The second is location: having decided, it handed back a position at whatever grain
-the atlas was drawn to. A grid square is not a point. Nobody was confused by that, because the square
+atlas listed. The second is location: having decided, it handed back a position at whatever grain
+the atlas was drawn to. A grid square is not a point. Readers of the atlas were not confused by that, because the square
 was drawn on the page and you could see how big it was.
 
-A geocoder does both jobs and then loses the square. It hands you a latitude/longitude, which looks
+A geocoder does both jobs and then loses the square. It hands you a latitude/longitude. That pair looks
 like a doorstep whether or not it is one.
 
 ## Forward and reverse
@@ -46,21 +46,21 @@ dot.
 
 ## A place is not a coordinate
 
-This is the distinction that costs people the most, so it is worth being slow about.
+This is the distinction that costs people the most, so this section goes through it slowly.
 
 When a geocoder resolves `Springfield, IL`, two separate things come back. There is the **place**: a
 record in a gazetteer, with a stable identifier, a name, a type (this is a city rather than a county), and a
 chain of parents (in Sangamon County, in Illinois, in the United States). And there is the
-**coordinate**, which is a property of that record. The center of whatever geometry the gazetteer
+**coordinate**. The coordinate is a property of that record. The center of whatever geometry the gazetteer
 holds for it, where it holds one at all.
 
-Those two can fail independently, and that is the whole reason to keep them apart in your head:
+Those two can fail independently. Keep them apart in your head for that reason:
 
 - **Right place, coarse coordinate.** The geocoder found the correct city and returned a point in the
   middle of it. Every downstream question about jurisdiction, coverage or territory is answered
   correctly. Every question about routing is answered wrongly, by kilometers.
 - **Wrong place, fine coordinate.** The geocoder found a different Springfield and returned a rooftop
-  in it. The coordinate carries eight decimal places and is off by four hundred kilometers.
+  in it. The coordinate has eight decimal places and is off by four hundred kilometers.
 
 The second failure is the dangerous one, because no part of the output looks wrong. Eight decimal
 places of latitude is about a millimeter of ground, and decimals are a property of the number's
@@ -70,7 +70,7 @@ failures you are looking at. Something else has to.
 ## Precision comes from the source rather than the geocoder
 
 The something else is the coordinate's provenance, and the vocabulary for it is **precision tiers**.
-The idea is that a geocoder does not have one way of producing a coordinate; it has several, arranged
+The idea is that a geocoder does not have one way of producing a coordinate. It has several, arranged
 worst-to-best, and it uses the best one that has data for your address. Which one answered is the
 single most useful fact about a result.
 
@@ -78,16 +78,16 @@ The tiers are roughly the same everywhere, whatever the software is called:
 
 - A **registered address point** — someone surveyed the building and wrote down where it is. This is
   as good as it gets, and it exists only where a register exists.
-- An **interpolated point** — nobody surveyed the building, but the street segment is known to run
+- An **interpolated point** — no survey located the building, but the street segment is known to run
   from number 100 to number 198, so number 150 is estimated about halfway along. That holds where the
-  numbering runs evenly along the segment and fails where it does not, and no field in the result says
+  numbering runs evenly along the segment and fails where it does not, and no field in the result reports
   which case you got.
-- A **street centroid** — the middle of the street, used when the input carries no house number.
+- A **street centroid** — the middle of the street, used when the input has no house number.
 - An **administrative centroid** — the middle of the town, the postcode, or the region. This tier
   always exists, because a gazetteer that knows the place at all knows roughly where it is.
 
 Mailwoman names these four in a field called `resolution_tier`, along with two more for a matched venue
-and a decoded plus code, and prices every tier but the administrative centroid with a radius.
+and a decoded plus code, and attaches an uncertainty radius to every tier but the administrative centroid.
 [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) walks the ladder with real
 output and the download that moves a result from the bottom tier to the top one.
 
@@ -108,7 +108,7 @@ wants the right polygon and does not care about kilometers. A dispatch service s
 cares about meters and does not care that the town was right. Both consumers can read the same result
 and disagree about whether it worked.
 
-A single accuracy number cannot answer all three, which is why a result worth trusting reports its
+A single accuracy number cannot answer all three. A trustworthy result therefore reports its
 tier and its radius rather than compressing them into one score. [How close is close
 enough?](./how-close-is-close-enough.mdx) is that argument at length.
 

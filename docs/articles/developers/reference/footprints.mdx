@@ -9,7 +9,7 @@ source-of-truth: npm registry metadata, the neural-weights-en-us model card, mai
 
 ## Scope
 
-This page carries the sizes. Every number states how it was obtained, because the three sources
+This page lists the sizes. Every number states how it was obtained, because the three sources
 disagree in ways that matter: a registry figure is the unpacked tarball, a disk figure is what an
 install occupies on disk, and a model-card figure is what the training pipeline recorded. A number
 without its basis is not checkable.
@@ -50,7 +50,7 @@ ONNX runtimes are ordinary dependencies of `@mailwoman/neural`, which is why ins
 behind it. On the unreleased line they become _optional peer dependencies_, so a
 `@mailwoman/neural`-only install stops pulling a runtime at all and you choose one — `onnxruntime-node`
 on a server, `onnxruntime-web` in a browser build. The `mailwoman` row does not move: the CLI is an
-application and declares `onnxruntime-node` outright. Re-measure after the release rather than
+application and declares `onnxruntime-node` as a direct dependency. Re-measure after the release rather than
 subtracting from these figures.
 
 No other dependency is close. The next largest dependency after the ONNX runtime is 7.7 MB.
@@ -90,8 +90,8 @@ Unpacked tarball sizes from the registry. Reproduce any row with
 | `@mailwoman/address-id`           | 23 kB    | —     |
 | `@mailwoman/neural-weights-en-in` | 8.9 kB   | —     |
 
-`@mailwoman/core` carries 1778 files because it ships reference data: libpostal dictionaries, Who's On
-First metadata, and Unicode locale tables. `mailwoman` carries 1136 for the same reason plus the
+`@mailwoman/core` contains 1778 files because it ships reference data: libpostal dictionaries, Who's On
+First metadata, and Unicode locale tables. `mailwoman` contains 1136 for the same reason plus the
 compiled command tree.
 
 ## Model artifacts
@@ -149,7 +149,7 @@ Downloaded with `mailwoman data pull`, never through npm. Sizes are the register
 | `us`        | 103       | 41.3 GB | US rooftop and interpolation, per state       |
 
 The `us` bundle is 52 rooftop databases and 51 interpolation databases, one pair per state plus DC and the
-US Virgin Islands, which has no interpolation database. Pull one state with
+US Virgin Islands. The US Virgin Islands have no interpolation database. Pull one state with
 `mailwoman data pull us --only nh` rather than the whole tier.
 
 Four state pairs account for 31.9% of that total: California at 4.25 GB, Florida at 3.74 GB, Texas at
@@ -177,7 +177,7 @@ Parse latency is not a footprint and is not on this page. It is measured per hos
 | An install is far larger than 707 MB              | Development dependencies were included                    | Install with `--omit=dev`                              |
 | A container image is over a gigabyte              | The ONNX runtime ships three platforms                    | Delete the platform directories you do not run         |
 | `npm view` reports a size this page does not list | This page documents `8.6.0`; npm serves the latest        | `npm view mailwoman version`. Trust npm over this page |
-| A pulled bundle is smaller than the table says    | The download did not finish, or an artifact is superseded | `mailwoman data status`, then re-pull                  |
+| A pulled bundle is smaller than the table lists   | The download did not finish, or an artifact is superseded | `mailwoman data status`, then re-pull                  |
 
 ## Rationale
 
@@ -186,12 +186,12 @@ for by every consumer who wanted only the parser. A separate download makes pars
 proposition and geocoding an explicit second decision.
 
 The model ships quantized because the accuracy cost was small and the size cost was not: int8 took the
-encoder from 146.6 MB to 37.6 MB in the card's units, which is the difference between a package a
+encoder from 146.6 MB to 37.6 MB in the card's units. That is the difference between a package a
 serverless function can cold-start and one it cannot.
 
 The ONNX runtime's 523 MB is not this project's choice and cannot be fixed from here. It is stated
 prominently because it dominates every other number on this page, and a reader sizing a container who
-budgets from the package sizes alone will be wrong by a factor of seven.
+budgets from only the package sizes will be wrong by a factor of seven.
 
 ## See also
 

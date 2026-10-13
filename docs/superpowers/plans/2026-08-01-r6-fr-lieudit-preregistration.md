@@ -10,17 +10,17 @@ a locale profile that lists the tag.
 
 WOF's French neighborhood records are Paris **quartiers**, such as "Des Halles", "Palais Royal" and
 "Saint-Germain l'Auxerrois" (5,473 pairs nationally). Those pairs as the FR pair source would be
-a mistake. The reasons are worth stating, because the US instance made the opposite decision:
+a mistake. The reasons follow, because the US instance made the opposite decision:
 
 - A quartier **never appears in a French postal address.** French addresses contain a number,
   street, postcode and commune. The postcode encodes the arrondissement (75001 = 1er), and the
   quartier is a cartographic subdivision rather than an address line.
-- The line that does appear is the **lieu-dit**, a named hamlet or place within a commune. It is
+- The line that does appear is the **lieu-dit**, a hamlet or place within a commune. It is
   written on its own line between the street and the commune, as in `261 Impasse des Pinsons /
   Pinsonnac / 12210 Montpeyroux`.
 
 The FR source is therefore BAN's `nom_ld` field (DINUM/IGN, Licence Ouverte 2.0) rather than WOF.
-The mechanism is the same, and the source is chosen by what the postal format carries. WOF
+The mechanism is the same, and the source is chosen by what the postal format contains. WOF
 would produce a technically valid index that biases toward spans real French addresses never
 contain.
 
@@ -46,7 +46,7 @@ a lieu-dit pair index moves this board the way GB's index moved its board from 0
   2/80 emit.
 - **D-R6.4 (disclosure).** Report what fraction of the golden board's (lieu-dit, commune) pairs the
   built index contains. If every pair on the board is in the index, a high positive score measures
-  whether the mechanism works rather than whether it generalizes. R5's B-R5.3 carried the same
+  whether the mechanism works rather than whether it generalizes. R5's B-R5.3 stated the same
   caveat, and the report must state it explicitly.
 
 A failure of B-R6.1 or B-R6.2 stops the ship regardless of B-R6.3.
@@ -73,7 +73,7 @@ It applies only to countries in `LEADING_POSTCODE_COUNTRIES` and requires a full
 codex shape, so output for a country that never writes that form stays byte-identical.
 
 **2. A newline was not a segment boundary.** `computeGroupSegments` scanned only for `,`. Every row
-on the FR golden board is newline-delimited, which is the shape the formatter itself emits (La
+on the FR golden board is newline-delimited. That is the shape the formatter itself emits (La
 Poste's line 5). The whole address therefore collapsed into one segment, the segment path could
 never fire, and the prior fell through to the anchored path. A line break is at least as strong a
 boundary as a comma, and it now counts as one.
@@ -99,11 +99,11 @@ multi-line address, in every locale, had been skipping the segment path without 
   fired on all 80.
 - **D-R6.4 disclosed.** All 80 of the board's pairs are in the index, so B-R6.3 measures how well
   the mechanism works where the gazetteer has data. It does not measure generalization. This cannot be
-  avoided here, because the board and the index both derive from BAN. R5's B-R5.3 carried the same
+  avoided here, because the board and the index both derive from BAN. R5's B-R5.3 stated the same
   caveat.
 
 ## Verdict
 
 The FR instance ships. R5 predicted that this locale would depend on the artifact. It depended on
-both the artifact and the probe. The probe defects affected every locale, and nobody had measured
-them because no shipped locale sent postcode-first or multi-line addresses through this path.
+both the artifact and the probe. The probe defects affected every locale, and no earlier rung had measured
+them, because no shipped locale sent postcode-first or multi-line addresses through this path.

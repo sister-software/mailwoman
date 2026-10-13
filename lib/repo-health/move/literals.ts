@@ -161,7 +161,7 @@ function pathLiteralsIn(file: string, text: string, moves: readonly ModuleMove[]
  * Finds every stale path literal the moves leave in the tracked files,
  * skipping `out/` and the `exempt` prefixes.
  *
- * Moved files are scanned too, because a script's `Usage:` line often quotes its own path.
+ * Moved files are scanned too, because a script's `Usage:` line can quote its own path.
  * A moved file is read wherever it is on disk, at its source before the move is applied
  * or at its destination after.
  *

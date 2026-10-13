@@ -8,7 +8,7 @@
  *   SpatiaLite).
  *
  *   A valid cached ZIP is reused. Re-running a state replaces its rows. Pass
- *   `--county <FIPS3>` to load just one county (handy for downstream per-county work).
+ *   `--county <FIPS3>` to load one county (handy for downstream per-county work).
  */
 
 import { Spinner } from "@inkjs/ui"

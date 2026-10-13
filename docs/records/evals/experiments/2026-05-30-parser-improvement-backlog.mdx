@@ -20,11 +20,11 @@ below sharpens that layer where the arenas show it bleeding.
 
 ## The real neural failures (from arena spot-checks)
 
-1. **Drops secondary units** — `… Apt 456` → no unit label; postal
-   secondary-unit edge class 0% neural.
+1. **Drops secondary units** — `… Apt 456` → no unit label. The postal
+   secondary-unit edge class reads 0% neural.
 2. **Over-spans street boundaries** — `Stone Way North Seattle` →
    `street: "Stone Way North Seattle"` (the locality bleeds into the street).
-3. **Confuses country ↔ region** — `UK` labeled region; trailing country names
+3. **Confuses country ↔ region** — `UK` labeled region, and trailing country names
    dropped or mis-tagged.
 4. **County → locality** — UK/IE counties (`Co. Mayo`, `Derbys`) land as
    locality instead of region.
@@ -40,20 +40,20 @@ the pass is opt-in, and precision guards keep it from regressing a confident
 parse. Postcode-repair earned default-on at a measured **+135/0**. Not every
 failure fits that mould — some need coverage (retrain) or a boundary model.
 
-| #   | failure          | mechanism                                                  | cost | risk             | status                          |
-| --- | ---------------- | ---------------------------------------------------------- | ---- | ---------------- | ------------------------------- |
-| B1  | drops units      | **post-decode repair**                                     | low  | low (opt-in)     | ✅ **built** (`unit-repair.ts`) |
-| B2  | country↔region   | **post-decode repair** (country lexicon)                   | low  | low (closed set) | scoped                          |
-| B3  | county→locality  | coverage (lexicon or synth)                                | med  | med              | scoped                          |
-| B4  | street over-span | decoder/boundary (gazetteer-clip or morphology-FST anchor) | high | med-high         | scoped                          |
-| B5  | locale sparsity  | coverage (real EU/Oceania data, #40)                       | high | low              | tier-listed                     |
+| #   | failure          | mechanism                                                  | cost | risk             | status                       |
+| --- | ---------------- | ---------------------------------------------------------- | ---- | ---------------- | ---------------------------- |
+| B1  | drops units      | **post-decode repair**                                     | low  | low (opt-in)     | **built** (`unit-repair.ts`) |
+| B2  | country↔region   | **post-decode repair** (country lexicon)                   | low  | low (closed set) | scoped                       |
+| B3  | county→locality  | coverage (lexicon or synth)                                | med  | med              | scoped                       |
+| B4  | street over-span | decoder/boundary (gazetteer-clip or morphology-FST anchor) | high | med-high         | scoped                       |
+| B5  | locale sparsity  | coverage (real EU/Oceania data, #40)                       | high | low              | tier-listed                  |
 
 **Why units fit the repair mould and street-overspan doesn't:** a unit has a
 self-announcing shape (`Apt`/`Ste`/`Unit`/`#` + identifier). A street boundary
-is defined by _what comes after it_ — there's no local shape that says "the
-street ends here," so a regex can't draw the line. B4 needs either a locality
-gazetteer to clip the tail or the street-morphology FST to anchor the head;
-both are real work and belong after the cheap repairs land.
+is defined by _what comes after it_ — no local shape marks where the
+street ends, so a regex can't draw the line. B4 needs either a locality
+gazetteer to clip the tail or the street-morphology FST to anchor the head.
+Both are real work and belong after the cheap repairs land.
 
 ## B1 — unit-repair (BUILT)
 
@@ -89,10 +89,10 @@ failure modes rather than one:
    intersections. The fix is a unit-containing synth extract (a B-list item) rather than a
    post-decode pass.
 
-Net: the repair patches the locality-mislabel half directly and safely; the
+Net: the repair patches the locality-mislabel half directly and safely. The
 street-absorption half needs coverage. Address-level pass on those cases doesn't
 flip (they also fail on house_number/street), so unit-repair's value is measured
-on **unit-tag recall** rather than address-level pass. Stays opt-in; promote to
+on **unit-tag recall** rather than address-level pass. It stays opt-in. Promote it to
 default-on once a golden-set unit-tag delta confirms the +N/0 holds there too.
 
 ## B2 — country-repair (scoped rather than built)
@@ -108,18 +108,18 @@ motivates it strongly:** trailing `AUSTRALIA` → `locality`, and `country` reca
 **Adjacent finding (new):** the v0.7.2 postal `v0-only` cluster shows a related
 failure — _last-line-only_ addresses (`NEW YORK NY 10025`, `CANBERRA ACT 2614`,
 `SYDNEY NSW`) mislabel the leading locality as **street** when no street is
-present. That's neither unit nor country; it's a coverage gap (the model rarely
+present. That's neither unit nor country. It's a coverage gap (the model rarely
 sees street-less addresses). Folds into the same coverage extract as B5.
 
 ## Order the work
 
-1. ✅ B1 unit-repair — built + measured (+2/8 postal unit-tag, 0 regressions,
+1. B1 unit-repair (done) — built + measured (+2/8 postal unit-tag, 0 regressions,
    locality-mislabel half). Street-absorption half is coverage (see B3'). Opt-in.
-2. B2 country-repair — now well-motivated by v0.7.2; build next (post-decode).
+2. B2 country-repair — now well-motivated by v0.7.2. Build it next (post-decode).
 3. **B3' unit + street-less coverage extract** — synth units mid/post-street
-   (`STE 12`) and street-less last-lines; folds with B5 real-data coverage. This
+   (`STE 12`) and street-less last-lines. It folds with B5 real-data coverage. This
    is the half post-decode repair can't reach.
-4. B4 street-overspan — the one true model/decoder change; its own investigation.
+4. B4 street-overspan — the one true model/decoder change. It needs its own investigation.
 
 All deltas measured through `scripts/eval/external-arenas.sh` against the v0.7.2
 model — the same three-bucket harness that surfaced the failures.

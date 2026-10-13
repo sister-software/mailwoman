@@ -11,8 +11,8 @@ replacements on the same probes.
 
 ## Result
 
-Both SQLite readers return a cold probe in 3 to 5 range requests. Replacing `sql.js-httpvfs` with a range
-VFS on `@sqlite.org/sqlite-wasm` changes the SQLite version from 3.35.0 to 3.53.4. At the current 64 KiB chunk it issued 55 requests
+Both SQLite readers return a cold probe in 3 to 5 range requests. A range VFS on `@sqlite.org/sqlite-wasm` in place of
+`sql.js-httpvfs` changes the SQLite version from 3.35.0 to 3.53.4. At the current 64 KiB chunk it issued 55 requests
 against 52, fetched 3,520 KB against 4,224 KB, and returned the median cold probe in 167 ms against
 168 ms. DuckDB-Wasm over Parquet
 fetched 37 times the bytes of the current reader on the cold pass and ran a warm probe in 47.5 ms
@@ -55,17 +55,17 @@ DuckDB-Wasm at row group 122,880 and 294 ms at row group 8,192.
 ## Observations
 
 **Chunk size trades bytes for round trips.** In `sql.js-httpvfs`, an 8 KiB chunk fetched 776 KB against
-4,224 KB, which is 18% of the bytes. It issued 63 requests against 52, and the median cold probe at a
+4,224 KB, or 18% of the bytes. It issued 63 requests against 52, and the median cold probe at a
 50 ms delay rose from 168 ms to 219 ms. Each request waits for the previous one, so the request count
 sets the latency.
 
 **The sqlite-wasm range VFS matches the current reader.** At a 64 KiB chunk it issued 55 requests against
 52 and fetched 3,520 KB against 4,224 KB. Its open took one data request against two. The VFS in this
-experiment has no read-ahead, which accounts for 84 requests against 63 at the 8 KiB chunk.
+experiment has no read-ahead. The missing read-ahead accounts for 84 requests against 63 at the 8 KiB chunk.
 
 **DuckDB-Wasm reads megabytes per probe.** Its read-ahead grows from 16 KiB to 16 MiB within one probe.
 The first probe, `springfield`, fetched 7,028 KB in 14 requests at row group 122,880, against 448 KB in 5
-requests for the current reader. A warm probe decodes a whole row group, which is the 45.6 ms and
+requests for the current reader. A warm probe decodes a whole row group. That decode is the 45.6 ms and
 283.9 ms in the last column.
 
 **DuckDB-Wasm 1.33.1-dev57.0 needs explicit configuration to issue range requests.** With the default

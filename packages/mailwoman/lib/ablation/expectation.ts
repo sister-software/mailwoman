@@ -137,7 +137,7 @@ export const RUNG_RADIUS_FLOOR_KM: Readonly<Record<string, number>> = {
 export const COINCIDENT_PLACE_KM = 10
 
 /**
- * Decisive log10 population margin for names.
+ * The log10 population margin by which a name's top candidate must lead the runner-up.
  */
 export const DECISIVE_MARGIN_LOG10 = 0.5
 
@@ -317,7 +317,7 @@ export function dominanceMarginLog10(places: readonly AblationPlace[]): number {
 }
 
 /**
- * True if top candidate is decisive.
+ * True if the top candidate leads the runner-up by at least the log10 population margin.
  */
 export function isDecisive(places: readonly AblationPlace[]): boolean {
 	return places.length > 0 && dominanceMarginLog10(places) >= DECISIVE_MARGIN_LOG10

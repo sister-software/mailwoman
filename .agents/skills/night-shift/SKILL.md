@@ -51,7 +51,7 @@ Output a one-paragraph pre-flight summary at session start: anything that needs 
 
 Before writing any new module, helper, or lookup table, **search the adjacent
 repos for prior art**. Two known sources — `isp-nexus/universe/mailwoman/postal/`
-and `isp-nexus/universe/spatial/` — carry vetted, provenance-tracked data and
+and `isp-nexus/universe/spatial/` — hold vetted, provenance-tracked data and
 utilities (USPS directionals, ISO-3166 tables, country/region name maps) that
 have been re-derived inside `mailwoman` more than once.
 
@@ -64,24 +64,24 @@ find /home/lab/Projects/isp-nexus /home/lab/Projects/mailwoman \
 ```
 
 If a match exists, **import it** (and adjust as needed) rather than re-derive.
-The operator has called this out twice; the cost of forgetting is a polite but
+The operator has called this out twice. The response to a forgotten check is a polite but
 firm "I warned you about recreating existing work." Salvage-first is part of
 pre-flight rather than an optional optimization.
 
-### Sub-agent briefs carry the same check
+### Sub-agent briefs include the same check
 
 A sub-agent inherits none of this file, and a re-typed helper it commits waits
-for a reviewer unless the brief and the hook carry the rule. Every brief includes:
+for a reviewer unless the brief and the hook both state the reuse requirement. Every brief includes:
 
 1. The reuse instruction: "Before writing a helper, read the _Before writing a
    small utility_ bullet in AGENTS.md and `git grep` the concept across
-   `packages/*/lib`. Import the home; do not re-type it."
+   `packages/*/lib`. Import the home. Do not re-type it."
 2. The PR-body requirement: "List every new module-private function with the
    home you checked for it." An empty list is a claim the reviewer reads the
    diff against.
 3. The hook: the pre-commit `oxlint` run includes `mailwoman/prefer-home`. A
-   finding is answered by the import, or by a scoped disable whose reason names
-   the constraint (no dependency on the home; a preinstall script).
+   finding is answered by the import, or by a scoped disable with a reason. The
+   reason states the constraint, such as no dependency on the home or a preinstall script.
 
 Before enabling auto-merge on an agent PR, read its diff for module-private
 functions and compare each against the home its body implies. A re-typed helper
@@ -98,7 +98,7 @@ the next copy is reported at commit time instead of at review.
 | ONNX export                           | **Modal**    | Loads PyTorch model, runs graph optimization — minutes of CPU |
 | int8 quantization                     | **Modal**    | onnxruntime quantizer — seconds but adds up across iterations |
 | Full golden eval (4500+ rows)         | **Modal**    | ~20s per run, ~3K ONNX inferences                             |
-| Demo presets (6-11 addresses)         | Local        | Trivially small                                               |
+| Demo presets (6-11 addresses)         | Local        | Small enough to run locally in seconds                        |
 | File edits, git operations            | Local        | Network-bound regardless                                      |
 | Build script development + tests      | Local        | Iteration speed                                               |
 | Single-file parquet builds (<1M rows) | Local        | Bound by Python parquet rather than GPU                       |
@@ -120,13 +120,13 @@ When training diverges:
 1. **Stop** the app: `modal app stop -y <app-id>`. Don't let it burn GPU on garbage gradients.
 2. **Capture** the divergence point: which step, what loss trajectory, what config differed from a known-good run.
 3. **Diagnose one knob.** Never adjust two variables simultaneously — you lose attribution.
-4. **Document** the hypothesis in the config YAML as a comment rather than the commit message alone. The next iteration needs to see what's already been tried.
+4. **Document** the hypothesis in the config YAML as a comment, in addition to the commit message. The next iteration needs to see what's already been tried.
 5. **Retry.** If it diverges again with the same root, escalate: drop the feature entirely (CE-only fallback) or schedule a deeper investigation as a separate issue.
 
 **Known constraints (bf16 CRF):**
 
 - CRF training on a 33×33 transition table in bf16 NaN'd twice. Fix was to disable CRF training entirely. The bf16 hypothesis remains unconfirmed — needs a fp32 follow-up.
-- Both NaN attempts happened post-warmup at peak LR. Warmup + LR adjustments alone don't fix the root cause.
+- Both NaN attempts happened post-warmup at peak LR. Warmup + LR adjustments without other changes don't fix the root cause.
 
 ## Diagnostic before fix
 
@@ -137,13 +137,13 @@ structural retrain. The pattern that adjudicated the consolidation affix fork
 
 1. **State the hypothesis in one sentence.** "Affix collapsed because feature X
    interferes with feature Y" vs "Affix collapsed because the schedule starved
-   its examples." These imply different fixes; conflating them wastes a full
+   its examples." These imply different fixes, and a fix that conflates them wastes a full
    training cycle.
 2. **Design a 2k-step probe that distinguishes them.** Resume from the latest
    checkpoint, change one knob in the direction the hypothesis predicts,
-   re-evaluate. If the metric moves with the hypothesis → confirmed; if flat →
-   the planned fix is wasted compute.
-3. **Run the probe before the fix.** Even 2k steps × A100 is minutes; a
+   re-evaluate. If the metric moves with the hypothesis, it is confirmed. If the metric
+   stays flat, the planned fix is wasted compute.
+3. **Run the probe before the fix.** Even 2k steps × A100 is minutes. A
    wrong-hypothesis full retrain is hours.
 
 Worked example: the v1.0.0 consolidation regressed US postcode 98.3 → 95.8.
@@ -152,7 +152,7 @@ zero the gazetteer clue near postcodes" (which became PR #468). The cheap
 diagnostic (resume + raise affix-sampling weight, 2k steps) later showed US
 postcode improved +1.6 with _zero_ postcode-position changes — the regression
 was under-convergence rather than interference. **Choreography wasn't essential for
-the nail it was built for.** Default-off/byte-stable saved face; the diagnostic
+the nail it was built for.** The default-off, byte-stable ship limited the damage. The diagnostic
 would have saved the build cycle.
 
 Rule of thumb: if your next planned action costs more than 30 min of GPU _and_
@@ -163,33 +163,33 @@ have a hypothesis yet — you have a guess. Don't launch.
 
 When continuing training to recover or extend a fragile capability, `init_from`
 is **not a substitute for `resume`**. The two paths look similar in config but
-carry different state:
+load different state:
 
 | Path        | Loads weights | Loads optimizer state (Adam moments, LR schedule, step counter) | Use when                                                                                                    |
 | ----------- | :-----------: | :-------------------------------------------------------------: | ----------------------------------------------------------------------------------------------------------- |
-| `resume`    |      yes      |                             **yes**                             | continuing a run; recovering or extending a learned capability; any fragile, low-prevalence tag             |
-| `init_from` |      yes      |                               no                                | warm-starting a _new_ run with a fresh objective; fine-tune off a different base; A/B optimizer recipes     |
+| `resume`    |      yes      |                             **yes**                             | continuing a run, recovering or extending a learned capability, any fragile, low-prevalence tag             |
+| `init_from` |      yes      |                               no                                | warm-starting a _new_ run with a fresh objective, fine-tune off a different base, A/B optimizer recipes     |
 | neither     |      no       |                               no                                | **from-scratch** — a new source the base never saw, a tokenizer change, or a corpus whose composition moved |
 
 Why this matters: late-emergent splits (`street_prefix/suffix` in the
 consolidation arc, the multi-locale country signal) sit in narrow basins that
 Adam's momentum is actively _in the middle of_ at checkpoint time. A fresh
-optimizer at the same weights is **not the same model**: it has no first/second
-moments pointing at the basin, no warmup remaining, and a step-counter reset
-that re-triggers any cosine schedule. The visible symptom is the run looks
-"flat" — it isn't; it's redoing the descent from a worse starting kinematic.
+optimizer at the same weights is **not the same model**: it lacks first/second
+moments pointing at the basin and any remaining warmup, and its step-counter reset
+re-triggers any cosine schedule. The visible symptom is that the run looks
+"flat". It isn't flat. It is redoing the descent from a worse starting kinematic.
 
 Specific cost from the campaign: Run B of the consolidation arc used
 `init_from` to avoid deleting Run A's later checkpoints. The result (affix
 prefix flat at 64.9 at 17× density) appeared to falsify the sampling-weight
 hypothesis. Run C — same recipe, **`resume`** — reproduced the predicted 75
-at 2k. ~35 min A100 lost; one consult-round downstream based on a misread
+at 2k. ~35 min A100 lost, plus one consult-round downstream based on a misread
 result.
 
 **Rule: decide the SHAPE before you decide between these two.** Both rows above
-presuppose a base, so copying last night's config carries `init_from` forward and
-the shape then never gets re-decided — six consecutive runs in one session were
-fine-tunes for that reason alone, and the placebo control later showed the fine-tune
+presuppose a base, so a copy of last night's config brings `init_from` forward and
+the shape then never gets re-decided. Six consecutive runs in one session were
+fine-tunes for that reason and no other, and the placebo control later showed the fine-tune
 itself cost 10 of 649 board rows before the new data was read. **A fine-tune
 cannot introduce a source the base never saw.** Write down `kind`, `why`, and
 which null run backs it, then pick a row.
@@ -200,11 +200,11 @@ with the weights and delete the _next_ checkpoint rather than the resume target.
 
 ## Pre-publish eval
 
-**A candidate number means nothing until the controls have run.** Before the per-tag
+**A candidate number is uninterpretable until the controls have run.** Before the per-tag
 analysis below, run `mwdev_arc` — self-control, then null, then candidate. It refuses
 to attribute a result when the shipped model disagrees with itself, and it subtracts
 the fine-tune's own row loss rather than attributing it to the change under test. The protocol and its rationale
-are the `training-arc` skill; the eval floors are the `eval-model` skill. Neither is
+are the `training-arc` skill, and the eval floors are the `eval-model` skill. Neither is
 optional, and the per-tag check below is in addition to them rather than instead.
 
 ### Per-tag error analysis
@@ -228,7 +228,7 @@ The 2pp threshold catches the regressions that matter without blocking on noise.
 
 The 2pp pre-publish eval measures against **canonical floors from the config** rather than against whatever table happens to be in the current postmortem. Any
 relaxation lives in a separate, explicit "eval-revision" note with a stated
-reason; the table in the doc cites the config bars verbatim above any
+reason. The table in the doc cites the config bars verbatim above any
 scorecard.
 
 When writing a scorecard or comparison table in `docs/records/evals/`:
@@ -236,17 +236,17 @@ When writing a scorecard or comparison table in `docs/records/evals/`:
 1. **Quote the config-canonical bar above the table.** Example:
    `promotion eval (config v1.0.0-consolidation.yaml): affix prefix ≥78, suffix ≥67, US street ≥80.4, …`
 2. **Don't drop rows that fail.** A row that fails the canonical bar is the
-   most important row in the table; if it's "noisy" or "out of scope," say so
-   in a footnote next to the row, don't remove it.
+   most important row in the table. If it's "noisy" or "out of scope," state that
+   in a footnote next to the row instead of removing it.
 3. **Any cell with a softer threshold than the config gets a marker** (e.g.
    `*` with a footnote stating the relaxation and rationale). Don't re-baseline
    silently.
 
 A consolidation doc once relaxed `affix 78/67 → 72/64` and dropped the
-US-street row from one table; the operator caught it on review. No decision
+US-street row from one table. The operator caught it on review. No decision
 flipped on the relaxed numbers (luck), but ~2h of detection lag is the kind of
 friction that ends with "did we ship a regression?" The
-`feedback-no-silent-eval-drift` memory exists; this rule is what keeps the
+`feedback-no-silent-eval-drift` memory exists, and this rule is what keeps the
 next doc from triggering it.
 
 When a regression is the right thing to ship (e.g. guardrail gains that
@@ -300,15 +300,15 @@ docs/records/evals/YYYY-MM-DD-night-N-postmortem.md
 Sections (in this order):
 
 1. **What shipped** — bullets, links to HF artifacts, git tags
-2. **What went well** — concrete patterns worth reusing
-3. **What could've gone better** — named friction points
+2. **What went well** — concrete patterns to reuse
+3. **What could've gone better** — specific friction points
 4. **Decisions made autonomously** — what choices you made without operator input, what the alternatives were, why you chose what you chose
 5. **Open questions** — things the operator should decide when they're back
 6. **Concrete next steps** — bullets with file paths, branch names, issue numbers
 
 Numbers table at the end: shift duration, models trained, total Modal time, local compute time, NaN incidents, CI failures, demo regressions, GPU lost to error (if any).
 
-**Don't write this at the end as an afterthought.** Sketch it as you go — the structured handoff helps you make better decisions because you're rehearsing the operator's "was that the right call?" question in real time.
+**Don't write this at the end as an afterthought.** Sketch it as you go — the structured handoff helps you make better decisions because you're rehearsing the operator's "should that have been done?" question in real time.
 
 ## Decision rubrics
 
@@ -325,18 +325,17 @@ Numbers table at the end: shift duration, models trained, total Modal time, loca
 ### Treadmill guard (codified)
 
 Two opposite-direction failures on consecutive iterations = **fork rather than a
-branch**. Stop, name the fork, consult; do not run a third recipe variant
-solo. The pattern: iteration N pushes knob K up to fix tag A and hurts tag B;
-iteration N+1 pushes K down to fix B and re-hurts A. That's a capacity or
+branch**. Stop, state the fork, and consult. Do not run a third recipe variant
+solo. The pattern: iteration N pushes knob K up to fix tag A and hurts tag B.
+Iteration N+1 pushes K down to fix B and re-hurts A. That's a capacity or
 stability constraint rather than a tuning problem, and no further K-only iteration
 will resolve it.
 
-The consolidation arc hit this exactly at Run C (high density → transient
-affix peak + FR-region collapse; moderate density → stable ~65 affix ceiling
-
-- no FR collapse). Treadmill guard fired; campaign STOPPED; the fork went to
-  the operator with three named options (re-baseline + ship / architecture
-  escalation / hold). No fourth iteration was launched.
+The consolidation arc hit this exactly at Run C. High density produced a transient
+affix peak + FR-region collapse. Moderate density produced a stable ~65 affix ceiling
+with no FR collapse. The treadmill guard fired and the campaign STOPPED. The fork went to
+the operator with three options (re-baseline + ship / architecture
+escalation / hold). No fourth iteration was launched.
 
 ### Time budget discipline
 
@@ -345,11 +344,11 @@ affix peak + FR-region collapse; moderate density → stable ~65 affix ceiling
 
 ## Operator handoff format
 
-At the very end of an autonomous shift, send the operator a chat-friendly summary (not a commit link alone). **Order matters — lead with what the operator needs to act on rather than with what shipped.**
+At the very end of an autonomous shift, send the operator a chat-friendly summary (more than a commit link). **Order matters — lead with what the operator needs to act on rather than with what shipped.**
 
-1. **Anything that needs eyes-on, in priority order** — merge wall, decision deferred, regression to review, open NaN mystery. This is what gets read first; everything below is context.
-2. **What changed in production** — HF defaults, demo version, npm tags. Empty is fine; say so.
+1. **Anything that needs eyes-on, in priority order** — merge wall, decision deferred, regression to review, open NaN mystery. The operator reads this first. Everything below is context.
+2. **What changed in production** — HF defaults, demo version, npm tags. Empty is fine. State that it is empty.
 3. **The numbers (1–2 sentences)** — headline result + the cost (Modal $, GPU hours).
 4. **Where the detailed report lives** — link to the committed postmortem.
 
-This is _additional to_ the committed shift artifact — the chat summary is what gets read first thing in the morning; the artifact holds the full detail. The morning-shift skill consumes this; if you want the handoff to feel smooth, write it the way you'd want to read it half-awake.
+This summary is _additional to_ the committed shift artifact. The operator reads the chat summary first thing in the morning, and the artifact holds the full detail. The morning-shift skill consumes this summary. Write it the way you'd want to read it half-awake.

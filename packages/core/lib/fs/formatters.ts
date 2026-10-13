@@ -27,7 +27,7 @@ export interface ByteFormatterOptions {
 }
 
 /**
- * Byte counts as a human reads them, in whichever of the two bases the number was actually measured in.
+ * Byte counts as a human reads them, in whichever of the two bases the number was measured in.
  *
  * Both bases, spelled correctly.
  * A formatter that divides by 1024 and prints `KB` is off by 2.4% at KB and 10% at TB.

@@ -6,7 +6,7 @@ Scope: public docs, concept articles, plan/reference docs, eval reports, retrosp
 
 ## Executive summary
 
-Mailwoman's direction is coherent and worth continuing: a TypeScript-native address parser/resolver that runs in Node and the browser, combines deterministic rules with a small neural classifier, and uses a staged pipeline to keep learned, lookup, and constraint-composition knowledge in the right layers. The best project idea is not "neural geocoding" in the abstract; it is the Knowledge Ladder: learn context-sensitive address structure, look up world facts in a gazetteer, then reconcile candidates rather than trusting local argmaxes.
+Mailwoman's direction is coherent, and the project should continue on it: a TypeScript-native address parser/resolver that runs in Node and the browser, combines deterministic rules with a small neural classifier, and uses a staged pipeline to keep learned, lookup, and constraint-composition knowledge in the right layers. The best project idea is not "neural geocoding" in the abstract. It is the Knowledge Ladder: learn context-sensitive address structure, look up world facts in a gazetteer, then reconcile candidates rather than trusting local argmaxes.
 
 The main risk is not that the architecture is wrong. The risk is that the docs and roadmap let too several states coexist: historical plan, shipped code, in-progress training, feature-flag scaffolding, and public product story are interleaved without a single canonical status layer. A newcomer can understand the philosophy, but cannot reliably answer "what can I install today, what works, and what is still experimental?"
 
@@ -40,7 +40,7 @@ The right product identity is:
 
 > TypeScript-native open geocoding front end: parse address strings into structured components, surface ambiguity, and resolve against open gazetteers locally or in-browser.
 
-That is narrower and stronger than "natural language classification engine for geocoding." It says who should care and why:
+That is narrower and stronger than "natural language classification engine for geocoding." It states who should care and why:
 
 - Node/browser developers who cannot send every query to Google.
 - This suits geocoding stacks that need local parsers, auditable failures, or custom retraining.
@@ -52,11 +52,11 @@ Avoid positioning Mailwoman as a rooftop geocoder or Google competitor. The reso
 
 ### TypeScript runtime, Python training
 
-This split is correct. Runtime consumers get npm packages, browser viability, and ONNX inference; training keeps PyTorch and the Python ML ecosystem where they belong. Keep training internals out of the user-facing path.
+This split is correct. Runtime consumers get npm packages, browser viability, and ONNX inference. The training side keeps PyTorch and the Python ML ecosystem where they belong. Keep training internals out of the user-facing path.
 
 ### Small encoder-only classifier
 
-The small transformer is a sound fit for token/span labeling. A generative LLM would be slower, harder to audit, and worse aligned with "return spans from the input." The docs should keep explaining that the model labels existing tokens; it does not generate addresses or memorize the world.
+The small transformer is a sound fit for token/span labeling. A generative LLM would be slower, harder to audit, and worse aligned with "return spans from the input." The docs should keep explaining that the model labels existing tokens. It does not generate addresses or memorize the world.
 
 ### Rules plus neural rather than rules versus neural
 
@@ -64,7 +64,7 @@ The Ship-of-Theseus policy registry is the right migration model. Postcodes, sta
 
 ### Parse/resolve separation
 
-This is foundational. The parser should not memorize WOF; the resolver should not infer grammar. WOF parent chains are a constraint source for reconciliation rather than model training targets.
+This is foundational. The parser should not memorize WOF. The resolver should not infer grammar. WOF parent chains are a constraint source for reconciliation rather than model training targets.
 
 ### QueryShape, kind classifier, phrase grouper
 
@@ -72,7 +72,7 @@ Cheap structural priors before neural classification are a good engineering comp
 
 ### CRF as inference-time structure
 
-Keep the frozen BIO mask and Viterbi at inference while dropping CRF-NLL from training if CE-only training continues to hold. The structural guarantee comes from the mask; learned CRF transitions have not yet justified their training risk.
+Keep the frozen BIO mask and Viterbi at inference while dropping CRF-NLL from training if CE-only training continues to hold. The structural guarantee comes from the mask. Learned CRF transitions have not yet justified their training risk.
 
 ### Browser-first constraint
 
@@ -148,7 +148,7 @@ The homepage has snippets, but docs need durable pages:
 - `/docs/getting-started`: install, parse first address, use CLI, use browser demo, choose packages, known caveats.
 - `/docs/api`: `NeuralAddressClassifier`, `createRuntimePipeline`, CLI flags, output shapes, `AddressTree`, `alternatives`, confidence semantics.
 
-The target reader can handle TypeScript; give them the concrete entry points.
+The target reader can handle TypeScript. Give them the concrete entry points.
 
 ### 3. Audience boundaries are too porous
 
@@ -156,7 +156,7 @@ Add "Who this is for" blocks to top-level and operator-heavy docs:
 
 - Audience: curious engineer or domain learner.
 - Concepts: implementer/technical evaluator.
-- Plan/reference: contributor/operator; historical unless status page says current.
+- Plan/reference: contributor/operator. Historical unless the status page marks it current.
 - Evals: model-quality reviewer.
 - Retrospectives/research: narrative history.
 
@@ -177,14 +177,14 @@ This is manageable only if defined early and consistently. Add these terms to gl
 
 Examples found during review:
 
-- `CRF decoder` says JS inference-time Viterbi is "not yet"; several newer docs and code say it shipped and is default.
-- `how-it-works-now` says locale check workspace exists but factory default falls back to caller trust; `STAGES.md` says it is wired as default; `mailwoman/runtime-pipeline.ts` still does not wire `@mailwoman/locale-hint` by default.
-- `STAGES.md` status says candidate-list API is scaffold-only/designed, then later says `AddressNode.alternatives` shipped.
+- `CRF decoder` states JS inference-time Viterbi is "not yet". Several newer docs and code state it shipped and is default.
+- `how-it-works-now` states the locale check workspace exists but factory default falls back to caller trust. `STAGES.md` states it is wired as default. `mailwoman/runtime-pipeline.ts` still does not wire `@mailwoman/locale-hint` by default.
+- `STAGES.md` status states candidate-list API is scaffold-only/designed, then later states `AddressNode.alternatives` shipped.
 - `ARCHITECTURE.md` still references a `packages/` layout and 47-label vocabulary, while current docs/code discuss root workspaces and 21 BIO labels.
-- `v0-5-0-shipped.md` says B2 is still cooking; later docs/researchs say B2 landed.
+- `v0-5-0-shipped.md` reports B2 as still cooking. Later docs/researchs report that B2 landed.
 - Some code comments in `mailwoman/runtime-pipeline.ts` describe kind classifier as not production-ready while it is wired by default.
 
-Fix with one sweep after `/docs/status` exists. Do not try to make every historical doc timeless; date-stamp and redirect to status.
+Fix with one sweep after `/docs/status` exists. Do not try to make every historical doc timeless. Date-stamp and redirect to status.
 
 ### 6. Homepage sends users to wrong first document
 
@@ -216,7 +216,7 @@ Promote or extract:
 - "Taming WOF" -> public WOF gotchas/reference article
 - v0.4.0 failure bucketing -> eval-methodology article
 
-Blogs can keep narrative; docs should carry stable concepts.
+Blogs can keep narrative. Docs should hold stable concepts.
 
 ### 9. Quantitative public claims need citations or softer framing
 
@@ -277,7 +277,7 @@ This preserves depth while giving each audience a door.
 
 6. Wire and evaluate `forceJointReconcile` with real logits and phrase proposals using current weights.
 7. Produce product-level eval matrix: rule-only, neural-only, hybrid, joint-decode.
-8. If CE-only full train succeeds, ship weights with explicit caveats and model card; if not, continue corpus/tokenizer bisect with synthetic-source weights capped.
+8. If CE-only full train succeeds, ship weights with explicit caveats and model card. If not, continue corpus/tokenizer bisect with synthetic-source weights capped.
 
 ### Next docs cycle
 
@@ -288,10 +288,10 @@ This preserves depth while giving each audience a door.
 
 ## Deepseek sanity check
 
-After the independent pass, the two provided Deepseek notes largely confirmed the same conclusions: strong architecture, serious status drift, missing status/getting-started/API pages, terminology confusion, and end-to-end reconcile validation as a key next step. Two points from those notes are worth carrying forward explicitly:
+After the independent pass, the two provided Deepseek notes largely confirmed the same conclusions: strong architecture, serious status drift, missing status/getting-started/API pages, terminology confusion, and end-to-end reconcile validation as a key next step. Two points from those notes are adopted explicitly here:
 
 - The "gap" sentence from `CONTEXT.md` should be louder: there is no widely adopted neural address parser shipped as a library.
-- The current usable-product story must be direct: yes, you can run pieces today, but the neural model's standalone component F1 is limited and the strongest architecture path still needs end-to-end default-path validation.
+- The current usable-product claim must be direct: yes, you can run pieces today, but the neural model's standalone component F1 is limited and the strongest architecture path still needs end-to-end default-path validation.
 
 ## Bottom line
 

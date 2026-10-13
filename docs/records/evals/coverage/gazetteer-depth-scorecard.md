@@ -26,17 +26,17 @@ appears in exactly the countries whose repo is ingested, and that correspondence
 property of the data.
 
 The column is read off the **artifact** (synthetic id ranges) rather than the recipe. `rebuild pending`
-means the recipe now names a country the shipped gazetteer has not been rebuilt for. Its rows are
-still Overture or GeoNames, and its rungs say nothing about WOF yet.
+means the recipe now lists a country the shipped gazetteer has not been rebuilt for. Its rows are
+still Overture or GeoNames, and its rungs do not yet measure WOF.
 
 ## What this report does not tell you
 
 - **Counts are not quality.** A node count establishes where to look, never that the rows are good.
-- **There is no demand-side grounding below the locality line.** Nothing here proves a sub-locality
-  surface appears in real addresses. Overture's `address_levels` — the obvious instrument — bottoms
+- **There is no demand-side grounding below the locality line.** This report does not prove that a
+  sub-locality surface appears in real addresses. Overture's `address_levels` — the obvious instrument — bottoms
   out at municipality in every country measured, so it cannot see this tier.
 - **The locality rung and above are partly self-comparison.** For the Overture-backfilled country
-  set those rows came from Overture rather than WOF; the `ovt` share in each cell is how much.
+  set those rows came from Overture rather than WOF. The `ovt` share in each cell is how much.
 - **An empty rung is coverage rather than fact.** Two independent filters produce zeroes here: the country
   recipe above, and `ADMIN_PLACETYPES` in `admin/ingest-wof.ts`, which allowlists 9 of WOF's 34
   placetypes . Therefore, even for a cloned country the build never asked for the other 25. Per the

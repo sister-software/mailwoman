@@ -8,7 +8,7 @@
 #   1. Affix relabel lexicon v2 licenses a suffix split by position, so ordinary rows now split too.
 #   2. Corpus v0.19.0 uses suffix-boundary recipe v2. That recipe adds real venue names and hard
 #      negatives that share a stem, such as "Menlo Park Road" beside "Menlo Park".
-#   3. The synth-suffix-boundary weight drops from 12.0 to 2.5, which is about four passes over its
+#   3. The synth-suffix-boundary weight drops from 12.0 to 2.5. That weight is about four passes over its
 #      30k rows in a 60k-step run.
 #   4. The synth-suffix-boundary rows skip augmentation, because augmented copies of a heavily
 #      sampled template source add repetition without diversity.

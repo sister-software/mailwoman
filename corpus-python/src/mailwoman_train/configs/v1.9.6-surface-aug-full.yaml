@@ -2,7 +2,7 @@
 # The v1.9.6 surface-augmentation retrain (case robustness, #829-class) is not promoted.
 # Check-failed: the metamorphic layer introduced 2 casing/whitespace regressions
 # (DC-zip-lowercase, Damrak-whitespace). The #834 drop-in normalize fix already covers most
-# of the case-robustness gap, so the retrain isn't worth the GPU + the regressions. Kept as
+# of the case-robustness gap, so the retrain's GPU cost and regressions exceed its benefit. Kept as
 # the recipe record. revisit only with a recipe that clears the metamorphic check.
 # See docs/articles/evals/2026-06-29-night-postmortem.md.
 # =========================================================================================
@@ -18,7 +18,7 @@
 # (clean attribution).
 #
 # root mechanism (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
-# comprehensive FR source (BAN, OSM) is postcode-complete, so the decoder learned the FR street→locality
+# full-coverage FR source (BAN, OSM) is postcode-complete, so the decoder learned the FR street→locality
 # boundary as "the token after the 5-digit postcode," never as "comma + city." Strip the postcode and proper-
 # noun street tokens leak into the following locality ("Rue René Cassin, Paris" → street="Rue Ren",
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
@@ -32,7 +32,7 @@
 #
 # check (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
 # scripts/diagnostic/fr-parse-recall.ts (bare FR street-intact rate, target the 90%→tail) and US/intl
-# no-regression (the per-tag floors). moves → imbalance confirmed → scale to a full run within the $20 cap.
+# no-regression (the per-tag floors). moves → imbalance confirmed → scale to the full-length resumed run within the $20 cap.
 # flat → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is off
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
 # v1.6.0 ~7M-loss mask blow-up does not apply here. Not promoted without operator GO + the check.

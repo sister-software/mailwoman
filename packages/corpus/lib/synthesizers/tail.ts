@@ -7,9 +7,9 @@
  *   synthesizer writes `Chicago, IL 60613`, `75005 Paris`, `London, EC3N 1DE` or
  *   `Maracaibo 4001, Zulia` from one call rather than from a template per country.
  *
- *   The layout decides which parts print: the FR layout prints no region, so a FR tail carries none
+ *   The layout decides which parts print: the FR layout prints no region, so a FR tail holds none
  *   and the returned components say so. The lines the layout writes are joined with the country's
- *   line join, which is the one-line form the corpus rows take.
+ *   line join. The result is the one-line form the corpus rows take.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

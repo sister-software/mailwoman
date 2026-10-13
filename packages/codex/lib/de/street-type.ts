@@ -13,7 +13,7 @@
  *   abbreviation table to salvage.
  *
  *   The second lesson is the collision, the German cousin of the US `KY` = Key / Kentucky problem.
- *   Many German place names end in what look like street suffixes — `-berg` (Nürnberg), `-burg`
+ *   Some German place names end in what look like street suffixes — `-berg` (Nürnberg), `-burg`
  *   (Hamburg), `-dorf` (Düsseldorf), `-feld`, `-hof`, `-stadt`. If those counted as street markers,
  *   the city token in a `PLZ City` segment would masquerade as a street and wrongly flag the
  *   postcode as a house number. {@link DE_STREET_SUFFIXES} is therefore a curated, place-name-safe

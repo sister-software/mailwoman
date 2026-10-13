@@ -4,7 +4,7 @@
 
 **Goal:** Make every `@mailwoman/*` subpath the browser client reaches bundle under the `browser` condition with no Node builtin in its static graph, so `docs/plugins/demo-assets/webpack-policy.ts` needs no stub, shim or fallback for `@mailwoman/*`.
 
-**Architecture:** Two packaging defects account for every stub. `@mailwoman/core/objects` imports one predicate from the `spliterator` barrel, which drags that library's Node fs, worker-thread and XLSX readers into the client. The fix is a local predicate. `@mailwoman/neural`'s classifier lazily imports `#classifier/loader`, the Node weights loader, and `webpackIgnore` hides that import only from webpack. The fix is a `browser` condition on that `imports` entry pointing at a module that throws. A table-driven esbuild test covers both fixes. Then the docs plugin drops its stubs, and the docs build confirms it works without them.
+**Architecture:** Two packaging defects account for every stub. `@mailwoman/core/objects` imports one predicate from the `spliterator` barrel. That import drags the library's Node fs, worker-thread and XLSX readers into the client. The fix is a local predicate. `@mailwoman/neural`'s classifier lazily imports `#classifier/loader`, the Node weights loader, and `webpackIgnore` hides that import only from webpack. The fix is a `browser` condition on that `imports` entry pointing at a module that throws. A table-driven esbuild test covers both fixes. Then the docs plugin drops its stubs, and the docs build confirms it works without them.
 
 **Tech Stack:** TypeScript under Node type stripping, esbuild (already a devDependency of `core` and `neural` at 0.28.2), vitest (the `unit-slow` CI leg runs `packages/**/*.integration.test.ts`), Docusaurus 3 with webpack, Playwright for the docs browser suite.
 
@@ -21,7 +21,7 @@ first two files as rows and runs from `yarn health`. Tasks 2 through 6 are uncha
 
 - The fix lives in the owning package: a `browser` export or import condition, never a new package, never a bundler shim in a published package.
 - A moved name gets no compatibility re-export.
-- Done means `webpack-policy.ts` carries zero `node:` stubs and zero client-side aliases for `@mailwoman/*`; the Earth `vite.config.ts` will carry no `resolve.alias` for `@mailwoman/*`.
+- Done means `webpack-policy.ts` contains zero `node:` stubs and zero client-side aliases for `@mailwoman/*`. The Earth `vite.config.ts` will contain no `resolve.alias` for `@mailwoman/*`.
 - `node:*` imports are permitted only under `packages/core/lib/fs/`; `oxlint.config.ts` refuses them elsewhere. No task adds one.
 - A test sits beside the module it covers and imports its own package through the `#` imports map. A shared helper under `test/` is imported through `#test/*`.
 - `process.env` and `process.argv` are never read directly.
@@ -39,7 +39,7 @@ Measured 2026-09-06 at `17d2ff958` with esbuild, `platform: "browser"`, `conditi
 | `@mailwoman/neural/web-loader`                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 0                      | 36                  | 34 through `classifier/index.js` → `import("#classifier/loader")` → `core/fs/readers`, `env-paths`, `core/module/resolvers`, `core/utils` barrel, `core/hash`, `core/process`; 2 node-guarded dynamic imports: `tokenizer.js` → `node:fs/promises`, `sentencepiece.mjs` → `node:module` |
 | The other 26 (`react`, `react/map`, `spatial`, `core/json`, `core/resolver`, `core/decoder`, `core/decoder/types`, `core/errors`, `core/pipeline`, `resolver`, `resolver-wof-wasm/browser-cascade`, `resolver-wof-sqlite/{street/normalize,proximity-rerank,primary-preference,fts,candidate-schema,fst/autocomplete,fst/deserialize-web}`, `neural/viterbi`, `kind-classifier`, `phrase-grouper`, `query-shape`, `codex/us`, `cartographer`, `cartographer/base`, `cartographer/coverage`) | 0                      | 0                   | clean                                                                                                                                                                                                                                                                                   |
 
-The `read-excel-file/node` and `write-excel-file/node` aliases in `webpack-policy.ts` are the XLSX reader on the `core/objects` chain; they leave with it. The `@mailwoman/neural/onnx-runner` and `#onnx-runner` aliases apply to the SSR bundle only (`bundleAliases(isServer = true)`), which is a Docusaurus property and leaves with the geocoder page in the Earth plan; Task 6 amends the spec to say so.
+The `read-excel-file/node` and `write-excel-file/node` aliases in `webpack-policy.ts` are the XLSX reader on the `core/objects` chain. They leave with it. The `@mailwoman/neural/onnx-runner` and `#onnx-runner` aliases apply to the SSR bundle only (`bundleAliases(isServer = true)`). That alias is a Docusaurus property and leaves with the geocoder page in the Earth plan. Task 6 amends the spec to say so.
 
 ---
 
@@ -345,7 +345,7 @@ yarn oxlint packages/core/lib/objects.ts
 yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts -t "core/objects"
 ```
 
-Expected: oxlint reports no issue; the row passes with zero static edges. If `prefer-home` reports the predicate, the `HELPER_HOMES` row it names is the home to import from instead; there is none today.
+Expected: oxlint reports no issue, and the row passes with zero static edges. If `prefer-home` reports the predicate, the `HELPER_HOMES` row it names is the home to import from instead. No such row exists today.
 
 - [ ] **Step 3: Run core's own unit tests for the module**
 
@@ -373,7 +373,7 @@ git commit -m "fix(core): objects no longer imports the spliterator barrel, whic
 
 **Interfaces:**
 
-- Consumes: `loadClassifierFromWeights` and `loadScriptRoutedClassifier` types from `#classifier/loader` (the Node module; tsc resolves `#classifier/loader` through the `node` condition to `lib/classifier/loader.ts`, so the `typeof import(...)` positions in `index.ts` keep the Node signatures).
+- Consumes: `loadClassifierFromWeights` and `loadScriptRoutedClassifier` types from `#classifier/loader` (the Node module. tsc resolves `#classifier/loader` through the `node` condition to `lib/classifier/loader.ts`, so the `typeof import(...)` positions in `index.ts` keep the Node signatures).
 - Produces: a browser half of `#classifier/loader` exporting the same two names, each throwing at call time.
 
 - [ ] **Step 1: Write the browser half**
@@ -411,7 +411,7 @@ export const loadScriptRoutedClassifier: typeof loadScriptRoutedClassifierNode =
 
 - [ ] **Step 2: Add the conditional `imports` entry**
 
-In `packages/neural/package.json`, inside `"imports"`, add this entry (an exact key wins over the `"#*"` pattern regardless of position; place it next to `"#onnx-runner"`, whose shape it copies):
+In `packages/neural/package.json`, inside `"imports"`, add this entry (an exact key wins over the `"#*"` pattern regardless of position. Place it next to `"#onnx-runner"`, whose shape it copies):
 
 ```json
 "#classifier/loader": {
@@ -439,7 +439,7 @@ Replace the paragraph at lines 201-206 with:
  */
 ```
 
-Leave the two `import(/* webpackIgnore: true */ "#classifier/loader")` lines as they are. The comment is for the docs SSR bundle, which resolves the `node` condition and would otherwise bundle the Node loader.
+Leave the two `import(/* webpackIgnore: true */ "#classifier/loader")` lines as they are. The comment is for the docs SSR bundle. That bundle resolves the `node` condition and would otherwise bundle the Node loader.
 
 - [ ] **Step 4: Compile, lint, run the rows**
 
@@ -457,7 +457,7 @@ Expected: all 10 rows pass. The `classifier` row's bundle contains `neural/out/c
 
 Run: `yarn vitest --run --config vitest.slow.config.ts packages/neural/test`
 
-Expected: the same pass count as on `main` (the fast CI leg excludes `neural/test/**`, so the slow config is the one that runs them; it needs the lab's weights and databases). Then, from the repository root, `node -e 'import("@mailwoman/neural/classifier").then((m) => console.log(typeof m.NeuralAddressClassifier.loadFromWeights))'` prints `function`.
+Expected: the same pass count as on `main` (the fast CI leg excludes `neural/test/**`, so the slow config is the one that runs them, and it needs the lab's weights and databases). Then, from the repository root, `node -e 'import("@mailwoman/neural/classifier").then((m) => console.log(typeof m.NeuralAddressClassifier.loadFromWeights))'` prints `function`.
 
 - [ ] **Step 6: Commit**
 
@@ -475,7 +475,7 @@ git commit -m "feat(neural): #classifier/loader resolves to a refusing module un
 - Modify: `docs/plugins/demo-assets/webpack-policy.ts` (delete `NODE_BUILTIN_SHIMS`, `EMPTY_NODE_BUILTINS`, `fallbackMap`, the `NormalModuleReplacementPlugin`, the two `*-excel-file/node` aliases, the `emptyShim` parameter)
 - Modify: `docs/plugins/demo-assets/plugin.ts:18,23-24,50` (drop `emptyShim`)
 - Delete: `docs/plugins/demo-assets/node-builtin-stubs.js`, `docs/plugins/demo-assets/node-path-shim.js`, `docs/src/empty-shim.js`
-- Modify: `packages/neural/lib/web/browser-slo.integration.test.ts` (the header paragraph that says the loader "needs the node-builtin shim policy the docs site keeps in `docs/plugins/demo-assets/`")
+- Modify: `packages/neural/lib/web/browser-slo.integration.test.ts` (the header paragraph that states the loader "needs the node-builtin shim policy the docs site keeps in `docs/plugins/demo-assets/`")
 
 **Interfaces:**
 
@@ -612,7 +612,7 @@ Run, from `docs/`:
 yarn test:e2e --project=chromium test/browser/100-demo-cold-load.spec.ts test/browser/200-demo-resolve.spec.ts
 ```
 
-Expected: pass. `100-demo-cold-load` asserts the page hydrates without style, terrain or asset errors, which is where a missing module surfaces at runtime rather than at build time.
+Expected: pass. `100-demo-cold-load` asserts the page hydrates without style, terrain or asset errors. A missing module surfaces there at runtime rather than at build time.
 
 - [ ] **Step 6: Commit**
 
@@ -674,7 +674,7 @@ with the outcome (kept on, or the refusing module) stated in the commit body.
 
 **Files:**
 
-- Modify: `docs/superpowers/specs/2026-09-06-browser-export-conditions-design.md` (status line; the "Proof" section; the "Definition of done" list)
+- Modify: `docs/superpowers/specs/2026-09-06-browser-export-conditions-design.md` (the status line, the "Proof" section, and the "Definition of done" list)
 
 - [ ] **Step 1: Amend the spec**
 
@@ -682,7 +682,7 @@ Status line: append `Implemented`, today's date, and the PR number once `gh pr c
 
 "Proof" section: replace its first sentence with "One table-driven test, `packages/neural/lib/browser-bundle.integration.test.ts`, covers every `core` and `neural` subpath the client reaches; `neural` depends on `core`, so both packages' public subpaths are reachable from one file, and a second copy of the esbuild walk would trip `jscpd`. Subpaths in packages `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`, `resolver-wof-sqlite`) measured clean and are guarded by the Earth app's Vite build."
 
-"Definition of done", second bullet: replace with "`docs/plugins/demo-assets/webpack-policy.ts` carries zero `node:` stubs, zero fallbacks, and zero client-side aliases for `@mailwoman/*`. The SSR-only `onnx-runner` alias is a Docusaurus property and leaves with the geocoder page in the Earth design."
+"Definition of done", second bullet: replace with "`docs/plugins/demo-assets/webpack-policy.ts` contains zero `node:` stubs, zero fallbacks, and zero client-side aliases for `@mailwoman/*`. The SSR-only `onnx-runner` alias is a Docusaurus property and leaves with the geocoder page in the Earth design."
 
 - [ ] **Step 2: Run the full preflight**
 
@@ -727,4 +727,4 @@ EOF
 )
 ```
 
-The PR is the receipt the spec's first done bullet asks for; the inventory table goes in its description rather than in a comment in code.
+The PR is the receipt the spec's first done bullet asks for. The inventory table goes in its description rather than in a comment in code.

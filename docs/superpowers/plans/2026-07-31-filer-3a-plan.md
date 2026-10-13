@@ -16,14 +16,14 @@
 
 ## Pre-registered decisions (cite in commits)
 
-1. **3a's crosswalk core is Form 499 plus the BDC provider list. CORES arrives as a bounded enrichment pass (Task 9) rather than through the Nexus scraper.** _Revised 2026-07-31 after operator pushback. The first draft deferred CORES entirely. It reasoned from "the salvage has no bulk loader" to "no good source exists", which does not follow, and the conclusion was wrong._ Research found that the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call). It returns the company name **plus parent and subsidiary names**. A Relationship-FRN endpoint is also documented in Postman. This is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b**, which is worth much more than the first draft's "enrichment" framing suggested.
+1. **3a's crosswalk core is Form 499 plus the BDC provider list. CORES arrives as a bounded enrichment pass (Task 9) rather than through the Nexus scraper.** _Revised 2026-07-31 after operator pushback. The first draft deferred CORES entirely. It reasoned from "the salvage has no bulk loader" to "no good source exists", which does not follow, and the conclusion was wrong._ Research found that the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call). It returns the company name **plus parent and subsidiary names**. A Relationship-FRN endpoint is also documented in Postman. This is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b**. That role supplies parent and subsidiary edges. The first draft's "enrichment" framing did not anticipate them.
    No CORES **bulk** extract was found, because the FCC's bulk downloads cover ULS and ASR but not CORES. Per-FRN calls are acceptable here because 499 and the provider list first produce a **finite, enumerated FRN universe**. The job is bounded enrichment over a known key set rather than an open-ended crawl for discovery. Cache per FRN, rate-limit the requests, and identify the client.
    **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs and terms are unverified. `broadbandmap.fcc.gov` works with credentials, so the block is specific to these hosts. Task 9 opens with a verification step and stops if the interface differs from the documentation.
 2. **`filer.db` is not a layer-interface artifact in 3a.** It has no coordinates (ASR is 3c), and `layer_coverage` is h3-keyed with no null path. Layer-interface conformance would require coverage rows that assert no fact. The meaning-of-zero rule prohibits those rows. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at), with `LayerManifestTable`'s fields minus the spatial ones. Layer-interface conformance is deferred to 3c, when ASR structures provide coordinates and coverage becomes meaningful. **Do not geocode filer HQ addresses in 3a** to create a spatial spine.
-3. **FRN is a zero-padded 10-character branded string.** Nexus types it as `Tagged<number>`, while `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros, the same defect class as 2a's `location_id`. Provide `isFRN(value): value is FRN` with a real 10-digit check, which the Nexus guard lacks.
+3. **FRN is a zero-padded 10-character branded string.** Nexus types it as `Tagged<number>`, while `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros, the same defect class as 2a's `location_id`. Provide `isFRN(value): value is FRN` with a real 10-digit check. The Nexus guard lacks that check.
 4. **Entity linkage runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup**, and its threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the direct FS path the spec describes. Revisit this only with a corporate-data model.
 5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and can be queried, but a rollup that includes them must say so. This is §4.1, and it is an acceptance check.
-6. **The graph keeps full cardinality, and `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can carry multiple FRNs and conflicting holding companies. Nexus warns, overwrites and keeps the last value, and this code must not copy that. `filer.db` retains every edge. When task 8 populates `bdc_provider`, the primary FRN is the one from the most recent 499 filing date, and the schema docstring documents that rule. `brand_name` stays NULL because the provider list has no source for it.
+6. **The graph keeps full cardinality, and `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can have multiple FRNs and conflicting holding companies. Nexus warns, overwrites and keeps the last value, and this code must not copy that. `filer.db` retains every edge. When task 8 populates `bdc_provider`, the primary FRN is the one from the most recent 499 filing date, and the schema docstring documents that rule. `brand_name` stays NULL because the provider list has no source for it.
 7. **Temporal validity: `valid_from` is mandatory and `valid_to` is nullable.** In 3a the only date source is the 499 `lastFiledAt`. `valid_from` is therefore the filing date for 499-derived edges and the file vintage for provider-list edges. Transfer-of-control dates arrive in 3b. Every rollup query takes an `asOf` date.
 8. **Parse by streaming rather than reading whole files.** The Nexus 499 loader reads the entire TSV into memory and silently truncates short rows (`relax_column_count_less`). The new parser streams, and a short row raises an error that identifies the file and line. Malformed input is never silently absorbed, as with 2a's `peekProviderID`.
 
@@ -32,7 +32,7 @@
 1. **Provenance completeness (required).** No edge can exist without `source`, `source_vintage`, `assertion` and `valid_from`. Enforce this structurally. The fields are non-optional on the insert type and pinned with `satisfies Record<keyof FilerEdgeInsert, true>`, and a runtime test asserts that a partial edge is rejected.
 2. **Authoritative and inferred edges are never conflated.** Entity groups use authoritative edges only. A fixture test adds an inferred edge that _would_ merge two authoritative components, then asserts that the merge does not happen and that the API exposes the distinction.
 3. **Cardinality fidelity.** A fixture `provider_id` carrying two FRNs round-trips both edges through `filer.db`. The test also asserts that the documented primary-FRN rule picks the later-filed one.
-4. **Temporal scoping.** Every edge carries `valid_from`. A rollup query with an `asOf` before an edge's `valid_from` excludes that edge, and the result states the `asOf` it used.
+4. **Temporal scoping.** Every edge stores `valid_from`. A rollup query with an `asOf` before an edge's `valid_from` excludes that edge, and the result states the `asOf` it used.
 
 ---
 
@@ -68,7 +68,7 @@ export function classifyFiler(row: Form499Row): FilerClassification[]   // port 
 export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row>  // STREAMING
 ```
 
-- [x] Tests first: `toFRN(1753557)` → `"0001753557"`; `isFRN("1753557")` false (not 10 chars); a fixture TSV of 3 rows parses to 3 typed rows; a short row throws naming file + line number (decision 8); `classifyFiler` over rows with `principalCommType` containing "Incumbent"/"CLEC"/"Interexchange"/"Toll Reseller" and `usfContributor` TRUE.
+- [x] Tests first: `toFRN(1753557)` → `"0001753557"`, `isFRN("1753557")` false (not 10 chars), a fixture TSV of 3 rows parses to 3 typed rows, a short row throws naming file + line number (decision 8), and `classifyFiler` over rows with `principalCommType` containing "Incumbent"/"CLEC"/"Interexchange"/"Toll Reseller" and `usfContributor` TRUE.
 - [x] Implement. Retain both the `managementCompany` and `holdingCompany` fields, because they are different assertions (spec §3.1 finding 1). Note in the docstring that `otherTradeName1` exists in the Nexus interface but not its column tuple, and is therefore absent here by design.
 - [x] Commit `feat(filer): FRN branded string + streaming Form 499 parser (3a task 2, decisions 3,8)`.
 
@@ -85,7 +85,7 @@ export async function* parseProviderList(csvPath: string): AsyncIterable<Provide
 
 One `provider_id` may appear on multiple rows with different FRNs. **Yield every row**, without deduplicating or keeping only the last one (decision 6). The fixture must include a provider_id with two FRNs and one with two different holding-company strings.
 
-- [x] TDD; commit `feat(filer): BDC provider-list parser preserving multi-FRN cardinality (3a task 3, decision 6)`.
+- [x] TDD, then commit `feat(filer): BDC provider-list parser preserving multi-FRN cardinality (3a task 3, decision 6)`.
 
 ### Task 4: `filer.db` schema
 
@@ -185,7 +185,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 The builder emits these authoritative edges: FRN↔form499ID, FRN↔holdingCompanyName, FRN↔managementCompanyName (both company fields, per the decision), bdcProviderID↔FRN and bdcProviderID↔holdingCompanyName. It stores legal name, DBA, classifications and contact fields as attributes. `valid_from` follows decision 7.
 
-- [x] TDD through the rows boundaries, with no file IO in tests. Assert that a malformed row raises an error, that a provider_id with two FRNs yields two edges, that every edge has non-empty provenance, and that the manifest carries the vintage.
+- [x] TDD through the rows boundaries, with no file IO in tests. Assert that a malformed row raises an error, that a provider_id with two FRNs yields two edges, that every edge has non-empty provenance, and that the manifest records the vintage.
 - [x] Commit `feat(filer): filer.db builder — authoritative edges, staged dedup, sealed artifact (3a task 5)`.
 
 ### Task 6: Entity clustering
@@ -241,7 +241,7 @@ MCP: add `mailwoman_filer_lookup` following the house pattern exactly: snake_cas
 
 **Files:** Modify `bdc/sdk/build-bdc.ts` (add `BuildBDCOptions.providers?`), `bdc/schema.ts` (docstring only, for the primary-FRN rule), `mailwoman/commands/gazetteer/build/bdc.tsx` (flag), and tests.
 
-`bdc.db` is sealed and atomically swapped, so this is a **rebuild path** rather than an in-place write (recon finding 4). Add an optional `providers?: Iterable<ProviderListRow>` to `BuildBDCOptions`. When it is present, populate `bdc_provider` during the build. The primary FRN is the one from the most recent 499 filing date. `brand_name` stays NULL because no source provides it, and the docstring says so. Verify that the default path (no `providers`) produces output byte-identical to today's.
+`bdc.db` is sealed and atomically swapped, so this is a **rebuild path** rather than an in-place write (recon finding 4). Add an optional `providers?: Iterable<ProviderListRow>` to `BuildBDCOptions`. When it is present, populate `bdc_provider` during the build. The primary FRN is the one from the most recent 499 filing date. `brand_name` stays NULL because no source provides it, and the docstring states that. Verify that the default path (no `providers`) produces output byte-identical to today's.
 
 - [x] TDD. Assert that default-path behavior is unchanged and that a multi-FRN fixture exercises the lossy-denormalization rule.
 - [x] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
@@ -253,11 +253,17 @@ MCP: add `mailwoman_filer_lookup` following the house pattern exactly: snake_cas
 - `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` returned **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block depends on the host or IP rather than the agent string.
 - `https://apps.fcc.gov/cores/api/frn/0001753557` returned an HTML **"Invalid Request"** page rather than JSON. That guessed path is not the documented interface.
 
-The check's own terms read: _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_. No fallback was attempted, and no code was written. `broadbandmap.fcc.gov` still works with credentials, so the block is specific to these hosts rather than covering all FCC hosts.
+The check's own terms read:
 
-**What remains true:** the FRN Conversions API is publicly documented and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than only enrichment. No evidence disproved that claim. It could not be verified from the lab host.
+```text
+if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape
+```
 
-**Carried to 3b** with two prerequisites:
+No fallback was attempted, and no code was written. `broadbandmap.fcc.gov` still works with credentials, so the block is specific to these hosts rather than covering all FCC hosts.
+
+**What remains true:** the FRN Conversions API is publicly documented and reportedly returns parent and subsidiary names. Those names would make it a family-edge source rather than only enrichment. No evidence disproved that claim. It could not be verified from the lab host.
+
+**Deferred to 3b** with two prerequisites:
 
 1. Run Step 0 from a network path that can reach `data.fcc.gov`, such as the operator's own machine, and record the real response shape, auth requirements and terms.
 2. Implement only after that, and keep the enumeration bounded. The FRN universe comes from the already-built crosswalk, so the job is enrichment over a known key set and never a crawl.

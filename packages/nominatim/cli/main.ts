@@ -107,7 +107,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const resolver = createWOFResolver(backend)
 	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse.
-	// A no-op when the extract is not on disk, so the endpoint degrades cleanly.
+	// A no-op when the extract is not on disk, so the endpoint falls back to the OSM tier without an error.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	// The annotation fallback adds no country constraint to the geocode.
@@ -296,7 +296,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			}
 
 			// The terms come from the same `layer_manifest` rows the `/status` payload includes,
-			// so the operator reads them at boot rather than by querying the endpoint they just started.
+			// so the operator reads them at boot rather than by querying the endpoint they started.
 			for (const line of rightsBannerLines({ dataUpdated: null, artifacts: status.mailwoman?.artifacts ?? [] })) {
 				console.error(line)
 			}

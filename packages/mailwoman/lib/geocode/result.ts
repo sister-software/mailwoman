@@ -173,7 +173,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			}
 		}
 
-		// A coordinate from the postcode's own row locates the postcode, which is finer than its locality.
+		// A coordinate from the postcode's own row locates the postcode.
+		// A postcode is finer than its locality.
 		if (adminWinnerNode?.tag === "postcode") {
 			tier = "postcode"
 			uncertaintyM = halfDiagonalM(adminWinnerNode.metadata?.["resolver_bbox"])

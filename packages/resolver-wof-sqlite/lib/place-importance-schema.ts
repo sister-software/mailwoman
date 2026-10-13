@@ -21,7 +21,7 @@ export interface PlaceImportanceTable {
 	 * It is never NULL.
 	 * A place without a population row scores `0`.
 	 *
-	 * That score represents no population evidence, so it earns no boost or penalty.
+	 * That score represents no population evidence, so it receives no boost or penalty.
 	 */
 	referential: number
 

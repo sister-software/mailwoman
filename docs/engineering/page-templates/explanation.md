@@ -6,7 +6,7 @@ reader should understand the system differently, without having changed anything
 
 ## Frontmatter skeleton
 
-Copy this to the top of the new page. This role carries no fields beyond `role:`.
+Copy this to the top of the new page. This role has no fields beyond `role:`.
 
 ```yaml
 ---
@@ -55,7 +55,7 @@ groupPhrases("1600 Amphitheatre Parkway, Mountain View, CA 94043", shape, locale
 ## Checks before commit
 
 - The rule-world analog appears before the statistical term rather than after it.
-- Each term is defined in one sentence at first use, and the registry link carries the rest.
+- Each term is defined in one sentence at first use, and the registry link supplies the rest.
 - The page states what the design gives up rather than only what it gains.
 - The page contains no steps or interface tables. Those belong on a `guide` or a `reference` page, linked
   from Related.

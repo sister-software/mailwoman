@@ -285,8 +285,8 @@ describe("DebugFrame", () => {
 		const lines = frameLines(text)
 		const markedLineCount = lines.filter((line) => line.includes("#")).length
 
-		// Every requested frame row actually rendered, since an undercounted chrome
-		// budget clips rows to fit MapPane's declared box height.
+		// Every requested frame row rendered, since an undercounted chrome budget
+		// clips rows to fit MapPane's declared box height.
 		expect(markedLineCount).toBe(cellSize.rows)
 		expect(text).toContain("map")
 		expect(text).toContain("test attribution")

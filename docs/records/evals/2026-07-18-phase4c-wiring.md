@@ -6,9 +6,9 @@ measured the name-evidence rerank at +6.0pp street@1 on the FR fragment board. T
 compose them into one production entry point, `rerankByStreetEvidence`, and — the part the board
 did not do — check what the rerank costs the REST of the parse.
 
-## The board measured street in isolation; the wiring measured the whole tree
+## The board measured street in isolation, and the wiring measured the whole tree
 
-The night's board scored the street tag alone. The real parse route (segmentation → tree)
+The night's board scored only the street tag. The real parse route (segmentation → tree)
 surfaced a hazard the board could not see: **the span head is a street-boundary specialist, and its
 full segmentation decode is far worse than the BIO argmax head on every other tag.** The segmentation
 argmax tree with the segmentation decode:
@@ -26,11 +26,11 @@ disaster. The board's number was real but partial.
 Two design moves, each measured:
 
 1. **Street-splice rather than tree-replace.** Override only the tokens the winning segmentation labels
-   street-family; argmax owns locality/region/postcode/house_number. This alone recovered most of
+   street-family. Argmax owns locality/region/postcode/house_number. This move by itself recovered most of
    the loss (fr exact −1.4pp) but still cost fr street −2.7pp — the span head over/under-extends the
    street on clean multi-component inputs where the BIO head is better.
 2. **Positive-evidence check.** Splice only a street the atlas CONFIRMS exists. On a clean address
-   the argmax street is already right + confirmed → the splice is a no-op; on a fragment the argmax
+   the argmax street is already right + confirmed → the splice is a no-op. On a fragment the argmax
    street is wrong/absent and the confirmed segmentation street replaces it. An unconfirmed street
    never overrides the model.
 
@@ -47,8 +47,8 @@ Two design moves, each measured:
 | — street-particle                          | 0.858           | 0.935     | +7.7pp        |
 
 273 fixes / 3 breaks on the fragment board. **Zero golden regression, +16.9pp on FR fragments.**
-Note the framing: the night's "+6.0pp" was measured against the span-head's own seg@1; against the
-model production runs (argmax), the result is +16.9pp — the argmax baseline was
+Note the framing: the night's "+6.0pp" was measured against the span-head's own seg@1. Against the
+model production runs (argmax), the result is +16.9pp. The argmax baseline was
 much lower on fragments than the segmentation seg@1 the board used.
 
 ## Status + what's next
@@ -56,12 +56,12 @@ much lower on fragments than the segmentation seg@1 the board used.
 - `mailwoman/kbest-street-rerank.ts` — `rerankByStreetEvidence(classifier, text, evidence, grammar,
   opts)`, PURE composition (injected evidence), byte-stable fallback for span-less models. Unit
   tested; `SQLiteStreetNameLookup` now exported from the resolver-wof-sqlite barrel (a gap #1156 left).
-- **Not yet in the runtime pipeline / CLI.** The function is the wired primitive; threading it into
-  `createRuntimePipeline` behind a flag (so the CLI + drop-in servers exercise it) is the next step,
-  along with the full CLI promote battery (gauntlet, metamorphic) — the golden guard here is the
+- **Not yet in the runtime pipeline / CLI.** The function is the wired primitive. The next step wires it into
+  `createRuntimePipeline` behind a flag (so the CLI + drop-in servers exercise it) and runs the full CLI promote battery (gauntlet, metamorphic) — the golden guard here is the
   headline check and it passes at 0.000.
-- **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the interface fold; rebuilding it
+- **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the interface fold. A rebuild
   with `foldStreetSurface` + a `street_norm` index closes the last few fragment misses (3 breaks) and
   makes the production lookup fast.
 - The rerank changes only the STREET tag, only on atlas-confirmed evidence — the anti-Pelias
-  discipline held end to end: one bit of evidence, no score blending, the model owns every uncertain call.
+  discipline held end to end. The rerank uses one bit of evidence and blends no scores, and the model
+  owns every uncertain call.

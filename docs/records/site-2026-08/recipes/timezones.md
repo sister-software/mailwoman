@@ -43,7 +43,7 @@ const lookup = new TimezoneLookup({ databasePath: "timezone.db" })
 lookup.find(35.6762, 139.6503) // "Asia/Tokyo"
 ```
 
-Already using the annotations layer? Wrap the lookup as an `Annotator` and it fills `AnnotationSet.timezone` on any resolved result, so a timezone rides along with every geocode:
+Already using the annotations layer? Wrap the lookup as an `Annotator` and it fills `AnnotationSet.timezone` on any resolved result, so every geocode result includes a timezone:
 
 ```ts
 const annotator = makeTimezoneAnnotator(lookup)
@@ -51,4 +51,4 @@ const annotator = makeTimezoneAnnotator(lookup)
 
 ## Data and licensing
 
-The boundaries come from timezone-boundary-builder, which is **ODbL**. Attribution and share-alike apply to the database you build and distribute — [Data licensing](../licensing/data-provenance.md) is where that line falls and what you owe. A browser/WASM build is a follow-up; today the lookup is server-side.
+The boundaries come from timezone-boundary-builder. Its license is **ODbL**. Attribution and share-alike apply to the database you build and distribute. [Data licensing](../licensing/data-provenance.md) explains where that line falls and what you owe. A browser/WASM build is a follow-up. The lookup is currently server-side.

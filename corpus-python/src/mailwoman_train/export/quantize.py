@@ -33,7 +33,7 @@ from onnxruntime.quantization import QuantType, quantize_dynamic
 
 
 def _strip_value_info(src: Path, dst: Path) -> Path:
-    """Drop intermediate ``value_info`` so onnx re-infers shapes cleanly at quantize time.
+    """Drop intermediate ``value_info`` so onnx re-infers shapes at quantize time without conflicting with stale entries.
 
     The function preserves graph inputs/outputs/initializers. It clears only the
     redundant or stale intermediate shape annotations. See the module docstring for the reason.

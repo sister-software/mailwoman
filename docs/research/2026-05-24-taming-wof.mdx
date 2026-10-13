@@ -11,7 +11,7 @@ tags: [resolver, geocoding]
 
 :::
 
-Who's On First is the best open gazetteer we have, and one of the strangest datasets you'll encounter as a developer. This post covers what makes it hard to use, what makes it worth the effort, and the tooling we built inside Mailwoman to work with it.
+Who's On First is the best open gazetteer we have, and one of the strangest datasets you'll encounter as a developer. This post covers what makes it hard to use, what makes it useful despite the effort, and the tooling we built inside Mailwoman to work with it.
 
 If you've ever tried to answer "what city is this address in?" programmatically with open data instead of a paid geocoding API, you've probably already run into WOF, and it probably raised some questions.
 
@@ -31,7 +31,7 @@ WOF gives you something no other open dataset does: **a consistent hierarchy wit
 
 WOF stores each place as a separate `.geojson` file in a directory tree. A US admin dataset has roughly 120,000 individual files. The French equivalent has about 80,000. Before an analyst can ask a question, the system must open, parse, and index 200,000 JSON files. That setup is a substantial engineering task.
 
-This per-file layout made sense for WOF's original use case, which was tracking changes to individual places in git. You can see who edited Houston last, what changed, and when. For a geocoder that needs to query "all localities named Houston" across 120K files, it is the wrong access pattern.
+This per-file layout made sense for WOF's original use case: tracking changes to individual places in git. You can see who edited Houston last, what changed, and when. For a geocoder that needs to query "all localities called Houston" across 120K files, it is the wrong access pattern.
 
 ### The property namespace explosion
 
@@ -104,7 +104,7 @@ The normalization matters because WOF stores "São Paulo" with the accent, but u
 
 ### Layer 2: per-placetype SQLite DB (`PlacetypeDataSource`)
 
-The reconciler needs richer queries, such as "give me all localities named Houston with their parent_id chains" and "walk this locality's parent_id up to region and check whether it reaches Texas."
+The reconciler needs richer queries, such as "give me all localities called Houston with their parent_id chains" and "walk this locality's parent_id up to region and check whether it reaches Texas."
 
 `PlacetypeDataSource` is a SQLite database per (placetype, language) combination. Schema:
 
@@ -123,7 +123,7 @@ CREATE TABLE records (
 );
 ```
 
-The table has one row per name variant. "Saint Petersburg", "St. Petersburg", and "St Petersburg" are three rows with the same `id` and different `name`/`variant`/`short` columns. The reconciler can query any variant form and get the same `parent_id` chain, which fixes the "not found" problem we hit in testing.
+The table has one row per name variant. "Saint Petersburg", "St. Petersburg", and "St Petersburg" are three rows with the same `id` and different `name`/`variant`/`short` columns. The reconciler can query any variant form and get the same `parent_id` chain. That fixes the "not found" problem we hit in testing.
 
 ### The Piscina pipeline (stalled, documented)
 
@@ -148,7 +148,7 @@ We built it and marked it `@internal`. We haven't exercised it at scale because 
 These are the next three tasks, in priority order:
 
 1. **Finish the SQLite migration.** The worker targets Redis, and it should target `PlacetypeDataSource`. The `pluckPlacetypeSpec` output already matches the schema. The remaining work is plumbing rather than design.
-2. **Wire PlacetypeDataSource into the reconciler.** The concordance scoring currently uses the raw WOF `spr` SQLite table (from Geocode Earth's distribution). It should use our per-placetype/per-language DBs, which carry the name variants the raw table doesn't expose. This fixes the "Saint Petersburg not found" class of lookup failures.
+2. **Wire PlacetypeDataSource into the reconciler.** The concordance scoring currently uses the raw WOF `spr` SQLite table (from Geocode Earth's distribution). It should use our per-placetype/per-language DBs. Those DBs hold the name variants the raw table doesn't expose. This fixes the "Saint Petersburg not found" class of lookup failures.
 3. **Benchmark the in-memory-then-consolidate pattern.** If 120K individual writes to the same few DB files from N concurrent workers bottlenecks on SQLite's WAL writer (likely), the in-memory-SQLite-per-worker → ATTACH-and-merge pattern is the fallback. Whether it's needed at all depends on whether step 1 is fast enough without it.
 
 ## So why put up with WOF?

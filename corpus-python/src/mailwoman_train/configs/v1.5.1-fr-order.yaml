@@ -1,5 +1,5 @@
-# This recipe is v1.5.0-fr-order.yaml with the synth-fr-order weight raised from 3.0 to 6.0, which
-# matches the synth-german weight. The source renders FR addresses with the postcode first. At 3.0
+# This recipe is v1.5.0-fr-order.yaml with the synth-fr-order weight raised from 3.0 to 6.0. The new
+# weight matches the synth-german weight. The source renders FR addresses with the postcode first. At 3.0
 # the model still read a leading postcode as a house number, because the BAN rows in canonical order
 # outweighed it.
 #

@@ -141,7 +141,8 @@ export interface WeightsFamily {
 /**
  * The Latin SentencePiece family.
  *
- * Its overlays declare `mailwoman.baseWeights` on its graph package and ship only retrieval artifacts.
+ * Its weights-overlay packages declare `mailwoman.baseWeights` on its graph package
+ * and ship only retrieval artifacts.
  * It has no routing scripts, so Latin requests reach it through the caller's locale.
  */
 const LATIN_FAMILY: WeightsFamily = {

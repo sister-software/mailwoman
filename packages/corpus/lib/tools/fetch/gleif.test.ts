@@ -24,7 +24,7 @@ const ARCHIVE_URL =
 	"https://goldencopy.gleif.org/storage/golden-copy-files/2026/10/03/1283915/20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip"
 
 /**
- * The publish API's answer for the 2026-10-03 08:00 publish, cut to the fields this module reads.
+ * The publish API's answer for the 2026-10-03 08:00 publish, reduced to the fields this module reads.
  */
 const PUBLISH_BODY = {
 	data: {

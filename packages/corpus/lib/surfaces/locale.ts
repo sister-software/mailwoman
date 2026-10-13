@@ -156,7 +156,7 @@ function tokenPresent(raw: string, value: string): boolean {
  * Render one tuple into a locale-ordered `{raw, components}` row via OpenCage templates,
  * with light variation (house number and postcode may be dropped).
  *
- * Returns `null` when the tuple is too thin or a component would not align cleanly.
+ * Returns `null` when the tuple is too thin or a component would not align to an exact span.
  *
  * Region handling depends on order:
  * - native omits region for alignment reliability

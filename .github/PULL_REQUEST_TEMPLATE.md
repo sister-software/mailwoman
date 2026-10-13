@@ -11,7 +11,7 @@ judgment word stands where a fact belongs
 ## Evidence
 
 - The measured quantity with its denominator, threshold, artifact, and comparison arm.
-- The addresses that changed, named. Link the full failure list when the board is large.
+- The addresses that changed, each written out. Link the full failure list when the board is large.
 - The tool or command that produced each number.
 
 ## Why chain
@@ -26,12 +26,12 @@ Delete this section when the change is not a fix.
 - [ ] D-rule: no known regression on any tier-1 locale vs shipped, or stated with its per-locale check
       (`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`).
 - [ ] The linked issue's task list is fully checked.
-- [ ] Every number in this description has its denominator; every WOF id has its entity name.
+- [ ] Every number in this description has its denominator, and every WOF id has its entity name.
 
 ## Docs pages touched? Confirm each line — delete this section if the PR doesn't touch docs/articles
 
-- [ ] The reader question this serves is named above — and no canonical page already owns it ([docs policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/contributing-docs.mdx)).
-- [ ] Canonical pages were updated in place; any new page answers a distinct reader question.
+- [ ] The reader question this serves is stated above, and no canonical page already owns it ([docs policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/contributing-docs.mdx)).
+- [ ] Canonical pages were updated in place, and any new page answers a distinct reader question.
 - [ ] Factual claims name their source: a code path, a schema, an eval report — not recollection.
-- [ ] Captured outputs were executed rather than hand-typed; release-bound numbers cite the shipped npm model.
+- [ ] Captured outputs were executed rather than hand-typed, and release-bound numbers cite the shipped npm model.
 - [ ] Frontmatter matches the policy: `role:` where required, `status:`/`superseded-by:` on retired pages, `review-by:` considered for concept pages.

@@ -7,7 +7,7 @@
  *
  *   1. Region abbreviations: WOF region records contain only the full name. `findPlace('IL')`
  *      returns no place without the abbreviation, killing the parent constraint the resolve walk
- *      depends on. The source of truth is the packaged chromium-i18n / libaddressinput dataset
+ *      depends on. The abbreviations come from the packaged chromium-i18n / libaddressinput dataset
  *      (`core/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and
  *      `sub_names` are index-aligned. These fields supply the abbreviations.
  *   2. `place_abbr`, the `id → abbreviation` join table that lets the resolver accept a 2-letter

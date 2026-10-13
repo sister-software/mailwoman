@@ -82,7 +82,7 @@ export interface SourceManifest {
 }
 
 /**
- * A status worth retrying: rate limiting or a server-side failure.
+ * A status the download retries: rate limiting or a server-side failure.
  */
 /**
  * An HTTP failure that includes its status, so callers branch on `error.status`

@@ -18,7 +18,7 @@
 #      anti-decompose signal without committing to full v0.7 locale expansion.
 #      Build pipeline: corpus/src/synthesize-no-street.ts +
 #      the no-street recipe (its script has since been retired. no `packages/corpus/lib/recipes/`
-#      module carries it today) + scripts/extract-tuples-de-gb.py +
+#      module contains it today) + scripts/extract-tuples-de-gb.py +
 #      scripts/jsonl-to-parquet.py.
 #
 #   3. CRF stays disabled (CE-only) per NaN protocol's "one variable at a time"
@@ -34,7 +34,7 @@
 #   5. Early-eval check at 20K steps: if dep_loc hallucinations > 100 against
 #      the v0.6.0 baseline JSON, abort and bump synth-no-street row count
 #      (don't drop synth-street further). The eval pipeline must run against
-#      a 20K checkpoint rather than just 100K.
+#      a 20K checkpoint as well as the 100K one.
 #
 # Promotion decision tree at 100K:
 #

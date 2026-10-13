@@ -9,7 +9,7 @@
  *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), derived
  *   after the sorting town Royal Mail routes it through rather than after a county or a constituent
  *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
- *   département from the first two digits. The only honest thing we _can_ derive is which of the
+ *   département from the first two digits. The only fact we _can_ derive is which of the
  *   four UK countries an area predominantly falls in — and even that has border exceptions:
  *
  *   - **TD** (Galashiels) and **SY** (Shrewsbury) straddle the Scotland/England and Wales/England
@@ -90,8 +90,9 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
  * Real postcodes occur on both sides of each border.
  *
  * The header above documents them in prose.
- * This is the same knowledge in a form a build can read, so an artifact that asserts ancestry per
- * postcode district can withhold the constituent country here instead of asserting a coin-flip.
+ * This is the same knowledge in a form a build can read, so an artifact that
+ * asserts ancestry per postcode district can withhold the constituent country here
+ * instead of asserting one of two equally likely countries.
  *
  * Consumers that only want the coarse majority answer keep using
  * {@link countryOfPostcodeArea} and ignore this.
@@ -112,7 +113,7 @@ function isAreaShape(area: unknown): area is string {
  * and `ENG` as the default for any other validly-shaped area.
  * England is by far the largest, so the default is transparent and the non-England
  * exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.
- * Returns null for clearly-invalid input (not one-or-two letters), so a malformed
+ * Returns null for invalid input (not one-or-two letters), so a malformed
  * token is not silently called England.
  */
 export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {

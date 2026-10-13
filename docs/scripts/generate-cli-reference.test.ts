@@ -47,7 +47,7 @@ describe("generate-cli-reference", () => {
 		expect(sectionFor(page, "doctor")).toMatchInlineSnapshot(`
 			"### \`mailwoman doctor\`
 
-			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs. A missing layer is reported, never fatal, and every failing line carries the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license carries (attribution, share-alike, source offer).
+			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs. A missing layer is reported, never fatal, and every failing line prints the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license imposes (attribution, share-alike, source offer).
 
 			\`\`\`
 			mailwoman doctor [options]
@@ -74,12 +74,12 @@ describe("generate-cli-reference", () => {
 
 			| Flag                      | Type                          | Default | Description                                                                                                                                                 |
 			| ------------------------- | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-			| \`--dry-run\`               | boolean                       | \`false\` | Print the download plan; touch no network and write no data                                                                                                 |
+			| \`--dry-run\`               | boolean                       | \`false\` | Print the download plan without network access or data writes                                                                                               |
 			| \`--only [only]\`           | string                        | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
 			| \`--force\`                 | boolean                       | \`false\` | Re-download even when a local copy already appears present                                                                                                  |
 			| \`--data-root [data-root]\` | string                        | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
 			| \`--host [host]\`           | string                        | —       | Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket. |
-			| \`--refuse [refuse...]\`    | \`share-alike\` \\| \`unresolved\` | —       | Decline a bundle whose recorded expression carries this class of obligation (share-alike, unresolved); repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS   |"
+			| \`--refuse [refuse...]\`    | \`share-alike\` \\| \`unresolved\` | —       | Decline a bundle whose recorded expression has this class of obligation (share-alike, unresolved). Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS       |"
 		`)
 	})
 

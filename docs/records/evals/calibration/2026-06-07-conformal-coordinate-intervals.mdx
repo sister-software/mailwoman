@@ -2,18 +2,18 @@
 
 A coverage guarantee on _where_ a resolved address is. Companion to the [isotonic
 calibration](./2026-06-07-isotonic-calibration.mdx) work — calibration tells you how much to trust the
-_label_; this tells you the _radius_ the true point sits in.
+_label_. This record tells you the _radius_ the true point sits in.
 
 ## The question
 
 When the resolver places an address at a locality, it returns that locality's centroid. The direct
 follow-up question is not "is the name right" but "how far is the real doorstep from the point we
 returned, and can we put a _guaranteed_ bound on it." A calibrated `conf=` answers the first kind of
-question; it says nothing about distance on the ground.
+question. It gives no information about distance on the ground.
 
 ## Method
 
-Split conformal regression, no distributional assumption. For every row the resolver placed:
+Split conformal regression, without a distributional assumption. For every row the resolver placed:
 
 - nonconformity score `s = haversine(gold point, resolved locality centroid)`.
 - split the scores into a calibration half and a test half (seeded).
@@ -23,7 +23,7 @@ Split conformal regression, no distributional assumption. For every row the reso
 - check it: the fraction of _test_ scores at or under `R(α)` should land on `1 − α`.
 
 It runs offline over an `oa-resolver-eval --out-resolved` dump plus the admin gazetteer's centroids —
-no model in the loop. Coverage is conditional on the resolver placing the row; rows it
+no model in the loop. Coverage is conditional on the resolver placing the row. Rows it
 declined to place are reported as an abstention rate rather than silently dropped.
 
 ## Results
@@ -42,7 +42,7 @@ Read the French row as: when we place a French address at a locality, the real p
 5.49 km of it nine times in ten — and that "nine times in ten" is measured rather than hoped for (0.893).
 
 Two things fall out of the table for free. France and the Netherlands resolve nearly everything
-(~99%) into tight circles; Germany resolves only 65% and into a circle three times wider. That
+(~99%) into tight circles. Germany resolves only 65% and into a circle three times wider. That
 34.8% German abstention is not noise. It is the Berlin / Hamburg / Bremen city-state rows where the
 parser drops the locality entirely ([#387](https://github.com/sister-software/mailwoman/issues/387)),
 surfacing here a second time through a completely independent lens. The wider German radius is the
@@ -52,5 +52,5 @@ actual city-centroid-to-doorstep distance for the rows that _do_ resolve rather 
 
 `scripts/eval/conformal-coord.py`, with a `--self-test` that validates the conformal math on synthetic
 scores (realized coverage within 0.003 of target at 80 / 90 / 95%). The radii are model-version
-specific — re-run per model. The demo can draw `R(α)` as a circle, which is also the natural way to
+specific — re-run per model. The demo can draw `R(α)` as a circle. A circle is also the natural way to
 show actual ambiguity ("could be either Berlin") instead of a false-precision pin.

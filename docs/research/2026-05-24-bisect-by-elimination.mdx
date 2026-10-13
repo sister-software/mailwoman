@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [training]
 ---
 
-This is a follow-up to [yesterday's post about the v0.5.0 C-train failures](/research/v0-5-0-c-train-bisect). Yesterday we ran four attempts and ruled out three suspects. Today we ran a fifth and ruled out a fourth, which leaves one hypothesis. The method we used carries over directly from software debugging, so this post is written for engineers who haven't run a training campaign before.
+This is a follow-up to [yesterday's post about the v0.5.0 C-train failures](/research/v0-5-0-c-train-bisect). Yesterday we ran four attempts and ruled out three suspects. Today we ran a fifth and ruled out a fourth. One hypothesis remains. The method we used comes directly from software debugging, so this post is written for engineers who haven't run a training campaign before.
 
 If you've ever bisected a software regression, you already understand the method. That includes running `git bisect`, narrowing a test failure by reverting changes one at a time, or comparing a known-good build with a known-broken build to find which change caused the breakage. The rest is vocabulary.
 
@@ -59,7 +59,7 @@ Each bisect tested a different hypothesis about the cause:
 
 - **v2 tested whether the learning rate was too high.** It was not. A lower LR delayed the climb but did not stop it.
 - **v3 tested whether the new loss-side weighting knobs were destabilizing training.** They were not. v0.4.0's known-stable loss settings still produced the climb.
-- **bisect-h256 tested whether the bigger model was the problem.** It was not. We reverted the hidden size to v0.4.0's value and got the cleanest training so far, including the best validation macro-F1 we've ever measured, and the climb still happened.
+- **bisect-h256 tested whether the bigger model was the problem.** It was not. We reverted the hidden size to v0.4.0's value and got the most stable training so far, including the best validation macro-F1 we've ever measured, and the climb still happened.
 - **bisect-phrase-off (today) tested whether the phrase-prior input layer was the problem.** It was not. We turned off the phrase-prior feature concatenation entirely, and the climb still appears in the same shape at almost the same step.
 
 Five attempts produced the same loss curve and eliminated four hypotheses. **Exactly one architectural change from the known-stable v0.4.0 setup is still in play**: the tokenizer + corpus pair.
@@ -81,7 +81,7 @@ This is the next bisect. If it trains without diverging, we'll know that the syn
 - **Investigate why the transliteration data destabilizes training.** Our working hypothesis is that the LLM-generated rows have systematically different gradient signatures from human-validated address data. They might be _too_ structured, or have repetitive patterns that the model overfits to before diverging. Our `corpus-audit` tooling can quantify this.
 - **Ship A1 (the tokenizer improvement) with the proven-stable corpus-v0.3.0 model** for v0.5.0, and defer transliteration training to v0.5.1.
 
-If the corpus-revert bisect also fails, the A1 tokenizer itself is the remaining destabiliser. That would be a stranger answer, because tokenizer training is mostly independent of classifier training, but it is possible. New vocabulary means a fresh embedding table the model has never seen; unusual sub-piece frequencies could in principle produce unusual gradient norms.
+If the corpus-revert bisect also fails, the A1 tokenizer itself is the remaining destabiliser. That would be a stranger answer, because tokenizer training is mostly independent of classifier training, but it is possible. New vocabulary means a fresh embedding table the model has never seen, and unusual sub-piece frequencies could in principle produce unusual gradient norms.
 
 ## What we'd tell a software engineer reading this
 
@@ -93,7 +93,7 @@ Three things about ML debugging that don't translate directly from regular softw
 
 ## Where we go next
 
-The corpus-revert bisect is the next experiment. It's a 25-30 hour training run on the lab's GPU, so we'll start it tonight and check on it tomorrow morning. If it trains without diverging, v0.5.0 is shippable, with a v0.5.1 follow-up to investigate why the transliteration data destabilizes training. If it doesn't, we'll have strong evidence that the tokenizer change itself interacts badly with classifier training, which would be a more interesting problem to write about.
+The corpus-revert bisect is the next experiment. It's a 25-30 hour training run on the lab's GPU, so we'll start it on the evening of 2026-05-24 and check it on the morning of 2026-05-25. If it trains without diverging, v0.5.0 is shippable, with a v0.5.1 follow-up to investigate why the transliteration data destabilizes training. If it doesn't, we'll have strong evidence that the tokenizer change itself interacts badly with classifier training. That problem would be a more interesting one to write about.
 
 Either way, few steps remain. After five experiments, one hypothesis is left, and the next experiment tests it. ML debugging is frustrating because each iteration takes so long, and it is satisfying because systematic elimination eventually finds the cause.
 

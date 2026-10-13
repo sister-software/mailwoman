@@ -2,7 +2,7 @@
 
 ## Why this exists
 
-Every published Mailwoman page is written against this document, and every rewrite task carries it as
+Every published Mailwoman page is written against this document, and every rewrite task lists it as
 required reading alongside the template for the page's role. It exists so that an 85-page rewrite has one
 settled answer to register, terminology and structure instead of 85 improvised ones. The derivation is
 recorded below so a later editor can reopen a decision against the evidence rather than against taste.
@@ -12,7 +12,7 @@ recorded below so a later editor can reopen a decision against the evidence rath
 Five geocoding and mapping documentation sets were surveyed on 2026-08-03 against a fixed rubric: document
 types offered, register per type, how limits and failures are admitted, terminology discipline, and
 code-example conventions. The surveys are read-only observations of public pages. Findings are compressed
-here; the full reports live beside the plan in `.superpowers/sdd/2026-08-03-docs-reorg/field-survey-*.md`.
+here. The full reports live beside the plan in `.superpowers/sdd/2026-08-03-docs-reorg/field-survey-*.md`.
 
 ### Google Maps Platform
 
@@ -23,12 +23,12 @@ platform root. Guides use second person ("You access the Geocoding API through a
 contractions and states obligations directly ("You must specify either `address` or `components` or both in
 a request",
 [requests-geocoding](https://developers.google.com/maps/documentation/geocoding/guides-v3/requests-geocoding)).
-Status codes are a closed enumerable table, one line each, which makes a status string matchable without
+Status codes are a closed enumerable table, one line each. A reader can match a status string without
 reading prose.
 
-Take: version forks that stay side-by-side with a migration pointer; errors as a closed set. Refuse: the
-same product carrying two names by page ("v3" in one nav, "Legacy products" in another); an error entry that
-restates its own name and stops (`UNKNOWN_ERROR`, "could not be processed due to a server error"); cost
+Take: version forks that stay side-by-side with a migration pointer, and errors as a closed set. Refuse: the
+same product under two names by page ("v3" in one nav, "Legacy products" in another), an error entry that
+restates its own name and stops (`UNKNOWN_ERROR`, "could not be processed due to a server error"), and cost
 facts split across a doc page, a calculator and a console with no single worked total.
 
 ### Mapbox
@@ -36,45 +36,45 @@ facts split across a doc page, a calculator and a console with no single worked 
 [docs.mapbox.com](https://docs.mapbox.com) splits by URL prefix: `/api/*` reference, `/help/dive-deeper/*`
 explanation, `/help/glossary/*` one term per page, `/help/getting-started/*` and `/help/tutorials/*` task
 content, `/playground/*` interactive. Prices never appear inline in technical docs. Reference prose is
-table-bound and terse; the response vocabulary (`feature`, `properties`, `relevance`, `spatial hierarchy`)
+table-bound and terse. The response vocabulary (`feature`, `properties`, `relevance`, `spatial hierarchy`)
 holds across reference, explanation and glossary with no synonym drift.
 
 Take: a full literal JSON response beside every reference request, so a reader can diff their own output
-against a known-good shape; a term registry cross-linked from first use; a playground that hits the live API
-with the documented parameters. Refuse: curl-only at the reference layer, which taxes every non-shell
-reader; code fragments with no output and no full-file context; a glossary that fragments one concept into
+against a known-good shape. Take a term registry cross-linked from first use, and a playground that hits the live API
+with the documented parameters. Refuse curl-only examples at the reference layer, because every non-shell
+reader must then translate each request into their own client. Refuse code fragments with no output and no full-file context. Refuse a glossary that fragments one concept into
 recursive one-sentence hops, so understanding "geocoding" requires opening "latitude and longitude" mid-read.
 
 ### Geocode Earth
 
 [geocode.earth/docs](https://geocode.earth/docs/) runs one flat sidebar of roughly 25 pages, with pricing,
-attribution and terms kept structurally outside the docs tree. Reference is plain declarative; guides are
-warmer and first-person plural; the blog carries the most personality. Limits state their mechanism rather than
+attribution and terms kept structurally outside the docs tree. Reference is plain declarative. Guides are
+warmer and first-person plural. The blog has the most personality. Limits state their mechanism rather than
 only their number: per-second rate limits exist "to guard our servers from momentary spikes in requests"
 and are "strictly enforced and are not averaged over multiple seconds"
 ([rate limits](https://geocode.earth/docs/intro/rate_limits/)). The authentication page names its own
 security gap and then admits it withholds the mitigation.
 
-Take: mechanism-first caveats with numbered thresholds a reader can compute against; curl first, then
-per-language tabs against the identical URL; legal and business content as siblings of the docs tree rather
-than nodes inside it. Refuse: no term registry despite an overloaded multi-word concept (match quality is
-real, used across five endpoint pages, and never named once); inconsistent compounding of a term used
-constantly; one flat sidebar for both read-once and look-up-repeatedly content, which survives at 25 pages
-and does not survive at 85.
+Take: mechanism-first caveats with numbered thresholds a reader can compute against, curl first and then
+per-language tabs against the identical URL, and legal and business content as siblings of the docs tree rather
+than nodes inside it. Refuse the missing term registry despite an overloaded multi-word concept (match quality is
+real, used across five endpoint pages, and never defined once). Refuse inconsistent compounding of a term used
+constantly. Refuse one flat sidebar for both read-once and look-up-repeatedly content. That sidebar works at 25 pages
+and fails at 85.
 
 ### Jawg Maps
 
 [jawg.io/docs](https://www.jawg.io/docs) separates an API reference tree from an integration/SDK tree, with
 marketing on its own property. Snippets are full standalone HTML documents rather than fragments, and
-placeholders carry an inline replace-me comment (`// Don't forget to replace <YOUR_ACCESS_TOKEN> ...`,
+placeholders have an inline replace-me comment (`// Don't forget to replace <YOUR_ACCESS_TOKEN> ...`,
 [simple map](https://www.jawg.io/docs/integration/maplibre-gl-js/simple-map/)). The Places overview explains
 one real URL with a labeled anatomy diagram instead of a paragraph, and the error table pairs an HTTP status
 with a stable message-code string.
 
-Take: a reading-time estimate at the top of each guide; the URL-anatomy diagram; an error table whose codes
-are grep targets. Refuse: an attribution block repeated byte-identically across every SDK page; a typo
-inside a shipped JSON example (`souce_id`), which propagates into the reader's own type definitions where a
-prose typo would not; the full site-tree sidebar rendered on every page regardless of where a reader landed.
+Take: a reading-time estimate at the top of each guide, the URL-anatomy diagram, and an error table whose codes
+are grep targets. Refuse an attribution block repeated byte-identically across every SDK page. Refuse a typo
+inside a shipped JSON example (`souce_id`). Such a typo propagates into the reader's own type definitions where a
+prose typo would not. Refuse the full site-tree sidebar rendered on every page regardless of where a reader landed.
 
 ### Felt
 
@@ -83,36 +83,36 @@ Felt runs three separately-branded properties: [help.felt.com](https://help.felt
 split means a GIS analyst troubleshooting a shapefile upload never reads code-flavored prose unless they
 click through. Limits arrive as ceiling plus next action in one sentence pair ("up to 10,000 addresses per
 upload. If you need a higher limit, contact sales"), and hard constraints are stated ahead of the procedure
-they would break: [wms-wmts](https://help.felt.com/data-sources/cloud-sources/wms-wmts) says HTTP is
+they would break: [wms-wmts](https://help.felt.com/data-sources/cloud-sources/wms-wmts) states that HTTP is
 unsupported before its six-step connect walkthrough rather than partway through it.
 
-Take: caveats that carry a door as well as a wall; a small reused noun chain (source → layer → map) taught
-in the same words on every page that touches it; constraints before steps. Refuse: bare FAQ-fragment
-answers ("Not right now.") lifted into flowing prose, where the warmth depends on the Q&A widget shape; a
-quoted customer's voice blended into house voice with no typographic separation; terminology held together
-by repetition alone, which forces the same distinction to be re-taught on three pages.
+Take: caveats that state a next action as well as a limit, a small reused noun chain (source → layer → map) taught
+in the same words on every page that touches it, and constraints before steps. Refuse bare FAQ-fragment
+answers ("Not right now.") lifted into flowing prose, where the warmth depends on the Q&A widget shape. Refuse a
+quoted customer's voice blended into house voice with no typographic separation. Refuse terminology kept consistent
+only by repetition. That approach forces the same distinction to be re-taught on three pages.
 
 ### What all five agree on
 
 All five use second person in task content, keep humor out of reference entirely, and hold marketing
-structurally apart from technical docs. None of them runs a controlled dictionary, which is the finding that
+structurally apart from technical docs. None of them runs a controlled dictionary. That finding
 decides the ASD-STE100 row below.
 
 ## Selection matrix
 
 Nine standards were assessed. The verdict column is binding.
 
-| Standard                                                                          | Verdict                          | Scope taken                                                                                    | Evidence                                                                                                                                                                                                                                           |
-| --------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Diátaxis](https://diataxis.fr/)                                                  | Adopt, structural                | Page-role split; one purpose per page                                                          | Already the six-role frontmatter interface (four Diátaxis roles plus `landing` and `evidence`). Geocode Earth's flat sidebar mixing read-once with look-up-repeatedly survives only at roughly 25 pages.                                           |
-| [ASD-STE100](https://asd-ste100.org/)                                             | Adapt, reference register only   | One instruction per sentence, active voice, one word per meaning, without rhetorical language  | Applied to `reference` pages. The controlled dictionary is rejected: it cannot carry geo and ML vocabulary, and no surveyed contemporary uses one. Tutorials and guides are exempt; flattening them would discard the field's best warm registers. |
-| [ISO 19100](https://www.iso.org/committee/54904.html)                             | Adapt, terminology seed only     | An ISO term where it is already the natural codebase term, such as coordinate reference system | The field speaks GeoJSON (`feature`, `properties`, `geometry` at both Mapbox and Geocode Earth), which is also the wire reality here. No wholesale adoption.                                                                                       |
-| [UPU S42](https://www.upu.int/)                                                   | Adapt, postal shelf terminology  | Postal component vocabulary: delivery point, postcode, address component                       | Used in the postal shelf and codex-adjacent reference. Plain language on first mention, then the term.                                                                                                                                             |
-| [RFC 7322](https://www.rfc-editor.org/rfc/rfc7322)                                | Adopt, organization principles   | Facts separated from rationale, stable section hierarchy, consistent terminology               | Interface first, rationale after. This is the ordering that lets a reference page be skimmed by a reader who already knows why.                                                                                                                    |
-| [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/)         | Adopt, primary style base        | Sentence-case headings, second person, contractions in guides, bias-free language              | Tie-breaker for anything the rules above leave open. It matches the observed field register across all five surveys.                                                                                                                               |
-| [Google developer style](https://developers.google.com/style)                     | Adapt, API-reference conventions | Placeholder style, code formatting, HTTP-reference patterns                                    | Secondary to Microsoft, consulted where Microsoft is silent.                                                                                                                                                                                       |
-| [Ordnance Survey](https://www.ordnancesurvey.co.uk/)                              | Reject as style authority        | GB place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                          |
-| [US Board on Geographic Names](https://www.usgs.gov/us-board-on-geographic-names) | Reject as style authority        | US place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                          |
+| Standard                                                                          | Verdict                          | Scope taken                                                                                    | Evidence                                                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Diátaxis](https://diataxis.fr/)                                                  | Adopt, structural                | Page-role split, one purpose per page                                                          | Already the six-role frontmatter interface (four Diátaxis roles plus `landing` and `evidence`). Geocode Earth's flat sidebar mixing read-once with look-up-repeatedly survives only at roughly 25 pages.                                                        |
+| [ASD-STE100](https://asd-ste100.org/)                                             | Adapt, reference register only   | One instruction per sentence, active voice, one word per meaning, without rhetorical language  | Applied to `reference` pages. The controlled dictionary is rejected: it cannot express geo and ML vocabulary, and no surveyed contemporary uses one. Tutorials and guides are exempt, because the flattened form would discard the field's best warm registers. |
+| [ISO 19100](https://www.iso.org/committee/54904.html)                             | Adapt, terminology seed only     | An ISO term where it is already the natural codebase term, such as coordinate reference system | The field speaks GeoJSON (`feature`, `properties`, `geometry` at both Mapbox and Geocode Earth), which is also the wire reality here. No wholesale adoption.                                                                                                    |
+| [UPU S42](https://www.upu.int/)                                                   | Adapt, postal shelf terminology  | Postal component vocabulary: delivery point, postcode, address component                       | Used in the postal shelf and codex-adjacent reference. Plain language on first mention, then the term.                                                                                                                                                          |
+| [RFC 7322](https://www.rfc-editor.org/rfc/rfc7322)                                | Adopt, organization principles   | Facts separated from rationale, stable section hierarchy, consistent terminology               | Interface first, rationale after. This is the ordering that lets a reference page be skimmed by a reader who already knows why.                                                                                                                                 |
+| [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/)         | Adopt, primary style base        | Sentence-case headings, second person, contractions in guides, bias-free language              | Tie-breaker for anything the rules above leave open. It matches the observed field register across all five surveys.                                                                                                                                            |
+| [Google developer style](https://developers.google.com/style)                     | Adapt, API-reference conventions | Placeholder style, code formatting, HTTP-reference patterns                                    | Secondary to Microsoft, consulted where Microsoft is silent.                                                                                                                                                                                                    |
+| [Ordnance Survey](https://www.ordnancesurvey.co.uk/)                              | Reject as style authority        | GB place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                                       |
+| [US Board on Geographic Names](https://www.usgs.gov/us-board-on-geographic-names) | Reject as style authority        | US place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                                       |
 
 Two notes on the adapted rows. STE100's value here is its sentence discipline, and that discipline costs a
 tutorial its warmth, so the adaptation is scoped by role rather than applied to the site. ISO 19100 is a
@@ -144,7 +144,7 @@ prerequisites block, then the steps. Avoid marketing language.
 **`reference`.** Use a controlled register: declarative sentences without contractions or humor, and tables in
 place of prose.
 Errors and statuses form one closed table with a stable grep-able code, a one-line meaning, and retry or
-next-step guidance; an entry that restates its own name is decoration. Show the full request and the full
+next-step guidance. An entry that restates its own name is decoration. Show the full request and the full
 literal response together. On HTTP surfaces, curl first, then language tabs, every tab hitting the identical
 endpoint. On library surfaces, show full-file runnable examples with their output or rendered result rather than
 fragments. Placeholders use `<CAPS_PLACEHOLDER>` with an inline replace-me comment. Give the HTTP API
@@ -186,9 +186,9 @@ related terms. A remark plugin auto-links occurrences in published pages, guarde
 positives (`docs/plugins/glossary/remark.ts`), so a term does not need a manual link to acquire a tooltip.
 
 **Define, then link.** On first use in a page, define the term in one sentence in the running prose, and let
-the registry link carry the depth. Do not send a first-time reader to the registry mid-sentence for the
+the registry link provide the depth. Do not send a first-time reader to the registry mid-sentence for the
 concept the page is about. That is the recursive-hop failure the Mapbox survey records. Do not re-derive a
-definition on the third page that needs it either; that is the repetition cost the Felt survey records. One
+definition on the third page that needs it either. That is the repetition cost the Felt survey records. One
 sentence locally, the registry for the rest.
 
 **A new term.** A concept used on two or more pages warrants a registry entry. Add it to
@@ -212,7 +212,7 @@ no entry.
 ### Numbers and measurement
 
 State the measured quantity. `23 m`, `14 parcels`, `95% confidence`, `27,405 ms → 175 ms on 8 MB`. If a
-claim rests on a magnitude, the magnitude belongs in the sentence, and a magnitude never carries its own
+claim rests on a magnitude, the magnitude belongs in the sentence, and a magnitude never encodes its own
 absence: zero coverage and unmeasured coverage are different claims and read the same, so distinguish them
 in words. Hedge quantities are permitted only where the sentence is deliberately qualitative, and Vale
 flags each one so the choice is visible in review.
@@ -233,13 +233,13 @@ structural, and a rule that matched them would also match correct prose.
    fact, and let the reader judge its weight.
 2. **Rule-of-three padding.** Two short clauses then a longer one, or three adjectives where the third
    restates the first two. Fix: keep the one precise descriptor.
-3. **Vague attribution.** "Developers find", "it is widely considered". Fix: name who, or remove the sentence.
-4. **Filler intensifiers.** Words that prop up a claim the evidence does not carry. Vale catches the common
-   ones; the pattern is the target rather than the token list.
-5. **Contrastive negation.** A topic framed by what it is not, especially when nobody proposed the
+3. **Vague attribution.** `Developers find`, `it is widely considered`. Fix: state who, or remove the sentence.
+4. **Filler intensifiers.** Words that prop up a claim the evidence does not support. Vale catches the common
+   ones. The pattern is the target rather than the token list.
+5. **Contrastive negation.** A topic framed by what it is not, especially when no one proposed the
    negated thing. Fix: state the positive claim.
 6. **Manufactured cadence.** Strings of clipped sentences, or a paragraph ending on a quotable line rather
-   than an informative one. Fix: end on the sentence that carries information.
+   than an informative one. Fix: end on the sentence that states information.
 7. **Superficial participial analysis.** A trailing "-ing" clause that narrates rather than explains
    ("reflecting the system's flexibility"). Fix: remove it, or replace it with the mechanism.
 8. **Uniform paragraph shape.** Every paragraph the same length, topic sentence plus three supports plus a
@@ -290,13 +290,13 @@ warnings across 458 files, because those pages predate these rules and are what 
 therefore lints only the pages a pull request touches under `docs/articles/` and `docs/src/pages/`; the
 fixture check runs unconditionally. The full-corpus run becomes the blocking CI check once the rewrite lands.
 
-Inline code spans and fenced code blocks are excluded from linting, so a banned token can be named in
+Inline code spans and fenced code blocks are excluded from linting, so a banned token can appear in
 backticks — which is how the canonical terms table above states the spellings it forbids. Frontmatter is
 stripped before linting, so a `source-of-truth:` key is not read as prose.
 
-Every rule needs a fixture. `config/vale/fixtures/dirty.md` carries one hit per token and
-`clean.md` must stay at zero alerts; `config/vale/check-rules.ts` asserts both, plus a minimum error
-count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
+Every rule needs a fixture. `config/vale/fixtures/dirty.md` holds one hit per token, and
+`clean.md` must stay at zero alerts. `config/vale/check-rules.ts` asserts both, plus a minimum error
+count and at least one hit from every rule file, and it runs in the docs CI job. That script also makes
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
 guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-eval.ts` or
 `mailwoman eval promote` must stay quiet, because a name tied to an interface in backticks is exempt by design.
@@ -306,7 +306,7 @@ guarded so the FTS vocabulary this repo ships survives the rule, and a backticke
 One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templates/tutorial.md),
 [how-to](./page-templates/how-to.md), [reference](./page-templates/reference.md),
 [explanation](./page-templates/explanation.md), [landing](./page-templates/landing.md),
-[evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the interface in
+[evidence](./page-templates/evidence.md). Each holds a frontmatter skeleton that satisfies the interface in
 `docs/scripts/docs/frontmatter/metadata.ts`, the section order for its role, the opening move, and one
 exemplar paragraph in this voice. Start a new page by copying the template for its role rather than by copying a
 neighboring page.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Lists country names in many languages from the runtime's ICU data through `Intl.DisplayNames`. The gazetteer
+ *   Lists country names in every language available in the runtime's ICU data through `Intl.DisplayNames`. The gazetteer
  *   build decides which of these candidate names to store.
  */
 

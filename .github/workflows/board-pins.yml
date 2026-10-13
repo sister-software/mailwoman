@@ -1,8 +1,8 @@
 # The cheap board-pin guard (#1895): the committed regression corpus's three pins (row count,
-# corpus hash, board id) must match the constants the pin test carries. This runs without the
+# corpus hash, board id) must match the constants the pin test declares. This runs without the
 # model/data stack — install + compile + a jsonl load, ~2 s of measurement — so it is the check
 # that stays affordable when the full suite is being deliberately skipped. The compile is the price
-# of calling the CLI (`mailwoman eval pins` is a TSX command, which node cannot type-strip); the
+# of calling the CLI (`mailwoman eval pins` is a TSX command, and node cannot type-strip TSX). The
 # `test` workflow measured it at 47.4 s cold.
 #
 # Three triggers, three roles:

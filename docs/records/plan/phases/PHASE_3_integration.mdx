@@ -19,7 +19,7 @@
 ### 1. Package scaffolding
 
 - [ ] Create `packages/neural/` workspace
-- [ ] Dependencies: `onnxruntime-node`, SentencePiece WASM (pick one — `@bloomberg/sentencepiece` or a maintained alternative; verify and document in `DECISIONS.md`), `@mailwoman/core`
+- [ ] Dependencies: `onnxruntime-node`, SentencePiece WASM (pick one — `@bloomberg/sentencepiece` or a maintained alternative, then verify and document in `DECISIONS.md`), `@mailwoman/core`
 - [ ] Strict TypeScript config
 
 ### 2. SentencePiece tokenizer wrapper
@@ -98,7 +98,7 @@ The first Ship of Theseus step.
 - [ ] Verify on the golden set that `country` accuracy improved (or held) and no other component regressed
 - [ ] If anything regresses, revert the policy change and investigate. The migration is blocked on metrics rather than on intent.
 
-▶ Repeat the same for `region` if Phase 2 metrics justify. Coarse components only. Do not migrate `locality` or below in Phase 3 — defer until Tier 2 trains.
+Repeat the same for `region` if Phase 2 metrics justify. Coarse components only. Do not migrate `locality` or below in Phase 3 — defer until Tier 2 trains.
 
 ### 9. End-to-end test
 

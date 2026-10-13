@@ -112,8 +112,8 @@ def _file_row_iter(
                         "fallback to token labels"
                     )
                 # Empty is the quieter way a span-schema file lies: a writer that projects rows without
-                # the span triple emits `[]` for all three. Those values pass the null check above
-                # and train as all-`O`. A row whose BIO labels include a tag cannot honestly have no spans.
+                # the span triple emits `[]` for all three. Those values pass the `None` check above
+                # and train as all-`O`. A row whose BIO labels include a tag must have at least one span.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(
                         f"corrupt row in {path} (row-group {rg}, raw={row['raw']!r}): "
@@ -136,8 +136,8 @@ def _source_iter(
 ) -> Iterator[dict[str, Any]]:
     """Yield rows from a sequence of parquet files, restricted to ``expected_source``.
 
-    Files, row-groups and row indices are all visited in shuffled order (see ``_file_row_iter``). One
-    row-group's worth of rows is held in memory at a time per source, so total RAM is bounded by the
+    Files, row-groups and row indices are all visited in shuffled order (see ``_file_row_iter``). The rows
+    of one row-group are held in memory at a time per source, so total RAM is bounded by the
     number of distinct sources rather than by any file-pool parameter.
 
     A draw reads one row-group. Rows are ordered by country within a source, so a draw sees only

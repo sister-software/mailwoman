@@ -65,7 +65,7 @@ const DEFAULT_LIMIT = 8
 const CANDIDATE_MULTIPLIER = 3
 
 /**
- * How many tokens past the typed prefix a suggestion may run, so a first-token
+ * The count of tokens past the typed prefix that a suggestion may run, so a first-token
  * prefix reaches a whole several-word nomenclature name.
  */
 const MAX_EXPANSION_DEPTH = 6
@@ -78,8 +78,8 @@ export class PlanetarySearch {
 	}
 
 	/**
-	 * Prefix search: the largest feature first at a shared prefix, one hit per
-	 * feature however many of its surfaces match.
+	 * Prefix search: the largest feature first at a shared prefix, one hit per feature
+	 * regardless of the count of its surfaces that match.
 	 */
 	query(text: string, limit = DEFAULT_LIMIT): SearchHit[] {
 		const tokens = nomenclatureTokens(text)

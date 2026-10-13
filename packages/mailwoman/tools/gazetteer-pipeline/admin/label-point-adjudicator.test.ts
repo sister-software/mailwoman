@@ -67,7 +67,7 @@ describe("choosePoint (#1905)", () => {
 	})
 
 	it(`an anchor separating at less than ${ANCHOR_DECISIVE_RATIO}x keeps the label`, () => {
-		// Both points ~equidistant from the anchor: no decisive read.
+		// Both points ~equidistant from the anchor: the anchor does not decide.
 		const geom = { latitude: 50, longitude: 10 }
 		const lbl = { latitude: 50, longitude: 10.2 }
 		const anchor = { latitude: 50, longitude: 10.1 }

@@ -66,7 +66,7 @@ describe("blank env values are treated as absent", () => {
 
 		test(`${key} still REJECTS a genuinely invalid value`, () => {
 			// The blank exemption must not become a general tolerance: a caller who sets 0
-			// or a word has made a mistake worth surfacing.
+			// or a word has made a mistake the parser must report.
 			expect(() => PublicMailwomanEnvSchema.parse({ [key]: "0" })).toThrow(/expected/i)
 			expect(() => PublicMailwomanEnvSchema.parse({ [key]: "banana" })).toThrow(/expected/i)
 		})

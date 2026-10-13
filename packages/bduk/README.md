@@ -90,7 +90,7 @@ publication page states the Open Government Licence v3.0 except where otherwise 
 guide states no exception. The package ships no BDUK data. Its test fixture copies eight rows of the
 published sample file under the sample's file name and header.
 
-The fixture rows carry this attribution:
+Each fixture row includes this attribution:
 
 > Building Digital UK, May 2026 OMR and premises in BDUK plans (England and Wales), UPRN-level release,
 > sample file. © Crown copyright 2026. Licensed under the

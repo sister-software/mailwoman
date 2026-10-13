@@ -21,15 +21,15 @@ the labels.
 
 The raw headers of every source in the matcher's catalog show:
 
-| source                               | rows' identity key        | shares a clean strong ID?             |
-| ------------------------------------ | ------------------------- | ------------------------------------- |
-| NPPES registry                       | **NPI** (+ EIN, taxonomy) | —                                     |
-| FCC RHC posted-services (71 cols)    | FCC HCP number            | **no** NPI / EIN / TIN / tax-ID field |
-| FCC RHC commitments (53 cols)        | Participating HCP number  | **no** NPI / EIN / TIN / tax-ID field |
-| TX HHSC nursing facilities (43 cols) | TX license number         | **no** NPI / EIN / TIN / tax-ID field |
+| source                               | rows' identity key         | shares a clean strong ID?             |
+| ------------------------------------ | -------------------------- | ------------------------------------- |
+| NPPES registry                       | **NPI** (+ EIN, taxonomy)  | —                                     |
+| FCC RHC posted-services (71 cols)    | FCC HCP number             | **no** NPI / EIN / TIN / tax-ID field |
+| FCC RHC commitments (53 cols)        | `Participating HCP number` | **no** NPI / EIN / TIN / tax-ID field |
+| TX HHSC nursing facilities (43 cols) | TX license number          | **no** NPI / EIN / TIN / tax-ID field |
 
 NPPES is the **only** source carrying a clean strong identifier (NPI, EIN). The FCC and TX sources
-key on their own program-internal IDs and carry no crosswalk back to NPI/EIN. The fields shared
+key on their own program-internal IDs and hold no crosswalk back to NPI/EIN. The fields shared
 across all sources reduce to: **organization name**, **address / geocode**, and **phone**.
 
 ## Why each candidate weak-label source fails
@@ -37,7 +37,7 @@ across all sources reduce to: **organization name**, **address / geocode**, and 
 - **Name + address/geocode** — these are precisely the features the Fellegi-Sunter scorer already
   uses. Weak labels drawn from agreement on them, fed to a scorer over the same features, is
   **circular**: the model learns to reproduce FS. This is the mechanism behind #664's result — the
-  GBT, re-thresholded over the FS feature vector, has nothing independent to add cross-source.
+  GBT, re-thresholded over the FS feature vector, has no independent signal to add cross-source.
 - **Phone** — shared across all sources, and the one candidate _independent_ signal. But #625
   established NPPES phone is an **unreliable** secondary identifier: institutional switchboard lines
   are shared by several distinct providers, so phone agreement over-links. A scorer trained on
@@ -57,7 +57,7 @@ would post a misleadingly-positive number.
 also appears in the FCC/TX records, or a published crosswalk). With that, the weak-label pipeline
 becomes viable — train a geocode+name scorer to predict the strong-ID matches, then apply it to the
 records that lack the strong ID. Until such a source exists, option 2 is blocked. Recommend closing
-#655 with this finding (option 1 was answered by #664; option 2 is data-blocked).
+#655 with this finding (option 1 was answered by #664, and option 2 is data-blocked).
 
-_Neutral entity-resolution framing: this is about whether two records denote the same organization,
-nothing about what that resolution implies._
+_Neutral entity-resolution framing: this is about whether two records denote the same organization.
+It makes no claim about what that resolution implies._

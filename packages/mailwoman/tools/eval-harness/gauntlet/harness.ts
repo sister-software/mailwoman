@@ -290,7 +290,7 @@ export interface GauntletGeocodeOpts {
  * The check only examines the shipped default.
  *
  * The md5 it receives is of the model `resolveWeights` returned rather than of a path
- * spelled out here, because the guard must check the artifact the run will actually grade.
+ * spelled out here, because the guard must check the artifact the run will grade.
  */
 async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
 	const cardPath = resolvePath("packages/neural-weights-en-us/model-card.json")
@@ -369,7 +369,8 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 /**
  * Build the geocode deps.
  *
- * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate against production fairly.
+ * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate
+ * against production with every other input held equal.
  * Omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the vocab, required for a
@@ -390,7 +391,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// Stamp the model under test so a stale dev symlink is never silent.
 	// The default path asks `resolveWeights`, which answers with the file `loadFromWeights`
-	// will actually open, rather than naming a package directory that may not be materialized.
+	// will open, rather than naming a package directory that may not be materialized.
 	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolvePath(opts.modelPath) : resolvedModel!)
 
@@ -399,7 +400,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
-		// The shipped default must match the model-card's `files_md5` (the card is the source of truth);
+		// The shipped default must match the model-card's `files_md5` (the card's hash decides);
 		// a `--candidate` run intentionally grades a different artifact, so it is exempt.
 		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
 			await assertShippedModelMatchesCard(md5)

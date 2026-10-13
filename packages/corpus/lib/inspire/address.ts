@@ -123,7 +123,7 @@ export function codelistValue(uri: string | null | undefined): string | null {
 /**
  * Whether a publisher marked this element void.
  *
- * INSPIRE writes `xsi:nil="true"` and usually a `nilReason`.
+ * INSPIRE writes `xsi:nil="true"`, in most cases with a `nilReason`.
  * Brussels writes the nil marker and no reason on all 232,003 of its void `ad:validFrom`
  * elements, and Czechia writes four `gn:pronunciation` elements nil with no reason.
  *
@@ -355,7 +355,7 @@ const REFERENCE_ID_PARAMETERS = new Set(["id", "featureid", "resourceid"])
  * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
  *
  * Whether a key joins is not a property of its spelling, so this reads a key
- * and the caller decides joinability against the features the publisher actually served.
+ * and the caller decides joinability against the features the publisher served.
  * A check based on the URL's shape once reported 15 of Flanders' 20 references as belonging
  * to another register, when every one of them addressed a feature of the same service.
  *
@@ -392,7 +392,7 @@ export function componentJoinKey(href: string): string | null {
 /**
  * The spelling a `gn:GeographicalName` holds, reached from a feature that has one.
  *
- * Every name-bearing INSPIRE feature nests the text at
+ * Every INSPIRE feature that has a name nests the text at
  * `…/gn:GeographicalName/gn:spelling/gn:SpellingOfName/gn:text`, under a per-feature
  * prefix: an `ad:ThoroughfareName` adds `ad:name/ad:ThoroughfareNameValue/ad:name`,
  * while an `ad:AdminUnitName` and an `ad:AddressAreaName` add only `ad:name`.

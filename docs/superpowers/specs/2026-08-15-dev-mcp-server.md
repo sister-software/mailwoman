@@ -7,7 +7,7 @@ rest of the design depends on.
 
 This spec describes a long-lived daemon that holds warm geocoder state and an MCP tool surface over it. With it,
 an agent working in this repo runs a measurement instead of writing a throwaway probe script. The goal is
-narrower than exposing mailwoman to agents, which `packages/mcp/` already does and ships. This server makes
+narrower than exposing mailwoman to agents. `packages/mcp/` already does that and ships. This server makes
 **well-powered measurement the cheapest option**, because the observed failure it addresses is sample
 selection rather than reasoning.
 
@@ -41,9 +41,10 @@ approximation gives `3/10 = 30%`). The true rate was `24/837 = 2.9%`, so a 10-ca
 **75% chance** of observing zero changes and reaching the wrong conclusion. The reasoning was correct.
 The measurement tool was badly designed, and the tool can be fixed.
 
-This applies the repo's existing rules ("the aggregate is not the verdict", "a magnitude never
-carries its own absence", and `AGENTS.md`'s **"the defects that survive review live in the input
-tail"**) to the agent's own probes rather than to the parser.
+This applies the repo's existing rules to the agent's own probes rather than to the parser. Those rules are
+"the aggregate is not the verdict", "A magnitude never represents its own absence"
+(`packages/resolver-wof-sqlite/lib/ranking-weights.ts:177`), and the `AGENTS.md` rule that a claim about
+source structure requires a direct measurement of the input tail.
 
 ### 1.2 The cost that makes small panels attractive
 
@@ -78,7 +79,7 @@ picks.
 
 1. **Full-corpus measurement must be the path of least resistance.** A hand-picked panel must cost
    more to express than the whole board rather than less.
-2. **A result must carry its own denominator.** Every number the surface emits states what it was out
+2. **A result must report its own denominator.** Every number the surface emits states what it was out
    of, the number of rows that errored, and what the input set did not cover.
 
 ---
@@ -119,7 +120,7 @@ absent from `.release-it.json`. See §7.4 for the workspace accounting that impl
 classifier, the gazetteer backend and the extract handles once."
 
 It returns `GeocodeSession { initTiming, geocode(input): Promise<GeocodeRun>, close() }` (`:172-179`),
-where `GeocodeRun` carries `result`, the `AddressTree` it resolved from, a `PipelineTiming`, and an
+where `GeocodeRun` holds `result`, the `AddressTree` it resolved from, a `PipelineTiming`, and an
 optional `GeocodeTrace` (`:124-166`) holding `NeuralParseTrace`, `QueryShape`, the kind verdict, the
 `InputMode` and the locale. It has a documented `close()` that releases every handle (`:411-418`), and
 its construction order determines the CLI's error behavior (`:10-18`).
@@ -143,7 +144,7 @@ assembles everything the trace surface needs. `packages/mcp/lib/cli.ts` does not
   (25).
 - `parity-corpus.ts` holds the 321-row triaged parse-parity fixture set with pre-registered floors;
   `preset-compare.ts` holds a **hardcoded 6-address eyeball comparison with no scoring at all**
-  (`preset-compare.ts:13,39`). It is a small self-selected panel wired into the release check, which
+  (`preset-compare.ts:13,39`). It is a small self-selected panel wired into the release check. It
   is the kind of panel this surface should make unattractive.
 
 ### 2.4 The head-to-head benchmark rig — the protocol is already locked
@@ -151,12 +152,12 @@ assembles everything the trace surface needs. `packages/mcp/lib/cli.ts` does not
 `docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md` §4 pre-registers the protocol, and
 this spec adopts it verbatim rather than inventing a second one:
 
-- top-1 result only; haversine with R = 6371 km; thresholds **1 / 5 / 25 km**
+- top-1 result only, haversine with R = 6371 km, thresholds **1 / 5 / 25 km**
 - a no-result (empty array **or** query failure) is a **miss at every threshold**
 - the **same raw query string** to every arm, with no per-arm normalization
-- bootstrap confidence intervals per locale with a pinned seed; a parity claim needs a TOST-style
+- bootstrap confidence intervals per locale with a pinned seed, and a parity claim needs a TOST-style
   equivalence bound of **±5 pp @ 25 km**
-- every row carries a pre-hoc `truth_type` (`rooftop` / `venue` / `city-only`) and
+- every row has a pre-hoc `truth_type` (`rooftop` / `venue` / `city-only`) and
   `local_coverage_hint`, and **"@1km lives or dies on `truth_type`, reported per stratum, never
   blended silently"**
 
@@ -176,10 +177,10 @@ reserved for mailwoman's own Photon drop-in). Panels live outside the repo at
 geocoder**, both answering in `@mailwoman/record`'s `PostalAddress` so comparison is field-to-field.
 Both are `APIClient`s with disk caching under `$MAILWOMAN_DATA_ROOT/geocode-oracle/`, 60 requests per
 minute, and `minRequestIntervalMs` set alongside the budget. Google requires
-`$private.GOOGLE_MAPS_API_KEY` and is **billed**; Census needs no credential.
+`$private.GOOGLE_MAPS_API_KEY` and is **billed**. Census needs no credential.
 
 Its header states the boundary this spec inherits: these providers are not ground truth and must not
-decide whether a build ships; a human reads the answer and decides what to pin.
+decide whether a build ships. A human reads the answer and decides what to pin.
 
 ### 2.6 `packages/mailwoman/lib/dev-tools/*.run.ts` — the sanctioned probes
 
@@ -299,7 +300,7 @@ the daemon never loads `out/` itself. The one exception is `mwdev_cli`, which sh
 That tool runs the same mtime walk and, if `out/` is stale, **refuses** and tells the caller to run
 `yarn compile` rather than running stale code.
 
-**(b) A stale derived artifact.** `regression.db` is built from the committed JSONL and carries a
+**(b) A stale derived artifact.** `regression.db` is built from the committed JSONL and stores a
 `gauntlet_meta` stamp with `corpus_hash`, `case_count`, and `built_at` (`schema.ts:152-171`). Every
 runner refuses when the stamp disagrees with the corpus currently on disk
 (`corpus-stamp.ts:assertCorpusStampFresh`). A separate emptiness guard exists because a hash
@@ -322,7 +323,7 @@ provenance block, including `model_md5`, `card_version`, and the fed-channel lis
 engine warned about an unfed channel, the result reports it rather than leaving it in a log the agent
 never reads.
 
-**(d) A source edit that a long-lived process does not see, which this design introduces.** An agent
+**(d) A source edit that a long-lived process does not see. This design introduces the risk.** An agent
 edits `geocode-core.ts`, calls `mwdev_run`, and gets the old code with no signal. This is the same
 failure as the `out/` trap, and the daemon would cause it.
 
@@ -345,7 +346,7 @@ unless the fingerprint is itself the declared variable (§6).
 
 - **Start.** `mwdevd` is started on demand by the MCP shim, or explicitly. It binds a Unix domain
   socket under `$XDG_RUNTIME_DIR` (falling back to the data root), one socket per `(dataRoot, repo
-  path)` pair so two checkouts do not share a daemon. It holds **no** engine at startup; the first
+  path)` pair so two checkouts do not share a daemon. It holds **no** engine at startup. The first
   tool call that needs one builds it. This matches the lazy loading in `packages/mcp/lib/cli.ts:14-17`,
   for the same reason: an agent may connect, list tools, and never call one.
 - **Idle.** Engines are evicted after a configurable idle interval, and the daemon exits after a longer
@@ -368,7 +369,7 @@ The design departs from `packages/mcp`'s tool envelope in two ways:
 
 1. **Declare `outputSchema` and return `structuredContent`.** `packages/mcp/lib/server.ts:42` stringifies
    every result into one text block. That works for a parse tree. It does not work for a comparison
-   result, whose denominators and verdict fields must be machine-readable so a wrapper can enforce
+   result. A comparison's denominators and verdict fields must be machine-readable so a wrapper can enforce
    §5's rules rather than relying on the agent to read prose.
 2. **Support progress notifications and a `job_id` handshake.** A gauntlet run takes minutes rather
    than milliseconds. Tools that can exceed a few seconds return a `job_id` immediately, and the caller
@@ -388,7 +389,7 @@ eleven tools.
 | Tool                   | Purpose                                                              | Replaces                                                                                                                                      |
 | ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mwdev_daemon`         | status / reload / evict / stop                                       | `autoload-check.ts`, `mailwoman doctor`                                                                                                       |
-| `mwdev_inputs`         | list and describe input sets; report coverage and denominators       | the implicit "which cases shall I use?" step                                                                                                  |
+| `mwdev_inputs`         | list and describe input sets, report coverage and denominators       | the implicit "which cases shall I use?" step                                                                                                  |
 | `mwdev_run`            | parse or geocode one input set under one configuration               | `acceptance-probe.ts`, most one-off parse scripts                                                                                             |
 | `mwdev_compare`        | two arms over one input set, diffed and graded                       | `fst-probe.ts`, `fst-board-probe.ts`, `hierarchy-benefit.ts`, `affix-diff.ts`, `backend-parity.ts`, all Pelias/Photon/Nominatim head-to-heads |
 | `mwdev_trace`          | per-stage evidence for a handful of inputs                           | `pgn-probe.ts`                                                                                                                                |
@@ -437,7 +438,7 @@ out (describe): { set_id, n, sha256, source, strata: { by_country: {…}, by_add
 - `{ kind: "board", country: "gb" }` / `{ kind: "board", address_kind: "us_po_box" }` /
   `{ kind: "board", status: "pass" }` — a declared subset, reported with its own denominator and with
   what the subset excluded.
-- `{ kind: "panel", version: "v2" | "v3" }` — the benchmark panel (420 / 424 rows). It carries
+- `{ kind: "panel", version: "v2" | "v3" }` — the benchmark panel (420 / 424 rows). It holds
   `truth_type` and therefore supports stratified reporting.
 - `{ kind: "golden", version: "v0.1.3", split: "dev" }`
 - `{ kind: "parity" }` — the 321-row triaged parse-parity fixtures.
@@ -510,7 +511,7 @@ verdict**. It is the supported way to look at a handful of cases, so an agent ha
 `mwdev_run` on a hand-picked set and then aggregate the result.
 
 It is built on `GeocodeSession`'s existing trace path (`geocode-session.ts:124-166,496-514`) plus
-`runPipeline`'s `PipelineResult`, which carries `queryShape`, `locale`, `kind`, `phraseProposals`,
+`runPipeline`'s `PipelineResult`. `PipelineResult` holds `queryShape`, `locale`, `kind`, `phraseProposals`,
 `faults`, `intentMarkers` and `path`.
 
 ### 4.6 `mwdev_gauntlet`
@@ -529,10 +530,9 @@ implementation would be a second answer key.
 
 The tool must return two properties in the result rather than leaving them in the log:
 
-- `describeResolverChanges`'s line, which prints on every run, pinned or not, because "two check logs
-  that differ only in a flag someone typed are not evidence about that flag unless each log says which
-  configuration it graded" (`run.ts:220-222`).
-- The **firing count**, which is the number of rows the pinned mechanism produced a signal on
+- `describeResolverChanges`'s line. It prints on every run, pinned or not, because "two pin logs that differ
+  only in a flag someone typed are not evidence about that flag" (`run.ts:267-268`).
+- The **firing count**: the number of rows the pinned mechanism produced a signal on
   (`GauntletResult.postcode_country_scope`, `harness.ts:441-445`). §6 generalizes this.
 
 ### 4.7 `mwdev_promotion_eval`
@@ -574,8 +574,8 @@ out: { provenance, cold: {…} | null, warm: { n, p50_ms, p90_ms, p99_ms, max_ms
 ```
 
 The tool **always** reports cold and warm timings **separately**, because a warm daemon makes it easy
-to publish a throughput number that no user will see. `cold` is `null` when `include_cold` was false,
-which reports absence rather than zero. Percentiles come from `@mailwoman/core/utils`'s `percentile`,
+to publish a throughput number that no user will see. `cold` is `null` when `include_cold` was false.
+That `null` reports absence rather than zero. Percentiles come from `@mailwoman/core/utils`'s `percentile`,
 which takes `p` in **[0, 100]**. AGENTS.md calls out the unit because local copies elsewhere took a
 fraction.
 
@@ -620,7 +620,7 @@ notifications where the client supports them, but polling must work regardless.
 The rest of the design exists to support this section. Each rule is mechanical and checkable, and each
 applies a rule the repo already has rather than new vocabulary.
 
-### 5.1 The full corpus is the default; a panel costs more to type
+### 5.1 The full corpus is the default, and a panel costs more to type
 
 Every measuring tool takes `inputs: InputSetRef`, and `{ kind: "board" }` is the shortest legal value.
 A hand-picked set requires `{ kind: "literal", inputs: [...], why: "..." }`, which is an array **and**
@@ -631,8 +631,7 @@ a justification string. The shortest input to type is the well-powered one.
 **Decided 2026-08-16: always report, never refuse.** An earlier draft withheld the aggregate below
 `n = 30`, and two arguments overturned it. First, the threshold was a convention rather than a
 measurement (`parity-corpus.ts` uses 8 for bucket stability). Second, and more important, a refusal an
-agent cannot override gives it a reason to write a probe script, which is the behavior this surface
-exists to remove. Agents bypass a tool that refuses, and a bypassed tool produces no measurement.
+agent cannot override gives it a reason to write a probe script. This surface exists to remove that behavior. Agents bypass a tool that refuses, and a bypassed tool produces no measurement.
 
 The rule therefore controls where the bound appears instead of refusing. The bound goes **inside the
 summary string**, in the same sentence as the count, because §5.8 establishes that the summary is what
@@ -654,7 +653,7 @@ because **no bound was reported.** It wrote "zero effect" from 10 rows, and the 
 With the summary above, writing that conclusion requires deleting the clause that contradicts it.
 
 For zero events the bound is the exact one-sided Clopper–Pearson upper limit, `1 − α^(1/n)`. For
-non-zero counts it is the Wilson interval, which the check specs already use to derive their floors
+non-zero counts it is the Wilson interval. The check specs already use that interval to derive their floors
 (`checks/v9.0.0-base.json`'s `$margin_rationale`: "2 × the downward Wilson 95% half-width at the
 metric's own support").
 
@@ -667,7 +666,7 @@ Every measuring result must include `n_requested`, `n_evaluated`, `n_errored` (w
 `n_skipped` (with reasons), and `not_covered`. `not_covered` lists the strata present in the corpus but
 absent from this set, and the strata present in the set with support below the reporting threshold.
 
-**A cell nobody measured never renders as zero.** This is the repo's existing meaning-of-zero rule, and
+**An unmeasured cell never renders as zero.** This is the repo's existing meaning-of-zero rule, and
 `ablation-report.ts` implements it. `ABLATION_ABSENT` covers three distinct absences: no cell, zero
 support, and real support that no ladder could grade (`:8-13`). The renderer takes
 `AblationCell | undefined` rather than a number so that it cannot produce a false zero (`:22-31`). The
@@ -676,7 +675,8 @@ same sentinel and the same rule apply here.
 ### 5.4 Report what the mechanism did rather than only whether the verdict moved
 
 Every comparison reports `arms_differed_on: n / N` alongside improved/regressed/neutral. `run.ts:32`
-states the reason: _"an unchanged verdict from a mechanism that never ran proves nothing."_
+stated the reason at the time. A verdict that stays unchanged because the mechanism never ran is not evidence
+about that mechanism.
 `GauntletResult.postcode_country_scope` exists only as a firing count for this purpose
 (`harness.ts:441-445`).
 
@@ -684,13 +684,13 @@ Some mechanisms have their own firing signal, such as a change that records what
 prior that records whether it participated. For those, the comparison reports
 `mechanism_fired_on: n / N` separately from `arms_differed_on`. A change that fired on 400 rows and changed 0 outcomes is a
 different fact from a change that never fired, and both differ from a change with no firing signal at
-all, which reports `mechanism_fired_on: null`.
+all. That last change reports `mechanism_fired_on: null`.
 
 ### 5.5 A diff is not a verdict
 
 `mwdev_compare` distinguishes three grading modes and always reports which one it used:
 
-- **`grade: "truth"`** — the input set carries truth (board coordinates and tiers, panel truth points,
+- **`grade: "truth"`** — the input set has truth (board coordinates and tiers, panel truth points,
   golden components). Report improved / regressed / neutral against truth, plus the significance test.
 - **`grade: "diff-only"`** — the input set has no truth. Report `changed / N` and set
   `verdict: null, verdict_withheld_reason: "no truth for this input set; changes are described rather than graded"`.
@@ -698,7 +698,7 @@ all, which reports `mechanism_fired_on: null`.
   chosen per row.
 
 The `fst-probe.ts` conclusion was a `diff-only` result read as a `truth` result. The board version
-happened to have truth, which is why "24 changed" could become "22 are clear improvements."
+happened to have truth. For that reason "24 changed" could become "22 are clear improvements."
 
 ### 5.6 State the test, and state the minimum detectable effect
 
@@ -711,12 +711,12 @@ missed.
 For a head-to-head parity claim against another geocoder, the bound is the pre-registered TOST
 equivalence bound of **±5 pp @ 25 km** (§2.4) rather than an eyeball on two percentages.
 
-### 5.7 Grade at a named tier, on a stratum, and never on an incomparable field
+### 5.7 Grade at a stated tier, on a stratum, and never on an incomparable field
 
 The tool enforces three refusals, all drawn from `docs/engineering/reference/resolver-backends.mdx`:
 
-- **Named tier.** Refuse "the deepest coordinated node" as a grading target. The candidate table
-  carries 3.66 M postcodes that the FTS admin extract lacks, so "deepest" means _postcode_ on one arm
+- **Stated tier.** Refuse "the deepest coordinated node" as a grading target. The candidate table
+  holds 3.66 M postcodes that the FTS admin extract lacks, so "deepest" means _postcode_ on one arm
   and _locality_ on the other without saying so. One evaluation using that method reported a 54-row
   sub-kilometer collapse that was a commune centroid compared against a postcode-area centroid
   (`:111-127`).
@@ -727,11 +727,11 @@ The tool enforces three refusals, all drawn from `docs/engineering/reference/res
   to threshold on it at all, because within either backend the wrong answers' range sits inside the
   correct answers' range with a _higher_ mean (`:162-170`).
 
-### 5.8 The result text says the thing the agent will relay
+### 5.8 The result text states the thing the agent will relay
 
-Tool output carries a one-paragraph `summary` field written to be quoted verbatim. It always contains
+Tool output contains a one-paragraph `summary` field written to be quoted verbatim. It always contains
 the denominator and the selection kind. An agent that relays `summary` cannot accidentally relay
-"zero effect" when the underlying object says "0 of 10, hand-picked, aggregate withheld."
+"zero effect" when the underlying object reports "0 of 10, hand-picked, aggregate withheld."
 
 ---
 
@@ -782,7 +782,7 @@ type ArmSpec =
 ```
 
 `rows_changed` is complete rather than truncated to the first thirty. The 837-row FST run produced 24
-changed rows, which is a readable list and is the actual evidence.
+changed rows. That list is short enough to read, and it is the actual evidence.
 
 ### 6.3 The confound guard
 
@@ -831,7 +831,7 @@ which are the columns the plan's §7 already specifies). It reports `null` where
 
 External arms benefit most from the daemon. The existing scorer spawns the compiled CLI once per row
 (§1.2), so a 420-row three-arm comparison spends around 10 minutes per mailwoman arm on process
-startup alone.
+startup, before any query runs.
 
 ### 6.5 `{ kind: "recorded" }`
 
@@ -854,7 +854,7 @@ must declare it as a variable. That is correct, because the comparison does span
 The server refuses the following:
 
 - **Any write to a sealed database.** Every built SQLite artifact is chmod 0444 via `sealDatabase`
-  (`@mailwoman/core/utils`), and `openBuiltDatabase` enforces read-only with a named error. All handles
+  (`@mailwoman/core/utils`), and `openBuiltDatabase` enforces read-only with a dedicated error. All handles
   the daemon opens are `readOnly: true`, matching `packages/mcp/lib/cli.ts`.
 - **Artifact builds.** `gazetteer build`, `coverage build`, `tiles publish`, `corpus` ingest, and
   `data pull` (multi-gigabyte downloads). These take hours and disk space, and the operator decides when
@@ -902,11 +902,11 @@ constrains this package in particular because it is a _lab_ tool:
 `{ kind: "oracle", provider: "census" }` is free and allowed. `provider: "google"` is **billed** and:
 
 - requires an explicit opt-in in the daemon's config file rather than a tool argument;
-- carries a per-daemon-lifetime call cap that the tool reports as it consumes;
+- enforces a per-daemon-lifetime call cap that the tool reports as it consumes;
 - inherits the existing disk cache under `$MAILWOMAN_DATA_ROOT/geocode-oracle/google` (30-day TTL) and
   60 req/min pacing, so a repeated panel costs no additional request;
 - is **never** a scored arm and never a grading truth. `packages/geocode-oracle/lib/index.ts`'s own header
-  is explicit: _"Not truth, and not a check … Nothing here should ever decide whether a build ships."_
+  is explicit: _"These providers are not ground truth and must not determine release decisions."_
   A comparison with an oracle arm always reports `grade: "diff-only"` and `verdict: null`, and its
   purpose is flagging rows for a human to read.
 
@@ -915,7 +915,7 @@ constrains this package in particular because it is a _lab_ tool:
 **Decided 2026-08-16: in-repo.** The standing policy routes code outside the monorepo to the `mailwoman`
 GitHub org, and this package fits the exception that the policy's rationale allows. It imports
 `mailwoman/eval-harness/*` and `geocode-session`, and neither is a published export. An out-of-repo
-package would therefore need a path dependency on a sibling checkout, which adds a second thing to keep
+package would therefore need a path dependency on a sibling checkout. That dependency adds a second thing to keep
 in sync for no benefit. A private in-repo workspace is also the only layout where a change to the eval
 harness produces a compile error instead of unreported drift.
 
@@ -967,19 +967,19 @@ These questions need a decision from the operator. Each one changes the design.
 
 1. **Does the daemon get to rebuild `regression.db`?** Agents commonly add board cases, and
    the case has no effect until `eval gauntlet-build regression-db` runs. The check reads that derived
-   artifact, which puts the build outside §7.1's boundary. If the daemon refuses the build, however, case authoring
+   artifact. That dependency puts the build outside §7.1's boundary. If the daemon refuses the build, however, case authoring
    a two-tool process with a shell step in the middle. The build already has a stamp and an emptiness
    guard, so the 2026-08-06 failure cannot recur. Should the build be allowed as the single permitted
    write, or should the boundary stay strict?
 
 2. **What is the memory budget, and is a two-gazetteer comparison affordable at all?** `candidate.db`
    is 2.0 GB and the FTS admin extract is 5.0 GB. Two resident engines with different gazetteers use
-   4–10 GB before the ONNX sessions. A 29 GB host can hold that alone, but possibly not alongside a
+   4–10 GB before the ONNX sessions. A 29 GB host can hold that with no other load, but possibly not alongside a
    running Pelias with a 4 GB ES heap and a Photon JVM. Should `compare` across gazetteers run
    **sequentially by default** (rebuild between arms, slower but small) or **concurrently** (fast, but
    occasionally running the machine out of memory mid-benchmark)?
 
-3. ~~**Is the undeclared-confound refusal (§6.3) worth its friction?**~~ **DECIDED 2026-08-16 — warn.**
+3. ~~**Is the undeclared-confound refusal (§6.3) justified by its friction?**~~ **DECIDED 2026-08-16 — warn.**
    Agents bypass a refusal they cannot override, and a bypassed tool enforces no invariant. The warning lists
    the changed keys and sets `attribution: "ambiguous"`. See §6.3.
 
@@ -996,12 +996,12 @@ These questions need a decision from the operator. Each one changes the design.
    and never a grading truth.** §7.3's proposal was chosen over excluding Google, because the panels are
    multi-country and a US-only oracle covers few of them. Three properties make the permission safe.
    First, the opt-in lives in `$MAILWOMAN_DATA_ROOT/dev-mcp/oracle-config.json` and deliberately **not**
-   in a tool argument. Whoever is driving the agent sets tool arguments, and that is the wrong authority
-   for a spending decision, so an agent cannot argue its way into spending money. Second, the cap is
+   in a tool argument. Whoever is driving the agent sets tool arguments. That person is the wrong authority
+   for a spending decision. With the opt-in in the config file, an agent cannot argue its way into spending money. Second, the cap is
    checked for the whole run before the first query. A set the caller cannot afford costs zero calls
    instead of producing a partial arm that could be graded as a whole one. Third, the meter counts
    queries rather than issued requests, so a warm cache over-counts. Over-counting can only refuse an
-   affordable run, which is the safer error. See `oracle-arm.ts`.
+   affordable run. That is the safer error. See `oracle-arm.ts`.
 
 7. **Who runs the external arms? RESOLVED 2026-08-16 — the operator does, and the daemon refuses.**
    This is the conservative choice under §7.1's boundary: this surface gathers evidence and changes no
@@ -1012,8 +1012,8 @@ These questions need a decision from the operator. Each one changes the design.
    reason. See `external-arm.ts`, which also refuses the shared public instances.
 
 8. **Retention. RESOLVED 2026-08-16 — 14 days, 200 runs, newest first.** The store needs both rules,
-   because neither bounds it alone. A stored run describes only the tree that produced it, so after two
-   weeks of commits it documents a system that no longer exists (age). The age rule alone permits an
+   because neither rule bounds it by itself. A stored run describes only the tree that produced it, so after two
+   weeks of commits it documents a system that no longer exists (age). The age rule by itself permits an
    unbounded number of runs inside the window, and a busy day can exceed any fixed window size (count). Implementation
    produced two smaller decisions. An **unparseable `created_at` is treated as old**, because a run that
    cannot say when it happened cannot be trusted to describe a current tree, and keeping it forever is
@@ -1026,19 +1026,19 @@ These questions need a decision from the operator. Each one changes the design.
 9. **Does `mwdev_compare` warrant the right to write a board case?** An investigation typically ends with
    "this row now resolves correctly, so pin it." That is a repo write, and it is the most valuable
    capability the surface could add next. It is also the capability most likely to grow the corpus by
-   capturing current output rather than by judgment, which `gauntlet/schema.ts:6-11` warns about
+   capturing current output rather than by judgment. `gauntlet/schema.ts:6-11` warns about that
    explicitly ("the Pelias acceptance- test false-trust pass-list").
 
 10. **Should `mwdev_trace` be allowed to accept a `run_id`** so an agent can trace exactly the rows a
     comparison flagged, rather than retyping them? It would be convenient, and it would also make the
-    small-panel path slightly easier to reach, which works against §5.1.
+    small-panel path slightly easier to reach. That works against §5.1.
 
 ---
 
 ## 10. The debug evidence is already structured, and only its reachability is missing
 
 The operator raised this on 2026-08-16: the detailed per-stage debug output exists for JSON or for the
-Ink `--debug` view, and this surface should carry it too. The code shows the problem is smaller than it
+Ink `--debug` view, and this surface should expose it too. The code shows the problem is smaller than it
 first appeared.
 
 ### 10.1 What is there
@@ -1057,11 +1057,11 @@ export interface GeocodeTrace {
 }
 ```
 
-`GeocodeRun.trace` carries it on any session opened with `trace: true`. When the loaded bundle's
+`GeocodeRun.trace` holds it on any session opened with `trace: true`. When the loaded bundle's
 classifier cannot produce a trace, the field is absent. That is a property of the bundle, and the
 session reports it rather than fabricating a trace.
 
-The renderer is deliberately independent of Ink. `debug-view/trace-rows.ts`'s docstring says:
+The renderer is deliberately independent of Ink. `debug-view/trace-rows.ts`'s docstring reads:
 
 > _Pure and Ink-free so the formatting is unit-testable without a render, and so a caller can truncate
 > the result against a pane width without owning any of the vocabulary._
@@ -1070,7 +1070,7 @@ Every function there takes the trace and returns **one string**. The module has 
 sentinel so that "the model has no locale head" and "no channel was fed" render differently. This
 applies the meaning-of-zero rule. `debug-view/static-render.ts` renders an Ink tree to a plain string
 without a TTY or timers. The `map-tui` pane is frame-first by design (`AGENTS.md`: _"Frame-first:
-consumers own presentation"_), and a `MapFrame` is braille text, which is returnable in a tool result
+consumers own presentation"_), and a `MapFrame` is braille text. Braille text is returnable in a tool result
 as-is.
 
 Two of the three layers are therefore already renderer-agnostic, and the debug system does not depend
@@ -1082,7 +1082,7 @@ Other code cannot reach the trace, for two reasons.
 
 **No code outside `debug-view/` consumes the trace.** Apart from the session that defines it, every
 importer of `GeocodeTrace` lives in that directory: `command.tsx`, `DebugSessionApp.tsx`,
-`DebugFrame.tsx`, `output-lines.ts`, and `trace-rows.ts`. No JSON output path carries it, and neither
+`DebugFrame.tsx`, `output-lines.ts`, and `trace-rows.ts`. No JSON output path emits it, and neither
 `@mailwoman/api` nor `@mailwoman/mcp` exposes it. `mw geocode --json` returns the answer, never the
 evidence.
 
@@ -1113,7 +1113,7 @@ out: { rows: [{ input,
                 … }] }
 ```
 
-The structured form makes a trace _diffable_, which no rendering can do. It would have answered "which
+The structured form makes a trace _diffable_. No rendering can do that. It would have answered "which
 stage introduced this node?" without `pgn-probe.ts`. The rendered form makes the trace _legible_ in a
 transcript without the agent paraphrasing it, since paraphrase loses detail. A result that contains only the
 structured form would repeat the 2026-08-15 failure in a new place: an agent summarizing evidence that
@@ -1139,10 +1139,10 @@ tool with a different cost rather than a larger `n` on this one.
 > pattern other MCP projects use (mcp-reloader, reloaderoo, mcp-hmr). `process.execve` was evaluated
 > and rejected because it discards the initialized MCP session along with the module graph. The worker
 > builds engines on first use after each restart. Engines are lazy and rebuild on first use,
-> and the restart report says so.
+> and the restart report states that.
 
 > **Status, 2026-08-16.** This section is the plan of record and is kept as written. The increment shipped
-> (#1698), and the prediction it tests held, so the deferred tools were built in order: every tool named
+> (#1698), and the prediction it tests held, so the deferred tools were built in order: every tool listed
 > here as waiting now exists, plus `mwdev_runs`. All four `ArmSpec` members are built. Of the §9 questions
 > this section listed as downstream, oracle billing (§9.6), who starts Pelias (§9.7) and retention (§9.8)
 > are resolved above. Board-case writes (§9.9) and `run_id` tracing (§9.10) are still open. Read what

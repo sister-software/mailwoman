@@ -17,7 +17,7 @@
  *       British Columbia). So like the French prefix it is a clean admin prior, but it does the job
  *       with a single alpha character rather than digits.
  *
- *   The clean rule has two wrinkles worth knowing. `X` is shared by the Northwest Territories and
+ *   The rule has two exceptions. `X` is shared by the Northwest Territories and
  *   Nunavut (no single letter splits them), so `provinceOfPostalCode` returns an array there. And
  *   the large provinces span several letters: only Ontario owns `K L M N P`, while Quebec owns `G H J`.
  *   The first three characters form the FSA (Forward Sortation Area); the last three are the LDU

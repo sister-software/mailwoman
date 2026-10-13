@@ -1,6 +1,6 @@
 ---
 title: Handle PO boxes and other edge kinds
-description: What the kind classifier does with a PO box, an intersection or a bare postcode — which of them parse, which resolve, and which resolve to the wrong country.
+description: What the kind classifier does with a PO box, an intersection or a bare postcode. The page lists the kinds that parse, the kinds that resolve, and the kinds that resolve to the wrong country.
 role: guide
 verified-with: mailwoman 8.7.0
 ---
@@ -54,7 +54,7 @@ There are eight kinds, and the classifier always returns the whole ranked list i
 | `locality_only`      | A short place name and no other part                                   |
 | `po_box`             | A post office box or its regional equivalent                           |
 | `intersection`       | Two streets joined by `and`, `&`, `@` or `at`                          |
-| `landmark`           | A named venue, or a relative description like `behind the gas station` |
+| `landmark`           | A venue name, or a relative description like `behind the gas station`  |
 | `poi_query`          | A category or brand plus a spatial anchor, when a POI lexicon is wired |
 | `vague`              | The floor, always present in `alternatives` at 0.3                     |
 
@@ -98,7 +98,7 @@ mailwoman geocode "PO Box 1234, San Francisco, CA" | jq -c '{lat, lon, resolutio
 }
 ```
 
-The result is San Francisco's centroid at the `admin` tier, which is the most the string can support.
+The result is San Francisco's centroid at the `admin` tier. That tier is the most precise one the string can support.
 Treat `resolution_tier: "admin"` on a `po_box` parse as "the city is right, but the point is not a
 delivery point", and do not route a driver to it.
 
@@ -161,7 +161,7 @@ top pick, because `intersection` appears there at 0.85.
 
 ## 4. Bare postcodes: resolvable, and ambiguous across countries
 
-A postcode alone is the only edge kind that resolves to its own coordinate. When the shape is
+A bare postcode is the only edge kind that resolves to its own coordinate. When the shape is
 unambiguous, it can also take a fast path that skips the model:
 
 ```bash
@@ -229,7 +229,7 @@ mailwoman parse "Empire State Building"
 ```
 
 The kind is right, but the component is wrong. This configuration has no venue tier, so the name is
-tagged `locality` and matched against place names, which finds some place with a similar name. Do not
+tagged `locality` and matched against place names. That match finds some place with a similar name. Do not
 send venue names to the geocoder and expect a venue back. Use `poi_query` with a POI layer instead.
 [Use annotations](./use-annotations.mdx) describes what the POI layer provides.
 
@@ -255,7 +255,7 @@ mailwoman parse --debug "$ADDRESS" | jq '{path, kind: .kind.kind, confidence: .k
 - **The kind is mostly informational.** It changes the pipeline in exactly three places. It can skip
   the model for a high-confidence `postcode_only` or `locality_only`, it routes a `poi_query` to the
   POI stage, and it selects the input register. Otherwise it is only reported on the result.
-- **`po_box` and `intersection` switch the parser to the formatted register**, which turns off the
+- **`po_box` and `intersection` switch the parser to the formatted register.** That register turns off the
   gazetteer evidence channels for that parse. That setting suits record-shaped input and does not suit
   a search box. Override it with `--input-mode fragmented` if your users are typing.
 - **Parse accuracy and geocode accuracy are separate numbers here.** `po_box` scores 90.9 and

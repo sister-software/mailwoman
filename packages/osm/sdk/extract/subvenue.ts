@@ -24,7 +24,7 @@ import { tagAlias } from "#sdk/tag-columns"
  * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object.
  * The parser returns an empty object for missing input.
  *
- * The parser scans quoted strings because OSM values such as names often contain commas.
+ * The parser scans quoted strings because OSM values such as names can contain commas.
  */
 export function parseOSMHstore(text: string | null): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -120,7 +120,7 @@ export function harvestLocalizedNames(tags: Readonly<Record<string, string | und
 }
 
 /**
- * One extracted transport structure, such as a platform or gate.
+ * One extracted transport structure, such as a platform or a terminal.
  */
 export interface SubVenueSourceRow {
 	/**
@@ -133,13 +133,13 @@ export interface SubVenueSourceRow {
 	 * The `name` tag.
 	 *
 	 * It is `null` for an unnamed feature.
-	 * Gates with only a `ref` often have no name.
+	 * An airport boarding point tagged with only a `ref` has no name.
 	 */
 	name: string | null
 
 	/**
 	 * The `ref` tag, such as `A12` in `Gate A12`.
-	 * OSM usually keeps this identifier out of `name`.
+	 * OSM tagging convention keeps this identifier out of `name`.
 	 */
 	ref: string | null
 

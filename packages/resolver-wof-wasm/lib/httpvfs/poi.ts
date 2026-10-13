@@ -50,7 +50,7 @@ export interface POISearchOpts {
 	/**
 	 * The number of H3 rings to search outward from the center, defaulting to 6.
 	 *
-	 * A smaller default missed ordinary nearby clusters.
+	 * A smaller default missed ordinary clusters a few rings from the center.
 	 * The Node reader searches further by default.
 	 */
 	maxRings?: number

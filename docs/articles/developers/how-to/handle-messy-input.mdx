@@ -7,7 +7,7 @@ verified-with: mailwoman 8.7.0
 
 # Handle messy input
 
-**Outcome.** You know which input defects the parser absorbs on its own, which ones the normalize stage
+**Outcome.** You know which input defects the parser absorbs on its own. You know the defects that the normalize stage
 removes before the model sees them, and when to call that stage yourself.
 
 For most callers the answer is short. If you use `geocodeAddress`, preprocessing already ran. If you
@@ -128,7 +128,7 @@ Japanese form produces. It also strips the postal mark `〒`, which would otherw
 unknown byte sequence in front of the postcode.
 
 Two options are off by default. `expandAbbreviations` with `locale: "und"` applies the safe set for an
-unknown locale, which contains abbreviations that mean the same thing everywhere:
+unknown locale. That set contains abbreviations that mean the same thing everywhere:
 
 ```
 "12 Bd Saint-Germain, 75005 Paris" -> "12 Boulevard Saint-Germain, 75005 Paris"  Bd->Boulevard
@@ -136,10 +136,10 @@ unknown locale, which contains abbreviations that mean the same thing everywhere
 "1275 Pennsylvania Ave NW, Washington DC" -> unchanged
 ```
 
-The stage leaves `Ave` alone because the model already reads it correctly. The set targets forms the
+The stage leaves `Ave` unexpanded because the model already reads it correctly. The set targets forms the
 model finds ambiguous. `caseFold` is the other opt-in, and you should leave it off. The classifier's
-own case handling is more precise, and folding first removes the case information that proper nouns
-and directionals carry.
+own case handling is more precise, and folding first removes the case information in proper nouns
+and directionals.
 
 ## Verify
 
@@ -172,8 +172,8 @@ or a match key, run the stage first.
 - **Offsets are reliable only against the string you passed to that call.** For this reason,
   `normalize` returns an `offsetMap` that maps normalized positions back to raw positions. If you
   normalize and then parse, map offsets through it instead of assuming the indexes line up.
-- **Case normalization applies to pure-ASCII input only.** Accented and non-Latin input is left
-  alone, because changing its case can change its length (`ß` becomes `SS`) and break the offset
+- **Case normalization applies to pure-ASCII input only.** Accented and non-Latin input keeps
+  its case, because changing its case can change its length (`ß` becomes `SS`) and break the offset
   guarantee described above. An all-caps French address does not get the all-caps fix.
 - **Abbreviation expansion uses a small safe set at `locale: "und"`.** A real locale widens
   the set. It is not a general address-standardization pass, and it does not implement USPS

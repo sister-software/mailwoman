@@ -7,7 +7,7 @@
  *   (`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`) hands this package that are
  *   checkable before any ontology record exists.
  *
- *   Both are written to keep failing usefully as the package grows, rather than to describe today's
+ *   Both are written to keep failing on a violation as the package grows, rather than to describe today's
  *   empty state: the first reads `@mailwoman/core`'s manifest, so it answers the same question after
  *   the schema and the compiler land. the second reads whatever the public entry point exports, so a
  *   later ordering API trips it on the commit that adds it.
@@ -30,7 +30,7 @@ describe("the geographic model's recorded dependency direction", () => {
 	it("keeps @mailwoman/core free of a dependency on @mailwoman/geographic-model", async () => {
 		const core = await readPackageJSON(import.meta.url, "@mailwoman/core")
 
-		// Name the manifest that was actually read.
+		// Name the manifest that the test read.
 		// Without this, a specifier that resolved somewhere else would report zero declarations —
 		// the absence this test exists to distinguish from a real one.
 		expect(core.name).toBe("@mailwoman/core")

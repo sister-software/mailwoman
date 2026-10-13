@@ -1,6 +1,6 @@
 # v2.5.0-fragment-assay — probe 1 of the parity campaign (night-1, 2026-07-13): the fragment-source
-# assay rather than a ship candidate. Refutes-or-confirms "data alone closes the fragment gap" on the
-# current architecture. the pre-registered read-out separator (campaign runbook) is:
+# assay rather than a ship candidate. Refutes-or-confirms the hypothesis that new data, with no
+# architecture change, closes the fragment gap on the current architecture. the pre-registered read-out separator (campaign runbook) is:
 #   token-F1 up + span-exact-match lag + trailing-number→postcode persisting  ⇒  #727 span-head
 #   ceiling confirmed → redirect budget to the structured-span-head arc. do not ship this.
 #

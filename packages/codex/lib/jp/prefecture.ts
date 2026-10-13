@@ -132,7 +132,7 @@ export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefe
  *   type-suffix, then drop everything but `a-z`.
  *   `Tōkyō-to` and `tokyo` both → `tokyo`.
  *
- * The suffix is only stripped when it is a genuine appendage — separated by a hyphen/space/middle-dot
+ * The suffix is only stripped when it is a separate appendage — separated by a hyphen/space/middle-dot
  * (`Tokyo-to`, `Osaka fu`) or trailing the macron-containing long-vowel form.
  * That guard is essential: four bare romaji names already END in a suffix syllable
  * (Kyo**to**, Gi**fu**, Hokkai**do**, Kumamo**to**), and a blind trailing-strip would maim them.

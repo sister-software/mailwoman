@@ -31,7 +31,7 @@ export const VARIANT_SIMILARITY_MIN = 0.85
  * BGN/pcgn-flavored Cyrillic romanization, folded to the name-key alphabet.
  *
  * Digraph outputs (zh, kh, ts, ch, sh, shch, yu, ya) match the dominant transliteration
- * conventions the gazetteer's Latin aliases actually use.
+ * conventions the gazetteer's Latin aliases use.
  * The `w`/`v` and `kh`/`h` style variance between systems is what the edit-similarity threshold absorbs.
  */
 const CYRILLIC_TO_LATIN: Record<string, string> = {

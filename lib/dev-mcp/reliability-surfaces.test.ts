@@ -74,7 +74,7 @@ describe("decodeReliabilitySample", () => {
 	})
 
 	it("grades it as WRONG only when the caller asks for the strict rule", async () => {
-		// The strict rule is sound against a corpus that genuinely asserts every component, so it stays reachable.
+		// The strict rule is sound against a corpus that asserts every component, so it stays reachable.
 		const sample = await decodeReliabilitySample(
 			stubEngine(WITH_UNASSERTED),
 			[ROW],

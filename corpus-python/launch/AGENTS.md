@@ -1,7 +1,7 @@
 # Modal retrain launch — runbook
 
 Notes for whoever (agent or human) launches a training run on Modal. Read this before touching the
-`launch/` package or kicking a retrain. The flow has several non-obvious failure points; each failure mode
+`launch/` package or kicking a retrain. The flow has several non-obvious failure points. Each failure mode
 below has cost a run or hours.
 
 ## Run it with `-m`, from `corpus-python/`
@@ -16,16 +16,16 @@ module with `launch/` itself on `sys.path`, so `launch` is unimportable and ever
 the package raises `ImportError: attempted relative import with no known parent package`. `-m` imports it
 as `launch.train_remote` with the package intact.
 
-`launch/train_remote.py` defines nothing. It imports every module so the one `app` carries every
-function, because `::<name>` resolves against that file's namespace — its docstring has the table of
-what lives where.
+`launch/train_remote.py` defines no function of its own. It imports every module so the one `app`
+registers every function, because `::<name>` resolves against that file's namespace. The file's docstring has
+the table of what lives where.
 
 ## The flow, in one line
 
 Corpus + configs + tokenizer live in Cloudflare R2 (`mailwoman-assets`) → a **container-side `rclone`**
 pulls them into the `mailwoman-training` Modal Volume (`/data`) → the training reads from the volume.
-The local `.env` carries the R2 creds (`RCLONE_S3_*`); `launch/app.py` loads it itself, so `source .env`
-before `modal run` is not required (but IS required for local `rclone`).
+The local `.env` holds the R2 creds (`RCLONE_S3_*`). `launch/app.py` loads it itself, so `source .env`
+before `modal run` is not required. A local `rclone` does require it.
 
 ## ⚠️ `modal volume put` is BLIND — never use it for the corpus
 
@@ -34,15 +34,15 @@ training container**, and `vol.reload()` does not bridge it (verified 2026-06-12
 Everything must go through **R2 → a container-side `rclone` → `vol.commit()`**. When the bucket refuses
 the token, `stage_v8cjk_regs` does the same container-side write from a local mount instead.
 
-## Launching a retrain (the v1.6.0-boundary-stress example)
+## Launch a retrain (the v1.6.0-boundary-stress example)
 
 1. **Build the corpus locally** — for an overlay (base + your new recipe output), assemble the overlay manifest.
 2. **Re-root the manifest paths to `/data`.** The data loader (`data/loader/`) reads each parquet file's
-   manifest `path` AS-IS; base parquet files must point at `/data/corpus/versioned/<base>/…` (where the base
+   manifest `path` unchanged. Base parquet files must point at `/data/corpus/versioned/<base>/…` (where the base
    `sync` lands them) rather than the local `$MAILWOMAN_DATA_ROOT` build path. The overlay assembler does this
    (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in manifest_files(data))"` must be 0.**
    _This bit us on v1.6.0: the manifest's 690 base parquet files pointed at `$MAILWOMAN_DATA_ROOT`, so on the volume
-   the loader would re-root them under the OVERLAY dir (which holds only the new recipe output) and find nothing._
+   the loader would re-root them under the overlay dir (which holds only the new recipe output) and find no base file._
 3. **Push the deltas to R2.** `set -a; source .env; set +a` then
    `rclone copy corpus-python/src/ :s3:mailwoman-assets/corpus-python/src/ --exclude "**/__pycache__/**"`
    (delivers the new config) and `rclone copy <overlay-dir>/ :s3:mailwoman-assets/corpus/<ver>/<corpus>/`.
@@ -51,9 +51,9 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    unquoted vars, so `$FLAGS` arrives as one bogus flag.
 4. **Add a row to `launch/corpora.py`** rather than a function. A row names its transfers with `corpus()`,
    `mirror()` and `file_into()`, the `__pycache__` directories to clear, and the paths that must exist
-   afterwards — the config, the MANIFEST, your recipe output, AND a re-rooted base parquet file. The base + tokenizer
-   usually persist on the volume from prior runs, so don't re-transfer the ~30 GB base unless it is
-   actually missing. When a path list cannot say what you need — a numbered range, a file's contents —
+   afterwards — the config, the MANIFEST, your recipe output, and a re-rooted base parquet file. The base + tokenizer
+   persist on the volume from prior runs in most cases, so don't re-transfer the ~30 GB base unless the
+   volume lacks it. When a path list cannot express what you need — a numbered range, a file's contents —
    put that in the country's own `staging.py` and name it in the row's `verifier`.
 
    While a corpus is still being tried, `sync_assets --corpus-versions <name>` stages it with no row at
@@ -62,8 +62,8 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
 5. **Run the sync:** `modal run -m launch.train_remote::sync --version <key>`. It raises naming anything
    that did not land, so a clean exit is the confirmation.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
-   mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
-   set; a new tokenizer is a separate, intended change.
+   mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it out of the variable
+   set. A new tokenizer is a separate, intended change.
 7. **Launch the GPU train (the real spend).** Through the detached launcher, never from a shell: a
    `modal run` is a local client whose death cancels the remote input, so a harness that kills the
    client loses the run. The Bash guard refuses the direct spelling for that reason.
@@ -83,7 +83,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    the convention table with the actual training labels first.
 9. **Watch the check:** the recipe's pre-registered check is canonical — targets move up, non-regression
    floors hold. A below-bar number is a MISS to confront (re-baseline with a stated reason, or iterate),
-   never a quiet pass. Restating a bar from memory drifts it.
+   never a quiet pass. A bar restated from memory drifts.
 
 ## Stale `__pycache__`
 
@@ -92,7 +92,7 @@ imports the PREVIOUS code and reports success against it. Every sync clears the 
 `pycache` names before `vol.commit()`; the default is `…/mailwoman_train/__pycache__`, and a row that
 also ships configs uses `PACKAGE_AND_CONFIGS`.
 
-## Recovering
+## Recovery
 
 The Volume persists across runs (outputs under `/data/output*`). A failed train doesn't corrupt the
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
@@ -100,7 +100,7 @@ synced corpus, so re-launch after fixing the config/recipe — no re-sync needed
 
 ## After the run: the promote/no-promote check (v1.6.0-boundary-stress example)
 
-The training function writes ONLY checkpoints + `train_log.csv` to the output dir — **no `model.onnx`,
+The training function writes only checkpoints + `train_log.csv` to the output dir — **no `model.onnx`,
 `model-card.json`, or `crf-transitions.json`.** You produce the evaluatable artifact yourself. Two
 simplifiers for this model: (1) the STAGE3 label set is stable, so the existing
 `neural-weights-en-us/model-card.json` (labels-identical) is reused as-is — no packaging step for the
@@ -140,7 +140,7 @@ node packages/mailwoman/out/cli/main.js eval check \
 cat /tmp/check-v160/verdict.json
 ```
 
-Both must pass to ship: 4a moves the four boundary targets up; 4b holds the guardrail floors. The floors
-spec (`mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json`) carries a stated `us.street` caveat — the recipe's
-80.4 is the pre-#492 shipped value; recent models sit at ~76-78, so it's floored at the committed 74.0
+Both must pass to ship: 4a moves the four boundary targets up, and 4b holds the guardrail floors. The floors
+spec (`mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json`) states a `us.street` caveat. The recipe's
+80.4 is the pre-#492 shipped value. Recent models sit at ~76-78, so it's floored at the committed 74.0
 pending a re-anchor to v1.5.1's measured number.

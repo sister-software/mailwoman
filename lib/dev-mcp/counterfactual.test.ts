@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The setting space and the move predicate. Driven through `resolveConfig` rather than a hand-built options object, so
- *   the flips are stated against the configuration production actually ships — a flip enumerated off a caller's
+ *   the flips are stated against the configuration production ships — a flip enumerated off a caller's
  *   half-filled config would move the unset settings in the wrong direction.
  */
 

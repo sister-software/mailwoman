@@ -170,7 +170,7 @@ export interface OATupleFields {
 
 export interface ReadOATuplesOptions<T> {
 	/**
-	 * Stop after this many distinct tuples.
+	 * Stop after this number of distinct tuples.
 	 *
 	 * The `break` closes the reader and releases the archive.
 	 * GB-scale countrywide extracts need this behavior.
@@ -496,7 +496,7 @@ export interface RecipeOptions {
 	 */
 	venueNames?: PathBuilderLike
 	/**
-	 * `venue`: share of locality rows that also carry the tuple's region after the locality.
+	 * `venue`: share of locality rows that also print the tuple's region after the locality.
 	 *
 	 * @defaultValue `0.5`
 	 */

@@ -49,7 +49,7 @@ model-index:
 The trained-model bundle (`@mailwoman/neural-weights-en-us`) for
 [Mailwoman](https://mailwoman.ai), a postal-address parser. This
 package is **data only** — `model.onnx`, `tokenizer.model`, and metadata. It has
-no JavaScript; it is loaded at inference time by `@mailwoman/neural`.
+no JavaScript. It is loaded at inference time by `@mailwoman/neural`.
 
 ## What this is
 
@@ -57,16 +57,16 @@ Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
 microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the sequence-labeler half: a small transformer
 encoder (≈29.6M params) doing BIO token classification over a 33-label address
-schema. It is not an LLM and none of it is generative; for a closed label
-set over short strings, boring NER is a feature.
+schema. It is not an LLM and none of it is generative. Plain NER suits a closed label
+set over short strings.
 
 The design splits the problem in two: **the model learns the grammar, the
 gazetteer knows the atlas.** The model never memorizes place names — postcode
 and gazetteer knowledge arrive at inference as _soft input features_ (anchors)
 retrieved from provenance-tracked databases that grow without retraining. If you
-know RAG from the LLM world, this is RAG for token classification; if you know
-speech recognition, it's contextual biasing with shallow fusion. Knowledge
-informs; it never overrides.
+know RAG from the LLM world, this is RAG for token classification. If you know
+speech recognition, it's contextual biasing with shallow fusion. These features
+inform the model's prediction and never override it.
 
 - **Base model:** none. Trained **from scratch** (no pretrained checkpoint) —
   see _Training_.
@@ -74,7 +74,7 @@ informs; it never overrides.
   48000, max sequence length 128. Linear-chain CRF at inference (Viterbi), CE
   loss only at training.
 - **Tokenizer:** SentencePiece unigram, `byte_fallback=true`, vocab 48000.
-- **Format:** ONNX int8 dynamic (≈29.8 MB), opset 17; fp32 source ≈118.4 MB.
+- **Format:** ONNX int8 dynamic (≈29.8 MB), opset 17, and the fp32 source is ≈118.4 MB.
 
 ## Intended use
 
@@ -129,22 +129,22 @@ anchor-on, currently shipped model:**
 | coordinate p90 — full geocode cascade | **0.1 km** |
 | within 100 m — full geocode cascade   |  **90.0%** |
 
-**The two coordinate tiers matter.** The parser plus the admin gazetteer alone
+**The two coordinate tiers matter.** Without the data layer, the parser plus the admin gazetteer
 resolve to the locality **centroid** — legitimately a few km from an edge address
 (p50 3.3 km). The full geocode pipeline (`mailwoman`'s `geocode` cascade) wires a
 per-state situs + interpolation data layer on top and resolves the actual point:
 **83.5% of US addresses land on an exact address-point, 9.7% on a street
 interpolation, and under 7% fall back to the centroid — p50 0.0 km, 90.0% within
 100 m.** That data layer is the released data the geocoder consumes rather than part of
-this weights package; see the situs-cascade eval under
+this weights package. See the situs-cascade eval under
 [`docs/articles/evals/`](https://mailwoman.ai) for the breakdown.
 
 Two more notes on reading these:
 
-- **The model is not the bottleneck; the resolver lands the right place.**
+- **The model is not the bottleneck, and the resolver lands the right place.**
   locality-match credits the resolver's full locality group (locality ∪ borough ∪
-  `localadmin`) — New England towns are `localadmin` in the gazetteer, which an
-  earlier metric discarded, under-counting locality-match by ~14pp (the corrected
+  `localadmin`). New England towns are `localadmin` in the gazetteer. An
+  earlier metric discarded that placetype, under-counting locality-match by ~14pp (the corrected
   metric is 97.8%). The small residual (~2%) is mostly civic-suffix name-mismatch
   ("Barre City" vs the gazetteer's "Barre") rather than absent places — a naming-convention
   artifact more than a coverage hole.
@@ -172,11 +172,11 @@ they are omitted.
 ## Train
 
 From-scratch (no pretrained base), 40000 steps on an NVIDIA A100 (Modal cloud),
-CE loss only (the dual CRF loss diverged and was retired; CRF is inference-only
+CE loss only (the dual CRF loss diverged and was retired, and CRF is inference-only
 Viterbi). Corpus v0.5.0 (char-offset span labels: from-source base plus
 re-emitted parity overlays) augmented with a reversed-order (postcode-first) FR
 training subset so the model stops mistaking a leading FR postcode for a house number. The
-gazetteer anchor channel is fed during training, which is why it is required at
+gazetteer anchor channel is fed during training, so it is required at
 inference.
 
 ## Limitations
@@ -184,14 +184,14 @@ inference.
 - **Expects its channels.** See _Ship-config requirement_ — anchor-off is OOD.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training).
   `@mailwoman/neural`'s `normalizeCase` opt title-cases detected all-caps ASCII
-  input before the model and recovers it (byte-stable for mixed-case / non-ASCII
-  input, which it leaves untouched).
+  input before the model and recovers it. Output is byte-stable for mixed-case / non-ASCII
+  input, because the option leaves that input untouched.
 - **Coverage rather than precision, is the frontier** for the assembled coordinate:
   where local rooftop/interpolation data is absent the coordinate is the
   admin-centroid (legitimately tens of km from an edge address); the parse is not
   the bottleneck.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens;
-  quality there is unmeasured.
+- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
+  and quality there is unmeasured.
 
 ## License & links
 

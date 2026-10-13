@@ -32,7 +32,7 @@ interface ViolationClass {
 }
 
 /**
- * How often one strict dependent tag was stranded.
+ * The number of times one strict dependent tag was stranded.
  */
 interface StrandingReading {
 	tag: string

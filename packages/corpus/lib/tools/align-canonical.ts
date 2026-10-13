@@ -7,8 +7,9 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  *
  * Most synthetic recipe outputs are generated on demand by a recipe (parametrized by --count),
  * so re-emitting them in a new label format is a re-run.
- * A few are fixed corpora with a hand/DeepSeek-authored canonical source that is never regenerated,
- * notably `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*` variants.
+ * A few are fixed corpora with a hand/DeepSeek-authored canonical source that is never regenerated.
+ *
+ * They include `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*` variants.
  *
  * Their committed parquets use the label format that was current when they were first built.
  *

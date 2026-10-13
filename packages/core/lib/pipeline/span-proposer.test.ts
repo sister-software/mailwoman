@@ -239,7 +239,7 @@ describe("modifier + venue-interior designator", () => {
 		unitDesignators: new Set([...LEXICON.unitDesignators, "wing", "concourse", "terminal", "gate"]),
 		venueStructureDesignators: new Set(["wing", "concourse", "terminal", "gate"]),
 		venueStructureModifiers: new Set(["north", "south", "east", "west", "upper", "main"]),
-		// `gate` is deliberately absent: "East Gate" is a street rather than a sub-venue.
+		// The airport gate designator is deliberately absent: "East Gate" is a street rather than a sub-venue.
 		modifierEligibleStructureDesignators: new Set(["wing", "concourse", "terminal"]),
 	}
 

@@ -76,7 +76,7 @@ export const EE_ADS_SORT_BY = "gml_id"
  * Features per page.
  *
  * The service's `CountDefault` is 1,000,000 and it honors `count=10000`, which is where the page
- * size is set: a 10,000-feature page is 31,198,909 bytes, and a larger page buys fewer requests
+ * size is set: a 10,000-feature page is 31,198,909 bytes, and a larger page needs fewer requests
  * at the cost of holding a larger body in memory and losing more work when one request fails.
  */
 export const EE_ADS_PAGE_SIZE = 10_000
@@ -135,7 +135,7 @@ export interface HarvestADSOptions {
 	 */
 	pageSize?: number
 	/**
-	 * Stop once the manifest holds this many pages, for a probe rather than a full harvest.
+	 * Stop once the manifest holds this number of pages, for a probe rather than a full harvest.
 	 */
 	maxPages?: number
 	signal?: AbortSignal

@@ -54,7 +54,7 @@ export interface ComparatorReading {
 	comparator: ResultComparatorName
 	observed: ObservedRelation
 	/**
-	 * What the comparator actually read on each side, stated whatever the verdict
+	 * What the comparator read on each side, stated whatever the verdict
 	 * so an absence is not reported as an agreement.
 	 */
 	basis: string

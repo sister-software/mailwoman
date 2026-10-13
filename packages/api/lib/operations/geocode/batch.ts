@@ -19,7 +19,7 @@ import { GeocodingTag } from "#operations/tags"
  */
 export const BatchRequestSchema = z
 	.object({
-		// The `batchMax` cap bounds how many rows arrive.
+		// The `batchMax` cap bounds the number of rows that arrive.
 		// This bounds how large each may be, or one request is 500 unbounded bodies.
 		addresses: z.array(z.string().max(MAX_ADDRESS_LENGTH)),
 		/**
@@ -78,7 +78,7 @@ const GeocodeBatch = {
 } as const satisfies APIOperationSchema
 
 /**
- * `POST /v1/batch`: geocode many addresses, isolating each row's failure.
+ * `POST /v1/batch`: geocode a list of addresses, isolating each row's failure.
  */
 export const GeocodeBatchOperation = {
 	method: "POST",

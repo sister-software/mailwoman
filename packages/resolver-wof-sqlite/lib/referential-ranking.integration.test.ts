@@ -201,9 +201,9 @@ describe("Saint-Denis — ranking is referential", () => {
 		// What it exposes is an assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`,
 		// which pins the Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan
 		// France", which is a different claim from "referentially dominant".
-		// The row fails identically under all four FST arms including no-FST, so it is a
-		// board-authoring question for §3 rather than a regression here, but a test that
-		// quietly omitted Réunion would be asserting a world that does not exist.
+		// The row fails identically under all four FST arms including no-FST,
+		// so it is a board-authoring question for §3 rather than a regression here,
+		// but a test that omitted Réunion would be asserting a world that does not exist.
 		const withReunion: FixturePlace[] = [
 			...SAINT_DENIS,
 			{ id: 9_000_000_590_797, name: "Saint-Denis", country: "FR", lat: -20.8823, lon: 55.4504, population: 154_765 },
@@ -214,7 +214,7 @@ describe("Saint-Denis — ranking is referential", () => {
 
 		expect(results[0]!.id).toBe(9_000_000_590_797)
 		// And the suburb still beats the hamlet.
-		// The pair §2 actually names is unaffected.
+		// The pair §2 names is unaffected.
 		const ids = results.map((r) => r.id)
 		expect(ids.indexOf(101_751_155)).toBeLessThan(ids.indexOf(101_896_431))
 	})

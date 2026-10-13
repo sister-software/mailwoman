@@ -74,7 +74,7 @@ export interface ProvenanceDocument {
 		status: "recorded" | "none-recorded-in-this-package"
 		entries: Array<{ text: string; license_named: string | null; uses: string[] }>
 		/**
-		 * How many entries state each use.
+		 * The number of entries that state each use.
 		 *
 		 * An entry may state more than one, so these do not sum to the entry count.
 		 */
@@ -231,7 +231,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 }
 
 /**
- * How many attribution entries state each use, in a fixed key order so the document is reproducible.
+ * The number of attribution entries that state each use, in a fixed key order
+ * so the document is reproducible.
  *
  * A use that no entry states is omitted rather than written as zero, because zero would read as
  * the measurement "no source was used for evaluation" where the truth is that no entry said so.

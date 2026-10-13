@@ -40,7 +40,7 @@ describe("three-law selectivity — pure units", () => {
 	})
 
 	it("law 3: metros clear the person-name tier, given names do not", () => {
-		// paris/lyon/nancy are IN the name lists.
+		// The name lists contain paris, lyon and nancy.
 		// The tiered floor keeps them at metro prominence.
 		expect(clearsProminenceFloor("paris", 0.85, personNames)).toBe(true)
 		expect(clearsProminenceFloor("lyon", 0.6, personNames)).toBe(true)
@@ -60,7 +60,7 @@ describe("three-law selectivity — pure units", () => {
 	})
 
 	it("law-3 guard: parent prominence never launders a person-name surface", () => {
-		// A neighborhood bearing the name "Joseph" inside a metropolis (parent 0.9) is still the
+		// A neighborhood whose name is "Joseph" inside a metropolis (parent 0.9) is still the
 		// Rue-Joseph hazard — only own metropolis-tier importance clears a person-name surface.
 		expect(clearsProminenceFloor("joseph", 0.1, personNames, 0.9)).toBe(false)
 		expect(clearsProminenceFloor("joseph", PERSON_NAME_IMPORTANCE_FLOOR, personNames, 0)).toBe(true)
@@ -85,7 +85,7 @@ describe("three-law selectivity — pure units", () => {
 	it("law-1 directional closure (v5): the census flip surfaces are in the directional set", async () => {
 		const directionals = await loadDirectionalSurfaces()
 
-		// The v3.19 flip census: US neighborhoods literally bearing these names painted evidence
+		// The v3.19 flip census: US neighborhoods whose names are exactly these words painted evidence
 		// onto street directionals ("3rd Ave East" → street "3rd", "Fargo" → locality "North").
 		for (const s of ["east", "west", "north", "south", "northeast", "northwest", "southeast", "southwest"]) {
 			expect(directionals.has(s), s).toBe(true)
@@ -145,7 +145,7 @@ describe("three-law selectivity — pure units", () => {
 		expect(isSubPhraseAlias(painterFold("Nashville"), painterFold("East Nashville"))).toBe(true)
 		// Equality is not a sub-phrase (re-adding the primary through names is harmless)…
 		expect(isSubPhraseAlias(painterFold("Frisco"), painterFold("Frisco"))).toBe(false)
-		// …and genuine nicknames survive.
+		// …and real nicknames survive.
 		expect(isSubPhraseAlias(painterFold("Frisco"), painterFold("San Francisco"))).toBe(false)
 		// Contiguity required — a scattered subsequence is not a sub-phrase.
 		expect(isSubPhraseAlias(painterFold("East Village"), painterFold("East Nashville Village Green"))).toBe(false)

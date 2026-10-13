@@ -1,9 +1,9 @@
 ---
 name: morning-shift
-description: Operator returns from a night-shift handoff. Encodes the wrap of the previous autonomous session (stop crons, deliver chat morning summary, present PRs in merge order, surface deferred decisions) and the kickoff of the day's collaborative work (read postmortem, sync main, carry forward lessons, set today's task list). Use when the operator says "I have returned", "good morning", "let's wrap up the shift", or "starting a new shift to close off the previous".
+description: Operator returns from a night-shift handoff. Encodes the wrap of the previous autonomous session (stop crons, deliver chat morning summary, present PRs in merge order, surface deferred decisions) and the kickoff of the day's collaborative work (read postmortem, sync main, apply the previous shift's lessons, set today's task list). Use when the operator writes "I have returned", "good morning", "let's wrap up the shift", or "starting a new shift to close off the previous".
 ---
 
-# Morning Shift Skill
+# The morning-shift skill
 
 The dual to `night-shift`. Two modes, run back-to-back: WRAP closes the
 autonomous session, then KICKOFF starts the day's collaborative work.
@@ -25,7 +25,7 @@ autonomous session, then KICKOFF starts the day's collaborative work.
 
 ## Mode A — WRAP the previous shift
 
-Run these in order. Don't skip; each one closes a specific loose end.
+Run these in order. Don't skip a step. Each one closes a specific loose end.
 
 ### 1. Stop the hourly cron immediately
 
@@ -65,7 +65,7 @@ under "needs eyes-on" — don't bury it.**
 ### 3. Deliver the morning summary in chat
 
 Order matters. Lead with what the operator must act on rather than with what shipped.
-The night-shift `Operator handoff format` is the authoritative spec; the
+The night-shift `Operator handoff format` is the authoritative spec. The
 shorthand:
 
 ```
@@ -92,8 +92,8 @@ Three habits that make this land:
 - **Headline result goes in line 1 rather than paragraph 4.** If the result is region p90
   2763km → 10km, lead with that under the relevant `needs your eyes` item.
 - **Empty rows are fine.** "Production: unchanged" is a complete answer.
-- **No filler.** "Standing by for the next checkpoint" was a night-shift artifact;
-  the operator is here now, the next message will tell you what to do.
+- **No filler.** "Standing by for the next checkpoint" was a night-shift artifact.
+  The operator is here now, and the next message will tell you what to do.
 
 ### 4. Finalize the postmortem timestamps
 
@@ -109,7 +109,7 @@ Modal $, regressions shipped = 0).
 
 If the night-shift had a fork sent for operator review (e.g. ship / escalate /
 hold), make sure the doc's `Open / next` section names that decision explicitly.
-The morning conversation is where it gets resolved; the doc should be the
+The morning conversation is where it gets resolved. The doc should be the
 artifact the operator can re-read in a week and understand the call.
 
 ### 5. Sync the in-memory MEMORY.md to match wrap state
@@ -128,7 +128,7 @@ $EDITOR /home/lab/.claude/projects/-home-lab-Projects-mailwoman/memory/MEMORY.md
 
 Once the chat summary is delivered and the doc + memory are in sync, that's it.
 Don't pile on follow-up paragraphs ("Standing by", "Let me know"). The operator
-will direct the day; the next user message is the kickoff.
+will direct the day. The next user message is the kickoff.
 
 ---
 
@@ -193,9 +193,9 @@ Some of them get in the way when the operator is at the keyboard:
 | Posture      | Night                              | Day                                                                         |
 | ------------ | ---------------------------------- | --------------------------------------------------------------------------- |
 | Default      | "default to action"                | "default to surfacing the choice"                                           |
-| Wakeups      | hourly recurring                   | none; respond to operator turns                                             |
+| Wakeups      | hourly recurring                   | none, respond to operator turns                                             |
 | DeepSeek     | consult freely on forks            | consult only when operator asks or the fork is bigger than the conversation |
-| Merging      | self-merge if green + authorized   | operator merges unless they've said otherwise                               |
+| Merges       | self-merge if green + authorized   | operator merges unless they've said otherwise                               |
 | PR scope     | "open, ready-to-merge" is the unit | normal PR cadence                                                           |
 | Chat density | scarce + high-signal               | normal conversation                                                         |
 
@@ -203,7 +203,7 @@ If the operator hands the conn again ("I'll be afk for an hour, keep going"),
 flip back to night-shift posture for that window — but the explicit handoff is
 the trigger rather than the wall-clock time.
 
-### 5. Carry forward the integrity guardrails
+### 5. Keep the integrity guardrails
 
 These survive both modes — they're not posture, they're project rules:
 
@@ -213,7 +213,7 @@ These survive both modes — they're not posture, they're project rules:
 - **Salvage-first** — check isp-nexus + mailwoman before writing new modules.
 - **Sequential mutating ops** — never parallel git/gh/npm batches (compaction-fabrication risk).
 - **Verify every remote mutation** — `git ls-remote origin`, `gh pr view`, `npm view`.
-- **DeepSeek calibration** — trust structure, test numbers; log the scoreboard line per consult.
+- **DeepSeek calibration** — trust structure and test numbers. Log the scoreboard line per consult.
 
 ---
 
@@ -223,19 +223,19 @@ These survive both modes — they're not posture, they're project rules:
 
 If the operator returns before the planned 15:00 UTC hand-off (or whatever the
 shift end was), do WRAP steps 1, 2, 3, then ask whether to continue the shift
-or close it now. Don't unilaterally extend or shorten; the operator's return is
+or close it now. Don't unilaterally extend or shorten. The operator's return is
 itself a context shift that wants their input.
 
 ### Multiple postmortems exist for "last night"
 
 If `docs/records/evals/` has two postmortems with the same date (e.g. one was
 amended after a restart), the most recently-touched one is canonical. The
-earlier file should be marked superseded in its own header; if it isn't, do
+earlier file should be marked superseded in its own header. If it isn't, do
 that as part of WRAP step 4.
 
 ### No postmortem exists
 
-The night-shift skill says "Don't write this at the end as an afterthought —
+The night-shift skill instructs "Don't write this at the end as an afterthought —
 sketch it as you go." If there's no draft, that's a process failure to flag.
 Write a stub now (what shipped, what's open, what's unknown) and own the gap
 in the morning summary explicitly: "No postmortem was sketched during the

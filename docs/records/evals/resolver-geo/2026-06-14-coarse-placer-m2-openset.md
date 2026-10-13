@@ -1,6 +1,6 @@
 # Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)
 
-_Frozen shipped model (`model`), NO retrain. In-map test 55000 rows (11 countries); off-map HELDOUT 66000 rows (never-trained families: baltic/oceania/middle-east). Mahalanobis fit on ≤2000/class in-map train logits. The 11-way routing is fixed; each score only changes the reject decision._
+_Frozen shipped model (`model`), NO retrain. In-map test 55000 rows (11 countries); off-map HELDOUT 66000 rows (never-trained families: baltic/oceania/middle-east). Mahalanobis fit on ≤2000/class in-map train logits. The 11-way routing is fixed. Each score only changes the reject decision._
 
 ## direct dev→test point (threshold picked on dev, frozen on test)
 
@@ -24,6 +24,6 @@ _Frozen shipped model (`model`), NO retrain. In-map test 55000 rows (11 countrie
 
 ## Verdict
 
-Best score (direct dev→test): **`p_inmap`** at min(in-map, heldout) = **91.3** on the frozen test half. **Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule; no retrain needed (Phase 2 reject-head unnecessary).
+Best score (direct dev→test): **`p_inmap`** at min(in-map, heldout) = **91.3** on the frozen test half. **Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule. The rule needs no retrain, and the Phase 2 reject head is unnecessary.
 
 Rank order (direct dev→test min): `p_inmap` 91.3 · `maxprob` 89.1 · `maxlogit` 83.6 · `energy` 83.4 · `maha` 76.2

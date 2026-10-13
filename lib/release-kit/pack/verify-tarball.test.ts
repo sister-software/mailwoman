@@ -119,7 +119,7 @@ describe("collectMissingImportTargets", () => {
 
 describe("collectMissingBinTargets", () => {
 	it("flags a bin whose file the tarball lacks — the map-tui class", () => {
-		// A package that packs `out/` as a glob still packs cleanly when unbuilt.
+		// A package that packs `out/` as a glob still packs without error when unbuilt.
 		// Only the bin audit sees a missing bin file that `files` and `exports` do not list.
 		const bin = { "map-tui": "./out/cli.js" }
 

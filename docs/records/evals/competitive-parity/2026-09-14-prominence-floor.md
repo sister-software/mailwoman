@@ -17,7 +17,7 @@ reading — 75 of 100 false selections down to 26, for 1.5 points of accuracy. T
 withheld settlement under another WOF id and are not false
 ([the correction](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts)), which
 changes the rate and not the comparison drawn here. That panel's gold comes from
-GeoNames `cities15000.txt` under a 50,000 rule, so all 453 of its gold entities carry population above 15,151.
+GeoNames `cities15000.txt` under a 50,000 rule, so all 453 of its gold entities have population above 15,151.
 A floor of 4.0 is a population floor of 10,000. It admitted every correct answer that panel contained, by
 construction rather than by merit, and rejected only wrong ones. A panel whose gold all clears a floor cannot
 measure that floor.
@@ -72,7 +72,7 @@ All 1,000 rows survived every arm without a replay miss, so no denominator moves
 
 Read the accuracy column down each band. The floor's cost tracks the band: at floor 4 it is 50 points for
 villages under 1,000, 55 points for 1,000–4,999, 47 points for 5,000–14,999, 15 points for 15,000–49,999, and
-1 point above 50,000. That gradient is the mechanism stated plainly — a floor at population 10,000 rejects the
+1 point above 50,000. That gradient is the mechanism: a floor at population 10,000 rejects the
 correct answer for every place smaller than 10,000, and the correct answer is most of what a small-place query
 has.
 
@@ -86,7 +86,7 @@ every other band. That is backwards, and checking it found the reason.
 
 The eligibility rule requires a name borne exactly once across the four registered countries. A large city
 typically shares its name with something — its own arrondissement, district or a namesake abroad — so it is
-excluded. An administrative division carries a long unique name and survives. Counted by a leading
+excluded. An administrative division has a long unique name and survives. Counted by a leading
 administrative noun in the four registers' languages:
 
 | band          | rows | administrative-division names |
@@ -119,10 +119,10 @@ Supported: the same-data benchmark's reading of this option was an artifact of i
 same code, 1.5 points of accuracy there against 55 points here — and the record that reported the favourable
 number already said its panel could not measure a floor. It could not.
 
-Refused: any claim about a fit-based abstention signal, which this benchmark does not test. The
+Refused: any claim about a fit-based abstention signal. This benchmark does not test one. The
 [abstention-threshold record](./2026-09-13-abstention-threshold.md) showed a margin threshold beats the
 deterministic baseline on both axes but floors at 28% invented selections, because the margin is a within-pool
-quantity that cannot see whether the pool holds the answer. Nothing here changes that, and a signal reading
+quantity that cannot see whether the pool holds the answer. This record leaves that result unchanged, and a signal reading
 the winner's FIT to the query remains the open question.
 
 Scope: four countries, gold with a recorded population above zero, admin candidate selection only.
@@ -134,8 +134,8 @@ Scope: four countries, gold with a recorded population above zero, admin candida
 | `docs/static/benchmarks/prominence-floor-candidates.jsonl` | `626e4f6f4192f1c04e40eb681bc44ac81b9f64ca2beae2fba8ea9f133a047fb0` |
 | frozen ruler `prominence-floor-v1` 1.0.0                   | `0750cdbafeda0b6a4e4891114ca3ce0fc1493af4089204098464decfb208d3cf` |
 
-1,000 panel rows from 606,894 register rows, of which 147,103 carried a coherent gold identity set. Zero
-recording errors; equal evidence confirmed over all 1,000 rows; every arm scored every row without a replay
+1,000 panel rows from 606,894 register rows, of which 147,103 had a coherent gold identity set. The run
+recorded zero errors. Equal evidence was confirmed over all 1,000 rows. Every arm scored every row without a replay
 miss.
 
 ## Reproduction

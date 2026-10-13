@@ -278,7 +278,7 @@ export function classifyCodepoint(cp: number): CodepointClass {
 /**
  * Returns the ISO 15924 script of a single codepoint.
  *
- * `Zyyy` (Common) covers characters shared by many scripts, such as digits, commas and spaces.
+ * `Zyyy` (Common) covers characters shared by more than one script, such as digits, commas and spaces.
  * `Zzzz` (Unknown) covers scripts that this file has no ranges for.
  *
  * Script shares skip `Zyyy` so that punctuation does not dominate every ranking.

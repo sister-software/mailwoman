@@ -9,7 +9,7 @@ Every resolver number we have ever quoted shares a flaw: the eval set and the tr
 cover the same places. A model that has seen Springfield, Illinois a thousand times in training
 will "resolve" it on the eval — but that is recall of a memorized place rather than generalization. And
 the headline metric made it worse. We graded resolution by **locality name-match**: did the
-resolved place carry the same name string as the gold? That question is blind to the failure that
+resolved place have the same name string as the gold? That question is blind to the failure that
 matters — resolving the right _name_ in the wrong _place_. "New York" matches "New York"
 whether the point lands in Manhattan or in a village 280km upstate.
 
@@ -44,14 +44,14 @@ ten, and the metric we had been quoting could not see it.
 
 The model is fine. It tags `region="VT"`, `locality="North Hero"`, the street, the number, and the
 postcode directly. The resolver is where it breaks: WOF stores the state only as "Vermont", and the
-`place_search` FTS index carried no USPS abbreviations, so `findPlace("VT")` returned nothing. With
+`place_search` FTS index held no USPS abbreviations, so `findPlace("VT")` returned no candidate. With
 no resolved region, the resolver's parent-constraint never engaged, the locality search ran
 unconstrained across the entire US, and a higher-population namesake in another state won. "Sheldon"
-has ten US localities; the population-5,455 one beats Vermont's population-932 one every time.
+has ten US localities. The population-5,455 one beats Vermont's population-932 one every time.
 
 The abbreviation enrichment that would fix this **already exists** — `scripts/add-region-abbrevs.ts`
 sources state/province abbreviations from the in-repo chromium-i18n libaddressinput data and writes
-them into the `names` table, which `build-fts` folds into `place_search`. It was only missing from
+them into the `names` table. `build-fts` folds that table into `place_search`. It was only missing from
 the build manifest's post-build step, so the deployed gazetteer was built without it (0 `abbr` rows).
 
 ### The fix, measured on the same set
@@ -67,9 +67,9 @@ We ran `add-region-abbrevs.ts`, rebuilt the FTS index, and remeasured the identi
 | locality PIP (all rows)                  |    11.3% |           29.7% |
 | locality PIP (polygon-coverage-adjusted) |    15.1% |           47.1% |
 
-Region resolution goes from broken to near-perfect; the median coordinate error collapses from
-326km to 3.4km. Name-match does not move — confirming the model was always emitting the right name;
-the fix makes the resolver pick the right _instance_.
+Region resolution goes from broken to near-perfect. The median coordinate error collapses from
+326km to 3.4km. Name-match does not move — confirming the model was always emitting the right name.
+The fix makes the resolver pick the right _instance_.
 
 Note the PIP-containment numbers. Even after the fix, locality-PIP is 29.7%, because 37% of the
 correctly-resolved Vermont localities are WOF **point geometry** (no polygon can contain a point),
@@ -89,7 +89,7 @@ abbreviation enrichment moved region-match from 25% to 100% but **regressed loca
 > "New York Mills", a village 283km upstate.
 
 The mechanism is a second, deeper data gap. Once the region resolves, the resolver boosts candidates
-that descend from it. New York Mills carries a full ancestry chain in WOF (locality → localadmin →
+that descend from it. New York Mills has a full ancestry chain in WOF (locality → localadmin →
 county → New York state → US). New York City's `ancestors` row contains **only itself** — its chain
 to New York state is missing. So the region-descendant boost lifts the village and not the city, and
 the village's boosted score overcomes the city's population. The region-abbreviation fix is
@@ -101,10 +101,10 @@ functional check wins — and chasing the disagreement found the deeper bug.
 
 ## The resolution — repair ancestry from `wof:hierarchy`
 
-The ancestry gap is a build artifact rather than a source gap. NYC's source geojson carries a full
-`wof:hierarchy` (region_id 85688543 = New York in every one of its five borough branches); it is
-only `wof:parent_id` that is `-4`, and `build-unified-wof`'s parent_id-closure follows nothing but
-parent_id. So `scripts/backfill-ancestors-from-hierarchy.ts` reads `wof:hierarchy` for every
+The ancestry gap is a build artifact rather than a source gap. NYC's source geojson has a full
+`wof:hierarchy` (region_id 85688543 = New York in every one of its five borough branches). Only
+`wof:parent_id` is `-4`, and `build-unified-wof`'s parent_id-closure follows parent_id and no other
+field. So `scripts/backfill-ancestors-from-hierarchy.ts` reads `wof:hierarchy` for every
 only-self place and inserts the missing ancestor rows — repairing 47,129 places (+132,832 rows) in
 the gazetteer.
 
@@ -122,7 +122,7 @@ Re-measured on the abbreviation-enriched **and** ancestry-backfilled gazetteer:
 The wrong-state error tail (full-US coord p90) collapses from 2763km to 10.3km, and the metro
 regression is gone, with NYC resolving to New York City again. Net-positive on rural and metro.
 
-Two things are worth saying about what this fix is. It is parser-agnostic: the harness runs both
+Two properties of this fix matter. It is parser-agnostic: the harness runs both
 the neural parser and the v0 (Pelias-style rules) parser through the same resolver, and the fix
 lifts both from 0% region / ~330km coord to ~99.5% / ~3.3km. The bug lived in the gazetteer rather than
 the parser. And once the resolver is direct, the neural parser keeps its edge over v0 on geography
@@ -133,14 +133,14 @@ it never trained on:
 | neural                |    93.7% |  99.9% |       3.4 |       7.4 |       277 |
 | v0 (Pelias)           |    91.9% |  99.5% |       3.3 |       7.2 |      2120 |
 
-The medians tie; the neural parser's p99 tail (277km vs 2120km) is far tighter, which is the
+The medians tie. The neural parser's p99 tail (277km vs 2120km) is far tighter. That is the
 beat-Pelias-on-the-hard-cases result we want on a held-out set.
 
 ## Status
 
 - The harness (`scripts/eval/honest-eval.sh`) + coverage-adjusted PIP reporter
   (`scripts/eval/pip-containment.py`) are the yardstick.
-- The fix is two idempotent build steps — `scripts/add-region-abbrevs.ts` (already existed; was
+- The fix is two idempotent build steps — `scripts/add-region-abbrevs.ts` (already existed but was
   absent from the manifest) and `scripts/backfill-ancestors-from-hierarchy.ts` (new) — now wired
   into `scripts/wof-build-manifest.json`'s post-build, before FTS.
 - The gazetteer fix is **validated on a copy** (`admin-abbrev-test.db`) but **not promoted to the

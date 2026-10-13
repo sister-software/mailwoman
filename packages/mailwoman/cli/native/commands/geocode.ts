@@ -55,7 +55,7 @@ export const spec = {
 		"default-country": {
 			type: "string",
 			hint: "country",
-			description: "ISO-3166 resolver country scope; pass none to disable it.",
+			description: "ISO-3166 resolver country scope. Pass none to disable it.",
 		},
 		"country-scope": {
 			type: "string",

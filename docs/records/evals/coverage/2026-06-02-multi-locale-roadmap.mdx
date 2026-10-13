@@ -2,7 +2,7 @@
 
 The German coverage extract taught the model one thing: addresses where the house number comes after
 the street and the postcode comes before the city. Before generalizing that recipe to more locales,
-it's worth knowing which locales  have that problem, because "the parser is bad at European
+we need to know which locales have that problem, because "the parser is bad at European
 addresses" is not one bug. A spot-check of the v0.7.2 parser against a handful of native-order
 addresses per locale sorts them into three groups.
 
@@ -26,21 +26,21 @@ locale order through the OpenCage template) drops straight onto them. When the G
 validates the recipe, ES and IT are the obvious next two, and the only new inputs are their OA source
 keys and a bounding box.
 
-NL is mostly the same story with a twist: the Dutch postcode carries two letters (`1012 LM`), and the
-model glues that letter-part onto the city. Real Dutch tuples show both the order and
-the postcode shape at once, so the same tooling covers it, but the postcode format is worth watching
-in the eval.
+NL shares the German order and adds one difference: the Dutch postcode ends in two letters
+(`1012 LM`), and the model glues that letter-part onto the city. Real Dutch tuples show both the order and
+the postcode shape at once, so the same tooling covers it. The eval should track the postcode format
+separately.
 
-GB is the one that does not fit. British addresses already run house-number-first, which is what the
+GB is the one that does not fit. British addresses already run house-number-first, the order the
 model was trained on. Therefore, it tags house and street correctly. What it cannot do is recognize
-`SW1A 2AA` as a postcode, so the postcode lands inside the locality. An order extract would do nothing
-for GB. It needs postcode coverage, which is closer to the existing postcode-repair work than to the
+`SW1A 2AA` as a postcode, so the postcode lands inside the locality. An order extract would not change
+GB results. GB needs postcode coverage. That work is closer to the existing postcode-repair work than to the
 German order extract.
 
 FR is already in the model's training and mostly works on canonical street addresses, so it is not a
 recipe candidate at all. Its weak tags (region 28%, venue and po_box near zero) come from the eval's
 harder rows rather than from order: checking the FR golden, every expected field is verbatim in the
-raw, but the rows that carry a region are coarse `Île-de-France, France` queries and multi-script
+raw, but the rows that include a region are coarse `Île-de-France, France` queries and multi-script
 kryptonite (`Шом, Creuse`, permuted to `France, Шом, Creuse`). So the FR change is the broader
 multi-script and permutation robustness plus coarse region+country queries, and the German order
 extract touches none of it.
@@ -48,17 +48,17 @@ extract touches none of it.
 ## The tokenizer is not the wall, for any script
 
 A reasonable worry is that the harder locales fail because the tokenizer can't represent their
-scripts, which would mean a tokenizer change (a bigger, more expensive change) instead of coverage.
+scripts. That would call for a tokenizer change (a bigger, more expensive change) instead of coverage.
 Checked directly across ten scripts with `diag-tokenizer-multiscript.ts`, that worry doesn't hold.
 
-The v0.6.0-a0 SentencePiece tokenizer round-trips every script losslessly, which is expected given
+The v0.6.0-a0 SentencePiece tokenizer round-trips every script losslessly, as expected given
 byte_fallback. The telling number is fragmentation, and there is almost none: zero byte-fallback
 pieces across Cyrillic, Greek, Japanese, Chinese, Korean, Arabic, Thai, and Devanagari, all sitting
-at roughly 0.5 to 1.1 pieces per character, the same range as Latin. The 48K vocab carries real
+at roughly 0.5 to 1.1 pieces per character, the same range as Latin. The 48K vocab holds real
 subword pieces (and for CJK, per-character pieces) for all of them rather than raw byte soup.
 
 So the non-Latin collapse measured earlier is not the tokenizer shredding the script. The pieces
-exist; their embeddings areunder-trained, because the corpus is almost entirely Latin. That is
+exist. Their embeddings are under-trained, because the corpus is almost entirely Latin. That is
 the same diagnosis as German: coverage rather than tokenizer. The synth-from-real-OA recipe therefore reaches
 past the Latin scripts, and the expensive option of swapping in a multilingual encoder is less
 necessary than it looked, since the vocabulary is already multilingual enough to learn from.

@@ -34,12 +34,12 @@ the original surface would hide that uncertainty from the caller.
 The corpus teaches some of this structural competence. It contains locale-specific component
 orders, Unicode scripts, mixed-script examples, and transliteration-shaped examples where we have
 defensible labels. The tokenizer can represent arbitrary Unicode through byte fallback. Representation
-alone is not comprehension, though: a script absent from training can still produce a well-formed but
+by itself is not comprehension, though: a script absent from training can still produce a well-formed but
 wrong parse.
 
 ## The atlas supplies the bridge between names
 
-After parsing, the resolver searches a gazetteer. One place record may carry a local name, an English
+After parsing, the resolver searches a gazetteer. One place record may store a local name, an English
 name, other language names, abbreviations, colloquial forms, and established transliterations:
 
 ```text
@@ -69,13 +69,13 @@ full Japanese street-address coverage.
 ### A United States address typed in kana
 
 The tokenizer accepts the text and the model may recover some structure. Resolution then depends on
-the atlas containing the kana surface. Most United States streets do not carry kana aliases, and
+the atlas containing the kana surface. Most United States streets do not have kana aliases, and
 Mailwoman does not silently turn the query into English. An absent alias therefore remains an
 unresolved query.
 
 ### A Japanese address typed in an Indian script
 
-The same boundary applies. A recorded Devanagari name or transliteration can reach the entity; an
+The same boundary applies. A recorded Devanagari name or transliteration can reach the entity. An
 unrecorded rendering cannot. The coarse country model has explicit outlier exposure for unsupported
 scripts so it can abstain instead of confidently assigning them to a country it knows.
 

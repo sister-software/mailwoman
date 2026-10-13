@@ -61,7 +61,7 @@ export const MIN_BIAS = Math.LN2
 export const MIN_COUNTRY_VENUE_NAMES = 10_000
 
 /**
- * A suffix entry that differs from the next shorter kept suffix by less than this many logits
+ * A suffix entry that differs from the next shorter kept suffix by less than this number of logits
  * is dropped, because the runtime falls back to that shorter suffix with nearly the same bias.
  */
 export const SUFFIX_PRUNE_DELTA = 0.5
@@ -210,7 +210,8 @@ export function suffixCounts(
 /**
  * Returns the single-word names of a country held by the codex: the country's name in every ICU locale.
  *
- * Subdivision names and codes come from the admin database, which covers every country.
+ * Subdivision names and codes come from the admin database.
+ * That database covers every country.
  */
 export function codexAdminWords(country: string): Set<string> {
 	const words = new Set<string>()
@@ -332,14 +333,14 @@ export function pruneSuffixes(suffixes: VenueHeadBiases): VenueHeadBiases {
 }
 
 /**
- * The fewest member countries that must carry a head before it enters a language aggregate.
+ * The fewest member countries whose tables must list a head before it enters a language aggregate.
  *
- * A head that one or two countries carry belongs to those countries' own tables.
+ * A head that only one or two country tables list belongs to those countries' own tables.
  */
 export const MIN_LANGUAGE_CARRIERS = 3
 
 /**
- * Averages country entries into one language aggregate over the countries that carry each head.
+ * Averages country entries into one language aggregate over the countries whose tables list each head.
  *
  * A country without a head is left out of that head's mean.
  * Most of a language's countries have too few venue names to score any head,
@@ -416,11 +417,11 @@ export interface BuildVenueHeadOptions {
 	 */
 	adminDB: string
 	/**
-	 * A corpus `MANIFEST.json` whose train slices supply street spans.
+	 * A corpus `MANIFEST.json` whose train files supply street spans.
 	 */
 	corpusManifest: string
 	/**
-	 * Rewrites a manifest slice path to a local path.
+	 * Rewrites a manifest file path to a local path.
 	 */
 	slicePath?: (path: string) => string
 	/**

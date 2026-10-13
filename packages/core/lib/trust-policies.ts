@@ -16,7 +16,7 @@
  *
  *   keep this module A leaf. The Node build constructs its jsdom window at import time — measured at
  *   0.45 s and ~130 MB over a bare Node process — so an import from a barrel (`core/utils`, the CLI
- *   graph) would tax every process in the repo. It is priced for modules that actually sanitize.
+ *   graph) would add that time and memory to every process in the repo. Only modules that sanitize import it.
  */
 
 import DOMPurify, { type Config as DOMPurifyConfig } from "isomorphic-dompurify"

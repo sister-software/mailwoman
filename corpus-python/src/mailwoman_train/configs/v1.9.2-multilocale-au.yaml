@@ -2,7 +2,7 @@
 # The data loader drops every row whose country is missing from country_weights, so the recipe adds
 # AU there and adds the gnaf source.
 #
-# AU addresses often put the postcode and locality first, as in "3053 Carlton, Barry Street 50".
+# Some AU addresses put the postcode and locality first, as in "3053 Carlton, Barry Street 50".
 # The gnaf rows come from `mailwoman gnaf assemble`, which joins the G-NAF PSV files and holds out the
 # AU eval addresses. They rotate through the same three component orders as the overture source.
 # The corpus overlays these rows on corpus-v0.9.1-multilocale.
@@ -58,7 +58,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # The overture source covers many EU locales. At 3.0 each locale gets exposure comparable to
+    # The overture source covers multiple EU locales. At 3.0 each locale gets exposure comparable to
     # synth-fr-admin-split while the US-heavy base still dominates.
     overture: 3.0
     # The gnaf source covers one locale and one format fix, so it takes the 6.0 weight that

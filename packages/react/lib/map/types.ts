@@ -209,8 +209,9 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block for content that reads on this answer. a
-	 * control that reads on the model belongs in {@link developerExtras}.
+	 * Rendered directly above the result block for content that reads on this answer.
+	 *
+	 * A control that reads on the model belongs in {@link developerExtras}.
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
 	/**

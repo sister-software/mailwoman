@@ -26,7 +26,7 @@ Read the memory line before you start — it is the one that bites.
   worker is a separate process that loads its own copy of the model and opens its own database handles.
   Measured on this machine as proportional set size, a pair of workers read 354 MB and 407 MB under light
   traffic and 447 MB and 449 MB once both were warm, plus 220 MB for the manager. Budget the warm figure.
-  Set `--cpus` to what you have room for; on a sixteen-core box the default is about 7.4 GB.
+  Set `--cpus` to what you have room for. On a sixteen-core box the default is about 7.4 GB.
 
 Two is a starting point with a measurement behind it. The threaded geocode path in this codebase was
 swept on a 16-core box against a single database and peaked at 2 workers, degrading from there — the
@@ -58,7 +58,7 @@ differently. Note that only the data root was set: `serve` looks for `wof/candid
 so the backend it names is the one it found rather than one you selected.
 
 Measured on this machine, `/health` answered 3.8 s after launch and the first parse request 4.0 s after
-launch, with the model file already in the page cache from an earlier run; a first-ever start pays the
+launch, with the model file already in the page cache from an earlier run. A first-ever start pays the
 read as well. Leave it running and open a second terminal for everything below.
 
 `--host` defaults to `0.0.0.0`, so the server is reachable from your network the moment it boots. There
@@ -101,19 +101,19 @@ curl -s http://127.0.0.1:7788/health | jq
 ```
 
 This is the route to point a load balancer at, and the route to read when a deployment answers
-differently than the last one did. `model.version` is the weights bundle rather than the package version, which
+differently than the last one did. `model.version` is the weights bundle rather than the package version. It
 is the field to compare across two hosts when their answers diverge.
 
 The `data` block counts what it found under the data root. `wof_dbs` is empty because this deployment
 resolves against the candidate gazetteer rather than a full WOF distribution. `situs_states: 1` and
 `interpolation_states: 1` are the District of Columbia databases
 [Geocode a CSV](./geocode-a-csv.mdx#6-make-the-same-script-more-precise) pulled — one jurisdiction out
-of the 52 the US bundle ships, which is why the geocodes below still answer `admin`. Those two counters
+of the 52 the US bundle ships. That is why the geocodes below still answer `admin`. Those two counters
 are the fastest way to tell a deployment that lost a mount from one that never had the data.
 
 ## 3. Parse one address
 
-`GET /v1/parse` is the one route that takes a query string, which makes it the one you can test from a
+`GET /v1/parse` is the one route that takes a query string. That makes it the one you can test from a
 browser address bar.
 
 ```bash
@@ -152,9 +152,9 @@ curl -s "http://127.0.0.1:7788/v1/parse?address=1%20madison%20ave%20madison%20wi
 }
 ```
 
-The response also carries a `tree` key that this `jq` filter drops — the same nested `AddressTree`, with
+The response also includes a `tree` key that this `jq` filter drops — the same nested `AddressTree`, with
 spans and confidences, that [Read everything a parse returns](./understand-a-parse.mdx) walks. The flat
-`components` array is the order-preserving projection, which is what most callers want over HTTP.
+`components` array is the order-preserving projection. Most callers want that projection over HTTP.
 
 ## 4. Geocode one address
 
@@ -197,7 +197,7 @@ curl -s -X POST http://127.0.0.1:7788/v1/geocode \
 
 Same object the CLI and the library return, over the wire without loss.
 
-`POST /v1/batch` takes an array and returns them in order, which is one connection and one round trip
+`POST /v1/batch` takes an array and returns them in order. That takes one connection and one round trip
 instead of N:
 
 ```bash
@@ -227,7 +227,7 @@ curl -s -X POST http://127.0.0.1:7788/v1/batch \
 ```
 
 The batch route caps at 1,000 rows per request by default (`MAILWOMAN_BATCH_MAX`). Past that, chunk your input or run the loop in
-[Geocode a CSV](./geocode-a-csv.mdx) instead, which has no HTTP layer to pay for.
+[Geocode a CSV](./geocode-a-csv.mdx) instead. That loop has no HTTP layer to pay for.
 
 ## 5. Read the failures
 
@@ -301,8 +301,8 @@ It is generated from the same route definitions the server runs
 from the deployment that served it. Point a client generator at that URL rather than at a copy.
 
 Three routes this page did not curl: `/v1/resolve` takes an already-decoded address tree and resolves it
-against the gazetteer, for callers that parse in-process and want only that pass; `/v1/format` is the
-inverse of the parser, rendering components back to an address string plus a canonical match key; and
+against the gazetteer, for callers that parse in-process and want only that pass. `/v1/format` is the
+inverse of the parser, rendering components back to an address string plus a canonical match key. And
 `/v1/reload` reloads versioned data files. That last one is a deploy-time route on a server with no
 authentication of its own — block it at your ingress, or it is a restart anyone on the network can
 trigger.
@@ -320,7 +320,7 @@ someone else's, run the compatible server instead of rewriting the caller: `@mai
 endpoints with GeoJSON feature collections, and `@mailwoman/libpostal` answers `/parse` and `/expand`.
 Each is a separate package with its own `serve` command, pointed at the same data root.
 
-The rule of thumb: a new integration goes to `/v1`, which has the fuller result object; an existing
+The rule of thumb: a new integration goes to `/v1`, because `/v1` has the fuller result object. An existing
 integration goes to whichever drop-in matches the client you already have. Why those exist at all is on
 [What Mailwoman is](../get-started/what-mailwoman-is.mdx#what-it-is-not).
 

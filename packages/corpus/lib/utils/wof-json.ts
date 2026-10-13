@@ -75,7 +75,7 @@ export function isCurrentFeature(props: Record<string, unknown>): boolean {
 /**
  * Pull `name:*` localized variants off a WOF feature's properties, lifting the first
  * non-empty string from the array WOF stores them in (`["Saint Petersburg"]`);
- * Multiple-value variants are rare and usually historical aliases.
+ * Multiple-value variants are rare, and most of them are historical aliases.
  *
  * This function keeps them together.
  * An adapter that needs separate values can iterate the underlying array.

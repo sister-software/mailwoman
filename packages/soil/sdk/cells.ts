@@ -73,7 +73,7 @@ export interface SoilCellIndexMeasurement {
 	 */
 	coarsenedFeatures: number
 	/**
-	 * The resolutions actually present, finest last.
+	 * The resolutions present in the stored rows, finest last.
 	 */
 	resolutions: number[]
 }

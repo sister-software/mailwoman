@@ -62,7 +62,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	{ placement: PostcodePlacement; locale: string; localityColumn?: GeonamesLocalityColumn }
 > = new Map([
 	// `Rue de l'Église, 3, 29217 Plougonvelin, Bretagne, France` and its siblings in
-	// the structured slices attest this leading placement.
+	// the structured recipe outputs attest this leading placement.
 	["FR", { placement: "leading", locale: "fr-FR" }],
 	["DE", { placement: "leading", locale: "de-DE" }],
 	["ES", { placement: "leading", locale: "es-ES" }],
@@ -85,7 +85,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 ])
 
 /**
- * How many postcodes one locality may contribute.
+ * The number of postcodes one locality may contribute.
  *
  * A quota rather than a cutoff: it bounds repetition without deleting a locality.
  */

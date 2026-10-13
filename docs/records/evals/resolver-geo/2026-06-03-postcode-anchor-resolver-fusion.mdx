@@ -1,12 +1,12 @@
 # Postcode anchor through the resolver eval (2026-06-03)
 
 The postcode anchor (#240) is wired into the OpenAddresses real-point resolver eval as a `neural+anchor`
-row (`--postcode-anchor`). The neural parse and the resolver supply the admin/place identity as before;
-the **coordinate** is taken from the postcode anchor's own centroid. So the row isolates exactly what the
+row (`--postcode-anchor`). The neural parse and the resolver supply the admin/place identity as before,
+and the **coordinate** is taken from the postcode anchor's own centroid. So the row isolates exactly what the
 anchor sharpens: where rather than which place. The tables below are emitted verbatim by
 `scripts/eval/oa-resolver-eval.ts` (eval figures are never hand-typed).
 
-The anchor now carries a **position-aware confidence**: a digit-only code that shares its comma-segment
+The anchor now reports a **position-aware confidence**: a digit-only code that shares its comma-segment
 with a street word reads as a house number rather than a postcode (house numbers sit beside the street,
 postcodes beside the city), so its confidence is scaled down. The street vocabulary is the full USPS
 Pub-28 suffix table from `@mailwoman/codex/us` — minus the abbreviations that collide with a state code
@@ -16,7 +16,7 @@ own `City, ST ZIP` segment. The eval then picks the highest-confidence span abov
 and a span the prior flags as a house number falls back to the resolver coordinate rather than placing
 the address at a far-away same-shaped ZIP.
 
-## German — the resolver carries admin only, no German postcodes
+## German — the resolver holds admin places but not German postcodes
 
 ```
 | parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
@@ -27,7 +27,7 @@ the address at a far-away same-shaped ZIP.
 
 The anchor drops coord p50 from 9.9 km to **1.3 km** (p90 66.8 → 5.7, p99 318 → 13.5), admin-match
 unchanged. The German parser is out of distribution (locality 77%), so the resolver lands on a coarse
-admin centroid; the postcode anchor — a regex plus a gazetteer, no model in the loop — carries the
+admin centroid. The postcode anchor is a regex plus a gazetteer without a model in the loop, and it moves the
 coordinate to the postcode's own point. It also beats the Pelias parser (v0) on coordinate by a wide
 margin (1.3 vs 7.0 km).
 
@@ -50,16 +50,16 @@ drops the duplicate. v0 reaches 99.3% because it emits the region in both.)
 
 Even where the resolver already resolves ZIPs, the anchor helps on the tail: p50 tightens 3.3 → 2.8 km
 and the p99 collapses from **277 km to 25.7 km**. The tail is the handful of addresses whose neural parse
-resolves to the wrong admin centroid; the postcode is a more reliable coordinate than a mis-resolved
+resolves to the wrong admin centroid. The postcode is a more reliable coordinate than a mis-resolved
 city, so swapping it in caps the error at ZIP granularity. (Getting here meant closing the house-number
 trap: a leading 5-digit that is a valid ZIP in another state — `32147 Bio Station Lane, Polson, MT 59860`
-— must not win over the real trailing ZIP. The position prior plus the trust floor handle it; before
+— must not win over the real trailing ZIP. The position prior plus the trust floor handle it. Before
 them, that trap put the US p99 at 889 km.)
 
 ## Takeaway
 
 The fusion is a clean win in both directions: it supplies postcode-level coordinates for the locales
-whose postcodes the resolver's extracts do not carry (DE/ES/IT/NL/FR), and it tightens the tail even where
+whose postcodes the resolver's extracts do not contain (DE/ES/IT/NL/FR), and it tightens the tail even where
 they do (US), because a real postcode out-resolves a mis-parsed admin centroid. It is the postcode tier
 the eval's own note promised, between the admin-centroid tier and the future street-level (TIGER) tier —
 and the position-aware confidence means it runs on the anchor's own judgment rather than an eval-side crutch.

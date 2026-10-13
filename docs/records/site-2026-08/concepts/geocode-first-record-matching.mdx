@@ -10,9 +10,9 @@ tags:
 
 # Geocode-first record matching — the thing that imploded, and why it won't again
 
-Mailwoman started as a record-matching project. The original job involved a set of clinics that receive federal and state funding. Their records arrived as SQLite dumps, CSV exports, and hand-keyed spreadsheets. The question was _which of these registered entities already got money, which are eligible and didn't, and which are the same clinic typed three different ways?_ The plan was to normalize and geocode the records, load them into QGIS, check coverage, and build a lead list.
+Mailwoman started as a record-matching project. The original job involved a set of clinics that receive federal and state funding. Their records arrived as SQLite dumps, CSV exports, and hand-keyed spreadsheets. The question was _Which of these registered entities already got money? Which are eligible and didn't? Which are the same clinic typed three different ways?_ The plan was to normalize and geocode the records, load them into QGIS, check coverage, and build a lead list.
 
-The pipeline failed at the matching step. Pelias and libpostal parsed the addresses too poorly, which led to mailwoman's v0 TypeScript rewrite and then to the neural parser. The parser was only the first step, though. We never shipped the matcher, which is the part that decides whether two messy records describe the same real-world entity. This page describes the plan for building it and the change that makes it feasible now.
+The pipeline failed at the matching step. Pelias and libpostal parsed the addresses too poorly. That failure led to mailwoman's v0 TypeScript rewrite and then to the neural parser. The parser was only the first step, though. We never shipped the matcher. The matcher is the part that decides whether two messy records describe the same real-world entity. This page describes the plan for building it and the change that makes it feasible now.
 
 ## What it is
 
@@ -22,15 +22,15 @@ Each term in that description has a specific meaning:
 
 - **Entity resolution.** This is the classical problem of blocking, pairwise matching, and clustering into canonical entities. The field is old and well theorized (Fellegi & Sunter, 1969).
 - **Geocode-first.** The address becomes a point before it becomes a match feature. This is the central design choice, and it addresses the cause of the earlier failure.
-- **Calibrated.** Every link carries a probability, and every threshold states its precision/recall tradeoff. The matcher sends ambiguous pairs to review instead of guessing. The geocoder follows the same practice.
+- **Calibrated.** Every link has a probability, and every threshold states its precision/recall tradeoff. The matcher sends ambiguous pairs to review instead of guessing. The geocoder follows the same practice.
 
 ## Why it imploded — and what changed under it
 
 The v0 matcher was **string-first**. It classified the address into components, placed them in templates, and compared the strings. Strings are the wrong key for addresses. `Jyllandsgade 15` and `Jyllandsgade 75` differ by one character, with a Levenshtein similarity of **0.963**, and they are **650 meters apart** (Isaj et al., SSTD 2019). String similarity has the wrong _topology_. It pulls different buildings together and pushes different spellings of the same building apart. Our matcher produced false pairs and missed real ones.
 
-![Two decision surfaces — string-first vs geocode-first — for P(match) over string similarity × geographic distance. String-first is a vertical wall blind to geography; geocode-first is a basin carved by distance, with the two canonical traps annotated.](./img/geocode-first-surface.png)
+![Two decision surfaces — string-first vs geocode-first — for P(match) over string similarity × geographic distance. String-first is a vertical wall blind to geography. Geocode-first is a basin carved by distance, with the two canonical traps annotated.](./img/geocode-first-surface.png)
 
-_Both surfaces plot `P(match)` over the same record-pair space, with string similarity on x and geographic distance on y. The **same** Fellegi-Sunter model ([below](#the-foundation-fellegi-sunter-without-labels)) scores both, using the **real** per-level Bayes factors (`NAME_LEVELS`, `DEFAULT_DISTANCE_LEVELS`). The surfaces differ only in which evidence each model sees. **String-first** sees only the name, so its boundary is a vertical line at high similarity that ignores location. It merges namesakes 1500 km apart (① `Springfield General` IL vs MA) and splits a same-building pair whose strings differ (② `123 Main St` vs `123 Main Street Apt 2`). **Geocode-first** also sees distance. Its match region is confined to pairs near a shared place, and it corrects both of those decisions. The geography levels carry the most evidence by design (±9.45 bits at the same-building grain vs ±6.32 for an exact name), so the boundary bends with distance rather than with spelling. The prior λ here is illustrative, chosen to keep the boundary visible. Production runs λ=1e-4 with phone and spatial-key corroboration, which this two-axis view omits. Generator: `scripts/record-matcher/viz/geocode-first-surface.ts`._
+_Both surfaces plot `P(match)` over the same record-pair space, with string similarity on x and geographic distance on y. The **same** Fellegi-Sunter model ([below](#the-foundation-fellegi-sunter-without-labels)) scores both, using the **real** per-level Bayes factors (`NAME_LEVELS`, `DEFAULT_DISTANCE_LEVELS`). The surfaces differ only in which evidence each model sees. **String-first** sees only the name, so its boundary is a vertical line at high similarity that ignores location. It merges namesakes 1500 km apart (① `Springfield General` IL vs MA) and splits a same-building pair whose strings differ (② `123 Main St` vs `123 Main Street Apt 2`). **Geocode-first** also sees distance. Its match region is confined to pairs near a shared place, and it corrects both of those decisions. The geography levels hold the most evidence by design (±9.45 bits at the same-building grain vs ±6.32 for an exact name), so the boundary bends with distance rather than with spelling. The prior λ here is illustrative, chosen to keep the boundary visible. Production runs λ=1e-4 with phone and spatial-key corroboration. This two-axis view omits that corroboration. Generator: `scripts/record-matcher/viz/geocode-first-surface.ts`._
 
 The change since then is that mailwoman is now a **geocoder with calibrated confidence.** Every record can become a rooftop coordinate (± calibrated meters), a Who's-on-First hierarchy, and structured components, each with a confidence. Those outputs give the matcher keys with the _right_ topology:
 
@@ -42,7 +42,7 @@ The matcher never compares formatted strings. It compares resolved places, so th
 
 ## Entity resolution is three problems rather than one
 
-Entity resolution projects can fail when they treat matching as one large problem. It has three parts, and the architecture follows from separating them (Binette & Steorts, 2022; Papadakis et al., 2021):
+Entity resolution projects can fail when they treat matching as one large problem. It has three parts, and the architecture follows from separating them (Binette & Steorts, 2022. Papadakis et al., 2021):
 
 1. **Block.** Generate candidate pairs cheaply. An all-pairs comparison is O(n²), and a million records produce a trillion comparisons. Geography does most of the work in this stage.
 2. **Match.** Score each candidate pair on whether both records are the same entity. This is the calibrated decision layer.
@@ -52,7 +52,7 @@ A **canonicalize** step runs before all three. It parses the name, sanitizes the
 
 ## The foundation: Fellegi-Sunter, without labels
 
-The matcher's core is the classical probabilistic-linkage model. It suits this job because **it trains without labeled data.** The model appears to require known matches, yet finding matches is the problem being solved. Expectation-Maximization resolves this by alternating between predictions about matching pairs and parameter estimates based on those predictions. It relies on true matches agreeing on most fields while non-matches do not (Winkler 1988; Splink).
+The matcher's core is the classical probabilistic-linkage model. It suits this job because **it trains without labeled data.** The model appears to require known matches, yet finding matches is the problem being solved. Expectation-Maximization resolves this by alternating between predictions about matching pairs and parameter estimates based on those predictions. It relies on true matches agreeing on most fields while non-matches do not (Winkler 1988, and Splink).
 
 This property addresses why the first attempt failed. Messy clinic CSVs come with **no ground truth**, so a supervised matcher has no examples to learn from at the start. Fellegi-Sunter still produces a _calibrated_ matcher, and its scores are interpretable. A total match weight is a prior plus a sum of per-field log-Bayes-factors (`M = M_prior + Σ log₂(mᵢ/uᵢ)`), so each decision can be traced to the fields that drove it. The match-weight threshold is the single precision/recall setting. A clerical-review band between the thresholds holds the ambiguous pairs, and the matcher abstains on them, as the geocoder does when its radius grows too large.
 
@@ -65,7 +65,7 @@ Distance enters again at the **scoring** stage in two forms, and both help:
 - **Bucketed**, as ordinary Fellegi-Sunter comparison levels ("within X m", "within Y m", "farther"), each with its own learned m/u (Splink's `DistanceInKMAtThresholds`). This form is the simplest to calibrate and is the established default.
 - **Continuous**, as a numeric feature. This form is measurably stronger. Geo-ER beats text-only matching by 2.7–7.2% F1, with the _largest_ gains where the address text is sparse, and it generalizes across regions far better than a text model.
 
-Our approach, which we have not seen published, runs this on a parser and geocoder we _own and calibrate_. The matcher can then condition on the geocode's stated uncertainty. That uncertainty has a cost. Geocoder error is large, heavy-tailed, and non-Gaussian, with a steep urban-to-rural gradient (street-interpolation median ~38 m urban, ~201 m rural; Cayo & Talbot, Zimmerman et al.). Two rules follow:
+We have not seen this approach published. It runs this on a parser and geocoder we _own and calibrate_. The matcher can then condition on the geocode's stated uncertainty. That uncertainty has a cost. Geocoder error is large, heavy-tailed, and non-Gaussian, with a steep urban-to-rural gradient (street-interpolation median ~38 m urban, ~201 m rural, per Cayo & Talbot, Zimmerman et al.). Two rules follow:
 
 1. **Distance buckets are density-aware.** A 50 m "same building" bucket fits downtown and is far too tight in the country. Mailwoman knows the density context, and the matcher uses it.
 2. **Geocode quality weights the evidence.** Two records at the same _rooftop_ point agree strongly. Two at the same _interpolated street centroid_ agree weakly. Two at the same _PO-box or multi-unit_ coordinate barely agree on location. NAACCR's cancer-registry geocoder already propagates this information: interpolation type, feature-match geography, PO-box and rural-route flags, and a Match/Review/Non-Match triage. It maps directly onto our situs → interp → admin tier cascade and conformal radii. The geocoder already reports the quality class, and the matcher has to use it.
@@ -81,14 +81,14 @@ The classical core is v1. Models are added selectively where the evidence shows 
 - **An LLM for the gray zone, never for the easy 95%.** When the task is framed as in-context _clustering_ rather than all-pairs classification, an LLM uses ~5× fewer API calls and improves quality (LLM-CER, 2025). Use it only on the clerical-review band where the calibrated scorer abstained.
 - **An LLM for ingest.** Source data arrives in forms such as a SQLite dump. An LLM reads a header row and a few samples, infers the column-to-field mapping, and caches it. That is one call per _source schema_ rather than one per row, and it removes the most painful onboarding step.
 
-## Four rules, carried over
+## Four rules from the parser work
 
 The matcher follows the same four rules as the geocoder:
 
 - **Configuration matters more than the model.** Across ~40,000 pipeline configs, F1 spans nearly the full [0,1] range, and cheap sampling-based auto-tuning recovers >95% of an exhaustive search in under 100 trials (AutoER, 2025). We therefore build a _tunable_ matcher and a small tuner instead of searching for one perfect model.
 - **Calibrate, then abstain.** A link is a probability, and ambiguous pairs go to review.
 - **Grade the full pipeline against truth, never a stage in isolation.** The reconcile regression showed why. Match quality is measured on linked entities against reality. A scorer's pairwise F1 does not measure it.
-- **Report every cap.** When blocking drops a region or a tier, the matcher says so. If it silently skips a comparison, the result reads as "no match found", which is the most misleading output an ER system can give.
+- **Report every cap.** When blocking drops a region or a tier, the matcher reports the drop. If it silently skips a comparison, the result reads as "no match found". That is the most misleading output an ER system can give.
 
 ## The address-frequency change needs a corpus
 

@@ -247,8 +247,8 @@ export type ConventionClaimID = (typeof ConventionClaimID)[keyof typeof Conventi
  * Whether a claim is decided by one row or needs two renderings compared.
  *
  * A unary claim is counted over single rows.
- * A relational claim needs paired or grouped examples and is measured by different machinery,
- * so counting it per row would answer a different question.
+ * A relational claim needs paired or grouped examples and is measured by a different
+ * procedure, so counting it per row would answer a different question.
  */
 export const ClaimArity = {
 	Unary: "unary",

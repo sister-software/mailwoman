@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Downloads one zip archive through an {@linkcode APIClient} and answers what arrived.
  *
- *   An INSPIRE ATOM service that publishes one archive per area is harvested through many small
- *   requests rather than through one large transfer, so the transfer runs on the client the harvest
+ *   An INSPIRE ATOM service that publishes one archive per area is harvested through one small
+ *   request per area rather than through one large transfer, so the transfer runs on the client the harvest
  *   already paces and a test can drive it over a stubbed transport. `downloadToFile` runs on global
  *   `fetch`, which a unit test cannot intercept.
  *

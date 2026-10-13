@@ -61,7 +61,7 @@ def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, An
 def precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
     """The autocast dtype for a precision setting, or None for full precision.
 
-    fp16 answers `None` off CUDA because the CPU path has no fp16 kernels worth using.
+    fp16 answers `None` off CUDA because the CPU path has no usable fp16 kernels.
     Full precision satisfies that request better than a failure would.
     """
     if precision == "fp16":

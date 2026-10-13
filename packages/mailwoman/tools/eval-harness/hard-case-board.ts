@@ -18,7 +18,7 @@
  *   unrequested tolerance. A zero bias means the FST accepted no entry for that surface. Whether a bias
  *   applies is a separate question.
  *
- *   Graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
+ *   Graded through `createRuntimePipeline`, the only path an FST prior reaches (see the runner).
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"

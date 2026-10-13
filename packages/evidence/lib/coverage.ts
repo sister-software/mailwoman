@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The exclusion check. An {@link Exclusion} is the only evidence kind that can act on an absence, so it is the only
- * one with no public constructor: {@link requireExclusionBasis} is the sole way to make one and refuses far more often
- * than it admits.
+ * one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and it refuses
+ * more requests than it admits.
  *
  * Fold parity is a precondition. A key that "exists nowhere" may exist under a surface the probe did
  * not check. The probe must identify the fold it used. The layer must identify the fold its builder wrote.
@@ -50,7 +50,7 @@ export type CoverageBasis = z.infer<typeof CoverageBasisSchema>
  *
  * Absence is only supportable from a designated or surveyed basis (presence is supportable from any),
  * so callers building negative evidence must check this rather than `completeness` by itself
- * or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.
+ * or an exclusion fires identically on a surveyed empty cell and on one we never surveyed.
  */
 export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boolean {
 	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed
@@ -141,7 +141,7 @@ export function requireExclusionBasis(input: RequireExclusionInput): Exclusion |
  * diacritics, hyphens, periods, apostrophes, case, whitespace collapsing and non-Latin scripts.
  *
  * Each new input changes every identity.
- * The order is load-bearing because identity is order-dependent.
+ * The order must be preserved because identity is order-dependent.
  */
 export const FOLD_PROBE_CORPUS: readonly string[] = [
 	"Besançon",

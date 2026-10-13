@@ -253,8 +253,8 @@ export interface PurposeFinding extends PurposeEntry {
 /**
  * Returns the entries whose name or sentence matches `phrase`, best first.
  *
- * A finding needs two matching terms, or one term in the name.
- * A term in the name scores 2 and a term in the sentence scores 1.
+ * A finding needs two matching terms, or one term that the symbol's identifier contains.
+ * A term the identifier contains scores 2 and a term in the sentence scores 1.
  */
 export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], limit = 10): PurposeFinding[] {
 	const wanted = new Set(terms(phrase))

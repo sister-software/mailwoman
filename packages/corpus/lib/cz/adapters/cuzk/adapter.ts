@@ -15,7 +15,7 @@
  * to read. The `ad:component` hrefs look external, because ČÚZK writes an absolute WFS stored-query
  * URL on `services.cuzk.cz`. The `Id=` parameter of each one matches a `gml:id` in the file at hand.
  * Measured over `584282.xml`: 5,460 component references across 1,365 addresses, 0 of them reaching
- * outside the archive. Only `ad:parcel` and `ad:building` point at genuinely separate themes, and
+ * outside the archive. Only `ad:parcel` and `ad:building` point at separate themes, and
  * the adapter reads neither.
  *
  * ČÚZK states one condition of use and states it uniformly. Every one of the 6,259 `rights` elements

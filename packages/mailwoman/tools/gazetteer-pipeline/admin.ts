@@ -169,7 +169,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
 		// The A-class admin fold for the zero-coverage locales — country + region nodes +
-		// locality ancestry — scoped to the countries actually in this run's geonames set.
+		// locality ancestry — scoped to the countries in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
 		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
@@ -241,8 +241,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build actually produced rather than the lists it was given,
-			// so a fold that ingested no places does not appear as a source — see manifest.ts.
+			// The counts the build produced rather than the lists it was given, so a fold that
+			// ingested no places does not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },

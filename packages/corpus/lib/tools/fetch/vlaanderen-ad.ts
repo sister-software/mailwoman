@@ -146,7 +146,7 @@ export interface HarvestVlaanderenOptions {
 	 */
 	outputDir: PathBuilderLike
 	/**
-	 * Stop after this many address pages, for a probe rather than a full harvest.
+	 * Stop after this number of address pages, for a probe rather than a full harvest.
 	 */
 	maxPages?: number
 	/**

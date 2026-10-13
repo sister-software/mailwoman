@@ -88,7 +88,7 @@ touches a file.
 
 ## Lanes
 
-Each lane carries a measured upper bound from the census and a realistic estimate. The realistic figure assumes a
+Each lane has a measured upper bound from the census and a realistic estimate. The realistic figure assumes a
 generic implementation keeps each instance's irreducible vocabulary.
 
 | Lane                               |    Upper bound | Realistic         | Confidence |
@@ -103,9 +103,9 @@ generic implementation keeps each instance's irreducible vocabulary.
 | Test families collapsing with A–C  |          6,733 | 2,500–4,000       | medium     |
 | **Total**                          |                | **11,850–17,150** |            |
 
-Lane B carries two bounds because two methods measured it. The 0.45 cluster threshold counts only the files that still
+Lane B has two bounds because two methods measured it. The 0.45 cluster threshold counts only the files that still
 look alike (3,378). A filename match across the four packages instead counts all 23 families (12,225), and
-the 8,847-line difference sits in same-named files that have drifted. `sdk/client.ts` measures 0.23 best-pair
+the 8,847-line difference sits in files with matching names that have drifted. `sdk/client.ts` measures 0.23 best-pair
 similarity, and `sdk/download.ts` has one identical pair and one at 0.09. The real figure lies between the two
 bounds.
 
@@ -134,7 +134,7 @@ different finding and may survive.
 per-command legibility for fewer lines, so this lane applies only where a group is coherent (the engine options
 `locale` / `weights-cache` / `db` / `resolve-db` / `candidate-db`) rather than key by key.
 
-A2 also exposes a naming split worth fixing while the files are open: `out` (56) beside `output` (23), and
+A2 also exposes a naming split to fix while the files are open: `out` (56) beside `output` (23), and
 `country` (14) beside `countries` (14). When #2280 read them afterwards, only the first was a drift (see the
 outcome section).
 
@@ -164,7 +164,7 @@ interface at 895 lines, and every layer already depends on `core`, but an ingest
 the package everything depends on. A new `@mailwoman/layer-kit` workspace is cleaner and costs the seven-register
 registration that `AGENTS.md` documents. Decide before writing code.
 
-**The acceptance tests already exist.** Each layer carries a `lib/sdk/build.test.ts` that drives the full build to
+**The acceptance tests already exist.** Each layer has a `lib/sdk/build.test.ts` that drives the full build to
 a sealed database from hand-built fixture geometry, without network access or GDAL. Those four suites plus the four
 `packages/mailwoman/lib/observations/*-route.test.ts` must pass unchanged. A test that needs editing to
 accommodate the kit is a behavior change, and it stops the lane until explained.
@@ -258,7 +258,7 @@ work.
 1. **A1** — done. 143 files, −1,182 net lines, two inert flags fixed.
 
    Per commit, so the branch's arithmetic can be audited: A1 −1,182, the voie consolidation −26, and the
-   `locale-tables` check +400, which is new capability rather than consolidation. The branch nets −808.
+   `locale-tables` check +400. The check is new capability rather than consolidation. The branch nets −808.
 
 2. **Home shadows** — the French voie set is done. The rest are layer-package shadows
    (`assertAreaAgreement`, `resolveCells`, `readIdentity`, `aggregateChunks`, `runBatchedIngest`,
@@ -284,7 +284,7 @@ conform with the rule that reference data is provenance-tracked immutable SQLite
 Of A2's two naming findings, one was a drift. `out` (56 commands) beside `output` (22) was the same option spelled
 two ways. It is now `out` everywhere, and `deprecatedName` on the option spec keeps the retired flag working behind
 a notice (#2280, `ebd389ba7`). `country` (13) beside `countries` (14) is a deliberate distinction. All 27 sites were
-read: every `country` carries one ISO code and every `countries` a comma-separated list. Two files declare both
+read: every `country` holds one ISO code and every `countries` a comma-separated list. Two files declare both
 because they refer to different sources at different arities (`corpus/fetch.tsx`: the OpenAddresses
 country against the GeoNames postal countries; `gazetteer/build/poi/index.tsx`: the OSM country against the
 Overture countries). Either rename would merge two sources into one flag.
@@ -321,7 +321,7 @@ standing rule, and do not open a separate pull request for a baseline.
   no size floor. Group by four keys, strongest claim first so no declaration counts twice: identical normalized
   declaration text (≥40 chars); identical normalized body (≥60 chars); identical constant initializer (≥20 chars,
   excluding `[]`, `{}`, `new Map()` and other empty values); identical AST-kind sequence (≥60 nodes). Same-name
-  matches are reported as leads and never counted, because 184 declarations are named `state` and 425 are named
+  matches are reported as leads and never counted, because 184 declarations use the name `state` and 425 use the name
   `rows`.
 - **File clustering.** Pre-order AST node-kind sequence per file, 8-grams, Jaccard similarity, single-linkage
   union-find at 0.45. Files under 40 lines excluded. Size banding skips pairs whose shingle counts differ by more

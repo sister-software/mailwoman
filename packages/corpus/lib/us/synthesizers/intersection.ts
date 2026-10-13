@@ -26,7 +26,7 @@ import { layoutAdminTail } from "#synthesizers/tail"
 import type { CanonicalRow } from "#types"
 
 /**
- * Street name cores (no suffix) — proper-noun streets that often appear bare.
+ * Street name cores (no suffix) — proper-noun streets that can appear bare.
  */
 
 /**
@@ -37,7 +37,7 @@ const MAX_DISTINCT_STREET_TRIES = 8
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
-   would hide the distribution behind identifiers. The genuine thresholds in these files are
+   would hide the distribution behind identifiers. The decision thresholds in these files are
     extracted as constants above. */
 
 const STREET_CORES = [
@@ -153,8 +153,8 @@ export function synthesizeIntersectionRow(
 ): SynthesizedIntersectionRow | null {
 	const random = opts.random ?? Math.random
 
-	// The junction connectors and the street vocabulary are US English,
-	// which is why this synthesizer sits under `us/`.
+	// The junction connectors and the street vocabulary are US English.
+	// This synthesizer therefore sits under `us/`.
 	// The admin tail renders through the country's layout.
 	if (base.country !== "US") return null
 

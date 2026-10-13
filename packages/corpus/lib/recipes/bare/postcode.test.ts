@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `bare-postcode` — a postcode without another address component. The interface worth pinning is that every surface
+ * @file `bare-postcode` — a postcode without another address component. These tests pin that every surface
  *   the recipe renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface
  *   the detector refuses would train the model on a string the query-shape prior cannot then support.
  */

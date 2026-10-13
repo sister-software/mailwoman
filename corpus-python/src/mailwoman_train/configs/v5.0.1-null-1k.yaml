@@ -1,7 +1,7 @@
 # v5.0.1 — NULL for the v5.0.0 base. Fine-tune with no added treatment: the base's own 34-source recipe kept verbatim, same corpus, same 134
 # admission, init_from the v5.0.0 step-060000 checkpoint, EWC 1e4 against its own Fisher, 1,000
-# steps. This is the placebo that prices the fine-tune tax for this base — measured at 10/649 on the
-# v4.4.0 base, paid in the first 1,000 steps. No candidate fine-tuned from v5.0.0 is attributable
+# steps. This is the placebo that measures the rows the fine-tune without any treatment regresses on this base — 10/649 on the
+# v4.4.0 base, all within the first 1,000 steps. No candidate fine-tuned from v5.0.0 is attributable
 # until this has run once. Grade candidate minus null, ship-check against the shipped model (training-arc skill).
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl

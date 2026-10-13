@@ -117,7 +117,7 @@ const COMPONENT_FLOOR = 2
 
 /**
  * Returns the shorter names contained in a name — every contiguous run of at least `floor`
- * components, excluding the whole name, because a duplicate often adds an affix to an existing
+ * components, excluding the whole name, because a duplicate can add an affix to an existing
  * name. the search runs one way only, so writing a shorter name does not report a longer one.
  */
 export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
@@ -177,7 +177,7 @@ export function findDeclarations(
 }
 
 /**
- * Returns the two declaration patterns with `nameExpression` in the name position.
+ * Returns the two declaration patterns with `nameExpression` as the declared identifier.
  * callers build it from `\w` and identifiers, so it needs no escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {

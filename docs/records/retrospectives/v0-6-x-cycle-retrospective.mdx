@@ -55,15 +55,15 @@ infrastructure that v0.7 builds on:
 - **v0-vs-neural harness**
   ([`scripts/harness-v0-neural.ts`](https://github.com/sister-software/mailwoman))
   — TS AST extraction of every `assert(input, ...expected)` from
-  `mailwoman/test/*.test.ts`. 376 assertions; v0 100% vs neural 14.4% at
+  `mailwoman/test/*.test.ts`. 376 assertions. v0 100% vs neural 14.4% at
   cycle start.
 - **Per-token confidence probe** — revealed the binding constraint that
   recipe tuning was masking: 81% of wrong predictions land at ≥ 0.9
-  confidence. The model is decisively wrong rather than uncertain.
+  confidence. The model is confidently wrong rather than uncertain.
 - **Stage 3 fold for eval** — collapses `street_prefix` + `street` +
   `street_suffix` into a single `street` span for Stage 2 golden-set
   comparison. Without this, v0.6.2's correct decomposition of "Main St"
-  → street + suffix is double-penalized as a street boundary error PLUS
+  into street + suffix is double-penalized as a street boundary error PLUS
   a street_suffix hallucination.
 - **Street morphology FST** — a deterministic two-pass bias that maps
   ~1707 libpostal street-type canonicals into a `street_affix` placetype
@@ -99,7 +99,7 @@ oscillating trade-offs. Every weight change addressed one regression at
 the cost of another. The pattern is reproducible:
 
 - v0.6.2 dropped `synth-street` weight and added a `synth-no-street`
-  counter-example extract at 1.0 weight. dep_loc returned to 0;
+  counter-example extract at 1.0 weight. dep_loc returned to 0, and
   house_number dropped to 74%.
 - v0.6.3 added `synth-house-venue` at 1.0 while keeping `synth-no-street`
   at 0.5. The anti-decompose:companion ratio dropped from 1.0:0 (v0.6.2)
@@ -137,7 +137,7 @@ recall rather than the harness.
 
 The per-token confidence probe found that 81% of wrong predictions land
 at ≥ 0.9 confidence on both v0.6.2 and v0.6.2b. The model is severely
-miscalibrated: it is decisively wrong rather than uncertain. This has
+miscalibrated: it is confidently wrong rather than uncertain. This has
 two implications:
 
 - **It explains v0.6.x fragility.** An overconfident model amplifies
@@ -222,9 +222,9 @@ the speculative-architecture work (per-locale routing) to v0.8.
 - Held-out test set: split v0.1.2 randomly 90/10 dev/test.
 - Run early-eval checks against dev and the release check against test,
   touching test once.
-- Measure the **harness pass rate** (the primary metric, which replaces
-  per-tag recall as the release metric), overconfidence %, and per-tag
-  recall on the held-out test set.
+- Measure the **harness pass rate**, overconfidence %, and per-tag
+  recall on the held-out test set. The harness pass rate is the primary
+  metric and replaces per-tag recall as the release metric.
 - Decision: ship if the harness improves and overconfidence drops.
   Otherwise, pivot.
 
@@ -249,7 +249,7 @@ The diagnostic confirms postcode `<90%` on most countries (US 80.5%, FR
    [shallow-fusion architecture](../site-2026-08/concepts/fst-priors-as-shallow-fusion.mdx).
 
 DeepSeek turn 12 favors (1) + (3). The final choice depends on the
-calibration result. If calibration alone raises postcode accuracy
+calibration result. If calibration without the tokenizer change raises postcode accuracy
 meaningfully, the tokenizer fix can be smaller in scope.
 
 **P2 — Pre-classifier design** (blocked on postcode result, may slip to v0.8)
@@ -258,13 +258,13 @@ If postcode accuracy is still < 90% after calibration + tokenizer fix,
 the locale-router approach becomes the next change. Recommended
 architecture: lexical-feature classifier (regex + char n-grams → tiny
 MLP), `<0.1ms` latency, `<100KB` serialized. 99% accuracy on
-postcode-containing inputs is achievable via postcode-pattern features
-alone.
+postcode-containing inputs is achievable with postcode-pattern features
+as the only input.
 
 This is the entry point for v0.8's system-multiplicity work
 (per-locale containment rules, hybrid encoder + per-system decoders).
 
-### 5.3 Methodology fixes (carry forward from turn 11)
+### 5.3 Methodology fixes (kept from turn 11)
 
 - **Harness pass rate is the primary release metric.** Per-tag recall
   becomes a diagnostic-only metric. The 2D check stays as a secondary
@@ -282,9 +282,9 @@ This is the entry point for v0.8's system-multiplicity work
 | Calibration                       | Postcode              | Action                                               |
 | --------------------------------- | --------------------- | ---------------------------------------------------- |
 | Improved + overconfidence dropped | < 90% (current state) | v0.7 = calibration + postcode tokenizer fix          |
-| Improved + overconfidence dropped | ≥ 90% everywhere      | v0.7 = calibration only; pre-classifier → v0.8       |
-| Flat + overconfidence unchanged   | < 90%                 | v0.7 pivots to structural; hybrid arch becomes focus |
-| Flat + overconfidence unchanged   | ≥ 90% everywhere      | Investigate further; calibration symptom not cause   |
+| Improved + overconfidence dropped | ≥ 90% everywhere      | v0.7 = calibration only, pre-classifier → v0.8       |
+| Flat + overconfidence unchanged   | < 90%                 | v0.7 pivots to structural. Hybrid arch becomes focus |
+| Flat + overconfidence unchanged   | ≥ 90% everywhere      | Investigate further. Calibration symptom not cause   |
 
 The diagnostic settles the postcode column as `< 90%`, so the v0.7
 action set is anchored on the top row unless calibration unexpectedly
@@ -302,12 +302,12 @@ The v0.8+ direction (informed by DeepSeek turn 12):
 
 - **Hybrid model architecture.** Shared encoder (language-agnostic
   structural features) + per-system decoders (US, JP, KR specialist
-  heads). Encoder ships once; new locales = new decoder heads.
+  heads). Encoder ships once. New locales = new decoder heads.
 - **Per-system containment rules.** `PARENT_OF` becomes per-system.
-  Today's table is the US/EU default; JP table has no `street` parent
+  Today's table is the US/EU default. The JP table has no `street` parent
   for `building_number`.
 - **Locale pre-classifier as the router.** Lexical-feature classifier
-  picks one system from a probability distribution; the matching
+  picks one system from a probability distribution, and the matching
   specialist decoder runs.
 - **AddressTree versioning.** Add `system` field to parsed output. JP
   trees keep `block` → `sub_block` → `building_number`; US trees keep
@@ -341,6 +341,6 @@ before forcing a methodology rethink.
 - [v0.6.2 step 100K eval](../evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx)
 - [v0.6.3 step 100K eval](../evals/model-versions/2026-05-29-v0.6.3-100k-eval.mdx)
 - [v0.4.0 ablation campaign](./v0-4-0-ablation-campaign.mdx) — the
-  previous retrospective; follows the same shape.
+  previous retrospective. It follows the same shape.
 - [How the model reasons](../site-2026-08/concepts/how-the-model-reasons.mdx) — the
   architecture overview the v0.7 plan operates within.

@@ -10,7 +10,7 @@
 import { pointInRing, ringSignedAreaM2, type MultiPolygonRings } from "@mailwoman/spatial"
 
 /**
- * How many of a hole's vertices are tested against a candidate exterior.
+ * The count of a hole's vertices that are tested against a candidate exterior.
  *
  * A hole and its exterior share vertices.
  * One vertex cannot distinguish them.

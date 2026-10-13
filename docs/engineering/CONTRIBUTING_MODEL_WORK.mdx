@@ -24,7 +24,7 @@ steps to follow.
 3. **Compare fp32-to-fp32.** Int8 is a release artifact and should not be used to compare
    experiments.
 4. **Change one variable per run.** Prove each change on its own, then consolidate. A single 20k run that stacks corpus
-   recipes in one 20k run dilutes every tag. This was measured twice; see the cumulative-dilution
+   recipes in one 20k run dilutes every tag. This was measured twice. See the cumulative-dilution
    note in the
    [parity scorecard](../records/evals/competitive-parity/parity-scorecard-2026-06-09.md).
 5. **The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5): a default-on mechanism must
@@ -34,7 +34,7 @@ steps to follow.
    compliant options are to fix the regression, to enable the mechanism per locale so the regressing
    locale is unaffected, or to ship it opt-in. (The rule was adopted because #1318 shipped default-on
    with a −6.8pp FR admin-street-homonym regression behind a bar revision. That change is recorded as
-   a named violation with a standing obligation to fix it, and it does not set a precedent.)
+   a documented violation with a standing obligation to fix it, and it does not set a precedent.)
 
    **The precondition: each locale the D-rule covers needs a validation split that can show a
    regression.** The rule blocks on a regression against the shipped model, and `evaluate()` reports
@@ -45,7 +45,7 @@ steps to follow.
    **The floor is per locale, stated as a number: 1,000 validation rows and 1,000 of them carrying a
    `street` or `house_number` tag.** The floor is per locale rather than global because the scales
    differ. In the measurement below, US held 1,780,240 validation street rows while the others held
-   thousands or none, so US alone would meet a global number.
+   thousands or none, so US rows by themselves would meet a global number.
 
    Measured on `v0.32.0-locality-shape` (#2353), against the four locales the D-rule covers: FR and
    US by tier 1, and DE and GB by `scope.config.json`'s `dRuleProtected`:
@@ -83,7 +83,7 @@ steps to follow.
    behind a flag is still shipped code. The flag controls who runs it, and it makes no statement about
    whether the mechanism works. Every `ResolveOpts` / config flag therefore needs at least one test
    that sets it to true and asserts the mechanism's own behavior. A test that only checks that the
-   default path stays byte-stable covers the other half, which is also required.
+   default path stays byte-stable covers the other half. That test is also required.
 
    Most of the tree already follows this rule: of 15 boolean `ResolveOpts` flags, 12 have a test
    that sets them to `true`. The rule is written down so that the remaining three (`parentFallback`,
@@ -100,10 +100,10 @@ steps to follow.
   [Closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx) before
   proposing a deterministic tagger.
 - **A closed-vocab place-hierarchy tag the model does not emit** (`dependent_locality`, a child
-  place under a parent, which the shipped model does not emit): restore it at decode time with a
+  place under a parent): restore it at decode time with a
   **retrieval-augmented pair-index overlay** on the unchanged base model, without retraining. This
   is now a repeatable per-country recipe. Follow
-  [Onboarding a country's evidence layer](./reference/country-evidence-layer-runbook.mdx), which
+  [Onboarding a country's evidence layer](./reference/country-evidence-layer-runbook.mdx). That runbook
   condenses the GB and NZ work. Note the closed-vs-open-vocab limit stated there: the overlay works
   for place names and fails for venue/street spans (#1287/#1288 disproved it with measurements), so
   do not re-run those.
@@ -115,11 +115,11 @@ steps to follow.
   than a corpus recipe. `packages/codex/lib/address/system-conventions.ts` is keyed by the model's own locale
   head. It needs no GPU and applies without retraining. Shipped in v4.3.0 (#478 increment 1).
 
-**The base-consistency check (from #511; run it before weighting any corpus source):** a coverage
+**The base-consistency check (from #511. Run it before weighting any corpus source.):** a coverage
 recipe's rows cannot outvote a base corpus that contradicts them. The affix source spent four
 releases competing with ~467M base rows that labeled the same surfaces the other way (≥1,000:1
 effective gradient mass). Every weight and architecture change failed because the mixing ratio
-determined the outcome. First audit what the base corpus says about your tag's surfaces
+determined the outcome. First audit what the base corpus contains for your tag's surfaces
 (`packages/mailwoman/tools/dev-tools/audit-affix-misses.run.ts` is the template, with per-row miss
 classification and an absorption check). If the base contradicts the recipe output, fix it with a
 relabel pass that makes the mix agree. A bigger weight does not fix it. A related result, measured on
@@ -133,15 +133,15 @@ classes (#513).
 [`v9.0.0-base.json`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/tools/eval-harness/specs/v9.0.0-base.json)**
 — `mailwoman eval promote --weights-cache <dir> --check v9.0.0-base` (or the `mwdev_promotion_eval` tool with
 `check: "v9.0.0-base.json"`). Its floors are reduced from the shipped baseline's own readings under the ship config,
-re-anchored on golden v0.1.3; `arena.perturb` reads 59.9 there, where the retired `v6.0.0-shipped-baseline` carried 78
-and failed the shipped model alone (#1675). `v6.0.0-shipped-baseline` is superseded by v9.0.0-base the same way it
+re-anchored on golden v0.1.3. `arena.perturb` reads 59.9 there. The retired `v6.0.0-shipped-baseline` set that floor at 78,
+and that floor by itself failed the shipped model (#1675). `v6.0.0-shipped-baseline` is superseded by v9.0.0-base the same way it
 superseded `v5.3.0-family`, and for the same reason.
 
 `v5.3.0-family` is **retired for v6.x candidates**. It was calibrated against the v2.2.0-era model
 and never re-derived when the lineage moved. By 2026-07-16 it was wrong in both directions: 16 of 17
 floors were slack by +1.8 to +50pp (a candidate could lose 27.9pp of `us.street_suffix` and pass),
 while its one tight floor, `fr.postcode 99.2`, **failed the shipped model**. The full battery
-on v264 itself confirmed this: the verdict was `FAIL`, on that floor alone.
+on v264 itself confirmed this: the verdict was `FAIL`, on that one floor.
 
 The v6 spec is derived from the shipped model's own readings:
 `floor = v264's reading − max(1.0pp, 2 × the metric's 95% binomial half-width)`. It **tightens 15 of
@@ -170,8 +170,8 @@ Run the battery for _every_ candidate, regardless of what you changed. This is w
 | Unit retention      | unit-real designators eval                                                                                   | ≥ 88                                                 |
 | Affix split         | `packages/mailwoman/tools/dev-tools/score/affix.run.ts` (not `per-locale-f1` — its fold can't see the split) | hold the spec's floors                               |
 | Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                                                         | presets stable                                       |
-| Geographic accuracy | `packages/mailwoman/tools/dev-tools/honest-eval.run.ts`                                                      | region-match + coord p50/p90 + PIP hold              |
-| Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                                                      | no new drift; xfails tracked                         |
+| Geographic accuracy | `packages/mailwoman/tools/dev-tools/heldout-geography-eval.run.ts`                                           | region-match + coord p50/p90 + PIP hold              |
+| Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                                                      | no new drift, xfails tracked                         |
 | Autocomplete ladder | `mailwoman eval autocomplete --country <CC>` (#2154)                                                         | report-only: first-hit rung, churn, latency per band |
 
 The input-robustness check is the metamorphic layer of the Gauntlet: label-preserving
@@ -244,7 +244,7 @@ bar must list both postcode floors explicitly.
 
 The floor policy above governs floors on a fixed answer key. A golden version bump that changes the
 labeling convention is a different case. It produces numbers that look like the old ones and appear
-in the same cell, but they measure something else. A floor carried across such a bump can produce a
+in the same cell, but they measure something else. A floor kept across such a bump can produce a
 confident verdict that is wrong in either direction.
 
 The worked example is `us.street`. Golden through **v0.1.2** wrote a US street as one folded span
@@ -268,7 +268,7 @@ When a golden version changes a convention:
 3. **Re-anchor the affected floors on a fresh reading of the shipped baseline**, on the new key,
    through the ship config. Floors on metrics the bump did not change still only move up
    (`max(old, re-derived)`). Floors whose metric changed are re-anchored directly, and their
-   `$derivation` says so. In v9.0.0-base, exactly two floors are re-anchored: `us.street` and
+   `$derivation` records that. In v9.0.0-base, exactly two floors are re-anchored: `us.street` and
    `us.micro`.
 4. **The answer key records its own convention.** A key that declares its convention cannot be
    graded under the wrong one by accident. This rule exists to prevent that failure, and a flag that
@@ -296,13 +296,13 @@ that time, and the check makes the outcome deliberate instead of lucky.
 ## Add a corpus recipe
 
 1. The recipe lives in `packages/corpus/lib/recipes/` and its row generator in
-   `packages/corpus/lib/synthesizers/`. Every row carries `synth: {method, base_source_id}` ancestry.
+   `packages/corpus/lib/synthesizers/`. Every row records `synth: {method, base_source_id}` ancestry.
 2. Audit format diversity against the forms observed in the real eval _before_ generating. Low
    diversity teaches lexical pattern-matching instead of the boundary.
 3. Overlay manifests declare lineage against a base corpus version
    (`mailwoman corpus overlay-manifest` writes one). Never hand-edit a manifest.
-4. Route every overlay parquet through `mailwoman corpus split-slice`, then register the per-split
-   outputs with `mailwoman corpus overlay-manifest --split`. If an overlay is appended as a train
+4. Route every corpus overlay parquet through `mailwoman corpus split-slice`, then register the per-split
+   outputs with `mailwoman corpus overlay-manifest --split`. If a corpus overlay is appended as a train
    file and a country's only rows of some kind come from that overlay, the country ends up with no
    held-out row of that kind. A hand-picked split has the same result and leaves no record of
    the choice. In `v0.6.0-register-surface`, the `synth-german` overlay (204,000 OpenAddresses rows
@@ -333,7 +333,7 @@ resolver mechanism ships.
   `countries/cjk/overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
   register is a renderer entry with a weight and a build report that states the row count it landed on.
 - **The board read.** `python -m mailwoman_train.evaluation.jp_probe_board --label-set stage3-cjk` over the 20,000-row JP board: the check
-  is coordinate-acceptability at 15 km through the municipality centroid table; beside it, the municipality macro, the
+  is coordinate-acceptability at 15 km through the municipality centroid table. Beside it are the municipality macro, the
   per-register table, and `--all-municipalities` for every held-out name. A row-weighted number moves 2 pp on one
   held-out municipality, so the pre-registration lists the municipalities it targets. `gold-exact` counts rows the
   kanji-keyed table cannot key (a kana-register surface) whose prediction equals the gold span. It is reported but is
@@ -367,11 +367,11 @@ rate controls how far the weights can move, and a fine-tune deliberately lowers 
 (5e-4 peak, tens of thousands of high-LR steps under a cosine anneal) can move any weight anywhere,
 and rare classes receive enough visits and gradient updates to be learned. A fine-tune (1e-5, ~8k
 steps) can move the weights only a short distance from their starting point. That limit is
-intended, because a fine-tune must not destroy the base. It has two structural consequences, which
+intended, because a fine-tune must not destroy the base. It has two structural consequences. They
 are opposite sides of the same effect:
 
 - **Rare-class forgetting:** the base had learned fr.cedex. Each fine-tune's gradient mass pulled
-  toward its own objective, and the small cedex classes eroded (~10/430 CA rows; measured across
+  toward its own objective, and the small cedex classes eroded (~10/430 CA rows, measured across
   every bundle-era fine-tune, with replay boosting reaching a plateau of ~83.4). The v4.0.0 base
   learned it again from its own training: **90.5 vs the waived 82.2 floor**, above even the
   unwaived 85.6 shipped reading.
@@ -383,7 +383,7 @@ The same run produced three more results:
 
 1. **Inherited capabilities hide provenance, and a from-scratch run exposes what the current feed
    teaches.** The shipped lineage was four fine-tune generations deep. Capabilities trained into
-   ancestor bases on feeds that no longer exist carry forward without any record. The v4.0.0 run
+   ancestor bases on feeds that no longer exist persist without any record. The v4.0.0 run
    exposed one: FR venue-led parsing ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by
    inheritance. The current feed's `source_weights` never admitted a venue source
    (`synth-house-venue` is not in the map, and an unlisted source is dropped), so the from-scratch
@@ -403,7 +403,7 @@ The same run produced three more results:
 **"Can't we start and stop training at will?"** You can resume the same run: the optimizer,
 scheduler and step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
 completed with the same behavior). You cannot "just continue" past the end of a cosine schedule. The
-anneal ends at LR 0 by design, so extending a finished run requires a new schedule, which makes it a
+anneal ends at LR 0 by design, so extending a finished run requires a new schedule. The new schedule makes it a
 new training process with new dynamics. A fine-tune is not a resume either. It is a new process
 initialized from old weights, with the learning rate ~50x lower. Resume, extend, and fine-tune are
 three distinct operations, and a recipe must state which one it uses.

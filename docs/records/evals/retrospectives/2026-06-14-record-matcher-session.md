@@ -1,20 +1,20 @@
 # Record-matcher session handoff — 2026-06-14 (Heather's shift)
 
 _For the next Claude. You have no memory of this session beyond the auto-loaded
-`project-record-matcher.md` memory file; this is the full narrative + file map so you
+`project-record-matcher.md` memory file. This is the full narrative + file map so you
 can pick up directly. Everything below is on branch `feat/record-matcher-foundation`,
 draft PR #607, Project #5._
 
-## TL;DR
+## Summary
 
 We revived the contact/organization **record-matcher** mailwoman was originally built
 to serve (clinic federal/state funding eligibility: normalize → geocode → match →
-QGIS → leads; it imploded years ago on the record-matching step). In one shift we
+QGIS → leads. An earlier attempt failed years ago on the record-matching step). In one shift we
 built the **entire geocode-first entity-resolution system end to end**, label-free,
 across **four new workspaces** and **14 commits**, with **121 passing tests** in the
-new packages (+170 corpus tests still green through a migration). Nothing is merged;
-it's all a draft PR awaiting review/CI/split. The only thing left to _run it on real
-data_ is a CLI command that injects the heavy geocoder (operator-verifiable; the
+new packages (+170 corpus tests still green through a migration). No change is merged.
+The work is a draft PR awaiting review/CI/split. The only step left to _run it on real
+data_ is a CLI command that injects the heavy geocoder (operator-verifiable, because the
 weights/extracts aren't in the worktree).
 
 ## What got built — the cascade
@@ -44,7 +44,7 @@ version works where the string-first v0 imploded.
   - `corpus/src/format.ts` is now a thin re-export of this (~170 dup lines removed,
     `@fragaria` dep dropped from corpus). **`core/formatter` was intentionally NOT
     migrated** — formatter type-deps core's `ComponentTag`, so `core` depending on
-    `formatter` would be a forbidden `tsc -b` reference cycle. Don't try it; the fix needs
+    `formatter` would be a forbidden `tsc -b` reference cycle. Don't try it. The fix needs
     the schema types in a shared base (a separate refactor).
 
 - **`@mailwoman/record`** (#600) — the canonicalize layer. Plain TypeScript interfaces
@@ -57,7 +57,7 @@ version works where the string-first v0 imploded.
   - `name.ts`: `parsePersonName` — rule-based positional parser (the python-nameparser
     recipe), comma-inversion, leading titles, trailing suffixes, surname **particle stored
     separately** (`de la Vega` to particle `de la` + family `Vega`), nickname extraction.
-    Western/romanized only; does not map nicknames to roots (lossy/gendered — that belongs
+    Western/romanized only. It does not map nicknames to roots (lossy/gendered — that belongs
     in the matcher as a fuzzy agreement level).
   - `organization.ts`: `canonicalizeOrganizationName` — Winkler designation-strip (`Acme
     Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
@@ -81,9 +81,9 @@ version works where the string-first v0 imploded.
     oversized blocks **reported** not silently dropped). `BlockingKey<R>`, `LatLon`.
   - `distance.ts`: `haversineKm`, `distanceComparison` (Splink DistanceInKMAtThresholds —
     bucket distance into FS levels), `DEFAULT_DISTANCE_LEVELS`.
-  - `clustering.ts`: `cluster` (connected-components union-find; pairwise scores are
-    non-transitive so this is a required distinct stage; threshold = precision/recall
-    knob; over-merge caveat — centroid-linkage is the documented refinement),
+  - `clustering.ts`: `cluster` (connected-components union-find. Pairwise scores are
+    non-transitive, so this is a required distinct stage. The threshold sets precision/recall.
+    Over-merge caveat: centroid-linkage is the documented refinement),
     `representative` (most-complete record).
   - `pipeline.test.ts`: the block-score-cluster capstone.
 
@@ -107,7 +107,7 @@ version works where the string-first v0 imploded.
    (`isp-nexus/universe/mailwoman/contacts`, `/organization`, `/postal`).
 2. **Matcher v1:** classical **Fellegi-Sunter core + EM (label-free)**, with models as
    _selective_ additions — NOT model-first rather than heuristics-only. Evidence-backed.
-3. **Schema:** plain TS interfaces, no ORM/JSON-schema generation. Kysely if a DB is needed.
+3. **Schema:** plain TS interfaces without ORM/JSON-schema generation. Kysely if a DB is needed.
 4. **Address-first**, then org/contact normalization structured on top of it.
 
 ## Research grounding (3 adversarially-verified deep-research passes)
@@ -118,11 +118,11 @@ so the matcher is tunable and we didn't chase one model. (3) **Geography as the 
 blocking key** is documented production practice (Grab, Geo-ER). (4) **Geocode quality
 weights the distance evidence** (NAACCR precedent). (5) Pairwise scores are
 **non-transitive**, so clustering is mandatory. (6) **No mature TS/JS ER lib exists** —
-greenfield. (7) Names: rule-based positional parse + separate particle; nickname = fuzzy
-agreement level not a rewrite; Jaro-Winkler + edit/LCS fallback; TF-adjust = leave m,
+greenfield. (7) Names: rule-based positional parse + separate particle. A nickname is a fuzzy
+agreement level rather than a rewrite. Use Jaro-Winkler + edit/LCS fallback. TF-adjust = leave m,
 lower u for rare values, computed on-the-fly. (8) **Org-name matching is a known evidence
 gap** (PART B — cleanco/GLEIF/acronym/TF-IDF unverified) — our org canonicalizer is a
-solid baseline; org _matching_ needs a follow-up pass. Full detail in
+solid baseline, and org _matching_ needs a follow-up pass. Full detail in
 `project-record-matcher.md` memory.
 
 ## How to work here (gotchas)
@@ -149,8 +149,8 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 
 1. **CLI command** `mailwoman registry <csv>` — construct the real geocoder (neural parse +
    resolver + extracts) and inject it into `geocodeAddressVia`, then run
-   ingest, resolve, GeoJSON on a dataset. Lives in `mailwoman/` (the CLI package, which
-   already has `geocode-core.ts`). This is the operator-verifiable integration that makes
+   ingest, resolve, GeoJSON on a dataset. The command lives in `mailwoman/`, the CLI package.
+   That package already has `geocode-core.ts`. This is the operator-verifiable integration that makes
    it run on real clinic data — **grades the thesis against truth.**
 2. **PR hygiene** — split #607 into reviewable PRs (it bundles #599/#600/#601/#604), run CI.
 3. **LLM column-mapping** (#603) — infer the `ColumnMapping` from a header + sample rows.

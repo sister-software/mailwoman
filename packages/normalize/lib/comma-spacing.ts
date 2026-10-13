@@ -28,7 +28,7 @@ export interface CommaSpacingResult {
 	text: string
 	map: number[]
 	/**
-	 * How many spaces were inserted.
+	 * The count of spaces inserted.
 	 */
 	inserted: number
 }

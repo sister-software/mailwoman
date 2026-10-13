@@ -18,8 +18,8 @@ steps take about ten minutes, plus the time for the one-time gazetteer download.
 - Node.js 24.18.0 or later, and roughly 750 MB of free disk for the install.
   [Install and first parse](./install-and-first-parse.mdx#prerequisites) explains both numbers.
 - About 2.88 GB more disk and a few minutes of download time when you reach
-  [Geocode it](#5-geocode-it) below. That space holds the gazetteer database, which you pull once and
-  keep for every later geocode.
+  [Geocode it](#5-geocode-it) below. That space holds the gazetteer database. You pull it once and
+  keep it for every later geocode.
 - `mailwoman data pull`, the command the gazetteer step runs, ships in `8.7.0`. Check
   `npm view mailwoman version` first. If it still prints `8.6.0`, steps 1 through 4 work, and step 5
   needs the next npm release.
@@ -99,7 +99,7 @@ needs one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
 
 **The geocoder needs the resolver database.** Mailwoman needs a gazetteer lookup to turn `New York`
 into a latitude and longitude. The gazetteer is a file you download once and keep. The transcript below shows the
-`2026-07-07a` build; at the current `2026-08-25b` build, the candidate gazetteer `candidate.db` is 2.88 GB,
+`2026-07-07a` build. At the current `2026-08-25b` build, the candidate gazetteer `candidate.db` is 2.88 GB,
 so your download will be larger. Your `doctor` output prints the exact one-line command
 that fetches it. The CLI generates that command from the build it knows about, so prefer it over a
 command copied from a web page. Run it next.
@@ -189,8 +189,8 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 }
 ```
 
-`candidate.db` alone answers at `resolution_tier: "admin"` or, where a postcode locates less than its
-city, as UK and Dutch unit postcodes do, at `"postcode"`. It carries locality, postcode and region
+Without a per-country layer, `candidate.db` answers at `resolution_tier: "admin"` or, where a postcode locates less than its
+city, as UK and Dutch unit postcodes do, at `"postcode"`. It stores locality, postcode and region
 centroids, so the coordinate is New York's centroid instead of this building's rooftop. Street-level
 precision (`resolution_tier: "address_point"` or `"interpolated"`) needs a further per-country
 download (`mailwoman data pull us` or `mailwoman data pull fr`), which this page does not cover.
@@ -252,8 +252,8 @@ The result has the right country and the right city, and no flag was needed. Thi
 The file you downloaded became the default backend in `8.7.0`. Before that release, it was opt-in
 behind the variable you were told to ignore above.
 
-You can still run the older backend. `--candidate-db none` pins it. It needs a full admin database,
-which is a separate, locally built file that `data pull` does not publish. You can read the
+You can still run the older backend. `--candidate-db none` pins it. It needs a full admin database.
+That database is a separate, locally built file that `data pull` does not publish. You can read the
 comparison below, but you cannot reproduce it with the downloads on this page. Same input, same
 machine:
 

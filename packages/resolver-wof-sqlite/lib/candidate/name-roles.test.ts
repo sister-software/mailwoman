@@ -7,7 +7,7 @@
  *   Its two detectors decide which alias rows receive a `name_role`.
  *
  *   Each case is one of the checks the detectors are made of, because the failure mode is a check
- *   quietly widening: `gloss` is an anomaly signal that must never reach a place with measured
+ *   widening without a failing test: `gloss` is an anomaly signal that must never reach a place with measured
  *   prominence or an admin placetype (a country legitimately has a name in every language), and
  *   `abbr` is a provenance signal that must never reach a variant recorded in a language the country
  *   does not speak. Both stamp non-primary rows only.

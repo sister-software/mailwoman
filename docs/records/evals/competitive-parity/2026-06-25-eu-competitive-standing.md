@@ -34,17 +34,17 @@ postcodes the #370 check needs).
 | mailwoman+rescore | 280 |  29% |  70% |   87% |            2.1 |        3% |
 | nominatim         | 280 |  75% |  79% |   80% |            0.0 |       17% |
 
-## What it says
+## What the numbers show
 
 **mailwoman+rescore beats Nominatim on the EU+AU aggregate, 87 vs 80 @25km.**
-The cross-harness estimate had us trailing ~−4pp; the same-harness truth is +7pp
+The cross-harness estimate had us trailing ~−4pp. The same-harness measurement is +7pp
 ahead. The earlier number was a harness artifact.
 
-The per-locale split is the positioning story rather than noise. mailwoman wins broad
+The per-locale split follows OSM density rather than noise. mailwoman wins broad
 and large where OSM street addresses are sparse — IT (100 vs 73), PT (83 vs 45),
 FR (95 vs 63), CZ (95 vs 85). Nominatim wins the dense-OSM locales — PL (98 vs
 90), AT (98 vs 73), AU (100 vs 75). A geocoder built on a parser + a gazetteer
-degrades gracefully on the locales OSM hasn't filled; a search index over OSM
+degrades gracefully on the locales OSM hasn't filled. A search index over OSM
 data inherits OSM's coverage gaps.
 
 The recall axis is the differentiator. Nominatim is sharper when it answers
@@ -58,10 +58,10 @@ the answer. That is the subset a calibrated parser should own.
 
 Isolated on the `-20j` gazetteer (both arms same backend), the span-rescore
 change is **+1pp aggregate @25km (86→87), zero regressions**: CZ +5, AT +3,
-PL +2; IT/PT/FR/AU flat; no-result 4→3%. The end-to-end `span-rescore-e2e`
+PL +2, IT/PT/FR/AU flat, and no-result 4→3%. The end-to-end `span-rescore-e2e`
 run agrees: +1.1pp over n=972, CZ +6. The `-20j` _data_ did the heavy lifting
 (the 59→86 climb); rescore adds the last point. It passes the night-plan check
-(newly-reachable locales improve, IT non-regressed, no losers) — a clean
+(newly-reachable locales improve, IT non-regressed, zero losing locales) — a clean
 default-on candidate, pending the call to flip it.
 
 ## Artifacts

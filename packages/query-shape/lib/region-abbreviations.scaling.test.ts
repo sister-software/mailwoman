@@ -30,7 +30,7 @@ const UNIT = "123 Main St, Springfield, IL 62701, "
 /**
  * Each size has timing samples.
  *
- * Five keeps the minimum honest against back-to-back load spikes
+ * Five samples keep two back-to-back load spikes from setting the minimum
  * (three let one through on 2026-08-05 — see the threshold note below) without making the test slow.
  */
 const TIMING_SAMPLES = 5

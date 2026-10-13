@@ -1,6 +1,6 @@
 # v3.7.1-no-fragment-b4b3-full is the 8k-step run of the v3.7.0 long-number oversample probe.
 #
-# The synth-no-fragment recipe ran with --bare-street-prob 0.30 and --long-number-boost 4, which emits
+# The synth-no-fragment recipe ran with --bare-street-prob 0.30 and --long-number-boost 4. The boost emits
 # four copies of each street-plus-number row whose number has at least 3 digits. The recipe flags live
 # in the corpus build, so this config matches v3.7.0 except for the step count and run names.
 #

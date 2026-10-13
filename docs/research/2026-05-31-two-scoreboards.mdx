@@ -11,13 +11,13 @@ meant to replace passes **93.7%**. By that scoreboard, we should delete the neur
 go home.
 
 We shipped the neural model instead. Here's why both numbers are true — and why the one that
-matters says the opposite.
+matters points the opposite way.
 
 {/* truncate */}
 
 ## Two parsers, one bench
 
-Mailwoman carries two address parsers. `v0` is a hand-written rule engine — a TypeScript port
+Mailwoman has two address parsers. `v0` is a hand-written rule engine — a TypeScript port
 of the [Pelias](https://github.com/pelias/parser) parser, all regexes and dictionaries and
 heuristics. The other is a 29M-parameter encoder-only transformer that tags each token (street,
 locality, postcode, …) and was trained on synthetic and real corpora. The whole bet of the
@@ -58,7 +58,7 @@ Three different stories:
 - **Clean input → rules win.** Canonical strings are exactly what hand-tuned regexes are for.
   This is also the _entire_ harness — all canonical, all Pelias-convention — which is why
   neural looks worst there.
-- **Messy input → neural wins, decisively** (61% vs 39%) — and this is the biggest bench by
+- **Messy input → neural wins** (61% vs 39%) — and this is the biggest bench by
   far (398 cases), built by perturbing real addresses: dropped commas, abbreviations,
   reordering, weird casing. It's the closest proxy we have to what people type, and
   it's the whole reason the neural model exists.

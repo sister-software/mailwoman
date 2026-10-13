@@ -179,7 +179,7 @@ describe("streamMarkupElements", () => {
 
 	it("decodes a chunk larger than one string, so a buffered document still reads", async () => {
 		// One chunk over the 8 MiB decode bound, with a multi-byte character on the boundary
-		// so a per-slice decoder without retained state would corrupt it.
+		// so a decoder that starts fresh on each piece and without retained state would corrupt it.
 		const filler = "x".repeat(8 * 1024 * 1024)
 		const document = `<r>${filler}<a>Mäenpääntie 16</a>${filler}</r>`
 

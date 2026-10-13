@@ -104,13 +104,13 @@ export interface SubVenueSurface {
 	/**
 	 * Whether a human has approved this surface for parsing use in its region.
 	 *
-	 * Machine-derived entries start `false`; only a matching {@link SubVenuePromotion}
-	 * flips it, so a consumer that gates a parse must filter on this.
+	 * Machine-derived entries start `false`; only a matching {@link SubVenuePromotion} flips it,
+	 * so a consumer that accepts or refuses a parse by this table must filter on this.
 	 */
 	curated: boolean
 	/**
-	 * How many source features attested this exact phrase when the source counts (OSM, Overture);
-	 * Vocabulary sources attest phrase existence and use a count of `0`.
+	 * The number of source features that attested this exact phrase when the source counts
+	 * (OSM, Overture); Vocabulary sources attest phrase existence and use a count of `0`.
 	 * OSM and Overture sources count occurrences.
 	 */
 	observations: number
@@ -138,7 +138,7 @@ export interface IdentifierShape {
 	/**
 	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in.
 	 *
-	 * It is per-region because the shapes differ (GB gates are 70% bare digits, Japanese platform
+	 * It is per-region because the shapes differ (GB airport gates are 70% bare digits, Japanese platform
 	 * refs a different range), so a recipe for a French address should sample France's distribution.
 	 */
 	region: string
@@ -190,7 +190,7 @@ export interface SubVenueLexiconTable {
  * below for the module docstring's dependency-direction reason.
  *
  * `tier` is added here: the seven WOF placetypes plus `terminal`/`gate` are all venue-interior,
- * while `campus` and `building` name a whole venue as often as a part of one
+ * while `campus` and `building` name a whole venue about as frequently as a part of one
  * but are marked `subvenue` because that is the role the span proposer uses them in.
  */
 export const SHIPPED_DESIGNATOR_SEED: ReadonlyArray<{

@@ -27,15 +27,15 @@ cases that parse correctly today:
 | "Park Slope" | en-US  | 0.65% (rank 14)          | locality 17.1% |
 | "Manhattan"  | en-US  | 0.18% (rank 11)          | locality 91.9% |
 
-US surfaces carry more raw dependent-locality mass than the GB ones that work. The shipped GB
+US surfaces have more raw dependent-locality mass than the GB ones that work. The shipped GB
 behaviour is not the model preferring the tag. It is the pair index at δ=10 clearing a deficit the
 en-GB model card already measured as "large but UNIFORM (~7.0 logits mean)". The origin is a
-training-side class weight of 0.3 on `B/I-dependent_locality` carried from v0.5.1 through v0.8.0
+training-side class weight of 0.3 on `B/I-dependent_locality` kept from v0.5.1 through v0.8.0
 ("penalize hallucination of rare tags"), since corrected to 1.0 but not retrained into the shipped
 lineage.
 
 **Therefore the US instance was never blocked on aliveness or on conventions. It was blocked on the
-artifact.** Confirmed end-to-end: a US pair index built from WOF (49,033 pairs; boroughs and
+artifact.** Confirmed end-to-end: a US pair index built from WOF (49,033 pairs of boroughs and
 neighborhoods, with `borough` admitted as a parent placetype because WOF parents US
 neighborhoods to the locality) dropped beside the en-US weights flips all three probes:
 
@@ -66,7 +66,7 @@ venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). No release ships
 - **D-R5.4 (disclosure).** The browser path's `detectPairIndexCountry` falls back to `us` for any
   bare Latin query with no postcode — so shipping a US index means unlabeled queries take US pair
   bias by default, where today they take none. Measure and report what that does to the GB and
-  bare-name boards; it is a packaging consequence rather than a bug, but it must be stated before ship.
+  bare-name boards. It is a packaging consequence rather than a bug, but it must be stated before ship.
 
 A failure of B-R5.1 or B-R5.2 stops the ship regardless of how good B-R5.3 looks.
 
@@ -87,7 +87,7 @@ against the same artifacts removed.
   **60/60 emit, 60/60 tag-correct (100%)**, and 60/60 assign the parent to `locality` correctly.
   Disclosure: every row's pair is necessarily IN the index, so this measures the mechanism's
   efficacy where the gazetteer has data — not generalization to unknown surfaces. Retrieval-augmented
-  by design; an unknown pair gets no bias and falls back to today's behaviour.
+  by design. An unknown pair gets no bias and falls back to today's behaviour.
 - **D-R5.4 disclosed, and it is clean.** A US index means the browser's
   `detectPairIndexCountry` fallback routes bare Latin postcode-less queries to `us`, where they take
   US pair bias instead of none. Probed against the GB canonical set — Shoreditch/London,
@@ -102,20 +102,20 @@ correctly refused to build a US index without one), and both boards as reusable 
 `$MAILWOMAN_DATA_ROOT/scratch-r5-us/`.
 
 **The choice to ship `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
-decision rather than taken here.** The bars were the technical check and they passed; what they do not
+decision rather than taken here.** The bars were the technical check and they passed. What they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
 neighborhood or borough line starts emitting `dependent_locality` where it previously emitted
 no such tag and silently dropped the second admin level. That is an improvement and a behaviour change
 at once, it wants a model-card note and a version, and the GB/NZ precedent (a locale overlay
-package nobody installs by accident) does not cover it.
+package that a user does not install by accident) does not cover it.
 
-## The finding worth carrying past this rung
+## The finding that applies beyond this rung
 
 The doc's claim that the US instance is blocked on "the tag's _contextual_ aliveness for US" is
 **wrong, and was wrong for GB too**. The tag is dead uniformly. The en-GB model card had already
 measured the deficit as "large but UNIFORM (~7.0 logits mean)" — and no locale's dependent-locality
-emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit;
-the US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
+emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit.
+The US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
 (FR lieu-dit, ES pedanía, BR bairro, MX colonia, and the borough instances in Paris/Tokyo/Amsterdam)
 is therefore an ARTIFACT question rather than a training question — which moves them out of R5's
 training-conditional column and into the same decode-time lane R2–R4b already ran.
@@ -137,8 +137,8 @@ states: of the 40 probe-set-2 improvement targets carrying an expected venue str
 residual is "A Bar with Shapes for a Name", "Art4Space", "B.indulged", "Paws 4 A Rest", "Tricky's @
 The Tolgus Inn" — small, new, deliberately odd commercial names that no gazetteer enumerates. **No
 retrieval artifact can supply what does not exist in any source.** This class is where the model
-has to generalize, which is why #1366's fine-tune shape was right even though V1 missed, and why its
-three named residual mechanisms are the actual work.
+has to generalize. That is why #1366's fine-tune shape was right even though V1 missed, and why its
+three stated residual mechanisms are the actual work.
 
 **Class 3 — compositional sub-venue structure (`building`, `campus`, `wing`, `concourse`, `arcade`,
 `enclosure`, `installation` → `venue` / `unit`).** Neither of the above: these are PATTERNS rather than
@@ -167,13 +167,13 @@ A probe extending the designator set moved `Terminal 5` → `unit="Terminal 5", 
 Airport"` and `Check 12` → `unit="Check 12"`, but split `Concourse B` into `unit=Concourse` +
 `venue=B` and left the trailing-designator `West Wing` untouched. **Real change rather than a clean sweep** —
 and it is a default-on change to unit parsing with obvious confound risk (GB street names ending in
-`-check`, industrial estates literally named "Terminal"). It gets its own pre-registered board before
-anything ships; the experiment was reverted.
+`-check`, industrial estates literally called "Terminal"). It gets its own pre-registered board before
+anything ships. The experiment was reverted.
 
 **Landed here instead: the instrument.** Six sub-venue cases join the gauntlet — five
 `improvement_target` and one **conditional control** (`Building 43`, the half that already works, locked
 so a future designator change cannot silently regress it). The class now has coverage it has never
-had, which is the precondition for fixing it.
+had. That coverage is the precondition for fixing it.
 
 ## Ship decision: TAKEN (operator, 2026-08-01) — "we don't mind change if the result is better"
 
@@ -185,7 +185,7 @@ measured at, inherited from GB rather than re-swept because the classifier defic
 to the flagship package was ordinary US addresses. They are untouched, and the reason is structural:
 the prior fires only when child and parent are both present in the query. `Astoria, NY 11103` — a
 USPS-valid city/state/ZIP with no parent in the string — keeps `locality=Astoria`. That is why the
-19 candidate rows in the US golden boards needed **no edit**; both halves are now conditional gauntlet
+19 candidate rows in the US golden boards needed **no edit**. Both halves are now conditional gauntlet
 cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
 
 **Two latent bugs surfaced by the packaging work, both fixed here:**
@@ -197,7 +197,7 @@ cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
    `MAILWOMAN_SKIP_WEIGHTS_COPY` and the operator publishes the dev-linked binary, but one local
    `yarn release` would have produced it.
 2. `neural/test/weights.test.ts` symlinked every en-us file into a temp package, then wrote a
-   1-entry stub named `pair-index-us.bin`. `writeFileSync` follows symlinks — so the moment en-us
+   1-entry stub called `pair-index-us.bin`. `writeFileSync` follows symlinks — so the moment en-us
    shipped a real one, that test would have overwritten the 49,033-pair production artifact in
    place, silently, with every later test in the run grading against the corrupt file. Same
    write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
@@ -206,5 +206,5 @@ cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
 (`mailwoman release hf … --pair-indexes neural-weights-en-us/pair-index-us.bin,…`) — CI fetches it
 from the bucket and the preflight now names it, so an unstaged file fails loud rather than
 publishing an empty package. The demo repoint (`STAGED_PAIR_INDEX_COUNTRIES`, `stagePairIndexes`)
-stays a separate follow-up per the country-evidence-layer runbook; adding `us` there is what turns
+stays a separate follow-up per the country-evidence-layer runbook. An entry for `us` there is what turns
 on US pair bias for bare postcode-less browser queries (D-R5.4).

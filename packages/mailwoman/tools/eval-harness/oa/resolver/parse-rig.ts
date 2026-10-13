@@ -40,8 +40,8 @@ export async function buildParseRig(
 	// the model-card's `requires` block and feeds every declared channel
 	// (anchor, gazetteer, conventions=auto, suppress-gaz-near-postcode), and fails
 	// closed (strict) if a declared channel cannot be fed.
-	// This grades the parse the library and server actually ship rather than the
-	// hand-built anchor-only classifier this eval used before.
+	// This grades the parse the library and server ship rather than the hand-built
+	// anchor-only classifier this eval used before.
 	// `--model-anchor-lookup` still pins the anchor source
 	// (else createScorer's default /mnt pilot and the repo gazetteer lexicon).
 	// `--ablate-to-anchor` drops back to anchor-only (gazetteer and conventions off)

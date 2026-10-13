@@ -7,7 +7,7 @@
  *   bytes are ODbL OpenStreetMap data, see `osm/readme.md`.
  *
  *   RAW `fetch` is deliberate: `agents.md` requires HTTP clients to use `APIClient`, whose pacing, retry and
- *   response caching earn their keep on small repeated API requests. A multi-gigabyte body streamed
+ *   response caching save requests and time on small repeated API calls. A multi-gigabyte body streamed
  *   straight to disk moves in a single pass, where pacing and retry add overhead.
  */
 

@@ -12,7 +12,7 @@
  * `numberMatched`, `numberReturned` and `timeStamp` describe the request its root came from rather
  * than the file. The reader consults none of the three.
  *
- * The twelve cover what the service varies: four street-bearing addresses that write both an
+ * The twelve cover what the service varies: four addresses with a street that write both an
  * `addressNumber` and a `buildingIdentifier`, four street-less addresses whose `ad:AddressAreaName`
  * states a settlement part other than the municipality, two street-less addresses that reference no
  * address area at all, and one of each from a fourth page.

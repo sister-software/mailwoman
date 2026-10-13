@@ -38,7 +38,7 @@ not seen it.
 Phase 4a tried to let the resolver choose between k-best readings. That approach fails for
 a structural reason that tuning cannot fix: **the resolver needs a house number or a
 locality to resolve, so it has no evidence for exactly the bare fragments that need it.**
-`Rue Montmartre` alone gives the resolver no candidate to resolve, so it cannot choose a reading
+`Rue Montmartre` with no other component gives the resolver no candidate to resolve, so it cannot choose a reading
 for the class that motivated this work. This result was measured. See the Phase 4a
 verdict.
 
@@ -110,14 +110,14 @@ unseen streets.
 | Tier  | Data                                                         | Allowed use                                  | Not allowed                                                         |
 | ----- | ------------------------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------------- |
 | **A** | Authoritative street/address registers — FR BAN, NL BAG-like | Eval, augmentation, positive name-index bias | Negative evidence                                                   |
-| **B** | Road/address-range data — US TIGER                           | Positive bias **only with scope**            | Unscoped/global evidence; negative evidence                         |
-| **C** | Admin gazetteers — WOF                                       | Locality/region/country evidence             | **Street existence**; negative evidence                             |
-| **D** | OSM-like broad data                                          | Experiments, coverage-gap analysis           | Product use without licensing/attribution review; negative evidence |
+| **B** | Road/address-range data — US TIGER                           | Positive bias **only with scope**            | Unscoped/global evidence, negative evidence                         |
+| **C** | Admin gazetteers — WOF                                       | Locality/region/country evidence             | **Street existence**, negative evidence                             |
+| **D** | OSM-like broad data                                          | Experiments, coverage-gap analysis           | Product use without licensing/attribution review, negative evidence |
 
 ### Tier A — start here
 
 BAN is the first test case because it is clean, national, and complete for street names.
-It is the only tier where the absence of a street carries any information, and the only
+It is the only tier where the absence of a street gives any information, and the only
 source against which the augmentation can be graded with real data. Other locales follow
 **by tier, afterward**, as a separate step.
 
@@ -134,7 +134,7 @@ evidence is usable only when the scope is present in the input.
 
 ### Tier C — the famous-street-as-place trap
 
-WOF carries admin polygons. It also carries famous streets **as places**, and `rue`,
+WOF stores admin polygons. It also stores famous streets **as places**, and `rue`,
 `boulevard`, and `place` are gazetteer entries themselves. A WOF hit shows that the street name
 is a gazetteer entry. It does not prove that a street exists. `Rue Montmartre` then looks like evidence for
 `locality`, which is the error this work is trying to fix.

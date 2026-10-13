@@ -100,7 +100,7 @@ describe("the checked read", () => {
 			viaDefault.push(row as string[])
 		}
 
-		// The comparison is only meaningful where the default actually loses rows.
+		// The comparison is only meaningful where the default loses rows.
 		// Assert that first.
 		expect(viaDefault.length).toBeLessThan(3)
 		await expect(readUnquotedTSVChecked(truncating)).resolves.toHaveLength(3)

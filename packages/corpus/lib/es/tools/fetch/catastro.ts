@@ -105,11 +105,11 @@ export const ES_CATASTRO_REQUEST_INTERVAL_MS = 250
 const SLUG = ES_CATASTRO_ADAPTER_ID
 
 /**
- * How many archives are written between two manifest writes.
+ * The number of archives written between two manifest writes.
  *
  * The manifest is what makes an interrupted harvest resumable, and writing it after every
  * archive would rewrite a document with one entry per municipality once per municipality.
- * At this interval an interruption re-fetches at most this many archives that are already on disk.
+ * At this interval an interruption re-fetches at most this number of archives that are already on disk.
  */
 const MANIFEST_INTERVAL = 25
 
@@ -416,18 +416,18 @@ export interface ESCatastroArchiveEntry extends SourceManifest {
  */
 export interface ESCatastroHarvestManifest extends SourceCollectionManifest {
 	/**
-	 * How many territorial offices the service document listed, read from the feed on each run.
+	 * The number of territorial offices the service document listed, read from the feed on each run.
 	 */
 	provinces_listed: number
 	/**
-	 * How many of those offices this run read a province feed for.
+	 * The number of those offices this run read a province feed for.
 	 *
 	 * A bounded run reads fewer, so this is the denominator for `municipalities_listed`
 	 * rather than a count of the country.
 	 */
 	provinces_harvested: number
 	/**
-	 * How many municipalities the province feeds this run read listed between them.
+	 * The number of municipalities the province feeds this run read listed between them.
 	 */
 	municipalities_listed: number
 	files: ESCatastroArchiveEntry[]
@@ -453,7 +453,7 @@ export interface HarvestESCatastroOptions {
 	 */
 	municipalities?: readonly string[]
 	/**
-	 * Stop after this many municipalities, counting the ones already on disk.
+	 * Stop after this number of municipalities, counting the ones already on disk.
 	 */
 	limit?: number
 	/**

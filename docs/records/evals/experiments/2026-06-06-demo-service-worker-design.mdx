@@ -9,8 +9,8 @@ with the gotchas already paid for rather than a from-scratch spike._
 
 The demo's heavy assets — `model.onnx`, `tokenizer.model`, `wof-hot.db`, `fst-en-US.bin` (~60 MB cold) — are
 HTTP-cache-only today. The header comment in `src/pages/demo/index.tsx` states: _"After first load the
-browser caches everything."_ That's fragile. There's no offline story, no version awareness, and the HTTP
-cache can be evicted under pressure with no say from us. You want a service worker that **precaches the bundle,
+browser caches everything."_ That's fragile. The demo has no offline mode and no version awareness. The browser can
+evict the HTTP cache under storage pressure without consulting the page. You want a service worker that **precaches the bundle,
 keyed by the selected model version, and evicts the old version's blobs when you switch.**
 
 ## The thing the header comment gets wrong (and why S38 is non-trivial)
@@ -35,7 +35,7 @@ single fact is most of the design.
 ### Sharp edge 1 — HF answers with a 302 to an expiring signed CDN URL
 
 A `GET` to the HF bucket URL doesn't return the bytes. It returns a **302** to a signed
-`cas-bridge.xethub.hf.co` URL whose query string carries an expiry — measured this shift,
+`cas-bridge.xethub.hf.co` URL whose query string holds an expiry — measured this shift,
 `X-Amz-Expires=3600` (one hour) and a `Policy`/`Signature` pair. Concretely:
 
 ```
@@ -54,19 +54,19 @@ Implications for the cache:
 - **A cache hit must short-circuit before the redirect.** Once cached, serve the stored body directly so you
   never touch the expiring signed URL again — that's the whole point (offline + no re-fetch).
 
-### Sharp edge 2 — CORS lives on the HF leg; the CDN leg is unconfirmed
+### Sharp edge 2 — CORS lives on the HF leg, and the CDN leg is unconfirmed
 
-The HF 302 carries `access-control-allow-origin: https://huggingface.co`. The final signed CDN `200`, probed
-with `HEAD` this shift, did **not** visibly carry an `access-control-allow-origin` header — but a `HEAD` is not
-authoritative for `GET` CORS, and the demo demonstrably reads these bytes today, so the browser is getting a
-readable (CORS-clean) response on the real `GET` somehow. **Verify in a browser before building**, because the
+The HF 302 sends `access-control-allow-origin: https://huggingface.co`. The final signed CDN `200`, probed
+with `HEAD` this shift, did **not** visibly include an `access-control-allow-origin` header. A `HEAD` is not
+authoritative for `GET` CORS, though. The demo reads these bytes today, so the browser receives a
+readable (CORS-clean) response on the real `GET` by some path. **Verify in a browser before building**, because the
 answer forks the design:
 
 - **If the final GET is CORS-clean** (most likely, since the demo works): cache normal (non-opaque) responses.
   You get `response.ok`, a real `content-length`, and integrity you can check against the model card's expected
   sizes (the plugin already treats those sizes as authoritative record).
-- **If it's opaque** (`mode: "no-cors"` fallback): you can still `cache.put` it, but the response is opaque —
-  no status, no readable size, and it counts a **padded** size against quota. That makes version eviction and
+- **If it's opaque** (`mode: "no-cors"` fallback): you can still `cache.put` it, but the response is opaque.
+  It has no status and no readable size, and it counts a **padded** size against quota. That makes version eviction and
   the ~60 MB quota math much harder. Don't design for this case unless the browser check forces it.
 
 ### Sharp edge 3 — version-keyed eviction is the actual feature
@@ -134,7 +134,7 @@ self.addEventListener("message", async (event) => {
 ```
 
 (`currentVersionForURL` keys the cache by the `locale/version` segment already present in the path, so each
-version's blobs land in their own named cache and eviction is a name comparison.)
+version's blobs land in their own version-keyed cache and eviction is a name comparison.)
 
 ## Storage & quota
 
@@ -151,16 +151,16 @@ A service worker's whole value is in behaviors you can only see across loads and
 them are visible to `tsc` or a single-page render:
 
 1. **Cold load** — assets fetched from network, populate the cache. (`100-demo-cold-load.spec.ts` covers the
-   page render; extend it to assert the cache got populated.)
-2. **Warm load** — second visit serves from cache; assert **zero** network requests to `huggingface.co`.
-3. **Version switch** — pick a different release; assert the old `mailwoman-assets-*` cache is deleted and the
+   page render. Extend it to assert the cache got populated.)
+2. **Warm load** — second visit serves from cache. Assert **zero** network requests to `huggingface.co`.
+3. **Version switch** — pick a different release. Assert the old `mailwoman-assets-*` cache is deleted and the
    new one populated.
-4. **Offline** — `context.setOffline(true)` after a warm load; the demo still parses.
-5. **Signed-URL expiry** — the cached path must never re-hit the expiring CDN URL (covered by #2, but worth an
+4. **Offline** — `context.setOffline(true)` after a warm load. The demo still parses.
+5. **Signed-URL expiry** — the cached path must never re-hit the expiring CDN URL (covered by #2, but add an
    explicit assertion that the SW served the body without a redirect).
 
-Playwright drives all five with a real Chromium + service-worker support; that's the check this feature needs,
-and it's a session's worth of careful work rather than an end-of-shift add-on.
+Playwright drives all five with a real Chromium + service-worker support. That is the check this feature needs,
+and it takes a full session of careful work rather than an end-of-shift add-on.
 
 ## Recommendation
 

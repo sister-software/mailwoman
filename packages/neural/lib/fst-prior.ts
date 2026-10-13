@@ -379,7 +379,7 @@ export function buildFSTEmissionPriors(
  * Groups SentencePiece pieces into FST-normalized words, splitting at the `▁` space sentinel.
  *
  * An alphanumeric piece without `▁` opens a new word when none is open,
- * because short words often lack a merged `▁word` piece.
+ * because some short words lack a merged `▁word` piece.
  * Punctuation-only pieces become empty placeholder groups so that separated words never merge.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {

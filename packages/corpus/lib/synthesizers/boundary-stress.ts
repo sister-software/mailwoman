@@ -20,7 +20,7 @@ import type { CanonicalRow } from "#types"
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
-   would hide the distribution behind identifiers. The genuine thresholds in these files are
+   would hide the distribution behind identifiers. The decision thresholds in these files are
     extracted as constants above. */
 
 /**
@@ -348,7 +348,8 @@ export function synthesizeBoundaryStressRow(
 
 		// The layout renders the tail in the country's order: `75005 Paris` for FR
 		// and `Boston, MA 02116` for the US.
-		// Dropping the layout's commas is a surface perturbation that applies to any country.
+		// The synthesizer drops the layout's commas.
+		// That is a surface perturbation that applies to any country.
 		const tail = layoutAdminTail(b.country, {
 			locality: b.locality,
 			region: b.region,

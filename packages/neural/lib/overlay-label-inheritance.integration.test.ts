@@ -15,7 +15,7 @@
  *   `assertEmissionWidth`. The package is inoperable at runtime.
  *
  *   A card check by itself is insufficient. `resolveWeights` already fell back to the
- *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and simply had no
+ *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and had no
  *   `labels` key. Existence and completeness are different questions.
  */
 

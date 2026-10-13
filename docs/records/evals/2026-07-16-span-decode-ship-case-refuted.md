@@ -12,11 +12,11 @@ token decode on the extract-trained model beats that number by 8 fixtures.
 
 Paris target class, n=63, production config, int8 against int8:
 
-|                                                |                   | 95% Wilson     |
-| ---------------------------------------------- | ----------------: | -------------- |
-| v264 `token@1` (shipped)                       |     33/63 = 0.524 | [0.403, 0.642] |
-| v301 `seg@1` — **the flag's entire case**      |     48/63 = 0.762 | [0.644, 0.850] |
-| v310 `token@1` — **the extract, no span head** | 56/63 = **0.889** | [0.788, 0.945] |
+|                                                 |                   | 95% Wilson     |
+| ----------------------------------------------- | ----------------: | -------------- |
+| v264 `token@1` (shipped)                        |     33/63 = 0.524 | [0.403, 0.642] |
+| v301 `seg@1` — **the flag's entire case**       |     48/63 = 0.762 | [0.644, 0.850] |
+| v310 `token@1` — **the extract without a head** | 56/63 = **0.889** | [0.788, 0.945] |
 
 ```
 the flag's claim : v264 token -> v301 seg   = +23.8pp
@@ -34,8 +34,8 @@ is not a feature.
 v301 (old corpus) + span vs v310 (new corpus) + token. Two variables move at once.
 
 **It is exactly the ship question.** "Should we ship this flag?" is a question about artifacts, and
-the answer is no: a strictly better and strictly simpler artifact exists. Nobody would opt into the
-worse one.
+the answer is no: a strictly better and strictly simpler artifact exists. A user choosing between the two
+has no reason to opt into the worse one.
 
 ## 3. Why §6 was right and is now wrong
 
@@ -50,16 +50,17 @@ the +23.8pp was the span head's to give. T1c and T2 falsified the belief:
 
 The decision was correct given what was known. The premise moved underneath it. That is what a
 pre-registered plan is for: §6's own text made the flag conditional (_"Tier 1a decides whether the
-flag has a regression cost we haven't named yet"_), and the tiers below it kept going.
+flag has a regression cost that has not been identified yet"_), and the tiers below it kept going.
 
 ## 4. Off-by-default is not free
 
-The tempting move is "ship it off by default, it costs nothing." It costs:
+The tempting move is to ship it off by default on the assumption that an unused flag adds no cost.
+An off-by-default flag still adds the following:
 
-- an **API surface** we have to keep;
-- a **maintenance burden** on a decode path nobody is validating;
-- an **implicit endorsement** — shipping weights trained on a corpus we have since replaced;
-- and a **worse experience for anyone who opts in**, which is the only population it has.
+- an **API surface** we have to keep.
+- a **maintenance burden** on a decode path that no check validates.
+- an **implicit endorsement** of weights trained on a corpus we have since replaced.
+- a **worse experience for anyone who opts in**. Those users are the flag's only population.
 
 ## 5. The one open question — and it is the last one
 
@@ -69,22 +70,21 @@ teaches bare streets, because **no span head has ever been trained on one**. Tha
 
 Pre-registered kill shot: **`seg@1` must beat v310's `token@1` = 56/63 (0.889)** — the bar the flag
 failed by 12.7pp. If an extract-trained span head cannot beat an extract-trained plain decode on the target
-class, the span head has no case **at any weight**, and the arc closes. No `span_loss_weight` tuning,
-no re-run: that is the treadmill the arc's own guard forbids.
+class, the span head has no case **at any weight**, and the arc closes. The arc does not then tune
+`span_loss_weight` or re-run. That is the treadmill the arc's own guard forbids.
 
 ## 6. What the arc bought anyway
 
-Four phases, and — as of this page — no shippable artifact. That is worth saying rather than
-dressing up.
+The arc ran four phases and, as of this page, produced zero shippable artifacts.
 
-What it produced instead is the reason the fix exists at all. `oracle@k` and the k-best decode were
-the instruments that made the headroom **visible** (oracle@10 0.775 against a 0.577 rank-1 — a gap
-nobody could see when every check scored top-1). That gap is what motivated T1a's cross-tab, which
-found the digit-eating and forced the hallucination check, which motivated T1c's board, which found
-the license, which built T2's extract, which fixed the class.
+It did produce the reason the fix exists at all. `oracle@k` and the k-best decode were the
+instruments that made the headroom **visible** (oracle@10 0.775 against a 0.577 rank-1). That gap was
+invisible while every check scored top-1. The gap motivated T1a's cross-tab. The cross-tab found the
+digit-eating and forced the hallucination check. That check motivated T1c's board. The board found
+the license. The license finding built T2's extract, and the extract fixed the class.
 
-The arc asked "can a better decode find the right answer?" The reply turned out to be: the right
-answer was never in the list to be found — it wasn't in the training data. **The instrument
+The arc asked whether a better decode could find the correct parse. The reply turned out to be that
+the correct parse was never in the list to be found, because it was not in the training data. **The instrument
 that proved the answer wasn't there is what led us to put it there.**
 
 ---

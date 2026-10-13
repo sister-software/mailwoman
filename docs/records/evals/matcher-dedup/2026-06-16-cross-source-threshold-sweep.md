@@ -17,7 +17,7 @@ FS weight, so lowering the threshold is the only knob.
 
 **Precision proxy (label-free):** there is no cross-source ground truth. No shared key across the
 three datasets is the whole premise. So we use **phone corroboration**: of the cross-source entities
-whose records carry a phone in ≥2 different sources, the fraction whose phones **match**. Phone is not
+whose records include a phone in ≥2 different sources, the fraction whose phones **match**. Phone is not
 the join key, so a match is independent evidence of same-facility. (Small-N + noisy — see caveats.)
 
 ## Result (cap 2000, TX)
@@ -37,17 +37,17 @@ the join key, so a match is independent evidence of same-facility. (Small-N + no
 | GBT @ 2         |         2 |           3543 |                 16 |      0 | 3/15 (20%)                  |
 | GBT @ 2.71      |    2.7143 |           3605 |                 11 |      0 | 3/10 (30%)                  |
 
-## Verdict — threshold alone (option 1) is INSUFFICIENT
+## Verdict — a threshold change without retraining (option 1) is INSUFFICIENT
 
-The decisive, config-independent signal is the **total-entity column**:
+The config-independent signal that settles the question is the **total-entity column**:
 
 1. **At its dedup threshold (2.71), the GBT finds _fewer_ cross-source links than FS** (11 vs 27) — it
    suppresses exactly the links the cross-source flows want, confirming the #603 follow-up's premise.
 2. **To make the GBT admit _more_ cross-source links, you must lower the threshold until the whole
    clustering collapses.** As the threshold drops, total entities fall 3343 → 2869 → 2382 → **115**.
    The "52 links / 33%" plateau at threshold ≤ −3 is an artifact of ~6000 records collapsing into 115
-   giant blobs — those blobs trivially span sources; they are not facility matches.
-3. **No threshold reproduces FS's precision.** FS sits at 37% phone-corroboration; every GBT arm is
+   giant blobs. A blob of that size spans sources by its size, and the blobs are not facility matches.
+3. **No threshold reproduces FS's precision.** FS sits at 37% phone-corroboration. Every GBT arm is
    below it, and the result links (thr ≤ 0) do so at 19–27% — lower precision _and_ more
    over-merging.
 
@@ -60,10 +60,10 @@ opposite — which is the definition of needing a different model rather than a 
 
 **FS stays pinned for the cross-source flows**. It is the recall-correct _and_ best-precision tool
 here, by design. The only way to "do better than FS" (#655) is a **cross-objective retrain**
-(option 2): a GBT trained on the cross-source objective, where `spatial-exact × name-disagree` carries
-the _opposite_ sign. That is blocked on cross-source labels, which don't exist (no shared key) — it
-needs a weak-label pipeline (e.g. phone/NPI-corroborated FS-high-confidence links as positive seeds,
-non-co-located pairs as negatives). That is a project rather than a tweak; it is **not** started here.
+(option 2): a GBT trained on the cross-source objective, where `spatial-exact × name-disagree` has
+the _opposite_ sign. That is blocked on cross-source labels. Those labels don't exist (no shared key), so
+it needs a weak-label pipeline (e.g. phone/NPI-corroborated FS-high-confidence links as positive seeds,
+non-co-located pairs as negatives). That is a project rather than a tweak, and it is **not** started here.
 
 ## Caveats
 
@@ -74,7 +74,7 @@ non-co-located pairs as negatives). That is a project rather than a tweak; it is
   FS-vs-GBT comparison (same config, same data, same run) and the entity-collapse pattern — both
   resilient regardless of absolute scale.
 - **The phone proxy is noisy** at N=27 (only 10–29 checkable per arm). It corroborates the conclusion
-  but isn't decisive; the entity-collapse evidence (point 2) is.
+  but is too small to establish it. The entity-collapse evidence (point 2) establishes it.
 - A higher-cap run would tighten the precision proxy but cannot change the structural finding: the
   GBT only yields more cross-source links by over-merging.
 
@@ -83,4 +83,4 @@ non-co-located pairs as negatives). That is a project rather than a tweak; it is
 Option 1 (re-threshold the dedup GBT) **does not work** — measured rather than assumed. Keep FS pinned for
 cross-source discovery. #655's remaining content is option 2 (a weak-label cross-objective retrain),
 which is a scoped project blocked on building cross-source weak labels — or, equally defensible, close
-#655 as "the GBT is dedup-only by design; FS is the correct cross-source tool."
+#655 as "the GBT is dedup-only by design, and FS is the correct cross-source tool."

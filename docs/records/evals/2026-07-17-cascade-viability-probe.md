@@ -5,7 +5,7 @@ The delegation vision under test: a query-shape front stage that handles easy sh
 principled by calibrated confidence. This probe measures it on the four standing arenas: what fraction a
 confidence-conditional front tier would absorb, how frequently its deterministic parse matches gold, and how frequently
 the full model matches gold **on those same rows**. Runner: `scratchpad/cascade-probe.run.ts` (kinds via
-`classifyKindSync` at confidence ≥0.7; handlers: `postcode_only` → the format-hit span, `locality_only` →
+`classifyKindSync` at confidence ≥0.7. Handlers: `postcode_only` → the format-hit span, `locality_only` →
 bare locality or the doubleton split at a trailing region abbreviation).
 
 ## The numbers
@@ -41,7 +41,7 @@ something a shape detector cannot do. On this domain, ease-of-shape
 and ease-of-parse are anti-correlated: long inputs are self-disambiguating (a house number licenses the
 street, a postcode anchors the locality); short inputs are pure ambiguity. **The model warrants its keep
 most on the smallest queries** — the opposite of the cascade's premise. Note the model itself scores only
-0.588 on the absorbed rows: they are hard for everyone; the front tiermakes hard rows 5× worse.
+0.588 on the absorbed rows. They are hard for everyone, and the front tier makes hard rows 5× worse.
 
 This is the third instrument to convict shape-conditioned routing this week: the queryShape locality bias
 (M1: −7.8 locality, venue absorption), the deletion counter-case (`New York, NY` needing the bias), and
@@ -50,17 +50,17 @@ the shape is ambiguous, and the ambiguous cases are the ones that matter.**
 
 ## What survives
 
-- **`postcode_only` fronting** is fine but nearly empty here (2 rows; more in autocomplete traffic) and
+- **`postcode_only` fronting** is fine but nearly empty here (2 rows, more in autocomplete traffic) and
   the postcode binary already serves it downstream — no architecture change needed.
 - **Atlas-verified fronting** — absorb a bare name only after a candidate-table hit confirms it is a
   known locality — is the one direct form left. But that front tier is a gazetteer lookup, i.e. the
-  resolver; the model + atlas channel already perform that arbitration with learned weighting (M1 priced
+  resolver. The model + atlas channel already perform that arbitration with learned weighting (M1 priced
   the channel at +10.4). A bypass provides ~0.5 ms and adds a second code path to maintain.
 - The scoped doubleton bias (PR #1148, four-line guard on a soft prior) remains the template for where
   shape knowledge helps: small, priced, scoped — inside the model's decode rather than in front of it.
 
 ## Verdict
 
-Do not build the shape-routed cascade. Keep the single-model + soft-channels architecture; spend the
+Do not build the shape-routed cascade. Keep the single-model + soft-channels architecture. Spend the
 delegation instinct on the resolver-as-arbiter direction (#727 stage-2), where the atlas judges _parses_
 rather than _routing inputs_. The probe cost one eval sweep and closes the question with receipts.

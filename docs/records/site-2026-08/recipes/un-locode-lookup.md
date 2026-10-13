@@ -43,7 +43,7 @@ lookup.byName("US", "New York") // "US NYC"
 lookup.nearest(51.92, 4.48) // "NL RTM"
 ```
 
-`byName` is exact, but the match is diacritic-folded and case-insensitive, so "São Paulo" and "sao paulo" both land. `nearest` covers the roughly 80% of entries that carry coordinates (93k of 116k), which is most of what you'll reach for. Wrap it as an `Annotator` to fill `AnnotationSet.unLocode` on a resolved result:
+`byName` is exact, but the match is diacritic-folded and case-insensitive, so "São Paulo" and "sao paulo" both land. `nearest` covers the roughly 80% of entries that have coordinates (93k of 116k). Those entries cover most of what you'll reach for. Wrap it as an `Annotator` to fill `AnnotationSet.unLocode` on a resolved result:
 
 ```ts
 const annotator = makeUnLocodeAnnotator(lookup)
@@ -51,4 +51,4 @@ const annotator = makeUnLocodeAnnotator(lookup)
 
 ## Data
 
-The UNECE UN/LOCODE code list is public domain, so this one carries no share-alike obligation — see [Data licensing](../licensing/data-provenance.md) for how the sources differ.
+The UNECE UN/LOCODE code list is public domain, so this one imposes no share-alike obligation. See [Data licensing](../licensing/data-provenance.md) for how the sources differ.

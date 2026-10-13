@@ -10,7 +10,7 @@
  *   Neither proves that a harvest of the real service writes a document that adapter reads.
  *
  *   The test takes one 25-feature page, so the document stays unclosed. A partial harvest leaves it
- *   that way, and the adapter reading the result is the claim worth proving.
+ *   that way, and the test proves that the adapter reads the result.
  */
 
 import { APIClient } from "@mailwoman/core/api"

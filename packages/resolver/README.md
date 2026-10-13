@@ -1,8 +1,8 @@
 # @mailwoman/resolver
 
-Walk a parsed `AddressTree` and decide, for each span, which real place it names — then hand back the tree with coordinates, attribution and ancestry stamped on it.
+Walk a parsed `AddressTree` and decide, for each span, the real place it refers to. Then hand back the tree with coordinates, attribution and ancestry stamped on it.
 
-This is the half of [mailwoman](https://www.npmjs.com/package/mailwoman) that turns _"the model assigns this run of characters to the locality label"_ into _"this is Springfield, Illinois, at 39.7973/-89.6455, and here is why."_ It owns the ranking, the coherence passes and the ordering rules; it owns no data. The gazetteer lives behind a `ResolverBackend` you supply.
+This is the half of [mailwoman](https://www.npmjs.com/package/mailwoman) that turns _"the model assigns this run of characters to the locality label"_ into _"this is Springfield, Illinois, at 39.7973/-89.6455, and here is why."_ It owns the ranking, the coherence passes and the ordering rules, and it owns no data. The gazetteer lives behind a `ResolverBackend` you supply.
 
 ## Installation
 
@@ -22,7 +22,7 @@ const resolver = createWOFResolver(backend)
 const decorated = await resolver.resolveTree(tree)
 ```
 
-`resolveTree` returns a new tree. Nodes that resolved carry `lat`/`lon`, a `placeID`, and `resolver_*` metadata; nodes that did not are returned untouched.
+`resolveTree` returns a new tree. Nodes that resolved have `lat`/`lon`, a `placeID`, and `resolver_*` metadata. Nodes that did not are returned untouched.
 
 ## Backend-agnostic on purpose
 
@@ -36,7 +36,7 @@ of looking like a bad result.
 
 Two rules run through this package, and both exist because their opposites shipped bugs.
 
-**A coordinate the gazetteer cannot supply is absent, never `0,0`.** `0,0` is the unlocated sentinel in every WOF-lineage database, and those databases carry a great deal of it — 48,216 of 142,604 Japanese postcodes, 86,377 GB, 414 US. `decorateNode` leaves `lat`/`lon` unset for such a row, so the place still resolves and identifies itself while stating that it cannot say where it is. A consumer's `lat != null` check then means what it looks like it means.
+**A coordinate the gazetteer cannot supply is absent, never `0,0`.** `0,0` is the unlocated sentinel in every WOF-lineage database, and those databases contain a great deal of it — 48,216 of 142,604 Japanese postcodes, 86,377 GB, 414 US. `decorateNode` leaves `lat`/`lon` unset for such a row, so the place still resolves and identifies itself while stating that it cannot say where it is. A consumer's `lat != null` check then means what it looks like it means.
 
 **A missing answer is not a wrong answer.** An unresolvable span is returned as parsed. The resolver invents no centroid to fill a hole.
 
@@ -44,7 +44,7 @@ Two rules run through this package, and both exist because their opposites shipp
 
 `admin-winner.ts` owns one ordering, and it is the only one whose rungs are not fixed.
 
-`PLACETYPE_SPECIFICITY` ranks placetypes by how much ground they cover, which is the right question for most of them and the wrong one for `postalcode`. A GB unit postcode covers ~15 addresses and is tighter than any locality centroid; a French _code postal_ can span several communes and be coarser than the one you want. One number cannot be both.
+`PLACETYPE_SPECIFICITY` ranks placetypes by how much ground they cover. That measure ranks most placetypes correctly and ranks `postalcode` wrongly. A GB unit postcode covers ~15 addresses and is tighter than any locality centroid. A French _code postal_ can span several communes and be coarser than the one you want. One number cannot be both.
 
 So the rank of a resolved postcode is computed, from two independent routes:
 
@@ -60,9 +60,9 @@ const rank = resolvedSpecificity({ placetype: "postalcode", value: "N7 0BT", res
 
 Either an **exact hit on a unit-grade code** (`@mailwoman/codex`'s `UNIT_GRADE_POSTCODE` — NL PC6, GB unit, CA urban LDU) or an **address system whose area-grade codes are finer than its localities** (`AREA_POSTCODE_FINER_THAN_LOCALITY` — Germany, where a Gemeinde can be the size of Berlin) puts the postcode ahead of the locality. Everything else follows the locality.
 
-The two shapes live in one module deliberately. They express one claim and are consumed by different callers, and when they were separate the eval harnesses each froze one arm of the conditional as a constant — every grader correct on half the data and wrong on the other half, unconditionally, for as long as nobody compared them. `lib/admin/winner.test.ts` asserts they agree on every arm; mutating either side fails it.
+The two shapes live in one module deliberately. They express one claim and are consumed by different callers, and when they were separate the eval harnesses each froze one arm of the conditional as a constant — every grader correct on half the data and wrong on the other half, unconditionally, until a test compared them. `lib/admin/winner.test.ts` asserts they agree on every arm, and a mutation of either side fails it.
 
-Membership in those tiers is earned by measurement, never by shape alone. Canada is the worked example: its urban LDU measures 78 m against rooftop truth and joined the tier, while its rural codes measure 2.08 km and did not — and Canada Post already marks the difference with a `0` in the second character, so the code says which before any lookup runs.
+A code system joins those tiers by measurement, never by its shape without a measurement. Canada is the worked example. Its urban LDU measures 78 m against rooftop truth and joined the tier, while its rural codes measure 2.08 km and did not. Canada Post already marks the difference with a `0` in the second character, so the code itself identifies its tier before any lookup runs.
 
 ## Coherence passes
 

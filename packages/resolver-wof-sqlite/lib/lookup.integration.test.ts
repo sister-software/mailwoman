@@ -320,7 +320,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 
 	test('"London" with placetype: "locality" INCLUDES the Ontario borough (locality placetype expansion)', async () => {
 		// `locality` expands to locality + borough + localadmin (core/resolver PLACETYPE_FILTER_GROUPS):
-		// WOF files many city-like places (Brooklyn, the London boroughs) under
+		// WOF files some city-like places (Brooklyn, the London boroughs) under
 		// `borough`/`localadmin`, and a locality span must be able to reach them.
 		const candidates = await lookup.findPlace({ text: "London", placetype: "locality" })
 		const byCountry = candidates.map((c) => `${c.country}:${c.placetype}`)

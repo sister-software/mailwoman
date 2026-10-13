@@ -101,7 +101,7 @@ import { worktreeArmRunner } from "#dev-mcp/worktree/runner"
 export type GradeRequest = "auto" | "truth" | "diff-only"
 
 /**
- * Abort a run after this many consecutive query failures on one arm.
+ * The count of consecutive query failures on one arm that aborts a run.
  */
 const ABORT_AFTER_CONSECUTIVE_FAILURES = 5
 

@@ -56,7 +56,7 @@ export interface LevelDesignatorRow {
 	variants: readonly string[]
 	kind: LevelDesignatorKind
 	/**
-	 * Whether a number usually follows the designator, as in "FL 3".
+	 * Whether a number is expected after the designator, as in "FL 3".
 	 */
 	requiresNumber: boolean
 	/**

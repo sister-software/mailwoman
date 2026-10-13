@@ -30,8 +30,8 @@ export type TruthLabel = (rec: SourceRecord) => string
  * Checks every pair within a block.
  * This preserves the per-pair Jaccard test.
  *
- * Therefore, a chain of near-matches cannot transitively fuse two genuinely distinct
- * co-located orgs unless some pair actually agrees.
+ * Therefore, a chain of near-matches cannot transitively fuse two distinct
+ * co-located orgs unless some pair agrees.
  */
 function unionAgreeingPairs(
 	blocks: Iterable<readonly string[]>,

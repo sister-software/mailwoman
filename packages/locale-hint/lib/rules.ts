@@ -12,7 +12,7 @@ import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
  * Confidence at or above which a known-format hit counts as unambiguous.
  *
  * Ambiguous hits — a bare 5-digit run that US, French and German parsers can all accept —
- * arrive at 0.6, so this cleanly separates them.
+ * arrive at 0.6, so a 0.9 floor separates them.
  */
 const UNAMBIGUOUS_FORMAT_CONFIDENCE = 0.9
 
@@ -75,8 +75,8 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 }
 
 /**
- * Whole-input fallback that keeps the stage always-decisive: when no other rule
- * fires it returns en-US at low confidence rather than `null`.
+ * Whole-input fallback that guarantees the stage always returns a locale: when no other
+ * rule fires it returns en-US at low confidence rather than `null`.
  */
 export function scoreFallback(_shape: QueryShapeFormatsView): LocaleCandidate {
 	return { locale: "en-US", confidence: 0.3, reason: "fallback" }

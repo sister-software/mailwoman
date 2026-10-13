@@ -86,7 +86,7 @@ export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 			},
 		},
 		// The taxonomy code-set discriminator uses set-overlap agreement over the NPI's 15 taxonomy slots.
-		// Co-located distinct providers usually have disjoint sets, while an entity's
+		// Co-located distinct providers mostly have disjoint sets, while an entity's
 		// own records always share theirs.
 		// It is stacked on the best prior classical config.
 		{

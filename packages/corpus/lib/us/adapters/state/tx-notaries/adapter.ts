@@ -6,7 +6,7 @@
  *   `state-tx-notaries`: Texas Notary Public Commissions CSV consumer.
  *
  *   The Texas Secretary of State publishes a registry of commissioned notaries public. Each row
- *   optionally includes a mailing address in free-form text (often multi-line with embedded
+ *   optionally includes a mailing address in free-form text (in some rows multi-line with embedded
  *   city/state/zip). Address fill rate is ~5-10%.
  *
  *   The adapter parses the embedded `Address` field for city/state/zip using a trailing `"city, ST

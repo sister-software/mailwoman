@@ -122,7 +122,7 @@ describe("resolveWeights — the artifact report", () => {
 		expect(by.get("model.onnx")?.origin).toBe(WeightsOrigin.Overlay)
 		expect(by.get("model-card.json")?.origin).toBe(WeightsOrigin.Overlay)
 
-		// An artifact absent from the overlay is reported with a null origin.
+		// An artifact absent from the weights overlay is reported with a null origin.
 		// Its omission would make "this checkout has no FST" indistinguishable from "this build never had one".
 		const fst = by.get("fst-xx-xx.bin")
 

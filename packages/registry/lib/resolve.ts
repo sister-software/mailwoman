@@ -81,7 +81,7 @@ const PHONE_LEVELS: ComparisonLevel[] = [
  *
  * These are seeds only, since EM refits.
  * `u` starts well above phone's 0.002, because two random providers share a
- * specialty far more often than a phone line.
+ * specialty at a far higher rate than a phone line.
  */
 const CODE_SET_LEVELS: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1, m: 0.75, u: 0.08 },
@@ -188,7 +188,7 @@ export interface DefaultModelOptions {
 	 *
 	 * Similarity scores mis-rank that case because the codes identify different specialties.
 	 * The over-merge separator: two co-located records of one entity nearly always share
-	 * a code, while two distinct co-located providers usually do not.
+	 * a code, while two distinct co-located providers mostly do not.
 	 */
 	exactDiscriminators?: string[]
 }

@@ -1,6 +1,6 @@
 # @mailwoman/kind-classifier
 
-This package is **stage 2.5 of the Mailwoman runtime pipeline**, which classifies
+This package is **stage 2.5 of the Mailwoman runtime pipeline**. It classifies
 the query kind.
 
 It assigns an input to one of seven `QueryKind`s by combining rule-based scorers
@@ -54,7 +54,7 @@ locale-hint → kind-classifier → phrase-grouper → classifier → ...
 - **Pure functions without ML.** Version 1 is rule-based, and a trained
   classifier is deferred.
 - **Returns alternatives.** The coordinator might skip a `locality_only` parse
-  and fall back to a `vague` handler, which the alternatives list makes possible.
+  and fall back to a `vague` handler. The alternatives list makes that fallback possible.
 - **Consumes `QueryShape` + `LocaleHint`** from the two preceding stages.
 
 ## Related

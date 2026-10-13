@@ -134,8 +134,8 @@ function tokenizeRaw(raw: string): RawTok[] {
 }
 
 /**
- * The code-shaped (digit-containing) token subset of a postcode string — "1382 Kožljek"
- * → "1382" — and an empty string when no token contains a digit.
+ * The code-shaped (digit-containing) token subset of a postcode string
+ * ("1382 Kožljek" yields "1382"), and an empty string when no token contains a digit.
  */
 export function postcodeCodeSubset(postcode: string): string {
 	return postcode
@@ -146,8 +146,8 @@ export function postcodeCodeSubset(postcode: string): string {
 }
 
 /**
- * Over-fetch for the bare-toponym probe: without a country filter the top 5 worldwide bearers of a
- * common name are often all in one country, with the candidate the soft prior promotes below the fold.
+ * Over-fetch for the bare-toponym probe: without a country filter the top 5 worldwide bearers of
+ * a common name can all be in one country, with the candidate the soft prior promotes below the fold.
  */
 const BARE_TOPONYM_FETCH = 20
 

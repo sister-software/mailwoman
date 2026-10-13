@@ -24,8 +24,8 @@ const CURRENCY_BACKFILL_RADIUS_KM = 10
 const CURRENCY_BACKFILL_POP_FLOOR = 1000
 
 /**
- * Restore a deprecated locality only when no nearby live namesake exists and GeoNames
- * attests the same folded name above {@link CURRENCY_BACKFILL_POP_FLOOR}.
+ * Restore a deprecated locality only when no live namesake exists within CURRENCY_BACKFILL_RADIUS_KM
+ * and GeoNames attests the same folded name above {@link CURRENCY_BACKFILL_POP_FLOOR}.
  */
 export interface CurrencyBackfillResults {
 	judged: number

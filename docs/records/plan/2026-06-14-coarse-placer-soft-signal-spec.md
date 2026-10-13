@@ -29,15 +29,15 @@ So the coarse-placer becomes **another `anchorPosterior` source** — no new ran
 
 ## Composition with the postcode anchor (precedence)
 
-Both emit country posteriors; they must not double-count.
+Both emit country posteriors, and they must not double-count.
 
 - **Postcode anchor present → it wins.** A postcode pins the country far more reliably than a whole-string
   guess. The coarse-placer posterior is **not applied** when the #369 postcode posterior exists.
 - **No postcode anchor → coarse-placer fills the gap**, at a **lower `anchorWeight`** than the postcode
   anchor's 2.0 (proposed **1.0**) — it's a broader, softer signal, so it should blend more gently with
   `score`.
-- **Coarse-placer says `OTHER` (off-map)** → emit **no in-map posterior** (equivalently a flat/empty map):
-  don't boost any of the 11; let the unconstrained ranking handle it. That's the graceful off-map path.
+- **Coarse-placer returns `OTHER` (off-map)** → emit **no in-map posterior** (equivalently a flat/empty map):
+  don't boost any of the 11. Let the unconstrained ranking handle it. That's the graceful off-map path.
 
 ## Where it runs
 
@@ -47,7 +47,7 @@ Both emit country posteriors; they must not double-count.
   (deferring to a postcode posterior per the precedence rule above).
 - **`geocode-core`** wires the same: a `CoarsePlacer` dep (optional), posterior fed into the resolve opts.
 - **Off by default → byte-identical.** Like `resolve`/`fst`, absent the stage the pipeline is unchanged.
-  PR-and-flag; promotion to default is a separate, evidence-conditional step.
+  The stage lands as a PR behind a flag. Promotion to default is a separate, evidence-conditional step.
 
 ## Threshold ~0.9 (and why the soft framing warrants it)
 
@@ -97,13 +97,13 @@ clean-install smoke test** — the new artifact must resolve from a fresh `npm i
   from correct country disambiguation).
 - **Client / Docusaurus (static assets)**: the model is a 0.79 MB int8 linear classifier with a pure
   char-ngram featurizer — **it can run in-browser**, but that's a **follow-on web build** (a `@mailwoman/…`
-  browser export + bundling the artifact). Not in this spec's scope; flagged as the natural next step so the
+  browser export + bundling the artifact). Not in this spec's scope. It is flagged as the natural next step so the
   demo's "it all runs client-side" story eventually includes country routing.
 
 ## Risks & the open change
 
-- **Double-counting with the postcode anchor** → the precedence rule (postcode wins; coarse-placer fills).
-- **Model-not-shipped** → the packaging prerequisite above; must pass `ci:smoke`.
+- **Double-counting with the postcode anchor** → the precedence rule (postcode wins, coarse-placer fills).
+- **Model-not-shipped** → the packaging prerequisite above. The package must pass `ci:smoke`.
 - **The linear ceiling** → the threshold can't push _both_ axes past ~90 (curves cross at ~88/88). The
   follow-on (separate milestone) is an **open-set / novelty method** (Mahalanobis on the in-map manifold,
   or a "not-any-of-11" head) that moves the whole frontier out — at which point the threshold relaxes and a
@@ -111,8 +111,8 @@ clean-install smoke test** — the new artifact must resolve from a fresh `npm i
 
 ## Phases
 
-1. **M1 (this spec):** ship the int8 model in `@mailwoman/core`; add the opt-in `placeCountry` stage feeding
-   `anchorPosterior` (precedence-aware), threshold 0.9; the assembled-pipeline country-disambiguation eval;
-   byte-stability + `ci:smoke` checks. PR-and-flag, default-off.
+1. **M1 (this spec):** ship the int8 model in `@mailwoman/core`. Add the opt-in `placeCountry` stage feeding
+   `anchorPosterior` (precedence-aware) at threshold 0.9, the assembled-pipeline country-disambiguation eval,
+   and byte-stability + `ci:smoke` checks. PR-and-flag, default-off.
 2. **M2:** open-set/novelty method to lift the 90/90 ceiling → consider default-on.
 3. **M3:** browser build for the client/demo path.

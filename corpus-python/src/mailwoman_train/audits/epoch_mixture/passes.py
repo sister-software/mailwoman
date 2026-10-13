@@ -35,8 +35,8 @@ class DrawPass:
     countries: Counter[str]
     #: Countries drawn from each source, keyed `source`, then country code.
     #:
-    #: `per_source` reports how many rows a source contributed. `countries` reports how many rows a country
-    #: received. Neither field identifies which countries received rows from each source. That join separates
+    #: `per_source` reports the row count each source contributed. `countries` reports the row count each
+    #: country received. Neither field identifies which countries received rows from each source. That join separates
     #: a country the sampler declined from a country whose rows sit in files the sampler never opened:
     #: `_source_iter` visits a source's parquet files in shuffled order and drains each before opening
     #: the next, so a fixed draw per source reads only the earliest files.

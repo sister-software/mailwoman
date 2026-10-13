@@ -159,7 +159,7 @@ async function readClaim(fetchFn: typeof fetch, workerOrigin: string, session: s
  * Waits for the first token, advances the test clock and waits for the renewed token.
  *
  * The worker issues tokens only after Stripe delivers a webhook, so a timeout
- * usually points to the webhook destination.
+ * points first to the webhook destination.
  */
 export async function advanceRehearsal(stripe: Stripe, input: AdvanceRehearsalInput): Promise<RehearsalRenewal> {
 	const fetchFn = input.fetch ?? fetch

@@ -52,7 +52,8 @@ export interface SubVenueLeg {
 	/**
 	 * The ISO 3166-1 alpha-2 key into the lexicon's `identifierShapes`.
 	 *
-	 * Gate and terminal numbering differs by country, so each leg samples identifiers from its own region.
+	 * Airport gate and terminal numbering differs by country, so each leg samples
+	 * identifiers from its own region.
 	 */
 	region: string
 	/**
@@ -142,7 +143,7 @@ export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
  * The region whose identifier distribution the en-US leg uses.
  *
  * The en-US leg has no OSM extract.
- * The Overture names file carries venue names without refs.
+ * The Overture names file holds venue names without refs.
  * The recipe borrows the identifier distribution from GB.
  */
 export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
@@ -514,7 +515,7 @@ function emitPositives(
 		const subGroup: Group = [{ text: form.text, tag: "unit" }]
 		const venueGroup: Group = [{ text: venue, tag: "venue" }]
 		const r = random()
-		// Some rows omit the street because venue addresses such as airport terminals often lack one.
+		// Some rows omit the street because venue addresses such as airport terminals can lack one.
 		const body = addressGroups(leg.country, tuple, r >= NO_STREET_SHARE)
 
 		// An empty body means that no address layout covers this country.

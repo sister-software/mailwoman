@@ -28,7 +28,7 @@ const id = createPostalAddressID({
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or from the ZIP via `@mailwoman/codex`. It is `xx` when the state is unknown. The prefix makes the key sortable by region.                    |
 | **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). The cell is coarse so that two geocodes of the same place a few meters apart land in the same cell. |
-| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. The hash carries the identity. The cell and state localize and partition it.      |
+| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. The hash is the identity. The cell and state localize and partition it.           |
 
 ## API
 
@@ -62,7 +62,7 @@ parsePostalAddressID(id: string): ParsedPostalAddressID
 
 ## Related
 
-- [`@mailwoman/match`](../match): the fuzzy matcher, which complements this package.
+- [`@mailwoman/match`](../match): the fuzzy matcher. It complements this package.
 - [`@mailwoman/normalize`](../normalize): the canonicalization used by the content hash.
 - [`@mailwoman/codex`](../codex): ZIP → state prefix resolution.
 - [`@mailwoman/formatter`](../formatter): `canonicalKey`, which is also deterministic and is used for blocking.

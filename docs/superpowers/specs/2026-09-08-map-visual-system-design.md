@@ -37,7 +37,7 @@ rule beneath it is scoped `:global([data-theme="dark"])`. Neither `packages/eart
 
 `packages/earth/test/browser/300-demo-theme.spec.ts` is the only test that touches the theme, and
 `GeocoderFixture.setTheme` sets the attribute itself before asserting. The test exercises a state that
-production never enters, which is why the defect shipped.
+production never enters. For that reason the defect shipped.
 
 The same file offsets the panel and the MapLibre control stack by `var(--ifm-navbar-height, 60px)` for a
 navbar that does not exist outside Docusaurus.
@@ -64,7 +64,7 @@ because after the repair deployed on `9504425c7`, `mars.mailwoman.ai` still draw
 ### No nomenclature tile is ever requested, and the cause is above the style
 
 This was measured on the deployed Mars app with a HAR, so that Web Worker traffic is counted. MapLibre
-fetches vector tiles from a worker, which a page-level request listener cannot see:
+fetches vector tiles from a worker. A page-level request listener cannot see that worker's traffic:
 
 | Kind                      | Requests    |
 | ------------------------- | ----------- |
@@ -75,7 +75,7 @@ fetches vector tiles from a worker, which a page-level request listener cannot s
 
 The source resolves, and then no layer requests tiles from it. Everything downstream is healthy. The tile
 worker answers `mars.json` and every tile with 200 and an `access-control-allow-origin` that echoes the
-app origin. The tiles carry features at every zoom: 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
+app origin. The tiles contain features at every zoom: 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
 
 A direct style test ruled it out. The exact object `createPlanetaryStyle` composes was loaded into
 a bare `maplibre-gl` 6.7.0 page (the version the repo pins) under globe projection, at the app's own
@@ -154,7 +154,7 @@ above the address field. The right-hand panel lists internal style-layer counts 
 3. **Three token layers.** The layers are primitive, semantic, and component. Component rules read
    semantic names only. The current defect is that component rules read raw primitives.
 4. **Aesthetic: Apple materials, Google density.** The chrome is translucent glass, neutral by default,
-   in the restrained Apple style. Map content carries the visual detail (label hierarchy, category color,
+   in the restrained Apple style. Map content holds the visual detail (label hierarchy, category color,
    icon markers) in the Google Maps style.
 5. **Magenta is an accent rather than a theme.** `#ff00b0` appears in exactly three roles: the primary
    action fill, the focus and selection ring, and the selected-feature marker. Everything else is
@@ -164,9 +164,9 @@ above the address field. The right-hand panel lists internal style-layer counts 
 7. **The typeface is bound per role, and the binding is expected to change.** A rule never refers to a
    font family directly. It refers to a scale role, and each scale role maps to one of five face roles.
    Bliss Pro is bound to `display` and `text`, and Fira Code to `number`, `code` and `glyph`. A swap edits
-   `font.family.*` and no other token. Map labels carry a separate binding, `font.family.map`, because
+   `font.family.*` and no other token. Map labels use a separate binding, `font.family.map`, because
    MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
-   stack the bucket serves, which today means `Bliss Pro Regular`, `Bliss Pro Medium` or
+   stack the bucket serves. Today that means `Bliss Pro Regular`, `Bliss Pro Medium` or
    `Bliss Pro Italic`.
 8. **Base UI is deferred until a specific need arises.** None of the 74 workspaces uses a UI library
    today. The whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six
@@ -175,7 +175,7 @@ above the address field. The right-hand panel lists internal style-layer counts 
    dismissal and focus return, and the result view needs a sheet. When Phase 2 reaches either, use
    `@base-ui/react` for those two only, behind the project's own component names. This is not a
    fourteen-component build-out.
-9. **Every control stays usable without glass.** Every material carries an opaque fallback under
+9. **Every control stays usable without glass.** Every material has an opaque fallback under
    `@supports not (backdrop-filter: blur(1px))` and under `prefers-reduced-transparency`. Text contrast
    holds in all three states.
 
@@ -263,7 +263,7 @@ to a scale role, and each scale role maps to a face role. A typeface change edit
 
 ### Face roles
 
-| Role                  | Carries                                                     | Requirement of any face bound to it                                                   |
+| Role                  | Holds                                                       | Requirement of any face bound to it                                                   |
 | --------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `font.family.display` | Wordmark, large titles                                      | —                                                                                     |
 | `font.family.text`    | Titles, body, captions                                      | —                                                                                     |
@@ -277,7 +277,7 @@ so `number` binds to Fira Code with `code` and `glyph`. The role bindings make a
 
 ### Scale roles
 
-Each scale role maps to a face role and carries size, line height and weight. The metrics follow Apple's
+Each scale role maps to a face role and sets size, line height and weight. The metrics follow Apple's
 iOS type scale, applied to the project's face.
 
 | Scale role                                                                                                      | Face role        |
@@ -294,7 +294,7 @@ iOS type scale, applied to the project's face.
 
 A control glyph is typeset. It inherits color and size and aligns to the baseline, so it belongs to a
 face role. An icon is artwork. The category markers in the reference are a colored disc carrying a white
-mark, which a monochrome icon font cannot express. `glyph` is therefore a font role, and `icons` is an
+mark. A monochrome icon font cannot express that mark. `glyph` is therefore a font role, and `icons` is an
 SVG sprite with a documented viewBox and a two-color interface.
 
 `@mailwoman/react`, `packages/earth` and `packages/planetary` contain zero inline `<svg>` elements today.
@@ -306,7 +306,7 @@ differently per platform and cannot take the accent color, so the glyph role rep
 
 MapLibre draws a map label from a signed-distance-field glyph range, while the browser draws DOM text from
 a `@font-face`. `font.family.*` therefore does not reach the map, and a face bound in the DOM does not
-appear on the globe until an SDF range for it exists in the bucket. Map labels carry their own token,
+appear on the globe until an SDF range for it exists in the bucket. Map labels use their own token,
 `font.family.map`, whose value must be a stack the bucket serves.
 
 ## Map chrome
@@ -333,10 +333,10 @@ component. Both apps ship as installable PWAs through `vite-plugin-pwa` and neit
 
 ### Labels
 
-- `"text-font"` becomes `["Bliss Pro Regular"]` in `planetary/layers.ts` and `base/buildings.ts`. This
-  alone restores every planetary nomenclature label and Earth's building labels.
+- `"text-font"` becomes `["Bliss Pro Regular"]` in `planetary/layers.ts` and `base/buildings.ts`. That
+  change by itself restores every planetary nomenclature label and Earth's building labels.
 - A tiered treatment matching the reference: region-scale features (`ME`, `PL`, `OC`, `TA`) uppercase and
-  letterspaced, which `layers.ts` already does; water-analogue and basin names in `Bliss Pro Italic`;
+  letterspaced, as `layers.ts` already does. Water-analogue and basin names in `Bliss Pro Italic`.
   point features in `Bliss Pro Regular`. Size continues to interpolate on `diameterKm`.
 - A `repo-health` check refuses a `text-font` value that is not in the bucket's served set, so the class
   of defect above cannot ship again.
@@ -387,7 +387,7 @@ Each phase is deployable on its own.
 
 | #   | Contents                                                                                                                       | Result                                                                                                                           |
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1a  | `text-font` repair in both styles                                                                                              | Shipped on `9504425c7`. Both styles name a served stack; planetary labels still absent, so this was necessary and not sufficient |
+| 1a  | `text-font` repair in both styles                                                                                              | Shipped on `9504425c7`. Both styles name a served stack. Planetary labels still absent, so this was necessary and not sufficient |
 | 1b  | `setWorkerUrl` in planetary's `main.tsx`, plus the browser guard for vector tiles, glyph ranges and HTML-served worker scripts | Moon and Mars name their features at all — the app's first job, and a precondition for judging any framing or palette change     |
 | 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets   | Panel readable, brand palette and typeface live, layout unchanged                                                                |
 | 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                          | No production surface yet, only stories and tests                                                                                |

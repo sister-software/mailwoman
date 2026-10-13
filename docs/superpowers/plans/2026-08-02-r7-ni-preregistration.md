@@ -3,14 +3,14 @@
 Hierarchy campaign R7, opened 2026-08-02. NI has been the GB side's open gap since R3, deferred
 then because "the pair parent needs post towns. An outcode→post-town table is the missing piece."
 
-## The blocker dissolved, and it is worth saying why
+## Why the blocker dissolved
 
 The post-town framing came from the GB source: PPD's parent column is the post town, so an NI
-extension seemed to require the same field for NI, which Royal Mail licenses rather than publishes.
+extension seemed to require the same field for NI. Royal Mail licenses that field rather than publishing it.
 But R5 established that the parent side does not have to come from a postal register at all. The US
 instance takes WOF localities as parents and passes every bar. The same rule applied here: WOF's NI
 neighborhoods hang off **Belfast, Newtownabbey, Londonderry, Lisburn** — localities that are the
-post towns for those addresses. No licensed table needed; the deferral was reasoning from GB's
+post towns for those addresses. No licensed table is needed. The deferral was reasoning from GB's
 source shape rather than from what the pair requires.
 
 Survey: **84 (child, parent) pairs**, every one a neighborhood, under 4 parents (Belfast 75,
@@ -21,12 +21,12 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 
 1. **`"Londonderry / Derry"` is a single WOF surface.** It folds to one key that matches neither
    "Londonderry" nor "Derry", so those 3 pairs would ship dead — present in the artifact, incapable
-   of firing. A slash-separated WOF parent is an ALIAS SET rather than a name; the extraction emits one
-   pair per alternative. This is the dual-naming convention the city carries politically, and the
+   of firing. A slash-separated WOF parent is an alias set rather than a name. The extraction emits one
+   pair per alternative. This is the city's dual-naming convention. The convention has a political meaning, and the
    index has to accept whichever form the writer used.
 2. **`"Lower Shenkill"` is a misspelling of Shankill** (the correctly-spelled "Upper Shankill" sits
    beside it in the same source). Harmless by construction — a wrong surface only never matches
-   real input — so it is recorded rather than patched. Never edit a reference source in place; the fix
+   real input — so it is recorded rather than patched. Never edit a reference source in place. The fix
    belongs upstream.
 
 ## Pre-registered bars
@@ -54,7 +54,7 @@ rung that can be executed off the shelf like this one.
 ## The readings
 
 - **B-R7.1 PASS.** GB index rebuilds to **20,126** distinct pairs (19,209 PPD + 917 secondary = 15
-  borough + 815 London + 87 NI), CROSS-CHECK PASS. Full gauntlet green with two new NI counted cases;
+  borough + 815 London + 87 NI), CROSS-CHECK PASS. Full gauntlet green with two new NI counted cases, and
   neural + gazetteer-pipeline suites **600/600**.
 - **B-R7.2 PASS.** 30-row NI confound board — all 8 law-1 directional surfaces (East/North/South
   Belfast, Upper Malone, Upper/Lower Shankill, Lower Springfield, New Barnsley) plus 22 others, each
@@ -68,11 +68,11 @@ rung that can be executed off the shelf like this one.
 current [4 entries] — rebuilding`. Under the old `sourceMD5s[0]`-only check this increment would
 have shipped against a stale artifact, exactly as the London pairs silently did.
 
-**One incident worth recording.** A verification run of `scripts/copy-weights.ts` (checking the
+**One incident.** A verification run of `scripts/copy-weights.ts` (checking the
 release path builds all three indexes) materialized a release-config `model.onnx` OVER the dev
 symlink, and the next gauntlet run failed the #1024 model-card drift guard — materialized md5
 `cb0527b5…` against the card's `c968c24a…`. Not an NI failure at all. `copy-weights` writes
-RELEASE artifacts into the dev packages; re-run `link-dev-weights` after using it to verify the
+RELEASE artifacts into the dev packages. Re-run `link-dev-weights` after using it to verify the
 release path, or the next check reads the wrong model.
 
 ## Verdict

@@ -158,7 +158,7 @@ interface PipelineOpts {
 }
 ```
 
-[Joint reconcile](./concepts/joint-decoding-walkthrough.mdx) requires a classifier with `parseWithLogits` support (the `NeuralAddressClassifier` has this) and the phrase grouper. It runs beam search over phrase proposals × classifier top-K × resolver candidates with WOF concordance scoring. It is **opt-in (default `false`)** — argmax is the default decode. Reconcile was retired as the default in [#566](https://github.com/sister-software/mailwoman/issues/566): graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0%. The code and A/B harnesses remain; set `jointReconcile: true` to opt back in (`forceJointReconcile` is the deprecated alias).
+[Joint reconcile](./concepts/joint-decoding-walkthrough.mdx) requires a classifier with `parseWithLogits` support (the `NeuralAddressClassifier` has this) and the phrase grouper. It runs beam search over phrase proposals × classifier top-K × resolver candidates with WOF concordance scoring. It is **opt-in (default `false`)** — argmax is the default decode. Reconcile was retired as the default in [#566](https://github.com/sister-software/mailwoman/issues/566): graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0%. The code and A/B harnesses remain. Set `jointReconcile: true` to opt back in (`forceJointReconcile` is the deprecated alias).
 
 ## CLI
 
@@ -229,7 +229,7 @@ The full [`ComponentTag` union](https://github.com/sister-software/mailwoman/blo
 | `street`             | Street name            | `Salmon St`        |
 | `street_prefix`      | Directional prefix     | `SE`               |
 | `street_suffix`      | Street type            | `Street`           |
-| `venue`              | Named place            | `Mt Tabor Park`    |
+| `venue`              | Place with a name      | `Mt Tabor Park`    |
 | `unit`               | Apartment/suite        | `Apt 4B`           |
 | `intersection_a`     | First crossing street  | `5th Ave`          |
 | `intersection_b`     | Second crossing street | `42nd St`          |
@@ -321,7 +321,7 @@ for feature in result.features:
 ```
 
 `PhotonClient`, `NominatimClient`, `LibpostalClient`, and `MailwomanClient` all default to their
-surface's local `serve` port, so they work against a self-hosted server out of the box; pass
+surface's local `serve` port, so they work against a self-hosted server out of the box. Pass
 `base_url=` to point elsewhere. Every generated endpoint module also exposes an `asyncio` coroutine
 alongside `sync`.
 
@@ -348,12 +348,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 `photon_local()` / `nominatim_local()` / `libpostal_local()` / `mailwoman_local()` point at each
-surface's local `serve` port; construct a module client directly (`mailwoman_client::nominatim::Client::new("http://…")`)
+surface's local `serve` port. Construct a module client directly (`mailwoman_client::nominatim::Client::new("http://…")`)
 for anything else. The transport is `reqwest` over **rustls**, so the build host needs a C compiler +
 CMake (rustls' default crypto provider, `aws-lc-rs`, builds a small C library) but not system OpenSSL.
 
 Both languages are AGPL-3.0-only OR LicenseRef-Commercial, matching the rest of the repo. The
-`mailwoman_client`/`mailwoman-client` naming, module layout, and license carry forward from an earlier
+`mailwoman_client`/`mailwoman-client` naming, module layout, and license come from an earlier
 prototype branch (`feat/api-clients`, superseded and left unmerged) — the difference is this pipeline
 sources every spec from the emitters above instead of a checked-in `openapi.yaml`, and adds the native
 `mailwoman` surface as a fourth module.

@@ -475,8 +475,9 @@ extend-glob = [
 	"2026-08-27-flood-layer-survey.md",
 	"2026-08-27-zoning-layer-survey.md",
 ]
-# These surveys quote publisher terms and source fields, sometimes across lines.
-extend-ignore-re = ['''(?s)"[^"]*"''', '''(?m)^\s*>.*$''']
+# These surveys quote publisher terms and source fields, sometimes across lines, in double quotes
+# or in code spans.
+extend-ignore-re = ['''(?s)"[^"]*"''', '''(?s)`[^`]*`''', '''(?m)^\s*>.*$''']
 extend-words = { COLOUR = "COLOUR", Descriptio = "Descriptio", Licence = "Licence", modelled = "modelled" }
 
 [type.recorded-prediction]

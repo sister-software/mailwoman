@@ -5,7 +5,7 @@
  *
  * Gauntlet ablation layer — the required map. For every corpus row that asserts a component, delete that component
  * from the input and re-run the full pipeline: the displacement from the row's own undeleted anchor shows what the
- * component was worth, aggregated per (component, locale).
+ * component contributed, aggregated per (component, locale).
  *
  * This layer measures component ablations and does not contribute to the combined verdict. It stores no expected
  * values. Its verdict reports whether the instrument ran. A map of all-zero cells means "not measured"; it does not
@@ -58,9 +58,9 @@ import { type GauntletLayerOptions, layerDepsOptions } from "#tools/eval-harness
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
 
 /**
- * How many substitutions the console summary lists before it truncates:
+ * The number of substitutions the console summary lists before it truncates:
  * a terminal-legibility cap only, because the full list is always in the artifact's `rows`
- * and the summary reports how many it withheld.
+ * and the summary reports the number it withheld.
  */
 const SUBSTITUTION_PRINT_LIMIT = 60
 
@@ -122,7 +122,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
 /**
  * The deletion variants a row's asserted components support, plus the components refused and why.
  *
- * Four refusals, each one a class the corpus actually contains:
+ * Four refusals, each one a class the corpus contains:
  *
  * 1. `empty` — the asserted value is the empty string.
  *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.

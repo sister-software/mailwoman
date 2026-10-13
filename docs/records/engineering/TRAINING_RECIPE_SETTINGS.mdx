@@ -5,7 +5,7 @@ title: Training recipe settings
 
 # Settings for training recipes
 
-Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each setting, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible — not the recipe itself alone.
+Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each setting, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible, as well as the recipe itself.
 
 Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 100K steps). Both trained on corpus-v0.4.0 with the A1 tokenizer.
 
@@ -44,7 +44,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Current value: 6.** Unchanged since v0.1.0. The model is intentionally shallow — address parsing doesn't require the deep reasoning chains that language generation does. Most of the useful signal is local (neighboring tokens in a comma-separated address).
 
-**Upper bound.** Not explored. 6 layers at h384 is ~29M params. 12 layers would be ~50M. The overfitting at step 65K suggests the current depth is sufficient for the data; more layers without more data would overfit faster.
+**Upper bound.** Not explored. 6 layers at h384 is ~29M params. 12 layers would be ~50M. The overfitting at step 65K suggests the current depth is sufficient for the data. More layers without more data would overfit faster.
 
 ### `use_phrase_priors`
 
@@ -81,14 +81,14 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 ### `class_weights`
 
-**What it does.** Per-tag multiplier on the cross-entropy loss. Tags with weight > 1.0 cost more when mislabeled; tags with weight < 1.0 cost less. Used to steer the model's attention toward underperforming or hallucination-prone tags.
+**What it does.** Per-tag multiplier on the cross-entropy loss. Tags with weight > 1.0 cost more when mislabeled, and tags with weight < 1.0 cost less. Used to steer the model's attention toward underperforming or hallucination-prone tags.
 
 | Tag                    | v0.5.0 weight | v0.5.1 weight | Rationale                                                                                                              |
 | ---------------------- | ------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | O                      | 1.0           | 0.5           | O is the majority class (~60% of tokens). Downweight to give real tags more gradient signal.                           |
 | B/I-street             | 0.5           | 2.0           | v0.5.0 had street F1=0.1% on golden. Upweight to force the model to learn streets.                                     |
 | B/I-locality           | 1.5           | 2.0           | Coarse label regression from v0.3.0. Upweight.                                                                         |
-| B/I-country            | 2.0           | 2.0           | Carried from v0.4.0.                                                                                                   |
+| B/I-country            | 2.0           | 2.0           | Kept from v0.4.0.                                                                                                      |
 | B/I-dependent_locality | 1.5           | **0.3**       | 956 FPs in v0.5.0 eval. Model hallucinates this tag. Downweight to make hallucination cheap → model stops emitting it. |
 | B/I-subregion          | 1.5           | **0.3**       | 272 FPs with 0 TPs. Same hallucination pattern.                                                                        |
 | B/I-venue              | 0.5           | 1.5           | The score is low. Upweight.                                                                                            |
@@ -123,7 +123,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to 1.5e-4.** v0.3.0 empirically found it as the stable LR for this architecture + corpus. v0.4.0 tried higher (5e-4, 3e-4) but the bisect showed divergence was recipe-driven rather than LR-driven. 1.5e-4 has been the constant since.
 
-**Upper bound.** Unknown under CE-only. The dual-loss divergence at higher LRs was caused by the CRF curvature conflict, which is gone. Higher LR might now be stable. But 1.5e-4 is working well enough that there's no pressure to explore.
+**Upper bound.** Unknown under CE-only. The dual-loss divergence at higher LRs was caused by the CRF curvature conflict. CE-only training removed that conflict. Higher LR might now be stable. But 1.5e-4 is working well enough that there's no pressure to explore.
 
 ### `batch_size` × `grad_accum_steps` (effective batch)
 
@@ -136,7 +136,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | 8               | batch=8 × ga=1       | v0.5.0 smoke tests                | **Falsely passed** — eff_batch=8 hides the curvature conflict. |
 | **128**         | **batch=128 × ga=1** | **v0.5.1 (A100, h384)**           | **Stable. 15-30× faster per step.**                            |
 
-**How we got to batch=128 direct.** The A100 has 40 GB VRAM; the h384 model uses ~4 GB. No need for gradient accumulation. Direct batch=128 gives cleaner gradients (no micro-batch noise) and much higher throughput (120 sps vs 6.9 sps).
+**How we got to batch=128 direct.** The A100 has 40 GB VRAM, and the h384 model uses ~4 GB. No need for gradient accumulation. Direct batch=128 gives cleaner gradients (no micro-batch noise) and much higher throughput (120 sps vs 6.9 sps).
 
 **The smoke-batch lesson.** Smoke tests at eff_batch=8 passed without error while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](../../engineering/reference/VERDICT_SMOKES.mdx).
 
@@ -149,18 +149,18 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | 500   | v0.5.0 (50K total)  | 1% of training.                       |
 | 1000  | v0.5.1 (100K total) | 1% of training. Proportional scaling. |
 
-**How we got here.** Convention: 1% of total steps. No experimentation. Shorter warmup risks early instability; longer warmup wastes steps at low LR that could be learning.
+**How we got here.** Convention: 1% of total steps. No experimentation. Shorter warmup risks early instability. Longer warmup wastes steps at low LR that could be learning.
 
 ### `lr_schedule`
 
-**What it does.** How the learning rate changes after warmup. Cosine decays to near-zero; constant stays at peak.
+**What it does.** How the learning rate changes after warmup. Cosine decays to near-zero. Constant stays at peak.
 
 | Value        | Where          | What happened                                                 |
 | ------------ | -------------- | ------------------------------------------------------------- |
 | cosine       | v0.3.0, v0.4.0 | Standard. But masked divergence in v0.4.0 smokes.             |
 | **constant** | v0.5.0, v0.5.1 | Used per VERDICT_SMOKES.md mode A — new recipe = constant LR. |
 
-**How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](../../engineering/reference/VERDICT_SMOKES.mdx).
+**How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full-length run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](../../engineering/reference/VERDICT_SMOKES.mdx).
 
 **Downside.** Constant LR can overfit faster (no LR decay to slow learning in late training). The v0.5.1 overfitting past step 65K may partly be caused by constant LR — cosine decay would reduce the learning rate by that point, slowing the overfitting. A future experiment: constant LR for the first 60K steps (validation), then cosine decay for the remaining 40K (refinement).
 
@@ -170,11 +170,11 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** Per-source sampling weights in the training data loader. Higher weight = more rows from that source in each epoch.
 
-Current values are carried from v0.4.0's §4 source rebalance (the only recipe setting that shipped clean in v0.4.0):
+Current values are kept from v0.4.0's §4 source rebalance (the only recipe setting that shipped clean in v0.4.0):
 
 | Source         | Weight  | Why                                                                                                                                                     |
 | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| tiger          | 4.0     | TIGER carries structured US address patterns. Highest weight to compensate for its small raw file count.                                                |
+| tiger          | 4.0     | TIGER holds structured US address patterns. Highest weight to compensate for its small raw file count.                                                  |
 | ban            | 3.0     | French address patterns. Second-highest weight.                                                                                                         |
 | wof-admin      | 2.0     | WOF admin names (locality, region, country).                                                                                                            |
 | wof-postalcode | 2.0     | Postcode patterns.                                                                                                                                      |
@@ -183,7 +183,7 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe s
 
 **How we got here.** v0.4.0's postcode regression (F1 0.76 → 0.69) was traced to NAD's downweight removing "postcode comes first" positional patterns. The current weights are a compromise. Not re-validated since v0.4.0 — the corpus-v0.4.0 additions (kryptonite + transliteration) may shift the optimal mix.
 
-**v0.5.2 planned change:** Drop `wof-admin` from 2.0 → 0.3. Root cause of the locality/region confusion in demo presets: WOF bare-name entries (which carry no positional context) outnumber OSM full-address entries for ambiguous place names like "Washington." The model learns the frequency-dominant pattern (region) rather than the positionally-correct pattern (locality when preceding a region abbreviation). See [`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx).
+**v0.5.2 planned change:** Drop `wof-admin` from 2.0 → 0.3. Root cause of the locality/region confusion in demo presets: WOF bare-name entries (which have no positional context) outnumber OSM full-address entries for ambiguous place names like "Washington." The model learns the frequency-dominant pattern (region) rather than the positionally-correct pattern (locality when preceding a region abbreviation). See [`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx).
 
 ### Augmentation during training (v0.5.2 planned)
 
@@ -191,17 +191,17 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe s
 
 **Region-abbreviation expansion.** Train on both "NY" → `B-region` and "New York" → `B-region I-region`. Only expand where unambiguous. Teaches token equivalence. ~30 lines.
 
-**Not done:** Inference-time normalization. SentencePiece vocabulary learned from raw corpus; feeding normalized forms at inference creates train/test distribution mismatch. All augmentation is training-side only.
+**Not done:** Inference-time normalization. SentencePiece vocabulary learned from raw corpus. Normalized forms fed at inference creates train/test distribution mismatch. All augmentation is training-side only.
 
 ### `country_weights`
 
 **What it does.** Per-country acceptance probability in the data loader. Only US and FR are weighted (1.0 each) — these are the two locales with trained weights.
 
-**Upper bound.** More countries (RU, JP, AM, KR, CN) are planned for v0.6.0. The A1 tokenizer already covers these scripts; the corpus has transliteration rows; only the classifier training is missing.
+**Upper bound.** More countries (RU, JP, AM, KR, CN) are planned for v0.6.0. The A1 tokenizer already covers these scripts, and the corpus has transliteration rows. Only the classifier training is missing.
 
 ## Known ceilings and open questions
 
-1. **Data ceiling at h384.** The model overfit past step 65K, which suggests it has extracted what it can from corpus-v0.4.0 at this capacity. More data (v0.5.0 corpus expansion, v0.6.0 multi-locale) would raise this ceiling.
+1. **Data ceiling at h384.** The model overfit past step 65K. That suggests it has extracted what it can from corpus-v0.4.0 at this capacity. More data (v0.5.0 corpus expansion, v0.6.0 multi-locale) would raise this ceiling.
 
 2. **Composition ceiling.** Per-token BIO accuracy (0.605-0.633 macro_f1) doesn't chain into per-component exact-match accuracy (0.1-6% on golden). This is a structural limitation of per-token training objectives. A future loss term that penalizes globally invalid parses (e.g. sequence-level negative log-likelihood over full addresses) would address this, but hasn't been explored.
 

@@ -120,7 +120,7 @@ export function scriptOfComponents(components: ComponentDict): AddressScript | n
 }
 
 /**
- * A dict naming every tag once, used to enumerate the slots a layout actually has.
+ * A dict naming every tag once, used to enumerate the slots a layout has.
  *
  * The enumeration is a render rather than a walk of the layout structure,
  * because only the renderer resolves which slots are reachable.

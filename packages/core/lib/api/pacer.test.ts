@@ -73,8 +73,8 @@ describe("RequestPacer", () => {
 		const grantTimes: number[] = []
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
-		// `Array.from`'s mapper runs synchronously for every index, so this genuinely fans
-		// out 40 concurrent `acquire()` calls with no intervening async I/O.
+		// `Array.from`'s mapper runs synchronously for every index, so this fans out 40
+		// concurrent `acquire()` calls with no intervening async I/O.
 		const pending = Array.from({ length: TOTAL_CALLS }, () => recordedAcquire())
 
 		// The first call resolves without sleeping, but awaiting an already-resolved promise

@@ -93,7 +93,7 @@ describe("tostEquivalence", () => {
 	})
 
 	it("reports a real gap as not equivalent, WITHOUT denying that the arms differ", () => {
-		// The companion z-test reports a significant gap on the same rows.
+		// The companion z-test reports a gap below its p-value threshold on the same rows.
 		// A boilerplate "this is not a claim that the arms differ" would contradict it in
 		// the same paragraph, so the wording turns on where the estimate fell.
 		const reading = tostEquivalence(250, 150, 400)

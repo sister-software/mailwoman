@@ -52,12 +52,12 @@ address mapped on both a node and its building way.
 The largest explained reductions are properties of the sources:
 
 - **CN, outside the outline: 73,490 of 158,215.** Geofabrik's China extract includes Hong Kong and
-  Macau, which ISO 3166 codes as HK and MO, and addresses across the Russian border. Before the
+  Macau (ISO 3166 codes them as HK and MO) and addresses across the Russian border. Before the
   outline check, 5,629 of 112,608 CN canonical rows (5.0%) were written in Cyrillic, 1,719 of them in
   Zabaykalsk. After it, 8 of 51,542 are. The China outline is coarse (97,329 bytes), so the Russian
   outline (6,943,733 bytes) is applied as an exclusion: a point inside a neighbor's outline is refused
   even where China's coarse outline also contains it.
-- **IN, streetless records with no locality: 35,098.** 45,819 of India's 64,275 streetless records carry
+- **IN, streetless records with no locality: 35,098.** 45,819 of India's 64,275 streetless records have
   `addr:housenumber` and no other address tag, so they state a number without a place.
 - **Every country, `component:house_number:not-designator`.** Mappers write whole lines into
   `addr:housenumber` (`House 34, Road 4, Sector 9`). The row keeps its street and loses the number.
@@ -104,7 +104,7 @@ record (47 with no layout):
 | `planning-word-names-locality`  |        0 |           0 |    201 |
 
 `ordering-reverses-with-script` now compares pairwise order. The seven supporting jurisdictions are
-CN, HK, JP, KP, KR, MO and TW; TH contradicts. Under the previous full-reversal rule it read 0.
+CN, HK, JP, KP, KR, MO and TW. TH contradicts. Under the previous full-reversal rule it read 0.
 `streetless-premise-identity` reads a layout as support only when it prints a house number and a
 locality with no street slot, and no libaddressinput layout does, so the corpus counts above are the
 evidence for that phenomenon.
@@ -112,7 +112,7 @@ evidence for that phenomenon.
 ## Decoder observation: the contrast board
 
 Twelve rows in four groups, all `status: pass`, on the shipped `neural-weights-en-us` graph (md5
-`98a49b5c`). The regression layer graded 539 of 609 counted rows; 8 of its 70 failures are these.
+`98a49b5c`). The regression layer graded 539 of 609 counted rows, and 8 of its 70 failures are these.
 
 | row                                        | input                                                                                  | result | first wrong label                                                    |
 | ------------------------------------------ | -------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
@@ -154,14 +154,14 @@ Five fine-tunes of the shipped v4.4.0 step-60000 graph, 2,000 steps each at lr 1
 EWC brake at 1e4, seed 42, differing only in `source_weights.osm-ru`
 (`corpus-python/src/mailwoman_train/configs/v4.15.0-ru-exposure-d*-2k.yaml`). The d0 arm draws no
 Russian row and is the placebo: its change from the shipped graph is the cost of fine-tuning at all.
-Each arm's epoch-mixture receipt passed before its GPU started; the d100 arm's audit drew 396 `osm-ru`
+Each arm's epoch-mixture receipt passed before its GPU started. The d100 arm's audit drew 396 `osm-ru`
 rows in 1,000,000 against an expectation of 390.7.
 
 Realized draws are the trainer's own count of RU rows in consumed batches
 (`exposure-realized-from-0.json` beside each checkpoint). The assembled curve is
 `$MAILWOMAN_DATA_ROOT/corpus-staging/exposure-2026-10-03/curve/curve-ru.json`, written by
 `python -m mailwoman_train.exposure.curve` from those files and the `grade_exposure` reports. Results are exact-match rows on the 1,963 RU
-test rows; the shipped graph reads 682.
+test rows. The shipped graph reads 682.
 
 | arm     | `osm-ru` weight | expected draws | realized RU draws |            all rows | six-digit postcode | house number after street | postcode after locality | streetless |
 | ------- | --------------: | -------------: | ----------------: | ------------------: | -----------------: | ------------------------: | ----------------------: | ---------: |
@@ -171,7 +171,7 @@ test rows; the shipped graph reads 682.
 | d10000  |         6.54472 |         10,000 |             9,683 |         977 (0.498) |            3 / 875 |               977 / 1,792 |                 3 / 642 |     0 / 15 |
 | d100000 |       103.20513 |        100,000 |            98,999 |       1,523 (0.776) |  541 / 875 (0.618) |             1,514 / 1,792 |               508 / 642 |     0 / 15 |
 
-The trainer's realized draws by phenomenon, the exposure the decoder actually received:
+The trainer's realized draws by phenomenon, the exposure the decoder received:
 
 | arm     | RU rows drawn | with a six-digit postcode | streetless premise | house number after street |
 | ------- | ------------: | ------------------------: | -----------------: | ------------------------: |
@@ -210,8 +210,8 @@ plateau. The 15 streetless held-out rows are too few to read a result from.
 
 `mwdev_arc` grades each arm's int8 export on the 1,041-row regression board against the shipped
 graph, with the shipped graph staged as a self-control and the d0 arm as the placebo. The arms are
-measurement arms, not ship candidates; the board says whether exposure to Russian rows moves any
-other locale.
+measurement arms rather than ship candidates. The board measures whether exposure to Russian rows
+moves any other locale.
 
 | leg vs shipped v4.4.0                | improved | regressed | net | rows differing |
 | ------------------------------------ | -------: | --------: | --: | -------------: |
@@ -233,8 +233,8 @@ of its 62 regressions are Singapore rows (`Blk 13 Mount Rosie Terrace #23-242 Si
 
 The exposure that teaches the six-digit Russian postcode, between 10,000 and 100,000 draws on a
 2,000-step fine-tune, is also the exposure at which a single-country share displaces the tier-1
-locales. A shippable dose for Russia therefore needs a longer run at a smaller share, or the
-from-scratch v7.1.0 config, whose 399,258 Russian draws are 5.2% of 7,680,000.
+locales. A shippable Russian share therefore needs a longer run at a smaller share, or the
+from-scratch v7.1.0 config. That config's 399,258 Russian draws are 5.2% of 7,680,000.
 
 Attributable to the Russian rows at 930 draws: net +8 = d1000 net 0 − placebo net −8. The one
 tier-1 regression, `Madison Square West` (US), also regresses in the placebo, so it is the cost of
@@ -245,15 +245,15 @@ the fine-tune rather than of the Russian rows. The d1000 regressions outside the
 
 ## Gap states
 
-| phenomenon                                  | state                               | evidence                                                                            |
-| ------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
-| Russian street and premise grammar          | unseen                              | 0 corpus rows before this arc; 0 of 875 held-out rows with a postcode parse exactly |
-| Chinese street rows                         | unseen before this arc, now sourced | 35,498 OSM rows with a street; none in the prior corpus                             |
-| Streetless premise identity                 | sparse                              | 493,285 RU, 12,377 IN and 11,936 CN rows now sourced; no layout states it           |
-| Planning words (`Sector`, `Block`, `Phase`) | confusable                          | 22,000+ PK and 900+ IN rows; both `sector` contrast arms and the `block` arms fail  |
-| Six-digit postcode across contexts          | confusable in RU native only        | four of five contrast arms pass                                                     |
-| Script-dependent order                      | unseen as pairs                     | 0 paired examples; the CN script arms fail                                          |
-| Premise subdivision                         | sparse                              | at most 897 rows per country                                                        |
+| phenomenon                                    | state                               | evidence                                                                            |
+| --------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
+| Russian street and premise grammar            | unseen                              | 0 corpus rows before this arc. 0 of 875 held-out rows with a postcode parse exactly |
+| Chinese street rows                           | unseen before this arc, now sourced | 35,498 OSM rows with a street, none in the prior corpus                             |
+| Streetless premise identity                   | sparse                              | 493,285 RU, 12,377 IN and 11,936 CN rows now sourced. No layout states it           |
+| The planning words `Sector`, `Block`, `Phase` | confusable                          | 22,000+ PK and 900+ IN rows. Both `sector` contrast arms and the `block` arms fail  |
+| Six-digit postcode across contexts            | confusable in RU native only        | four of five contrast arms pass                                                     |
+| Script-dependent order                        | unseen as pairs                     | 0 paired examples. The CN script arms fail                                          |
+| Premise subdivision                           | sparse                              | at most 897 rows per country                                                        |
 
 ## Address systems (v7.2.0)
 
@@ -266,10 +266,10 @@ renumber.
 Four systems took 82.7% of the epoch: 35.6% for the street-before-number, postcode-before-city system (DE,
 AT, CH, CZ, DK and others), 19.7% for FR's, 17.5% for US and CA, and 9.8% for GB's.
 
-**Sources added for the zero-row systems**, all elected in the source register, which reads 36
+**Sources added for the zero-row systems**, all elected in the source register. The register now lists 36
 ingest-eligible sources against 29 before:
 
-| source                            | train rows | jurisdictions                    | licence             |
+| source                            | train rows | jurisdictions                    | license             |
 | --------------------------------- | ---------: | -------------------------------- | ------------------- |
 | BAN overseas department files     |    755,327 | GP MQ GF RE PM YT BL MF PF NC    | Licence Ouverte 2.0 |
 | Latvia's State Address Register   |    495,577 | LV                               | CC BY 4.0           |
@@ -283,7 +283,7 @@ v7.2.0 weights them to about 474,000 of the run's 7,680,000 draws and admits 79 
 of its 42 corpus receipts passed the epoch-mixture audit.
 
 **Model.** v7.2.0 adds an address-system head, trained against each row's system at weight 0.3, and an
-optional locale hint, an address-system id added to every token. Training drops the hint for half the
+optional locale hint, an address-system id added to every token. The trainer drops the hint for half the
 rows and swaps in a wrong system for 5%, so the model parses without a hint and can overrule a wrong one.
 Both modules register after `_init_weights`, so every other parameter starts where v7.1.0's did.
 
@@ -295,27 +295,27 @@ has a postcode format the value matches.
 
 **Sources refused or held.** Ireland's Register of Charities: its Rights notes forbid modifying the data
 and override the CC BY 4.0 label. Dubai Pulse: the captured terms limit use to non-commercial, personal
-use. TED notices: rows filed under a country carried other countries' addresses. Malaysia's portal files:
-held until each dataset's licence is read.
+use. TED notices: rows filed under a country held other countries' addresses. Malaysia's portal files:
+held until each dataset's license is read.
 
 ## Decisions recorded
 
 - **Semantic tags.** One global id per concept (`semantic_tags.py`, version 1). `prefecture`,
   `municipality`, `district`, `block`, `sub_block` and `building_number` project onto the stage3 tags
-  SCHEMA.mdx says they refine. `locality_unit`, `building_name`, the stage4 tags and the two JS-only
+  SCHEMA.mdx defines them as refining. `locality_unit`, `building_name`, the stage4 tags and the two JS-only
   tags have no documented equivalent and are counted as unrepresentable rather than written as `O`.
 - **Wallonia.** `addressNumberExtension` is ICAR's box number, rendered as `unit` without a designator
   word. Stage4 activation is a separate decision and is not taken here.
-- **OSM rows per country.** Each country's rows carry their own source id (`osm-ru` … `osm-bd`), so
+- **OSM rows per country.** Each country's rows have their own source id (`osm-ru` … `osm-bd`), so
   country admission, source admission and sampling weight are three settings.
-- **Holdouts.** Each of the eight countries has a declared holdout. NG's is 24 val and 36 test rows,
-  which is too few to read a phenomenon from.
+- **Holdouts.** Each of the eight countries has a declared holdout. NG's is 24 val and 36 test rows.
+  That is too few to read a phenomenon from.
 
 ## Open decisions
 
 - **CN district tag.** `黄浦区` is `municipality` on the CJK head and `dependent_locality` on the Latin
   head, and SCHEMA.mdx defines neither for CN. The contrast rows leave it unasserted.
-- **CN Han rows and the model family.** The 50,963 `osm-cn` train rows are Han script, which routes to
+- **CN Han rows and the model family.** The 50,963 `osm-cn` train rows are Han script. Han script routes to
   the CJK character family. The Latin config weights them at zero.
 
 ## Where each artifact lives
@@ -324,7 +324,7 @@ held until each dataset's licence is read.
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | OSM receipts and funnel counts   | `$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/*.receipt.json`, `db/osm/corpus/*.stats.json`, each adapter `MANIFEST.json` `dropped` map                               |
 | Country outlines                 | `$MAILWOMAN_DATA_ROOT/db/osm/outlines/<ISO3>-ADM0.geojson` with receipts; `packages/osm/tools/fetch/country-outline.ts`, `packages/osm/sdk/country-outline.ts` |
-| Shared semantic tag registry     | `corpus-python/src/mailwoman_train/semantic_tags.py`; model cards carry `semantic_tags`                                                                        |
+| Shared semantic tag registry     | `corpus-python/src/mailwoman_train/semantic_tags.py`; model cards list `semantic_tags`                                                                         |
 | New-country config with holdouts | `corpus-python/src/mailwoman_train/configs/v7.1.0-osm-exposure-60k.yaml`; `defaultHoldouts()` in `packages/corpus/lib/utils/split.ts`                          |
 | Wallonia decision and rendering  | `packages/corpus/lib/be/adapters/wallonie/adapter.ts`                                                                                                          |
 | Exposure measurement             | `corpus-python/src/mailwoman_train/exposure/` (`phenomena.py`, `report.py`, `cli.py`); `exposure-canonical-8.json`                                             |

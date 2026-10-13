@@ -12,9 +12,10 @@
 #    replaced by a wrong system for 5%, so the model parses without a hint and can overrule a wrong one.
 #    Both modules are built after `_init_weights`, so every other parameter starts where v7.1.0's did.
 #
-# 3. `country_weights` admits 79 more countries, every country the new sources carry except AE, HK and BS,
-#    whose GLEIF rows the adapter refuses as unreviewed. Admission is a hard filter, so without this the
-#    new rows for RO, LV, the French overseas jurisdictions and the rest would train on nothing.
+# 3. `country_weights` admits 79 more countries, every country the new sources contain except AE, HK and BS.
+#    The adapter refuses the GLEIF rows of those three as unreviewed. Admission is a hard filter, so
+#    without this change the new rows for RO, LV, the French overseas jurisdictions and the rest would
+#    never reach training.
 #
 # 4. The new sources' weights come from their train rows through `source_reps`, which sets passes per row
 #    over the run's 60,000 × 128 = 7,680,000 samples:
@@ -55,7 +56,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.7.2-address-systems/corpus-v0.7.2-address-systems
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  # `NO` is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+  # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
   country_weights:
     {
       AD: 1.0, AE: 1.0, AF: 1.0, AG: 1.0, AI: 1.0, AL: 1.0, AM: 1.0, AO: 1.0, AR: 1.0, AS: 1.0, AT: 1.0, AU: 1.0,
@@ -245,7 +246,7 @@ data:
       min_draws: 1000
       source: overture-latam
       country: MX
-    # The OSM receipts carried from v7.1.0.
+    # The OSM receipts copied from v7.1.0.
     - name: osm-ru-exposure
       min_draws: 46780
       source: osm-ru
@@ -405,7 +406,7 @@ data:
       min_street_rows: 10
   augment_exclude_sources:
     - spliced-suffix-boundary
-    # This source teaches a postcode alone, such as `119 00`, so augmentation would add tokens the row
+    # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
     # must not contain.
     - codex-bare-postcode
   train_rows_per_epoch: 1000000

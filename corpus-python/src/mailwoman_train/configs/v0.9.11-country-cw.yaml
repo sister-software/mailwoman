@@ -1,6 +1,6 @@
 # This recipe is v0.9.10-country-bal.yaml with the B-country and I-country class weights raised from
 # 2.0 to 3.5. It trains on the same v0.4.10-country-bal corpus. The higher weight penalizes a missed
-# country more heavily, which is meant to raise country recall.
+# country more heavily. The heavier penalty is meant to raise country recall.
 #
 # The corpus overlays the country-balanced recipe (packages/corpus/lib/recipes/country-balanced.ts) on
 # v0.4.5-unit-v2. That recipe renders homographs such as Georgia and Jordan both as countries and as

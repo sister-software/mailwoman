@@ -1,4 +1,4 @@
-# v7.4.1 trains from scratch on the v0.7.3.2-venue-planet corpus with the venue-with-locality rows alone: the
+# v7.4.1 trains from scratch on the v0.7.3.2-venue-planet corpus with only the venue-with-locality rows: the
 # v7.4.0 run shape with `fragment-venue-bare` out of the mixture (#2520).
 #
 # The differences from v7.4.0-venue-planet-60k.yaml are:
@@ -10,7 +10,7 @@
 #    `venue`: `Calle de Fuencarral`, `Paseo de la Reforma`, `Marylebone High Street`, `Neusser Str. 12`. The
 #    bare rows are bare multi-word names labeled `venue`, and from step 0 they competed with every bare
 #    multi-word street. The decoder's venue-head prior and the POI venue tier, on by default since 10.2.0,
-#    carry the bare venue query at inference.
+#    handle the bare venue query at inference.
 #
 # 2. `spliced-venue-locality` keeps its reps of 0.07394, 1.5% of the run's draws, and its receipt.
 #
@@ -25,7 +25,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  # `NO` is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+  # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
   country_weights:
     AD: 1
     AE: 1

@@ -4,20 +4,20 @@
 # from real (postcode, locality, region) triples in two placements:
 #   leading       FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"
 #   after_region  IN                     "Bengaluru, Karnataka 560038, India"
-# The leading rows are the counterexamples. A new placement taught alone would change the model's
+# The leading rows are the counterexamples. A new placement taught without them would change the model's
 # default placement instead of teaching it to tell the two forms apart.
 #
 # The recipe takes the locality from GeoNames admin2, the region from admin1 and the dependent_locality
-# from column 3. Column 3 holds the finest named place for the postcode, which is often a street or a
-# colonia rather than the city. Most rows therefore carry a name before the locality, so the model does
-# not learn that the first named segment is always the locality. The triples come from
+# from column 3. Column 3 holds the most specific place name for the postcode. That place can be a
+# street or a colonia rather than the city. Most rows therefore contain a name before the locality, so
+# the model does not learn that the first place-name segment is always the locality. The triples come from
 # packages/corpus/lib/tools/postcode-triples.ts.
 #
-# Every after_region row is from IN, and no source carries a VE postcode. The VE board rows test whether
+# Every after_region row is from IN, and no source contains a VE postcode. The VE board rows test whether
 # the after_region form generalizes beyond India.
 #
 # The country_weights map lists 134 codes, because the loader drops rows from any country missing from it.
-# The map covers the earlier 25 countries, IN, every gauntlet-board country, and KR and TW. KR and TW carry
+# The map covers the earlier 25 countries, IN, every gauntlet-board country, and KR and TW. KR and TW have
 # the same wof-admin toponym rows as CN and JP. Most codes have no corpus rows yet. Admitting a country
 # does not change source draw shares, because country_weights filters rows inside each source's stream.
 # JP rows here teach toponym recognition only. JP block structure needs the stage3-jp label set.

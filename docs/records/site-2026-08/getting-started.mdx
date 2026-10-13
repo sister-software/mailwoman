@@ -62,7 +62,7 @@ region: "NY" (confidence: 0.93)
 
 The confidence numbers are calibrated probabilities. With the bundled per-locale calibrator, "0.90" means the label is correct about 90% of the time. See [Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it.
 
-`result` also carries `result.kind` (the query-shape classification, e.g. `structured_address`), `result.path` (`"full"` or `"fast-path"`), and `result.timing` (per-stage wall-clock time in milliseconds). See [API reference](./api.mdx) for the full `PipelineResult` shape.
+`result` also has `result.kind` (the query-shape classification, e.g. `structured_address`), `result.path` (`"full"` or `"fast-path"`), and `result.timing` (per-stage wall-clock time in milliseconds). See [API reference](./api.mdx) for the full `PipelineResult` shape.
 
 :::info[Direct classifier access]
 If you don't need the staged pipeline stages (normalize, locale check, phrase grouping, resolution), call `NeuralAddressClassifier.parse()` directly. It runs only the neural stage and returns the same `AddressTree` shape. See [API reference](./api.mdx#neuraladdressclassifier) for the signature.
@@ -94,7 +94,7 @@ This is the flattened projection (`--format json`, the default). It has one key 
 ## Caveats
 
 - **The resolver behind `--resolve` works at the administrative and postcode level.** It returns place centroids (locality, region, postcode) rather than delivery-point coordinates. Rooftop and interpolated street-level resolution are available through the separate `mailwoman geocode` command. See [Status](../../articles/developers/status.mdx) for what is covered.
-- **Model quality varies by component and locale.** Some tags are strong, and others are still developing. [Status](../../articles/developers/status.mdx) has the current per-tag numbers. Check it instead of relying on numbers quoted on other pages, which can go out of date.
+- **Model quality varies by component and locale.** Some tags are strong, and others are still developing. [Status](../../articles/developers/status.mdx) has the current per-tag numbers. Check it instead of relying on numbers quoted on other pages. Those numbers can go out of date.
 - **Non-Latin scripts still perform worse.** The tokenizer falls back to byte-level encoding for scripts without dedicated subwords (Cyrillic, CJK, Arabic). Confidence drops and span boundaries become less reliable. Several languages written in Latin script with diacritics (French, Czech, Polish, Slovak, Slovenian, the Nordic languages) have dedicated tokenizer coverage. See [Releases & capabilities](../../engineering/releases.mdx) for which release added each one, and [which languages Mailwoman handles well](./concepts/language-support.mdx) for the full picture.
 
 ## Where to go next

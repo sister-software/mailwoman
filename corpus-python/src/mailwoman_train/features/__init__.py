@@ -35,6 +35,6 @@ street-versus-locality labeling errors are literal evidence absence rather than 
 
 **Locality surface** — `[locality, locality_homograph]` over curated WOF locality and localadmin names,
 homograph meaning the name occurs in two or more countries. It is the counterweight to street type: the
-bundle doctrine is that the two must be weighed against each other in context, so neither becomes a
-decisive soft rule on its own.
+bundle doctrine is that the two must be weighed against each other in context, so neither feature
+determines the label by itself.
 """

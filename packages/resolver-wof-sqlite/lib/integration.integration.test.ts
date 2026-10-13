@@ -67,7 +67,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 
 		test("`Springfield` with locality filter returns several distinct candidates", async () => {
 			const candidates = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 50 })
-			// The US has dozens of Springfields — admin-us has many.
+			// The US has dozens of Springfields — admin-us has more than five.
 			expect(candidates.length).toBeGreaterThan(5)
 			// All distinct ids
 			const ids = new Set(candidates.map((c) => c.id))

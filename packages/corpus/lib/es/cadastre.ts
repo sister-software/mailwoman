@@ -72,8 +72,8 @@ export function spanishHouseNumber(
  * `ES.SDGC.PD.55.101.` and `ES.GFA.PD.059.`, against no feature of that id.
  *
  * Those truncated references are the only unresolvable ones measured in either file.
- * A reader taking every unresolved reference as an absence would also swallow a genuinely
- * broken join, so the two are separated here and every other unresolved reference raises.
+ * A reader taking every unresolved reference as an absence would also swallow a broken join,
+ * so the two are separated here and every other unresolved reference raises.
  */
 export function referenceStatesNoValue(key: string): boolean {
 	return key.trim().endsWith(".")

@@ -605,7 +605,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options
 	const coverage = new Map<number, number>()
 	// res-9 short cell → res-6 short cell.
-	// Rows cluster many to a res-9 cell, so the parent walk runs once per cell rather than once per row.
+	// Several rows share each res-9 cell, so the parent walk runs once per cell rather than once per row.
 	const parentOf = new Map<number, number>()
 	const readByRegion = Object.fromEntries(NSUL_REGIONS.map((region) => [region, 0])) as Record<NSULRegion, number>
 	let read = 0

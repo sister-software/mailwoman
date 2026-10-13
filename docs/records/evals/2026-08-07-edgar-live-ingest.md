@@ -51,7 +51,7 @@ has no Exhibit 21 in its most recent 10-K. That is the filer's choice rather tha
 Three SICs are blank because the registrant was pinned rather than corroborated:
 Comcast and AT&T (actual CIK ties broken by operator pins) and Bandwidth/Ooma
 (real carriers SEC files under software classifications). Pins are documented
-decisions; blank SICs here are the artifact of the pin bypass rather than a gap in
+decisions. Blank SICs here are the artifact of the pin bypass rather than a gap in
 the data.
 
 ## How the name-resolution false matches were avoided
@@ -61,8 +61,8 @@ USA, Inc." to AlTi Global, Inc. at 0.829 and "WideOpenWest, Inc." to WidePoint
 Corp at 0.886. Neither is a telecom company.
 
 This run used `cik-lookup-data.txt` (130× the ticker file) plus the SIC
-corroboration check plus five operator pins. Both false matches were excluded;
-both registrants resolved correctly.
+corroboration check plus five operator pins. Both false matches were excluded.
+Both registrants resolved correctly.
 
 | query                | resolved CIK | SIC  | how                                    |
 | -------------------- | ------------ | ---- | -------------------------------------- |
@@ -86,8 +86,8 @@ mailwoman filer edgar-ingest \
 ```
 
 `cik-lookup-data.txt` is fetched once from
-`https://www.sec.gov/Archives/edgar/cik-lookup-data.txt` (40 MB, public, no
-auth). `SEC_EDGAR_USER_AGENT` must be set to a descriptive
+`https://www.sec.gov/Archives/edgar/cik-lookup-data.txt` (40 MB, public, and
+served without authentication). `SEC_EDGAR_USER_AGENT` must be set to a descriptive
 `"Company Name AdminContact@domain.com"` string.
 
 ## The filer.db artifact (built 2026-08-08)
@@ -120,5 +120,5 @@ The cessation numbers are the first time `valid_to` has been set on anything. Th
 3,992 abstentions are the 3,916 filers whose stated cessation date PREDATES their last
 filing (an annual form — a carrier that ceased September 2013 still files April 2014)
 plus 76 same-day filers. If the system closed those unconditionally, it would write inverted windows
-that match nothing under `valid_from <= t < valid_to`; open is visibly incomplete,
-inverted is invisible.
+that match no instant under `valid_from <= t < valid_to`. An open window is visibly incomplete.
+An inverted window is invisible.

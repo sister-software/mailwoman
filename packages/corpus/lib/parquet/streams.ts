@@ -63,7 +63,7 @@ export interface ParquetRowStreamOptions {
 	 */
 	columns?: readonly string[]
 	/**
-	 * Stop after this many rows.
+	 * Stop after this number of rows.
 	 */
 	limit?: number
 }

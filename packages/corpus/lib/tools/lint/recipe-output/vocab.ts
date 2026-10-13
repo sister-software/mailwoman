@@ -47,7 +47,7 @@ function stripBIO(label: string): string {
  *
  * Pure-numeric tokens (house_number and postcode) are context-determined
  * rather than lexical vocab, so they are excluded.
- * `\p{Nd}` covers the decimal digits these address corpora actually contain.
+ * `\p{Nd}` covers the decimal digits these address corpora contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)
@@ -148,7 +148,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 }
 
 /**
- * Read just the first row's `source` value, used to group base parts for a proportional sample.
+ * Read only the first row's `source` value, used to group base parts for a proportional sample.
  */
 async function readSource(con: DuckDBConnection, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)

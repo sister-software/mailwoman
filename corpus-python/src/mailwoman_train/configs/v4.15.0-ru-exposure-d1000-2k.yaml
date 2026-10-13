@@ -1,8 +1,8 @@
 # v4.15.0 Russian exposure curve, the arm expecting 1,000 `osm-ru` draws over its 256,000 training draws.
 #
-# Identical to v4.15.0-ru-exposure-d0-2k.yaml, whose header states the run shape, the placebo and the
-# weight arithmetic, except for `source_weights.osm-ru`, the receipt below, `train.output_dir` and
-# `train.trackio_run_name`.
+# This file is identical to v4.15.0-ru-exposure-d0-2k.yaml except for `source_weights.osm-ru`, the
+# receipt below, `train.output_dir` and `train.trackio_run_name`. The d0 header states the run shape,
+# the placebo and the weight arithmetic.
 #
 # The receipt reads the epoch-mixture audit's 1,000,000-row epoch, where this weight expects 3,906.2
 # draws with a standard deviation of 62.4. Its floor, 3,750, sits 2.5 standard deviations below.

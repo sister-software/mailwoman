@@ -37,7 +37,7 @@ const MIN_QUALIFIER_LENGTH = 3
  * (St→Saint, Mt→Mount, Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX".
  * Deliberately does not strip civic suffixes (City/Town/Township/Village):
  * in New England "Barre City" and "Barre Town" are distinct municipalities,
- * so collapsing them would over-credit genuine wrong-place misses.
+ * so collapsing them would over-credit real wrong-place misses.
  *
  * Pair with the WOF altname set (a place's own recorded variants) rather than loosening here.
  */
@@ -91,7 +91,7 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  *    is the German name (`Sachsen`).
  *    `lookupGermanState` folds code, German name and English name → one ISO 3166-2:DE code on both sides.
  *    Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects the
- *    cross-language mismatch without loosening a genuine wrong-region.
+ *    cross-language mismatch without loosening a real wrong-region miss.
  * 4. FR: `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one
  *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs `Ile-de-France`.
  *
@@ -126,10 +126,10 @@ export type LocalityMatcher = (expected: string | null, locNode: Resolved | null
  * The locality-credit predicate: does the resolved place count as OA's expected locality?
  *
  * The matcher grants two provenance-based allowances without hardcoded name lists.
- * WOF alias names can earn credit for an already-correct place
+ * WOF alias names can grant credit for an already-correct place
  * (Butte ↔ Butte-Silver Bow, Saint ↔ St. Johnsbury).
  *
- * Gold's regional qualifier can also earn credit when it matches the place's
+ * Gold's regional qualifier can also grant credit when it matches the place's
  * ancestry (`Plauen Vogtl` → Plauen).
  * Plauen's county is Vogtlandkreis.
  *
@@ -146,7 +146,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	// A resolved place counts as a locality match if OA's expected name equals any of that
 	// place's WOF `names` rows (normalized) rather than only its single canonical name.
 	// This credits forms WOF records as the same place (Butte ↔ Butte-Silver Bow,
-	// Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) without loosening genuine wrong-place misses.
+	// Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) without loosening real wrong-place misses.
 	// Different WOF ids have disjoint name sets, so Saint Albans never matches St. Johnsbury.
 	// The admin db (database 0) opens read-only.
 	// Its `names` table is indexed on id.
@@ -176,7 +176,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	}
 
 	// Hierarchy-aware regional-qualifier credit.
-	// OpenAddresses tags many German localities with a disambiguating district
+	// OpenAddresses tags some German localities with a disambiguating district
 	// suffix WOF's canonical name drops.
 	// Gold `Plauen Vogtl` and `Chemnitz Sachs` resolve to `Plauen` and `Chemnitz`.
 	// The point lands inside the place.
@@ -185,7 +185,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	// credit the qualifier only when it matches the resolved place's own WOF ancestry:
 	// `Vogtl`→county `Vogtland`, `Sachs`→region `Sachsen`.
 	// List-free and non-gameable.
-	// A genuinely wrong place will not have the gold's qualifier among its ancestors.
+	// A wrong place will not have the gold's qualifier among its ancestors.
 	// `und` and non-latin ancestor names normalize to empty under normName
 	// (Cyrillic and CJK are stripped), so the token set is latin-only without a language filter.
 	const ancestorNamesStmt = adminDB.prepare(

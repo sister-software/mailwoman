@@ -24,12 +24,12 @@ geo.reverse((38.8977, -77.0365))
 
 | Endpoint        | Nominatim interface                                           | Status  |
 | --------------- | ------------------------------------------------------------- | ------- |
-| `/`             | HTML landing page (endpoint index + example queries)          | ✓       |
-| `/search`       | free-text `q` + structured forward geocoding                  | ✓       |
-| `/reverse`      | `lat`/`lon` → nearest address (`WofReverseGeocoder` PIP)      | ✓       |
-| `/status`       | health + data version                                         | ✓       |
+| `/`             | HTML landing page (endpoint index + example queries)          | shipped |
+| `/search`       | free-text `q` + structured forward geocoding                  | shipped |
+| `/reverse`      | `lat`/`lon` → nearest address (`WofReverseGeocoder` PIP)      | shipped |
+| `/status`       | health + data version                                         | shipped |
 | `/lookup`       | resolve known place ids                                       | planned |
-| `/openapi.json` | emitted OpenAPI 3.1 document for search/reverse/lookup/status | ✓       |
+| `/openapi.json` | emitted OpenAPI 3.1 document for search/reverse/lookup/status | shipped |
 
 ## Library use
 
@@ -85,15 +85,15 @@ Nominatim-compatible field — the newest build date across the databases this p
 ```
 
 Every date comes out of the artifact itself — the `layer_manifest` row its builder wrote before sealing it — never
-from a file's timestamp or a record kept alongside. An artifact built without a manifest, and
-says so (`"manifest": "absent"`) rather than being left out; when none of them carries one, `data_updated` is omitted
+from a file's timestamp or a record kept alongside. An artifact built without a manifest is
+listed with `"manifest": "absent"` rather than left out. When none of them has one, `data_updated` is omitted
 instead of guessed. A Nominatim client ignores the `mailwoman` key.
 
 ## Status
 
 Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`
 is not yet implemented (returns `501`). `addressdetails` goes down to the house number and road when the
-query carries them — `1600 Pennsylvania Avenue NW, Washington, DC 20500` resolves to the rooftop
+query contains them. For example, `1600 Pennsylvania Avenue NW, Washington, DC 20500` resolves to the rooftop
 (`38.897, -77.037`) with `house_number`, `road`, `city`, `state`, `postcode`, and `country_code`.
 
 For autocomplete / type-ahead, see the companion [`@mailwoman/photon`](../photon).

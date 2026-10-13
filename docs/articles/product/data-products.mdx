@@ -11,7 +11,7 @@ import { BundleFileCount, BundleSize, DataBundlesTable, ServedBundlesTable } fro
 
 The model travels with the npm package. The reference data does not, because the smallest useful
 gazetteer is <BundleSize name="candidate" /> and a registry tarball that size would be paid for by
-every consumer who wanted the parser alone. So the data is a separate download, pulled once and kept.
+every consumer who wanted only the parser. So the data is a separate download, pulled once and kept.
 
 `mailwoman data pull` fetches it. The table below is the whole published set, read from the command's
 own registry when this page is built, and the command exits with an error and lists the same names if
@@ -27,7 +27,7 @@ and `mailwoman data pull <bundle> --dry-run` prints the same figures without tou
 
 ### As served
 
-The registry says what the command expects. The table below says what the bucket served on the date
+The registry states what the command expects. The table below lists what the bucket served on the date
 it was measured, from a committed snapshot that a repository check compares against the registry, so
 the two cannot drift apart without a build failing.
 
@@ -37,7 +37,7 @@ the two cannot drift apart without a build failing.
 
 ## What you build yourself
 
-Everything else on the shelf is a local build, and three cases are worth naming because people ask
+Everything else on the shelf is a local build, and three cases are listed here because people ask
 for them by name.
 
 **The full WOF distribution reverse geocoding needs.** Not a published bundle, and not the
@@ -57,9 +57,9 @@ to serving a coordinate from one. Build one and the obligation is yours.
 ## Where the data came from
 
 Every source is recorded with its license at the point it enters the pipeline, and each built
-artifact carries an `ATTRIBUTION.json` naming the source, release and license behind it. Two items
+artifact includes an `ATTRIBUTION.json` naming the source, release and license behind it. Two items
 matter to a review and are stated in full on the compliance page. The OpenStreetMap **rooftop**
-extracts in `@mailwoman/osm` reach no published artifact. The served `candidate` gazetteer does carry
+extracts in `@mailwoman/osm` reach no published artifact. The served `candidate` gazetteer does contain
 a Northern Ireland postcode fold derived from OpenStreetMap under ODbL, 4,757 places measured
 2026-09-27, and what ODbL asks of that is with counsel. And one source's license is recorded
 inconsistently in our own files, so attribute Who's On First until that is settled.
@@ -67,7 +67,7 @@ inconsistently in our own files, so attribute Who's On First until that is settl
 [Data provenance](../about/security-and-compliance.mdx#data-provenance) on the compliance page, and
 the
 [provenance record](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/data-provenance.md)
-that carries the measurement.
+that records the measurement.
 
 ## When it changes
 
@@ -77,6 +77,6 @@ a weekly or a monthly artifact.
 
 What you get instead is that each artifact is sealed and dated, and the vintage travels in the remote
 path, so you can always tell which build you are running without downloading anything. A new build is
-a new path, which arrives in a new release of the `mailwoman` package.
+a new path. The new path arrives in a new release of the `mailwoman` package.
 
 [Keep your data current →](../developers/how-to/keep-data-fresh.mdx)

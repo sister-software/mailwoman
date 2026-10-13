@@ -69,8 +69,8 @@ The hierarchy goes administrative all the way down to `neighbourhood`/`microhood
 The omission is principled rather than an oversight:
 
 1. **Streets are linear rather than point or polygonal.** WOF stores geometries. A locality has a polygon, an address has a point. A street is a line — closer to OSM ways than to WOF places.
-2. **Streets recur per-locality.** London has [seventeen different High Streets](../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx). A unique identifier for "High Street" doesn't exist without disambiguation by parent locality. WOF assigns one ID per place; streets break that assumption.
-3. **Streets are owned by different authorities.** Administrative places are governed by census bureaus, statistical offices, and political entities. Streets are governed by highway departments, postal services, and municipal planning. WOF concords with administrative authorities; street data lives elsewhere.
+2. **Streets recur per-locality.** London has [seventeen different High Streets](../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx). A unique identifier for "High Street" doesn't exist without disambiguation by parent locality. WOF assigns one ID per place, and streets break that assumption.
+3. **Streets are owned by different authorities.** Administrative places are governed by census bureaus, statistical offices, and political entities. Streets are governed by highway departments, postal services, and municipal planning. WOF concords with administrative authorities, and street data lives elsewhere.
 4. **Streets compose differently across locales.** US street grammars assume `[number] [name] [type]`. French addresses are `[number] [type] [name]`. Japanese addresses [skip streets entirely](../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx#addresses-have-a-street-at-all). Mannheim uses a grid. A single hierarchical slot can't encode this.
 
 WOF's decision to stop at `neighbourhood → address` is correct _for a place gazetteer_. Itleaves a gap _for an address parser_.
@@ -126,7 +126,7 @@ The FST gazetteer prior ([concept doc](./fst-gazetteer-prior.mdx)) gives the neu
 - **Positive evidence:** matched token sequence biases toward `B/I-{placetype}` for the matched placetype.
 - **Negative evidence:** a token that walks off the FST trie tells the decoder "this is not an admin component" — likely a venue, street, or unrecognized name.
 
-For administrative tags (`country`, `region`, `locality`, `postcode`), both kinds of evidence are present and the model uses them. For street tags (`street`, `street_prefix`, `street_suffix`), only the _negative_ signal is available — and only in the form "this token is not an admin place." There is no positive evidence that says "this token _is_ a street," because the FST has no street placetypes to match.
+For administrative tags (`country`, `region`, `locality`, `postcode`), both kinds of evidence are present and the model uses them. For street tags (`street`, `street_prefix`, `street_suffix`), only the _negative_ signal is available — and only in the form "this token is not an admin place." No positive evidence marks a token as a street, because the FST has no street placetypes to match.
 
 The empirical consequence shows up in [v0.6.1's error analysis](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/v0.6.1-error-analysis.mdx). When training added a 100K-row synthetic street-decomposition corpus, the model learned to decompose subcomponents — but with no inference-time anchor for "this is a street," the decomposition energy leaked into `dependent_locality` (the schema's only labeled "below locality" slot). `dependent_locality` hallucinated 1066 times where v0.6.0 emitted zero.
 
@@ -172,9 +172,9 @@ flowchart TB
 
 **Layer 1.5 (street candidacy)** sits between morphology and identity. Pre-compute over the corpus: count the distinct localities adjacent to each n-gram. `"Elm Avenue"` co-occurs with hundreds of localities → strong street-candidacy signal. `"Health Clinic"` co-occurs with zero → strong non-street signal. `"Piccadilly"` co-occurs with London-area postcodes consistently → moderate street-candidacy signal even without an affix. ~1MB compact lookup table. Solves suffix-less streets that morphology misses, without committing to OSM extraction.
 
-**Layer 2 (street-identity FST)** is the missing WOF hierarchy node. It carries actual street names per metro, sourced from OSM ways or postal authorities. This is what makes `Piccadilly` resolvable: the FST contains `piccadilly` as a known street in London W1, with parent_chain `[London, England, UK]` — the same chain pattern WOF uses for admin places. Multi-shift work; first POC is NYC-only (~50K street names) to validate the pipeline before committing to per-metro extract routing.
+**Layer 2 (street-identity FST)** is the missing WOF hierarchy node. It holds actual street names per metro, sourced from OSM ways or postal authorities. This is what makes `Piccadilly` resolvable: the FST contains `piccadilly` as a known street in London W1, with parent_chain `[London, England, UK]` — the same chain pattern WOF uses for admin places. This is multi-shift work. The first POC is NYC-only (~50K street names) to validate the pipeline before committing to per-metro extract routing.
 
-**Layer 3 (schema extensions)** addresses the cases where the hierarchy itself differs. Japan's chōme/banchi/gō chain, Mannheim's grid, Nicaragua's landmark-relative addressing. Mailwoman's JP-specific tags exist as placeholders (`block`, `sub_block`, `building_number`) andneed activation — corpus adapter, golden-set additions, JP model bundle. Mannheim and Nicaragua need new tags; v0.8+.
+**Layer 3 (schema extensions)** addresses the cases where the hierarchy itself differs. Japan's chōme/banchi/gō chain, Mannheim's grid, Nicaragua's landmark-relative addressing. Mailwoman's JP-specific tags exist as placeholders (`block`, `sub_block`, `building_number`) and need activation: a corpus adapter, golden-set additions, and a JP model bundle. Mannheim and Nicaragua need new tags, planned for v0.8+.
 
 **The layers don't substitute — they compose.** A novel street like `"Piccadilly Lane"` gets:
 

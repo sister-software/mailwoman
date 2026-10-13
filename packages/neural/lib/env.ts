@@ -17,8 +17,9 @@ import { z } from "zod"
  */
 export const PublicNeuralEnvSchema = z.object({
 	// ONNX intra-op thread cap.
-	// Deployment-shaped rather than code-shaped: the right value depends on how many The
-	// library cannot know how many Mailwoman processes share the host.
+	// Deployment-shaped rather than code-shaped: the right value depends on the
+	// number of Mailwoman processes that share the host.
+	// The library cannot know that number.
 	// See DEFAULT_INTRA_OP_THREADS.
 	MAILWOMAN_INTRA_OP_THREADS: blankAsAbsent(z.coerce.number().int().positive().optional()).meta({
 		title: "ONNX intra-op threads",

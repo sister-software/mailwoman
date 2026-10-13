@@ -132,13 +132,13 @@ export async function buildAncestorsSidecar(ctx: {
 	const postOf = new Map<number, number>()
 
 	for (const kids of childrenOf.values()) {
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass just built
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass built
 		kids.sort((a, b) => a - b)
 	}
 
 	const roots = [...forest].filter((id) => !canonicalParentOf.has(id))
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass just built
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass built
 	roots.sort((a, b) => a - b)
 
 	let counter = 0
@@ -174,7 +174,7 @@ export async function buildAncestorsSidecar(ctx: {
 	const insInterval = out.prepare(`INSERT INTO ${CANDIDATE_INTERVAL_TABLE} VALUES (?, ?, ?)`)
 	const labeled = [...preOf.keys()]
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass just built
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass built
 	labeled.sort((a, b) => a - b)
 
 	out.exec("BEGIN")

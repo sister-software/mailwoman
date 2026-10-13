@@ -30,7 +30,7 @@ import type { ModuleMove } from "#repo-health/move/types"
 const CHECK_ID = "prefix-directories"
 
 /**
- * How many children must share a prefix before it is a family.
+ * The number of children that must share a prefix before it is a family.
  */
 const GROUP_THRESHOLD = 2
 

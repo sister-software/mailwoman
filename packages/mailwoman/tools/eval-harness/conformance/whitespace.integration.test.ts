@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The whitespace law against the live pipeline — the leg that actually geocodes.
+ *   The whitespace law against the live pipeline — the leg that geocodes.
  *
  *   It is an `.integration.test.ts` file because that is the suite the `mailwoman-data` runner runs, with
  *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a

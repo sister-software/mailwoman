@@ -1,18 +1,18 @@
 # Regression corpus — batch notes
 
 The prose that lived between the array literals of `cases/regression.ts` until the 2026-08-05
-migration to per-country JSONL. JSONL carries no comments, so it moved here VERBATIM rather than
-being deleted with the array. Nothing here is machine-read; it is the reasoning a reader needs
+migration to per-country JSONL. JSONL holds no comments, so the prose moved here verbatim rather than
+being deleted with the array. No program reads this file. It holds the reasoning a reader needs
 before touching a row.
 
 Two indexes:
 
 - **Batches** — the header that introduced a group of rows, keyed by the `source` value(s) those rows
-  carry. `source` is the only field that survives the country split as a batch handle, which is why it
+  hold. `source` is the only field that survives the country split as a batch handle. It therefore
   must stay a curated, batch-shaped value and not drift into free text.
-- **Per-case margin notes** — comments that sat above ONE row, keyed by case id.
+- **Per-case margin notes** — comments that sat above one row, keyed by case id.
 
-Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regression.jsonl`.
+Country dirs are lowercase ISO-3166 alpha-2. A row lives at `cases/<cc>/regression.jsonl`.
 
 ## Batches
 
@@ -23,29 +23,29 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 > The four target families of #1931 that had no board rows, each authored from the set its issue attests and
 > written by `packages/mailwoman/tools/dev-tools/family/board.run.ts` over `family-board-rows.ts`. Every point
-> is a gazetteer record named in the row's note (`Point: Camden (borough 1158857277)`); every status is what
+> is the gazetteer record that the row's note identifies (`Point: Camden (borough 1158857277)`); every status is what
 > the shipped model and resolver did on the day the file was written.
 >
-> **F3, district plus city (#1914), 0/21.** The issue's parse defect (the district tagged `street`) is NOT
+> **F3, district plus city (#1914), 0/21.** The issue's parse defect (the district tagged `street`) is not
 > what the shipped model does now: 20 of 21 rows parse `Camden, London` as `dependent_locality` +
-> `locality` and fail on the COORDINATE alone, 2.7–8.7 km off at the parent city's point. The one parse
+> `locality` and fail only on the coordinate, 2.7–8.7 km off at the parent city's point. The one parse
 > failure is the Montmartre row, where the district is read as the locality. The stage that must change
 > moved from the parse to the resolver: a `dependent_locality` the parse names is not the place the
 > resolver answers. Tolerance 2 km, the district's own point.
 >
 > **F5, «locality» «postcode» (#1821), 10/17.** New Zealand and South Africa pass bare (`Auckland 1010`,
-> `Cape Town 8001`); `Hamilton 3204` resolves 13,847 km away (a namesake); `Queen Street, Auckland 1010`
-> swaps street and locality; every Venezuelan row fails as the issue measured (`Barcelona 6001, Venezuela`
+> `Cape Town 8001`). `Hamilton 3204` resolves 13,847 km away (a namesake). `Queen Street, Auckland 1010`
+> swaps street and locality. Every Venezuelan row fails as the issue measured (`Barcelona 6001, Venezuela`
 > yields no locality and no postcode).
 >
 > **F7, the possessive qualifier (#1754), 4/13.** `St Mary's, Oxford` still decodes to one component and
-> answers Georgia, 6,739 km; the London neighbourhoods parse and miss the point by 3.5–8 km (the F3 shape);
+> answers Georgia, 6,739 km. The London neighborhoods parse and miss the point by 3.5–8 km (the F3 shape).
 > `King's Lynn, Norfolk`, `Bishop's Stortford, Hertfordshire`, `Lee's Summit, Missouri` and `St. John's,
 > Newfoundland and Labrador` pass.
 >
 > **F9, Commonwealth and military po_box (#517), 14/16.** `GPO Box`, `Locked Bag`, `Private Bag`, `PSC … Box`
 > and `CMR … Box` all pass on the shipped model, so the "last 0% class" is now two rows: `Unit 2050 Box 4190,
-> DPO AP 96278` tags `Box 4190` alone, dropping the `Unit 2050` head of the unit line.
+> DPO AP 96278` tags only `Box 4190` and drops the `Unit 2050` head of the unit line.
 
 ### `sg-register-board:2026-09-09`
 
@@ -56,15 +56,15 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > renders — the HDB block line with a `#NN-NN` unit (`Blk 533A Upper Cross St #27-40 Singapore 051533`), the
 > bracketed postcode (`17 Tanglin Rise S(247998)`), the building-led line (`Oue Downtown, 6A Shenton Way,
 > Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). `expectComponents` is what the
-> recipe tags (`Blk` and `S(` `)` untagged; the floor-unit is `unit`; `Singapore` is the locality); the point is
-> the register row's rooftop at the postcode's tolerance (1 km: one six-digit code is one building).
+> recipe tags (`Blk` and `S(` `)` untagged, the floor-unit is `unit`, and `Singapore` is the locality). the point is
+> The point is the register row's rooftop at the postcode's tolerance (1 km: one six-digit code is one building).
 >
 > Every row was graded through the gauntlet's own grader before it was written, and `status` is what the shipped
 > model (`neural-weights-en-us`, md5 `98a49b5c`) did on that day: block 0/60, bracket_postcode 0/60, building_led
-> 12/60, official 38/60. The 50 passes are regression pins; the 190 `improvement_target` rows are the reason the
+> 12/60, official 38/60. The 50 passes are regression pins. The 190 `improvement_target` rows are the reason the
 > recipe exists. The block rows fail because the street span runs through the unit (`street "Bedok Reservoir Rd
-> #04-51"`) and `Blk` reads as a locality; the bracketed-postcode rows because `S(560123)` yields no postcode and
-> the line resolves to a foreign namesake 11,300 km away; the building-led rows because the lead name reads as a
+> #04-51"`) and `Blk` reads as a locality. The bracketed-postcode rows fail because `S(560123)` yields no postcode and
+> the line resolves to a foreign namesake 11,300 km away. The building-led rows fail because the lead name reads as a
 > locality rather than a venue. Re-grade with the builder after a model that trained on the recipe, and promote
 > the rows that flip.
 
@@ -73,14 +73,14 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 5 rows · `cases/au/`, `cases/ca/`, `cases/fi/`, `cases/fr/`, `cases/ie/`
 
 > #905 acceptance rows — bare famous namesakes through the production path. The Jun-27 GeoNames
-> alias fold silently broke unscoped ranking (FTS5 bm25 length-poisoning; the fix is the
-> population-ordered companion fetch + population-first exact tier, PR #910). These lock the
-> user-visible behavior class against BOTH ranking and placer regressions at the next DB rebuild —
+> alias fold silently broke unscoped ranking through FTS5 bm25 length-poisoning. The fix is the
+> population-ordered companion fetch + population-first exact tier, PR #910. These lock the
+> user-visible behavior class against both ranking and placer regressions at the next DB rebuild —
 > the exact silent-break mode #905 documented (lab-only suites are CI-invisible).
 > STATUS 4/5 pass (#912 ranking bug CLOSED 2026-07-04): the #910 population-first exact tier +
-> #936 officialNameExact fixed both the library ranking AND the CLI defaultCountry/township-alias
+> #936 officialNameExact fixed both the library ranking and the CLI defaultCountry/township-alias
 > path — Paris→FR, Dublin→IE, Melbourne→AU, Vancouver→CA all resolve correctly, and the #3
-> sub-finding ("Åbo"→"bo" diacritic drop) is gone. Åbo stays improvement_target for a DIFFERENT,
+> sub-finding ("Åbo"→"bo" diacritic drop) is gone. Åbo stays improvement_target for a different,
 > narrower reason: its coordinate is now correct (Turku) but the resolver returns the alias NAME
 > "Åbo" not canonical "Turku" (a name-canonicalization residual, #897 family) — see its note.
 
@@ -101,9 +101,9 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > #901 knife-edge sentinels (added 2026-07-03): the four SI short-village rows + the Učakar
 > digit-split form. The four-probe attribution proved these are knife-edge outputs of the
 > shipped encoder — ANY 2k init_from fine-tune of a surgery-lineage base tips them (zero-database
-> control: 4/4 row-identity; embedding-freeze: still breaks). They are the v2.2.0 full
+> control: 4/4 row-identity. Embedding-freeze: still breaks). They are the v2.2.0 full
 > retrain's acceptance rows and the permanent early-warning sentinel for partial-update
-> damage. Coordinates = the OA SI gold for each address; Učakar expects the street WHOLE.
+> damage. Coordinates = the OA SI gold for each address; Učakar expects the whole street as one span.
 
 <details><summary>Rows</summary>
 
@@ -120,11 +120,11 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 4 rows · `cases/fr/`, `cases/jp/`
 
 > Venue-toponym traps (added 2026-07-10, contributed by a POSAIS attendee — real Paris venues whose
-> NAMES are toponyms pointing the wrong way). Live v5.9.0 behavior at intake: parís.méxico → Comer,
-> Georgia US (the Spanish verb matched a US town namesake); Bubble Tea → "Bubble Bubble", AU;
+> names are toponyms pointing the wrong way). Live v5.9.0 behavior at intake: parís.méxico → Comer,
+> Georgia US (the Spanish verb matched a US town namesake). Bubble Tea → "Bubble Bubble", AU.
 > Shinjuku Pigalle → Tokyo. The class needs venue-kind detection + POI tier + the #1039 confidence
-> floor; coordinates = BAN rooftops of the actual venues (provenance: ban:fr release=2026-05-18).
-> Tolerance is metro-scale — the win condition is "lands in greater Paris or declines" rather than rooftop.
+> floor. Coordinates = BAN rooftops of the actual venues (provenance: ban:fr release=2026-05-18).
+> Tolerance is metro-scale. A row passes when it "lands in greater Paris or declines" rather than rooftop.
 
 <details><summary>Rows</summary>
 
@@ -139,16 +139,16 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 4 rows · `cases/fr/`
 
-> FR street-name homonyms (operator's Paris list, 2026-07-15). The street's NAME is a major
-> foreign city; the tolerance is what makes these mean something — Paris→Rome is ~1100 km, so a
-> 50 km band FAILS LOUD if the toponym ever out-competes the street reading. These PASS today;
-> they are here because two in-flight changes put them at risk: the #1103 morphology bias (a
+> FR street-name homonyms (operator's Paris list, 2026-07-15). The street's name is a major
+> foreign city. The tolerance is what makes these mean something. Paris→Rome is ~1100 km, so a
+> 50 km band fails visibly if the toponym ever out-competes the street reading. These pass today.
+> They are here because two in-flight changes put them at risk: the #1103 morphology bias (a
 > re-probe is pre-registered now that the #727 span head landed) and any recalibration of the
 > gazetteer importance score (`impBias = importance * biasScale * maxBias`, neural/fst-prior.ts
 > — measured 2026-07-15: `rue` 0.149 / `boulevard` 0.167 / `place` 0.169 are themselves
-> gazetteer places, so raising importance would start biasing STREET-TYPE WORDS toward locality).
-> The 30 currently-FAILING bare-fragment forms deliberately do NOT live here — this file is the
-> executable bug log rather than a wish list; they live in eval-harness/fixtures/paris-streets.jsonl.
+> gazetteer places, so raising importance would start biasing street-type words toward locality).
+> The 30 currently-failing bare-fragment forms deliberately live elsewhere, because this file is the
+> executable bug log rather than a wish list. They live in eval-harness/fixtures/paris-streets.jsonl.
 
 <details><summary>Rows</summary>
 
@@ -163,19 +163,19 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 13 rows · `cases/fr/`
 
-> Venue-name traps, carried-address form (operator's venue list, 2026-07-24). Sibling family of
-> the 2026-07-10 venue-toponym traps, but the venue NAMES here are mostly NOT foreign toponyms —
-> they're honorifics, digit-words, slashes, CJK script, and one Korean city. Seven of thirteen
-> resolve to the BAN rooftop TODAY (verified 2026-07-24, shipped model md5 700f3cf4, tier
-> address_point, uncertainty 1 m): the BAN tier keys on house_number+street+postcode, which all
-> parse cleanly. Therefore, the resolution is insensitive to the venue span. The six exceptions are counted
+> Venue-name traps, venue-plus-address form (operator's venue list, 2026-07-24). Sibling family of
+> the 2026-07-10 venue-toponym traps, but the venue names here are mostly not foreign toponyms.
+> They are honorifics, digit-words, slashes, CJK script, and one Korean city. Seven of thirteen
+> resolve to the BAN rooftop today (verified 2026-07-24, shipped model md5 700f3cf4, tier
+> address_point, uncertainty 1 m). The BAN tier keys on house_number+street+postcode. All three
+> parse correctly in these rows. Therefore, the resolution is insensitive to the venue span. The six exceptions are counted
 > as improvement_target: venue-delta-restaurant-paris-6 (the venue's 'Paris 6' arrondissement
 > number
 > is grabbed as the house_number — rooftop still lands), venue-bangkok-factory-boulogne ('Bis'
 > glues into the street + the query falls to the admin tier), venue-nooyork-gravilliers-range
 > (the '46/48' slash-range parses whole but the BAN tier can't match the literal range form),
-> and venue-american-express-bercy (the brand demonym matched 'American', OHIO — a confident
-> cross-continent pin ignoring the explicit 75012 postcode; the #1039 failure mode),
+> and venue-american-express-bercy (the brand demonym matched 'American', OHIO, a confident
+> cross-continent pin that ignores the explicit 75012 postcode in the #1039 failure mode),
 > and venue-bar-1802-pascal (the venue span consumed the address — '1802' as house_number, 'Bar'
 > as street, the real span destroyed), and venue-cathedrale-strasbourg (the venue name contains
 > the locality — 'Strasbourg' is consumed with it and the hierarchy collapses to country-only,
@@ -183,8 +183,8 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > The pinned residual across the whole batch is the LOCALITY SLOT: in every row the venue span
 > swallows `locality` ('Paris' is consumed — locality='MR', 'Le 9Neuf', 'SOKCHO 牛者', …), the
 > same venue-span/address-span separation defect the #1039 family tracks. These rows check that
-> the carried address keeps out-voting the venue name — tolerance is metro-scale, the win
-> condition is 'lands the rooftop or declines'.
+> the address in the input keeps out-voting the venue name. Tolerance is metro-scale. A row passes
+> when it 'lands the rooftop or declines'.
 
 <details><summary>Rows</summary>
 
@@ -208,8 +208,8 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 1 row · `cases/fr/`
 
-> Bare-form companion to the 2026-07-24 venue batch (same operator intake, but NO venue span):
-> the unspaced-bis resolution defect stands alone.
+> Bare-form companion to the 2026-07-24 venue batch (same operator intake, but no venue span).
+> This row isolates the unspaced-bis resolution defect from any venue span.
 
 <details><summary>Rows</summary>
 
@@ -221,15 +221,15 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 3 rows · `cases/fr/`
 
-> Comma-dependence pair (operator probe, 2026-07-24) — same street, same number, the ONLY
-> difference is the comma-borne admin context. The bare form parses perfectly then DECLINES
-> (null coords); the comma form rooftops at 1 m. Google Maps resolves the bare form to the
-> Paris address; we emit nothing. The 2026-07-15 homonym note already observed the class
-> ('the BARE form Rue de Rome emits nothing at all') — this pair pins it end-to-end on a
-> street whose comma form is proven resolvable. The third row repeats the bare form WITH an
-> explicit FR country prior: it STILL declines (verified 2026-07-24 — neither defaultCountry=FR
-> nor a Paris proximity-bias point rescues it), proving the missing street-search-without-admin
-> path can't be worked around by scoping; that row is the fix's natural acceptance row.
+> Comma-dependence pair (operator probe, 2026-07-24). Both rows use the same street and number. The only
+> difference is the admin context after the comma. The bare form parses perfectly, then declines
+> with null coordinates. The comma form resolves to a rooftop at 1 m. Google Maps resolves the bare form to the
+> Paris address, and Mailwoman returns null coordinates. The 2026-07-15 homonym note already observed the class:
+> the bare form Rue de Rome returns no result. This pair pins it end-to-end on a
+> street whose comma form is proven resolvable. The third row repeats the bare form with an
+> explicit FR country prior, and it still declines (verified 2026-07-24: neither defaultCountry=FR
+> nor a Paris proximity-bias point rescues it). Scoping therefore cannot work around the missing
+> street-search-without-admin path. That row is the fix's natural acceptance row.
 
 <details><summary>Rows</summary>
 
@@ -244,13 +244,13 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 9 rows · `cases/gb/`
 
 > Directional-homograph probes (operator, 2026-07-30 — added before the run-2 promote decision).
-> The set measures the OTHER side of the street_prefix recall trade: every row carries a
-> South/North/East word that must NOT be split as a prefix (venue names, locality names, and
+> The set measures the other side of the street_prefix recall trade. Every row contains a
+> South/North/East word that must not be split as a prefix (venue names, locality names, and
 > mid-street abbreviations), plus GB venue-led forms, ranged numbers, a doubled station name,
 > and one mixed-script venue. INTAKE CORRECTION 2026-07-30: the first grading ran against a stale regression DB (the probes
 > weren't in it — absence-of-failure read as pass, the JSON-hides-gaps class). True intake: the
-> three bare directional rows pass on BOTH shipped and the 7.0.0 candidate; ALL SIX venue-led
-> rows fail on BOTH (venue null — the GB tail shape 'London EC3N 1DE' was never in the venue
+> three bare directional rows pass on both shipped and the 7.0.0 candidate. All six venue-led
+> rows fail on both (venue null — the GB tail shape 'London EC3N 1DE' was never in the venue
 > database's FR/US templates), so they enter as improvement_target for the GB venue increment. Parse-only cases — no coordinate asserted.
 
 <details><summary>Rows</summary>
@@ -272,13 +272,13 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 4 rows · `cases/de/`, `cases/es/`, `cases/in/`, `cases/it/`
 
 > ── The non-GB dependent-locality instances (campaign R9–R11), counted so each locale's win cannot
-> silently regress. Every one of these emitted NOTHING before its artifact shipped, and three of
-> the four additionally emitted a WRONG span — the locality fused with the sub-locality — so these
-> rows protect against a return to corrupt output rather than merely to missing output.
+> silently regress. Every one of these emitted no dependent_locality before its artifact shipped. Three of
+> the four also emitted a wrong span, with the locality fused with the sub-locality. These
+> rows therefore fail on a return to corrupt output, and not only on a return to missing output.
 >
 > They grade through their own weights overlay (OVERLAY_LOCALE_BY_COUNTRY in harness.ts). Without
 > that mapping they would run against base en-US, find no pair index for their country, and fail
-> for a reason that has nothing to do with the model.
+> for a reason unrelated to the model.
 
 <details><summary>Rows</summary>
 
@@ -295,8 +295,8 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 > ── Northern Ireland (2026-08-02, campaign R7). NI sat outside the GB index since R3, deferred on
 > "the pair parent needs post towns" — a licensed Royal Mail table. R5 dissolved that: the parent
-> side need not come from a postal register, and WOF parents NI neighbourhoods to Belfast /
-> Newtownabbey / Londonderry / Lisburn, which ARE the post towns for those addresses. 87 pairs.
+> side need not come from a postal register, and WOF parents NI neighborhoods to Belfast /
+> Newtownabbey / Londonderry / Lisburn. Those four are the post towns for those addresses. 87 pairs.
 
 <details><summary>Rows</summary>
 
@@ -310,11 +310,11 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 2 rows · `cases/us/`
 
 > ── US dependent-locality instance (2026-08-01, campaign R5). en-us ships `pair-index-us.bin`, so
-> a US address carrying BOTH a neighbourhood/borough and its parent now resolves the hierarchy
-> instead of dropping the second admin level. The pair of counted cases below locks BOTH halves: the
-> new capability, and — more importantly — the guarantee that an ordinary single-admin-level US
-> address is UNTOUCHED. The prior fires only when child AND parent are both present, which is why
-> "Astoria, NY 11103" (a USPS-valid city/state/ZIP with no parent in the string) keeps locality.
+> a US address containing both a neighborhood/borough and its parent now resolves the hierarchy
+> instead of dropping the second admin level. The pair of counted cases below locks both halves: the
+> new capability, and the guarantee that an ordinary single-admin-level US
+> address is unchanged. The guarantee is the more important half. The prior fires only when child and parent are both present.
+> That is why "Astoria, NY 11103" (a USPS-valid city/state/ZIP with no parent in the string) keeps locality.
 
 <details><summary>Rows</summary>
 
@@ -327,14 +327,14 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 6 rows · `cases/gb/`, `cases/us/`
 
-> ── Sub-venue structure (2026-08-01, campaign R5 follow-on). The projection table has named this
+> ── Sub-venue structure (2026-08-01, campaign R5 follow-on). The projection table has listed this
 > class since it was written — `building`/`campus`/`wing`/`concourse`/`arcade` project onto venue
 > and unit sub-structure, "the airport-terminal / campus parsing nudge" — and the gauntlet had ZERO
 > coverage for it: no `unit:` expectation existed anywhere in this file. These rows are the
 > instrument, added before any fix.
 >
 > The measured diagnosis: `Building 43, Googleplex` already parses correctly while `Terminal 5,
-> Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the airport DROPPED. The
+> Heathrow Airport` collapses to locality="Terminal" + house_number=5 and drops the airport. The
 > asymmetry traces to the designator lexicon the span proposer reads (`neural/span-proposer-lexicon.ts`
 > over `codex/us/unit-designator.ts`), which is USPS Publication 28 — a MAIL DELIVERY standard. It
 > stocks BUILDING, HANGAR, PIER and LOBBY because mail is delivered there, and omits TERMINAL, CHECK,
@@ -343,7 +343,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 >
 > A probe extending the designator set moved `Terminal 5` and `Check 12` to correct units but split
 > `Concourse B` into unit="Concourse" + venue="B" and left trailing-designator `West Wing` untouched,
-> so the change is real but NOT a clean sweep; it wants its own confound board (GB street names ending
+> so the change fixes some rows and breaks or misses others. It needs its own confound board (GB street names ending
 > in -check, industrial "Terminal" estates) before anything ships default-on.
 
 <details><summary>Rows</summary>
@@ -426,21 +426,21 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 7 rows · `cases/de/`, `cases/fr/`, `cases/gb/`, `cases/us/`
 
 > #42 postcode-country coherence — the mis-scoped-locale block, added 2026-08-05 with the gauntlet's
-> resolver-change pin. The pin alone was not enough to grade the change: the corpus carried exactly ONE case with
+> resolver-change pin. The pin by itself was not enough to grade the change. The corpus held exactly one case with
 > a `defaultCountry` (an FR address under FR, where the pass exits cheaply by design), so the mechanism fired on
 > 0/116 cases and the pinned run came back byte-identical to the unpinned one. An unchanged verdict from a
-> mechanism that never ran is not evidence — hence these seven, which are the only cases in the corpus that put
+> mechanism that never ran is not evidence. These seven rows were added for that reason. They are the only cases in the corpus that put
 > a country prior in tension with the address it is applied to.
 >
 > They come in two halves, and both halves are needed:
 >
-> · four ADVERSARIAL rows at status=pass — real US addresses whose (postcode, locality) pair is exactly the
-> confound the mechanism could break (ZIP 75001 really IS Addison TX; Paris TX; Berlin NH carrying a
-> 5-digit code the DE shape also accepts; Athens GA). They must hold with the change pinned either way, and
+> · four adversarial rows at status=pass — real US addresses whose (postcode, locality) pair is exactly the
+> confound the mechanism could break: ZIP 75001 is Addison TX, Paris TX, Berlin NH with a
+> 5-digit code the DE shape also accepts, and Athens GA. They must hold with the change pinned either way, and
 > they are the "zero newly-failing cases" bar with teeth.
-> · three RESCUE rows — a French, a British and a German address under `defaultCountry: US`, the demo/CLI
+> · three rescue rows — a French, a British and a German address under `defaultCountry: US`, the demo/CLI
 > reality (locale en-US → US on every query). They were the defect: all three failed at the pre-promotion
-> default, and under the change the FR and DE rows passed, which the runner's anti-rot loop reported as
+> default, and under the change the FR and DE rows passed. The runner's anti-rot loop reported them as
 > "now PASSES — promote to status=pass".
 >
 > PROMOTION 2026-08-05: with `postcodeCountryCoherence` default-ON, `fr-rivoli-us-scoped` and
@@ -450,7 +450,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > own note), so #42 cannot reach it at any default.
 >
 > Every coordinate below was measured through the compiled CLI at 2026-08-05 against the 2026-08-04 gazetteer,
-> not copied from the design record.
+> rather than copied from the design record.
 
 <details><summary>Rows</summary>
 
@@ -473,26 +473,26 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > Ireland, the Balearics, Puerto Rico, the US and British Virgin Islands, Bermuda, Costa Rica, Nicaragua,
 > Mexican supermanzana addressing, Atlantic Canada, and small-town US.
 >
-> HOW THE STATUSES WERE SET. Every coordinate below was measured through THIS harness (buildGauntletDeps +
+> How the statuses were set. Every coordinate below was measured through this harness (buildGauntletDeps +
 > runOne) on 2026-08-05 against the 2026-08-04 gazetteer, and every GOLD coordinate is an independent
 > reference — an OSM feature resolved through Nominatim, or (one row) the decoded Open Location Code, or (one
-> row) a directory listing where OSM has nothing. `status: pass` means today's pipeline MEETS the expectation
+> row) a directory listing where OSM has no feature. `status: pass` means today's pipeline MEETS the expectation
 > the row states; `improvement_target` means it does not. No tolerance was widened to make a row green: the
 > bands are set by what the address NAMES (rooftop 100–300 m, small settlement 1–2 km, city-only 3–6 km).
 >
 > SCOPED ASSERTIONS. Several rows land the right coordinate through a wrong parse — the venue span is eaten by
 > `locality`, or the street is split. Those follow the corpus's existing idiom (see venue-mr-mrs-crab-huchette):
-> assert the coordinate + the components that ARE right, check on that, and name the unasserted parse defect in
-> the note. A row whose note describes a defect is a row that is NOT guarding that defect.
+> assert the coordinate + the components that are right, check on that, and name the unasserted parse defect in
+> the note. A row whose note describes a defect does not guard that defect.
 >
-> `expectTier` is pinned ONLY where today's result is `address_point`. Pinning `interpolated` or `admin` would
+> `expectTier` is pinned only where today's result is `address_point`. A pin on `interpolated` or `admin` would
 > make a future rooftop upgrade fail the check — the tier assertion is a floor, and there is no floor to state
 > below the top tier.
 >
-> READINGS RECORDED RATHER THAN GUESSED (each is argued in its own row's note): "W4, The Odyssey" as
-> unit+venue; "Les Halles" as a named quartier rather than the 75001 arrondissement; the Nicaraguan plus code
-> VFQ6+92P and the "NIC-38" route number, neither of which has a ComponentTag; the Mexican
-> supermanzana/manzana/lote block, which also has none (the schema's `block`/`sub_block` are JP-only).
+> Readings recorded rather than guessed (each is argued in its own row's note): "W4, The Odyssey" as
+> unit+venue, and "Les Halles" as a quartier rather than the 75001 arrondissement. The Nicaraguan plus code
+> VFQ6+92P and the "NIC-38" route number have no ComponentTag. The Mexican
+> supermanzana/manzana/lote block also has none (the schema's `block`/`sub_block` are JP-only).
 
 <details><summary>Rows</summary>
 
@@ -570,10 +570,10 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 114 rows · 92 country dirs
 
 > The country-coverage sweep. `cases/country-coverage-candidates.md` drafted 400 candidate inputs across
-> 220 ISO-3166 codes, sorted into three predicted failure-mode classes; this batch is the 114 of them that
-> FAILED the production pipeline. Every candidate was first canonicalized through the Google oracle
+> 220 ISO-3166 codes, sorted into three predicted failure-mode classes. This batch is the 114 of them that
+> failed the production pipeline. Every candidate was first canonicalized through the Google oracle
 > (`@mailwoman/geocode-oracle`, `components=country:<cc>`, `language=en`) — 400/400 resolved, no
-> `ZERO_RESULTS`, so **every address in the draft exists as written**; the seven Google marked
+> `ZERO_RESULTS`, so **every address in the draft exists as written**. The seven Google marked
 > `partial_match` are parked below rather than promoted, per the draft's own rule. The remaining 279
 > candidates PASSED and are parked as holdout source material in
 > `cases/generalization/country-sweep-2026-08-05-passes.jsonl`, which the loader does not read (it walks
@@ -582,62 +582,62 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > **What the sweep measured, by the draft's own class hypothesis:** structural-dialect rows failed hardest
 > (13/31 = 42%, plus 6 of the 7 suspects), bare-capital/namesake rows produced the most bugs in absolute
 > terms (71 of 114), and exonym/renamed/script rows failed least (30/137 = 22%). The draft predicted the
-> namesake class would be the largest unguarded surface; it was, but the per-row hit rate was highest on the
-> addressing structures nothing in the corpus had ever exercised.
+> namesake class would be the largest unguarded surface. It was, but the per-row failure rate was highest on the
+> addressing structures that no earlier corpus row had exercised.
 >
-> **29 of these rows share one measured root cause and should flip together.** Their notes carry the
+> **29 of these rows share one measured root cause and should flip together.** Their notes contain the
 > sentence "ROOT CAUSE MEASURED". The resolver's default backend (`candidate.db`, symlinked to
 > `candidate-global.db` built 2026-08-05 18:15) and `admin-global-priority.db` (2026-08-04 17:59) disagree
-> about what a synthetic place id (`spr_id >= 9e12`) MEANS: 743,853 of 1,670,055 joined rows (44.5%) name a
-> different place in each, 212,993 of them `is_primary=1`. Reading the newer source
+> about what a synthetic place id (`spr_id >= 9e12`) means: 743,853 of 1,670,055 joined rows (44.5%) identify a
+> different place in each, 212,993 of them `is_primary=1`. A read of the newer source
 > (`admin-global-priority-geonames.db`, built 2026-08-05 18:09, six minutes before the candidate build)
-> locates it in the alternate-names join — 522,184 of 2,110,096 `names` rows on synthetic ids carry a
+> locates it in the alternate-names join: 522,184 of 2,110,096 `names` rows on synthetic ids hold a
 > `country` that disagrees with their own `spr` row's. `Gaborone` is in `names` twice, both times attached
-> to an Austrian hamlet, and there is no `spr` row named `Gaborone` at all. So `geocode "Gaborone"` returns
-> `wof:9000000121151` — Gaborone's id in the older source — carrying the name `Aichegg` and a coordinate in
+> to an Austrian hamlet, and no `spr` row has the name `Gaborone`. So `geocode "Gaborone"` returns
+> `wof:9000000121151`, Gaborone's id in the older source, with the name `Aichegg` and a coordinate in
 > Styria. Same shape for `Djibouti` → `Ober-Himmeri` (CH) and `Kinshasa` → `Alionys II` (LT, population
 > 16,000,000).
 >
-> **27 rows resolve to NOTHING** (`Marrakesh`, `Amman`, `Kigali`, `Phnom Penh`, `Mogadishu`, …) — the
-> honest failure, and the one that does not violate the meaning-of-zero rule.
+> **27 rows resolve to no place** (`Marrakesh`, `Amman`, `Kigali`, `Phnom Penh`, `Mogadishu`, …). This
+> failure reports an absence as an absence, so it satisfies the meaning-of-zero rule.
 >
 > **Assertion policy.** Components first, then a coordinate at a bar sized to the tier Google returned and
 > rounded up: `APPROXIMATE` → 25 km (the bar `global-paris-bare` already uses for this class),
 > `GEOMETRIC_CENTER` → 10 km, `RANGE_INTERPOLATED` → 5 km, `ROOFTOP` → 2 km. `expectComponents.locality` is
-> asserted only where Google's canonical form is a string the INPUT already carries; where it is not
-> (`Cairo Governorate`, `Daerah Khusus Ibukota Jakarta`, `French Quarter`) the row keeps the coordinate
-> assertion and the note names Google's answer, because pinning it would target Google's rendering rather
-> than mailwoman's. `house_number`/`street`/`postcode` follow the same rule. No `expectTier` anywhere: the
-> resolver has not been measured on these rows, which is the draft's stated precondition for pinning one.
+> asserted only where Google's canonical form is a string the input already contains. Where it is not
+> (`Cairo Governorate`, `Daerah Khusus Ibukota Jakarta`, `French Quarter`), the row keeps the coordinate
+> assertion and the note records Google's answer, because a pin on it would target Google's rendering rather
+> than mailwoman's. `house_number`/`street`/`postcode` follow the same rule. No row sets `expectTier`. The
+> resolver has not been measured on these rows, and the draft states that measurement as the precondition for a tier pin.
 >
 > **Instrument caveat.** The 16 rows under `DE`/`ES`/`GB`/`IN`/`IT`/`NZ` graded through their weights
-> overlay with the anchor channel OFF — those overlay packages carry no `postcode-<cc>.bin`, so
-> `loadFromWeights` warned and degraded. None of the 16 inputs carries a postcode, so the effect on this
+> overlay with the anchor channel off. Those overlay packages ship no `postcode-<cc>.bin`, so
+> `loadFromWeights` warned and degraded. None of the 16 inputs contains a postcode, so the effect on this
 > batch is nil, but a later row with a postcode in those countries would need the artifact.
 >
 > **2026-08-06 follow-up (#1507 / #1516).** Two corrections to the paragraph above and one addition to the
 > batch itself.
 >
-> The WARNING was wrong rather than the grading. Those overlays ship no binary on purpose (en-gb under the #1476
-> mitigation; en-nz has no WOF NZ postcode database to build one from), and the warning fired on
-> `requires.anchor.required` — a statement about the shared ENCODER that every overlay inherits — once per
-> PROCESS, naming no package. So one overlay's deliberate absence printed a line that reads as the PRIMARY
+> The warning was wrong rather than the grading. Those overlays ship no binary on purpose: en-gb under the #1476
+> mitigation, and en-nz because no WOF NZ postcode database exists to build one from. The warning fired on
+> `requires.anchor.required`, a statement about the shared encoder that every overlay inherits. It fired once per
+> process and identified no package. So one overlay's deliberate absence printed a line that reads as the primary
 > locale's `postcode-us.bin` having gone missing while it was present and feeding on every US row. The
-> condition now reads each package's OWN card (`files.postcode_anchor`), and `buildGauntletDeps` asserts up
+> condition now reads each package's own card (`files.postcode_anchor`), and `buildGauntletDeps` asserts up
 > front that every locale the corpus routes to has the binary its card declares. The 2026-08-06 re-run of
-> this batch prints zero anchor warnings across all six overlays; the grading is unchanged.
+> this batch prints zero anchor warnings across all six overlays. The grading is unchanged.
 >
-> Seven of the 29 family-A rows now carry `expectPlaceName` — `bw-cs-gaborone`, `cd-cs-kinshasa`,
+> Seven of the 29 family-A rows now set `expectPlaceName` — `bw-cs-gaborone`, `cd-cs-kinshasa`,
 > `dj-cs-djibouti`, `ba-cs-sarajevo`, `bf-cs-ouagadougou`, `er-cs-asmara`, `cg-cs-brazzaville`. The corpus
-> had stored `expectPlaceID`/`expectPlaceName` since the migration and `checkCase` read neither (#1507);
-> wiring them in gives this batch the assertion its own root cause demanded. The class was "right locality
+> had stored `expectPlaceID`/`expectPlaceName` since the migration and `checkCase` read neither (#1507).
+> `checkCase` now reads them. That gives this batch the assertion its own root cause demanded. The class was "right locality
 > string, wrong place": `expectComponents.locality` graded GREEN on every one of these rows while the
 > resolver returned an Austrian hamlet, and only a coordinate 8,045 km away said so — an impostor inside the
 > 25 km bar would have passed silently. The rows grade off `hierarchy[0].name` (the gazetteer's canonical
-> `resolver_name`), never `GauntletResult.locality`, which echoes the parsed query span and. Therefore, agrees
-> with the input no matter what resolved. Five now pass outright; `dj-cs-djibouti` (65.9 km) and
-> `cg-cs-brazzaville` (453.1 km) fail on coordinate alone with the place identity green, which is exactly the
-> separation the assertion exists to draw.
+> `resolver_name`), never `GauntletResult.locality`. That field echoes the parsed query span and therefore agrees
+> with the input no matter what resolved. Five now pass on every assertion. `dj-cs-djibouti` (65.9 km) and
+> `cg-cs-brazzaville` (453.1 km) fail only on coordinate, with the place identity green. The assertion exists to draw exactly that
+> separation.
 
 | case                                  | cc  | kind                   | Google coordinate   | Google tier      | pipeline                      |
 | ------------------------------------- | --- | ---------------------- | ------------------- | ---------------- | ----------------------------- |
@@ -807,29 +807,29 @@ carrying its own margin note below rather than a shared header.
 > #831 FIXED — promoted to a counted pass (night 34, 2026-07-05). The v5.4.0 parse fix
 > (v2.3.0-nl-postcode, family-pinned) parses 'Chevaleret' into the street ('Rue du Chevaleret'),
 > not the locality, so the canonical mixed-case now reaches the OSM rooftop tier — verified
-> deterministic at 48.8335,2.3686 (address_point) under the shipped v5.4.0 dev weights. Not a
-> #829 effect (that hook only touches all-lowercase input; the mixed-case canonical is untouched).
+> deterministic at 48.8335,2.3686 (address_point) under the shipped v5.4.0 dev weights. The #829 hook
+> did not cause this. That hook only touches all-lowercase input, and it leaves the mixed-case canonical unchanged.
 
 ### `us-dc-pennsylvania`
 
 `cases/us/regression.jsonl` · `source: golden`
 
 > A US landmark anchor — guards the US admin/street path doesn't drift while we touch intl. (country
-> is dropped: the US resolver hierarchy stops at region — region=DC already implies US.)
+> is dropped because the US resolver hierarchy stops at region, and region=DC already implies US.)
 
 ### `us-5th-ave-ny-rescore`
 
 `cases/us/regression.jsonl` · `source: bug:span-rescore`
 
-> The 'Ave recovered as a French locality' span-rescore bug (66ff2e68). The fix's guarantee is IN NY,
-> NOT France — guarded with a wide (NY-state) tolerance. The tighter NYC disambiguation is #832.
+> The 'Ave recovered as a French locality' span-rescore bug (66ff2e68). The fix guarantees a result in NY,
+> and a wide (NY-state) tolerance guards it. The tighter NYC disambiguation is #832.
 
 ### `us-new-york-nyc`
 
 `cases/us/regression.jsonl` · `source: bug:#832`
 
-> #832 — RESOLVED. NYC carries WOF parent_id=-4 (multi-parent sentinel), so the ancestors parent_id
-> closure left it only-self; the region hard-filter then excluded it and "New York Mills" (pop 3,190)
+> #832 — RESOLVED. NYC has WOF parent_id=-4 (multi-parent sentinel), so the ancestors parent_id
+> closure left it only-self. The region hard-filter then excluded it and "New York Mills" (pop 3,190)
 > won over NYC (8.8M). Fixed by wiring the wof:hierarchy ancestry backfill into the build (PR #835) +
 > swapping the backfilled canonical DB. Counted `pass` so it can't silently regress (anti-rot).
 
@@ -838,16 +838,16 @@ carrying its own margin note below rather than a shared header.
 `cases/us/regression.jsonl` · `source: bug:#833`
 
 > #833 — RESOLVED by admin descendant-consistency (#263). The greedy walk resolved region "ME" to
-> Messina (IT, by population), "Portland" found nothing under it, and the result fell back to the
+> Messina (IT, by population), "Portland" found no candidate under it, and the result fell back to the
 > Sicilian centroid. The fix re-picks the (region, locality) pair where the locality descends from a
-> same-named region candidate — Portland descends from Maine rather than Messina. No country prior, no list.
+> region candidate with the same name. Portland descends from Maine rather than Messina. The fix uses no country prior and no list.
 
 ### `us-portland-or`
 
 `cases/us/regression.jsonl` · `source: bug:#833`
 
 > #833 sibling — a different namesake collision (region "OR" → Ourense, Spain), guards that the fix
-> generalizes across countries (IT for ME, ES for OR) rather than just one province.
+> generalizes across countries (IT for ME, ES for OR) rather than one province.
 
 ### `us-augusta-me`
 
@@ -868,16 +868,16 @@ carrying its own margin note below rather than a shared header.
 
 `cases/ge/regression.jsonl` · `source: bug:#267`
 
-> #266/#267 — international coverage. "Georgia" the country shadows the populous US state; the GeoNames
+> #266/#267 — international coverage. "Georgia" the country shadows the populous US state. The GeoNames
 > admin fold (#267 data) + the country-candidate reconcile (#267 resolver) land Tbilisi in Georgia rather than
-> US Georgia. Guards the gap-country admin hierarchy + the foreign-capital-vs-US-state collision fix.
+> US Georgia. Guards the gap-country admin hierarchy and the foreign-capital-vs-US-state collision fix.
 
 ### `intl-batumi-georgia`
 
 `cases/ge/regression.jsonl` · `source: bug:#1023`
 
 > #1023 — a SECOND Georgian city on the exact path the Tbilisi fix repairs. "Georgia" parses as
-> `region` (it names a US state), so a non-capital Georgian city ("Batumi") must ride
+> `region` (it is also a US state), so a non-capital Georgian city ("Batumi") must resolve through
 > reconcileAdminPair's matchCountry fall-through rather than the greedy walk. Guards against a future admin
 > rebuild re-breaking the country-vs-US-state class for anything but the one capital already pinned.
 
@@ -896,7 +896,7 @@ carrying its own margin note below rather than a shared header.
 
 > #1023 sibling-path guard — the country-vs-US-town namesake via the EXPLICIT-country path (#822),
 > the disjoint half of the namesake family. "Lebanon" parses as `country` (region=null), so
-> "Beirut, Lebanon" rides applyExplicitCountryCoherence rather than reconcileAdminPair. Broadens the class
+> "Beirut, Lebanon" resolves through applyExplicitCountryCoherence rather than reconcileAdminPair. Broadens the class
 > beyond Georgia (Lebanon has populous US-town namesakes — Lebanon PA/TN/OH) so a regression in
 > EITHER coherence pass is caught.
 
@@ -904,9 +904,9 @@ carrying its own margin note below rather than a shared header.
 
 `cases/at/regression.jsonl` · `source: bug:#822`
 
-> #822 — the named-foreign-country namesake. "Vienna" has 6 populous US namesakes that win the
-> population-first candidate window; the explicit "Austria" token was ignored. applyExplicitCountry
-> coherence (resolve.ts) re-picks the locality to the same-named place under matchCountry("Austria")=AT.
+> #822 — the namesake with an explicit foreign country. "Vienna" has 6 populous US namesakes that win the
+> population-first candidate window. The explicit "Austria" token was ignored. applyExplicitCountry
+> coherence (resolve.ts) re-picks the locality to the place with the same name under matchCountry("Austria")=AT.
 
 ### `intl-sydney-australia`
 
@@ -930,6 +930,6 @@ carrying its own margin note below rather than a shared header.
 
 `cases/us/regression.jsonl` · `source: bug:#822`
 
-> #822 byte-stability guard — the explicit-country reconcile must NOT fire when a REGION scopes the
+> #822 byte-stability guard — the explicit-country reconcile must not fire when a REGION scopes the
 > locality (no region/subregion ancestor between country and locality). "Springfield, IL, USA" must
 > stay Springfield IL, never the most-populous US Springfield. Pins the region guard in resolve.ts.

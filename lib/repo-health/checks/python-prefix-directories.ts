@@ -27,9 +27,9 @@ const CHECK_ID = "python-prefix-directories"
 const PYTHON_ROOT = "corpus-python/"
 
 /**
- * How many children must share a prefix before it is a family.
+ * The number of children that must share a prefix before it is a family.
  *
- * Two siblings are a coincidence often enough that the TypeScript check uses the same floor.
+ * A shared prefix on two siblings can be a coincidence, so the TypeScript check uses the same floor.
  */
 const GROUP_THRESHOLD = 3
 

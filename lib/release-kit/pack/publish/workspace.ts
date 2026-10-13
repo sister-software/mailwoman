@@ -13,7 +13,7 @@
  *        A published `workspace:*` dependency breaks consumer `npm install` (eunsupportedprotocol).
  *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
  *        condition is rewritten to emitted JavaScript. The repo runs source under Node. Consumers get `out/`.
- *        The dev `exports` in each workspace's package.json is the single source of truth. There is no
+ *        The dev `exports` in each workspace's package.json is the only exports map a workspace commits. There is no
  *        hand-maintained `publishConfig.exports`. That removal left the v7.2.0 publish fully broken.
  *        This transform replaces it. A guard
  *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points to a
@@ -138,9 +138,9 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 		publishArgs.push("--otp", options.otp)
 	}
 
-	// npm can only mint a provenance attestation from a CI provider it supports, so this
-	// is conditioned on GitHub Actions rather than on CI generally: a local `yarn release`
-	// passing --provenance fails outright, with no OIDC token to sign against.
+	// npm can only mint a provenance attestation from a CI provider it supports,
+	// so this is conditioned on GitHub Actions rather than on CI generally: a local
+	// `yarn release` passing --provenance fails, with no OIDC token to sign against.
 	// Trusted Publishing works either way.
 	// The attestation is the part that needs the CI identity.
 	//

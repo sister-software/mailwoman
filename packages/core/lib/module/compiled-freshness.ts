@@ -115,7 +115,7 @@ export interface CompiledFreshness {
  * Compares the newest source file against the newest compiled `.js` file across the given workspaces.
  *
  * `workspaces` are repo-relative directories.
- * Each caller passes the workspaces it actually loads.
+ * Each caller passes the workspaces it loads.
  *
  * A set that omits a loaded workspace can report `fresh` while that workspace is stale.
  */

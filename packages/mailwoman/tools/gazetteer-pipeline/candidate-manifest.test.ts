@@ -271,7 +271,7 @@ describe("candidateLayerManifest", () => {
 	it("marks a fold that declares no terms, rather than omitting it from the expression", async () => {
 		// Measured 2026-09-27: 28 of the 28 postcode and locality databases on the lab host
 		// have no `layer_manifest`, and 26 of them have no `meta.license` either.
-		// An expression that simply left them out would read as a complete list of the artifact's terms.
+		// An expression that left them out would read as a complete list of the artifact's terms.
 		const root = await scratchDirectory()
 
 		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "CC-BY-4.0")

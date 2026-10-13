@@ -14,13 +14,13 @@
 
 - The app is `private: true`, lives under `packages/`, and joins the root `workspaces` array, both root `tsconfig.json` reference entries, and `SANCTIONED_RELEASE_ABSENCES` with a stated reason. The `publishCount` pin in `packages/release-kit/lib/release-stage.integration.test.ts` stays at 60.
 - The app has no application Worker script. `wrangler.toml` has no `main`, no `run_worker_first`, and no routes.
-- Dependency ranges match the workspace that already declares them (`sherif` in `health:manifests` refuses a second range): `react` and `react-dom` `^19.2.8`, `react-map-gl` `^8.1.3`, `maplibre-gl` `^6.7.0`, `vite` `^8.2.2`, `@vitejs/plugin-react` `^6.1.1`, `wrangler` `^4.129.0`, `@playwright/test` at the range `docs/package.json` carries.
+- Dependency ranges match the workspace that already declares them (`sherif` in `health:manifests` refuses a second range): `react` and `react-dom` `^19.2.8`, `react-map-gl` `^8.1.3`, `maplibre-gl` `^6.7.0`, `vite` `^8.2.2`, `@vitejs/plugin-react` `^6.1.1`, `wrangler` `^4.129.0`, `@playwright/test` at the range `docs/package.json` declares.
 - Code never reads `process.env` directly, and this plan has no environment to read.
 - A test imports the package under test through its public exports, so the app declares an `exports` entry for every module a test names.
 - Source lives under `lib/` and tests under `test/`, with `rootDir: ./lib`. Relative imports use explicit `.ts`/`.tsx` extensions, and the code uses no `enum`.
 - Comments state invariants rather than history.
 - Every commit passes the pre-commit hook. Branch: `git fetch origin main && git checkout -b feat/earth-shell origin/main`.
-- No file in `docs/` changes in this plan except the three-origin CORS edit in the tile worker, which is not in `docs/`.
+- No file in `docs/` changes in this plan except the three-origin CORS edit in the tile worker. The tile worker is not in `docs/`.
 
 ## File Structure
 
@@ -78,7 +78,7 @@ The app cannot import `packages/react/test/mocks.tsx`, because a test helper is 
 
 - [ ] **Step 1: Create the module with the five moved definitions**
 
-`packages/react/lib/map/fake-runtime.ts` carries, verbatim from `test/mocks.tsx`, `STUB_MAP_STYLE`, `FAKE_SUGGESTIONS`, `makeDemoRuntime`, `makeFakeParseResult` and `makePipelineRuntime`, with this header and these imports (package-internal, through the `#` map):
+`packages/react/lib/map/fake-runtime.ts` holds, verbatim from `test/mocks.tsx`, `STUB_MAP_STYLE`, `FAKE_SUGGESTIONS`, `makeDemoRuntime`, `makeFakeParseResult` and `makePipelineRuntime`, with this header and these imports (package-internal, through the `#` map):
 
 ```ts
 /**
@@ -256,7 +256,7 @@ The ranges above are the ones `docs/package.json` and `packages/react/package.js
 }
 ```
 
-Compare against `packages/license-worker/tsconfig.test.json` and copy any field it carries that these lack. The test-base file's header explains why `include`, `exclude` and `references` repeat per workspace.
+Compare against `packages/license-worker/tsconfig.test.json` and copy any field it sets that these lack. The test-base file's header explains why `include`, `exclude` and `references` repeat per workspace.
 
 - [ ] **Step 3: Register the workspace in the four registers**
 
@@ -604,7 +604,7 @@ yarn compile
 yarn mwops health manifest-targets
 ```
 
-Expected: 8 tests pass; oxlint reports no findings; `tsc -b` emits `packages/earth/out/{routes,config}.js` and `packages/site-kit/out/build-info.js`; `manifest-targets` reports no findings.
+Expected: 8 tests pass, and oxlint reports no findings. `tsc -b` emits `packages/earth/out/{routes,config}.js` and `packages/site-kit/out/build-info.js`, and `manifest-targets` reports no findings.
 
 - [ ] **Step 5: Commit**
 
@@ -814,7 +814,7 @@ precacheAndRoute(self.__WB_MANIFEST)
 </svg>
 ```
 
-Render the two PNGs once with ImageMagick, which the lab has at `/usr/bin/convert`:
+Render the two PNGs once with ImageMagick. The lab has it at `/usr/bin/convert`:
 
 ```bash
 cd packages/earth/public && convert -background none icon.svg -resize 192x192 icon-192.png && convert -background none icon.svg -resize 512x512 icon-512.png && cd -
@@ -850,7 +850,7 @@ cat packages/earth/dist/build.json
 node -e "const m=require('./packages/earth/dist/manifest.webmanifest');console.log(m.id,m.start_url,m.display,m.icons.length)"
 ```
 
-Expected: `EXIT=0`; `dist/` holds `index.html`, `build.json`, `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon.svg`, `assets/`; `build.json` carries `app`, a 7-plus-character `revision`, and a `buildTime` ending in `Z`; the manifest prints `https://earth.mailwoman.ai/ / standalone 2`.
+Expected: `EXIT=0`; `dist/` holds `index.html`, `build.json`, `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon.svg`, `assets/`; `build.json` contains `app`, a 7-plus-character `revision`, and a `buildTime` ending in `Z`; the manifest prints `https://earth.mailwoman.ai/ / standalone 2`.
 
 - [ ] **Step 4: Typecheck the config and worker**
 
@@ -987,7 +987,7 @@ if (!root) throw new Error("index.html has no #root")
 createRoot(root).render(<App />)
 ```
 
-The debug and trace routes render the same geocoder in this plan. The drawer-open default and the trace page arrive with the runtime plan, which is where `DemoPanels` and the debug drawer move from `docs/src/pages/demo/`.
+The debug and trace routes render the same geocoder in this plan. The drawer-open default and the trace page arrive with the runtime plan. That plan moves `DemoPanels` and the debug drawer from `docs/src/pages/demo/`.
 
 - [ ] **Step 2: Build and look**
 
@@ -1125,7 +1125,7 @@ import { previewConfig } from "@mailwoman/site-kit/playwright"
 export default previewConfig({ port: 7780, remoteURLVariable: "MAILWOMAN_EARTH_URL" })
 ```
 
-The one `process.env` read carries the same scoped disable `docs/playwright.config.ts` carries, for the same reason: Playwright loads this file with its own loader, outside the typed `$public` view.
+The one `process.env` read has the same scoped disable as `docs/playwright.config.ts`, for the same reason: Playwright loads this file with its own loader, outside the typed `$public` view.
 
 - [ ] **Step 2: The smoke**
 
@@ -1230,7 +1230,7 @@ yarn workspace @mailwoman/react test:browser
 yarn workspace @mailwoman/earth test:browser
 ```
 
-Expected: `health` passes every step (if `health:debt` fails on counters this branch did not move, compare with `main` before touching the baseline); `typecheck:tests` passes; the fast leg passes with the two new unit files counted; both browser suites pass.
+Expected: `health` passes every step (if `health:debt` fails on counters this branch did not move, compare with `main` before touching the baseline). `typecheck:tests` passes, the fast leg passes with the two new unit files counted, and both browser suites pass.
 
 - [ ] **Step 2: Push and open the PR**
 

@@ -8,7 +8,7 @@ realistic full-address context so the surrounding street/admin tags stay anchore
 
 Designators are a curated draw from USPS Pub-28 Appendix C2 (units) and the per-locale codex
 level-semantics lexicons — ``@mailwoman/codex`` (``codex/us/unit-designator.ts``,
-``codex/level-semantics.ts``) is the runtime source of truth. this synthetic set only needs realistic
+``codex/level-semantics.ts``) defines the designators the runtime uses. this synthetic set only needs realistic
 training surfaces rather than the full table.
 
 Rows include char-offset spans (#519) — the authoritative label channel for v0.5.0+ training — built by

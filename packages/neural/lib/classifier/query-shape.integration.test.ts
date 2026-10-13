@@ -91,7 +91,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		}
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
-		// biasScale = 2 makes the postcode bias (0.9 × 2 = 1.8) clearly larger than the O boost (0.5).
+		// biasScale = 2 makes the postcode bias (0.9 × 2 = 1.8) larger by 1.3 than the O boost (0.5).
 		const tree = await classifier.parse(text, { queryShape: shape, queryShapeBiasScale: 2 })
 
 		// A postcode root (or postcode child) should now exist.

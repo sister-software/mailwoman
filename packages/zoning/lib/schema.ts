@@ -101,7 +101,7 @@ export interface ZoningAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * How many rings the source published for this feature, with `signed_area_m2`,
+	 * The count of rings the source published for this feature, with `signed_area_m2`,
 	 * the ingest's own receipt that the orientation was read rather than assumed.
 	 */
 	ring_count: number
@@ -193,7 +193,7 @@ export interface ZoningVocabularyTable {
 	 */
 	declared: number
 	/**
-	 * How many rows of this artifact contain the code.
+	 * The count of rows of this artifact that contain the code.
 	 *
 	 * A census a reader checks a closed domain against, rather than a claim about the world.
 	 */

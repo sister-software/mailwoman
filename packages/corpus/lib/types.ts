@@ -15,7 +15,7 @@ import type { PathBuilderLike } from "path-ts"
  * The values are wire values.
  *
  * Roles have different grammars.
- * For example, mailing addresses often use post-office boxes, so mixing roles in
+ * For example, some mailing addresses use post-office boxes, so mixing roles in
  * a corpus shifts what the premise parser learns.
  */
 export const AddressRole = {
@@ -277,7 +277,7 @@ export interface CanonicalRow extends SourceProvenance {
 /**
  * A row after alignment, with tokens, BIO labels and character spans.
  *
- * The span arrays are the source of truth.
+ * The span arrays are authoritative when they disagree with any other field.
  * Consumers can derive token labels from them.
  */
 export interface LabeledRow extends CanonicalRow {
@@ -399,7 +399,7 @@ export function countDropped(opts: Pick<AdapterOptions, "dropped">, reason: stri
 /**
  * The interface that every data source implements.
  *
- * Adapters stream rows, because many sources hold tens of millions of rows.
+ * Adapters stream rows, because some sources hold tens of millions of rows.
  */
 export interface CorpusAdapter {
 	/**

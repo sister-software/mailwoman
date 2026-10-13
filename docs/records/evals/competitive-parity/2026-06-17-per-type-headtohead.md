@@ -15,7 +15,7 @@ Both parsers through the same resolver, against real address points. Strata over
 
 ## Part B — parse-structure win-rate on the headline types (generated, 150 each)
 
-OpenAddresses has ~no PO boxes, intersections, or units, so these are templated from real OA cities; the truth is the known TYPE. We score whether each parser emits the correct STRUCTURE.
+OpenAddresses has ~no PO boxes, intersections, or units, so these are templated from real OA cities. The truth is the known type. We score whether each parser emits the correct structure.
 
 | type                    |   n | neural correct | v0 correct |
 | ----------------------- | --: | -------------: | ---------: |

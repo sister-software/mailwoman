@@ -1,7 +1,7 @@
 """What a staged Korean corpus must contain before a run can read it.
 
 The launcher stages files. This check reports whether the resulting files are usable. It lives here because the answer
-is Korean knowledge — how many numbered parts the Juso build writes, that the board and the sigungu
+is Korean knowledge — the number of numbered parts the Juso build writes, that the board and the sigungu
 centroids travel with it, that the permit register is a separate corpus — and a launcher that knew
 any of it would be a launcher one country's release schedule could break.
 """
@@ -14,7 +14,7 @@ import os
 LABEL_CORPUS = "v8-kr-2026-09-08"
 #: The noisy register corpus: building permits, a separate build with its own single part.
 REGISTER_CORPUS = "v8-kr-registry-2026-09-08"
-#: How many numbered train parts the label build writes.
+#: The number of numbered train parts the label build writes.
 TRAIN_PARTS = 8
 
 

@@ -16,7 +16,7 @@
  * The sheet splits the address into `Strada`, `Numar`, `Cod postal` and `Localitate unitate`, so the
  * adapter splits no street line. Measured over the 2025–2026 edition's 18,022 units:
  *
- * - `Strada` is the street name as the school writes it, usually without the street-type word:
+ * - `Strada` is the street name as the school writes it, in most rows without the street-type word:
  *   `REPUBLICII`, `PRINCIPALA`, `Piața 1848`. 198 values begin with `STR.` and 247 with `CALEA`.
  *   The value is copied unchanged, because a street type the publisher did not write is not evidence.
  * - `Numar` holds the house number. `FN` (`fără număr`, "without number") and `-` state that the premise
@@ -36,7 +36,7 @@
  *
  * ## Identity and license
  *
- * The row id is content-addressed over the aligned components. A school and its kindergarten often share
+ * The row id is content-addressed over the aligned components. A school and its kindergarten can share
  * one address under two names, so they are two rows.
  *
  * data.gov.ro publishes the dataset under `CC-BY-4.0`, the license its CKAN record names for the

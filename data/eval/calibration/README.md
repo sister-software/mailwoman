@@ -1,8 +1,8 @@
 # Confidence calibration (task #59, #240 PR3)
 
 Post-hoc isotonic calibration of the neural decoder's per-span softmax confidence — the `conf=` a
-resolver or human reads off a parse. A CE-trained model's softmax is not a calibrated probability;
-this maps it to one (Expected Calibration Error 0.067 → 0.004 on the held-out eval; see
+resolver or human reads off a parse. A CE-trained model's softmax is not a calibrated probability.
+This calibration maps it to one (Expected Calibration Error 0.067 → 0.004 on the held-out eval, as reported in
 [`../../../docs/articles/evals/2026-06-07-isotonic-calibration.md`](../../../docs/articles/evals/2026-06-07-isotonic-calibration.md)).
 
 ## The pipeline
@@ -26,9 +26,9 @@ python3 corpus-python/scripts/fit-isotonic-calibration.py
 
 | File                         | Committed?      | Why                                                                                                                        |
 | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `calibration-set.jsonl`      | ✅              | Frozen fit input (the corpus parquet lives on `$MAILWOMAN_DATA_ROOT`, not in git) — makes the fit reproducible without it. |
-| `isotonic-en-us-v4.0.0.json` | ✅              | The deliverable: the 20-bin lookup table the decoder calibrator loads.                                                     |
-| `confidences.jsonl`          | ❌ (gitignored) | Purely derivable from the set + the model (stage 2). 3 MB.                                                                 |
+| `calibration-set.jsonl`      | Yes             | Frozen fit input (the corpus parquet lives on `$MAILWOMAN_DATA_ROOT`, not in git) — makes the fit reproducible without it. |
+| `isotonic-en-us-v4.0.0.json` | Yes             | The deliverable: the 20-bin lookup table the decoder calibrator loads.                                                     |
+| `confidences.jsonl`          | No (gitignored) | Purely derivable from the set + the model (stage 2). 3 MB.                                                                 |
 
 ## Read the table
 

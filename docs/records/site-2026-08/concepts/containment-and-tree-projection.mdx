@@ -45,7 +45,7 @@ Five `AddressNode`s with these relationships:
 - `postcode` parents to `locality` (siblings of street)
 
 The decoder didn't "discover" this structure from the address text. It
-walked a rule table that says "given these tags, here's how they nest."
+walked a rule table that states "given these tags, here's how they nest."
 
 ## The rule table: PARENT_OF
 
@@ -102,7 +102,7 @@ The builder skips tags without a labeled span.
    tree roots. All others attach as children of their resolved parent.
 
 The output is `AddressTree { raw, roots: AddressNode[] }`. Each
-`AddressNode` carries `tag`, `start`, `end`, `value`, `confidence`,
+`AddressNode` holds `tag`, `start`, `end`, `value`, `confidence`,
 `children`.
 
 ## What the projection provides you
@@ -152,7 +152,7 @@ into either ontology directly.
 
 - **Multi-parent.** Each span has exactly one parent. The DAG-like
   fact that a `borough` can nest under both `locality` and `localadmin`
-  in WOF doesn't carry over — the decoder picks one.
+  in WOF is not reproduced. The decoder picks one parent.
 - **Cross-address linkage.** The tree is per-address. If you parse a
   list of addresses and want to detect that they all share the same
   locality, that's a resolver concern rather than a decoder one.
@@ -165,7 +165,7 @@ into either ontology directly.
 ## See also
 
 - [How the model reasons](./how-the-model-reasons.mdx) — the central
-  pipeline; this article expands stage 6
+  pipeline. This article expands stage 6.
 - [Viterbi and BIO validity](./viterbi-and-bio-validity.mdx) — what
   produces the BIO sequence this article consumes
 - [WOF hierarchy gap](./wof-hierarchy-gap.mdx) — the relationship between

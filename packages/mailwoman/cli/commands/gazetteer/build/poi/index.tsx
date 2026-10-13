@@ -120,7 +120,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			// only on the selected build path, so a top-level import breaks the whole published
 			// CLI on a clean install — the smoke test's clean-install leg is what catches it.
 			// The osm source branch is build-local by design.
-			// It may only resolve its SDK when actually invoked.
+			// It may only resolve its SDK when a run selects it.
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk/extract/poi")
 
 			for await (const row of extractOSMPOIs(pbf)) {

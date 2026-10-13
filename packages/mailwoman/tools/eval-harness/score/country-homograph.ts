@@ -5,8 +5,8 @@
  *
  *   Country homograph scorer, the baseline for the model-first country change. Measures
  *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, plus the
- *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
- *   "trailing token = country" failure), and how often gold country is missed.
+ *   over-fire confusion: the count of gold region/locality spans mistagged as `country` (the
+ *   "trailing token = country" failure), and the count of missed gold country spans.
  *
  *   Every printed line goes through the `report` sink, one call per line.
  */
@@ -154,7 +154,7 @@ export async function scoreCountryHomograph(
 		(row, got) => {
 			const exp = row.components
 
-			// over-fire: model emitted a country that is actually the gold region or locality
+			// over-fire: model emitted a country where gold has the region or locality
 			const gc = normalizeComponent(got.country)
 
 			if (

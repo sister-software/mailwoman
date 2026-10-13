@@ -9,7 +9,7 @@ role: evidence
 ## What ran
 
 On **2026-08-04** we ran 30 Belgian address lines through a local install three times, changing one
-thing each time. We chose Belgium because on that date it had no eval tier; it has since entered tier 2. No Belgian rooftop register
+thing each time. We chose Belgium because on that date it had no eval tier. It has since entered tier 2. No Belgian rooftop register
 ships, no `nl-BE` or `fr-BE` weights package exists, and the global candidate gazetteer is the only
 artifact that answers. This panel reports the results you get from that setup.
 
@@ -28,7 +28,7 @@ bilingual Brussels pairs. Nine are in Flanders, nine are in Wallonia, and two ar
 German-speaking Community. No Belgian rooftop register ships, so the pipeline parses the house number
 but never looks it up. The panel does not depend on any particular number existing on these streets.
 
-The run has three arms, each named for the question a reader is likely to ask:
+The run has three arms, each labeled with the question a reader is likely to ask:
 
 | Arm              | Weights | Configured             | Question                                       |
 | ---------------- | ------- | ---------------------- | ---------------------------------------------- |
@@ -49,7 +49,7 @@ building.
   extremes, and whether the result reports `BE`. A coordinate outside the box did not land in
   Belgium. A coordinate inside the box is not necessarily correct.
 - **Locality**, split three ways, because each of the two obvious versions is misleading on its own.
-  `parsed` reads the span the model labeled, which is nearly circular because the commune appears in
+  `parsed` reads the span the model labeled. That is nearly circular because the commune appears in
   the input string. `name matched` reads only the nodes the resolver decorated. It shows that the
   gazetteer returned an accepted spelling but not where that place is. `resolved` combines the name
   match with the bounding-box check, and it is the measure to read. Place names repeat across
@@ -108,14 +108,14 @@ the failures it repairs.
 
 Six rows fail in the `base` arm. Five share one defect, and the sixth has a different one.
 
-| Address                             | Where it landed                  | Named |
-| ----------------------------------- | -------------------------------- | ----- |
-| `Grote Markt 1, 1000 Brussel`       | no coordinate                    | —     |
-| `Rathausplatz 1, 4700 Eupen`        | no coordinate                    | —     |
-| `Hauptstrasse 1, 4780 Sankt Vith`   | no coordinate                    | —     |
-| `Oude Markt 1, 3000 Leuven`         | 51.844, 5.094 — the Netherlands  | `NL`  |
-| `Place Saint-Lambert 1, 4000 Liège` | 47.229, 1.110 — Le Liège, France | `FR`  |
-| `Rue Léopold 1, 4000 Liège`         | 46.243, 14.364 — Slovenia        | `SI`  |
+| Address                             | Where it landed                  | Country |
+| ----------------------------------- | -------------------------------- | ------- |
+| `Grote Markt 1, 1000 Brussel`       | no coordinate                    | —       |
+| `Rathausplatz 1, 4700 Eupen`        | no coordinate                    | —       |
+| `Hauptstrasse 1, 4780 Sankt Vith`   | no coordinate                    | —       |
+| `Oude Markt 1, 3000 Leuven`         | 51.844, 5.094 — the Netherlands  | `NL`    |
+| `Place Saint-Lambert 1, 4000 Liège` | 47.229, 1.110 — Le Liège, France | `FR`    |
+| `Rue Léopold 1, 4000 Liège`         | 46.243, 14.364 — Slovenia        | `SI`    |
 
 The gazetteer contains the right answers. A direct probe of `candidate.db` for the names in these
 rows returns:
@@ -210,8 +210,8 @@ The script is [`be-panel.mjs`](/benchmarks/be-panel.mjs), the panel is
 addresses in each of the three arms.
 
 That file's `versions` block records what this run used: Mailwoman 8.7.0, `model.onnx` from
-`neural-weights-en-us@7.0.0`, and `candidate-global-1026.db`. Each arm additionally carries its own
-`weights` entry, which is how the identical `base` and `fr-overlay` columns are traceable to one ONNX
+`neural-weights-en-us@7.0.0`, and `candidate-global-1026.db`. Each arm additionally records its own
+`weights` entry. That entry shows how the identical `base` and `fr-overlay` columns are traceable to one ONNX
 file behind two package names. The block has no data-release field, because no Belgian register
 ships.
 
@@ -223,7 +223,7 @@ mailwoman data pull candidate
 node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
 ```
 
-The run needs one 2.88 GB bundle and no rooftop database, which is the condition the panel tests. The
+The run needs one 2.88 GB bundle and no rooftop database. That is the condition the panel tests. The
 three arms took 4,273 ms together, excluding model load.
 
 ## Related

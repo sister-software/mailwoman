@@ -68,7 +68,7 @@ export interface InterpolationQuery {
 
 /**
  * Acceptance geometry for the `near` tie-break: the winning group must be within this
- * many kilometers and the runner-up at least {@link NEAR_DOMINANCE} times farther.
+ * number of kilometers and the runner-up at least {@link NEAR_DOMINANCE} times farther.
  */
 const NEAR_MAX_KM = 25
 
@@ -223,7 +223,7 @@ export class StreetInterpolator<
 	}
 
 	/**
-	 * Resolve one key variant's covering rows to an answer, or null when they cannot give one honestly.
+	 * Resolve one key variant's covering rows to an answer, or null when the rows do not support one.
 	 */
 	#answerFromRows(rows: SegmentRow[], n: number, query: InterpolationQuery): InterpolatedHit | null {
 		if (!rows.length) return null

@@ -12,10 +12,12 @@ Everything numeric here was re-measured today against the committed fixture
 
 ## Verdict in one paragraph
 
-`resolver_score` is not one number. On the FTS backend it is a negated bm25 plus about six points of additive tiers;
-on the candidate backend it is exactly `log10(population + 1)`. The two live on scales that do not overlap
+`resolver_score` is not one number. On the FTS backend it is a negated bm25 plus about six points of additive tiers.
+On the candidate backend it is exactly `log10(population + 1)`. The two live on scales that do not overlap
 (FTS localities 9–44, candidate localities 0–7), and within the FTS backend a second code path returns a bounded
-`[0, 1]` blend instead. Its own type says so: _"Scale is implementation-defined; callers should treat as ordinal."_
+`[0, 1]` blend instead. Its own type documented this at the time. The doc comment said that the backend defines the scale and that callers
+should read the score as an ordinal. The field's comment at `packages/core/lib/resolver/types.ts:48` now reads
+`Resolver-defined ranking score`.
 So the interesting question is not "what threshold abstains" but **"is this number ordinal within one query, or is it
 a magnitude you can compare across queries?"** — and the answer is the former. Measured on the fixture, a single
 score threshold separates a correct locality from a garbage locality with Youden J = 0.357 (FTS) / 0.573 (candidate).
@@ -83,16 +85,18 @@ This is confirmed by measurement: every postcode node the candidate backend reso
 
 ### Who consumes it today
 
-Almost nobody, and no code path blocks on it by default.
+Three code paths read it, and none of them blocks on it by default.
 
 - `resolve.ts:1076` — `if (top.score < state.minWinningScore) return null`. This is the one site that can reject a result.
   `minWinningScore` defaults to `0` (`resolve.ts:757`) and **no production caller sets it** (grep: only
-  `resolver/resolve.test.ts:311`). Its own docstring says _"Score scale is implementation-defined; tune per backend."_
+  `resolver/resolve.test.ts:311`). Its own docstring said that the backend
+  defines the score scale and that the threshold is tuned per backend. The option's comment at
+  `packages/core/lib/resolver/types.ts:299` now reads `Minimum winning score threshold`.
 - `resolver-wof-wasm/browser-cascade.ts:302` — a tiebreak _within_ a placetype-rank tier
   (`b.rank - a.rank || b.hit.score - a.hit.score`). Same backend, same query, so scale-consistent and safe.
 - `core/pipeline/reconcile.ts:565` — `normalizeResolverScore` clamps to `(0, 1]` for a multiplicative beam combiner.
   Because both real backends routinely return scores above 1, this **saturates almost every candidate to exactly 1**,
-  contributing "was there a match at all" and no other signal. It is on the joint-reconcile path, which is
+  contributing "was there a match at all" and no other signal. It is on the joint-reconcile path. That path is
   **default-OFF** (`runtime-pipeline.ts:479`, `jointReconcile ?? false`, retired as default 2026-06-14), so this is
   latent rather than live. Anyone who re-promotes that path will inherit the saturation.
 - `mailwoman/geocode-core.ts` reads `primaryNode.alternatives` to build the geocode `candidates` array, and never
@@ -119,7 +123,7 @@ Scripts live in the gitignored `scripts/diagnostic/` (`score-probe.ts`, `score-r
 **Definitions, stated because the answer depends entirely on them:**
 
 - A **garbage resolution** is any coordinate produced for a fixture row. A **violation** is narrower: a coordinate
-  produced for a row whose committed `expect` bar is `no-resolve` (35 of the 105 rows carry that bar).
+  produced for a row whose committed `expect` bar is `no-resolve` (35 of the 105 rows have that bar).
 - A **correct control resolution** is a control locality node within 25 km of the government point. 25 km is
   deliberately loose because admin-centroid resolution legitimately misses an edge address by tens of km.
 
@@ -137,13 +141,13 @@ Scripts live in the gitignored `scripts/diagnostic/` (`score-probe.ts`, `score-r
 The mailfail report's headline was "35 of 110 probes produced at least one coordinate". Re-measured on the 105
 committed rows that is 33 (FTS) — consistent, since the fixture drops the oversized `size` rows.
 
-**The 33 is not 33 defects.** Nineteen of the resolving FTS probes carry a bar _weaker_ than `no-resolve`, and the
+**The 33 is not 33 defects.** Nineteen of the resolving FTS probes have a bar _weaker_ than `no-resolve`, and the
 fixture is right to grade them that way: `﻿350 5th Ave, New York, NY` (leading BOM), `Café de Flore, Paris` (NFD
 accents), `רחוב דיזנגוף 100, תל אביב`, the U+2028-separated address, the repeated-address size row, the CSV and YAML
 rows that contain `New York`, and `Springfield` are **real place names inside awkward wrappers**. Those matches are
 correct behavior. Only the 14/35 `no-resolve` violations are the defect: `1` → Zona 1, `0` → Purwa 0, `a` → A,
 `home` → Home, `Aug` → Aug, `boom` → Boom, `amet` → Amet, `all` → All, `null` → Null, `DROP` → Drop, `Quote` → Quote,
-`NEAR` → Near Acres Estates. One row (`g76`, a SQL statement containing `'New York'`) carries `no-resolve` and
+`NEAR` → Near Acres Estates. One row (`g76`, a SQL statement containing `'New York'`) has `no-resolve` and
 contains the city name `New York` — that bar is arguably mis-set.
 
 ### Score distributions (locality nodes)
@@ -168,7 +172,7 @@ thresholds that do best are different numbers on different backends because the 
 
 The framing this task arrived with was that **wrong answers score higher than right ones** — FTS 25.67 vs 24.33,
 candidate 6.52 vs 6.07. On the definitions above, that inequality does not hold: correct localities score _higher_
-than garbage localities on both backends (25.63 vs 21.05; 4.47 vs 2.26).
+than garbage localities on both backends (25.63 vs 21.05 on FTS, 4.47 vs 2.26 on candidate).
 
 The sign flips when you pool tags. The distance-to-truth grades for every resolved node on the candidate backend are:
 
@@ -178,16 +182,16 @@ control wrong  >25km   n=127 mean=6.43     <- "wrong scores higher"
 ```
 
 That "wrong" bucket is 125 **region** nodes and 2 postcode nodes. A region node that resolves California correctly
-still sits 200 km from a Mill Valley address, so distance grading marks it wrong; and region rows carry the highest
+still sits 200 km from a Mill Valley address, so distance grading marks it wrong. Region rows also have the highest
 scores on that backend (5.31–7.59, vs 0.00–6.44 for localities and a flat 0.00 for postcodes). The pooled statistic
-is therefore **dominated by tag rather than by correctness** — 6.43 is close to the 6.52 in the original claim, which makes
-this the likely mechanism behind it.
+is therefore **dominated by tag rather than by correctness** — 6.43 is close to the 6.52 in the original claim. Tag composition is
+therefore the likely mechanism behind that claim.
 
 This correction does not make the score usable. It gives a second, independent reason to avoid thresholding on it:
-`resolver_score` is not comparable across tags _within_ one backend, let alone across backends. Any pooled mean over
+`resolver_score` is not comparable across tags _within_ one backend, and it is not comparable across backends either. Any pooled mean over
 this field is measuring composition.
 
-### The scale table, which is the whole argument
+### The scale table: the whole argument
 
 | backend   | locality     | region       | postcode      |
 | --------- | ------------ | ------------ | ------------- |
@@ -205,10 +209,10 @@ Same populations, same runs, other fields already present on the node:
 
 | signal                                    | FTS J        | candidate J  | note                                                       |
 | ----------------------------------------- | ------------ | ------------ | ---------------------------------------------------------- |
-| `resolver_score`                          | 0.357        | 0.573        | backend-specific scale; no shared threshold                |
+| `resolver_score`                          | 0.357        | 0.573        | backend-specific scale. No shared threshold.               |
 | **classifier span confidence**            | **0.929**    | **0.917**    | already `[0, 1]`, already on the node, backend-independent |
 | corroboration (another component present) | drops 7/14   | drops 6/12   | costs 0 on this control — but see the caveat               |
-| alternatives count                        | 1.50 vs 1.50 | 2.33 vs 0.81 | no signal on FTS; some on candidate                        |
+| alternatives count                        | 1.50 vs 1.50 | 2.33 vs 0.81 | no signal on FTS, some on candidate                        |
 
 Confidence detail (FTS leg):
 
@@ -229,7 +233,7 @@ the model is more sure about than any real address it read.
    before it means anything.
 2. Corroboration costs "0 of 149" only because every control row is a full street address. `Springfield` — a bare
    city name a user types, and a row in this very fixture — is uncorroborated by construction. A
-   corroboration-only rule would delete the bare-locality search path, which is the map-search register the product
+   corroboration-only rule would delete the bare-locality search path. That path is the map-search register the product
    is aimed at.
 3. n=14 and n=12. These are directional results on a small violation set rather than calibrated numbers.
 
@@ -237,13 +241,13 @@ Fields already on `ResolvedPlace` that no code currently reads at `resolve.ts:10
 `exactMatch` (match-quality tier — already the primary sort key elsewhere), `prominence` (bounded ~`[0, 8]`, defined
 the same way on both backends, and therefore a far better candidate for a shared threshold than `score`), `mismatch`
 (an explicit postcode/locality conflict flag), `resolutionQuality` (an explicit fallback-tier flag), and the
-top-vs-runner-up score _margin_, which is computed nowhere today even though `alternatives` is retained.
+top-vs-runner-up score _margin_. No code computes that margin today, even though `alternatives` is retained.
 
 ---
 
 ## 5. Three candidate designs for an abstention surface
 
-Presented in ascending order of cost. None of them is a recommendation; each carries what would have to be measured
+Presented in ascending order of cost. None of them is a recommendation. Each lists what would have to be measured
 to promote it.
 
 ### Design A — per-backend calibration of the existing `minWinningScore`
@@ -255,7 +259,7 @@ caller: a `scoreProfile` on the `PlaceLookup`/`ResolverBackend` interface declar
 - **Cost.** Small and contained: one optional interface field, one line in `resolve.ts:1076`, two backend
   implementations. It adds no new features and needs neither model work nor an artifact rebuild.
 - **What it buys.** At the measured optimum it drops 36% (FTS) / 83% (candidate) of `no-resolve` violations. The
-  candidate number is decent; the FTS number is not.
+  candidate number is decent. The FTS number is not.
 - **What it does not buy.** It cannot fix the tag-incomparability — `5.31` is a plausible region and an implausible
   locality on the same backend — so the profile would really need to be per-`(backend, placetype)`, and by then you
   are hand-tuning six constants against a 14-row violation set.
@@ -267,18 +271,18 @@ caller: a `scoreProfile` on the `PlaceLookup`/`ResolverBackend` interface declar
 
 ### Design B — abstain on a separate, backend-independent feature set (do not touch scoring)
 
-Leave `resolver_score` alone permanently — accept that it is ordinal-within-query — and add an explicit
+Leave `resolver_score` unchanged permanently — accept that it is ordinal-within-query — and add an explicit
 `abstention` decision computed from features that already exist and are already on a shared scale: classifier span
-confidence, `exactMatch`, corroboration (does the parse carry a house number / street / postcode / unit?),
+confidence, `exactMatch`, corroboration (does the parse contain a house number / street / postcode / unit?),
 `prominence`, `mismatch`, and the top-vs-runner-up margin. Surface the outcome as structured metadata
 (`resolution_abstained` + reason) rather than by suppressing the coordinate, so consumers choose the policy — matching
 the `postcode_city_mismatch` / `resolution_quality` idiom already in `decorateNode`, and matching what the #40
-`PipelineResult.faults` work landed today (report the degrade; do not silently change the answer).
+`PipelineResult.faults` work landed today (report the degrade, and do not silently change the answer).
 
 - **Cost.** Medium. A new decision function in `@mailwoman/resolver` plus plumbing for two features the resolver
-  cannot currently see (the classifier's span confidence is on the node, so that one is free; corroboration needs the
-  whole tree, which `resolveTree` already walks). It needs neither a model retrain nor an artifact rebuild, and it leaves the backends unchanged.
-- **What it buys.** On the measured signals, confidence alone separates at J ≈ 0.92 on both backends with a single
+  cannot currently see. The classifier's span confidence is on the node, so that one needs no plumbing. Corroboration
+  needs the whole tree, and `resolveTree` already walks it. It needs neither a model retrain nor an artifact rebuild, and it leaves the backends unchanged.
+- **What it buys.** On the measured signals, confidence without any other feature separates at J ≈ 0.92 on both backends with a single
   shared threshold — an order of magnitude better than any score threshold, and it works identically on both
   backends because the feature is upstream of them.
 - **Risk.** The confidence band on clean input is suspiciously tight, so the first shippable version of this is
@@ -295,7 +299,7 @@ the `postcode_city_mismatch` / `resolution_quality` idiom already in `decorateNo
 ### Design C — normalize the score into a shared unit
 
 Replace the raw pass-through with a calibrated, backend-declared `[0, 1]` score: each backend maps its native scale
-to a probability-like quantity (FTS via a fitted logistic on bm25 + tiers; candidate via
+to a probability-like quantity (FTS via a fitted logistic on bm25 + tiers, candidate via
 `min(1, log10(pop+1) / 9.15)` or a fitted equivalent), and `resolver_score` ships the calibrated value with the raw
 one preserved beside it as `resolver_score_raw`.
 
@@ -312,7 +316,7 @@ one preserved beside it as `resolver_score_raw`.
   survives the remap on the resolver evals. Plus the usual major-version consumer sweep.
 
 **If you only take one thing:** Designs B and C are complementary rather than alternatives, and B does not depend on C.
-Design C makes the number comparable; Design B makes the decision possible. Design C alone would produce a
+Design C makes the number comparable. Design B makes the decision possible. Design C without Design B would produce a
 well-calibrated number that still cannot abstain.
 
 ---
@@ -320,11 +324,11 @@ well-calibrated number that still cannot abstain.
 ## 6. What was not tested
 
 - **One locale.** `en-US` weights, US control set. The confidence distribution is a model property and will differ
-  per locale; the score scales are backend properties and will not.
+  per locale. The score scales are backend properties and will not.
 - **One control shape.** All 150 control rows are full US street addresses. The _control_ contains no bare localities,
   fragments, or non-Latin script (the garbage set contains some non-Latin script). The corroboration signal's zero measured cost
   is an artifact of that shape and should not be quoted without this caveat.
-- **No FTS postcode database.** The FTS leg ran against the admin database alone, so it produced no postcode nodes and
+- **No FTS postcode database.** The FTS leg ran against the admin database only, so it produced no postcode nodes and
   never exercised the coordinate-first Regime B scorer. The `[0, 1]` regime is read from source rather than measured.
 - **No calibration fitting.** Design C's mappings are sketches. No logistic was fitted and no reliability curve was drawn.
 - **No `prominence` measurement.** It is argued for on the strength of its definition (bounded, same meaning on both

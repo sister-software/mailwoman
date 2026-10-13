@@ -142,7 +142,8 @@ export function aliasKeyIndex(index: KeyIndex): void {
 }
 
 /**
- * How many tokens from `start` form one of the region's 시군구 — 2 for `수원시 장안구`, 1 for `종로구`, 0 for none.
+ * The number of tokens from `start` that form one of the region's 시군구 —
+ * 2 for `수원시 장안구`, 1 for `종로구`, 0 for none.
  *
  * Two-token first, because `수원시` by itself is also listed and taking it would
  * leave `장안구` to be read as a road.

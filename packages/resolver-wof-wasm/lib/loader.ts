@@ -30,7 +30,7 @@ export interface LoadSlimOpts {
 	 * Where the sqlite-wasm runtime can find its .wasm asset.
 	 *
 	 * Required in browser builds because the default URL is relative to the worker script.
-	 * Bundlers usually rewrite that script URL.
+	 * A bundler can rewrite that script URL.
 	 *
 	 * Most bundlers will let you
 	 * do `new URL("../node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm", import.meta.url).href`.

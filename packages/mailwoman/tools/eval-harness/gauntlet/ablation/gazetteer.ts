@@ -80,8 +80,9 @@ export function wofIDFromPlaceID(placeID: string | null): number | null {
 }
 
 /**
- * How many candidate rows one name probe reads before collapsing, sized at 2000 well above the corpus's
- * worst key (886 rows for `San José`) so no corpus name is truncated and ambiguity is not understated.
+ * The number of candidate rows one name probe reads before collapsing,
+ * sized at 2000 well above the corpus's worst key (886 rows for `San José`)
+ * so no corpus name is truncated and ambiguity is not understated.
  */
 const NAME_PROBE_LIMIT = 2000
 

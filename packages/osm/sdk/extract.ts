@@ -87,7 +87,7 @@ const ADDR_TAGS = [
 ] as const
 
 /**
- * A tag value as the driver returns it: absent, empty, or a string worth keeping.
+ * A tag value as the driver returns it: absent, empty, or a non-empty string the extract keeps.
  */
 function tagValue(properties: Record<string, unknown>, tag: string): string | null {
 	const value = properties[tag]

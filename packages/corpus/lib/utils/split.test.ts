@@ -373,7 +373,7 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(deRow("de-bautzen", "02625"))).not.toBe("train")
 
 		// Other Sachsen postcodes stay in train.
-		// The corpus contains many rows in this group.
+		// The corpus contains more than one row in this group.
 		expect(splitForRow(deRow("de-dresden", "01067"))).toBe("train")
 		expect(splitForRow(deRow("de-leipzig", "04103"))).toBe("train")
 		expect(splitForRow(deRow("de-chemnitz", "09126"))).toBe("train")

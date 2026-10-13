@@ -4,7 +4,7 @@
 package. Implemented 2026-09-07 (PR #2192).
 **Builds on:** the platform-split rule that put `workerd`/`browser` conditions beside `node` in `@mailwoman/core`
 for the license worker (`packages/core/lib/worker-bundle.integration.test.ts` is the proof shape), and the
-`browser` condition `@mailwoman/neural` already carries on `./onnx-runner`.
+`browser` condition `@mailwoman/neural` already declares on `./onnx-runner`.
 **Precedes:** the Earth app (`2026-09-06-earth-app-design.md`) and the planetary app
 (`2026-09-06-planetary-app-design.md`). Both consume the packages this design fixes, under a second bundler.
 
@@ -18,7 +18,7 @@ Docusaurus plugin, `docs/plugins/demo-assets/`, whose `webpack-policy.ts` rewrit
 | ---------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------- |
 | `node:` builtins stubbed with a shim (`fs`, `path`, `worker_threads`, `stream/web`, `fs/promises`)                           | 5     | A `@mailwoman/core` subpath the client reaches imports a Node builtin.     |
 | `node:` builtins set to `false` (`module`, `url`, `crypto`, `stream`, `buffer`, `util`, `perf_hooks`, `os`, `child_process`) | 9     | The same, on subpaths whose builtin use is dead on the browser path.       |
-| Aliases (`@mailwoman/neural/onnx-runner` and `#onnx-runner` to the browser runner; two `*-excel-file/node` shims)            | 4     | The package's `exports` map does not answer the browser bundler by itself. |
+| Aliases (`@mailwoman/neural/onnx-runner` and `#onnx-runner` to the browser runner, and two `*-excel-file/node` shims)        | 4     | The package's `exports` map does not answer the browser bundler by itself. |
 
 Each of the eighteen entries is a packaging defect in the package it refers to, and none of them is
 visible to that package's own tests. The Earth app moves the same runtime under Vite, and without this
@@ -40,8 +40,8 @@ license worker, to the client.
 half, the browser half is a new file under the same subpath, selected by condition. No file re-exports
 the old shape.
 
-**Progress is measured by the entry count.** The work is done when `webpack-policy.ts` carries zero
-stubs and zero aliases for `@mailwoman/*`, and the Earth `vite.config.ts` carries no `resolve.alias` for
+**Progress is measured by the entry count.** The work is done when `webpack-policy.ts` contains zero
+stubs and zero aliases for `@mailwoman/*`, and the Earth `vite.config.ts` contains no `resolve.alias` for
 `@mailwoman/*`. Each removed entry is one commit, and the commit message states the subpath it fixed.
 
 ## Design
@@ -75,7 +75,7 @@ subpath that imported it is fixed under fix 1 or 3.
 ### The `#` imports map
 
 The `imports` map takes conditions the same way `exports` does, and `@mailwoman/neural` already declares
-`"browser"` on `#onnx-runner`. The docs alias for it applies only to the SSR bundle, which resolves the
+`"browser"` on `#onnx-runner`. The docs alias for it applies only to the SSR bundle. That bundle resolves the
 `node` condition and would otherwise bundle `onnxruntime-node`. That is a Docusaurus property and is out
 of scope here. The `imports` entry that did need a condition is `#classifier/loader`. esbuild and Vite
 follow the classifier's lazy `import("#classifier/loader")` regardless of `webpackIgnore`, so under
@@ -87,8 +87,8 @@ Every bundle walk lives in one place: the `bundle-graph` check in `@mailwoman/re
 (`packages/repo-health/lib/checks/bundle-graph.ts`), which `yarn health` runs in the CI static leg after
 `yarn compile`. The check is a table of rows. Each row is an entry specifier with the platform and
 conditions a consumer bundles it under. `esbuild` bundles the row, and the check reads the metafile for
-a builtin on a static edge, a dynamic builtin import that no row lists, and files the row says the bundle
-must or must not carry. The same table now holds the two license-key rows under
+a builtin on a static edge, a dynamic builtin import that no row lists, and files the row requires the bundle
+to include or to omit. The same table now holds the two license-key rows under
 `["workerd", "worker", "browser"]` that `packages/core/lib/worker-bundle.integration.test.ts` held, and
 the classifier row that `packages/neural/lib/browser-graph.test.ts` held. Both files are gone, so
 the repository has one esbuild walk rather than three. `packages/neural/lib/web/browser-slo.integration.test.ts`
@@ -99,7 +99,7 @@ that `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-
 ## Definition of done
 
 - The inventory table exists in the PR that opens the work.
-- `docs/plugins/demo-assets/webpack-policy.ts` carries zero `node:` stubs, zero fallbacks, and zero
+- `docs/plugins/demo-assets/webpack-policy.ts` contains zero `node:` stubs, zero fallbacks, and zero
   client-side aliases for `@mailwoman/*`. The `*-excel-file/node` shims were the XLSX reader on the
   `core/objects` chain and were removed with it. The SSR-only `onnx-runner` alias is a Docusaurus
   property and is removed with the geocoder page in the Earth design.

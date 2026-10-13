@@ -7,11 +7,11 @@ confidence implementation fits classifying failures into a discrete, human-triag
 diagnosis vocabulary?
 
 Source read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (calibrated,
-retrieval-augmented sequence labeler; channels are soft features, never overrides) and
+retrieval-augmented sequence labeler with channels as soft features and never overrides) and
 `packages/neural/lib/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
 street-type channels, each `features[][]` + `confidence[]`, fed alongside `input_ids`; the
 ProductionScorer already asserts _which_ channels were fed). In this memo's terms, the Weimar case
-went as follows. Every channel row was zero, and the token-embedding pathway alone produced the
+went as follows. Every channel row was zero, and only the token-embedding pathway produced the
 (correct) labels. The resolver then chose Weimar, Texas. This is a _cross-boundary contradiction_
 that the current implementation cannot detect.
 
@@ -25,7 +25,7 @@ confidence unless hedged). Work from 2025 onward is flagged inline.
 ### 1.1 Activation patching / causal tracing
 
 **What it is.** Run the model twice — once on the real input, once on a corrupted or counterfactual
-input — and copy ("patch") a chosen internal activation from one run into the other; the change in
+input — and copy ("patch") a chosen internal activation from one run into the other. The change in
 output logits is the _causal_ contribution of that activation. Introduced at scale as "causal
 tracing" in ROME — Meng et al. 2022, _Locating and Editing Factual Associations in GPT_ [S] — which
 found mid-layer MLPs at the subject token mediate factual recall. Path patching refines this to
@@ -43,7 +43,7 @@ for localizing LLM behavior to components_ [S]; note also _When Attribution Patc
 1 MLP per layer over ~32 SentencePiece pieces, an **exhaustive** sweep is ≈ 6 × 9 × 32 ≈ 1,700
 patch sites per input. That is a couple of GPU batches: well under a second per case, or seconds
 on ONNX CPU. Exhaustive _path_ patching over all component pairs takes a few hundred thousand
-forward passes, which is minutes. A full causal trace of every row of the 558-row dev board would
+forward passes, or minutes. A full causal trace of every row of the 558-row dev board would
 take under an hour on the lab GPU, so it can run as a nightly board metric. We do not need AtP
 approximations, although they cost only one backward pass because we own the PyTorch side.
 
@@ -56,8 +56,8 @@ side _would_ have produced had it known the place, and measure the logit/label d
 is the direct "evidence sensitivity" measurement.
 
 **Pitfalls.** Choice of corruption distribution changes conclusions (Gaussian-noise vs.
-counterfactual-token patching disagree; discussed across the patching literature [M]). Such interventions
-finds _sufficient mediators_ rather than unique stories; backup/redundant circuits can hide behind each
+counterfactual-token patching disagree, as the patching literature discusses [M]). Such interventions
+find _sufficient mediators_ rather than unique causal accounts. Backup/redundant circuits can hide behind each
 other (the hydra effect [M]). For BIO tagging, patch metrics should be per-token label logit
 deltas rather than sequence loss, or Viterbi coupling smears the localization.
 
@@ -70,23 +70,23 @@ decision.
 ### 1.2 Integrated gradients, occlusion, and simpler attribution
 
 **What they are.** Integrated Gradients (Sundararajan, Taly & Yan 2017, _Axiomatic Attribution for
-Deep Networks_ [M]) integrates input gradients along a baseline→input path; occlusion (Zeiler &
-Fergus 2014 [M]) ablates input pieces and measures output change; DeepLIFT (Shrikumar et al. 2017
+Deep Networks_ [M]) integrates input gradients along a baseline→input path. Occlusion (Zeiler &
+Fergus 2014 [M]) ablates input pieces and measures output change. DeepLIFT (Shrikumar et al. 2017
 [M]) and SHAP (Lundberg & Lee 2017 [M]) are relatives. All are input-attribution: they answer
 "which input features mattered," not "which internal computation."
 
-**Cost/feasibility.** Trivial. IG is ~50 forwards+backwards per token decision on the PyTorch side;
-occlusion of _channels_ (not tokens) is one extra ONNX forward per channel group and works in
-production, browser included. Because our channels are _named, human-meaningful input columns_, IG
+**Cost/feasibility.** Trivial. IG is ~50 forwards+backwards per token decision on the PyTorch side.
+Occlusion of _channels_ (not tokens) is one extra ONNX forward per channel group and works in
+production, browser included. Because our channels are _labeled, human-meaningful input columns_, IG
 over the channel inputs is far more meaningful than IG over token embeddings is for an LLM. The
 concept bottleneck is at the input, so input attribution _is_ concept attribution.
 
 **What it provides.** The cheapest deployable "evidence-silent" detector: per decision, the share of
-attribution mass on channel inputs vs. token embeddings. Report it per parse; alarm when a
-high-confidence parse carries ~zero channel share. Note the degenerate case: when channels are
-all-zero, occlusion is a no-op and IG attribution to them is trivially ~0. The flag can be
+attribution mass on channel inputs vs. token embeddings. Report it per parse, and alarm when a
+high-confidence parse has ~zero channel share. Note the degenerate case: when channels are
+all-zero, occlusion is a no-op and IG attribution to them is ~0 by construction. The flag can be
 computed _without any attribution at all_ as an input predicate ("all channel confidences zero"),
-which soft-features.ts can emit today. Attribution is worth its cost on the _mixed_ cases where
+which soft-features.ts can emit today. Attribution pays for its cost on the _mixed_ cases where
 channels fired but may have been ignored.
 
 **Pitfalls.** IG's baseline choice matters (zero-embedding baselines are out-of-manifold [M]);
@@ -102,27 +102,27 @@ one-line input predicate produces the same flag without computing a gradient.
 Jain & Wallace 2019, _Attention is not Explanation_ [S]: attention distributions correlate poorly
 with gradient-based importance and admit adversarial alternative distributions yielding the same
 predictions. Wiegreffe & Pinter 2019, _Attention is not not Explanation_ [S]: the rebuttal —
-existence of an alternative distribution constructed ad hoc doesn't prove unfaithfulness; tests
-must be model-consistent — but even the rebuttal claims only that attention _may sometimes_ carry
+existence of an alternative distribution constructed ad hoc doesn't prove unfaithfulness, and tests
+must be model-consistent — but even the rebuttal claims only that attention _may sometimes_ contain
 explanatory signal rather than that it's faithful. Serrano & Smith 2019, _Is Attention Interpretable?_
 [M], and the survey Bibal et al. 2022, _Is Attention Explanation? An Introduction to the Debate_
 (ACL) [S] round out the picture. Practical rule for us: attention maps are a debugging _display_,
-never a faithfulness _claim_; anything we assert about "the model looked at X" must come from
+never a faithfulness _claim_. Anything we assert about "the model looked at X" must come from
 patching or channel interventions. **Weimar verdict:** some head would show "Thüringen" attending
-to "Weimar" and the comma, and the debate literature says that licenses no conclusion about why
+to "Weimar" and the comma, and the debate literature holds that this licenses no conclusion about why
 the labels came out right.
 
 ### 1.4 Cheap extras that are only possible because the model is tiny
 
-- **Logit lens / tuned lens** (nostalgebraist 2020; Belrose et al. 2023 [M]): project each layer's
-  residual stream through the classifier head; for a 6-layer encoder this yields a per-token
+- **Logit lens / tuned lens** (nostalgebraist 2020, Belrose et al. 2023 [M]): project each layer's
+  residual stream through the classifier head. For a 6-layer encoder this yields a per-token
   "decision depth" — the layer at which the BIO label crystallizes — for the cost of five extra
   matmuls. Early crystallization + high confidence + silent channels is a distinctive signature.
 - **Linear probes** (Alain & Bengio 2016 [M]): train a logistic probe on the residual stream for
   "country of this address" — recovering the model's _implicit_ country belief even when the
   country channel was silent. One matmul at inference. In the Weimar case the probe would have
   read "DE-ish" off the hidden states while the resolver committed to US — a contradiction
-  detector spanning the model/resolver boundary, which is where the actual failure lived.
+  detector spanning the model/resolver boundary. The actual failure lived at that boundary.
 - **Exact interchange interventions as _input_ experiments**: because the interpretable concepts
   are input columns, swapping channel values between paired inputs is a causal experiment needing
   no model surgery at all. A luxury LLM interpretability does not have.
@@ -132,9 +132,8 @@ the labels came out right.
 ## 2. Sparse autoencoders (SAEs)
 
 **What they are.** Dictionary-learning decompositions of activations into overcomplete sparse
-"monosemantic" features: Anthropic's line — Bricken et al. 2023, _Towards Monosemanticity:
-<!-- vale off -->Decomposing Language Models With Dictionary Learning<!-- vale on -->_ [S]; Templeton et al. 2024, _Scaling
-
+"monosemantic" features: Anthropic's line — Bricken et al. 2023,
+_Towards Monosemanticity: Decomposing Language Models With Dictionary Learning_ [S]; Templeton et al. 2024, _Scaling
 Monosemanticity_ [M] — plus architecture successors: TopK SAEs (Gao et al. 2024, _Scaling and
 evaluating sparse autoencoders_, OpenAI [S]), Conditional and JumpReLU SAEs (Rajamanoharan et al. 2024,
 DeepMind [M]), Gemma Scope's released SAE suites (Lieberum et al. 2024 [M]), crosscoders (Anthropic
@@ -156,12 +155,12 @@ library (Gemma-2-2B / Llama-3.2-1B / Qwen3-4B) [S].
   Canonical Units of Analysis_ (2025) [S, title from aggregate — moderate confidence on authors].
 - Related-but-different: OpenAI Nov 2025, _Weight-sparse transformers have interpretable circuits_
   (arXiv 2511.13653) + the Dec 2025 `circuit-sparsity` release [S] — train the _model_ sparse
-  instead of decomposing a dense one; circuits ~16× smaller at matched loss. This is relevant to our
+  instead of decomposing a dense one, with circuits ~16× smaller at matched loss. This is relevant to our
   only as a _retraining_ option (we own training) rather than as post-hoc analysis.
 
 **Cost/feasibility at our scale.** At our scale, training cost is a non-issue: d_model of a few hundred, a
 dictionary of 4–16k features, activations harvested over the corpus — an SAE per layer trains in
-well under an hour on the lab GPU; the full stack in an evening, Modal not required. The real cost
+well under an hour on the lab GPU, and the full stack in an evening, Modal not required. The real cost
 is the _human_ loop: naming and validating thousands of features, building tooling to browse them,
 and redoing that work after every retrain. Mailwoman retrains constantly on a ~1-hour iteration
 loop, and SAE features do not transfer across retrains. The seed-instability results above make
@@ -169,7 +168,7 @@ this worse.
 
 **What it provides compared with a tagger's alternatives, and why it is more than we need.** For an
 LLM, SAEs are useful because you _don't know what the concepts are_. Our situation is the reverse. The interesting concepts
-(postcode-ness, gazetteer membership, country, street-type) are already named input columns, and
+(postcode-ness, gazetteer membership, country, street-type) are already labeled input columns, and
 the label vocabulary is 33 BIO tags. For "does the model internally represent German-place
 morphology?" a supervised linear probe answers in minutes and — per the 2025 results — likely
 better. The one actual SAE use-case for us: an _exploratory inventory_ of what grammar features a
@@ -179,11 +178,11 @@ outputs get confirmed by probes/patching. Sparse feature circuits (Marks et al. 
 the follow-on if that inventory proves rich.
 
 **Pitfalls.** Everything in the 2025 correction above, plus: reconstruction error means SAE-based
-stories are about a _approximation_ of the model; features found on our small corpus may be
+stories are about an _approximation_ of the model. Features found on our small corpus may be
 dataset artifacts ("fake features" — FaithfulSAE 2025 [S]).
 
 **Weimar verdict.** An SAE would likely have surfaced a "German place morphology" feature (umlaut,
--ingen/-üringen pieces, Länder names) firing hard on "Thüringen" — evidence the model carries an
+-ingen/-üringen pieces, Länder names) firing hard on "Thüringen" — evidence the model has an
 internal country detector the resolver never consulted — but a supervised country probe finds the
 same fact for a thousandth of the effort.
 
@@ -199,7 +198,7 @@ relevant literature is not "how to build a bottleneck" but "how to _measure and 
 one that leaks."
 
 **Concept bottleneck models.** Koh et al. 2020, _Concept Bottleneck Models_ (ICML) [S/M]: predict
-interpretable concepts, then predict the label _only_ from concepts; supports test-time concept
+interpretable concepts, then predict the label _only_ from concepts. The design supports test-time concept
 intervention. The leakage literature is the required part for us: Mahinpei et al. 2021,
 _Promises and Pitfalls of Black-Box Concept Learning Models_ [M]; Margeloiu et al. 2021, _Do
 Concept Bottleneck Models Learn as Intended?_ [M]; Havasi et al. 2022, _Addressing Leakage in
@@ -214,18 +213,17 @@ the gazetteer does not know. **The Weimar case shows that we want the leak.** A 
 garbage. The bypass produced the correct parse. The failure happened downstream, so the right
 implementation _flags_ bypass decisions instead of preventing them.
 
-**Right for the right reasons.** Ross, Hughes & Doshi-Velez 2017, _Right for the Right Reasons:
-<!-- vale off -->Training Differentiable Models by Constraining their Explanations<!-- vale on -->_ (IJCAI) [S]: penalize input
-
+**Right for the right reasons.** Ross, Hughes & Doshi-Velez 2017,
+_Right for the Right Reasons: Training Differentiable Models by Constraining their Explanations_ (IJCAI) [S]: penalize input
 gradients on features the model _shouldn't_ use (or reward gradients on ones it should). Directly
 implementable in corpus-python as a `∂logits/∂channel` regularizer — but note the sign: our
-problem is under-reliance on channels only when channels are _present and correct_; when they're
+problem is under-reliance on channels only when channels are _present and correct_. When they're
 silent, token-embedding reliance is desired behavior. A blanket penalty is the wrong change.
 
 **Interchange-intervention training / causal alignment — the strongest fit.** Geiger et al. 2022,
 _Inducing Causal Structure for Interpretable Neural Networks_ (IIT, ICML) [S]; Geiger et al. 2024,
 _Finding Alignments Between Interpretable Causal Variables and Distributed Neural Representations_
-(DAS) [S]; Boundless DAS (Wu et al. 2023) [S]. These _train_ the model so that named causal
+(DAS) [S]; Boundless DAS (Wu et al. 2023) [S]. These _train_ the model so that specified causal
 variables (e.g., "country", "this-span-is-a-locality") live in designated activation subspaces and
 respond correctly to interventions. Since we own the PyTorch training loop and a retrain costs
 ~1 hour, IIT is affordable here in a way it is not for LLM labs. An interchange loss can tie a
@@ -238,13 +236,11 @@ measurement. Feed paired inputs that differ only in their channels (the same tok
 different simulated "world"). The output delta is the causal channel reliance. It can be measured
 per tag, per locale, and per checkpoint as a standing board metric. This is an input-level
 interchange intervention and requires no changes to the model. Related
-framings: permutation-style model reliance (Fisher, Rudin & Dominici 2019, _All Models are Wrong,
-but several are Useful_, JMLR [M]); shortcut-learning auditing (Geirhos et al. 2020, _Shortcut
-<!-- vale off -->Learning in Deep Neural Networks<!-- vale on -->_, Nature MI [M]); rationale-faithfulness metrics —
-
+framings: permutation-style model reliance (Fisher, Rudin & Dominici 2019, JMLR 20(177) [M]);
+shortcut-learning auditing (Geirhos et al. 2020, _Shortcut Learning in Deep Neural Networks_, Nature MI [M]); rationale-faithfulness metrics —
 comprehensiveness/sufficiency from ERASER (DeYoung et al. 2020 [S]; rationale extraction lineage
 Lei et al. 2016, _Rationalizing Neural Predictions_ [S]) transfer directly: "sufficiency of the
-channels" = performance parsing from channels alone; "comprehensiveness" = performance drop with
+channels" = performance parsing from channels only, "comprehensiveness" = performance drop with
 channels ablated. For validating whatever attribution method we adopt, ground-truth-known
 evaluation exists: Tracr (Lindner et al. 2023 [S]) and InterpBench (Gupta et al. 2024, semi-
 synthetic transformers with known circuits [S]; the MIB benchmark, 2025 [S, hedged]) — and our own
@@ -252,7 +248,7 @@ synthetic transformers with known circuits [S]; the MIB benchmark, 2025 [S, hedg
 is derivable only from a channel, so any faithful method must attribute to it.
 
 **Pitfalls.** IIT constrains capacity and could cost tier-1 accuracy. The D-rule forbids a
-default-on mechanism with a known tier-1 regression, so IIT is a conditional experiment. Reliance metrics averaged over a board hide per-locale collapse; compute them per tier.
+default-on mechanism with a known tier-1 regression, so IIT is a conditional experiment. Reliance metrics averaged over a board hide per-locale collapse, so compute them per tier.
 Leakage literature warns that intervention on a leaky bottleneck can _hurt_ (leakage poisoning,
 2025 [S]) — relevant if we ever add "correct the channel and re-run" tooling.
 
@@ -272,10 +268,10 @@ discrete _diagnosis_ — an error shape like "evidence-silent parse", "resolver 
 diagnosis vocabulary itself evolves as new shapes are discovered.
 
 **Calibration.** Guo et al. 2017, _On Calibration of Modern Neural Networks_ (ICML) [S]:
-temperature scaling — one parameter fit on held-out data — fixes most overconfidence; ECE is the
-standard metric (use adaptive binning — Nixon and colleagues' 2019 paper, _<!-- vale off -->Measuring Calibration in Deep
-Learning<!-- vale on -->_ [M] — because a triage ledger is small and imbalanced). Temperature scaling never changes
-the argmax; when per-class miscalibration differs (it will, with rare diagnoses), Dirichlet
+temperature scaling — one parameter fit on held-out data — fixes most overconfidence, and ECE is the
+standard metric (use adaptive binning — Nixon and colleagues' 2019 paper,
+_Measuring Calibration in Deep Learning_ [M] — because a triage ledger is small and imbalanced). Temperature scaling never changes
+the argmax. When per-class miscalibration differs (it will, with rare diagnoses), Dirichlet
 calibration (Kull et al. 2019, _Beyond temperature scaling_, NeurIPS) [S] is the multiclass
 upgrade. Minderer et al. 2021, _Revisiting the Calibration of Modern Neural Networks_ [S] for the
 modern picture. Mailwoman already runs isotonic calibration (Zadrozny & Elkan 2002 [M]) on parse
@@ -284,7 +280,7 @@ refit on a rolling window because triage standards drift.
 
 **Selective prediction (abstention).** The classical stack: Chow 1970 (reject option) [M];
 Geifman & El-Yaniv 2017, _Selective Classification for Deep Neural Networks_ [M] — pick an
-operating point on the risk–coverage curve; SelectiveNet 2019 [M] trains the abstainer jointly.
+operating point on the risk–coverage curve, and SelectiveNet 2019 [M] trains the abstainer jointly.
 When the abstention target is a human triager with limited attention, the right framing is
 learning-to-defer: Mozannar & Sontag 2020, _Consistent Estimators for Learning to Defer to an
 Expert_ (ICML) [S]; multi-expert/two-stage variants Mao et al. 2023 [S]; cost-sensitive deferral
@@ -296,7 +292,7 @@ Introduction to Conformal Prediction_ [M]) turns any score into prediction _sets
 sample coverage guarantees, using only a calibration split of the ledger. For diagnosis, sets are
 the direct output shape: "this failure is `{resolver-country-flip, evidence-silent}` at 90%" is more
 useful to a triager than a single guess, and **abstention falls out naturally** (defer when the set
-is large; alarm when the set is empty at the working level). Two specifics for our shape:
+is large, and alarm when the set is empty at the working level). Two specifics for our shape:
 
 - **Class-conditional (Mondrian) coverage.** Marginal conformal under-covers rare classes —
   measured collapses to near-0% minority coverage in a 2026 multi-domain benchmark, with Mondrian
@@ -311,7 +307,7 @@ is large; alarm when the set is empty at the working level). Two specifics for o
 
 **The evolving vocabulary.** No off-the-shelf standard exists, so this section assembles practice from adjacent work. I found no
 literature that directly treats "calibrated posterior over a _changing_ discrete diagnosis
-vocabulary" as a solved problem [S — searched; absence noted rather than proven]. The assembled recipe
+vocabulary" as a solved problem [S — searched, absence noted rather than proven]. The assembled recipe
 from adjacent literatures:
 
 1. **An explicit `novel/other` outcome** backed by conformal novelty p-values — test "does this
@@ -320,10 +316,10 @@ from adjacent literatures:
    [S]); lineage: open-world recognition, Bendale & Boult 2015 (CVPR) [S] / OpenMax 2016 [M].
    A case that conforms to no known shape is the trigger to _mint a class_ rather than a classification.
 2. **Mondrian per-class calibration makes vocabulary growth cheap**: adding diagnosis class K+1
-   requires only K+1's own calibration rows; existing classes' guarantees are untouched. Marginal
+   requires only K+1's own calibration rows, and existing classes' guarantees are untouched. Marginal
    calibration would need a global refit and silently shifts everyone's coverage.
 3. **Exchangeability honesty**: a ledger triaged over months by a human whose taxonomy is drifting
-   is not exchangeable; use weighted/rolling-window conformal (_Conformal Prediction Beyond
+   is not exchangeable. Use weighted/rolling-window conformal (_Conformal Prediction Beyond
    Exchangeability_, Barber et al. 2023 [M]; label-shift variant Podkopaev & Ramdas 2021 [M]) and
    version the vocabulary the way the eval ledger already versions scores.
 4. Alternative posterior implementation — evidential deep learning (Sensoy et al. 2018, _Evidential
@@ -331,9 +327,9 @@ from adjacent literatures:
    _Prior and Posterior Networks_ [S]) gives a Dirichlet over classes whose total evidence is an
    abstention signal in one head. This option is tempting, but its epistemic-uncertainty claims have known
    theoretical soft spots [M — critique line c. 2022–2024, moderate confidence], and it needs the
-   classifier retrained under a special loss; conformal wraps _any_ scorer, ledger-sized data is
+   classifier retrained under a special loss. Conformal wraps _any_ scorer, ledger-sized data is
    its native regime, and the interval calculation remains valid when the classifier is a heuristic. Recommendation:
-   conformal + Dirichlet/temperature calibration; skip EDL.
+   conformal + Dirichlet/temperature calibration, and skip EDL.
 
 **Weimar verdict.** Parse-level calibration would rightly _not_ have flagged it (the parse was
 correct and deserved its confidence); the alarm belongs in the diagnosis layer — "evidence-silent
@@ -345,22 +341,22 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 
 ## 5. Weimar case, one line per method (consolidated)
 
-| Method                       | What it would have said about "Weimar, Thüringen"                                                                                                    |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Input predicate (no interp)  | "All channel confidences zero, parse confidence high" — the flag, computable today in `soft-features.ts` output.                                     |
-| Occlusion / channel ablation | No effect — ablating already-zero channels is a no-op; must run the counterfactual direction (inject plausible channel values) instead.              |
-| Integrated gradients         | ~All attribution mass on token embeddings, ~none on channels — automatic evidence-silent alarm, at gradient cost.                                    |
-| Attention inspection         | A head attends Thüringen→Weimar/comma; per Jain & Wallace vs. Wiegreffe & Pinter, this licenses no faithfulness claim.                               |
-| Activation patching          | Locality/region decisions localize to the embedding→mid-layer pathway with zero causal channel contribution — grammar-only decision, proven.         |
-| Path patching / circuits     | Names the specific embedding→MLP→classifier path (a "German morphology" subcircuit) carrying the region label.                                       |
-| Logit lens / decision depth  | Labels crystallize in early layers — easy-grammar signature; early + confident + channel-silent = the alarm triple.                                  |
-| Linear country probe         | Hidden states read "DE" while the resolver chose US — the cross-boundary contradiction that _was_ the actual failure.                                |
-| SAE dictionary               | Would likely surface a German-place-morphology feature firing on "Thüringen" — same fact as the probe, at ~1000× the effort.                         |
-| Hard concept bottleneck      | Would have been forced to abstain (zero concept input) — and been wrong, since the parse was right; shows why the bypass is a feature at parse time. |
-| RRR gradient penalty         | Would push reliance toward channels — the wrong change here; the model's grammar-only decision was correct.                                          |
-| IIT/DAS country register     | A trained country subspace would have output "DE" as a first-class readable value for the resolver to check against.                                 |
-| Calibration (parse level)    | No flag — correctly confident; calibration is not an error-shape detector.                                                                           |
-| Mondrian conformal diagnosis | Classifies the case into "evidence-silent + resolver country flip" with per-class coverage, or emits a novelty p-value before that class exists.     |
+| Method                       | What it would have said about "Weimar, Thüringen"                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Input predicate (no interp)  | "All channel confidences zero, parse confidence high" — the flag, computable today in `soft-features.ts` output.                                        |
+| Occlusion / channel ablation | No effect — ablating already-zero channels is a no-op. It must run the counterfactual direction (inject plausible channel values) instead.              |
+| Integrated gradients         | ~All attribution mass on token embeddings, ~none on channels — automatic evidence-silent alarm, at gradient cost.                                       |
+| Attention inspection         | A head attends Thüringen→Weimar/comma. Per Jain & Wallace vs. Wiegreffe & Pinter, this licenses no faithfulness claim.                                  |
+| Activation patching          | Locality/region decisions localize to the embedding→mid-layer pathway with zero causal channel contribution — grammar-only decision, proven.            |
+| Path patching / circuits     | Names the specific embedding→MLP→classifier path (a "German morphology" subcircuit) carrying the region label.                                          |
+| Logit lens / decision depth  | Labels crystallize in early layers — easy-grammar signature. Early + confident + channel-silent = the alarm triple.                                     |
+| Linear country probe         | Hidden states read "DE" while the resolver chose US — the cross-boundary contradiction that _was_ the actual failure.                                   |
+| SAE dictionary               | Would likely surface a German-place-morphology feature firing on "Thüringen" — same fact as the probe, at ~1000× the effort.                            |
+| Hard concept bottleneck      | Would have been forced to abstain (zero concept input) — and been wrong, since the parse was right. It shows why the bypass is a feature at parse time. |
+| RRR gradient penalty         | Would push reliance toward channels — the wrong change here. The model's grammar-only decision was correct.                                             |
+| IIT/DAS country register     | A trained country subspace would have output "DE" as a first-class readable value for the resolver to check against.                                    |
+| Calibration (parse level)    | No flag — correctly confident. Calibration is not an error-shape detector.                                                                              |
+| Mondrian conformal diagnosis | Classifies the case into "evidence-silent + resolver country flip" with per-class coverage, or emits a novelty p-value before that class exists.        |
 
 ---
 
@@ -368,25 +364,25 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 
 1. **Ship the predicate** (days, CPU): "channels silent + confidence high" flag from the existing
    `SoftFeatures` confidences, surfaced through the scorer/ProductionScorer interface and into the
-   resolver as a caution bit. Zero model work; would have flagged Weimar.
+   resolver as a caution bit. It needs zero model work and would have flagged Weimar.
 2. **Country probe + decision depth** (a weekend, lab GPU): linear probe on the residual stream
-   for implied country; logit-lens depth per token. Both are matmul-cheap at inference and give
+   for implied country, and logit-lens depth per token. Both are matmul-cheap at inference and give
    the model/resolver contradiction detector. Requires exporting hidden states from the ONNX
    graph (or a second output head at export time — we own the export).
 3. **Channel-reliance board metric** (a week): paired-input interchange interventions (same
-   string, injected vs. silent channels) over the dev board; per-tag, per-locale reliance shares;
+   string, injected vs. silent channels) over the dev board, per-tag and per-locale reliance shares, and
    ERASER-style sufficiency/comprehensiveness of channels as two numbers per checkpoint. This is
    the standing "feature-reliance audit" and catches reliance drift across retrains.
 4. **Activation-patch forensics tool** (a week, lab GPU): exhaustive activation-patch sweep as an on-demand
    `mwdev`-style tool for any board row — the "WHERE did this decision form" answer. Exhaustive is
-   affordable _only because_ the model is 4–6 layers; no AtP approximation needed.
+   affordable _only because_ the model is 4–6 layers, so no AtP approximation is needed.
 5. **Optional, conditional experiments**: IIT country register (one ~1-hour retrain + D-rule check); a
    single exploratory SAE run for feature inventory (evening of GPU) — deprioritized per the 2025
    negative-results literature, probes first.
 6. **Diagnosis confidence**: Mondrian split-conformal over the triage ledger with a conformal-
    novelty `other` bucket, temperature/Dirichlet-calibrated scores underneath, rolling-window
    recalibration, risk–coverage curve to pick the abstention operating point. Ledger discipline:
-   ~20–40 rows per class before trusting that class's guarantee; version the vocabulary.
+   ~20–40 rows per class before trusting that class's guarantee, and version the vocabulary.
 
 **Verification status**: all bracketed [S] items were confirmed by web search this session
 (2026-08); [M] items are from memory — high confidence on the canonical pre-2024 papers (IG,

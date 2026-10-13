@@ -51,8 +51,8 @@ function splitMatcher(encyclopedic?: number): FSTMatcher {
 }
 
 /**
- * Rewrite a v5 buffer's place table at the v4 stride (no encyclopedic float) and stamp the header
- * back to 4, the only way to produce a genuine pre-split artifact now that the serializer writes v5.
+ * Rewrite a v5 buffer's place table at the v4 stride (no encyclopedic float) and stamp the header back
+ * to 4, the only way to produce a byte-accurate pre-split artifact now that the serializer writes v5.
  */
 function downgradeToV4(v5: Buffer): Buffer {
 	const headerSize = 32

@@ -62,7 +62,7 @@ export const FOREIGN_ROOTS: Record<string, string> = {
 }
 
 /**
- * The `layer_manifest` columns worth reporting.
+ * The `layer_manifest` columns the inventory reports.
  *
  * `build_cmd` is the one that matters: it is the difference between an artifact
  * that documents its own reproduction and one that does not.
@@ -320,7 +320,7 @@ export function inventorySentence(report: InventoryReport): string {
  * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
  *
  * Both artifacts pass every "has a manifest" check and neither can be rebuilt from its recorded contents.
- * So presence of a manifest is not the property worth counting on its own.
+ * So the inventory does not count the presence of a manifest as a property on its own.
  *
  * The check is deliberately shallow: any token that looks like a path
  * (contains `/` and no shell metacharacter) must resolve under the repo root.

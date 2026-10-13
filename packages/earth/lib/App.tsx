@@ -79,7 +79,8 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			// `initialQuery`; a cold visit still pre-fills the demo address without resolving it.
 			initialQuery={query}
 			presets={PRESETS}
-			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
+			// `/debug` exists to show the model's intermediate outputs, so it opens
+			// the disclosure the default view collapses.
 			developer={route === Route.Debug}
 			onSubmitQuery={writeQueryToURL}
 		/>

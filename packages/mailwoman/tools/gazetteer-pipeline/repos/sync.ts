@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Clone and refresh the WOF repos root through {@link resolveWOFRepoOrigin}, so a machine cannot
- *   quietly rebuild from upstream over a correction we depend on.
+ *   rebuild from upstream without a warning over a correction we depend on.
  *
  *   Split into a pure planner and an executor, so every refusal can be tested without a network or a
  *   clone.
@@ -33,7 +33,7 @@ export const SyncAction = {
 	 */
 	Clone: "clone",
 	/**
-	 * Behind its remote and cleanly advanceable.
+	 * Behind its remote, and a fast-forward reaches the remote's tip.
 	 */
 	FastForward: "fast-forward",
 	/**

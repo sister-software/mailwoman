@@ -18,7 +18,7 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Samples a bucket needs before its flip rate is worth reporting rather than noise.
+ * Samples a bucket needs before the census reports its flip rate as a measurement rather than noise.
  */
 const MIN_REPORTABLE_SAMPLES = 4
 

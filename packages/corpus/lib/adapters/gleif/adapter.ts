@@ -14,12 +14,11 @@
  *
  * ## License
  *
- * GLEIF's LEI Data Terms of Use, at {@linkcode GLEIF_LICENSE_URL}, read on 2026-10-03, state: "The
- * data available through the Access Service are provided under the CC0 licence, see CC0 1.0
- * Universal (CC0 1.0)." The Access Service is defined there as the facility that lets users "look-up
- * and/or download individual LEIs and/or related LE-RD and/or the entire set or a subset of LEIs",
- * which is the golden copy. GLEIF's open-data page states the same: "The data on GLEIF's website is
- * provided under a Creative Commons (CC0) license." The same terms ask a user not to create the
+ * GLEIF's LEI Data Terms of Use, at {@linkcode GLEIF_LICENSE_URL}, read on 2026-10-03, place the
+ * data served through the Access Service under CC0 1.0 Universal. The terms define the Access
+ * Service as the facility for looking up or downloading single LEIs, their related reference data,
+ * or the whole LEI set or a subset of it. The golden copy falls under that definition. GLEIF's open-data page
+ * also places the data on GLEIF's website under CC0. The same terms ask a user not to create the
  * impression that derived data or services are provided or endorsed by GLEIF. That is why
  * {@linkcode GLEIF_ATTRIBUTION} credits the source rather than the corpus.
  *
@@ -60,7 +59,7 @@
  * becomes `po_box` rather than a street.
  *
  * **A line holding a digit the split could not place refuses the address**, and so does a line with
- * no digit at all: in this register a digitless first line is as often a building (`UGLAND HOUSE`,
+ * no digit at all: in this register a digitless first line is a building about as frequently (`UGLAND HOUSE`,
  * `KYDD BUILDING`) as a street, and no field separates the two. An English ordinal inside a street name
  * (`5TH AVENUE`) is a name rather than a number.
  *
@@ -126,7 +125,7 @@ export const GLEIF_ADAPTER_ID = "gleif-lei"
  * Countries whose sampled rows show a labeling defect the street split cannot detect,
  * so none of their rows is emitted until the split handles them.
  *
- * - `AE`: the first address line is often an office or unit number before a building name,
+ * - `AE`: the first address line can be an office or unit number before a building name,
  *   as in `601 سويس تاور` and `501 LE SOLARIUM`, which the split reads as a house number and a street.
  * - `HK`: a floor such as `6F` comes out as the house number, as in `6F MANULIFE PLACE`.
  * - `BS`: codex records the Bahamas as number-last while its published lines are number-first

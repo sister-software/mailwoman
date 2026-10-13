@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The span diff is where a parse comparison can lie quietly.
+ *   The span diff is where a parse comparison can report a wrong result without an error.
  *
- *   Both parsers speak libpostal's label vocabulary. Mailwoman's route into it is many-to-one.
+ *   Both parsers speak libpostal's label vocabulary. Mailwoman's route into it maps several tags to one label.
  *   The comparison can mislead in two opposite ways: it can report a disagreement that is really a case or segmentation difference,
  *   or report an agreement that is really two different tags landing on one label.
  */

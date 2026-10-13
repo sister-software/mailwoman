@@ -9,7 +9,7 @@
  *
  *   Why a register: a character model closes a `subregion` span where the training set taught it names end. A
  *   name it never saw (`해운대구`, held out of the training corpus by the board's design and unseen by the shipped
- *   model for the same reason) closes early, at `해` or `해운대`. The register states every boundary outright, so the
+ *   model for the same reason) closes early, at `해` or `해운대`. The register states every boundary explicitly, so the
  *   decode-time repair in `@mailwoman/neural` extends a run to the one name the following characters spell.
  *
  *   Source: 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (kogl Type 1):

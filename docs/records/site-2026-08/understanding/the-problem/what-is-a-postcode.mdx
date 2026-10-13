@@ -25,7 +25,7 @@ Every postal system uses postcodes differently, but the common thread is **hiera
 | France            | `75008`      | First 2 digits: département (75 = Paris). Last 3: commune-level routing.                               |
 | Canada            | `K1A 0B1`    | Forward sortation area (K1A) → local delivery unit (0B1). One side of one block face.                  |
 | Ireland (Eircode) | `D02 X285`   | Unique per delivery point. The postcode is the address.                                                |
-| Japan             | `100-0001`   | 3-digit regional + 4-digit local. Coarser than US +4; municipality is the finer unit.                  |
+| Japan             | `100-0001`   | 3-digit regional + 4-digit local. Coarser than US +4, and municipality is the finer unit.              |
 
 The hierarchy is for sorting mail rather than for describing geography. A US 5-digit ZIP gets a letter to the right post office — that's it. The carrier who delivers it knows which streets are in their route. The ZIP doesn't encode that information explicitly.
 
@@ -38,7 +38,7 @@ The US Postal Service does not publish ZIP code boundaries. The ZIP code is a ro
 - Overlaps (different carriers serve different sides of the same street).
 - Non-geographic assignments (PO boxes, military APO/FPO addresses, unique large-volume mailers).
 
-When you see a ZIP code displayed as a polygon on a map, you are almost certainly looking at a **ZIP Code Tabulation Area** (ZCTA) — a statistical approximation produced by the US Census Bureau. ZCTAs are generalized from census blocks rather than from USPS delivery routes. USPS explicitly disclaims them. The Census Bureau's own documentation says ZCTAs "are not exact representations of USPS ZIP Code service areas."
+When you see a ZIP code displayed as a polygon on a map, you are almost certainly looking at a **ZIP Code Tabulation Area** (ZCTA) — a statistical approximation produced by the US Census Bureau. ZCTAs are generalized from census blocks rather than from USPS delivery routes. USPS explicitly disclaims them. The Census Bureau's own documentation states that ZCTAs "are not exact representations of USPS ZIP Code service areas."
 
 This matters because the errors are systematic:
 
@@ -52,9 +52,9 @@ A geocoder should treat a postcode as **supplementary evidence** rather than as 
 
 1. Use the postcode to narrow the resolver's search space (limit gazetteer lookups to places within the postcode's rough region).
 2. Use the postcode to validate the parse (if the parsed locality and the postcode's known municipality disagree, flag the ambiguity).
-3. Do not return coordinates from a postcode alone unless the postcode is a delivery-point code (Eircode, UK postcode with full unit, US ZIP+4+2). Even then, flag it as "postcode-level resolution," not "address-level."
+3. Do not return coordinates from only a postcode unless the postcode is a delivery-point code (Eircode, UK postcode with full unit, US ZIP+4+2). Even then, flag it as "postcode-level resolution," not "address-level."
 
-A user who types `90210` into a geocoder is not asking "where is ZIP code 90210?" They are asking "where is the place I associate with 90210?" The correct answer is "Beverly Hills, CA" with a note that the ZIP covers multiple municipalities and the precise location cannot be determined from the postcode alone. The incorrect answer is a pin dropped at the ZCTA centroid with the label "Beverly Hills."
+A user who types `90210` into a geocoder is not asking "where is ZIP code 90210?" They are asking "where is the place I associate with 90210?" The correct answer is "Beverly Hills, CA" with a note that the ZIP covers multiple municipalities and the precise location cannot be determined from the postcode by itself. The incorrect answer is a pin dropped at the ZCTA centroid with the label "Beverly Hills."
 
 ## Why the postal system does this
 

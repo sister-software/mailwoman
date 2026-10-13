@@ -104,8 +104,8 @@ export interface FeatureCells {
 }
 
 /**
- * How many cells at `resolution` the feature's bounding box spans — the same quantity
- * h3 reserves its buffer from, approximate on purpose.
+ * The count of cells at `resolution` that the feature's bounding box spans —
+ * the same quantity h3 reserves its buffer from, approximate on purpose.
  */
 export function estimateCellCount(polygons: MultiPolygonRings, resolution: number): number {
 	const box = ringsBoundingBox(polygons)

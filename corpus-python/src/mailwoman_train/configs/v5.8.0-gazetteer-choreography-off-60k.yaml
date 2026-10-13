@@ -1,8 +1,8 @@
 # v5.8.0 — the near-postcode gazetteer choreography, off
 #
 # One variable. This config is v5.7.0-region-code-and-unit-60k.yaml with `data.gazetteer_choreography`
-# taken true -> false, and two sources named at zero weight so the run starts (the paragraph below says
-# why, and zero is the exposure v5.7.0 gave them). Corpus version, seed, steps, every other weight, every
+# taken true -> false, and two sources listed at zero weight so the run starts (the comment above
+# `state-ia-contractors` gives the reason, and zero is the exposure v5.7.0 gave them). Corpus version, seed, steps, every other weight, every
 # reps target and every receipt are identical. From scratch: no `init_from`, launched with
 # `--resume none`, the same shape v5.7.0 used.
 #
@@ -10,16 +10,17 @@
 # arm's exact twin and no control run has to be paid for. That is the whole reason this arm is one run
 # rather than two.
 #
-# One difference between the arms is not the flag, and grading has to carry it. v5.7.0 trained under a
+# One difference between the arms is not the flag, and grading has to account for it. v5.7.0 trained under a
 # loader that took a parquet file's first row as the whole file's source, so a source whose rows sat in
 # another source's file was unreachable. Reading every source in a file reaches them: across the 718
-# train files, 8 carry more than one source, and the rows those files hold for a source other than their
+# train files, 8 hold more than one source, and the rows those files hold for a source other than their
 # first row's number 4,084,591 — 0.60% of the 681,901,687 train rows a full read of the split counts, of
-# which 154,989 belong to the two sources declined below. The manifest's own `counts.train` says
-# 681,408,112 and is the figure to distrust: it disagrees with the sum of the per-file `rows` it carries,
-# and the read agrees with that sum. Every share is unchanged. The reps-targeted sources' row
-# counts do not move, the fixed weights come from this file, and the two newly visible sources are
-# declined — so what differs is which distinct rows back a source's draws rather than how many it gets.
+# which 154,989 belong to the two sources declined below. The manifest's own `counts.train`
+# reports 681,408,112, and that figure is the one to distrust. It disagrees with the sum of the
+# per-file `rows` the manifest records. The full read agrees with that sum. Every share is unchanged.
+# The reps-targeted sources' row counts do not move. The fixed weights come from this file. The two
+# newly visible sources are declined. What differs is therefore which distinct rows back a source's
+# draws rather than the number of draws it gets.
 #
 # What the flag does. `gazetteer_choreography` zeroes the gazetteer clue on tokens within one piece of
 # a postcode-anchor hit, at train time. Inference mirrors it through the model card's
@@ -34,7 +35,7 @@
 #
 # v5.7.0 already spent a corpus arm on this surface (#2303) and it worked: the bare arm went 53.2%
 # (309/581) under v5.6.0 to 92.0% (555/603) under v5.7.0, measured by
-# `us/locality-region-postcode-arms.run.ts`. What it did not reach is the residual, which is
+# `us/locality-region-postcode-arms.run.ts`. What it did not reach is the residual. The residual is
 # concentrated in one name shape. Serving v5.7.0 with the choreography off, same panel, same probe:
 #
 #   shape                     n     choreography on    choreography off
@@ -58,16 +59,16 @@
 #      loss here is the expected cost of the change and the number that decides whether it ships.
 #
 #   3. The regression board, 1,029 cases. The 33 bare-admin rows added for this arc
-#      (`cases/us/family-city-state-postcode.jsonl`) carry 22 improvement targets and 6 reverse-risk
+#      (`cases/us/family-city-state-postcode.jsonl`) contain 22 improvement targets and 6 reverse-risk
 #      rows. net improved-minus-regressed must be >= 0 and the six reverse-risk rows must stay passing.
 #
 #   4. The D-rule, iron rule 6: no regression anywhere on FR, GB or DE.
 #
 # Pair the inference half by hand before grading. `cli/commands/package.py` does not write
 # `suppress_gazetteer_near_postcode` into the model card, and the shipped card
-# (`packages/neural-weights-en-us/model-card.json`, line 62) carries `true` as a hand-maintained
+# (`packages/neural-weights-en-us/model-card.json`, line 62) holds `true` as a hand-maintained
 # value. A candidate staged from this run with that card unedited is served with the choreography the
-# run was trained without, which is the mismatch this whole arm is about, and every number measured
+# run was trained without. That is the mismatch this arm tests. Every number measured
 # that way is void. Set the candidate card's `suppress_gazetteer_near_postcode` to false and confirm
 # it before the first grade:
 #
@@ -237,7 +238,7 @@ data:
     # Declined, and the decline is what keeps this arm v5.7.0's twin. Each of these two sources lives
     # entirely inside a parquet file whose first row belongs to another source, so the loader v5.7.0
     # ran — which took a file's first row as the whole file's source — never indexed them and drew
-    # zero rows from either. `_index_by_source` now reads every source in a file, which makes them
+    # zero rows from either. `_index_by_source` now reads every source in a file. That change makes them
     # visible, and `_apply_source_weights` refuses a source the weights never mention. Naming them at
     # zero reproduces the exposure v5.7.0 had. Measured on v0.31.0-region-code-and-unit:
     # state-ia-contractors 74,587 rows in part-0672, usgov-imls-pls 80,402 rows in the same file.
@@ -272,8 +273,8 @@ data:
   # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
   # 1.0*20460 + 1.0*16000 + 4.0*13740 = 508,759 draws, 6.6% of the run. The big register sources take
-  # one pass each because they carry their diversity in the rows. the four-to-five-thousand-row ones
-  # take eight, which is the exposure `synth-suffix-boundary` already draws at weight 2.5.
+  # one pass each because their rows already vary. the four-to-five-thousand-row ones
+  # take eight. Eight passes is the exposure `synth-suffix-boundary` already draws at weight 2.5.
   #
   # The two added lines are the arm's exposure decisions and the epoch audit is what confirms them —
   # see the header for the count behind each.
@@ -289,13 +290,13 @@ data:
     synth-trailing-region-ca-bare: 4.0
   required_corpus_receipts:
     # The three added sources. A receipt is what turns "the weights name it" into "the sampler drew
-    # it": the generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is
-    # why nothing failed for five model versions.
+    # it": no config listed the generations dropped before v5.5.0, and their omission failed no check.
+    # For that reason no check failed for five model versions.
     #
     # Each floor is counted. A reps target of 1.0 is exactly rows/samples of the run (`derive_source_weights`),
     # so 16,000 US rows draw about 2,083 per 1,000,000-row epoch and 500 is a floor a real draw clears
     # four times over. The Canadian source at 4.0 draws about 7,156, and 1,000 clears seven times over.
-    # `synth-unit-v30` inherits its predecessor's weight, which the v5.6.0 audit measured at 9,013
+    # `synth-unit-v30` inherits its predecessor's weight. The v5.6.0 audit measured that weight at 9,013
     # draws per epoch, so 2,000 is the same four-times margin.
     - name: us-city-state-postcode
       min_draws: 500
@@ -313,7 +314,7 @@ data:
       min_draws: 2000
       source: synth-unit-v30
       country: US
-    # Carried forward from v5.6.0 unchanged.
+    # Copied from v5.6.0 unchanged.
     - name: bare-postcode-czech
       min_draws: 250
       source: synth-bare-postcode
@@ -359,9 +360,9 @@ data:
       source: osm
   augment_exclude_sources:
     - synth-suffix-boundary
-    # A bare postcode has nothing to augment: a directional, a region or a glue token appended to
-    # `119 00` produces a row whose label sequence no longer matches its surface, and the shape this
-    # source exists to teach is the two-token input with nothing else in it.
+    # A bare postcode has no context for augmentation to vary. A directional, a region or a glue token
+    # appended to `119 00` produces a row whose label sequence no longer matches its surface. The shape
+    # this source exists to teach is the two-token input with no other token in it.
     - synth-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

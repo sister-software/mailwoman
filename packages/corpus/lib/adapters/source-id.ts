@@ -5,7 +5,7 @@
  *
  *   The deterministic row id for a source that publishes no primary key of its own.
  *
- * A CSV row or GeoJSON feature often has no stable identifier. The runner still needs one, so
+ * A CSV row or GeoJSON feature can lack a stable identifier. The runner still needs one, so
  * deduplication and holdout manifests agree across reruns and a run can resume. These functions
  * derive it by hashing the adapter id together with a canonical serialization of the row's values.
  *

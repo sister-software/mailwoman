@@ -1,12 +1,12 @@
 # Interface Reference
 
-Every boundary in the system has an explicit TypeScript interface. Stick to these. If you need to extend, extend; do not silently widen.
+Every boundary in the system has an explicit TypeScript interface. Stick to these. If you need to extend an interface, extend it explicitly. Do not silently widen it.
 
 ## Core types
 
 ### `Span`
 
-Mailwoman already has this interface. It is documented here for completeness.
+Mailwoman already has this interface. Later interfaces on this page reference it.
 
 ```ts
 interface Span {
@@ -294,11 +294,11 @@ export interface LabeledRow {
 - `Classifier.locales` and `Classifier.emits` are arrays known at construction time. Allows the solver to skip locale-incompatible classifiers entirely without running them.
 - `CanonicalRow.components` is `Partial<Record<…>>` because most rows lack most components. Coarse rows have only country/region/locality. Don't force `null` fills.
 - `LabeledRow.tokens` is the SentencePiece output rather than raw words. This is the model's native input. Tokenization happens once, in the corpus stage rather than at training time. Determinism.
-- Every row carries `license` so downstream consumers can filter for redistribution-safe data.
+- Every row stores `license` so downstream consumers can filter for redistribution-safe data.
 
 ## Forbidden patterns
 
-- ❌ Adding fields to `ClassificationProposal` without updating every wrapping adapter in the same commit.
-- ❌ Using `any` in interface definitions. If you don't know the type, write the type. If you can't, the abstraction is wrong.
-- ❌ Throwing exceptions from `Classifier.classify`. Return empty array on failure, log via the project's logger.
-- ❌ Synchronous classifier interfaces. Everything is `Promise`, even rule classifiers, because the solver's loop is async and we don't want sync/async ambiguity.
+- Do not add fields to `ClassificationProposal` without updating every wrapping adapter in the same commit.
+- Do not use `any` in interface definitions. If you don't know the type, write the type. If you can't, the abstraction is wrong.
+- Do not throw exceptions from `Classifier.classify`. Return empty array on failure, log via the project's logger.
+- Synchronous classifier interfaces. Everything is `Promise`, even rule classifiers, because the solver's loop is async and we don't want sync/async ambiguity.

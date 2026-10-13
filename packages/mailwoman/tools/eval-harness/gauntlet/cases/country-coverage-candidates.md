@@ -17,7 +17,7 @@
 >
 > **The class hypothesis below was half right.** Bare-capital/namesake produced the most bugs in absolute
 > terms (71 of 114), as predicted. But the highest per-row failure rate was class 3, the
-> country-distinctive addressing structures: 13 of 31 failed outright (42%) and 6 of the 7 oracle-suspect
+> country-distinctive addressing structures: 13 of 31 failed (42%) and 6 of the 7 oracle-suspect
 > rows were class-3 too. Exonym/renamed/script was the SAFEST class (30 of 137, 22%) — the fold work
 > already shipped mostly holds.
 >
@@ -28,19 +28,19 @@
 >
 > ---
 >
-> **Original header, as drafted (unverified against the live pipeline; NOT a commit target).**
+> **Original header, as drafted (unverified against the live pipeline, and not a commit target).**
 > Proposed 2026-08-05. ~160 countries have zero coverage in `regression.ts` (29 countries) and the
 > parity corpus (~20, US/NL/NZ/AU/DE/FR-heavy). This sweep closes the gap **by failure-mode class**,
-> not by thoroughness — per the corpus rule ("never pad; every entry pins a failure").
+> not by thoroughness — per the corpus rule that the corpus is never padded and every entry pins a failure.
 >
 > **Triage protocol (measure, don't reason):** run each entry through the pipeline before promoting.
-> Entries that FAIL are real bugs → promote to `regression.ts` as `improvement_target` (or `pass`
-> once fixed). Entries that PASS are generalization evidence → they belong in the held-out runner
-> (`holdout.ts`) rather than in the regression leg. Coordinates are deliberately NOT asserted here; assert
+> Entries that fail are real bugs → promote to `regression.ts` as `improvement_target` (or `pass`
+> once fixed). Entries that pass are generalization evidence → they belong in the held-out runner
+> (`holdout.ts`) rather than in the regression leg. Coordinates are deliberately not asserted here. Assert
 > components first, coordinates only after the resolver is measured on the entry.
 >
 > `source: "operator:country-sweep-2026-08-05"`, `status: "improvement_target"` for all entries.
-> `confidence` marks MY knowledge confidence about the address string (HIGH = canonical, well-known;
+> `confidence` marks MY knowledge confidence about the address string (HIGH = canonical and well-known,
 > MED = verify the street/name before committing). Kind names follow the existing `address_kind`
 > taxonomy style.
 
@@ -50,8 +50,8 @@
    Georgia, #833 Portland ME→Messina, #905 Paris→Paris Township OH, Dublin→Dublin OH, Vancouver→WA).
    ~190 countries × namesake-prone capitals = the largest unguarded real-bug surface.
 2. **Exonym / renamed / script variants** — "Kyiv" vs "Kiev", "Yangon" vs "Rangoon", "Hagåtña" vs
-   "Agana", "Rīga" vs "Riga", "Chișinău" vs "Chisinau". The gazetteer carries one spelling; the input
-   carries another. Cheap to assert (components/coords only).
+   "Agana", "Rīga" vs "Riga", "Chișinău" vs "Chisinau". The gazetteer stores one spelling, and the input
+   uses another. Cheap to assert (components/coords only).
 3. **Country-distinctive addressing structures** — chōme/ban (JP), block+street+house (KW), sector
    (PK), 6-digit-postal (SG), supermanzana (MX, present), pluscode (NI, present), townland (IE,
    present), freguesia (PT), soi (TH).
@@ -62,18 +62,18 @@
 
 ### EG — Egypt
 
-- [ ] `Cairo` — `bare_city_global` — HIGH — namesake class: Cairo IL/GA/NY/NE/WV/OH all exist; unscoped must win EG (2.2M-pop + governorate).
-- [ ] `Alexandria` — `bare_city_global` — HIGH — namesake class: Alexandria VA/LA/MN/IN… 20+ US towns; the #905 family.
-- [ ] `1 Tahrir Square, Downtown, Cairo` — `eg_venue_square` — MED — square-led form; Tahrir is a square not a street, pins square/toponym parsing.
+- [ ] `Cairo` — `bare_city_global` — HIGH — namesake class: Cairo IL/GA/NY/NE/WV/OH all exist. Unscoped must win EG (2.2M-pop + governorate).
+- [ ] `Alexandria` — `bare_city_global` — HIGH — namesake class: Alexandria VA/LA/MN/IN… 20+ US towns. This is the #905 family.
+- [ ] `1 Tahrir Square, Downtown, Cairo` — `eg_venue_square` — MED — square-led form. Tahrir is a square, so the entry pins square/toponym parsing.
 
 ### DZ — Algeria
 
-- [ ] `Algiers` — `bare_city_exonym` — HIGH — "Algiers"/"Alger"/"الجزائر" triple; exonym fold.
+- [ ] `Algiers` — `bare_city_exonym` — HIGH — "Algiers"/"Alger"/"الجزائر" triple. It tests the exonym fold.
 - [ ] `Oran` — `bare_city_global` — MED — namesake: Oran, Missouri.
 
 ### MA — Morocco
 
-- [ ] `Casablanca` — `bare_city_global` — HIGH — namesake: Casablanca, Chile; also "Dar el-Beida" alias.
+- [ ] `Casablanca` — `bare_city_global` — HIGH — namesake: Casablanca, Chile. Also "Dar el-Beida" alias.
 - [ ] `Marrakesh` — `spelling_variant` — HIGH — "Marrakesh" vs "Marrakech" both common.
 
 ### TN — Tunisia
@@ -83,22 +83,22 @@
 
 ### LY — Libya
 
-- [ ] `Tripoli` — `bare_city_namesake` — HIGH — THE triple-Tripoli class: Libya / Lebanon / Greece share the exact string; unscoped must win the capital (1.2M) over the port town.
+- [ ] `Tripoli` — `bare_city_namesake` — HIGH — THE triple-Tripoli class: Libya / Lebanon / Greece share the exact string. Unscoped must win the capital (1.2M) over the port town.
 - [ ] `Benghazi` — `bare_city_global` — MED — also spelled "Bengasi"/"Banghazi".
 
 ### SD — Sudan
 
-- [ ] `Khartoum` — `bare_city_same_admin` — MED — city vs "Khartoum State" same-name; also "Khartum" spelling.
-- [ ] `Omdurman` — `bare_city_global` — MED — the cross-river twin; distinct city, no postcode.
+- [ ] `Khartoum` — `bare_city_same_admin` — MED — city vs "Khartoum State" same-name. Also "Khartum" spelling.
+- [ ] `Omdurman` — `bare_city_global` — MED — the cross-river twin. A distinct city without a postcode.
 
 ### SS — South Sudan
 
-- [ ] `Juba` — `bare_city_global` — MED — new capital; gazetteer may carry none/state-level only.
+- [ ] `Juba` — `bare_city_global` — MED — new capital. The gazetteer may hold no record or only a state-level one.
 
 ### ET — Ethiopia
 
 - [ ] `Addis Ababa` — `spelling_variant` — HIGH — "Addis Ababa" vs "Addis Abeba"; chartered city = region, same-name admin.
-- [ ] `Dire Dawa` — `bare_city_global` — MED — hyphenated two-word; also a chartered city (same-name region).
+- [ ] `Dire Dawa` — `bare_city_global` — MED — hyphenated two-word. Also a chartered city (same-name region).
 
 ### ER — Eritrea
 
@@ -106,12 +106,12 @@
 
 ### DJ — Djibouti
 
-- [ ] `Djibouti` — `city_country_same` — HIGH — capital and country are the same string; must resolve to the city.
+- [ ] `Djibouti` — `city_country_same` — HIGH — capital and country are the same string. Must resolve to the city.
 
 ### SO — Somalia
 
 - [ ] `Mogadishu` — `spelling_variant` — MED — "Mogadishu" vs "Muqdisho"/"Xamar"; country data thin.
-- [ ] `Hargeisa` — `bare_city_global` — MED — de facto capital of Somaliland; recognition-churn admin.
+- [ ] `Hargeisa` — `bare_city_global` — MED — de facto capital of Somaliland. Recognition-churn admin.
 
 ### KE — Kenya
 
@@ -121,12 +121,12 @@
 ### UG — Uganda
 
 - [ ] `Kampala` — `bare_city_same_admin` — MED — city vs "Kampala District" same-name.
-- [ ] `Entebbe` — `bare_city_global` — MED — the airport town; city/district churn.
+- [ ] `Entebbe` — `bare_city_global` — MED — the airport town. City/district churn.
 
 ### TZ — Tanzania
 
 - [ ] `Dar es Salaam` — `bare_city_same_admin` — HIGH — city vs "Dar es Salaam Region"; also "Dodoma" is the official capital — two-capital country, the BO class.
-- [ ] `Zanzibar City` — `intl_city_region` — MED — "Zanzibar City" vs "Zanzibar" island/region/archipelago; three-way same-name.
+- [ ] `Zanzibar City` — `intl_city_region` — MED — "Zanzibar City" vs "Zanzibar" island/region/archipelago. Three-way same-name.
 
 ### RW — Rwanda
 
@@ -139,13 +139,13 @@
 
 ### CD — DR Congo
 
-- [ ] `Kinshasa` — `bare_city_same_admin` — HIGH — city-province same-name; namesake: Kinshasa, Ohio (no — VERIFY; US township risk).
+- [ ] `Kinshasa` — `bare_city_same_admin` — HIGH — city-province same-name. Namesake: Kinshasa, Ohio (unconfirmed, verify the US township risk).
 - [ ] `Lubumbashi` — `bare_city_global` — MED — ex-Elisabethville (renamed 1966).
 
 ### CG — Congo
 
-- [ ] `Brazzaville` — `bare_city_global` — MED — the river twin of Kinshasa; cross-country pair.
-- [ ] `Pointe-Noire` — `bare_city_global` — MED — hyphenated; also a department.
+- [ ] `Brazzaville` — `bare_city_global` — MED — the river twin of Kinshasa. Cross-country pair.
+- [ ] `Pointe-Noire` — `bare_city_global` — MED — hyphenated. Also a department.
 
 ### GA — Gabon
 
@@ -153,7 +153,7 @@
 
 ### CM — Cameroon
 
-- [ ] `Yaoundé` — `spelling_variant` — HIGH — "Yaoundé" vs "Yaounde" diacritic drop; also "Yaounde" region same-name.
+- [ ] `Yaoundé` — `spelling_variant` — HIGH — "Yaoundé" vs "Yaounde" diacritic drop. Also "Yaounde" region same-name.
 - [ ] `Douala` — `bare_city_global` — MED — also "Duala"; economic capital.
 
 ### NE — Niger
@@ -172,7 +172,7 @@
 
 ### MR — Mauritania
 
-- [ ] `Nouakchott` — `bare_city_global` — MED — 2014 split into Nouakchott-Nord/Sud/Ouest; city may dangle.
+- [ ] `Nouakchott` — `bare_city_global` — MED — 2014 split into Nouakchott-Nord/Sud/Ouest. The city may lack a parent.
 
 ### GW — Guinea-Bissau
 
@@ -188,7 +188,7 @@
 
 ### LR — Liberia
 
-- [ ] `Monrovia` — `bare_city_global` — MED — named after US president; namesake: Monrovia, Indiana/California.
+- [ ] `Monrovia` — `bare_city_global` — MED — takes its name from a US president. Namesake: Monrovia, Indiana/California.
 
 ### CI — Côte d'Ivoire
 
@@ -207,7 +207,7 @@
 ### BJ — Benin
 
 - [ ] `Cotonou` — `bare_city_global` — MED — economic capital (Porto-Novo is official) — two-capital class.
-- [ ] `Porto-Novo` — `bare_city_namesake` — MED — namesake: Porto Novo, Brazil; hyphenated.
+- [ ] `Porto-Novo` — `bare_city_namesake` — MED — namesake: Porto Novo, Brazil. Hyphenated.
 
 ### BF — Burkina Faso
 
@@ -215,7 +215,7 @@
 
 ### TD — Chad
 
-- [ ] `N'Djamena` — `apostrophe_trap` — HIGH — "N'Djamena" vs "Ndjamena" apostrophe-dropped; the td twin of ye_sanaa.
+- [ ] `N'Djamena` — `apostrophe_trap` — HIGH — "N'Djamena" vs "Ndjamena" apostrophe-dropped. The td twin of ye_sanaa.
 
 ### CF — Central African Republic
 
@@ -234,7 +234,7 @@
 ### MW — Malawi
 
 - [ ] `Lilongwe` — `bare_city_same_admin` — MED — city vs "Lilongwe District" same-name.
-- [ ] `Blantyre` — `bare_city_global` — MED — namesake: Blantyre, Scotland (Livingstone's birthplace) — genuine cross-country pair.
+- [ ] `Blantyre` — `bare_city_global` — MED — namesake: Blantyre, Scotland (Livingstone's birthplace), a cross-country pair.
 
 ### MZ — Mozambique
 
@@ -260,8 +260,8 @@
 
 - [ ] `Pretoria` — `renamed_metro` — HIGH — ex-Pretoria now part of "Tshwane" metro; "Pretoria" still the common input — renamed-admin class.
 - [ ] `Durban` — `renamed_metro` — HIGH — now "eThekwini" metro; "Durban" still the common input.
-- [ ] `Bloemfontein` — `renamed_metro` — MED — "Mangaung" metro; also the judicial capital — three-capitals country.
-- [ ] `14 Long St, Green Point, Cape Town, 8001` — `za_suburb_postal` — MED — suburb+postal-town structure; postal town ≠ municipality.
+- [ ] `Bloemfontein` — `renamed_metro` — MED — "Mangaung" metro. Also the judicial capital — three-capitals country.
+- [ ] `14 Long St, Green Point, Cape Town, 8001` — `za_suburb_postal` — MED — suburb+postal-town structure. Postal town ≠ municipality.
 
 ### LS — Lesotho
 
@@ -283,8 +283,8 @@
 
 ### MU — Mauritius
 
-- [ ] `Port Louis` — `bare_city_global` — MED — namesake: Port-Louis, Guadeloupe; un-hyphenated form.
-- [ ] `Curepipe` — `bare_city_global` — MED — single-word town, no street in the Western sense for some districts.
+- [ ] `Port Louis` — `bare_city_global` — MED — namesake: Port-Louis, Guadeloupe. Un-hyphenated form.
+- [ ] `Curepipe` — `bare_city_global` — MED — single-word town without a street in the Western sense for some districts.
 
 ### SC — Seychelles
 
@@ -292,7 +292,7 @@
 
 ### RE — Réunion
 
-- [ ] `Saint-Denis` — `bare_city_namesake` — HIGH — namesake: Saint-Denis, FR (Seine-Saint-Denis, 110k) — the island/continent pair; also "Saint Denis" un-hyphenated.
+- [ ] `Saint-Denis` — `bare_city_namesake` — HIGH — namesake: Saint-Denis, FR (Seine-Saint-Denis, 110k) — the island/continent pair. Also "Saint Denis" un-hyphenated.
 
 ### YT — Mayotte
 
@@ -301,7 +301,7 @@
 ### SH — Saint Helena, Ascension, Tristan da Cunha
 
 - [ ] `Jamestown` — `bare_city_namesake` — MED — namesake: Jamestown VA/NY/RI…; 700-pop capital.
-- [ ] `Edinburgh of the Seven Seas` — `venue_toponym_trap` — MED — the Tristan da Cunha settlement; THE definitive "of the..." compound.
+- [ ] `Edinburgh of the Seven Seas` — `venue_toponym_trap` — MED — the Tristan da Cunha settlement. The definitive "of the..." compound.
 
 ### CV — Cabo Verde
 
@@ -310,8 +310,8 @@
 
 ### ST — São Tomé and Príncipe
 
-- [ ] `São Tomé` — `city_country_same` — MED — capital and country same string; also "Sao Tome" diacritic drop.
-- [ ] `Santo António` — `bare_city_global` — MED — the Príncipe town; diacritics.
+- [ ] `São Tomé` — `city_country_same` — MED — capital and country same string. Also "Sao Tome" diacritic drop.
+- [ ] `Santo António` — `bare_city_global` — MED — the Príncipe town. Diacritics.
 
 ### GM — Gambia
 
@@ -325,7 +325,7 @@
 
 ### IO — British Indian Ocean Territory
 
-- [ ] `Diego Garcia` — `bare_city_global` — MED — no civilian addressing; pins the "no data → admin-only" path.
+- [ ] `Diego Garcia` — `bare_city_global` — MED — no civilian addressing. Pins the "no data → admin-only" path.
 
 ### EH — Western Sahara
 
@@ -345,7 +345,7 @@
 
 - [ ] `Tel Aviv-Yafo` — `compound_city` — HIGH — "Tel Aviv-Yafo" vs "Tel Aviv" vs "תל אביב"; compound + script.
 - [ ] `Jerusalem` — `bare_city_namesake` — HIGH — namesake: Jerusalem, Ohio (and Jerusalem, NZ) — the #905 family.
-- [ ] `Ben Yehuda St 12, Tel Aviv` — `il_street_he` — MED — "St" vs "Street" abbrev; Hebrew-script street names.
+- [ ] `Ben Yehuda St 12, Tel Aviv` — `il_street_he` — MED — "St" vs "Street" abbrev. Hebrew-script street names.
 
 ### IQ — Iraq
 
@@ -378,7 +378,7 @@
 
 ### KW — Kuwait
 
-- [ ] `House 12, Street 102, Block 5, Salmiya` — `kw_block_street_house` — HIGH — the block/street/house addressing system; structurally unlike anything covered.
+- [ ] `House 12, Street 102, Block 5, Salmiya` — `kw_block_street_house` — HIGH — the block/street/house addressing system. Structurally unlike anything covered.
 - [ ] `Hawalli` — `bare_city_global` — MED — governorate/city same-name.
 
 ### QA — Qatar
@@ -389,8 +389,8 @@
 ### AE — UAE
 
 - [ ] `Dubai` — `bare_city_same_admin` — HIGH — city vs "Dubai" emirate same-name (already-proven class in this corpus's home: Dubai vs Dubai, #?).
-- [ ] `Abu Dhabi` — `bare_city_same_admin` — HIGH — city vs emirate; also the country's capital.
-- [ ] `PO Box 12345, Dubai` — `ae_po_box` — MED — PO-box-heavy addressing; PO box + no street.
+- [ ] `Abu Dhabi` — `bare_city_same_admin` — HIGH — city vs emirate. Also the country's capital.
+- [ ] `PO Box 12345, Dubai` — `ae_po_box` — MED — PO-box-heavy addressing. PO box without a street.
 
 ### SA — Saudi Arabia
 
@@ -400,7 +400,7 @@
 ### JO — Jordan
 
 - [ ] `Amman` — `bare_city_global` — MED — also "Amman Governorate" same-name; "Amman" vs "Ammān" diacritic.
-- [ ] `Jabal Amman, Amman` — `jo_district_circle` — MED — district-led; the "1st Circle" reference system.
+- [ ] `Jabal Amman, Amman` — `jo_district_circle` — MED — district-led. The "1st Circle" reference system.
 
 ### CY — Cyprus
 
@@ -409,7 +409,7 @@
 
 ### KZ — Kazakhstan
 
-- [ ] `Astana` — `renamed_city` — HIGH — "Astana" → "Nur-Sultan" (2019) → back to "Astana" (2022) — the rename-return trap; gazetteer may carry either.
+- [ ] `Astana` — `renamed_city` — HIGH — "Astana" → "Nur-Sultan" (2019) → back to "Astana" (2022) — the rename-return trap. The gazetteer may store either.
 - [ ] `Almaty` — `spelling_variant` — HIGH — "Almaty" vs "Alma-Ata" (Soviet); also "Алматы" Cyrillic.
 
 ### UZ — Uzbekistan
@@ -428,7 +428,7 @@
 
 ### TJ — Tajikistan
 
-- [ ] `Dushanbe` — `spelling_variant` — MED — "Dushanbe" vs "Dushanbé" diacritic; ex-"Stalinabad".
+- [ ] `Dushanbe` — `spelling_variant` — MED — "Dushanbe" vs "Dushanbé" diacritic. Ex-"Stalinabad".
 
 ### AF — Afghanistan
 
@@ -454,7 +454,7 @@
 ### LK — Sri Lanka
 
 - [ ] `Colombo` — `bare_city_global` — MED — namesake: Colombo, Brazil (Paraná).
-- [ ] `No 12, Galle Road, Colombo 03` — `lk_number_city` — MED — the "No <n>, <street>, <city> <number>" form; Colombo 03 postal-district numbering.
+- [ ] `No 12, Galle Road, Colombo 03` — `lk_number_city` — MED — the "No <n>, <street>, <city> <number>" form. Colombo 03 postal-district numbering.
 
 ### NP — Nepal
 
@@ -468,11 +468,11 @@
 
 ### MV — Maldives
 
-- [ ] `Malé` — `diacritic_script` — HIGH — "Malé" vs "Male" diacritic-drop; also "Malé" city vs "Malé" (Kaafu) atoll — same-name pair.
+- [ ] `Malé` — `diacritic_script` — HIGH — "Malé" vs "Male" diacritic-drop. Also "Malé" city vs "Malé" (Kaafu) atoll — same-name pair.
 
 ### MM — Myanmar
 
-- [ ] `Yangon` — `renamed_city` — HIGH — ex-"Rangoon" (1989); the definitive SE-Asia rename; region same-name.
+- [ ] `Yangon` — `renamed_city` — HIGH — ex-"Rangoon" (1989). The definitive SE-Asia rename. Region same-name.
 - [ ] `Naypyidaw` — `spelling_variant` — MED — "Naypyidaw"/"Nay Pyi Taw"/"Naypidaw" — the new-capital spelling tangle.
 
 ### TH — Thailand (covered 1 — upgrade)
@@ -483,28 +483,28 @@
 ### LA — Laos
 
 - [ ] `Vientiane` — `exonym_script` — MED — "Vientiane"/"Viangchan"/"ວຽງຈັນ".
-- [ ] `Luang Prabang` — `bare_city_global` — MED — two-word; also "Louangphabang".
+- [ ] `Luang Prabang` — `bare_city_global` — MED — two-word. Also "Louangphabang".
 
 ### KH — Cambodia
 
-- [ ] `Phnom Penh` — `bare_city_same_admin` — MED — city vs "Phnom Penh Municipality" same-name; also "Phnum Pénh".
+- [ ] `Phnom Penh` — `bare_city_same_admin` — MED — city vs "Phnom Penh Municipality" same-name. Also "Phnum Pénh".
 - [ ] `Sangkat Boeung Keng Kang, Khan Chamkarmon, Phnom Penh` — `kh_sangkat_khan` — MED — the sangkat/khan admin structure.
 
 ### VN — Vietnam
 
 - [ ] `Ho Chi Minh City` — `renamed_city` — HIGH — ex-"Saigon" (1976); both names common — renamed-class.
 - [ ] `Hanoi` — `diacritic_script` — MED — "Hanoi" vs "Hà Nội"; also "Ha Noi".
-- [ ] `12 Lý Thái Tổ, Hoàn Kiếm, Hà Nội` — `vn_street_ward` — MED — ward/district structure; diacritics in street.
+- [ ] `12 Lý Thái Tổ, Hoàn Kiếm, Hà Nội` — `vn_street_ward` — MED — ward/district structure. Diacritics in street.
 
 ### MY — Malaysia
 
-- [ ] `Kuala Lumpur` — `bare_city_global` — MED — also "KL" abbrev-trap; Federal Territory same-name.
+- [ ] `Kuala Lumpur` — `bare_city_global` — MED — also "KL" abbrev-trap. Federal Territory same-name.
 - [ ] `George Town` — `spelling_variant` — HIGH — "George Town" (Penang) vs "Georgetown" — the spelling pair (also KY, GY, CA).
 - [ ] `Petaling Jaya` — `bare_city_global` — MED — city vs "Petaling District"; "PJ" abbrev.
 
 ### SG — Singapore
 
-- [ ] `Blk 12 Kallang Ave #03-04, Singapore 123456` — `sg_block_postal` — HIGH — the 6-digit-postal-IS-the-address form; block + unit + unique postal.
+- [ ] `Blk 12 Kallang Ave #03-04, Singapore 123456` — `sg_block_postal` — HIGH — the 6-digit-postal-IS-the-address form. Block + unit + unique postal.
 - [ ] `Singapore` — `city_country_same` — HIGH — city/state/country same string — the definitive case.
 
 ### ID — Indonesia
@@ -515,35 +515,35 @@
 
 ### PH — Philippines
 
-- [ ] `Manila` — `bare_city_global` — MED — namesake: Manila, Arkansas; also "Maynila".
+- [ ] `Manila` — `bare_city_global` — MED — namesake: Manila, Arkansas. Also "Maynila".
 - [ ] `Quezon City` — `bare_city_same_admin` — MED — city vs "Quezon" province (different entity — the old-capital class).
 - [ ] `Barangay San Antonio, Makati` — `ph_barangay` — MED — the barangay-first form.
 
 ### BN — Brunei
 
-- [ ] `Bandar Seri Begawan` — `bare_city_global` — MED — also "BSB" abbrev-trap; the longest single capital name.
+- [ ] `Bandar Seri Begawan` — `bare_city_global` — MED — also "BSB" abbrev-trap. The longest single capital name.
 - [ ] `Kuala Belait` — `bare_city_global` — MED.
 
 ### TL — Timor-Leste
 
-- [ ] `Dili` — `diacritic_script` — MED — "Dili" vs "Díli" diacritic; also "Dilly" (colonial).
+- [ ] `Dili` — `diacritic_script` — MED — "Dili" vs "Díli" diacritic. Also "Dilly" (colonial).
 - [ ] `Baucau` — `bare_city_global` — MED — the second city.
 
 ### JP — Japan (covered 1 — upgrade)
 
 - [ ] `1-2-3 Ginza, Chuo-ku, Tokyo` — `jp_bancho` — HIGH — the chōme/ban/gō block system — no street names; "Ginza" is the chōme.
-- [ ] `Shibuya, Tokyo` — `jp_ward_locality` — HIGH — ward vs station-area ambiguity: "Shibuya" is the ward AND the famous area.
+- [ ] `Shibuya, Tokyo` — `jp_ward_locality` — HIGH — ward vs station-area ambiguity: "Shibuya" is both the ward and the famous area.
 - [ ] `Kyoto` — `bare_city_same_admin` — MED — city vs "Kyoto Prefecture" same-name (like the tr "İzmir" class).
 
 ### KR — South Korea
 
-- [ ] `Seoul` — `bare_city_global` — MED — "Seoul" vs "Sŏul" romanization; special-city same-name.
+- [ ] `Seoul` — `bare_city_global` — MED — "Seoul" vs "Sŏul" romanization. Special-city same-name.
 - [ ] `Gangnam-gu, Seoul` — `kr_gu` — MED — the gu structure; "Gangnam-gu" vs "Gangnam" bare.
 - [ ] `Busan` — `spelling_variant` — MED — "Busan" vs "Pusan" (old romanization) — the MR/revised-romanization pair.
 
 ### KP — North Korea
 
-- [ ] `Pyongyang` — `spelling_variant` — MED — "Pyongyang"/"P'yŏngyang"/"평양" — romanization tangle; admin data thin.
+- [ ] `Pyongyang` — `spelling_variant` — MED — "Pyongyang"/"P'yŏngyang"/"평양" — romanization tangle. Admin data is thin.
 
 ### TW — Taiwan
 
@@ -563,14 +563,14 @@
 ### HK — Hong Kong
 
 - [ ] `Central, Hong Kong` — `hk_district` — MED — district-led; "Central" vs "Central and Western District".
-- [ ] `New Territories, Hong Kong` — `hk_region` — MED — the region same-name; also "NT" abbrev.
+- [ ] `New Territories, Hong Kong` — `hk_region` — MED — the region same-name. Also "NT" abbrev.
 
 ### MO — Macau
 
 - [ ] `Macau` — `spelling_variant` — MED — "Macau" vs "Macao" — the definitive spelling pair.
 - [ ] `Taipa` — `bare_city_global` — MED — namesake: Taipa, New Zealand (Northland).
 
-### GE — Georgia (covered 2 — skip; covered)
+### GE — Georgia (covered 2 — skip, covered)
 
 ---
 
@@ -635,17 +635,17 @@
 ### SK — Slovakia
 
 - [ ] `Bratislava` — `exonym_script` — MED — vs "Pressburg"/"Pozsony" (historical trilingual city).
-- [ ] `Košice` — `bare_city_global` — MED — diacritics; vs "Kaschau" (historical).
+- [ ] `Košice` — `bare_city_global` — MED — diacritics. Vs "Kaschau" (historical).
 
 ### HU — Hungary
 
-- [ ] `Budapest` — `bare_city_global` — HIGH — also "Budapest XIII" district forms; namesake: Budapest, Hungary only (VERIFY US).
-- [ ] `Győr` — `diacritic_script` — MED — "Győr" vs "Gyor" drop; vs "Raab" (German).
+- [ ] `Budapest` — `bare_city_global` — HIGH — also "Budapest XIII" district forms. Namesake: Budapest, Hungary only (verify US).
+- [ ] `Győr` — `diacritic_script` — MED — "Győr" vs "Gyor" drop. Vs "Raab" (German).
 
 ### RO — Romania
 
 - [ ] `București` — `exonym_script` — HIGH — "București" vs "Bucharest"; diacritic-dropped "Bucuresti" also common.
-- [ ] `Cluj-Napoca` — `renamed_city` — MED — hyphenated compound; "Cluj" alone still common; "Kolozsvár" historical.
+- [ ] `Cluj-Napoca` — `renamed_city` — MED — hyphenated compound; "Cluj" by itself still common; "Kolozsvár" historical.
 
 ### BG — Bulgaria
 
@@ -674,7 +674,7 @@
 
 ### MK — North Macedonia
 
-- [ ] `Skopje` — `script_variant` — MED — "Скопје" vs "Skopje"; "Scupi" historical; country rename "Macedonia"→"North Macedonia" (2019) churn.
+- [ ] `Skopje` — `script_variant` — MED — "Скопје" vs "Skopje". "Scupi" historical. Country rename "Macedonia"→"North Macedonia" (2019) churn.
 - [ ] `Ohrid` — `bare_city_global` — MED — also "Ohrid" vs "Охрид".
 
 ### AL — Albania
@@ -691,32 +691,32 @@
 ### MT — Malta
 
 - [ ] `Valletta` — `bare_city_global` — MED — also "Il-Belt Valletta" (Maltese); "Valleta" misspelling.
-- [ ] `Triq ir-Repubblika, Valletta` — `mt_triq` — MED — the "Triq" street prefix; Maltese street names.
+- [ ] `Triq ir-Repubblika, Valletta` — `mt_triq` — MED — the "Triq" street prefix. Maltese street names.
 
 ### AD — Andorra
 
 - [ ] `Andorra la Vella` — `city_country_same` — MED — capital vs country prefix; "Andorra" bare must not collapse to the country.
-- [ ] `Les Escaldes` — `bare_city_global` — MED — "Escaldes-Engordany" parish; "Les Escaldes" alone common.
+- [ ] `Les Escaldes` — `bare_city_global` — MED — "Escaldes-Engordany" parish; "Les Escaldes" by itself is common.
 
 ### LI — Liechtenstein
 
-- [ ] `Vaduz` — `bare_city_global` — MED — no-street-in-part town; also "Vaduz" vs "Vaduz" municipality.
+- [ ] `Vaduz` — `bare_city_global` — MED — no-street-in-part town. Also "Vaduz" vs "Vaduz" municipality.
 - [ ] `Schaan` — `bare_city_global` — MED — the largest municipality (≠ capital).
 
 ### LU — Luxembourg
 
-- [ ] `Luxembourg` — `city_country_same` — HIGH — capital and country same string — the definitive case; must resolve to the city.
-- [ ] `Esch-sur-Alzette` — `bare_city_global` — MED — hyphenated compound; "Esch" alone is common shorthand.
+- [ ] `Luxembourg` — `city_country_same` — HIGH — capital and country same string — the definitive case. Must resolve to the city.
+- [ ] `Esch-sur-Alzette` — `bare_city_global` — MED — hyphenated compound; "Esch" by itself is common shorthand.
 
 ### MC — Monaco
 
-- [ ] `Monaco` — `city_country_same` — HIGH — city-state; also "Monte Carlo" vs "Monte-Carlo" hyphen variant.
+- [ ] `Monaco` — `city_country_same` — HIGH — city-state. Also "Monte Carlo" vs "Monte-Carlo" hyphen variant.
 - [ ] `Monte-Carlo` — `spelling_variant` — MED — the quarter; "Monte Carlo" un-hyphenated is the common input.
 
 ### SM — San Marino
 
 - [ ] `San Marino` — `city_country_same` — HIGH — capital and country same string.
-- [ ] `Serravalle` — `bare_city_global` — MED — namesake: Serravalle, Italy (many) — the largest municipality (≠ capital).
+- [ ] `Serravalle` — `bare_city_global` — MED — namesake: Serravalle, Italy (several Italian places share the name) — the largest municipality (≠ capital).
 
 ### VA — Vatican
 
@@ -726,7 +726,7 @@
 
 - [ ] `Zürich` — `diacritic_script` — HIGH — "Zürich" vs "Zurich" drop (already guards the exonym fold — extend to canton same-name).
 - [ ] `Basel` — `exonym_script` — MED — "Basel" vs "Bâle" (FR) vs "Basle" (old EN).
-- [ ] `Bürgenstock` — `no_street_locality` — MED — the hotel-resort locality with NO street — locality-only resolution.
+- [ ] `Bürgenstock` — `no_street_locality` — MED — the hotel-resort locality without a street — locality-only resolution.
 
 ### AT — Austria (covered 1 — upgrades)
 
@@ -748,12 +748,12 @@
 - [ ] `Antwerpen` — `exonym_script` — HIGH — "Antwerpen"/"Anvers"/"Antwerp" — bilingual-country triple.
 - [ ] `Brussel` — `exonym_script` — HIGH — "Brussel"/"Bruxelles"/"Brussels" — the definitive bilingual-capital case.
 
-### FR — France (covered 36 — skip; the corpus owns FR)
+### FR — France (covered 36 — skip, because the corpus owns FR)
 
 ### GB — UK (covered 54 — upgrades)
 
 - [ ] `Derry` — `renamed_city` — HIGH — "Derry" vs "Londonderry" — the naming-dispute pair (official = Londonderry, common = Derry).
-- [ ] `Londonderry` — `renamed_city` — HIGH — the mirror entry; must resolve to the SAME place as "Derry".
+- [ ] `Londonderry` — `renamed_city` — HIGH — the mirror entry. Must resolve to the same place as "Derry".
 
 ### IE — Ireland (covered 11 — upgrade)
 
@@ -779,7 +779,7 @@
 
 ### UA — Ukraine
 
-- [ ] `Kyiv` — `renamed_city` — HIGH — "Kyiv"/"Kiev"/"Київ" — THE post-2022 spelling case; gazetteer may carry "Kiev".
+- [ ] `Kyiv` — `renamed_city` — HIGH — "Kyiv"/"Kiev"/"Київ" — THE post-2022 spelling case. The gazetteer may store "Kiev".
 - [ ] `Lviv` — `spelling_variant` — MED — "Lviv"/"Lwów"/"Lvov" — the trilingual spelling.
 - [ ] `Kharkiv` — `spelling_variant` — MED — "Kharkiv"/"Kharkov" (Russian transliteration).
 
@@ -794,12 +794,12 @@
 
 ### RU — Russia
 
-- [ ] `Saint Petersburg` — `renamed_city` — HIGH — "Saint Petersburg"/"St. Petersburg"/"Leningrad"/"Петербург" — the quadruple; also "Petersburg" abbrev.
+- [ ] `Saint Petersburg` — `renamed_city` — HIGH — "Saint Petersburg"/"St. Petersburg"/"Leningrad"/"Петербург" — the quadruple. Also "Petersburg" abbrev.
 - [ ] `Moscow` — `exonym_script` — HIGH — "Moscow"/"Moskva"/"Москва"; also "Moskau".
 
 ### XK — Kosovo
 
-- [ ] `Pristina` — `spelling_variant` — MED — "Pristina"/"Priština"/"Prishtinë" — four-spelling case; recognition-churn admin.
+- [ ] `Pristina` — `spelling_variant` — MED — "Pristina"/"Priština"/"Prishtinë" — four-spelling case. Recognition-churn admin.
 - [ ] `Prizren` — `bare_city_global` — MED.
 
 ### GL — Greenland
@@ -814,10 +814,10 @@
 ### CA — Canada (covered 4 — upgrades)
 
 - [ ] `Montréal` — `diacritic_script` — HIGH — "Montréal" vs "Montreal" drop — the definitive Canadian diacritic case.
-- [ ] `Québec` — `diacritic_script` — HIGH — "Québec" vs "Quebec"; city vs province same-name; also "Québec City".
+- [ ] `Québec` — `diacritic_script` — HIGH — "Québec" vs "Quebec". City vs province same-name. Also "Québec City".
 - [ ] `Toronto` — `renamed_city` — HIGH — ex-"York" (1834) — renamed-class.
 
-### US — US (covered 33 — skip; owned)
+### US — US (covered 33 — skip, already owned)
 
 ### MX — Mexico (covered 5 — upgrades)
 
@@ -830,7 +830,7 @@
 
 ### BZ — Belize
 
-- [ ] `Belize City` — `city_country_same` — HIGH — "Belize City" vs "Belize" country/district — the definitive triple-same-name; former capital.
+- [ ] `Belize City` — `city_country_same` — HIGH — "Belize City" vs "Belize" country/district — the definitive triple-same-name. Former capital.
 - [ ] `Belmopan` — `bare_city_global` — MED — the actual capital since 1970 — capital-vs-largest class.
 
 ### SV — El Salvador
@@ -840,7 +840,7 @@
 
 ### HN — Honduras (covered 2 — upgrades)
 
-- [ ] `San Pedro Sula` — `bare_city_global` — MED — two-word; the largest city (≠ capital Tegucigalpa).
+- [ ] `San Pedro Sula` — `bare_city_global` — MED — two-word. The largest city (≠ capital Tegucigalpa).
 
 ### NI — Nicaragua (covered 2 — skip)
 
@@ -850,28 +850,28 @@
 
 ### PA — Panama
 
-- [ ] `Panama City` — `city_country_same` — HIGH — "Panama City"/"Panamá"/"Panama" — country/city/province same-name; also "Panama City" FL namesake.
-- [ ] `Colón` — `bare_city_same_admin` — MED — "Colón" city vs "Colón Province" same-name; diacritic.
+- [ ] `Panama City` — `city_country_same` — HIGH — "Panama City"/"Panamá"/"Panama" — country/city/province same-name. Also "Panama City" FL namesake.
+- [ ] `Colón` — `bare_city_same_admin` — MED — "Colón" city vs "Colón Province" same-name. Diacritic.
 
 ### CU — Cuba
 
-- [ ] `La Habana` — `exonym_script` — MED — "La Habana" vs "Havana"; also "Habana" alone.
+- [ ] `La Habana` — `exonym_script` — MED — "La Habana" vs "Havana"; also "Habana" by itself.
 - [ ] `Santiago de Cuba` — `bare_city_namesake` — HIGH — "Santiago" short-form vs Santiago, Chile/Dominican Republic — the santiago_class.
 
 ### JM — Jamaica
 
-- [ ] `Kingston` — `bare_city_same_admin` — HIGH — parish/city same-name; namesake: Kingston NY/ON/UK — the triple.
-- [ ] `Montego Bay` — `bare_city_global` — MED — "MoBay" abbrev-trap; two-word.
+- [ ] `Kingston` — `bare_city_same_admin` — HIGH — parish/city same-name. Namesake: Kingston NY/ON/UK — the triple.
+- [ ] `Montego Bay` — `bare_city_global` — MED — "MoBay" abbrev-trap. Two-word.
 
 ### HT — Haiti
 
-- [ ] `Port-au-Prince` — `bare_city_global` — MED — hyphenated compound; also "Pòtoprens" (Haitian Creole).
-- [ ] `Cap-Haïtien` — `diacritic_script` — MED — diacritics; also "Cap Haitien" / "Le Cap".
+- [ ] `Port-au-Prince` — `bare_city_global` — MED — hyphenated compound. Also "Pòtoprens" (Haitian Creole).
+- [ ] `Cap-Haïtien` — `diacritic_script` — MED — diacritics. Also "Cap Haitien" / "Le Cap".
 
 ### DO — Dominican Republic
 
 - [ ] `Santiago` — `bare_city_namesake` — HIGH — short-form of "Santiago de los Caballeros" vs Santiago, Chile/Cuba — the santiago_class.
-- [ ] `Santo Domingo` — `bare_city_same_admin` — MED — city vs "Santo Domingo" province; also "Santo Domingo Este" suburb (the split).
+- [ ] `Santo Domingo` — `bare_city_same_admin` — MED — city vs "Santo Domingo" province. Also "Santo Domingo Este" suburb (the split).
 
 ### TT — Trinidad and Tobago
 
@@ -893,11 +893,11 @@
 
 ### BM — Bermuda (covered 1 — upgrade)
 
-- [ ] `Hamilton` — `bare_city_namesake` — HIGH — namesake: Hamilton ON/NZ/UK… — the definitive Bermuda case; also "Hamilton Parish" vs "City of Hamilton".
+- [ ] `Hamilton` — `bare_city_namesake` — HIGH — namesake: Hamilton ON/NZ/UK… — the definitive Bermuda case. Also "Hamilton Parish" vs "City of Hamilton".
 
 ### GD — Grenada
 
-- [ ] `St. George's` — `abbrev_trap` — MED — "St. George's" vs "Saint George's" vs "St George" — abbrev class; also the Bermuda "St. George's" namesake.
+- [ ] `St. George's` — `abbrev_trap` — MED — "St. George's" vs "Saint George's" vs "St George" — abbrev class. Also the Bermuda "St. George's" namesake.
 
 ### GU — Guam
 
@@ -911,7 +911,7 @@
 
 ### AW — Aruba
 
-- [ ] `Oranjestad` — `bare_city_namesake` — HIGH — namesake: Oranjestad, Sint Eustatius — the definitive twin; also "Orange Town".
+- [ ] `Oranjestad` — `bare_city_namesake` — HIGH — namesake: Oranjestad, Sint Eustatius — the definitive twin. Also "Orange Town".
 
 ### CW — Curaçao
 
@@ -920,7 +920,7 @@
 ### SX — Sint Maarten
 
 - [ ] `Philipsburg` — `bare_city_namesake` — HIGH — namesake: Philipsburg, Montana/PA — the #833 class.
-- [ ] `Sint Maarten` vs `Saint Martin` — `split_island` — MED — the island is half-Dutch/half-French; same-name pair.
+- [ ] `Sint Maarten` vs `Saint Martin` — `split_island` — MED — the island is half-Dutch/half-French. Same-name pair.
 
 ### BQ — Bonaire, Sint Eustatius, Saba
 
@@ -941,7 +941,7 @@
 ### MS — Montserrat
 
 - [ ] `Plymouth` — `abandoned_capital` — MED — the volcano-abandoned capital (1997); "Plymouth" namesake: Plymouth UK/MA — the quadruple trap.
-- [ ] `Brades` — `renamed_city` — MED — the de facto capital since 1997; no official designation.
+- [ ] `Brades` — `renamed_city` — MED — the de facto capital since 1997. No official designation.
 
 ### KN — Saint Kitts and Nevis
 
@@ -974,13 +974,13 @@
 
 ### VE — Venezuela
 
-- [ ] `Caracas` — `bare_city_same_admin` — MED — city vs "Distrito Capital" same-name; also "Santiago de León de Caracas" full name.
+- [ ] `Caracas` — `bare_city_same_admin` — MED — city vs "Distrito Capital" same-name. Also "Santiago de León de Caracas" full name.
 - [ ] `Maracaibo` — `bare_city_same_admin` — MED — city vs "Zulia" state (capital-city ≠ state-name pair).
 
 ### CO — Colombia
 
-- [ ] `Bogotá` — `spelling_variant` — HIGH — "Bogotá" vs "Bogota" drop; city vs "Bogotá D.C." — no-postal-country note.
-- [ ] `Medellín` — `spelling_variant` — MED — "Medellín" vs "Medellin" drop; city vs "Antioquia" state pair.
+- [ ] `Bogotá` — `spelling_variant` — HIGH — "Bogotá" vs "Bogota" drop. City vs "Bogotá D.C." — no-postal-country note.
+- [ ] `Medellín` — `spelling_variant` — MED — "Medellín" vs "Medellin" drop. City vs "Antioquia" state pair.
 
 ### EC — Ecuador
 
@@ -990,16 +990,16 @@
 ### PE — Peru
 
 - [ ] `Lima` — `bare_city_same_admin` — MED — city vs "Lima Province"/"Lima Region" — the double-same-name.
-- [ ] `Cusco` — `spelling_variant` — MED — "Cusco" vs "Cuzco" — the definitive spelling pair; also "Qosqo" (Quechua).
+- [ ] `Cusco` — `spelling_variant` — MED — "Cusco" vs "Cuzco" — the definitive spelling pair. Also "Qosqo" (Quechua).
 
 ### BO — Bolivia
 
-- [ ] `La Paz` — `bare_city_same_admin` — MED — city vs "La Paz Department" same-name; namesake: La Paz, Mexico/Baja California Sur.
+- [ ] `La Paz` — `bare_city_same_admin` — MED — city vs "La Paz Department" same-name. Namesake: La Paz, Mexico/Baja California Sur.
 - [ ] `Sucre` — `two_capitals` — HIGH — constitutional capital (La Paz is seat of government) — the two-capital class; "Sucre" vs "Chuquisaca" department pair.
 
 ### PY — Paraguay
 
-- [ ] `Asunción` — `diacritic_script` — MED — "Asunción" vs "Asuncion" drop; also "Nuestra Señora Santa María de la Asunción" full name.
+- [ ] `Asunción` — `diacritic_script` — MED — "Asunción" vs "Asuncion" drop. Also "Nuestra Señora Santa María de la Asunción" full name.
 
 ### UY — Uruguay
 
@@ -1013,7 +1013,7 @@
 
 ### AR — Argentina
 
-- [ ] `Buenos Aires` — `bare_city_same_admin` — HIGH — city vs "Buenos Aires Province" same-name — the definitive pair; also "Ciudad Autónoma de Buenos Aires" (CABA) full.
+- [ ] `Buenos Aires` — `bare_city_same_admin` — HIGH — city vs "Buenos Aires Province" same-name — the definitive pair. Also "Ciudad Autónoma de Buenos Aires" (CABA) full.
 - [ ] `Rosario` — `bare_city_namesake` — HIGH — namesake: Rosario, California — the #833 class.
 
 ### BR — Brazil
@@ -1024,11 +1024,11 @@
 
 ### FK — Falkland Islands
 
-- [ ] `Stanley` — `bare_city_namesake` — MED — namesake: Stanley, Idaho/ND/WV — the #833 class; also "Port Stanley".
+- [ ] `Stanley` — `bare_city_namesake` — MED — namesake: Stanley, Idaho/ND/WV — the #833 class. Also "Port Stanley".
 
 ### GS — South Georgia
 
-- [ ] `King Edward Point` — `bare_city_global` — MED — the research-station capital; no civilian addressing.
+- [ ] `King Edward Point` — `bare_city_global` — MED — the research-station capital. No civilian addressing.
 
 ### PM — Saint Pierre and Miquelon
 
@@ -1040,7 +1040,7 @@
 
 ### AU — Australia (covered 2 — upgrades)
 
-- [ ] `Canberra` — `bare_city_same_admin` — HIGH — city vs "Australian Capital Territory" — the designed-capital disambiguation; also "Canberra" vs "ACT" abbrev.
+- [ ] `Canberra` — `bare_city_same_admin` — HIGH — city vs "Australian Capital Territory" — the designed-capital disambiguation. Also "Canberra" vs "ACT" abbrev.
 - [ ] `Geelong` — `bare_city_global` — MED — namesake: Geelong, none (VERIFY); the second-Victoria-city class.
 
 ### NZ — New Zealand
@@ -1051,7 +1051,7 @@
 
 ### PG — Papua New Guinea
 
-- [ ] `Port Moresby` — `bare_city_global` — MED — "Port Moresby" vs "Moresby" abbrev-trap; also "National Capital District".
+- [ ] `Port Moresby` — `bare_city_global` — MED — "Port Moresby" vs "Moresby" abbrev-trap. Also "National Capital District".
 - [ ] `Lae` — `bare_city_namesake` — MED — namesake: Lae, Marshall Islands.
 
 ### FJ — Fiji
@@ -1097,13 +1097,13 @@
 
 ### TV — Tuvalu
 
-- [ ] `Funafuti` — `atoll_admin_same` — MED — atoll/island same-name; the whole country is 9 atolls — the definitive small-state class.
+- [ ] `Funafuti` — `atoll_admin_same` — MED — atoll/island same-name. The whole country is 9 atolls — the definitive small-state class.
 - [ ] `Fongafale` — `bare_city_global` — MED — the islet that holds the capital (Vaiaku).
 
 ### MH — Marshall Islands
 
 - [ ] `Majuro` — `atoll_admin_same` — MED — atoll/town/municipality same-name.
-- [ ] `Delap-Uliga-Darrit` — `compound_capital` — MED — THE "DUD" triple-town capital — three contiguous islets as one city; structurally unique.
+- [ ] `Delap-Uliga-Darrit` — `compound_capital` — MED — the "DUD" triple-town capital — three contiguous islets as one city. Structurally unique.
 
 ### FM — Micronesia
 
@@ -1112,8 +1112,8 @@
 
 ### PW — Palau
 
-- [ ] `Koror` — `bare_city_global` — MED — state/town same-name; the old capital.
-- [ ] `Ngerulmud` — `renamed_city` — MED — the capital since 2006 — the "nobody knows the capital" class; must not fall back to Koror.
+- [ ] `Koror` — `bare_city_global` — MED — state/town same-name. The old capital.
+- [ ] `Ngerulmud` — `renamed_city` — MED — the capital since 2006 — the class of capitals that few users can name. Must not fall back to Koror.
 
 ### CK — Cook Islands
 
@@ -1122,19 +1122,19 @@
 
 ### NU — Niue
 
-- [ ] `Alofi` — `village_island_same` — MED — village/island same-name; also "Alofi North/South" split.
+- [ ] `Alofi` — `village_island_same` — MED — village/island same-name. Also "Alofi North/South" split.
 
 ### TK — Tokelau
 
-- [ ] `Fakaofo` — `atoll_admin_same` — MED — atoll/village; the "capital" (each atoll has its own).
+- [ ] `Fakaofo` — `atoll_admin_same` — MED — atoll/village. The "capital" (each atoll has its own).
 
 ### WF — Wallis and Futuna
 
-- [ ] `Mata-Utu` — `diacritic_script` — MED — "Mata-Utu" vs "Matā'Utu" okina; also "Mata Utu" un-hyphenated.
+- [ ] `Mata-Utu` — `diacritic_script` — MED — "Mata-Utu" vs "Matā'Utu" okina. Also "Mata Utu" un-hyphenated.
 
 ### AS — American Samoa
 
-- [ ] `Pago Pago` — `bare_city_global` — MED — the "Pango Pango" mispronunciation/misspelling pair; also "Pago Pago" vs "Pago" (village).
+- [ ] `Pago Pago` — `bare_city_global` — MED — the "Pango Pango" mispronunciation/misspelling pair. Also "Pago Pago" vs "Pago" (village).
 
 ### MP — Northern Mariana Islands
 
@@ -1143,11 +1143,11 @@
 
 ---
 
-## Covered-country gaps worth filling (single high-value entries)
+## Covered-country gaps to fill (single high-value entries)
 
 - [ ] `Wellington, FL` — US — the reverse-namesake guard (US town that shadows the NZ capital) — complements the corpus's #905-class entries.
 - [ ] `Georgetown, Penang` — MY — the George Town/Georgetown spelling pair, both directions.
-- [ ] `Basse-Terre, Guadeloupe` — GP — the twin of kn Basseterre; also "Basse-Terre" vs "Basse-Terre Island".
+- [ ] `Basse-Terre, Guadeloupe` — GP — the twin of kn Basseterre. Also "Basse-Terre" vs "Basse-Terre Island".
 
 ---
 

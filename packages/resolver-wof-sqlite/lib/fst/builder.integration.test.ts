@@ -96,7 +96,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 })
 
 // The curation block runs against the canonical admin DB
-// (the artifact the shipped per-locale FSTs are actually built from).
+// (the artifact the shipped per-locale FSTs are built from).
 // The per-repo DB above is a legacy fixture absent on newer hosts.
 const ADMIN_DB = wofDatabasePath("admin-global-priority.db")
 const HAS_ADMIN = await pathExists(ADMIN_DB)

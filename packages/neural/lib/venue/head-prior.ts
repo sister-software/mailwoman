@@ -11,7 +11,7 @@
  *
  *   A first-word or last-word head is read only when the word has a neighbor in the same segment,
  *   so a single-word input such as `Rijksmuseum` receives a bias only through its suffix entry. A
- *   lone word is as often a locality as a venue, and the table's position rates were measured on
+ *   lone word is as likely a locality as a venue, and the table's position rates were measured on
  *   names of two or more words.
  *
  *   The extension stays inside one comma-separated segment and stops at an identifier word: one that

@@ -30,7 +30,7 @@ const SHORT_QUERY_MAX_LENGTH = 3
 /**
  * Over-fetch floor for short (≤3-character) queries.
  *
- * These queries are usually region abbreviations such as "NY" or "VT".
+ * The target case is a region abbreviation such as "NY" or "VT".
  *
  * An exact-abbrev holder's BM25 is poor (long multilingual alt-name document),
  * so the normal `limit * 4` window can drop it before `exactMatchTiering` promotes
@@ -41,7 +41,7 @@ const SHORT_QUERY_MAX_LENGTH = 3
 const SHORT_QUERY_OVERFETCH = 200
 
 /**
- * How many rows the population-ordered companion fetch adds to the candidate pool.
+ * The count of rows the population-ordered companion fetch adds to the candidate pool.
  *
  * Small on purpose.
  * Its only job is to guarantee the famous holders of a name enter the pool at all.
@@ -184,10 +184,10 @@ export function fetchSearchRows<DB>(options: {
 	// and builds no join at all.
 	const { select: encyclopedicSelect, join: encyclopedicJoin } = encyclopedicClauses.get(sch)!
 
-	// Push the population boost into the order BY when the index is available, so famous places
-	// (whose long alt-name lists hurt BM25) actually make it into the over-fetch window.
+	// Push the population boost into the order BY when the index is available, so famous
+	// places (whose long alt-name lists hurt BM25) make it into the over-fetch window.
 	// The TS post-scoring will still compute the same boost for the final score.
-	// This just ensures the candidate set is right.
+	// This ordering only decides which rows enter the candidate set.
 	//
 	// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
 	// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").

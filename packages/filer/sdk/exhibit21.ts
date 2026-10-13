@@ -38,7 +38,7 @@ export interface ParsedSubsidiary {
  * {@linkcode parseExhibit21}'s result.
  *
  * `unparseable` is a count rather than a list of the offending text, since criterion
- * 3 requires only knowing that abstention happened and how often.
+ * 3 requires only knowing that abstention happened and its count.
  */
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
@@ -111,12 +111,12 @@ function headerColumnMapping(
  * Distinctness is the separating condition: a jurisdiction column repeats
  * (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26) while a second
  * name column does not (IDT 1.00), and Charter's `"Delaware limited liability company"`
- * makes all 135 values include a designation on a genuine jurisdiction list.
+ * makes all 135 values include a designation on a true jurisdiction list.
  */
 const MINIMUM_NAME_OVER_NAME_ROWS = 4
 
 /**
- * More than half the second values must include a legal designation. A genuine jurisdiction column is
+ * More than half the second values must include a legal designation. A true jurisdiction column is
  * 0/N except where the filer spells the entity type out (Charter's `"Delaware limited liability
  * company"`, 135/135), which {@linkcode DISTINCT_SECOND_VALUE_RATIO} separates.
  */
@@ -443,7 +443,7 @@ const TITLE_LINE_PATTERNS = [
 ]
 
 /**
- * A candidate line longer than this many whitespace-separated tokens is abstained on
+ * A candidate line longer than this number of whitespace-separated tokens is abstained on
  * rather than split, because the longest legitimate name in the real-filing corpus
  * is 8 tokens and a preamble sentence is not a name at all.
  */

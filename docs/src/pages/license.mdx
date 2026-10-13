@@ -1,6 +1,6 @@
 ---
 title: License
-description: Mailwoman is AGPL-3.0-only, or commercial under a paid license. This page says what each branch asks of you, how to provide a license, and how a key is configured, checked and kept current.
+description: Mailwoman is AGPL-3.0-only, or commercial under a paid license. This page explains what each branch asks of you, how to provide a license, and how a key is configured, checked and kept current.
 ---
 
 import { BundleObligationsList, BundleRightsTable } from "#components/DataBundles/DataBundles"
@@ -13,19 +13,19 @@ branches are offered for every release, and the branch that applies to an instal
 can show a key for. The offer reaches the code and model artifacts Sister Software authors, to the
 extent it holds or controls the rights in them. Third-party components distributed with Mailwoman, and
 reference data you download, stay under the terms of whoever published them, and neither branch of this
-offer changes those terms. The two sections below, on reference data and on what a pretrained package carries, say
+offer changes those terms. The two sections below, on reference data and on what a pretrained package contains, state
 where to read them.
 
 ## The open-source branch
 
 Under the AGPL, three obligations attach. You keep the copyright notices (attribution). A modified
-copy carries the same license (share-alike). And if people use your modified copy over a network,
+copy stays under the same license (share-alike). And if people use your modified copy over a network,
 they are entitled to its corresponding source (the source offer, section 13). `mailwoman doctor`
 reports these three by name for the installation it runs on.
 
-Without a license key, every `mailwoman` command ends with a two-line notice on stderr that says so,
-and every HTTP response from the native API and the drop-in servers carries a `Server` header naming
-the branch and a `Link: rel="license"` header pointing here. JSON responses carry the same in an
+Without a license key, every `mailwoman` command ends with a two-line notice on stderr that states the
+branch. Every HTTP response from the native API and the drop-in servers includes a `Server` header naming
+the branch and a `Link: rel="license"` header pointing here. JSON responses include the same in an
 `engine` object. The notice records which branch applies, and every command runs the same with or
 without a key. The AGPL grants those rights directly, so exercising them requires no key.
 
@@ -41,29 +41,29 @@ term of the agreement you accepted. What each tier covers, and the enterprise an
 the [pricing page](/docs/pricing).
 
 [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md)
-in the repository is a reference template, and its own opening notice says it is not self-executing and
-grants no rights on its own. It carries the same ten sections in the same order, and four of them read
+in the repository is a reference template, and its own opening notice states that it is not self-executing and
+grants no rights on its own. It has the same ten sections in the same order, and four of them read
 differently from `commercial-2026-10`: the template defines the licensee generically where the
 published agreement identifies the entity given at checkout, the template leaves fees and term open where
 the published agreement states the subscription price and the key-period mechanics, and the template's
-attribution section carries a paragraph limiting the waiver to Sister Software's own attribution that
+attribution section contains a paragraph limiting the waiver to Sister Software's own attribution that
 the published agreement states only in its grant section. Read the published version for a purchase
 made under it. The template is where a negotiated agreement starts.
 
 ### What the commercial grant does not cover
 
 Section 2 of the agreement limits the grant to the code and model artifacts Sister Software authors.
-It does not extend to third-party components distributed with Mailwoman, which stay under their own
+It does not extend to third-party components distributed with Mailwoman. Those components stay under their own
 licenses, and any attribution or share-alike obligation attaching to those components continues to
 apply. A commercial license does not waive or relicense them.
 [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md)
-lists the components we distribute and the terms each one carries. Reference data an operator
-downloads separately carries the terms of whoever published it, and the next section says what those
+lists the components we distribute and the terms that apply to each one. Reference data an operator
+downloads separately is under the terms of whoever published it, and the next section states what those
 terms are for each bundle we host.
 
 ## Reference data you download
 
-The resolver needs a gazetteer, and no npm package carries one. Four bundles are published for
+The resolver needs a gazetteer, and no npm package includes one. Four bundles are published for
 download (`candidate`, `poi`, `fr` and `us`), and each one contains rows another party published.
 Each copy engages that publisher's terms:
 
@@ -74,13 +74,13 @@ The table above is rendered from the bundle registry in the `mailwoman` package 
 artifact, under `docs/static/sbom/mailwoman-data-<version>.cdx.json`, and each component states whether its
 license expression came from the artifact's own `layer_manifest` or from this registry.
 
-What each bundle obliges you to do, and what nobody has established about it:
+What each bundle obliges you to do, and what no one has established about it:
 
 <BundleObligationsList />
 
 No command downloads a bundle for you. `mailwoman serve` and `mailwoman geocode` with no gazetteer print
 the command to run and stop. The download happens when you run `mailwoman data pull <bundle>`, and that
-command prints each bundle's publishers, its terms, what it obliges you to do, and what nobody has
+command prints each bundle's publishers, its terms, what it obliges you to do, and what no one has
 established about it, before any bytes move. `mailwoman data --list` prints each bundle's description, file
 count, size and destination, and states no terms.
 Two paths do fetch without a prompt and are not this command: a page running the browser engine
@@ -90,20 +90,20 @@ and sprites from the same origin.
 A commercial key does not reach any of this. The publishers above are not parties to your agreement
 with us, and their attribution and share-alike conditions apply to you whichever branch you are on.
 
-## What a pretrained package already carries
+## What a pretrained package already contains
 
 A model's inputs are fixed when it is trained. If you install `@mailwoman/neural-weights-en-us` without
 pulling a single bundle still gives you artifacts built from the sources that package records, and
 skipping a runtime download leaves them unchanged. To use different inputs, install a different
 package.
 
-Every published weights package carries two generated files in its tarball. `LICENSE.md` states the
+Every published weights package includes two generated files in its tarball. `LICENSE.md` states the
 terms above. `PROVENANCE.json` records each artifact it ships with its digest or `unrecorded`, the
 sources its model card attributes with the license each one names, the base package a data-only overlay
 decodes through together with that base's own sources, and the questions the record leaves open. Read
 it as a record of what the model card holds: a package recording no attribution is a package whose card
-records none, which is a different statement from a package with no attributable inputs. Neither file
-says an artifact is cleared for a particular use.
+records none. That is a different statement from a package with no attributable inputs. Neither file
+states that an artifact is cleared for a particular use.
 
 For the installation in front of you:
 
@@ -134,13 +134,13 @@ mailwoman doctor
 
 `license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
 mailwoman.ai still lists the key id as active and, for a self-service license, whether the license
-still stands. `doctor` reports the branch that applies and the obligations it carries. With a valid
+still stands. `doctor` reports the branch that applies and the obligations that branch imposes. With a valid
 key the notice is silent and `engine.license` reads `LicenseRef-Commercial`.
 
 ## Keep the key current
 
 A self-service license renews with its subscription, and each renewal issues a new key whose date is
-the paid period's end plus 14 days. The purchase page and the first email carry a refresh secret.
+the paid period's end plus 14 days. The purchase page and the first email contain a refresh secret.
 Adopt the key once:
 
 ```bash

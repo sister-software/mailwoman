@@ -10,7 +10,7 @@ title: Demo preset diagnosis
 - **"New York, NY"**: Fixed by the region-aware locality bias guard ([#174](https://github.com/sister-software/mailwoman/pull/174)). The QueryShape prior now skips locality bias when the preceding text matches the region's full name.
 - **FST importance weighting**: Washington DC locality (0.815) correctly outranks Washington state (0.764) via Wikipedia importance ([#173](https://github.com/sister-software/mailwoman/pull/173)).
 - **"Washington, DC"**: Partially improved. The FST biases toward locality, but the model's high B-street confidence after street phrases overrides the prior. The remaining fix depends on training data quality.
-- **"San Francisco"**: Fixed in the v0.5.2 model, which labels it as a locality.
+- **"San Francisco"**: Fixed in the v0.5.2 model. That model labels it as a locality.
   :::
 
 This page records the root-cause analysis of v0.5.1's demo preset failures and the fix plan. The analysis came from an 8-turn DeepSeek consultation (2026-05-25).

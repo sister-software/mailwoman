@@ -807,7 +807,7 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 
 	await makeDirectories(destDir)
 
-	// A package that declares `mailwoman.baseWeights` inherits its graph whatever the manifest says,
+	// A package that declares `mailwoman.baseWeights` inherits its graph whatever the manifest lists,
 	// because `resolveWeights` takes the base's graph over a file in the overlay directory.
 	const inherits =
 		manifest.model?.kind === "inherit" || (!manifest.model && (await declaresBaseWeights(manifest.locale)))

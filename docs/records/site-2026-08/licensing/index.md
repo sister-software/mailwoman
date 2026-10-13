@@ -14,7 +14,7 @@ publishing under the trade name **Sister Software**. All Mailwoman source code i
 copyright Sister Software and released under the dual license described below
 (`AGPL-3.0-only OR LicenseRef-Commercial` — see each published package's license field on
 [npm](https://www.npmjs.com/org/mailwoman)). There are no external copyright holders in the
-codebase; third-party data sources and their licenses are cataloged on the
+codebase. Third-party data sources and their licenses are cataloged on the
 [data licensing & provenance](./data-provenance.md) page.
 
 A [**commercial license**](./commercial.md) grants you full ownership and control over your products,

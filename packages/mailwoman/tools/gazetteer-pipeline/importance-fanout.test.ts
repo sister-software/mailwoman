@@ -96,7 +96,7 @@ describe("resolveConcordanceFanout", () => {
 
 	it("treats a zero-population maximum as no signal, not as a winner", () => {
 		// The meaning-of-zero rule: absent population is stored as 0, so "the biggest
-		// of several zeroes" must not read as a decisive maximum.
+		// of several zeroes" must not read as a winning maximum.
 		const zeroes = [
 			{ id: 1, placetype: "locality", lat: 0, lon: 0, population: 0 },
 			{ id: 2, placetype: "locality", lat: 10, lon: 10, population: 0 },

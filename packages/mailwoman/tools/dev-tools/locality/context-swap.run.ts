@@ -147,7 +147,7 @@ console.log(`| arm | rows | locality recovered |`)
 console.log(`| --- | --: | --: |`)
 
 /**
- * How many recovered rows to print under the table.
+ * The number of recovered rows to print under the table.
  *
  * The list shows what the arms render.
  * The table records the rate.

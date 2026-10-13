@@ -13,7 +13,7 @@
  *   - `retagged`  — same text, different tag.
  *   - `moved`     — same tag, different span.
  *   - `removed` / `added` — a span with no counterpart at all.
- *   - `confidence` — same tag, same span, the model simply became more or less sure.
+ *   - `confidence` — same tag, same span, only the model's confidence changed.
  *
  *   The diff stores confidence changes per span instead of as a headline.
  *   A row can keep its answer while losing confidence on the deciding span.
@@ -73,7 +73,7 @@ export function isChange(delta: SpanDelta): boolean {
 }
 
 /**
- * One input's parse on both sides, plus the span-level story of how they differ.
+ * One input's parse on both sides, plus the span-level account of how they differ.
  */
 export interface ParseDiff {
 	input: string
@@ -266,7 +266,7 @@ export function diffParse(
 }
 
 /**
- * Confidence movement below which a same-tag same-span pair is not worth a line of its own:
+ * Confidence movement below which a same-tag same-span pair gets no line of its own:
  * two hundredths, because the decoder's aggregate is a mean over a span's tokens,
  * so a one-token re-scoring moves a long span by a hair.
  */

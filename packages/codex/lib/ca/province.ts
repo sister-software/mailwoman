@@ -12,8 +12,8 @@
  *   Columbia` / `Colombie-Britannique`). That mirrors the German English-exonym pattern (`Bavaria`
  *   / `Bayern`), except here the French name is not a foreign exonym but a co-official form a real
  *   address can be written in. And like a US two-letter state code, the ISO code (`on`, `QC`, `BC`)
- *   is the abbreviation people actually write on the address line — so unlike German or French
- *   regions, the Canadian code is a surface form rather than just a resolver key.
+ *   is the abbreviation people write on the address line — so unlike German or French
+ *   regions, the Canadian code is a surface form as well as a resolver key.
  */
 
 import { foldName } from "#normalize"

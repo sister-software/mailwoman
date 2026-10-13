@@ -15,7 +15,7 @@
  *
  * Two checks keep a short transfer from reading as a small directory. The records endpoint is asked
  * for the `total_count` of the same filter before the export, and the written file must hold exactly
- * that many lines. A mismatch removes the file and fails the fetch. A re-run compares the catalog
+ * that number of lines. A mismatch removes the file and fails the fetch. A re-run compares the catalog
  * record's `modified` against the manifest and makes no transfer when they agree and the file is on
  * disk at the recorded length.
  */
@@ -75,7 +75,7 @@ export function annuaireExportURL(): string {
 }
 
 /**
- * The records URL that answers how many records the overseas filter selects.
+ * The records URL that answers with the count of records the overseas filter selects.
  */
 export function annuaireCountURL(): string {
 	return `${ANNUAIRE_EDUCATION_API_URL}/records?where=${encodeURIComponent(annuaireOverseasFilter())}&limit=0`
@@ -135,7 +135,7 @@ export async function readAnnuaireCatalog(
 }
 
 /**
- * Read how many records the overseas filter selects.
+ * Read the count of records the overseas filter selects.
  *
  * @throws When the endpoint answers no `total_count`.
  */

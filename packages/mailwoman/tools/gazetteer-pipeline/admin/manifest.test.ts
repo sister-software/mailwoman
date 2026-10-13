@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The manifest is only worth its accuracy, so each field must be true of the build that produced it
+ *   A manifest field that is wrong misleads its reader, so each field must be true of the build that produced it
  *   rather than merely populated.
  */
 

@@ -246,8 +246,8 @@ export async function loadReleaseAssets(
 				const wofLookup = new WOFCandidateTableLookup(database)
 				// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
 				// the VFS now so the first interactive query starts warm.
-				// The worker serializes queries, so a user query issued mid-warm-up simply
-				// queues behind pages it was going to need anyway.
+				// The worker serializes queries, so a user query issued mid-warm-up queues
+				// behind pages it was going to need anyway.
 				void wofLookup.warmUp().catch(() => {})
 				lookup = wofLookup
 			}

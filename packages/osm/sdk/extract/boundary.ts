@@ -37,7 +37,7 @@ const BOUNDARY_LAYER = "multipolygons"
  *
  * The value is interpolated into an ogrsql string literal, so an apostrophe is
  * admissible only because it is doubled below.
- * Every other quoting metacharacter is refused outright.
+ * Every other quoting metacharacter is refused.
  */
 const SAFE_NAME = /^[\p{L}\p{N} '’\-.()/]+$/u
 

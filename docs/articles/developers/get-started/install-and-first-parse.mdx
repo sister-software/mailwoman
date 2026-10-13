@@ -116,9 +116,9 @@ byte-stable. On the held-out set this model is under-confident: mean confidence 
 route on the score (for example, sending everything under 0.8 to human review), wire the calibrator
 first. The uncalibrated score would send more addresses to review than the error rate justifies.
 
-**Values come back repaired.** The input said `apt 4b` and the output says `Apt 4B`.
+**Values come back repaired.** The input said `apt 4b` and the output contains `Apt 4B`.
 The ordinal `5th` comes back as `5TH`. If you pass the same address in mixed case with commas, the
-repair step leaves the casing alone. If you need the exact characters the user typed, keep your own
+repair step leaves the casing unchanged. If you need the exact characters the user typed, keep your own
 copy of the input string, or read `result.input`.
 
 Two more fields on `result` are useful later. `result.locale` records which locale the pipeline
@@ -129,7 +129,7 @@ chose, and `result.kind` records the query shape it detected (`structured_addres
 
 You have a parser running in your own process, without a service dependency. It turns free-text
 addresses into labeled components with confidence scores you can route on. It does not produce
-coordinates yet, because coordinates require a gazetteer database, which is a separate download.
+coordinates yet, because coordinates require a gazetteer database. That database is a separate download.
 
 ## Next
 

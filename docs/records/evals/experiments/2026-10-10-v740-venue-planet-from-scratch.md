@@ -16,7 +16,7 @@ baseline and no placebo applies.
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Config    | `corpus-python/src/mailwoman_train/configs/v7.4.0-venue-planet-60k.yaml`: no `init_from`, 60,000 steps at batch 128, learning rate 5e-4, cosine, seed 42                                                                                                             |
 | Corpus    | `0.7.3.2-venue-planet` over `0.7.2-address-systems`: 1,637,640 `spliced-venue-locality` and 1,478,399 `fragment-venue-bare` rows over 147 countries                                                                                                                  |
-| Mixture   | Venue reps 0.07394, 3% of draws; inherited receipt floors at the base's times 0.97 times 0.9; 215 admitted countries                                                                                                                                                 |
+| Mixture   | Venue reps 0.07394, 3% of draws. Inherited receipt floors at the base's times 0.97 times 0.9. 215 admitted countries                                                                                                                                                 |
 | Floors    | 44 corpus receipts, 22 validation-coverage floors, one label floor (`unit` at 500 validation rows)                                                                                                                                                                   |
 | Run       | Modal app `ap-MS66fbMNKwT1p5hxsPYWK0`, A100-SXM4-40GB, 39,292,118 parameters, 4.9 steps per second, about 3.4 hours                                                                                                                                                  |
 | Artifacts | `/data/output-v740-venue-planet-s42/checkpoints/step-060000` with `fisher-diag-v1.npz`; fp32 `model.onnx` md5 `247516327f33d57914e81bd73e4d7b90`; int8 `/data/models/quantized/model-v740-venue-planet-step-060000-int8.onnx` md5 `19dd3d592acbd3a926c638f97546848b` |
@@ -29,7 +29,7 @@ The epoch-mixture audit over a 1,000,000-row window passed all 44 receipts: `spl
 15,781 against 14,180, `fragment-venue-bare` 14,306 against 12,810, `ve-locality-postcode-region` 213 against 174. The validation-coverage audit passed every floor. The label-support audit on the trainer's 4,096-row
 validation draw counted `unit` 745 rows against the floor of 500 and `po_box` 3 rows, as #2438 recorded.
 
-## Training
+## The training run
 
 Train loss fell from 5.04 at step 100 to 0.69 at step 60,000. The final eval on the 4,096-row validation
 draw: val loss 0.7821, macro F1 0.8848. v7.2.0's final eval read 0.7462 and 0.9297 on its own draw of the
@@ -74,12 +74,12 @@ d'Ivoire, Uganda, Malawi, Botswana, Qatar, Oman and Armenia, four Han-script CN 
 `A Bar with Shapes for a Name, 232 Kingsland Rd, Whitmore Estate, London E2 8AX, United Kingdom` and
 `りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57`, and four bare US `locality, region postcode` rows.
 
-The regressions carry one mechanism in the majority of the sampled rows, from `mwdev_diff_parse` against
+The regressions show one mechanism in the majority of the sampled rows, from `mwdev_diff_parse` against
 shipped: a bare street name is retagged `venue`. `Calle de Fuencarral` street 0.73 → venue 0.58;
 `Paseo de la Reforma` street 0.83 → venue 0.85; `Marylebone High Street` street + suffix 0.94 → venue
 0.58 over the whole phrase; `Neusser Str. 12, Nippes, 50733 Köln` street 0.88 → venue 0.72 with the
 house number swallowed. The `fragment-venue-bare` rows, bare multi-word names labeled `venue` at a 3%
-share from step 0, compete with bare multi-word streets, which the v7.3.x fine-tunes showed on
+share from step 0, compete with bare multi-word streets. The v7.3.x fine-tunes showed that competition on
 `Pago Pago` and `Yonge Street North` and a from-scratch run shows across the bare-street rows of six
 countries. A second mechanism retags a trailing directional as `region`: `King Street East` → locality
 `King Street` + region `East` 0.25, `Constitution Avenue Northwest` → street `Constitution Avenue` 0.41 +

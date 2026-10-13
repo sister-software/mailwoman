@@ -76,7 +76,9 @@ export interface ONNXRunnerOpts {
 	intraOpNumThreads?: number
 
 	/**
-	 * The token-embedding table of a split release, whose `encoder.onnx` declares `inputs_embeds`.
+	 * The token-embedding table of a split release.
+	 *
+	 * A split release's `encoder.onnx` declares `inputs_embeds`.
 	 * An unsplit `model.onnx` reads `input_ids` and needs none.
 	 */
 	embeddings?: EmbeddingTable

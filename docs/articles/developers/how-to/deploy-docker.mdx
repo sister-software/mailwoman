@@ -19,7 +19,7 @@ container was built or run for this page. Every command below comes from the rep
 produce the published image: the repo-root `Dockerfile`, `docker/package.json`,
 `docker/docker-compose.yml` and `docker/README.md`. The registry facts in step 1 come from the GHCR API.
 The [example server](/examples/mailwoman-server.mjs) in step 4 _was_ executed outside a container, in
-both states the image can start in: with a gazetteer on disk, and with an empty data root, which matches
+both states the image can start in: with a gazetteer on disk, and with an empty data root. The empty data root matches
 a first run without a volume. Those transcripts are real output. The `docker run` lines were not
 executed.
 
@@ -126,7 +126,7 @@ RUN rm -rf node_modules/onnxruntime-node/bin/napi-v6/win32 \
 		node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_tensorrt.so
 ```
 
-The binary trim is the change most worth copying. `onnxruntime-node` installs 500 MB, most of it for
+The binary trim saves the most space of these changes. `onnxruntime-node` installs 500 MB, most of it for
 the other two platforms and for the CUDA and TensorRT execution providers. On this host, removing them
 reduced `node_modules` from 746 MB to 303 MB. CPU inference is unaffected, because it loads only
 `libonnxruntime.so.1` and `onnxruntime_binding.node`.
@@ -164,8 +164,8 @@ without a volume alive. A server that trusted a configured path would try to ope
 exit at import with `SQLITE_ERROR: unable to open database file`, before binding a port. The published
 image's entrypoint uses the same check.
 
-You can verify this without Docker. Point the data root at a directory without a gazetteer, which
-matches the container's first-run state, and run the server under plain node:
+You can verify this without Docker. Point the data root at a directory without a gazetteer. That directory
+matches the container's first-run state. Then run the server under plain node:
 
 ```bash
 PORT=13782 MAILWOMAN_DATA_ROOT=/tmp/mw-verify-trial node mailwoman-server.mjs

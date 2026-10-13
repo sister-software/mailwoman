@@ -27,7 +27,7 @@ Read the last two items before you start. They determine whether this page can a
 - **The gazetteer is a 1,652,916,224-byte download**, and it is not on npm. Step 1 fetches it once.
   Everything after step 1 runs locally.
 - **The default ports conflict with the servers you are replacing.** The defaults are 2322 for Photon,
-  8080 for Nominatim and 8081 for libpostal, which are the same ports your existing servers use. This
+  8080 for Nominatim and 8081 for libpostal. Those are the same ports your existing servers use. This
   page moves two of them with `--port`, because ports 2322 and 8080 were in use on the machine used to
   verify it. Run the drop-in next to the original on a spare port to test a swap
   anyway, because you can compare the two answers before you switch.
@@ -35,7 +35,7 @@ Read the last two items before you start. They determine whether this page can a
   Nominatim drop-ins runs point-in-polygon over a full WOF distribution at
   `<data-root>/db/wof/admin-global-priority.db`. `mailwoman data pull` does not provide one, so
   `/reverse` returns an empty result until you add it. Step 3 shows that output so that you do not
-  mistake it for a broken install. Forward geocoding, which most callers use, works from step 1.
+  mistake it for a broken install. Most callers use forward geocoding, and it works from step 1.
 - **None of the servers has authentication**, and `--host` defaults to `0.0.0.0`. Bind `127.0.0.1` or
   put the server behind your own ingress before you expose it on a shared network.
 
@@ -99,7 +99,7 @@ npx @mailwoman/photon serve --port 2323
 
 The four indented lines describe the deployment. Check them in the log when two hosts return different
 answers. `resolver:` shows which gazetteer answers queries. `wof:` shows the reverse-geocoding database
-from the prerequisites, which is missing here. Only `mailwoman serve` reads the variable that line
+from the prerequisites. That database is missing here. Only `mailwoman serve` reads the variable that line
 suggests. This server looks only in `<data-root>/db/wof/`. Permissive CORS is on
 by default because browser geocoder widgets call these endpoints cross-origin. `--no-cors` turns it
 off when a reverse proxy already sets the headers.
@@ -174,7 +174,7 @@ and the route returns the empty shape instead of a 500. To get real answers, put
 
 ## 4. Point your existing client at it
 
-The steps above did not use a client library. This step performs the swap, which in geopy is one
+The steps above did not use a client library. This step performs the swap. In geopy the swap is one
 argument. Install geopy in a disposable environment:
 
 ```bash
@@ -275,7 +275,7 @@ curl -s "http://127.0.0.1:8088/search?q=10+Downing+Street,+London+SW1A+2AA&addre
 }
 ```
 
-The `annotations` block is an addition in OpenCage's format. Fields derived from the coordinate alone
+The `annotations` block is an addition in OpenCage's format. Fields derived from only the coordinate
 are always present: the coordinate formats, the qibla direction and the sun times. Three more fields,
 `flag`, `currency` and `callingcode`, need a country in the resolved hierarchy. This result has none,
 but `?q=Berlin,+Germany` does. The IANA timezone, UN/LOCODE and EU NUTS codes are added when those
@@ -342,7 +342,7 @@ curl -s -X POST http://127.0.0.1:8081/parse -H 'content-type: application/json' 
 [{"label":"house_number","value":"30"},{"label":"road","value":"Rue de Rivoli"},{"label":"postcode","value":"75004"},{"label":"city","value":"Paris"}]
 ```
 
-`/expand` returns a set, which is deliberately small:
+`/expand` returns a set. The set is deliberately small:
 
 ```bash
 curl -s "http://127.0.0.1:8081/expand?address=1600%20Pennsylvania%20Ave%20NW"
@@ -353,7 +353,7 @@ curl -s "http://127.0.0.1:8081/expand?address=1600%20Pennsylvania%20Ave%20NW"
 ```
 
 The route builds three strings (the input, its normalized form, and its abbreviation-expanded form)
-and drops duplicates, which is why this address yields two. Mailwoman's normalization stage is
+and drops duplicates. That is why this address yields two. Mailwoman's normalization stage is
 deterministic, so the result is one canonical alternative instead of the multi-variant hypothesis set
 that libpostal's probabilistic expander produces. A caller that indexes every expansion gets fewer
 keys per address here. A caller that takes `expansions[0]` or the last element sees no difference.
@@ -403,24 +403,24 @@ one.
 
 ### Nominatim: `/search`, `/reverse`, `/lookup`, `/status`
 
-| Parameter or field                                           | Verdict           | What that means here                                                                                                                                       |
-| ------------------------------------------------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `q`                                                          | Honored           | Free-text forward geocoding                                                                                                                                |
-| `street`, `city`, `county`, `state`, `country`, `postalcode` | Honored           | Joined into one query string in that order, then parsed. `?city=Berlin&country=Germany` resolves                                                           |
-| `countrycodes`                                               | Honored           | Hard country restriction, first code only. Can legitimately answer `[]`                                                                                    |
-| `addressdetails`                                             | Honored           | Adds the `address` block                                                                                                                                   |
-| `format`                                                     | Honored           | `geojson` and `jsonld` change the envelope; `jsonv2` (the default) and `json` both answer the result array. `/lookup` ignores `jsonld` — a preserved quirk |
-| `limit`                                                      | Accepted, capped  | `/search` returns at most one result today, so `limit=5` still answers one                                                                                 |
-| `bounded`                                                    | Accepted, ignored | The server applies no viewbox restriction                                                                                                                  |
-| `accept-language`                                            | Accepted, ignored | Names behave the same way as with Photon's `lang`                                                                                                          |
-| `zoom` on `/reverse`                                         | Accepted, ignored | The detail level is whatever the containing hierarchy provides                                                                                             |
-| `viewbox`, `extratags`, `namedetails`, `polygon_*`, `dedupe` | Not read          | The handlers parse none of them                                                                                                                            |
-| `place_id`                                                   | Substituted       | Forward results carry a deterministic hash of coordinate plus display name rather than a Nominatim id. Reverse results carry the gazetteer's own place id  |
-| `osm_id` / `osm_type`                                        | Never set         | As with Photon                                                                                                                                             |
-| `licence`                                                    | Substituted       | `Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER` — the sources these answers come from                                               |
-| `annotations`                                                | Addition          | The OpenCage-style block from step 5                                                                                                                       |
-| `/lookup`                                                    | `501`             | Not implemented                                                                                                                                            |
-| `/reverse` without a full WOF distribution                   | `null`            | See the prerequisites                                                                                                                                      |
+| Parameter or field                                           | Verdict           | What that means here                                                                                                                                        |
+| ------------------------------------------------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `q`                                                          | Honored           | Free-text forward geocoding                                                                                                                                 |
+| `street`, `city`, `county`, `state`, `country`, `postalcode` | Honored           | Joined into one query string in that order, then parsed. `?city=Berlin&country=Germany` resolves                                                            |
+| `countrycodes`                                               | Honored           | Hard country restriction, first code only. Can legitimately answer `[]`                                                                                     |
+| `addressdetails`                                             | Honored           | Adds the `address` block                                                                                                                                    |
+| `format`                                                     | Honored           | `geojson` and `jsonld` change the envelope; `jsonv2` (the default) and `json` both answer the result array. `/lookup` ignores `jsonld` — a preserved quirk  |
+| `limit`                                                      | Accepted, capped  | `/search` returns at most one result today, so `limit=5` still answers one                                                                                  |
+| `bounded`                                                    | Accepted, ignored | The server applies no viewbox restriction                                                                                                                   |
+| `accept-language`                                            | Accepted, ignored | Names behave the same way as with Photon's `lang`                                                                                                           |
+| `zoom` on `/reverse`                                         | Accepted, ignored | The detail level is whatever the containing hierarchy provides                                                                                              |
+| `viewbox`, `extratags`, `namedetails`, `polygon_*`, `dedupe` | Not read          | The handlers parse none of them                                                                                                                             |
+| `place_id`                                                   | Substituted       | Forward results return a deterministic hash of coordinate plus display name rather than a Nominatim id. Reverse results return the gazetteer's own place id |
+| `osm_id` / `osm_type`                                        | Never set         | As with Photon                                                                                                                                              |
+| `licence`                                                    | Substituted       | `Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER` — the sources these answers come from                                                |
+| `annotations`                                                | Addition          | The OpenCage-style block from step 5                                                                                                                        |
+| `/lookup`                                                    | `501`             | Not implemented                                                                                                                                             |
+| `/reverse` without a full WOF distribution                   | `null`            | See the prerequisites                                                                                                                                       |
 
 ### libpostal: `/parse` and `/expand`
 

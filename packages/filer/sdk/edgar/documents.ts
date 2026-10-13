@@ -41,9 +41,8 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 }
 
 /**
- * Matches every `type` spelling edgar actually files an Exhibit 21 under
- * (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase `ex-21.2`, …) while rejecting a
- * type that merely starts the same way.
+ * Matches every `type` spelling edgar files an Exhibit 21 under (`EX-21`, `EX-21.1`,
+ * `EX-21.01`, lowercase `ex-21.2`, …) while rejecting a type that merely starts the same way.
  *
  * `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A` are all distinct exhibits
  * rather than a spelling variant of Exhibit 21.

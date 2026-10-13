@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Schema and validation for conformance-law fixtures. Each row compares base and variant queries under one fixed
- *   context, using a comparator identified by name and an expected relation. Comparator, relation, and status vocabularies are closed;
- *   invalid rows fail loading rather than being skipped or defaulted.
+ *   context, using a comparator identified by name and an expected relation. Comparator, relation, and status vocabularies are closed.
+ *   Invalid rows fail loading rather than being skipped or defaulted.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -18,7 +18,8 @@ import type { GauntletGeocodeOpts } from "#tools/eval-harness/gauntlet/harness"
 /**
  * Supported result comparators.
  *
- * Each checks one observable interface; implementations live in `comparators.ts`.
+ * Each checks one observable interface.
+ * The implementations live in `comparators.ts`.
  */
 export const RESULT_COMPARATORS = [
 	"resolution_identity",
@@ -41,7 +42,8 @@ export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
 /**
  * Verdict role of a fixture.
  *
- * `pass` blocks on failure; tracked statuses report without blocking.
+ * `pass` blocks on failure.
+ * Tracked statuses report without blocking.
  */
 export const CONFORMANCE_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 
@@ -89,11 +91,13 @@ export interface ConformanceFixture {
 	 */
 	base: string
 	/**
-	 * Variant query; may equal the base for idempotence checks.
+	 * Variant query.
+	 * It may equal the base for idempotence checks.
 	 */
 	variant: string
 	/**
-	 * Options shared by both sides; absent means production defaults.
+	 * Options shared by both sides.
+	 * An absent value means production defaults.
 	 */
 	context: ConformanceContext | null
 	/**
@@ -105,7 +109,8 @@ export interface ConformanceFixture {
 	 */
 	expect: ConformanceRelation
 	/**
-	 * Whether failure blocks the run; defaults to `pass`.
+	 * Whether failure blocks the run.
+	 * The default is `pass`.
 	 */
 	status: ConformanceStatus | null
 	/**
@@ -117,17 +122,21 @@ export interface ConformanceFixture {
 	 */
 	rowRef: string | null
 	/**
-	 * Coordinate tolerance in meters; supported only by `assembled_coordinate`.
+	 * Coordinate tolerance in meters.
+	 * Only `assembled_coordinate` supports it.
 	 */
 	toleranceM: number | null
 	/**
-	 * A note for the fixture author; the suite does not grade it.
+	 * A note for the fixture author.
+	 * The suite does not grade it.
 	 */
 	note: string | null
 }
 
 /**
- * Accepted fixture keys; reject unknown fields instead of silently dropping typos.
+ * Accepted fixture keys.
+ *
+ * The loader rejects unknown fields instead of silently dropping typos.
  */
 const FIXTURE_KEYS = new Set<string>([
 	"id",

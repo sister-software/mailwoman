@@ -1,22 +1,24 @@
 # v4.12.0 — house-venue intl, EWC brake raised 10x (#1748 / #1821)
 #
 # one variable against v4.11.0: ewc_lambda 1e4 -> 1e5. Same corpus (v0.27.0), same source, same
-# weight, same steps, same seed. A difference here is attributable to the brake alone.
+# weight, same steps, same seed. Because the lambda is the only setting that differs, a difference
+# here is attributable to the brake.
 #
-# why the brake. Five runs regressed FR/GB/IE venue rows, and v4.11.0 eliminated the two corpus-side
-# explanations: it introduced no new source and no new weight, put a venue + street + house_number in
-# 100% of its rows, and still graded 5 improved / 18 regressed with the same nine venue-led losses as
+# why the brake. Five runs regressed FR/GB/IE venue rows. v4.11.0 eliminated the two corpus-side
+# explanations. It introduced no new source and no new weight. It put a venue + street + house_number
+# in 100% of its rows and still graded 5 improved / 18 regressed with the same nine venue-led losses as
 # the 3.1%-share admin-only arm. Composition and exposure modulate the size of the shift. neither
 # removes it. What remains is the model: a 39.3M-param encoder fine-tuned against a US/FR base may not
-# hold a new tail convention without moving an old one, and `ewc_lambda` is the knob that decides how
-# hard the old one is held.
+# hold a new tail convention without moving an old one. `ewc_lambda` is the setting that decides how
+# strongly the old convention is held.
 #
 # what this can conclude, both directions useful:
-#   - regressions fall and the 5 gains survive -> the brake was the change, and this is shippable;
-#   - regressions fall and the gains vanish too -> the brake trades learning for stability 1:1, so a
-#     fine-tune cannot carry this data at all and the next step is a from-scratch base that sees every
-#     tail at once;
-#   - nothing moves -> the brake is not the change either, and the search moves to capacity.
+#   - regressions fall and the 5 gains survive -> the brake was the change. This run is shippable.
+#   - regressions fall and the gains vanish too -> the brake trades learning for stability 1:1. A
+#     fine-tune cannot learn this data at all. The next step is a from-scratch base that sees every
+#     tail at once.
+#   - neither regressions nor gains move -> the brake is not the change either. The search moves to
+#     capacity.
 #
 # PRE-registered check, unchanged from v4.11.0:
 #   1. the venue-led rows v4.8.0 regressed must all hold;
@@ -25,7 +27,7 @@
 #
 # the fourth shape, and the first that contains its own alternatives.
 #
-# Four trailing-region runs graded do-not-ship because the recipe output carried only admin segments and so
+# Four trailing-region runs graded do-not-ship because the recipe output contained only admin segments and so
 # damaged whichever class occupied the position it taught:
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
@@ -35,7 +37,7 @@
 #
 # `house-venue` was already emitting the surface those recipes were built to teach. Its default tail is
 # `${locality}, ${region} ${postcode}` — `Springfield, IL 02101` and `Bengaluru, Karnataka 560038` are
-# the same shape — and every row it emits carries a venue, a street and a house number. The surface is
+# the same shape — and every row it emits contains a venue, a street and a house number. The surface is
 # taught with its alternatives present rather than against them.
 #
 # what is added: 18,000 rows, IN/PT/MX, real (postcode, locality, region) triples from the GeoNames

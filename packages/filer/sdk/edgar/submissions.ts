@@ -59,7 +59,7 @@ interface RawSubmissionsPayload {
  * (missing `filings.recent`, or its parallel arrays disagreeing in length) —
  * decision 8's "malformed input must be loud" discipline.
  * This is SEC's own documented API shape, so either failure means the upstream
- * interface changed rather than a row worth silently dropping.
+ * interface changed rather than a row to drop without a report.
  */
 export function parseTenKFilings(cik: CIK, raw: unknown): TenKFiling[] {
 	const recent = (raw as RawSubmissionsPayload | null)?.filings?.recent

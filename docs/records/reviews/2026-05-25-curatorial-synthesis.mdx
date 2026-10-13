@@ -15,7 +15,7 @@ Every review, from three different models across two dates, reaches the same ass
 | **Model training** | Divergence is the active blocker. CE-only training is the right current experiment. v0.5.0 repeated the scope-bundling mistake v0.4.0's retrospective warned about.                                                        |
 | **Docs structure** | The docs lack a canonical status page, getting-started guide, and API reference. Terminology drift (Stage/Tier/Phase/Thread) needs reconciliation. Operator docs and user docs are interleaved without audience signposts. |
 | **Blog posts**     | Unusually strong and direct, but serial-narrative assumptions and missing search-engine preambles make them hostile to inbound readers.                                                                                    |
-| **Synthetic data** | LLM-generated corpus rows need curriculum controls — alignment validation alone is insufficient.                                                                                                                           |
+| **Synthetic data** | LLM-generated corpus rows need curriculum controls — alignment validation by itself is insufficient.                                                                                                                       |
 | **Next moves**     | Narrow the next cycle: status clarity, reconcile integration, product-level evals, one-variable training discipline, then spend.                                                                                           |
 
 ---
@@ -35,13 +35,13 @@ These docs-only changes resolve the status confusion immediately. They support e
 | Section              | Content                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Packages & versions  | `mailwoman` (CLI), `@mailwoman/core`, `@mailwoman/classifiers`, `@mailwoman/neural`, `@mailwoman/neural-weights-en-us` (v0.4.0), `@mailwoman/neural-weights-fr-fr` (v0.4.0), `@mailwoman/phrase-grouper`, `@mailwoman/normalize`, `@mailwoman/query-shape`, `@mailwoman/kind-classifier`, `@mailwoman/resolver-wof-wasm`, `@mailwoman/neural-web`, `@mailwoman/cartographer` |
-| Model weights        | v0.4.0 shipped. 21 BIO labels (7 coarse + 3 fine). Per-component F1 limits. Known regressions: postcode (0.69), coarse labels still rule-carried.                                                                                                                                                                                                                            |
+| Model weights        | v0.4.0 shipped. 21 BIO labels (7 coarse + 3 fine). Per-component F1 limits. Known regressions: postcode (0.69), coarse labels still come from rules.                                                                                                                                                                                                                         |
 | Corpus               | corpus-v0.3.0 (677M rows). corpus-v0.4.0 (v0.3.0 + 4,771 kryptonite + ~73K transliteration pairs) exists but no stable classifier trained on it yet.                                                                                                                                                                                                                         |
 | Tokenizer            | v0.1.0 (16K vocab) — used by v0.4.0 weights. A1 (48K vocab, trained on corpus-v0.4.0) — trained but not yet used in a stable classifier.                                                                                                                                                                                                                                     |
 | Runtime stages       | Table: each of the 6 stages, status (✅ default / 🚩 opt-in / 🧪 scaffold / ❌ not built), and what model weights it works with.                                                                                                                                                                                                                                             |
 | Browser demo         | Runs v0.4.0 weights + WOF SQLite in-browser. ~60MB cold load. Joint decode is not active in the demo.                                                                                                                                                                                                                                                                        |
 | Model training state | CE-only smoke passed with val_macro_f1=0.444 and without divergence past step 2000. Full 50K CE-only run in progress. Target: first v0.5.0 weights that train stably.                                                                                                                                                                                                        |
-| Known regressions    | Postcode F1 0.69 (down from 0.76 in v0.3.0). Coarse labels (country 0.21, region 0.19) remain rule-carried. Full-parse exact match ~0.08.                                                                                                                                                                                                                                    |
+| Known regressions    | Postcode F1 0.69 (down from 0.76 in v0.3.0). Coarse labels (country 0.21, region 0.19) still come from rules. Full-parse exact match ~0.08.                                                                                                                                                                                                                                  |
 | Not supported        | Rooftop/address-point geocoding. Multi-locale ensemble. Japanese addresses. PO boxes. Unit/apartment parsing.                                                                                                                                                                                                                                                                |
 
 **Update rule**: this page is updated on every release. Blog posts link here for current status rather than to each other.
@@ -79,18 +79,18 @@ These docs-only changes resolve the status confusion immediately. They support e
 
 The five contradictions the Codex review identified as "now a docs bug class":
 
-1. **CRF runtime status**: `crf-decoder.md` says JS-side Viterbi is "not yet" — update to "shipped 2026-05-23"
-2. **Locale check default**: `how-it-works-now.md` says "factory default falls back to caller-trust" — `STAGES.md` says "wired as default" — reconcile to "workspace shipped but not yet wired as factory default"
-3. **Candidate-list status**: `STAGES.md` says "scaffold-only/designed" then later says `AddressNode.alternatives` shipped — the alternatives field shipped, the top-K resolver API behind `--candidates` is in progress
+1. **CRF runtime status**: `crf-decoder.md` reports JS-side Viterbi is "not yet" — update to "shipped 2026-05-23"
+2. **Locale check default**: `how-it-works-now.md` states "factory default falls back to caller-trust" — `STAGES.md` states "wired as default" — reconcile to "workspace shipped but not yet wired as factory default"
+3. **Candidate-list status**: `STAGES.md` states "scaffold-only/designed" then later states `AddressNode.alternatives` shipped — the alternatives field shipped, the top-K resolver API behind `--candidates` is in progress
 4. **ARCHITECTURE.md layout/label count**: add a dated block at the top: "⚠️ Written for Phase 2 planning (2026-05-18). Current shipped vocabulary: 21 BIO labels. See `/docs/status` for current state."
-5. **v0.5.0 B2 status**: `v0-5-0-shipped.md` still says B2 is "still cooking" — update to "landed; included in corpus-v0.4.0"
+5. **v0.5.0 B2 status**: `v0-5-0-shipped.md` still reports B2 as "still cooking" — update to "landed. Included in corpus-v0.4.0."
 
 #### A6. Add audience headers
 
 Add `:::info[Who this is for]` blocks to:
 
 - `plan/README.md` — "Contributors and operators running training experiments"
-- `ARCHITECTURE.md` — "ML engineers evaluating the design; historical planning doc. See `/docs/status` for current shipped state."
+- `ARCHITECTURE.md` — "ML engineers evaluating the design. Historical planning doc. See `/docs/status` for current shipped state."
 - `OPERATIONS.md` — "Operators running corpus builds, training runs, and releases"
 - `TRAINING_ENV.md` — "Operators provisioning GPU training environments"
 - `VERDICT_SMOKES.md` — "Operators designing training experiments"
@@ -122,7 +122,7 @@ In `the-90-percent-trap.md`, the geocoder accuracy table by housing type, and an
 
 ### Phase B — Architecture validation (this week, zero GPU, ~200 lines of TypeScript)
 
-**[→ #153](https://github.com/sister-software/mailwoman/issues/153)** — Wire joint-reconcile end-to-end with real model output
+**[Issue #153](https://github.com/sister-software/mailwoman/issues/153)** — Wire joint-reconcile end-to-end with real model output
 
 This work closes the integration gap. It tests the architectural thesis independently of training stability.
 
@@ -170,7 +170,7 @@ Decision matrix (from the Claude×DeepSeek follow-up):
 
 ### Phase C — Training resolution (this week, blocked on CE-only full run)
 
-**[→ #154](https://github.com/sister-software/mailwoman/issues/154)** — CE-only training: validate stability, ship v0.5.0 weights or bisect
+**[Issue #154](https://github.com/sister-software/mailwoman/issues/154)** — CE-only training: validate stability, ship v0.5.0 weights or bisect
 
 #### C1. If CE-only full 50K run converges
 
@@ -199,7 +199,7 @@ Before any future training run that includes LLM-generated data:
 
 ### Phase D — Product-level evals (next 1-2 weeks)
 
-**[→ #155](https://github.com/sister-software/mailwoman/issues/155)** — Product-level eval matrix: comparison script as release check
+**[Issue #155](https://github.com/sister-software/mailwoman/issues/155)** — Product-level eval matrix: comparison script as release check
 
 #### D1. Build eval matrix script
 
@@ -228,7 +228,7 @@ Extract the strongest blog-post technical content into stable concept docs:
 
 #### E1. WOF gotchas → `concepts/whosonfirst-gotchas.md`
 
-Extract the factual content from `taming-wof.mdx`: file-per-place layout, property namespace explosion, Brooklyn Integers, supersession chains, parent_id=-1, the two-layer architecture (WOFPlacenameCache + PlacetypeDataSource), the Piscina pipeline, and `AsyncSpliterator.asMany`. Keep the blog post for narrative; the concept article is the reference.
+Extract the factual content from `taming-wof.mdx`: file-per-place layout, property namespace explosion, Brooklyn Integers, supersession chains, parent_id=-1, the two-layer architecture (WOFPlacenameCache + PlacetypeDataSource), the Piscina pipeline, and `AsyncSpliterator.asMany`. Keep the blog post for narrative. The concept article is the reference.
 
 #### E2. Dual-loss explainer → companion to `dual-loss-curvature-conflict.md`
 

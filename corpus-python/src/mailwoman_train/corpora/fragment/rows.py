@@ -34,7 +34,7 @@ COUNTRY_NAMES = {
 }
 
 # Country surfaces come from @mailwoman/codex (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME), not re-derived
-# here — the codex is the single source of truth. `codex/tools/export-country-surfaces.ts` snapshots it
+# here. The codex is the only place these surface tables are defined. `codex/tools/export-country-surfaces.ts` snapshots it
 # across the TS→Python boundary into the data file below (regenerate it when the codex changes). Filter
 # to word-forms (len ≥ 3) so an address tail is "USA" / "United States", never the bare "US" alpha-2
 # code (ambiguous with a US state code at the tail). Golden gold is the surface, e.g.

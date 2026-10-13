@@ -6,7 +6,7 @@ using each state's situs address points (OA/NAD) as independent ground truth for
 interpolation tier — a non-circular holdout available for all 50 states. The factor is **not**
 region-invariant: it runs 1.53× (dense NY) to 2.85× (rural MT), a ~2× spread that tracks rurality. The
 shipped single 1.70× is overconfident in rural America and over-conservative in dense cities. The
-parked "per-region vs single-factor" decision resolves toward **per-region**; this records the
+parked "per-region vs single-factor" decision resolves toward **per-region**. This record documents the
 evidence, ships a seed calibration table + reusable tooling, and flags the wiring decision._
 
 ## Why a second look
@@ -57,8 +57,8 @@ neural cascade) extended the five above to **twelve**, and the trend holds and w
 | 3.0+    | **AZ 3.12** (sprawl / long rural segments)  |
 
 A **2.2× spread** (DC 1.44 → AZ 3.12), monotonic with rurality. The five-state read wasn't a small-sample
-fluke — it's the real shape. The seed table (`data/calibration/interp-radius-conformal.json`) carries all
-twelve; the full 50 is a turn-key follow-up (mind the heat ceiling on a sustained sweep).
+fluke — it's the real shape. The seed table (`data/calibration/interp-radius-conformal.json`) holds all
+twelve. The full 50 is a turn-key follow-up (mind the heat ceiling on a sustained sweep).
 
 ## What the shipped 1.70 does off-Texas
 
@@ -70,27 +70,27 @@ A single nationwide 1.70× is wrong in both directions, and one direction is dan
 - **Dense cities are over-conservative.** NY needs only 1.53×; at 1.70× the radius is wider than it
   needs to be — direct, but it throws away precision the data supports.
 
-Texas (1.70) sits in the middle, which is exactly why a single-region calibration looked fine and
+Texas (1.70) sits in the middle. That position is why a single-region calibration looked fine and
 shipped. The artifact is the regional mean masquerading as a constant.
 
 ## Decision and recommendation
 
 **Resolve the parked decision toward per-region.** Two shippable shapes:
 
-1. **Per-region table (seed shipped here).** `data/calibration/interp-radius-conformal.json` carries the
+1. **Per-region table (seed shipped here).** `data/calibration/interp-radius-conformal.json` holds the
    five measured states + a **conservative default of 1.95** for unmeasured states — deliberately on the
    high side, because under-coverage (overconfidence) is the harmful error and most states skew rural.
-   `geocode-core` would load the factor by parsed region instead of the hardcoded 1.70. Cheap; the full
+   `geocode-core` would load the factor by parsed region instead of the hardcoded 1.70. Cheap. The full
    50-state table is a turn-key follow-up (the tooling is committed — ~2 min/state).
 2. **Per-segment-length bucket (the principled refinement).** The real driver is segment length /
    local density rather than the state line. A state like CA holds both dense LA and rural North State. A Q̂
    indexed on the claimed radius (segment-length bucket) would generalize within a state and to
-   unmeasured states. More work; the better long-term answer. Recommended as the follow-up to the seed
+   unmeasured states. More work, and the better long-term answer. Recommended as the follow-up to the seed
    table.
 
 **Flagged rather than auto-wired.** A per-region factor changes the shipped `uncertainty_m` on every
 interpolated geocode — a behavior change. Per the merge-wall discipline this is PR-and-flag: the seed
-table + this evidence land; the operator decides whether to wire per-region now (table) or hold for the
+table + this evidence land, and the operator decides whether to wire per-region now (table) or hold for the
 per-segment-length version. The single 1.70 stays the default until then — with this report on record
 that it under-covers rural geocodes.
 

@@ -23,8 +23,8 @@ The first run exposed two resolver gaps the deleted off-the-shelf DB had masked:
 1. **No top-level country constraint** — `ResolveOpts` only propagated country _down_
    from a resolved parent, so a bare "IL" over the 7-country gazetteer fuzzy-matched a
    **French** region (`@48.15,−1.64`), poisoning the whole walk.
-2. **US state abbreviations didn't resolve** — WOF regions carry "Illinois" rather than "IL";
-   `findPlace('IL')` returned nothing, killing the parent-constraint the walk depends on.
+2. **US state abbreviations didn't resolve** — WOF regions store "Illinois" rather than "IL".
+   `findPlace('IL')` returned no place. The walk then lost the parent-constraint it depends on.
 
 Fixes (both production keepers):
 
@@ -55,7 +55,7 @@ Fixes (both production keepers):
 - The strict clean-5pp criterion **fails on an inverted premise**: it assumed _v0 wins
   clean_ (so the arbiter would pick v0's clean wins). End-to-end, **neural wins clean**
   (77% vs v0's 70%) — the opposite of the _parse-level_ capability map (libpostal). The
-  routing gains correctly land on noisy + overall, where the robustness story lives.
+  routing gains correctly land on the noisy and overall scores. Those two scores measure robustness.
 - Oracle shows ~6pp of headroom above the arbiter — a better router (lexical quality
   signal, notresolver score) could capture more.
 

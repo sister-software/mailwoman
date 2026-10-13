@@ -85,7 +85,7 @@ function bestOf(run: () => void): number {
  * Each pair exposes both arms to the same burst.
  * The median removes corrupted pairs in either direction.
  *
- * A genuinely quadratic run still shows ~4x in every clean pair.
+ * A quadratic run still shows ~4x in every clean pair.
  */
 function medianPairedRatio(small: () => void, large: () => void): { ratio: number; smallMs: number; largeMs: number } {
 	small()

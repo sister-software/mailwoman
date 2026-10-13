@@ -176,8 +176,8 @@ describe("buildSlimWOFDatabase", () => {
 		const postcodeSource = scratch.path("postcode.db")
 		const output = scratch.path("slim.db")
 		buildFixtureWOF(adminSource)
-		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin
-		// fixture's postcode rows to verify insert or ignore actually de-dupes on id).
+		// Postcode extract: same schema, only contributes postcodes
+		// (here, re-use the admin fixture's postcode rows to verify insert or ignore de-dupes on id).
 		buildFixtureWOF(postcodeSource)
 
 		const result = await buildSlimWOFDatabase({

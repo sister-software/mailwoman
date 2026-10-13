@@ -65,7 +65,7 @@ export interface AgreementRow {
 	service: string | null
 	result: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
-	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
+	 * Meters from the point to the nearest edge of any polygon the service returned for the probe bbox.
 	 *
 	 * Measures to the edge rather than the nearest vertex.
 	 * Polygon edges are long compared with this product's slivers.

@@ -15,7 +15,7 @@
  *      Those results show whether the pair was coherent. This is the number that decides whether the pass can speak.
  *
  *   The candidate set is bounded by codex rather than by the gazetteer: `candidateSystemsForPostcode` only knows the systems
- *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed however many rows it has. The
+ *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed at any row count. The
  *   probe
  *   therefore walks exactly those systems, one real pair each.
  *

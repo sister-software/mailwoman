@@ -27,8 +27,8 @@ expect, so this page covers it first.
 ## The bounded case: when a regex and a CSV win
 
 If your addresses come from a known, fixed set (a utility's service addresses, a retailer's store list,
-one city's delivery points), you may not need geocoding at all. You need matching, which is much
-easier.
+one city's delivery points), you may not need geocoding at all. You need matching, a much
+easier task.
 
 Normalize both sides and compare them. Lowercase the text, strip punctuation, expand the standard
 abbreviations, and drop the tokens your database does not store. Then take the best fuzzy match above a
@@ -67,9 +67,9 @@ keeping a national address dataset current is ongoing work that continues after 
 You must translate it into your schema, and the translation loses anything your schema has no field
 for. You cannot inspect the provider's reasoning. When one address keeps resolving wrongly, there is no
 stage to examine and no local override to add, so you must correct it downstream in your code. Terms
-vary on what you may store and for how long, which decides whether geocoding a stable set of addresses
-is a one-time cost or a recurring one. Every query also leaves your infrastructure, which your
-compliance team must review if any of those addresses fall under data-protection rules.
+vary on what you may store and for how long. Those terms decide whether geocoding a stable set of addresses
+is a one-time cost or a recurring one. Every query also leaves your infrastructure. Your
+compliance team must review that transfer if any of those addresses fall under data-protection rules.
 
 This section makes no claims about any provider's pricing or accuracy. Both change, both depend on your
 query mix, and the provider's own pages are the right source for both.
@@ -81,7 +81,7 @@ infrastructure instead of per request.
 
 Most well-known open engines use the search-engine-with-a-map architecture: an index over every place,
 queried as text. That design is strong at fuzzy recall over a very large corpus and is the right choice
-for exploratory search. It also needs the index in memory, which explains the published memory
+for exploratory search. It also needs the index in memory. That requirement explains the published memory
 recommendations. [The two architectures](./the-two-architectures.mdx) gives those figures with dated
 citations and explains the reasoning behind them.
 
@@ -121,9 +121,9 @@ Mailwoman does not fit these cases:
   place near the bridge" suit the search architecture better.
 - **You need a country outside the measured tiers.** Mailwoman claims coverage per locale, and only
   where a coordinate-graded evaluation exists. [What ships today](../../status.mdx) lists those
-  locales. Outside them, the output is unverified, which is worse than merely less accurate.
+  locales. Outside them, the output is unverified. Unverified output is worse than merely less accurate output.
 
-## The one thing worth deciding first
+## The first decision
 
 Decide your requirements before you pick a tool. Write down your tolerance in meters, and determine
 whether your set of addresses is bounded or open. Those two facts rule out most of the options on this

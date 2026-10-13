@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The paging, manifest and resumption machinery a paged WFS harvest shares.
+ * The paging, manifest and resumption code that every paged WFS harvest shares.
  *
  * `./inspire-addresses.ts` owns what an INSPIRE Addresses service exposes — its capabilities, its
  * feature-type names and its GeoJSON pages. This module owns what a harvest of any paged WFS does
@@ -75,7 +75,7 @@ export interface MarkupRoot {
 	 */
 	attributes: string
 	/**
-	 * The offset just past the opening tag.
+	 * The offset of the first character after the opening tag.
 	 */
 	contentStart: number
 }
@@ -158,7 +158,7 @@ export function rootContent(body: string, root: MarkupRoot, context: string): st
 /**
  * The attributes a page states about itself rather than about the feature type.
  *
- * A harvest assembles many pages under one root element, so the first page's counts
+ * A harvest assembles several pages under one root element, so the first page's counts
  * and timestamp would describe the assembled file wrongly.
  * They are dropped and the manifest records them per page.
  */
@@ -420,7 +420,7 @@ export interface PagedWFSHarvestOptions {
 	featureCount: FeatureCountStatement
 	pageSize: number
 	/**
-	 * Stop once the manifest holds this many pages, for a probe rather than a full harvest.
+	 * Stop once the manifest holds this number of pages, for a probe rather than a full harvest.
 	 *
 	 * A cap on the manifest rather than on the run, so a second run under the same cap makes no request.
 	 */
@@ -437,7 +437,7 @@ export interface PagedWFSHarvestOptions {
  * Does a recorded manifest describe the request being made now?
  *
  * A harvest taken at another page size, ordering, format or type cannot be continued:
- * its pages were cut at different boundaries, and appending to them would leave
+ * its pages were split at different boundaries, and appending to them would leave
  * a file whose manifest describes neither half.
  */
 function describesSameRequest(manifest: WFSHarvestManifest, options: PagedWFSHarvestOptions): boolean {
@@ -932,7 +932,7 @@ export async function runWFSHarvest(
 	if (options.client) {
 		manifest = await options.harvest(options.client)
 	} else {
-		// Bounded retry, because a harvest is many requests and one 5xx would otherwise end the run.
+		// Bounded retry, because a harvest is a long series of requests and one 5xx would otherwise end the run.
 		await using client = new APIClient({
 			displayName: options.displayName,
 			minRequestIntervalMs: options.minRequestIntervalMs,

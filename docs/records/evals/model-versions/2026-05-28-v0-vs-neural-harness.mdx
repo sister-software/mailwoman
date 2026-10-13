@@ -7,7 +7,7 @@ title: "2026-05-28 v0-vs-Neural harness — direct assessment"
 
 The neural parser has never been measured against the legacy rule-based pipeline's hand-tuned
 acceptance criteria. The 4561-entry golden set at `data/eval/golden/v0.1.2/` measures the
-neural on what it was trained for; the 376 assertions in `mailwoman/test/*.test.ts` measure
+neural on what it was trained for. The 376 assertions in `mailwoman/test/*.test.ts` measure
 the rule-based parser on what it was hand-tuned for. This eval bridges the two.
 
 Per DeepSeek consult turn 6: without this harness,
@@ -31,7 +31,7 @@ v0.6.2's corpus augmentation is "try something and hope." With it, augmentation 
     `solutions[i].classifications`).
   - **Neural:** flatten `AddressTree` to `Map<ComponentTag, string>`, fold neural-only tags
     (`street_prefix` + `street` + `street_suffix` → `street`; `intersection_a` + `intersection_b`
-    → `street` as two values), then check if any expected solution matches the resulting
+    to `street` as two values), then check if any expected solution matches the resulting
     record (substring containment in either direction allowed).
 
 ## Result
@@ -55,7 +55,7 @@ rule-based pipeline strictly dominates the neural pipeline on its own test suite
 
 | File                    | Total    | Neural % | Comment                                              |
 | ----------------------- | -------- | -------- | ---------------------------------------------------- |
-| address.usa.test.ts     | 73       | 23%      | Heaviest training distribution; still 56/73 missing  |
+| address.usa.test.ts     | 73       | 23%      | Heaviest training distribution, still 56/73 missing  |
 | intersection.test.ts    | 65       | **0%**   | Total failure mode; `Main St & 5th Ave`-style inputs |
 | functional.test.ts      | 34       | 3%       | Cross-reducing cases                                 |
 | address.fra.test.ts     | 33       | 24%      | Some French in training                              |
@@ -95,7 +95,7 @@ This is a tokenizer/encoder issue rather than a schema issue. The model can't re
 
 v0 has both `unit` and `unit_designator` — for `Unit 12/345 Main St`, expected is
 `{unit_designator: ["Unit"], unit: ["12"], house_number: ["345"], street: ["Main St"]}`. The
-neural schema only has `unit`. Every Australian unit-notation test fails on this gap alone:
+neural schema only has `unit`. Every Australian unit-notation test fails on this gap, with no other cause:
 
 - `Apartment 12/345 Main St` → expected `unit_designator: ["Apartment"]` but neural has no tag for it
 - `U 12 345 Main St` → same problem with `U`
@@ -112,7 +112,7 @@ The neural parser keeps reading street and house_number as one span. German exam
 - `Am Falkpl. 5, 10437 Berlin` → expected `street: "Am Falkpl."`; neural: `street: "Am Falkpl"` (period dropped) — close but not equal under strict comparison
 
 The model never saw enough German addresses to learn the prepend-house-number pattern. v0's
-HouseNumberClassifier hard-codes the heuristic; the neural has to learn it from data.
+HouseNumberClassifier hard-codes the heuristic, and the neural has to learn it from data.
 
 ### 4. Intersections (0/65)
 
@@ -127,7 +127,7 @@ intersections relative to v0's hand-tuned coverage.
 
 This is the "direct assessment" the postmortem called for. The implications:
 
-1. **Locale coverage is the dominant gap.** US, FR, and a portion of AUS are in distribution;
+1. **Locale coverage is the dominant gap.** US, FR, and a portion of AUS are in distribution,
    everything else is structurally untaught. v0.6.2's corpus augmentation has to expand
    beyond US-only synth-street.
 2. **Schema additions are needed before retraining helps Aus/UK unit notation.** The
@@ -139,7 +139,7 @@ This is the "direct assessment" the postmortem called for. The implications:
 5. **Strict equality might be the wrong bar for the neural parser.** v0's tests assert exact
    structural equality including punctuation. The neural pipeline currently doesn't preserve
    token-level punctuation. A looser equivalence (`Am Falkpl.` ≈ `Am Falkpl`) would change
-   the picture for cluster #3 specifically; whether that looser bar is acceptable is a
+   the picture for cluster #3 specifically. Whether that looser bar is acceptable is a
    product decision.
 
 ## Falsehoods extension
@@ -149,7 +149,7 @@ The harness also accepts a `--falsehoods <dir>` argument for JSONL files of stru
 [`falsehoods-streets.md`](../../site-2026-08/understanding/why-its-hard/falsehoods/falsehoods-streets.mdx) as 22 explicit
 test rows — Piccadilly, rue de Rivoli, Plein 1944, Avenue Road, Gondel 2695, the
 A1-as-composite-street, dependent streets, Japanese block addressing, rural routes, Mannheim
-grid. Each row carries `falsehood` (the category) and `expected_failure` (whether this is a
+grid. Each row has `falsehood` (the category) and `expected_failure` (whether this is a
 known gap rather than a regression vector).
 
 With the falsehoods rows added the picture is:
@@ -170,10 +170,10 @@ With the falsehoods rows added the picture is:
 parser succeeds and the rule-based pipeline fails:
 
 1. `8 Seven Gardens Burgh, WOODBRIDGE, IP13 6SU` — number-in-street-name. v0's
-   HouseNumberClassifier grabs the leading `8` then mis-tags the rest; neural reads it as a
+   HouseNumberClassifier grabs the leading `8` then mis-tags the rest, while neural reads it as a
    single street span correctly.
 2. `R 5, 6-13, D-68161 Mannheim` — grid address with no street. v0's classifiers force a
-   street-shaped reading that doesn't fit; neural correctly produceslocality + postcode.
+   street-shaped reading that doesn't fit, while neural correctly produces locality + postcode.
 
 The pattern: **neural is sometimes BETTER on formats it has never seen**, because v0's
 hand-tuned rules actively misclassify them. The "ambiguous-but-common" cases (rue de Rivoli,

@@ -14,8 +14,8 @@
  * no such mapping and this adapter claims none. It reads one archive or a directory of them. A
  * caller harvests all 272 by pointing it at the directory.
  *
- * This publisher is read entirely from its references' titles, and that is what separates it from
- * every other INSPIRE reader here. Its own file publishes no `AD:ThoroughfareName`,
+ * This publisher is read entirely from its references' titles. No other INSPIRE reader
+ * here reads its addresses that way. Its own file publishes no `AD:ThoroughfareName`,
  * `AD:PostalDescriptor` or `AD:AdminUnitName` feature at all: partition 1 holds 29 distinct element
  * names across 115 addresses and none of them is a component feature. Each address instead holds
  * six `AD:component` references whose `xlink:title` states the value:

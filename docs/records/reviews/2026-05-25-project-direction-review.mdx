@@ -6,7 +6,7 @@
 
 ## The project, in one paragraph
 
-Mailwoman is a TypeScript-first address parser that runs in Node and the browser. It combines rule-based classifiers (postcodes, state abbreviations, dictionary lookups) with a small neural model (9M-parameter encoder-only transformer) that handles contextual ambiguity. A staged pipeline — normalize, locale/kind classify, phrase group, token classify, sequence correct, reconcile, resolve — decomposes the problem by knowledge layer. Rule and neural classifiers coexist via a per-component policy registry; the neural model gains authority one component at a time (Ship of Theseus). The gazetteer is Who's On First, delivered as a SQLite database queried through a browser-compatible WASM runtime.
+Mailwoman is a TypeScript-first address parser that runs in Node and the browser. It combines rule-based classifiers (postcodes, state abbreviations, dictionary lookups) with a small neural model (9M-parameter encoder-only transformer) that handles contextual ambiguity. A staged pipeline — normalize, locale/kind classify, phrase group, token classify, sequence correct, reconcile, resolve — decomposes the problem by knowledge layer. Rule and neural classifiers coexist via a per-component policy registry. The neural model gains authority one component at a time (Ship of Theseus). The gazetteer is Who's On First, delivered as a SQLite database queried through a browser-compatible WASM runtime.
 
 ---
 
@@ -22,7 +22,7 @@ The reconciliation stage (joint decoding over classifier top-K, phrase proposals
 
 Neural models for address parsing are unproven in production. A policy registry that defaults to `rule_only` and assigns per-component, per-locale authority after golden-set metrics is the correct migration strategy. It lets the model ship below parity (which it currently is on several components) without breaking anything.
 
-The explicit refusal to replace rule classifiers that are already correct (postcode regex, state abbreviation dictionaries) is also correct. The bitter lesson says "don't hand-engineer what you can learn," not "learn things that are already solved."
+The explicit refusal to replace rule classifiers that are already correct (postcode regex, state abbreviation dictionaries) is also correct. The bitter lesson argues "don't hand-engineer what you can learn," not "learn things that are already solved."
 
 ### The bilingual US + FR scope is realistic
 
@@ -73,11 +73,11 @@ The shipped v0.4.0 model has:
 | postcode     | 0.69 | Marginal (regressed vs v0.3.0's 0.76)                     |
 | venue        | 0.39 | Low                                                       |
 | street       | 0.30 | Low                                                       |
-| locality     | 0.27 | Low (rule classifiers carry this in practice)             |
+| locality     | 0.27 | Low (rule classifiers label this in practice)             |
 | country      | 0.21 | Low (mostly adversarial transliteration evaluation noise) |
 | region       | 0.19 | Low                                                       |
 
-Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model gets every component right on only 8% of addresses. In practice, the hybrid system (rule classifiers carrying coarse components, neural on house_number and street) performs better than these per-tag neural numbers suggest, but the neural model alone is nowhere near production-quality on most components.
+Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model gets every component right on only 8% of addresses. In practice, the hybrid system (rule classifiers labeling coarse components, neural on house_number and street) performs better than these per-tag neural numbers suggest. Without the rule classifiers, the neural model is nowhere near production-quality on most components.
 
 This observation is not fatal. The project is early-stage and the architecture is additive. It does mean the project's "what you can use today" story is limited, and the docs do not state that limitation.
 

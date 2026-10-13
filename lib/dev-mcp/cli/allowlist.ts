@@ -6,7 +6,7 @@
  *   Which CLI verbs this server may run.
  *
  *   The boundary the whole surface is built on: **gather evidence, never change state that anything else reads.** The
- *   CLI's surface is larger than this server's and will stay that way, so a passthrough is worth having — but a
+ *   CLI's surface is larger than this server's and will stay that way, so this server provides a passthrough. A
  *   passthrough with no allowlist would hand back every build, publish and ledger write the boundary excludes.
  *
  *   allow-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds

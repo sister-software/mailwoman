@@ -43,7 +43,7 @@ def normalize_name(text: str) -> str:
         All whitespace is removed, interior included. 135 street values contain an ideographic space
         (``西与賀町　字今津乙``) which is a rendering artifact of the source rather than part of the name — the
     written form closes it up. Its retention put a U+3000 inside a ``district`` span. The first full
-        build counted labeled characters against significant characters and measured coverage at
+        build counted labeled characters against non-whitespace characters and measured coverage at
         1.000001. A six-row defect produced that value.
 
         Explicitly does not touch hyphens (U+30FC is a real katakana character here) and does not fold

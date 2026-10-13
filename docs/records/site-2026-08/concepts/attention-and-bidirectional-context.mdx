@@ -57,7 +57,7 @@ that the presence of a 2-letter all-caps token (`OR`) and a 5-digit token
 By layer 6, the mixing has propagated multiple times. `Portland`'s
 representation captures more than a generic "this could be a locality"
 guess — it represents the specific structural signal that the following
-tokens have the shape of a US state abbreviation + ZIP code, which
+tokens have the shape of a US state abbreviation + ZIP code. That signal
 strongly supports the locality interpretation.
 
 The same happens in reverse. `OR`'s representation is informed by
@@ -97,7 +97,7 @@ production rules. The model learns:
 - "When a token matches a libpostal street-typing affix (Ave, St, Rd), the
   adjacent name token's interpretation should consider street."
 
-Nobody hand-writes these rules. The attention weights learn the patterns,
+No engineer hand-writes these rules. The attention weights learn the patterns,
 distilled from the training distribution's co-occurrence statistics.
 
 ## What this CAN'T do (compositional limits)
@@ -109,7 +109,7 @@ Attention is also expensive at the limit: 128 tokens × 128 positions × 6 heads
 × 6 layers = quadratic in seq_len. The v0.5.0 + work made
 hardware-validated choices about head/layer counts to fit the throughput
 budget on the A100. A deeper or wider model would need more
-GPU per inference call, which has a downstream UX cost (browser inference
+GPU per inference call. That cost reaches the UX (browser inference
 takes longer, larger model files to download).
 
 There's also a representation-capacity limit. The hidden state is 384
@@ -122,7 +122,7 @@ space and be confused.
 
 The v0 rule-based parser computes per-token classifications independently
 and then reconciles via solvers. Each classifier looks at the token's
-features in isolation; solvers handle cross-token coherence.
+features in isolation. Solvers handle cross-token coherence.
 
 The encoder's bidirectional attention does this all at once. There's no
 distinction between "what does this token look like in isolation" and

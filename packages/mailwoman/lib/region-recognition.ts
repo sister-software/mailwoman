@@ -161,8 +161,8 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 	}
 
 	// Only convert when there is a sibling city to nest, the unambiguous "City, State" shape.
-	// A lone state-name locality ("Washington", "Florida") is genuinely a city in this
-	// context as often as a state, so leave it untouched rather than risk a mis-fire.
+	// A lone state-name locality ("Washington", "Florida") can be a city or a state in
+	// this context, so leave it untouched rather than risk a mis-fire.
 	if (!region.children.length) return afterSplit
 	out.push(region)
 
@@ -228,7 +228,7 @@ function correctNode(node: AddressNode): AddressNode {
  * Messina and Ourense lose in US-format context.
  * Georgia the country uses "GE".
  *
- * A full name is genuinely ambiguous ("Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state),
+ * A full name is ambiguous ("Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state),
  * so full-name tokens are left to resolve on their own name-match evidence and are never pinned.
  */
 function annotateUSRegions(roots: readonly AddressNode[]): void {

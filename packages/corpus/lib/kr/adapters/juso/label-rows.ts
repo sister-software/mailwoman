@@ -152,7 +152,7 @@ function joinNumber(main: string, sub: string): string {
 
 export interface ReadJusoOptions {
 	/**
-	 * Stop after this many rows per 시도, for a fixture or a smoke run.
+	 * Stop after this number of rows per 시도, for a fixture or a smoke run.
 	 * Omit for the whole register.
 	 */
 	maxRowsPerRegion?: number

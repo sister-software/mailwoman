@@ -92,7 +92,7 @@ cheap win, done for free. It also costs approximately nothing.
 
 Price the change first, then price it in; we priced the ratio and priced out
 the rest. It is worth the cost, it pays for itself, it paid for itself at zero
-cost, and it provides you a clean board.
+cost, and it buys us a clean board.
 
 That is tomorrow's work — a good place to pause; we've accomplished a lot,
 so let's pick this up and call it a night, winding down. Pick it up later.
@@ -147,7 +147,11 @@ axios's `HttpStatusCode`, and 106 sites in `packages/license-worker` name it.)
 
 The POI taxonomy holds 970 entries and `erasableSyntaxOnly` is a tsconfig flag.
 (EconomyMetaphor: the word boundary protects `taxonomy` and the letters inside
-`syntax`, so banning tax outright costs neither.)
+`syntax`.)
+
+The shop charges VAT and sales tax, the tax assessor records the parcel, and a
+customer can buy a license. (EconomyMetaphor: a literal tax and a purchase are
+not metaphors.)
 
 The recipe sits in `packages/corpus/lib/extract-recipes/` as
 `synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked

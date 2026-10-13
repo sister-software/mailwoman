@@ -6,7 +6,7 @@ description: The receipt for `label_support` in `corpus-python/launch/census.py`
 # Label support census — the validation rows behind each macro-F1 term in v7.2.0
 
 `label_support` in `corpus-python/launch/census.py` counts, for one training config, the rows of the
-trainer's validation draw and of a training draw that hold each component label, and names the
+trainer's validation draw and of a training draw that hold each component label. It also lists the
 sources and countries that supply each label's training rows. `macro_f1` in
 `corpus-python/src/mailwoman_train/evaluation/metrics.py` drops zero-support labels and weighs every
 other label as one equal term, so a label held by a few validation rows moves the headline score as
@@ -64,12 +64,12 @@ register rows sit elsewhere.
 ## Real-world comparison
 
 1,029 distinct FY2024 USAspending foreign-recipient address lines across 19 countries, matched by
-pattern, give a lower bound: 57 lines (5.5%) carry a PO box (`P.O. Box`, `BP`, `Private Bag`,
-`Apartado`) and 144 (14.0%) carry a unit, against 1.2% and 6.1% of training rows. The PO box share by
+pattern, give a lower bound: 57 lines (5.5%) contain a PO box (`P.O. Box`, `BP`, `Private Bag`,
+`Apartado`) and 144 (14.0%) contain a unit, against 1.2% and 6.1% of training rows. The PO box share by
 country: Côte d'Ivoire 10 of 62, Malawi 11 of 82, Uganda 13 of 158, Ecuador 0 of 76.
 
 The real sources (BAN, TIGER, G-NAF, OpenAddresses, OSM) register buildings and situs points. A PO box
-is a postal destination, so a building register holds none, and these registers carry few apartment
+is a postal destination, so a building register holds none, and these registers record few apartment
 or suite numbers.
 
 ## What follows

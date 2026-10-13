@@ -54,7 +54,7 @@ export const NL_KADASTER_FEED_URL = "https://service.pdok.nl/kadaster/ad/atom/ad
  * The adapter's `inputPath` states this name.
  *
  * The publisher's own name for the file.
- * The adapter reads a `.gml.gz` by inflating it, so the suffix is load-bearing.
+ * The adapter reads a `.gml.gz` by inflating it, so the suffix is required.
  */
 export const NL_KADASTER_DOWNLOAD_FILENAME = "addresses.gml.gz"
 

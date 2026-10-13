@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build coastal` — acquire the Environment Agency's `Mapping (England, 2024)` dataset
- *   for National Coastal Erosion Risk and build the sealed `coastal-england.db` layer. Thin wiring only: catalogue read
- *   → download → build → verify all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
+ *   for National Coastal Erosion Risk and build the sealed `coastal-england.db` layer. This file only wires steps: the catalogue
+ *   read, download, build and verify steps all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
  *   or the network in the loop. Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   `--measure-resolutions` does not build. The index resolution is measured for this layer.

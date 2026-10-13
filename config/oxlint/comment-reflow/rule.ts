@@ -113,8 +113,8 @@ function protectedComment(source: SourceCode, comment: Comment) {
  * The lines of a starred block that are missing their `*`, by offset within the block.
  *
  * The opener and the closer are skipped.
- * A line holding only whitespace is skipped too: a blank line in a starred block
- * is written bare as often as it is written with a star.
+ * A line holding only whitespace is skipped too: a blank line in a starred block is
+ * written either bare or with a star, and both forms are accepted.
  */
 function missingStarLines(lines: readonly string[]): { at: number; width: number }[] {
 	const found: { at: number; width: number }[] = []
@@ -176,8 +176,8 @@ export const reflowRule: CreateRule = {
 
 		// Only a statement or a member can own a trailing comment, so the visitor
 		// is registered for those node types only.
-		// A `"*"` visitor was called for every node of every file, about seven times as often,
-		// and each call read `loc` before `eligibleNode` could refuse the type.
+		// A `"*"` visitor was called for every node of every file, about seven times the call
+		// count, and each call read `loc` before `eligibleNode` could refuse the type.
 		const collect = (node: ESTree.Node): void => {
 			if (!eligibleNode(node)) return
 			const line = node.loc.end.line

@@ -17,7 +17,7 @@ verdict**, in the shape the erosion survey established:
 - **A third answer that the issue did not ask for but the sources required.** Most of the patchwork is
   already mapped: two thirds of the US population lives in a jurisdiction somebody has read and
   normalized. **The obstacle is that publishers do not say whether their data may be copied.** Of 2,000
-  enumerated public zoning services, **85.0 % carry an empty license field** (§2.6), and the
+  enumerated public zoning services, **85.0 % have an empty license field** (§2.6), and the
   false-negative direction was tested.
 
 The consuming implementation already exists, so the sections below propose no new architecture:
@@ -34,7 +34,7 @@ The consuming implementation already exists, so the sections below propose no ne
 - `packages/mailwoman/lib/observations/absence-route.ts` and its `QueryIntentMarker` carrier deliver an
   additive, provenance-carrying advisory without touching ranking.
 
-**Every external claim below carries its URL and the date it was read.** Measurements taken from this lab
+**Every external claim below cites its URL and the date it was read.** Measurements taken from this lab
 are labeled as measurements and give the command's answer rather than a summary of it. A fact that could
 not be established from a primary source is listed in §10 as unverified, with what was tried. No entry in
 §10 was filled in with a plausible reading.
@@ -43,14 +43,14 @@ not be established from a primary source is listed in §10 as unverified, with w
 
 Settled here: the division between the three subjects the word "zoning" is used for (§2.1); the verified
 inventory including the checked federal and national absences (§2); **the vocabulary decision and the
-measurement that forced it (§4), which is this survey's distinctive deliverable**; **the
-mixed-provenance rule as a schema constraint rather than a convention (§5)**; the storage shape and the
-resolution measurement, including the one place the inherited size interface does not reach (§6); the
-pilot and the recorded threshold finding (§7); and the product requirement (§8).
+measurement that forced it (§4), which is this survey's distinctive deliverable**, **the
+mixed-provenance rule as a schema constraint rather than a convention (§5)**, the storage shape and the
+resolution measurement, including the one place the inherited size interface does not reach (§6), the
+pilot and the recorded threshold finding (§7), and the product requirement (§8).
 
-The following are not settled here. They are listed so nobody reads the omission as a decision:
+The following are not settled here. They are listed so that no reader takes the omission as a decision:
 
-- **Whether Ireland's zoned footprint can be stated at all.** The authority says coverage is incomplete
+- **Whether Ireland's zoned footprint can be stated at all.** The authority states that coverage is incomplete
   and publishes the detail only in a map viewer (§3.2). Until a footprint source is settled the layer
   writes `CoverageBasis.SourcePresent` and supports presence only.
 - **The Tailte Éireann clause against the CC-BY declaration** (§2.7). This record reports the
@@ -107,7 +107,7 @@ item by item to establish that absence.
 | **Census TIGER**                | `www2.census.gov/geo/tiger/TIGER2025/` — **45 layer directories** listed                                                                    | zero matches for `zoning`. Control: `/PLACE/` → HTTP 200, `/ZONING/` → **404**                                                                                                     |
 | **HUD**                         | The full DCAT catalogue (`hudgis-hud.opendata.arcgis.com/api/feed/dcat-us/1.1.json`, 691,873 bytes), **112 datasets**                       | **zero** with `zoning` in the title. A second path (`/api/search/v1/…?q=zoning`) returns `numberMatched: 5`, all tax or grant designation areas (Promise Zones, Opportunity Zones) |
 | **EPA Smart Location Database** | Technical Documentation v3.0, **2,874 extracted lines**                                                                                     | **`zoning` appears zero times**                                                                                                                                                    |
-| **data.gov**                    | `catalog.data.gov/search?q=zoning&org_type=Federal Government` → 276; `q=zoning districts` + federal → **0**; `q="national zoning"` → **0** | Of the 276, **243 are NOAA _marine_ zoning or tidal zoning**; five have `zoning` in the title, all NREL wind and solar siting                                                      |
+| **data.gov**                    | `catalog.data.gov/search?q=zoning&org_type=Federal Government` → 276; `q=zoning districts` + federal → **0**; `q="national zoning"` → **0** | Of the 276, **243 are NOAA _marine_ zoning or tidal zoning**. Five have `zoning` in the title, all NREL wind and solar siting                                                      |
 | **FEMA regulation**             | 44 CFR § 59.1                                                                                                                               | refers to "**a community's** zoning maps" — the possessive is the finding                                                                                                          |
 
 **EPA states the absence directly** in the Smart Location Database technical documentation. This is the
@@ -117,16 +117,14 @@ most useful sentence in this section:
 > be allocated to the CBG, assumptions were made about the mixture of land uses based on counts of job by
 > employment sector and housing unit counts."
 
-**HUD explains why**, verbatim from PD&R:
-
-> "Land use regulations are implemented locally, under authority given to municipalities by their state
-> government. It is generally accepted that the federal government has limited ability to influence local
-> land use regulations."
+**HUD explains why** in a PD&R statement. Municipalities implement land use regulations locally, under
+authority their state government gives them. HUD's PD&R states that the federal government has limited
+ability to influence those local regulations.
 
 **The closest federal artifact covers a different subject.** NREL's _U.S. Wind/Solar Siting Regulation
 and Zoning Ordinances_ is CC-BY 4.0 and national. Its GeoPackage holds "the jurisdiction shapes for each
 ordinance" (counties and townships) rather than zoning districts, it is limited to wind and solar
-siting, and it carries its own warning: "This data was collected with the help of generative AI. The Large Language
+siting, and it prints its own warning: "This data was collected with the help of generative AI. The Large Language
 Models used for this effort make mistakes."
 
 **Four federal products can be mistaken for a national zoning layer**, and each covers a different
@@ -148,26 +146,18 @@ answer stops being usable.
 
 **The National Zoning Atlas is the largest assembly, and its terms forbid what a layer does.** It is
 published by **Land Use Atlas, Inc.**, a Delaware 501(c)(3) headquartered in Washington DC. Cornell's
-Legal Constructs Lab started the project but does not publish it. Terms of use §1.2 and §1.3, verbatim:
+Legal Constructs Lab started the project but does not publish it. Terms of use §1.2 and §1.3 state the following, in our words:
 
-<!-- vale off -->
-
-> "**1.2. Content.** From time to time, the content on the website may include, among other things,
-> information, software, processes, maps, **geospatial data**, text, illustrations, displays, images,
-> trademarks, designs, icons, photographs, video, and audio (collectively, the "Website Content"), all of
-> which are owned by either LUAI or LUL and are protected by United States and international copyright,
-> trademark, patent, trade secret, and other intellectual property or proprietary rights laws."
-
-<!-- vale on -->
-
-> "**1.3. Limitations.** Unless you have our express written permission, you may not use, host, store,
-> reproduce, modify, license, create derivative works of, communicate, download, publish, publicly
-> display, or **distribute** any of the Website Content. If we provide you with express written permission
-> to take such actions with regard to the Website Content: (a) you must display and keep intact all
-> copyright and other proprietary notices; (b) you must credit the "National Zoning Atlas, online at
-> zoningatlas.org," (c) you must **not commercially use (including sell)** any of the Website Content;
-> and (d) you must not use the materials in a manner that suggests LUAI or LUL approval or participation
-> without our written permission."
+- **§1.2 Content.** The website content may include information, software, processes, maps, **geospatial
+  data**, text, illustrations, displays, images, trademarks, designs, icons, photographs, video and audio.
+  The terms call these the Website Content. LUAI or LUL owns all of it. United States and international
+  copyright, trademark, patent, trade secret and other intellectual property laws cover it.
+- **§1.3 Limitations.** Without LUAI's express written permission, a user may not use, host, store,
+  reproduce, modify, license, create derivative works of, communicate, download, publish, publicly display
+  or **distribute** any of the Website Content. A user who has that permission must keep all copyright and
+  proprietary notices intact. That user must credit the National Zoning Atlas at zoningatlas.org. That
+  user must **make no commercial use (including sale)** of the Website Content. That user must also avoid
+  any use that suggests LUAI or LUL approval or participation without written permission.
 
 The license separately bans scraping (§2.2). Screenshots with credit are the only free use. The atlas offers no
 bulk download, public data API or tile service. `edit.zoningatlas.org/atlas/` and
@@ -187,7 +177,7 @@ are the fallback values the page shows when the endpoint does not answer** (§10
 | `pages_analyzed`        |       1,337,510 | "Pages of Zoning Codes Read"                           |
 | `population_covered`    | **224,494,683** | "People Living in Published Jurisdictions"             |
 
-The same site says "WE'VE identified **33,295** jurisdictions". **The widely quoted "more than 33,000
+The same site states "WE'VE identified **33,295** jurisdictions". **The frequently quoted "more than 33,000
 jurisdictions" is the universe they have identified rather than what they have published.** Published
 coverage is 11,015 of 33,295, about 33 % of jurisdictions. A separate undated claim of "over 50% national
 coverage" appears on the project's analysis page **with no stated denominator**. It matches neither
@@ -198,7 +188,7 @@ Land Use Atlas is nowhere stated:
 
 | chapter                           | measured                                                                  | terms                                                                                |
 | --------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **Montana**, **Hawaii** (GitHub)  | MT 535 districts / 62 jurisdictions; HI 262 features, 25.7 MB             | **MIT license file at the repository root**                                          |
+| **Montana**, **Hawaii** (GitHub)  | MT 535 districts / 62 jurisdictions, HI 262 features, 25.7 MB             | **MIT license file at the repository root**                                          |
 | **Vermont** (VCGI / UVM)          | 1,736 records, 240+ fields, queryable feature service                     | `licenseInfo` **empty**, `copyrightText` **empty**                                   |
 | **New Hampshire** (Saint Anselm)  | 269 jurisdictions, 1,869 districts                                        | a liability disclaimer without a **grant**                                           |
 | **Washington** (Dept of Commerce) | **470,130 zones, 320 jurisdictions**                                      | a terms page carrying an RCW 42.56.070(8) clause forbidding commercial use of lists  |
@@ -208,31 +198,27 @@ Washington also uses **a different vocabulary**: a `WAZAZoneGeneral` field over 
 (`COM`, `IND`, `LIR`, `MIL`, `MR`, `MXU`, `NRL`, `OS`, `PUB`, `RUR`, `TRB`, `UND`, `UNK`) rather than the
 national chapter's district-type field, so the state chapters are not one dataset in several files.
 
-**Three assemblies do carry a usable license, and none of them carries geometry.**
-
-<!-- vale off -->
+**Three assemblies do state a usable license, and none of them includes geometry.**
 
 - **Eviction Lab's National Zoning and Land Use Database (NZLUD)**, Princeton — **MIT licensed**, stated
   in both `LICENSE` and `README.txt`. Measured: `nzlud_muni.csv` = 827,091 bytes, **2,639 rows × 77
   columns**, keyed on `GEOID`. **No geometry column of any kind.** Its authors state that it replicates
-  the 2006 WRLURI sampling frame, so "many MSAs in our sample are missing data for a large proportion of
-  their municipalities", and they ship `msa_coverage_rates.csv` quantifying it (Abilene TX 1 of 17;
-  Akron OH 11 of 58).
-
-<!-- vale on -->
+  the 2006 WRLURI sampling frame. They state that a large share of municipalities lack data in a number of
+  the sample's MSAs. They ship `msa_coverage_rates.csv` to quantify it. Abilene TX has 1 of 17, and Akron
+  OH has 11 of 58.
 
 - **Urban Institute's National Longitudinal Land Use Survey (NLLUS)** — **ODC-BY 1.0**, per its own
-  citation. Jurisdiction survey responses for the top 50 CBSAs; 2019 wave emailed to 2,945 jurisdictions,
-  1,703 responded. **No geometry.** (`urban.org` returns HTTP 403 to this network; this rests on a single
-  archived read — §10.)
+  citation. It holds jurisdiction survey responses for the top 50 CBSAs. The 2019 wave was emailed to
+  2,945 jurisdictions, and 1,703 responded. **No geometry.** (`urban.org` returns HTTP 403 to this
+  network, so this entry rests on a single archived read, §10.)
 - **Berkeley's Othering & Belonging Institute**, seven repositories including `CAZoning` — statewide
-  California as per-municipality GeoJSON across 55 county directories, with real polygons (Alhambra alone
-  is 12,993,436 bytes and **19,410 polygons**). **Its `LICENSE.txt` is MIT, and its README says the data
-  is for "broad, noncommercial public use".** Those two statements cannot both govern. Two sampled files
-  also carry **different schemas and different coordinate reference systems** (`city_zone`/`zone_descp`
+  California as per-municipality GeoJSON across 55 county directories, with real polygons (the Alhambra file
+  by itself is 12,993,436 bytes and **19,410 polygons**). **Its `LICENSE.txt` is MIT, and its README states
+  that the data is for "broad, noncommercial public use".** Those two statements cannot both govern. Two
+  sampled files also use **different schemas and different coordinate reference systems** (`city_zone`/`zone_descp`
   in CRS84 against `general_pl`/`Zoning` in EPSG:3493).
 
-**WRLURI is freely downloadable and carries no license at all.** The 2018 wave (Stata `.dta`, 6,731,396
+**WRLURI is freely downloadable and states no license at all.** The 2018 wave (Stata `.dta`, 6,731,396
 bytes, 150 variables × 2,844 observations) and the 2006 wave (1,444,496 bytes) are the only two waves that
 exist. The unit is one responding municipality, from a survey ICMA sent to 10,949 members with 2,825
 responses — a 25.8 % response rate. All 150 variable names were scanned for
@@ -245,10 +231,10 @@ Land Use and Climate Innovation publishes _Statewide Zoning North_ and _Statewid
 `data.ca.gov`. **The two feature counts were re-measured for this record and are 264,417 and 304,324 —
 568,741 zoning polygons**, published in CSV, shapefile, GeoJSON, GeoPackage and file geodatabase, with a
 14-value normalized `ucd_description` vocabulary beside the local `Code` and `Descriptio` fields. The
-publisher claims 535 of California's 539 jurisdictions; a distinct-value count over both halves resolves
+publisher claims 535 of California's 539 jurisdictions. A distinct-value count over both halves resolves
 to **534** after de-duplication. Its CKAN `license_id` is **null**, its ArcGIS `licenseInfo` is **empty**,
 and its rights field reads "No restrictions on public use". That is a stated non-restriction rather than
-a grant, and §7.2 treats it as such. Its dataset description states the method plainly: where "zoning
+a grant, and §7.2 treats it as such. Its dataset description states the method: where "zoning
 maps were not available in a GIS format, maps were converted from PDF or image maps using geo-referencing
 techniques and then transposing map information to parcel geometries sourced from county assessor data",
 with collection "begun in late 2021 and… mostly finished in late 2022". The `Date` column is free text.
@@ -259,10 +245,10 @@ and 4,605 features dated `7/11/1905`.
 Regrid's zoning comes from Zoneomics, as Regrid's own documentation states: "Our zoning data partner
 Zoneomics created and utilizes a proprietary system to extract, process, analyze, and standardize zoning
 data". Redfin's consumer zoning also comes from Zoneomics. Regrid publishes 27 standardized zoning fields and a
-measured coverage sheet showing **160,832,639 parcels across 3,231 counties, `zoning_pct` 88 nationwide**;
-its Data Store License Agreement forbids reselling, sublicensing or "otherwise making the Data available
+measured coverage sheet showing **160,832,639 parcels across 3,231 counties, `zoning_pct` 88 nationwide**.
+Its Data Store License Agreement forbids reselling, sublicensing or "otherwise making the Data available
 to third parties", expires after one year, and separately prohibits uploading the data to any public
-language model. Zoneomics, LightBox, ATTOM and Placekey each carry an equivalent clause. Zillow and Redfin
+language model. Zoneomics, LightBox, ATTOM and Placekey each impose an equivalent clause. Zillow and Redfin
 publish **no** zoning data at all. The word appears zero times on both research-data pages.
 
 ### 2.4 United States — the states that do aggregate, and what each one's layer is
@@ -271,26 +257,26 @@ All measurements were taken on **2026-08-27** against the live services. **More 
 the issue expected. They still do not add up to a national layer, because each answers a different
 question, at a different vintage, under different terms.**
 
-| state              | verdict                                         | measured                                                                                                               | the catch                                                                                                          |
-| ------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **California**     | **statewide zoning**                            | **568,741** polygons; **534** distinct jurisdictions measured against a claimed 535 of 539                             | `license_id` **null**; source dates 2021–2023 and a dirty `Date` column                                            |
-| **Washington**     | **statewide zoning**                            | **470,130** zones, **6,034** overlays, **320** jurisdictions = 39 counties + 281 cities                                | a commercial-use restriction under RCW 42.56.070(8)                                                                |
-| **Oregon**         | **statewide zoning**                            | **114,823** polygons; **245** jurisdictions (209 cities + 36 of 36 counties)                                           | vintage 2023-06-30; the description claims 229 jurisdictions against 245 measured                                  |
-| **Hawaii**         | **statewide zoning, two tiers**                 | State Land Use Districts **906** polygons + county zoning **14,913** across 4 of 4 counties                            | two products, two vocabularies                                                                                     |
-| **Rhode Island**   | **statewide zoning**                            | **15,733** zones + 1,639 overlays; **39 of 39** municipalities                                                         | the most complete small state found                                                                                |
-| **Vermont**        | **statewide zoning**                            | **1,746** polygons; **208 of 256** town units                                                                          | `licenseInfo` **empty**                                                                                            |
-| **New Hampshire**  | statewide zoning, academic publisher            | **3,302** districts                                                                                                    | a liability disclaimer without a grant                                                                             |
-| **Connecticut**    | statewide zoning, **non-government and frozen** | **2,297** districts; **169 of 169** towns; 14,808,908 bytes                                                            | `Last-Modified: 2022-04-27`, unchanged for four years, **and its source repository returns 404**                   |
-| **Utah**           | statewide zoning, self-labeled in progress      | **749** polygons; **69 of 261** municipalities (**26 %**)                                                              | the publisher labels it `IN PROGRESS`                                                                              |
-| **Wisconsin**      | **county-administered only, frozen**            | **402,407** polygons; **51 of 72** counties; **zero cities or villages**                                               | `DBF_DATE_LAST_UPDATE = 2017-07-31`; Milwaukee, Madison and Green Bay are absent                                   |
-| **Maryland**       | **generalized only**                            | **2,289** polygons; 24 of 24 jurisdictions                                                                             | **no local zone code at all**, and **64.1 % of rows still carry a 2020 update year**                               |
-| **Florida**        | **future land use only**                        | 479 source jurisdictions, 67 of 67 counties                                                                            | a future-land-use plan designation rather than zoning (§2.1)                                                       |
-| **Massachusetts**  | **retired**                                     | the catalogue's 238 layer pages contain `zoning` **zero times**; the download bucket's 287 keys hold no zoning archive | what remains is the MBTA Communities 3A District Atlas — real adopted zoning, **153 of 351 municipalities (44 %)** |
-| **New Jersey**     | **none — and this is the trap**                 | **564 features against 564 municipalities**                                                                            | see below                                                                                                          |
-| **Minnesota**      | county-by-county only                           | **2 of 87** counties (2.3 %)                                                                                           | —                                                                                                                  |
-| **North Carolina** | county-by-county only                           | 0 of 100 counties                                                                                                      | —                                                                                                                  |
-| **Montana**        | none from the state                             | zoning is not an MSDI framework theme; `zoning` appears **zero times** on the MSDI page                                | the 39 "zoning" matches in the state's 1,090 ArcGIS items are **every one a Channel Migration Zone**               |
-| **Delaware**       | none                                            | **1 of 57** municipalities (Lewes), 0 of 3 counties                                                                    | —                                                                                                                  |
+| state              | verdict                                         | measured                                                                                                                   | the catch                                                                                                          |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **California**     | **statewide zoning**                            | **568,741** polygons, **534** distinct jurisdictions measured against a claimed 535 of 539                                 | `license_id` **null**, source dates 2021–2023 and a dirty `Date` column                                            |
+| **Washington**     | **statewide zoning**                            | **470,130** zones, **6,034** overlays, **320** jurisdictions = 39 counties + 281 cities                                    | a commercial-use restriction under RCW 42.56.070(8)                                                                |
+| **Oregon**         | **statewide zoning**                            | **114,823** polygons, **245** jurisdictions (209 cities + 36 of 36 counties)                                               | vintage 2023-06-30. The description claims 229 jurisdictions against 245 measured                                  |
+| **Hawaii**         | **statewide zoning, two tiers**                 | State Land Use Districts **906** polygons + county zoning **14,913** across 4 of 4 counties                                | two products, two vocabularies                                                                                     |
+| **Rhode Island**   | **statewide zoning**                            | **15,733** zones + 1,639 overlays, **39 of 39** municipalities                                                             | the most complete small state found                                                                                |
+| **Vermont**        | **statewide zoning**                            | **1,746** polygons, **208 of 256** town units                                                                              | `licenseInfo` **empty**                                                                                            |
+| **New Hampshire**  | statewide zoning, academic publisher            | **3,302** districts                                                                                                        | a liability disclaimer without a grant                                                                             |
+| **Connecticut**    | statewide zoning, **non-government and frozen** | **2,297** districts, **169 of 169** towns, 14,808,908 bytes                                                                | `Last-Modified: 2022-04-27`, unchanged for four years, **and its source repository returns 404**                   |
+| **Utah**           | statewide zoning, self-labeled in progress      | **749** polygons, **69 of 261** municipalities (**26 %**)                                                                  | the publisher labels it `IN PROGRESS`                                                                              |
+| **Wisconsin**      | **county-administered only, frozen**            | **402,407** polygons, **51 of 72** counties, **zero cities or villages**                                                   | `DBF_DATE_LAST_UPDATE = 2017-07-31`. Milwaukee, Madison and Green Bay are absent                                   |
+| **Maryland**       | **generalized only**                            | **2,289** polygons, 24 of 24 jurisdictions                                                                                 | **no local zone code at all**, and **64.1 % of rows still record a 2020 update year**                              |
+| **Florida**        | **future land use only**                        | 479 source jurisdictions, 67 of 67 counties                                                                                | a future-land-use plan designation rather than zoning (§2.1)                                                       |
+| **Massachusetts**  | **retired**                                     | the catalogue's 238 layer pages contain `zoning` **zero times**, and the download bucket's 287 keys hold no zoning archive | what remains is the MBTA Communities 3A District Atlas — real adopted zoning, **153 of 351 municipalities (44 %)** |
+| **New Jersey**     | **none — and this is the trap**                 | **564 features against 564 municipalities**                                                                                | see below                                                                                                          |
+| **Minnesota**      | county-by-county only                           | **2 of 87** counties (2.3 %)                                                                                               | —                                                                                                                  |
+| **North Carolina** | county-by-county only                           | 0 of 100 counties                                                                                                          | —                                                                                                                  |
+| **Montana**        | none from the state                             | zoning is not an MSDI framework theme; `zoning` appears **zero times** on the MSDI page                                    | the 39 "zoning" matches in the state's 1,090 ArcGIS items are **every one a Channel Migration Zone**               |
+| **Delaware**       | none                                            | **1 of 57** municipalities (Lewes), 0 of 3 counties                                                                        | —                                                                                                                  |
 
 **Maryland states its own limitation, and it supports the vocabulary decision from the publisher's
 side.** Verbatim: "Generalized zoning data is **not meant to substitute for local zoning
@@ -298,11 +284,11 @@ information** and should not be used to determine permissible uses." A statewide
 generalized classes and drops the local code has discarded the column §4.2 makes mandatory.
 
 **New Jersey's layer is the most misleading dataset in this survey, because it scores perfectly.** The
-Department of Community Affairs publishes a statewide layer named **"Municipal Zoning"**, with **564
+Department of Community Affairs publishes a statewide layer titled **"Municipal Zoning"**, with **564
 features against New Jersey's 564 municipalities**. A coverage script that counts jurisdictions with a
 row reports 100 %, and that figure is entirely wrong. The fields are `Muni`, `Municipali`, `County_1`,
 **`Map`**, **`Ordinance`**, and **`Website`**. The layer has no zoning code and no district geometry.
-Its attributes are hyperlinks to each town's PDF zoning map. The Department says so itself, verbatim:
+Its attributes are hyperlinks to each town's PDF zoning map. The Department states this itself, verbatim:
 
 > "This layer contains **links to online municipal zoning maps, zoning ordinances and zoning office
 > contact information** known to the Department of Community Affairs as of March 23, 2026… **The
@@ -316,7 +302,7 @@ distinguishes the two.**
 
 **Three further near-misses share vocabulary with zoning, and each covers a different subject.** NJDEP's
 Land Use/Land Cover 2020 is **699,777** imagery-derived Anderson-code polygons carrying labels like
-`RESIDENTIAL, HIGH DENSITY OR MULTIPLE DWELLING`. Montana's MSDI framework theme is literally named "Land
+`RESIDENTIAL, HIGH DENSITY OR MULTIPLE DWELLING`. Montana's MSDI framework theme is literally titled "Land
 Use/Land Cover" and sits where a zoning theme would sit in its fifteen-theme list, but it is a 30 m
 raster. Maryland's Land Use 2018 is derived from tax-assessment records plus land cover validated
 against aerial imagery. **The distinguishing test is provenance, never the class name.**
@@ -340,7 +326,7 @@ rural counties. All measured **2026-08-27**.
 | City of Seattle WA      | yes                                     |               3,627 | `ZONING`        | `ZONING_DESC`        | **PDDL — the only open license found**              |
 | Mecklenburg County NC   | yes                                     |                 977 | `zone_des`      | none                 | disclaimer only                                     |
 | City of Charlotte NC    | yes                                     |               5,689 | `ZoneDes`       | `ZoneClass`          | disclaimer only                                     |
-| Jefferson County AL     | service exists, **403 to this network** |          unverified | unverified      | unverified           | metadata says "no use limitations"                  |
+| Jefferson County AL     | service exists, **403 to this network** |          unverified | unverified      | unverified           | metadata reads "no use limitations"                 |
 | Sedgwick County KS      | yes, covers Wichita                     |              19,123 | `ZONING`        | a coded-value domain | disclaimer rather than on the layer                 |
 | City of Fargo ND        | yes, parcel-attributed                  |              38,876 | `Zone1`/`Zone2` | **none**             | disclaimer only                                     |
 | **Cass County ND**      | **no**                                  |                   — | —               | —                    | a public-domain grant, and no data                  |
@@ -357,27 +343,21 @@ rural counties. All measured **2026-08-27**.
 department responsible for planning and development states, verbatim: "**The City of Houston does not have zoning**, but
 development is governed by ordinance codes that address how property can be subdivided. **The City codes
 do not address land use.**" The stronger instrument is the City's own signed _Official City of Houston
-Zoning Letter_ (HTTP 200, 7,561,533 bytes), verbatim:
-
-<!-- vale off -->
-
-> "**The City of Houston does not have a city-wide comprehensive zoning ordinance.** However, there are
-> certain land use regulations for properties located within the areas described below… Tax Increment
-> Reinvestment Zone (TIRZ) No.1, St. George Place - Zoning regulations control the use of land within the
-> TIRZ boundaries."
-
-<!-- vale on -->
+Zoning Letter_ (HTTP 200, 7,561,533 bytes). The letter states that **the City of Houston has no city-wide
+zoning ordinance**. It then lists land use regulations for properties within certain described areas. One
+of those areas is Tax Increment Reinvestment Zone (TIRZ) No.1, St. George Place, where zoning regulations
+control the use of land within the TIRZ boundaries.
 
 So "Houston has no zoning" is true only at city-wide scale: airport land-use envelopes and one tax
-increment zone carry real land-use control. And Houston's own Land Use layer — **1,538,086 features** —
+increment zone exercise real land-use control. And Houston's own Land Use layer — **1,538,086 features** —
 is not a substitute, by its own description: "Land Use derived by City of Houston staff based on
 **appraisal district land use codes**." That is §2.1's assessment category, and the Florida rule quoted
-there says why it will not match the zoning.
+there explains why it will not match the zoning.
 
 **Texas counties have no general zoning power, verified from the statute.** Tex. Loc. Gov't Code Ch. 211
 grants zoning to "the governing body of a **municipality**". Ch. 231, titled _County Zoning Authority_,
 has one definitional section conferring no power, and **every operative subchapter is geographically
-restricted** — Padre Island, Amistad, military zones, named lakes, the El Paso Mission Trail, Hood County.
+restricted** — Padre Island, Amistad, military zones, specific lakes, the El Paso Mission Trail, Hood County.
 Harris County's own Fair Housing plan states: "**In the State of Texas counties are not granted
 zoning powers** and have limited power to guide development and as a result, private deed restrictions and
 covenants typically govern land use and development." Gillespie County confirms the pattern independently:
@@ -385,11 +365,11 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
 
 **Five findings from the sample that a builder needs, and each is measured.**
 
-1. **Almost nobody grants reuse.** Across 21 jurisdictions, **exactly one open license identifier
+1. **Almost no publisher grants reuse.** Across 21 jurisdictions, **exactly one open license identifier
    appears** — Seattle's PDDL. Three affirmatively forbid redistribution or commercial use. The rest are
-   liability disclaimers that make no statement about copying, which leaves reuse governed by default copyright.
+   liability disclaimers that make no statement about copying. Default copyright then governs reuse.
 2. **City and county terms contradict each other inside one metropolitan area.** Phoenix grants
-   redistribution while Maricopa County forbids commercial use; Seattle dedicates to the public domain
+   redistribution while Maricopa County forbids commercial use. Seattle dedicates to the public domain
    while King County requires written authorization. There is no metro-level answer.
 3. **County layers are unincorporated-only and never nested.** Proven for Maricopa by a
    `returnDistinctValues` on `JURIS`, which returns exactly `['COUNTY']`. Countywide coverage means
@@ -400,15 +380,15 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
    `source_zone`. **Chicago, Maricopa, King County, Fargo, Bannock, Screven and Sumter ship codes with
    no table to expand them** — §4.2's verbatim-code rule is the only thing that can be honored there.
 5. **Prose vintage disagrees with data vintage, and the prose is the stale half.** Los Angeles County's
-   description says "last updated through 12/16/14" while its own `Date_Updated` column measures
+   description reads "last updated through 12/16/14" while its own `Date_Updated` column measures
    2024-11-08 to 2026-08-12. Oregon's description claims 229 jurisdictions against 245 measured.
 
 **And HTTP 200 repeatedly meant failure.** Screven County's published layers return 200 carrying
-`{"error":{"code":500}}`; Dawes County's advertised service returns 200 carrying "Service may be stopped";
-the Census API returns **200 `text/html`** titled "Missing Key"; Minnesota's CKAN API returns 200 with a
-94,488-byte application shell; and Mecklenburg County's own published item URL is **misspelled**
-(`Unicorporated…`), returning a 404 error body inside an HTTP 200. **A harvester checking status codes
-alone records healthy endpoints and ingests no data.** Layer index `0` is not safe either — Los Angeles
+`{"error":{"code":500}}`. Dawes County's advertised service returns 200 carrying "Service may be stopped".
+The Census API returns **200 `text/html`** titled "Missing Key". Minnesota's CKAN API returns 200 with a
+94,488-byte application shell. Mecklenburg County's own published item URL is **misspelled**
+(`Unicorporated…`), and it returns a 404 error body inside an HTTP 200. **A harvester that checks only
+status codes records healthy endpoints and ingests no data.** Layer index `0` is not safe either — Los Angeles
 City's zoning is at `/15`, Vermont's at `/8`, Rhode Island's at `/1` with overlays at `/0`, Hawaii's five
 at 20, 2, 29, 33 and 3 — and a wrong index returns `{"error":{"code":400,"message":"Invalid URL"}}`, which
 reads as a broken service.
@@ -431,7 +411,7 @@ repository keeps writing down: a precise-looking figure that a reader would take
 | `tags:zoning`                       |  10,000 |
 | `zzzqqxnonsensetermxyz`             |       0 |
 
-The nonsense query answers 0, so the API works. Every real query answers exactly 10,000, which is the
+The nonsense query answers 0, so the API works. Every real query answers exactly 10,000. That number is the
 service's cap. **A survey that reported "10,000 zoning layers" would be reporting the ceiling.**
 
 **ArcGIS Hub's dataset API answers, and its answer is internally inconsistent.** Measured against
@@ -448,7 +428,7 @@ service's cap. **A survey that reported "10,000 zoning layers" would be reportin
 more common than its parts, so `totalCount` is not counting what the query asked for. The tag filter is
 the only figure with a defensible meaning, and it is still not a jurisdiction count.
 
-**A sample says how far off it is.** The first 50 records under `filter[tags]=zoning` (2026-08-27) were
+**A sample measures how far off it is.** The first 50 records under `filter[tags]=zoning` (2026-08-27) were
 read by hand. **Four are a current adopted zoning-district polygon layer for a US jurisdiction** —
 Yavapai County AZ (798 records), Hawaii County and Kauai County (7,721 and 1,953, both published by the
 Hawaiʻi Statewide GIS Program), and Los Angeles County's `Existing Zoning (outline)` (2,281). The other
@@ -457,10 +437,10 @@ Hawaiʻi Statewide GIS Program), and Los Angeles County's `Existing Zoning (outl
 Counties of Leeds and Grenville ON, City of Courtenay BC), overlays and buffers (`Oak Woodland OAK`,
 `Loudoun Steep Slopes`, `500m Waste Influence Area`, `Residential Base Zone by Area … 600 Ft Buffer`),
 future-land-use layers (`Character Area Future Land Use`), and three records of **Ireland's** national
-zoning layer, which is how §2.7 was found.
+zoning layer. Those three records are how §2.7 was found.
 
 So the sampled precision is **4 in 50, 8 %**. Applied to 43,960 that suggests on the order of 3,500
-records, before de-duplication — and de-duplication is most of the work, because Los Angeles County alone
+records, before de-duplication — and de-duplication is most of the work, because Los Angeles County by itself
 contributed 20 of the 50.
 
 **The publisher facet shows why de-duplication cannot be automated.** We aggregated
@@ -471,21 +451,21 @@ counties and cities with universities, consulting firms (`GEO Jobe GIS Consultin
 LLC`, `WSB`), personal accounts (`AndersonSusan`, `Loftus59`, `salehmuth1`), regional planning
 commissions, and non-US publishers (`Wicklow County Council`, `The City of Saint John`). The field is
 also dirty in a way that defeats grouping: `      City of Bowling Green, KY` and `     Huntingdon County`
-carry leading whitespace.
+begin with leading whitespace.
 
 **A narrower enumeration produces a usable number, and its most important column is empty.** We restricted
 to public feature services titled _Zoning Districts_ and enumerating the population rather than reading a
 `total`: **2,041 services, of which 2,000 were enumerated, across 1,279 distinct owner accounts — and 911
 owners (71.2 %) publish exactly one.** In a random sample of 60, **only 36 (60 %) returned a feature count
-anonymously**; the median reachable layer holds 150 features. And the license field:
+anonymously**, and the median reachable layer holds 150 features. And the license field:
 
-> **1,700 of the 2,000 (85.0 %) carry an empty `licenseInfo`.**
+> **1,700 of the 2,000 (85.0 %) have an empty `licenseInfo`.**
 
 **That 85 % is a real absence rather than a measurement artifact, and the failure direction was tested
 specifically**: re-checking 25 search-reported-empty items against the item endpoint confirmed **25 of 25
 empty, zero false negatives**. So the largest single obstacle to a US zoning layer is measurable, and it
-comes from reuse terms: **five publishers in six make no statement at all about reuse**,
-which leaves reuse governed by default copyright.
+comes from reuse terms: **five publishers in six make no statement at all about reuse**.
+Default copyright then governs reuse.
 
 **The conclusion this forces is §7.2's.** A jurisdiction-coverage map of the United States cannot be
 produced by querying a catalogue. It can only be produced the way the assemblies in §2.3 produced
@@ -506,12 +486,12 @@ Online organization (`orgId` `NzlPQPKn5QF9v2US`, owner `GZT_curator`):
   **85,330 features** (`returnCountOnly` and the bulk export agree exactly).
 - `GZT Expired Plan` — item `bfc2633e0b23411d8f61ad90f1cdb8ef`, **7,331 features**.
 
-Item created 2024-07-05, modified 2026-05-13; latest `UPLOAD_DATE` in the data is **2026-06-18**. The
+Item created 2024-07-05, modified 2026-05-13. The latest `UPLOAD_DATE` in the data is **2026-06-18**. The
 service reports `capabilities: Query,Extract`, `maxRecordCount: 2000`, `spatialReference` **EPSG:2157**
 (Irish Transverse Mercator), and a declared extent of (−10.5455, 51.4528) to (−5.9478, 54.4739) — the
 Republic of Ireland, excluding Northern Ireland.
 
-**What the Department says it is**, verbatim from the item description:
+**What the Department states it is**, verbatim from the item description:
 
 > "Generalised Zoning Types developed for the Myplan.ie project. This represents a consistent zoning
 > scheme across all local authorities, and **complements (rather than replaces) the existing statutory
@@ -522,14 +502,14 @@ That sentence is this survey's central exhibit. A national authority built a sha
 local vocabularies, published both, and stated in writing that the shared one does not replace the local
 one. §4 adopts that posture as the layer's rule.
 
-**The schema carries both, in the same row.** Field list, verbatim from the layer's `?f=json`:
+**The schema holds both, in the same row.** Field list, verbatim from the layer's `?f=json`:
 
 | field                                     | what it is                                                                                  |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `ZONE_ORIG`                               | **the local authority's own zone code, verbatim** — `RES`, `EE`, `HA-DM`, `RA - Rural Area` |
 | `ZONE_DESC`                               | the local authority's own description of that zone                                          |
 | `ZONE_LINK`                               | a link to the local authority's development plan                                            |
-| `ZONE_GZT`                                | **the national generic zoning type** — a coded-value domain named `GZT Code`                |
+| `ZONE_GZT`                                | **the national generic zoning type** — a coded-value domain called `GZT Code`               |
 | `GZT_DESC`, `GZT_LINK`                    | the generic type's description and its reference document                                   |
 | `SZO`                                     | `Standardised Zoning Objective` — a second, coarser national code                           |
 | `LA_CODE`, `LA_NAME`                      | the jurisdiction the row belongs to                                                         |
@@ -574,7 +554,7 @@ An address inside a covered authority may still lack a zoning polygon.
 against `CL`, `CO`, `DU` and the rest.
 
 **Currency — `CURRENT_PLAN = 1` does not mean "in force today".** All 85,330 rows in the Current layer
-carry `CURRENT_PLAN = 1`, which the domain defines as `Current plan` (as against `Expired and not
+have `CURRENT_PLAN = 1`. The domain defines that value as `Current plan` (as against `Expired and not
 replaced` and `Expired and replaced`). But **2,363 of them (2.77 %) have a `PLAN_TO` already in the
 past** as of 2026-08-27, measured with `where=PLAN_TO < DATE '2026-08-27'`. The plan-end distribution:
 
@@ -582,9 +562,9 @@ past** as of 2026-08-27, measured with `where=PLAN_TO < DATE '2026-08-27'`. The 
 | --------- | ----: | ---: | -----: | -----: | -----: | ----: | ----: |
 | features  | 1,839 |  947 | 12,652 | 39,328 | 18,348 | 9,645 | 2,571 |
 
-`PLAN_FROM` runs from 2012-10-08; no row has a future `PLAN_FROM` and none has a NULL `PLAN_TO`. So
+`PLAN_FROM` runs from 2012-10-08. No row has a future `PLAN_FROM` and none has a NULL `PLAN_TO`. So
 `CURRENT_PLAN` means "not superseded", and the plan window is a separate fact the consumer must read.
-`PLAN_LEVEL` splits **68,669 Development Plan** rows from **16,661 Local Area Plan** rows; the declared
+`PLAN_LEVEL` splits **68,669 Development Plan** rows from **16,661 Local Area Plan** rows. The declared
 `SDZ` (Strategic Development Zone) value appears on none.
 
 **Acquisition — three routes, measured.**
@@ -596,14 +576,14 @@ past** as of 2026-08-27, measured with `where=PLAN_TO < DATE '2026-08-27'`. The 
    features with no null geometry.
 2. **The query API**, paginated at `maxRecordCount` 2000, with `outSR` — `outSR=4326` returns WGS84
    correctly.
-3. **The service metadata**, which carries the coded-value domains and is the only retrievable copy of
-   the generic-type vocabulary (see the dead documentation host below).
+3. **The service metadata.** It holds the coded-value domains and is the only retrievable copy of the
+   generic-type vocabulary (see the dead documentation host below).
 
 **Three acquisition traps, each measured, each capable of producing a well-formed wrong answer.**
 
-**(a) The bulk GeoJSON is not in WGS84, and says so in a member the format removed.** Coordinates in the
+**(a) The bulk GeoJSON is not in WGS84, and it declares this in a member the format removed.** Coordinates in the
 downloaded file run x ≈ 701,873–730,724 and y ≈ 735,435–766,394 — Irish Transverse Mercator meters. The
-file carries a top-level `"crs": {"type":"name","properties":{"name":"EPSG:2157"}}`. RFC 7946 specifies
+file contains a top-level `"crs": {"type":"name","properties":{"name":"EPSG:2157"}}`. RFC 7946 specifies
 WGS84 and **removed the `crs` member**, so a strict reader ignores it and places Ireland's zoning at
 latitude 735,435. A reader that honors the legacy member (GDAL does) is fine. Use `outSR=4326` on the
 query path, or reproject and check that every output coordinate falls inside the Department's declared bounding box.
@@ -620,7 +600,7 @@ answers.** Measured on the largest feature, `OBJECTID` 17175, Meath's `RA - Rura
 So the service uses the ESRI convention — **clockwise is exterior, counter-clockwise is a hole** — which
 is the inverse of RFC 7946's, and it flattens every ring into its own MultiPolygon part. **Both output
 formats do it**: `f=geojson` and `f=json` from the query API return the same 107 rings with the same 5/102
-split. Across the whole export, **1,210 of 85,330 features (1.42 %) carry at least one hole this way**,
+split. Across the whole export, **1,210 of 85,330 features (1.42 %) contain at least one hole this way**,
 and reading every ring as an exterior over-reports the national zoned area by 222.1 km²:
 
 | national zoned area, computed three ways | km²         |
@@ -634,16 +614,16 @@ rings as exteriors answers **"inside `P5` rural zoning"** for locations the plan
 **The check is free and it is exact:** compute the signed sum and compare it to `Shape__Area`.
 
 **(c) The published definition of the crosswalk vocabulary is unreachable.** Every one of the 85,330 rows
-carries a `GZT_LINK` under `https://viewer.myplan.ie/` — 36,438 at `gztcoderef.htm#Residential`, 26,344 at
+holds a `GZT_LINK` under `https://viewer.myplan.ie/` — 36,438 at `gztcoderef.htm#Residential`, 26,344 at
 `#Conservation`, 7,810 at `#Mixed`, and so on. **`viewer.myplan.ie` has no A or AAAA record** (`getent
 hosts` returns no record and `curl` exits 6). Three candidate replacements on the live host —
 `www.myplan.ie/gztcoderef.htm`, `www.myplan.ie/zoning-map-viewer/gztcoderef.htm`, `myplan.ie/gztcoderef.htm`
 — all return **HTTP 404**. The vocabulary's 54 code-to-name pairs survive in the service's own coded-value
-domain, which is the second path; the **definitions** behind them were not retrieved (§10).
+domain, the second path. The **definitions** behind them were not retrieved (§10).
 
 The same shape appears on Ireland's open-data portal. The `data.gov.ie` record
 [`generalised-zoning-types`](https://data.gov.ie/dataset/generalised-zoning-types) (`metadata_modified`
-2026-07-14) carries exactly two resources, both on `https://maps.environ.ie/arcgis/rest/services/MyPlan/GZTZoning/MapServer`
+2026-07-14) lists exactly two resources, both on `https://maps.environ.ie/arcgis/rest/services/MyPlan/GZTZoning/MapServer`
 — and **`maps.environ.ie` has no DNS record either**. The record's `organization` is harvested as _Marine
 Institute_, and its `notes` field is null. The live data is on ArcGIS Online under a different owner, and
 the national portal does not point at it.
@@ -655,24 +635,20 @@ Three published statements, all read 2026-08-27:
    `license_url: https://creativecommons.org/licenses/by/4.0/`.
 2. **The ArcGIS item's `licenseInfo`**, verbatim in two parts:
 
-   <!-- vale off -->
-
-   > "The Department encourages the free dissemination of data and aims to publish its data holdings into
-   > the future, **where possible**, as Open Data licensed under Creative Commons Attribution 4.0
-   > International Licence (CC-BY)."
-
-   <!-- vale on -->
+   ```text
+   The Department encourages the free dissemination of data and aims to publish its data holdings into
+   the future, where possible, as Open Data licensed under Creative Commons Attribution 4.0
+   International Licence (CC-BY).
+   ```
 
    and, in the same field:
 
-   <!-- vale off -->
-
-   > "Copyright in this site and the information set out on it **belonging to our licensors (Tailte
-   > Éireann) may not be copied, transmitted or reproduced without their prior consent.** All copyright,
-   > trademark and other proprietary notices must be left intact. © Copyright 2011 DHLGH. All rights
-   > reserved. **© Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073**"
-
-   <!-- vale on -->
+   ```text
+   Copyright in this site and the information set out on it belonging to our licensors (Tailte
+   Éireann) may not be copied, transmitted or reproduced without their prior consent. All copyright,
+   trademark and other proprietary notices must be left intact. © Copyright 2011 DHLGH. All rights
+   reserved. © Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073
+   ```
 
 3. **`myplan.ie`'s own disclaimer**, verbatim:
 
@@ -687,7 +663,7 @@ clause naming the national mapping agency as an upstream licensor. The third is 
 and it points to a splash screen inside a map application for the operative terms. Those terms were not
 retrieved (§10). **This record reports the contradiction and does not resolve it.** Counsel must resolve it rather than engineering.
 for counsel. Until then, this record does not assert that the layer may ship at `tier: shipped`, and §7.1
-says what that means for the pilot.
+states what that means for the pilot.
 
 **The Department also declines to make one claim**, verbatim from the same `licenseInfo`. The refusal
 matches the Environment Agency's property-level refusal in the flood and erosion surveys:
@@ -717,9 +693,9 @@ CELLAR at `http://publications.europa.eu/resource/celex/32007L0002`, HTTP 200, 1
 > dimension or socio-economic purpose (e.g. residential, industrial, commercial, agricultural, forestry,
 > recreational)."
 
-"current and future planned" carries the existing/planned split at Directive level, so zoning is inside
+"current and future planned" states the existing/planned split at Directive level, so zoning is inside
 the theme by the Annex text rather than only by the later specification. The binding implementation is
-Commission Regulation (EU) No 1089/2010 Annex IV §4, whose definitions are verbatim:
+Commission Regulation (EU) No 1089/2010 Annex IV §4. Its definitions, verbatim:
 
 > "(5) 'planned land use' means spatial plans, defined by spatial planning authorities, depicting the
 > possible utilization of the land in the future."
@@ -751,7 +727,7 @@ binding text or the specification:
 
 1. **The national category is voidable.** In the `ZoningElement` attribute table, `hilucsLandUse` is
    mandatory while **`specificLandUse` — "Land Use Category according to the nomenclature specific to
-   this data set" — is `voidable`**. A conforming dataset may carry the harmonized code and omit the
+   this data set" — is `voidable`**. A conforming dataset may include the harmonized code and omit the
    local one.
 2. **The EU-side code list for national categories is empty by design.** `LandUseClassificationValue`,
    verbatim: "This CodeList is **empty in the INSPIRE context** and must be extended by each data
@@ -761,7 +737,7 @@ binding text or the specification:
    be stored in a register managed by the member states… only **the correspondence between the national
    codes and the HILUCS code shall be documented**." The next paragraph downgrades it to Recommendation 7.
 
-**The part of a plan that carries the actual building restrictions is admitted to be unharmonised.**
+**The part of a plan that states the actual building restrictions is admitted to be unharmonised.**
 `SupplementaryRegulationValue` has extensibility `any` against `HILUCSValue`'s `none`, and the
 specification states: "**Further work is though needed for achieving a European harmonisation on
 that matter**."
@@ -779,7 +755,7 @@ returns **HTTP 301 to `https://data.europa.eu`**, as does every geoportal path t
 announcement dated 2026-06-22, verbatim: "From 1 July 2026, INSPIRE datasets will be searchable and
 accessible through the European Data Portal… **As part of this transition, the INSPIRE Geoportal will be
 retired on 1 July 2026.** […] Further filtering of INSPIRE datasets will also be added to the
-functionalities." **The theme filter is named as future work**, so no first-class instrument currently
+functionalities." **The theme filter is listed as future work**, so no first-class instrument currently
 counts the Land Use datasets registered by each country.
 
 **Counted through the replacement's SPARQL endpoint, the number is real and means something other than
@@ -802,14 +778,14 @@ record per municipal plan, so 410,895 measures German metadata granularity rathe
 **Member-state tests, measured.** The Reportnet-style pointer problem takes six different forms across
 six member states:
 
-| member state    | central planned-land-use geometry?                        | measured                                                                                                                                                                                                                   |
-| --------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Netherlands** | **partial** — bulk GML and WMS; **WFS absent everywhere** | `land_use.gml` **8,780,264,029 bytes**; `inspire-planned-land-use.gml` **28,748,757,324 bytes**; all five candidate WFS/OGC-API paths **404**; the DSO APIs return **401**                                                 |
-| **Spain**       | **yes**, national plus a stronger regional layer          | SIU national WFS 2.0.0 `numberMatched="21791"` land classes; bulk shapefile 300,691,988 bytes without authentication; Catalonia's `MUC_QUALIFICACIONS` **546,696**                                                         |
-| **Finland**     | **yes, central — and nearly empty**                       | Ryhti OGC API Features without a key: **5,635** detailed plans and 647 master plans, spanning **39 of 309 municipalities**; regional plans absent entirely                                                                 |
-| **Germany**     | **no national geometry**                                  | 566,042 `*Bebauungsplan*` and 194,403 `*XPlanGML*` metadata records pointing at municipal services; a nationwide query returns **0**; Land-level aggregation works (Baden-Württemberg 31,537, Hamburg 3,044, Berlin 2,844) |
-| **Poland**      | **partial** — a national WMS view without WFS             | sending `service=WFS` to the national endpoint returns a **byte-identical WMS response**                                                                                                                                   |
-| **Czechia**     | **no national aggregation established**                   | `inspire-lu-wfs` → **404**; the national registry holds planning _records_ rather than geometry                                                                                                                            |
+| member state    | central planned-land-use geometry?                        | measured                                                                                                                                                                                                                       |
+| --------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Netherlands** | **partial** — bulk GML and WMS, **WFS absent everywhere** | `land_use.gml` **8,780,264,029 bytes**, `inspire-planned-land-use.gml` **28,748,757,324 bytes**, all five candidate WFS/OGC-API paths **404**, and the DSO APIs return **401**                                                 |
+| **Spain**       | **yes**, national plus a stronger regional layer          | SIU national WFS 2.0.0 `numberMatched="21791"` land classes, bulk shapefile 300,691,988 bytes without authentication, Catalonia's `MUC_QUALIFICACIONS` **546,696**                                                             |
+| **Finland**     | **yes, central — and nearly empty**                       | Ryhti OGC API Features without a key: **5,635** detailed plans and 647 master plans, spanning **39 of 309 municipalities**, and regional plans absent entirely                                                                 |
+| **Germany**     | **no national geometry**                                  | 566,042 `*Bebauungsplan*` and 194,403 `*XPlanGML*` metadata records pointing at municipal services, a nationwide query returns **0**, and Land-level aggregation works (Baden-Württemberg 31,537, Hamburg 3,044, Berlin 2,844) |
+| **Poland**      | **partial** — a national WMS view without WFS             | sending `service=WFS` to the national endpoint returns a **byte-identical WMS response**                                                                                                                                       |
+| **Czechia**     | **no national aggregation established**                   | `inspire-lu-wfs` → **404**, and the national registry holds planning _records_ rather than geometry                                                                                                                            |
 
 **Licenses differ within a single member state, on a single dataset.** For the Dutch services the WMS
 capabilities declare `<AccessConstraints>https://creativecommons.org/publicdomain/zero/1.0/deed.nl</AccessConstraints>`
@@ -829,7 +805,7 @@ Länder to exchange digitally, and its decisions take effect only where plans ar
 
 **This section's main contrast:** Finland mandates _submission of data_ to a national
 register and its central endpoint holds 12.6 % of municipalities, with the statutory duty deferred to
-2029-01-01; Germany mandates the _exchange format_ and has near-complete data that is nowhere central.
+2029-01-01. Germany mandates the _exchange format_ and has near-complete data that is nowhere central.
 Neither produces a retrievable European layer.
 
 **This section found two measurement traps.** Each produces a confident wrong answer that looks the same
@@ -837,18 +813,18 @@ as a real absence:
 
 1. **`data.europa.eu`'s search API ignores its `facets` parameter without an error.** `{"country":["de"]}`,
    `{"keywords":["PlannedLandUse"]}` and a deliberate nonsense key `{"bogusfacet":["zzz"]}` all return the
-   identical full-corpus count of **1,893,030**. The control key is what caught it; any per-country figure
+   identical full-corpus count of **1,893,030**. The control key is what caught it. Any per-country figure
    taken from that API is fabricated.
 2. **A SPARQL exact-literal keyword match returns zero for a keyword that is present.** `?d dcat:keyword
    "PlannedLandUse"` returns **0**, while `FILTER(STR(?k) = "PlannedLandUse")` returns **267,072**. The
-   literals are language-tagged. The zero suggests that nobody publishes planned land use, which is a
-   plausible-sounding wrong answer.
+   literals are language-tagged. The zero suggests that no publisher releases planned land use. That
+   answer sounds plausible and is wrong.
 
 **One defect in the authoritative register, found by reading it rather than the specification.** The
-`1_PrimaryProduction` definition is an orphaned rider clause. It says what is _additionally included_
+`1_PrimaryProduction` definition is an orphaned rider clause. It states what is _additionally included_
 ("Areas where the manufacturing industries aggregate, package, purify or process the primary products
 close to the primary producers are included…") and never states what primary production **is**. Every
-sibling class carries a head definition and its own children are coherent. The specification's normative
+sibling class has a head definition and its own children are coherent. The specification's normative
 Annex C does not enumerate the values at all and defers to the register, so no second copy exists to
 read. Anyone building against HILUCS needs a hand-written definition for that one class.
 
@@ -859,20 +835,12 @@ included because a consumer turns to them when zoning is absent, and §5's rule 
 a zoning answer.
 
 **OpenStreetMap records observed ground use, and its own documentation forbids the reading that would
-make it zoning.** From `Tag:landuse=residential`, under the heading `When not to use`, verbatim:
+make it zoning.** The `Tag:landuse=residential` page, under the heading `When not to use`, limits the tag to areas dedicated to
+residential purposes and in residential use. It excludes **areas that local development plans zone as
+residential and that are not yet in residential use**.
 
-<!-- vale off -->
-
-> "This tag should only be used for areas dedicated to and actually used for residential purposes. It
-> should not be used […] **for areas zoned as residential by local development plans, and not yet used as
-> residential area**"
-
-<!-- vale on -->
-
-and from the same page's image caption:
-
-> "This area is `landuse=farmland` - **even if local government zoned it for residential construction and
-> construction is planned in future**"
+The same page's image caption labels an area `landuse=farmland` **even though local government zoned it
+for residential construction and construction is planned**.
 
 The governing doctrine is verifiability — "A tag/value combination and geometry is verifiable _if and only
 if_ **independent users observing the same feature would make the same observation every time**" — and
@@ -881,13 +849,13 @@ database."** A zoning designation can never pass the verifiability test, because
 ordinance, and two mappers standing on the parcel cannot observe it.
 
 **There is no OSM zoning scheme, and that was measured rather than assumed.** The wiki page `Zoning` is a
-redirect (`#REDIRECT [[Parcel]]`), and `Parcel` records an unresolved dispute — "No widely accepted
-consensus exists on whether or not parcel boundaries and associated parcel attributes should be made
-available in OSM… **No detailed proposals for tagging parcel data appear to have been put forward.**" A
+redirect (`#REDIRECT [[Parcel]]`), and `Parcel` records an unresolved dispute. The page states that OSM contributors have reached no
+consensus on whether parcel boundaries and their attributes belong in OSM. It also states that **no detailed
+proposal for tagging parcel data appears to exist**. A
 taginfo query for keys matching `zone` returns **311 keys**, and the top ones are `zone:traffic`
 (782,123), `zone:maxspeed` (404,615), `surveillance:zone` (292,803) and transit fare zones. **None of them
 is a land-use zoning designation.** The closest match in the global database is `bakersfield:zone` at
-1,028 uses, which is a single-city import artifact.
+1,028 uses. That key is a single-city import artifact.
 
 **Coverage measured for two US cities**, by administrative boundary rather than by a bounding box, with a
 point-grid coverage test rather than a polygon-area sum (which double-counts, because OSM sanctions
@@ -909,7 +877,7 @@ coverage therefore depends on the local mapping community rather than on OSM as 
 itself disclaims `grass`: "At least two of the common values of `landuse` may be viewed as **not strictly
 land use**. These are `landuse=grass` and `landuse=forest`."
 
-**Overture carries the same data under a shared schema and the same license.** Theme **`base`**, type
+**Overture republishes the same data under a shared schema and the same license.** Theme **`base`**, type
 **`land_use`**, whose schema file states its own provenance: `description: Land use features from
 OpenStreetMap`, and `Translates 'landuse' from OpenStreetMap tag`. Required fields are `subtype` (24
 values) and `class` (114 values). Overture's attribution page states **"License for theme: ODbL"** for
@@ -918,11 +886,11 @@ Current release measured by direct bucket listing: **`2026-08-19.0`**, with
 `s3://overturemaps-us-west-2/release/2026-08-19.0/theme=base/type=land_use/` holding **32 objects
 totalling 18,686,303,456 bytes**.
 
-**This repository's Overture path does not carry it.** A census of `theme=` string literals across the
+**This repository's Overture path does not ingest it.** A census of `theme=` string literals across the
 whole tree (excluding `node_modules` and `out/`) returns **six occurrences over three themes** —
 `theme=divisions` (3, in `packages/mailwoman/lib/gazetteer-pipeline/admin/fold-overture.ts`), `theme=places`
 (2, in `.../poi/build-poi.ts`), and `theme=addresses` (1). **The tree has no `theme=base` reference, so
-the existing ingestion path carries no land-use theme at all.** A land-use theme would require new work rather than a
+the existing ingestion path reads no land-use theme at all.** A land-use theme would require new work rather than a
 configuration change.
 
 **Three land-cover products can be confused with zoning.** Each is a raster that represents neither
@@ -940,15 +908,11 @@ parcels nor ordinances:
 All facts read **2026-08-27**. Before proposing a vocabulary, this survey checked whether one already
 exists. **Two do, and both classify observed use rather than legal designation.**
 
-<!-- vale off -->
-
 **The APA Land-Based Classification Standards (LBCS)** classify land along **five dimensions**, verbatim
 from the standard (p. 2): "For local planning purposes, LBCS calls for classifying land uses in the
 following dimensions: **activity, function, structure type, site development character, and ownership**."
-Each is a separate four-digit code, and "every record in the database is classified in not just one
-land-use field, but several—one for each dimension."
-
-<!-- vale on -->
+Each is a separate four-digit code. The standard classifies every record in several land-use fields, one
+for each dimension.
 
 **Measurement shows it is not a zoning crosswalk.** In the 163-page normative standard
 (`LBCS.pdf`, HTTP 200, 489,655 bytes) **the string `zoning` appears three times, all incidental**. In the
@@ -958,8 +922,8 @@ dimension is defined as "An observable characteristic of land based on **actual 
 review of it agrees: "Because of the different dimensions a very detailed and accurate picture of **the
 actual land use** can be made."
 
-**It is also frozen and not redistributable.** Every one of the standard's **163 page footers carries the
-identical date `01-Apr-2001`**, and the machine-readable databases carry internal timestamps of
+**It is also frozen and not redistributable.** Every one of the standard's **163 page footers prints the
+identical date `01-Apr-2001`**, and the machine-readable databases hold internal timestamps of
 **2009-12-23 and 2009-12-26**, distributed only as legacy Microsoft Access `.mdb`. APA's copyright page,
 verbatim:
 
@@ -975,30 +939,25 @@ begun "to update the 1965 SLUCM".
 **No published crosswalk maps LBCS to HILUCS.** The INSPIRE Land Use data specification's Appendix D.1.7
 reviews LBCS as a candidate model and rejects it — "**LBCS model is a bit confusing and not simple in
 use**", "**Overall there is too much detail and the whole system is too complex**" — and the document
-carries no correspondence table between them.
+contains no correspondence table between them.
 
 **The one organisation performing zoning-district-to-shared-category mapping at national scale reduced the
 vocabulary to three values.** The National Zoning Atlas's `Type of Zoning District` field takes
 `Primarily Residential`, `Mixed With Residential` and `Nonresidential`, with all fidelity moved into about
 200 per-district measured characteristics. Its own framing of the problem, verbatim: "**Zoning is
-decentralized, inconsistent, and convoluted.**" And on whether the reading can be automated:
-
-<!-- vale off -->
-
-> "Not the code reading part! **Algorithms simply cannot (yet) understand the nuances of lengthy, complex
-> zoning codes to the level of accuracy we require.** (We've tried since 2022…)"
-
-<!-- vale on -->
+decentralized, inconsistent, and convoluted.**" On whether the reading can be automated, the Atlas states that the code reading part cannot be automated.
+It states that **algorithms cannot yet read the nuances of long, complex zoning codes at the accuracy the
+Atlas requires**, and that it has tried since 2022.
 
 The one commercial operator doing it describes the same method. Regrid, verbatim: "we convert each
 County's usecode **or zoning code** when they make them available, to the closest corresponding
 Standardized Land Use Code **manually**." Its input is an assessment use-code _or_ a zoning code,
-used interchangeably, which erases the distinction §2.1 draws.
+used interchangeably. That practice erases the distinction §2.1 draws.
 
 ### 2.11 Deliberately not surveyed
 
 - **Member states other than Ireland, beyond the six tested in §2.8.** Each publishes under its own terms
-  with its own vocabulary; none was verified and none is claimed.
+  with its own vocabulary. None was verified and none is claimed.
 - **Canada, and every country outside the US and the EU.** Canadian records appeared repeatedly in the
   catalogue sampling (§2.6) and were set aside rather than followed.
 - **Separate topics: building codes, overlay districts and historic-district designations.**
@@ -1008,7 +967,7 @@ used interchangeably, which erases the distinction §2.1 draws.
   program with its own licensing.
 - **Assessment use-codes as a source.** They are closely related but answer a different question. §2.1's
   Florida rule is why they are explicitly excluded here rather than ignored.
-- **The zoning ordinance text itself.** The layer carries designations rather than rules. A code reader would need to
+- **The zoning ordinance text itself.** The layer records designations rather than rules. A code reader would need to
   extract permitted uses is the National Zoning Atlas's programme, and its own statement that algorithms
   "cannot (yet)" do it is the reason this survey does not propose it.
 
@@ -1018,12 +977,12 @@ used interchangeably, which erases the distinction §2.1 draws.
 | ----------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
 | subject (§2.1)          | zoning                                                          | zoning                                                           | zoning, future land use, or neither                      | zoning                                              | planned land use                                            | **observed land use**                               |
 | provenance grade (§5)   | `authoritative`                                                 | `inferred` — a research assembly                                 | `authoritative`                                          | `authoritative`                                     | `authoritative`                                             | `inferred`                                          |
-| what it is              | 30 local authorities' adopted plans, republished nationally     | jurisdictions read and normalized by analysts                    | 18 states checked; 12 publish something statewide        | one jurisdiction each, ~33,000 of them              | a binding vocabulary over national publication obligations  | community observation of ground use                 |
-| license                 | **three statements that disagree** (§2.7)                       | **redistribution and commercial use prohibited**                 | null, empty, or restrictive — see §7.2                   | **85 % empty `licenseInfo`**; 1 open license in 21  | at least four families; two within one Dutch dataset        | **ODbL**, share-alike                               |
-| vocabulary              | 560 local codes **and** 54 declared generic types, side by side | 3 district-type values + ~200 characteristics                    | local codes, or a generalization with no local code (MD) | 16 different field names, frequently no description | HILUCS, 98 values, 3 levels, closed; national code voidable | `subtype` 24 / `class` 114                          |
-| coverage                | 30 of 31 authorities; **96.76 %** of population                 | 11,015 of 33,295 jurisdictions; **65.68 %**                      | **18.90 %** of US population at best, 10 acquisitions    | one jurisdiction each                               | no pan-European statement; the central index is retired     | 16.1 % of Philadelphia, 48.6 % of Phoenix           |
+| what it is              | 30 local authorities' adopted plans, republished nationally     | jurisdictions read and normalized by analysts                    | 18 states checked, 12 publish something statewide        | one jurisdiction each, ~33,000 of them              | a binding vocabulary over national publication obligations  | community observation of ground use                 |
+| license                 | **three statements that disagree** (§2.7)                       | **redistribution and commercial use prohibited**                 | null, empty, or restrictive — see §7.2                   | **85 % empty `licenseInfo`**, 1 open license in 21  | at least four families, two within one Dutch dataset        | **ODbL**, share-alike                               |
+| vocabulary              | 560 local codes **and** 54 declared generic types, side by side | 3 district-type values + ~200 characteristics                    | local codes, or a generalization with no local code (MD) | 16 different field names, frequently no description | HILUCS, 98 values, 3 levels, closed, national code voidable | `subtype` 24 / `class` 114                          |
+| coverage                | 30 of 31 authorities, **96.76 %** of population                 | 11,015 of 33,295 jurisdictions, **65.68 %**                      | **18.90 %** of US population at best, 10 acquisitions    | one jurisdiction each                               | no pan-European statement, the central index is retired     | 16.1 % of Philadelphia, 48.6 % of Phoenix           |
 | acquisition             | one download, 247,452,342 bytes, 41.1 s                         | none: no bulk download or API, and the DOI resolves to a web map | one service per state                                    | one service per jurisdiction                        | six architectures across six member states                  | Overpass, or 18.69 GB of Parquet                    |
-| reachable from this lab | **yes**, measured end to end                                    | web map only; the API returns 403                                | mostly; 40 % of sampled services fail anonymously        | mixed; several 403 or 200-with-an-error-body        | mixed; NL has no WFS, PL has no WFS, CZ 404                 | **yes**                                             |
+| reachable from this lab | **yes**, measured end to end                                    | web map only, the API returns 403                                | mostly, 40 % of sampled services fail anonymously        | mixed, several 403 or 200-with-an-error-body        | mixed, NL has no WFS, PL has no WFS, CZ 404                 | **yes**                                             |
 | usable for this layer   | **yes — the pilot, at `build-local`**                           | **no**                                                           | **not yet** — §7.2's threshold                           | **no** — the acquisition cost is the programme      | **no** — no retrievable European layer                      | **no** — a different question and a different grade |
 
 ## 3. Coverage honesty per source
@@ -1041,14 +1000,14 @@ and never
 
 > this is what may be built here.
 
-The distinction matters in practice. The Department of Housing, Local Government and Heritage says in its
+The distinction matters in practice. The Department of Housing, Local Government and Heritage states in its
 own metadata that the second reading is wrong: "Myplan.ie data are **not published here as legal definitions** of
 the current actuality with regard to Local Authority zoning or their geographic extents… **Original data
 should be sourced directly from the relevant Local Authority.**" This matches the Environment Agency's
 property-level refusal in the flood and erosion surveys. The same caveat must appear in the observation's
 wording as well as in this document.
 
-**A plan is part of the claim rather than a parameter of it.** A zone exists inside a named Development
+**A plan is part of the claim rather than a parameter of it.** A zone exists inside a specific, titled Development
 Plan or Local Area Plan with a stated validity window. A layer that dropped the plan and kept the zone
 would answer a question no authority asked.
 
@@ -1066,15 +1025,15 @@ entirely different cases, and no published product distinguishes them:
 3. **In a jurisdiction that has never adopted zoning at all.** This category occurs in practice:
    the National Zoning Atlas's own data records Colorado as having 334 potential zoning jurisdictions of
    which **59 have declined to zone**, and Hawaii as vesting zoning in **5 counties only**.
-4. **In a jurisdiction whose records nobody has read or published yet.** This is the largest category in
+4. **In a jurisdiction whose records no one has yet read or published.** This is the largest category in
    the United States by a wide margin (§7.2).
 
-**The source distinguishes one of these cases explicitly, which shows the rest are absences rather than
-designations.** Ireland's layer carries `ZONE_ORIG = "UNZ - Unzoned"` with `ZONE_GZT = "N/A"` on **4 of
+**The source distinguishes one of these cases explicitly. That shows the rest are absences rather than
+designations.** Ireland's layer records `ZONE_ORIG = "UNZ - Unzoned"` with `ZONE_GZT = "N/A"` on **4 of
 85,330 rows**. The authority records "unzoned" as a positive value when it means that. Every other
 absence is a missing row, and it means one of the four cases above.
 
-**A builder that copied the flood layer's rule would therefore turn "nobody has published this" into "no
+**A builder that copied the flood layer's rule would therefore turn "no publisher has released this" into "no
 restriction applies here"** over most of the map, in a domain where a reader would act on it. The pilot
 therefore writes `CoverageBasis.SourcePresent`, `supportsExclusion` is false, and the layer licenses no
 negative claim.
@@ -1093,7 +1052,7 @@ by an order of magnitude, so this record states both and keeps them apart.**
 
 **Denominator A — people living in a covered jurisdiction.** For Ireland: **4,982,055 of 5,149,139 =
 96.76 %**, and the missing authority is Donegal County Council (Census 2022, CSO table `FY003A`). This
-figure says a zoning product exists for the place a person lives. It does **not** say a zoning polygon
+figure states that a zoning product exists for the place a person lives. It does **not** state that a zoning polygon
 covers their address.
 
 **Denominator B — land carrying a zoning polygon.** This was measured for Ireland, and the measurement
@@ -1114,7 +1073,7 @@ than a percentage.
 
 ### 4.1 What was measured
 
-The issue asked whether to carry jurisdiction-local codes verbatim or to author a crosswalk. **Ireland
+The issue asked whether to store jurisdiction-local codes verbatim or to author a crosswalk. **Ireland
 provides a natural experiment on that question**, because a national authority already built the
 crosswalk for one small country, with statutory access to the plans. Measured 2026-08-27 against the live service:
 
@@ -1130,7 +1089,7 @@ crosswalk for one small country, with statutory access to the plans. Measured 20
 **One small country's 30 authorities therefore produce 560 distinct zone labels for 55 generic types.**
 That is the lower bound on the vocabulary problem: one country, one language, and one national curator.
 
-**The decisive measurement shows that the crosswalk cannot be expressed as a lookup table.** If a local
+**The measurement shows that the crosswalk cannot be expressed as a lookup table.** If a local
 code determined a generic type, the mapping could ship as a lookup and the local column would be
 redundant. The local code does not determine it:
 
@@ -1141,22 +1100,18 @@ redundant. The local code does not determine it:
 - **A further 24 local codes are consistent inside each authority and diverge across them** — `Commercial`,
   `District Centre`, `Enterprise`, `Low Density Residential`, `Neighbourhood Centre`, `Mixed Use Zoning`.
 
-<!-- vale off -->
-
 The mapping is therefore **per polygon, authored by a person reading a plan**, and it cannot be
 reconstructed from the pair of columns. The two organisations doing this at US scale reached the same
-conclusion independently. The National Zoning Atlas says directly that "Algorithms simply cannot
-(yet) understand the nuances of lengthy, complex zoning codes to the level of accuracy we require", and
-Regrid says its conversion is done "**manually**".
+conclusion independently. The National Zoning Atlas states that algorithms cannot yet read long,
+complex zoning codes at the accuracy it requires. Regrid states that it performs its conversion
+**manually**.
 
-<!-- vale on -->
-
-**The local code alone is unreadable outside its authority, which is why the crosswalk is needed.** South Dublin's 16
+**Without a crosswalk, the local code is unreadable outside its authority. That is why the crosswalk is needed.** South Dublin's 16
 local codes are `RES`, `OS`, `SDZ`, `EE`, `RU`, `REGEN`, `RES-N`, `VC`, `LC`, `HA-DM` and six more.
-Nobody outside South Dublin can read them, and they collide with other authorities' codes for other
+A reader outside South Dublin cannot interpret them, and they collide with other authorities' codes for other
 meanings.
 
-**The crosswalk alone loses information, which is why the verbatim code is needed.** A crosswalk that collapses 560
+**Without the verbatim code, the crosswalk loses information. That is why the verbatim code is needed.** A crosswalk that collapses 560
 labels to 55 types discards, among other things, the difference between South Dublin's `RES` and
 `RES-N`, which the authority itself keeps.
 
@@ -1165,11 +1120,11 @@ national code, `SZO` (Standardised Zoning Objective), 22 distinct values. A grou
 `SZO` returns 55 distinct pairs: **no generic type maps to more than one `SZO`**, while **8 of the 22
 `SZO` values span more than one generic type** (`TU` covers all 17 network codes; `RU` covers all six
 primary-sector codes). `SZO` is therefore a strict coarsening of `ZONE_GZT` rather than a competing
-classification. It is carried as published rather than derived, because the roll-up could change.
+classification. It is stored as published rather than derived, because the roll-up could change.
 
 ### 4.2 The decision
 
-**Always carry the jurisdiction's own code verbatim. Carry a crosswalk only where the publishing
+**Always store the jurisdiction's own code verbatim. Store a crosswalk only where the publishing
 authority ships one, as a separate column with its own provenance and never as a replacement. Author no
 crosswalk in this project.**
 
@@ -1179,9 +1134,9 @@ Four reasons support the decision, in order of weight.
    not been revised since 2001, and may not be copied or distributed without APA's written permission.
    SLUCM is public domain and sixty-one years old, and is also about observed use. There is no LBCS-to-
    HILUCS crosswalk. Either one would relabel a legal instrument as an observation if used for zoning.
-2. **A new crosswalk would require zoning judgments**, which the issue puts out of scope and this
-   project's rules forbid anyway. The measurement above shows the judgment is per polygon. The 51
-   `(authority, code)` pairs show that no code table could carry it, so authoring a crosswalk would mean
+2. **A new crosswalk would require zoning judgments.** The issue puts those out of scope, and this
+   project's rules forbid them anyway. The measurement above shows the judgment is per polygon. The 51
+   `(authority, code)` pairs show that no code table could express it, so authoring a crosswalk would mean
    adjudicating 560 vocabularies parcel by parcel. That is the National Zoning Atlas's whole programme.
    It has taken 1,337,510 pages of reading, and a geocoder cannot do it as a side task.
 3. **The authority's own crosswalk is a fact about the authority**, and this layer repeats it. Ireland's
@@ -1193,12 +1148,12 @@ Four reasons support the decision, in order of weight.
    values are the defensible shape to copy. The _shape_ is free to copy, while their _data_ is
    not.
 
-**Consequences for the builder.** The declared domain is carried as a closed set, and an undeclared value
+**Consequences for the builder.** The declared domain is stored as a closed set, and an undeclared value
 **throws**, because an unknown code signals a source-schema change and a reader most needs to hear about
 that. Ireland's own data, however, already violates its own domain on 4 rows (`N/A`). The ingest must
-therefore carry the service's domain **plus** the values observed in the data, and report the difference
+therefore store the service's domain **plus** the values observed in the data, and report the difference
 rather than coerce it. Store the source string, compare case-insensitively, and never normalize the
-stored value. `LA_CODE` carries `Fl` for Fingal against `CL`, `CO`, `DU` for the rest.
+stored value. `LA_CODE` holds `Fl` for Fingal against `CL`, `CO`, `DU` for the rest.
 
 ## 5. The mixed-provenance rule
 
@@ -1208,7 +1163,7 @@ stored value. `LA_CODE` carries `Fl` for Fingal against `CL`, `CO`, `DU` for the
 
 - `authoritative` — the publishing body is the planning or legislative authority for the land, or a
   government body republishing that authority's own records. Ireland's Department of Housing, Local
-  Government and Heritage republishing a local authority's adopted plan is authoritative; so is the local
+  Government and Heritage republishing a local authority's adopted plan is authoritative. So is the local
   authority's own service.
 - `inferred` — an observation, a community mapping project, a research assembly, or any reading of the
   land that was not adopted as the plan. OpenStreetMap `landuse` is inferred. Overture's `base/land_use`
@@ -1223,8 +1178,8 @@ no reader may reach a zoning conclusion by mixing the two.
 _means_, and a `CHECK` constraint enforces the direction. The reason, verbatim from
 `packages/filer/lib/schema.ts`: "a score may appear only on an inferred row, since an authoritative
 membership matched no candidate and any number there would be a fabricated confidence." The same three
-mechanics carry over. The grade is a column rather than a convention. A blank grade is rejected, because
-`NOT NULL` alone would accept `''` and a blank matches neither half of every read that splits on
+mechanics apply here. The grade is a column rather than a convention. A blank grade is rejected, because
+`NOT NULL` without a `CHECK` would accept `''` and a blank matches neither half of every read that splits on
 strength. The two grades never merge in a rollup.
 
 ### 5.2 The measurement that makes it a constraint rather than a preference
@@ -1240,7 +1195,7 @@ territory (Overpass `timestamp_osm_base` 2026-08-27T20:11:06Z), of which the lar
 When we take the **1,652 OSM `landuse=residential`** polygons and ask the authority what it zones at each
 polygon's centroid:
 
-| what the authority says at that location       | polygons |      share |
+| what the authority records at that location    | polygons |      share |
 | ---------------------------------------------- | -------: | ---------: |
 | **no zoning polygon at all**                   |  **249** | **15.1 %** |
 | `R2` Existing residential                      |      519 |     31.4 % |
@@ -1257,20 +1212,20 @@ polygon's centroid:
 `landuse=residential` as a proxy for residential zoning would be wrong about two polygons in three, and
 the two largest wrong answers are agriculture and conservation.
 
-**OSM is correct here.** It answers the question it says it answers, and its own wiki forbids the
+**OSM is correct here.** It answers the question it claims to answer, and its own wiki forbids the
 substitution explicitly: `landuse=residential` "should not be used… for areas zoned as
 residential by local development plans, and not yet used as residential area". The divergence follows
 from the difference in category, and the number is recorded so the rule rests on a measurement.
 
 Two caveats bound the number. A centroid is one point, so a large OSM polygon spanning several zoning
-polygons is credited to only one of them. No centroid fell inside two zoning polygons, which is
+polygons is credited to only one of them. No centroid fell inside two zoning polygons. That result is
 consistent with the authority's zones forming a partition.
 
 ### 5.3 What the schema does about it
 
 - **`provenance_grade` is a `NOT NULL` column on every zoning row**, over `{authoritative, inferred}`,
   with a `CHECK` rejecting the empty string.
-- **`source` is not a proxy for the grade** and is carried separately. The filer precedent's reason
+- **`source` is not a proxy for the grade** and is stored separately. The filer precedent's reason
   applies directly: one publisher can emit both grades, as Overture does across its themes.
 - **One artifact holds one grade.** An `inferred` land-use layer is a **different database with a
   different `layer_manifest.name`**, because `layer_coverage.observed_rows` is defined as "rows this layer
@@ -1284,7 +1239,7 @@ consistent with the authority's zones forming a partition.
   of a collection of independent databases", which covers shipping ODbL data **alongside** other data
   rather than merging its rows into a joint schema. §4.5(b) is the route that works: query _output_ is a
   Produced Work, and creating one does not create a Derivative Database. An observation that _answers
-  from_ an ODbL layer therefore carries the §4.3 attribution obligation but excludes share-alike. **A merge of an
+  from_ an ODbL layer therefore incurs the §4.3 attribution obligation but excludes share-alike. **A merge of an
   ODbL land-use row into a CC-BY zoning table would relicense the zoning table.**
 - **A response never mixes grades in one claim.** Where both layers are attached, the observation reports
   the authoritative designation and the observed use as two labeled statements with two attributions, or
@@ -1375,13 +1330,13 @@ layer_manifest / layer_coverage   -- the interface tables, from @mailwoman/core/
 ```
 
 `WITHOUT ROWID` on `zoning_cell` and not on the geometry tables follows the interface's own guidance:
-small fixed-width rows probed by their exact primary key belong in the B-tree; a row carrying a geometry
+small fixed-width rows probed by their exact primary key belong in the B-tree. A row that holds a geometry
 blob does not.
 
-Three schema points carry a measurement behind them.
+Three schema points rest on a measurement.
 
-- **`local_code` is `NOT NULL` and `crosswalk_code` is nullable**, which is §4.2 expressed as a
-  constraint. A source with no crosswalk produces a complete row; a source with no local code does not.
+- **`local_code` is `NOT NULL` and `crosswalk_code` is nullable.** That pair is §4.2 expressed as a
+  constraint. A source with no crosswalk produces a complete row. A source with no local code does not.
 - **`signed_area_m2` is stored as the ingest's own receipt**, because §2.7's ring-orientation trap is
   silent and its check is exact: the signed sum matches the authority's published area, the absolute sum
   does not.
@@ -1400,14 +1355,14 @@ Three schema points carry a measurement behind them.
 | `attribution`               | the Department, and Tailte Éireann where the resolved terms require it                                             |
 | `source` / `source_vintage` | ArcGIS item `5c2608ebedd84013aaeff8bf669e8596`, and the item's `modified` date 2026-05-13                          |
 | `build_cmd` / `build_sha`   | the invocation and the commit that produced it                                                                     |
-| `freshness_policy`          | `versioned-refresh` — the Department re-issues under the same product; there is no published cadence (§10)         |
+| `freshness_policy`          | `versioned-refresh` — the Department re-issues under the same product, with no published cadence (§10)             |
 | `spine_keys`                | `{ h3: { column: "h3_cell", resolution: … } }`, plus `wof_id` on `zoning_jurisdiction` — see §1                    |
 | `created_at`                | caller-supplied, per the interface                                                                                 |
 
 ### 6.4 The resolution — and the one place the size interface's decision procedure does not reach
 
-The inherited size interface says the resolution is picked from the measured `partial` share, never
-argued. **For this subject that statistic carries no signal, and the reason was measured.**
+The inherited size interface requires that the resolution is picked from the measured `partial` share,
+never argued. **For this subject that statistic gives no signal, and the reason was measured.**
 
 **Most polygons in this layer are smaller than a cell.** We computed this over all 85,330 Irish features (planar
 shoelace in EPSG:2157, signed rings):
@@ -1445,15 +1400,15 @@ size:
 3. **Expect `compactCells` to yield almost no cells.** There are no uniform interiors to collapse.
 
 The measurement above is a lower bound on cells and candidates, because the fallback added one cell per
-sub-cell polygon rather than every cell its ring touches; a real builder's numbers will be higher. The
+sub-cell polygon rather than every cell its ring touches. A real builder's numbers will be higher. The
 national figure was not extrapolated from one urban authority (§10).
 
 **One reprojection the pilot needs, and it is not optional.** The service is EPSG:2157 and its bulk export
-carries ITM meters under a `crs` member that RFC 7946 removed (§2.7 trap a). Use `outSR=4326` on the query
+stores ITM meters under a `crs` member that RFC 7946 removed (§2.7 trap a). Use `outSR=4326` on the query
 path or reproject explicitly, and **check that every output coordinate falls inside the Department's declared bounding
 box**. An unreported identity transform puts Ireland's zoning at latitude 735,435.
 
-Two traps carry over from the sibling surveys, already commented in place in `coverage-region.ts` and
+Two traps also apply from the sibling surveys, already commented in place in `coverage-region.ts` and
 `build-poi.ts`: `polygonToCells` takes `[lat, lng]` per vertex in its default mode, and a coverage cell
 must be `cellToParent` of the finer cell rather than a direct `latLngToCell` at the coarse resolution.
 
@@ -1463,21 +1418,21 @@ must be `cellToParent` of the finer cell rather than a direct `latLngToCell` at 
 
 Five reasons, in the order they bind.
 
-1. **It is an authority's adopted designation, which is the only thing this layer is allowed to repeat.**
+1. **It is an authority's adopted designation. That is the only thing this layer is allowed to repeat.**
    A national department republishing 30 local authorities' adopted plans is the same object class the
-   flood and erosion layers carry. Every US alternative is a research assembly, a commercial extraction,
+   flood and erosion layers store. Every US alternative is a research assembly, a commercial extraction,
    or a community observation.
-2. **It answers the survey's hardest question by example.** The issue asked whether to carry local codes
+2. **It answers the survey's hardest question by example.** The issue asked whether to store local codes
    verbatim or to author a crosswalk. Ireland's Department did both and said in writing that the
    crosswalk "complements (rather than replaces)" the local vocabulary. A pilot that transcribes that is
    demonstrating the decision rather than asserting it.
 3. **The acquisition path was exercised end to end.** 247,452,342 bytes of GeoJSON in 41.1 s, 85,330
    features, feature counts agreeing exactly between the bulk export and the service, coded-value domains
    readable, and neither a key nor registration was needed.
-4. **It puts the meaning-of-zero rule under a new kind of pressure, which is the point.** The flood layer
+4. **It tests the meaning-of-zero rule in a new way, and that test is the purpose.** The flood layer
    taught that absence inside a mapped country is a designation. Erosion inverted that. **This layer reverses
    it harder**: absence is one of at least four different things (§3.2), the authority states "unzoned" as
-   a positive value on 4 rows so the other absences are demonstrably not designations, and one authority's
+   a positive value on 4 rows so the other absences are shown not to be designations, and one authority's
    drafting convention moves the national zoned-area figure by 41 %.
 5. **Its traps are the useful kind.** A ring-orientation convention that flips point-in-polygon answers
    inside 1,210 features, a `crs` member the format removed, a currency flag that does not mean current,
@@ -1497,11 +1452,15 @@ smaller area first.
 
 **Fixtures.** Hand-built geometry, run without network access. A square zone, an adjacent one, **a zone with a hole
 encoded by ring orientation**, a zone smaller than one cell, and two zones in different plans over the
-same ground. It asserts: a wholly-interior cell resolves from the index without touching geometry; a
-sub-cell polygon still receives at least one cell; **a point inside a hole returns no zone**; a point
-outside every polygon produces **no coverage row and no negative claim**; the local code is stored
-byte-identically including case and trailing space; an undeclared crosswalk code is recorded as observed
-rather than coerced or dropped; and an `inferred` row never answers an `authoritative` question.
+same ground. The fixtures assert the following:
+
+- A wholly-interior cell resolves from the index without touching geometry.
+- A sub-cell polygon still receives at least one cell.
+- **A point inside a hole returns no zone.**
+- A point outside every polygon produces **no coverage row and no negative claim**.
+- The local code is stored byte-identically, including case and trailing space.
+- An undeclared crosswalk code is recorded as observed rather than coerced or dropped.
+- An `inferred` row never answers an `authoritative` question.
 
 **Smoke.** One local authority from the real service — South Dublin, 5,478 features, already measured
 here. This verifies what fixtures structurally cannot: the actual field names, that `outSR=4326` lands
@@ -1522,18 +1481,18 @@ silent:
 
 ### 7.2 The recorded finding — the threshold the United States does not meet, and by how much
 
-The issue named this outcome as a completion, and it is the one the US half reaches.
+The issue listed this outcome as a completion, and it is the one the US half reaches.
 
-**The threshold, recorded.** A zoning layer is worth building for a region when **a single verified
-acquisition — one publisher, one redistribution grant, one schema — covers a stated population against a
-named denominator, and the publisher states its own coverage.** The unit is one acquisition, because that
-is the unit each of the three sibling surveys picked and the unit a builder issue carries; and the test is
+**The threshold, recorded.** A zoning layer should be built for a region when **a single verified
+acquisition — one publisher, one redistribution grant, one schema — covers a stated population against an
+identified denominator, and the publisher states its own coverage.** The unit is one acquisition, because that
+is the unit each of the three sibling surveys picked and the unit a builder issue tracks. The test is
 a _grant_ rather than availability, because §2.3 found four separate sources that download without
 friction and grant no license.
 
 **Ireland meets it.** One publisher, 30 of 31 authorities, 96.76 % of the State's population against the
-Census 2022 denominator, one schema, one download — with the grant itself still open, which is why §7.1
-holds the tier at `build-local` rather than calling the threshold met outright.
+Census 2022 denominator, one schema, one download — with the grant itself still open. For that reason §7.1
+holds the tier at `build-local` rather than calling the threshold fully met.
 
 **The United States does not meet it anywhere, and here is the arithmetic.** Denominator throughout:
 **341,784,857**, the US resident population at 2025-07-01, Census Bureau `NST-EST2025-ALLDATA.csv`
@@ -1551,14 +1510,14 @@ is reproduced exactly by summing its 51 state rows, and it agrees with the Vinta
 | — Connecticut (2,297 districts, 169 of 169 towns)                                                      |   3,688,496 |      1.08 % |            1 | non-government, frozen at 2022-04-27, source repository **404**                            |
 | — Utah (749 polygons, 69 of 261 municipalities)                                                        |   3,538,904 |      1.04 % |            1 | the publisher labels it `IN PROGRESS`                                                      |
 | — Hawaii (906 state districts + 14,913 county zones)                                                   |   1,432,820 |      0.42 % |            1 | not established                                                                            |
-| — New Hampshire, Rhode Island, Montana, Vermont                                                        |   4,319,220 |      1.26 % |            4 | empty `licenseInfo` or a disclaimer; two MIT chapters (see below)                          |
+| — New Hampshire, Rhode Island, Montana, Vermont                                                        |   4,319,220 |      1.26 % |            4 | empty `licenseInfo` or a disclaimer, two MIT chapters (see below)                          |
 | **What a redistributable layer can stand behind today** — the two MIT-licensed chapters                |   2,577,514 |  **0.75 %** |            2 | Montana and Hawaii on GitHub — **and the rights chain back to Land Use Atlas is unstated** |
 
 **The gap between 65.68 % and 0.75 % is the finding, and the gap is licensing rather than coverage.** The
-reading has been done — 1,337,510 pages of it — and effectively none of it can be carried. The layer's
-problem in the United States is not that the patchwork is unmapped; it is that publishers do not say
+reading has been done — 1,337,510 pages of it — and effectively none of it can be redistributed. The layer's
+problem in the United States is not that the patchwork is unmapped. The problem is that publishers do not state
 whether it may be copied. **§2.6 measures that directly: 1,700 of 2,000 enumerated public zoning services
-(85.0 %) carry an empty `licenseInfo`, verified against a false-negative check of 25 of 25.**
+(85.0 %) have an empty `licenseInfo`, verified against a false-negative check of 25 of 25.**
 
 **Why the unit is an acquisition and not a percentage.** The 2022 Census of Governments counts **90,837
 local governments**, of which **38,736 are general purpose** — 3,031 counties, 19,491 municipalities and
@@ -1567,7 +1526,7 @@ zero times in the table's documentation. The best-sourced statement of the unive
 Atlas team writing in HUD's peer-reviewed _Cityscape_, verbatim: "Of 38,779 general-purpose governments as
 of 2017… **tens of thousands of local jurisdictions have likely enacted zoning.**" A per-jurisdiction
 program at even half an hour each is on the order of sixteen thousand hours, before any plan is amended.
-So the number that decides whether this layer is buildable is not the population share; it is **the number of
+So the number that decides whether this layer is buildable is not the population share. It is **the number of
 acquisitions that share costs**. Ireland is one. California would be one. The remainder of the United
 States is tens of thousands.
 
@@ -1579,7 +1538,7 @@ States is tens of thousands.
    `LICENSE.txt` and a noncommercial README. Its `CAZoning` repository is real statewide California
    polygon data and its README invites the email.
 3. **Land Use Atlas's licensing arm offers redistribution terms.** It exists as of spring 2026 and sells
-   bulk files; whether any tier permits redistribution was not established (§10). This is the single
+   bulk files. Whether any tier permits redistribution was not established (§10). This is the single
    change that would move 66 % at once.
 4. **A state mandates a standard statewide zoning layer.** None does today: New Jersey's statewide
    "Municipal Zoning" layer is, in its own words, "links to online municipal zoning maps, zoning
@@ -1602,8 +1561,8 @@ rather than the theme.
 A caller who geocodes an address in a jurisdiction whose planning authority publishes zoning receives,
 alongside the ordinary result and without changing it, that authority's own zoning designation for the
 resolved coordinate — **the authority's own code in the authority's own spelling**, its description, the
-named plan it belongs to and that plan's stated validity window, the publishing authority, and, where and
-only where the authority itself publishes one, its generic classification carried as a separate labeled
+titled plan it belongs to and that plan's stated validity window, the publishing authority, and, where and
+only where the authority itself publishes one, its generic classification returned as a separate labeled
 value that never replaces the local code. Where the authority publishes no determination, the caller
 receives that fact and receives no permissive one: the coverage basis licenses presence only, so an absent
 polygon is reported as "this product makes no statement here" and never as "no restriction applies", because the
@@ -1619,40 +1578,42 @@ attributed field and preserves rank order, abstention and all existing result fi
 
 Not filed here. The outline, for the issue that lands against this survey.
 
-**Shape.** The `bdc` pattern gives a workspace acquisition, parsing and the layer reader; the CLI stays thin
-wiring. `gazetteer build bdc` takes `--state` as a FIPS code, which is the precedent for a region-scoped
-build; the zoning equivalent takes the publisher and an optional local-authority selector for the smoke
+**Shape.** The `bdc` pattern gives a workspace acquisition, parsing and the layer reader. The CLI stays thin
+wiring. `gazetteer build bdc` takes `--state` as a FIPS code. That flag is the precedent for a region-scoped
+build. The zoning equivalent takes the publisher and an optional local-authority selector for the smoke
 rung.
 
 **Registration.** A new workspace joins several registers and only the first fails loudly — the root
 `workspaces` array, the `.release-it.json` publish list (or a sanctioned-absence entry with the reason as
-data), **both** root `tsconfig.json` reference entries, and the `smoke-clean-install.ts` pack set; the
+data), **both** root `tsconfig.json` reference entries, and the `smoke-clean-install.ts` pack set. The
 full paragraph is in the root `AGENTS.md`. The arithmetic currently reads **59 workspaces, 53 in the
-release list, six absent with a stated reason each** (measured 2026-08-27); re-run it afterwards and
+release list, six absent with a stated reason each** (measured 2026-08-27). Re-run it afterwards and
 confirm every absent name still has a reason someone can state.
 
 **Acquisition.** The rule binds where it draws its line. The service metadata read, the coded-value domain
 read and per-feature queries are API requests and go through `APIClient`; a 247 MB GeoJSON archive
 streamed to disk is a file transfer and keeps raw `fetch`, saying so in place, as `osm/sdk/fetch.ts` and
-`tiger/sdk/download.ts` do. Four behaviours to write into the client, each measured in §2.7: the Hub
-download endpoint returns a job result whose `resultUrl` **302s**, so the fetch needs `-L`; the bulk
-export is **EPSG:2157 under a `crs` member RFC 7946 removed**; **holes are encoded by ring orientation**
-in both `f=geojson` and `f=json`; and `GZT_LINK` points at a host with no DNS record, so
-`definition_url` cannot be populated from it.
+`tiger/sdk/download.ts` do. Four behaviours to write into the client, each measured in §2.7:
+
+- The Hub download endpoint returns a job result with a `resultUrl` that **302s**, so the fetch needs `-L`.
+- The bulk export is **EPSG:2157 under a `crs` member RFC 7946 removed**.
+- **Holes are encoded by ring orientation** in both `f=geojson` and `f=json`.
+- `GZT_LINK` points at a host with no DNS record, so
+  `definition_url` cannot be populated from it.
 
 **Build.** Ingest with `outSR=4326` or an explicit reprojection, and **check that every output coordinate falls inside the
 publisher's declared bounding box**. **Resolve hole roles from signed ring area** — clockwise is exterior
 under this service's convention — and **store `signed_area_m2`, comparing the total against the source's
-own `Shape__Area` sum as a build-time check** (5,444.5 km² either way; 5,666.6 km² if you get it wrong).
+own `Shape__Area` sum as a build-time check** (5,444.5 km² either way, and 5,666.6 km² if you get it wrong).
 Build `zoning_area` with precomputed bounding boxes and unsimplified rings as the truth. Index
 **cell-touches-polygon**, and **fail the build if any feature ends with zero cells** (§6.4: at res 9 that
-would be 86.8 % of them). Carry `local_code` verbatim and `crosswalk_code` beside it, never instead of it.
+would be 86.8 % of them). Store `local_code` verbatim and `crosswalk_code` beside it, never instead of it.
 Record observed-but-undeclared vocabulary values rather than coercing them. **Write `layer_coverage` at
 `basis = source_present`** and add a test that fails if any code path reads `supportsExclusion` as true
-for this layer. Write the manifest at `tier: build-local`; seal 0444; build-then-swap.
+for this layer. Write the manifest at `tier: build-local`, seal it 0444, and build-then-swap.
 
 **Measure and report** the candidates-per-cell distribution and the zero-cell count at res 9, 10 and 11
-over the full national set, and pick from the measurement (§6.4 measured one authority; the national
+over the full national set, and pick from the measurement (§6.4 measured one authority, and the national
 figure is not extrapolated).
 
 **Verify** on the fixtures → smoke → full ladder in §7.1, ending with both agreement checks and the
@@ -1685,15 +1646,15 @@ Recorded as gaps rather than filled in. No gap below was completed with a plausi
   viewer's. **This is the single fact that would move the pilot from `build-local` to `shipped`.**
 - **The generic-type definitions.** All 85,330 rows link to `viewer.myplan.ie`, which has **no DNS record**;
   three candidate replacements on the live host return 404. The 54 code-to-label pairs survive in the
-  service's coded-value domain; the **definitions** behind them do not, so `zoning_vocabulary.definition`
+  service's coded-value domain. The **definitions** behind them do not, so `zoning_vocabulary.definition`
   cannot be populated for the pilot.
-- **The publisher's own coverage statement.** The item description says "Awaiting data for some Local
+- **The publisher's own coverage statement.** The item description reads "Awaiting data for some Local
   Authorities - please see map viewer for coverage details". Donegal's absence was recovered by measuring
   `LA_CODE` rather than read from a statement. Whether other authorities are partially rather than wholly
   represented is unknown, and it is why `zoning_mapped_extent` stays empty.
 - **The refresh cadence.** No maintenance-frequency statement was found. `UPLOAD_DATE` runs to 2026-06-18
-  and the item's `modified` is 2026-05-13; neither is a commitment.
-- **Ireland's national land area**, which would turn the measured 5,444.5 km² of zoned land into a
+  and the item's `modified` is 2026-05-13. Neither is a commitment.
+- **Ireland's national land area.** That figure would turn the measured 5,444.5 km² of zoned land into a
   percentage. The CSO PxStat `ReadCollection` endpoint returns **HTTP 500** and no area table was located
   through `ReadDataset`. The absolute figure is reported and no percentage is derived from it.
 - **We resolved the 3.0 % area disagreement and still need to explain the rest.** An all-exterior interpretation of the rings
@@ -1707,13 +1668,13 @@ Recorded as gaps rather than filled in. No gap below was completed with a plausi
 
 - **Whether Land Use Labs' commercial tiers permit redistribution.** Bulk files and API access exist as of
   spring 2026 under "additional or separate agreements"; no such agreement is public. **This is the change
-  that would move 66 % of the US population at once**, and it is one question to a named organisation.
+  that would move 66 % of the US population at once**, and it is one question to one identified organisation.
 - **Whether the National Zoning Atlas's terms reach the Mercatus-hosted mirrors or the MIT-licensed
-  GitHub repositories.** The state chapters were produced by separately funded regional teams; nobody
-  states the rights chain either way. Needs written confirmation rather than a reading.
+  GitHub repositories.** The state chapters were produced by separately funded regional teams. No
+  party states the rights chain either way. Needs written confirmation rather than a reading.
 - **The Berkeley Othering & Belonging Institute contradiction** between an MIT `LICENSE.txt` and a
-  noncommercial README on the same repositories. Its README invites the email; it was not sent.
-- **California's grant.** `license_id` is null, `licenseInfo` is empty, and the rights field says "No
+  noncommercial README on the same repositories. Its README invites the email. It was not sent.
+- **California's grant.** `license_id` is null, `licenseInfo` is empty, and the rights field reads "No
   restrictions on public use" — which is a description rather than a license. Unresolved rather than permissive.
 - **The Urban Institute's ODC-BY 1.0 statement** rests on a single Wayback read (`20251018071606`);
   `urban.org` and `datacatalog.urban.org` return **HTTP 403** to this network. Not corroborated by a
@@ -1722,25 +1683,25 @@ Recorded as gaps rather than filled in. No gap below was completed with a plausi
   local governments and 38,736 general-purpose ones, and **its own documentation contains the string
   `zoning` zero times** — the survey classifies governments by type and function and never asks whether
   one zones. The National Zoning Atlas's 33,295 is that project's own identified universe, matches no
-  Census total (it sits between 38,736 and 35,705), and is used as such throughout. **Nobody has counted
+  Census total (it sits between 38,736 and 35,705), and is used as such throughout. **No source has counted
   this**, and a claim that anybody has should be checked before it is repeated.
 - **The National Zoning Atlas's live coverage figures.** `api.zoningatlas.org/nza_coverage` returns
   **HTTP 403** to this network, plain and browser-headed. The 11,015 / 224,494,683 pair is read from the
   homepage markup, where it is the **fallback** value the page renders when the endpoint does not answer.
-  Every use of those two numbers in this record carries that qualification.
+  Every use of those two numbers in this record is subject to that qualification.
 - **A Census "Survey of Local Government Zoning".** Searched across the full API catalogue (1,798
   datasets), the Census of Governments landing page and its notes; **no trace**. Do not assert it exists.
 - **Licenses on several sampled sources**: Vermont's statewide layer (`licenseInfo` null, and the state's
   open-geodata policy scopes itself to a portal the layer is not in), Jefferson County AL (the whole host
   returns 403 under six header combinations), Delaware, Sedgwick, Bannock and Dawes counties (fields empty
   or portal pages script-rendered), and whether the National Zoning Atlas's terms reach Connecticut's
-  separately-hosted 2022 GeoJSON, whose source repository returns 404.
-- **"Counties zone unincorporated areas only" as a general rule.** Verified for Minnesota alone
+  separately-hosted 2022 GeoJSON. That GeoJSON's source repository returns 404.
+- **"Counties zone unincorporated areas only" as a general rule.** Verified only for Minnesota
   (Minn. Stat. § 394.32 subd. 3) and measured for Maricopa County. California § 65850 and Washington
-  ch. 36.70 were retrieved and contain no such clause; several other state hosts were unreachable. It is
+  ch. 36.70 were retrieved and contain no such clause. Several other state hosts were unreachable. It is
   reported as a measured pattern across four sampled counties rather than as a rule.
 - **`catalog.data.gov` from this lab.** The CKAN API returns **HTTP 404** and `/dataset?q=…` **301s to the
-  catalogue home page, dropping the query**. The counts in §2.2 came from a path that answers; this lab
+  catalogue home page, dropping the query**. The counts in §2.2 came from a path that answers. This lab
   cannot reproduce them by the obvious route.
 - **Four hosts refused this network throughout**: `mercatus.org`, `urban.org`, `jchs.harvard.edu` and
   `costar.com`, all Cloudflare 403 rather than authentication. **These are not absences** and must not be
@@ -1749,18 +1710,18 @@ Recorded as gaps rather than filled in. No gap below was completed with a plausi
 **European Union.**
 
 - **The INSPIRE Geoportal's own historical Land Use theme count.** The portal was retired 2026-07-01 and
-  301s to `data.europa.eu`. The Wayback CDX API timed out repeatedly; an availability-API snapshot
+  301s to `data.europa.eu`. The Wayback CDX API timed out repeatedly. An availability-API snapshot
   (`20231002005556`) was retrieved at 67,103 bytes and is a single-page-application shell rendering 1,377
   characters, with the counts loaded by script and never captured.
-- **Country attribution for 101,418 of the 267,072 `PlannedLandUse` datasets** — 38 % carry the keyword
+- **Country attribution for 101,418 of the 267,072 `PlannedLandUse` datasets** — 38 % have the keyword
   with no catalogue link in the triplestore, so the German share is a floor rather than a figure.
-- **Poland's Rejestr Urbanistyczny endpoints.** Documentation claims WMS, WFS and CSW; every candidate path
-  returns an identical 22,530-byte application shell. Worth re-checking after the stated 2026-11-30
+- **Poland's Rejestr Urbanistyczny endpoints.** Documentation claims WMS, WFS and CSW. Every candidate path
+  returns an identical 22,530-byte application shell. Re-check the endpoints after the stated 2026-11-30
   transition date.
 - **Czech national plan geometry.** The catalogue that should answer it returns 1,982 records that are
   **Slovak** (100 of 100 sampled identifiers resolve to `data.gov.sk`), and `geoportal.gov.cz`'s CSW
   returns HTTP 500 on `GetRecords`.
-- **Whether Ireland's GZT is registered under the INSPIRE Land Use theme.** Not checked; the layer was
+- **Whether Ireland's GZT is registered under the INSPIRE Land Use theme.** Not checked. The layer was
   reached through a commercial catalogue rather than through INSPIRE.
 
 **Measurement traps found while running this survey.** Seven, all of the shape this repository keeps
@@ -1768,7 +1729,7 @@ writing down. A confident number that is not counting what was asked — and eac
 path:
 
 1. **ArcGIS Online's search `total` is capped at 10,000.** Five different zoning queries all returned
-   exactly 10,000; a nonsense query returned 0, which is what proves the API works and the number is a
+   exactly 10,000. A nonsense query returned 0. That zero proves the API works and the number is a
    ceiling.
 2. **ArcGIS Hub's `totalCount` is not a match count.** The quoted phrase `"zoning districts"` returns
    **944,023** against the single word `zoning` at **500,893** — a phrase cannot outnumber its own word.
@@ -1777,18 +1738,18 @@ path:
 4. **A SPARQL exact-literal keyword match returned 0 for a keyword present on 267,072 datasets**, because
    the literals are language-tagged. The zero reads as a finding.
 5. **`returnDistinctValues` normalizes and a `GROUP BY` does not.** The distinct-values endpoint answered
-   **555** local zone codes; the group-by answered **560**; the difference is exactly the five strings
+   **555** local zone codes. The group-by answered **560**. The difference is exactly the five strings
    that collide on case or a trailing space.
 6. **When software reads GeoJSON rings as all-exterior, it over-reports area by 4.1 % and inverts point-in-polygon inside
-   1,210 features.** The signed sum matches the publisher's own figure to the tenth of a square kilometer;
-   the absolute sum does not.
+   1,210 features.** The signed sum matches the publisher's own figure to the tenth of a square kilometer.
+   The absolute sum does not.
 7. **`polygonToCells` returns no cell for 86.8 % of zoning polygons at res 9.** A polyfill-only index
    would drop them silently, and every dropped polygon reads downstream as an absence of zoning.
 8. **HTTP 200 repeatedly meant failure.** Screven County's layers return 200 carrying
-   `{"error":{"code":500}}`; Dawes County's returns 200 carrying "Service may be stopped"; the Census API
-   returns 200 `text/html` titled "Missing Key"; Minnesota's CKAN API returns 200 with an application
-   shell; and one county's own published item URL is misspelled, returning a 404 body inside a 200. **A
-   harvester checking status codes alone records healthy endpoints and ingests no data.**
+   `{"error":{"code":500}}`. Dawes County's returns 200 carrying "Service may be stopped". The Census API
+   returns 200 `text/html` titled "Missing Key". Minnesota's CKAN API returns 200 with an application
+   shell. One county's own published item URL is misspelled, and it returns a 404 body inside a 200. **A
+   harvester that checks only status codes records healthy endpoints and ingests no data.**
 9. **A statewide layer can score 100 % on jurisdictions and hold no zoning at all.** New Jersey's
    "Municipal Zoning" has one row per municipality and the rows are hyperlinks to PDFs.
 10. **An owner name is not an organization identifier.** A catalogue search for `owner:COHGIS`

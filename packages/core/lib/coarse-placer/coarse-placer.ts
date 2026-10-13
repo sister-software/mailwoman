@@ -88,7 +88,7 @@ export function dequantizeInt8Weights(
 /**
  * Reads `weights.bin` into an array buffer that covers exactly the file's bytes.
  *
- * A Node `Buffer` can share a larger pooled buffer, so the result is sliced to the buffer's own range.
+ * A Node `Buffer` can share a larger pooled buffer, so the result covers only the buffer's own byte range.
  */
 export async function readWeightsBin(dir: PathBuilderLike): Promise<ArrayBufferLike> {
 	const { PathBuilder } = await import("path-ts")

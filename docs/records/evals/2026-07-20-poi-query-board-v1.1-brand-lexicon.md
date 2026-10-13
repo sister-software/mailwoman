@@ -3,7 +3,7 @@
 **Date:** 2026-07-20. **Command:** `mailwoman eval poi-board`. **Fixtures:**
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (51 cases, committed — v1's 45 + 6 new brand
 cases). **DB:** `$MAILWOMAN_DATA_ROOT/db/poi/poi-full.db` (the full 4-country build,
-release 2026-05-20.0; regenerated `poi-taxonomy/data/brands.json` against this same db — see
+release 2026-05-20.0, with a regenerated `poi-taxonomy/data/brands.json` against this same db — see
 below). **Resolver:** default FTS admin extract (`admin-global-priority.db`).
 
 **Status: still report-only.** No floors this round either — the brand-lexicon wiring is new
@@ -13,7 +13,7 @@ follow-up once the operator reviews both v1 and v1.1.
 ## What changed since v1
 
 Part 1 (#1201, on main) shipped the QID table + `lookupPOIBrand`/`resolveBrandName` + the
-browser table factory, but nothing consumed them — every query still only ever matched
+browser table factory, but no caller consumed them — every query still only ever matched
 `@mailwoman/poi-taxonomy` categories. Part 2 (this PR) does three things:
 
 1. **Dominance floor in the brand-table generator.** `build-brands.ts`'s `aggregateBrands` now
@@ -22,20 +22,20 @@ browser table factory, but nothing consumed them — every query still only ever
    pre-existing noise floor does. For example, `Q4835981` aggregated ~20 unrelated US
    chains (CVS 23.8%, Walgreens 11.8%, 7-Eleven 6.2%, …) under one Wikidata QID — a systematic
    mistagging upstream in Overture's data rather than a chain with noisy alt-spellings. **Regenerated
-   `brands.json` against the same `poi-full.db`: 315 QIDs clear `--min-rows` alone; the
+   `brands.json` against the same `poi-full.db`: 315 QIDs clear the `--min-rows` floor. The
    dominance floor drops 111 of those (systematic mistagging) to a final 204-brand table, with
    `Q4835981` confirmed absent.** A second run against the same db produced a byte-identical
    file (`diff` exit 0) — the floor doesn't disturb determinism. `BRAND_TABLE_VERSION` bumped
    0.1.0 → 0.2.0 (the generation semantics changed, even though the shape didn't).
 2. **`kind-classifier`'s `POIPhraseMatch` gained `kind: "category" | "brand"` and an optional
    `wikidata`.** `matchPOISubject`/`createScorePOIQuery` are unchanged — neither ever read
-   `categoryID` for its own meaning; both treat a match opaquely beyond `.confidence`. For
-   `kind: "brand"`, `categoryID` carries the brand's canonical display name (not a taxonomy id)
-   — the field is reused rather than adding a parallel `name` field, since nothing in
-   `kind-classifier` interprets it; the caller (`mailwoman`'s `poi-intent.ts`) is the one that
+   `categoryID` for its own meaning. Both treat a match opaquely beyond `.confidence`. For
+   `kind: "brand"`, `categoryID` holds the brand's canonical display name (not a taxonomy id).
+   The field is reused rather than adding a parallel `name` field, since no code in
+   `kind-classifier` interprets it. The caller (`mailwoman`'s `poi-intent.ts`) is the one that
    knows what `kind` means.
 3. **`mailwoman`'s `poiTaxonomyLookup` became the union lookup.** Categories first (unchanged),
-   then `lookupPOIBrand` (exact-phrase, no locale blocking), then `@mailwoman/variant-aliases`'
+   then `lookupPOIBrand` (exact-phrase, without locale blocking), then `@mailwoman/variant-aliases`'
    brand-kind slang (locale-hintd) chained through `resolveBrandName` to recover a QID. On a
    phrase that matches both a category and a brand, **category wins** — the early return never
    even consults the brand table. No live collision exists in the shipped tables (checked: zero
@@ -45,7 +45,7 @@ browser table factory, but nothing consumed them — every query still only ever
 
 The executor (`poi-executor.ts`) and the reader's brand k-ring search
 (`resolver-wof-sqlite/poi-lookup.ts`, `brandWikidata` search — category unconstrained) already
-existed from part 1's scaffolding; both were verified live, unchanged.
+existed from part 1's scaffolding. Both were verified live, unchanged.
 
 ## v1.1 numbers
 
@@ -80,7 +80,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=33): min 0.
 Applebee's/Dallas — fails, below) + the locale-hintd slang case (`brand-slang-01`, "mcdo" →
 McDonald's under `fr-FR`, chained through `variant-aliases`, since "mcdo" is not one of
 McDonald's own `brands.json` aliases — verified empty) + the bare-brand abstain (`brand-bare-01`,
-"chevron" alone → `anchor_required`) all pass.
+"chevron" without an anchor → `anchor_required`) all pass.
 
 **No brand-vs-category collision case shipped** — the composition brief asked for one "if one
 exists in the data." Checked directly: zero overlap between `taxonomy.json`'s synonym
@@ -108,7 +108,7 @@ This is an actual execution-layer finding, the same class as v1's `supermarket`/
 category misses: **brand rows are sparser per unit area than category rows** (one Applebee's
 per few km² of a metro vs a "restaurant"/"cafe" hit almost anywhere), so a k-ring radius tuned
 for category density under-reaches for a specific brand even in a market where the brand has
-real, findable coverage. Left failing rather than tuned away — worth a follow-up look at whether brand
+real, findable coverage. The case is left failing rather than tuned away. A follow-up should check whether brand
 queries should get a wider `maxRings` default (or the board's own grading tolerance should split
 brand vs category, since 25 km papers over what a 4 km search radius can't reach).
 
@@ -117,7 +117,7 @@ brand vs category, since 25 km papers over what a 4 km search radius can't reach
 - The grade extension adds an optional `brandWikidata` field to `PoiBoardResultsExpect` alongside
   the existing (now-optional) `categoryID` — every fixture sets exactly one, enforced by a new
   fixture-set test. `gradeCase`'s results branch checks `results[0].brandWikidata` when
-  `brandWikidata` is set, `results[0].categoryID` otherwise; the category branch's exact
+  `brandWikidata` is set, `results[0].categoryID` otherwise. The category branch's exact
   mismatch wording (`top category X !== expected Y`) is unchanged, keeping every v1 assertion
   green untouched.
 - `gradeCase` + fixture-set tests: 26 tests, all green (`mailwoman/eval-harness/poi-board.test.ts`).

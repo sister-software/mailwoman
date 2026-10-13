@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit cover for the region → coverage-cell derivation. The property under test is not "how many cells"
+ *   Unit cover for the region → coverage-cell derivation. The property under test is not "the cell count"
  *   but "no cell that pokes outside the region" — the one that decides whether a completeness claim covers
  *   ground the source never saw.
  */

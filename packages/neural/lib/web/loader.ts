@@ -109,7 +109,8 @@ export interface LoadFromURLsOptions {
 	modelURL: string
 
 	/**
-	 * The embedding row files of a split release, whose `modelURL` names `encoder.onnx`.
+	 * The embedding row files of a split release.
+	 * A split release's `modelURL` names `encoder.onnx`.
 	 *
 	 * The loader fetches `hotURL` whole and reads each other row from `rowsURL` by HTTP range on first use.
 	 */

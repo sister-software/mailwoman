@@ -102,7 +102,7 @@ describe("overlay ↔ base evidence-channel parity (#1511 class — a declared b
 			test(`${overlay} declares ${channel} as the base does, or declares no block at all`, async () => {
 				const card = await readCard(overlay)
 				// A card with no block is exempt by design, so the expected value is the base's
-				// declaration only when this overlay declares anything at all.
+				// declaration only when this weights overlay's card declares a block.
 				const expected = card.requires ? semanticFields(enUs.requires![channel] ?? null) : null
 
 				expect(semanticFields(card.requires?.[channel] ?? null)).toEqual(expected)

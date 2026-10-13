@@ -134,7 +134,7 @@ export async function fetchWithRetry(
 
 /**
  * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take
- * for its `fetchImpl`; `shouldReport` picks the request whose bytes are worth a bar,
+ * for its `fetchImpl`; `shouldReport` picks the request whose bytes the bar reports,
  * since reporting every small artifact would make the bar jump backwards.
  */
 export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {

@@ -31,7 +31,7 @@ data:
     # The single variable (#487): the recipe output exists now — weight from the builder's data-derived rec.
     synth-intersection: 1.0
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Every proven change runs at its solo-validated weight.
     synth-unit: 1.5
     synth-affix: 2.0
     synth-country: 2.0

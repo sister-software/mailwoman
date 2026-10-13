@@ -1,14 +1,14 @@
 # The Lite artifact line — free channel vs subscriber channel (design)
 
 2026-07-30. Operator + Claude. GTM item D1. This is the companion to D2, the public
-[database products catalog](../../records/site-2026-08/licensing/data-products.md), which lists the artifacts
+[database products catalog](../../records/site-2026-08/licensing/data-products.md). The catalog lists the artifacts
 this policy applies to. The pricing page shipped first (PRs #1353 / #1355) and
 already publishes the OEM band that this doc's registration mechanism depends on.
 
 **No legal counsel exists on this project** (see `docs/superpowers/plans/counsel-dossier.md`).
 This document defines policy and mechanics only. It does not draft license text, terms of
 service, or a data-use agreement. Every place where an instrument would eventually have to be
-written carries a **PENDING COUNSEL** marker, and each such marker gets a numbered entry in the
+written has a **PENDING COUNSEL** marker, and each such marker gets a numbered entry in the
 counsel dossier before anything ships.
 
 ## 1. What is being sold
@@ -30,7 +30,7 @@ This follows the MaxMind GeoLite model. The parts of that model are:
 3. The free channel requires **registration with a key**. Registration tells us who embeds
    the data and gives us a name to email.
 4. The free channel requires **attribution**. The paid channel does not, beyond whatever the
-   upstream data's own license demands, which no terms of ours can waive.
+   upstream data's own license demands. No terms of ours can waive those demands.
 
 ## 2. Delay rather than degradation
 
@@ -55,12 +55,12 @@ Subscribers pay for this quarter's buildings, and Lite users get last quarter's 
 |             | Lite channel                                             | Subscriber channel                           |
 | ----------- | -------------------------------------------------------- | -------------------------------------------- |
 | Cadence     | the subscriber artifact, republished on a delay          | weekly, where the upstream supports it       |
-| Delay       | **90 days** (proposed; operator's call)                  | none                                         |
+| Delay       | **90 days** (proposed, operator's call)                  | none                                         |
 | Price       | free                                                     | included in the commercial license and above |
 | Access      | keyed registration, self-serve                           | keyed, issued with the license               |
 | Attribution | required (§4)                                            | upstream obligations only                    |
 | Coverage    | identical to the subscriber artifact of the same version | current                                      |
-| Support     | none; community issues only                              | per the license tier                         |
+| Support     | none, community issues only                              | per the license tier                         |
 
 Two constraints apply to the "weekly" claim, and both must hold before it appears anywhere
 customer-facing:
@@ -78,8 +78,8 @@ customer-facing:
 
 ### 2.2 What the delay is measured against
 
-The delay is measured on the **artifact version**, which every published
-path already carries as a date (`gazetteer/2026-07-07a/candidate.db`, `poi/2026-07-20a/poi.db`,
+The delay is measured on the **artifact version**. Every published
+path already encodes that version as a date (`gazetteer/2026-07-07a/candidate.db`, `poi/2026-07-20a/poi.db`,
 `street/fr/2026-07-10/situs.db`). This needs no schema change or new field. An artifact becomes Lite when it is
 re-published under the Lite prefix once its version date is 90 days old. The layer
 manifest's `version` and `source_vintage` already tell a consumer exactly how old their copy
@@ -129,8 +129,8 @@ infrastructure:
   the public prefix without a key. That is a first-party use of our own artifact and must keep
   working. It is also why the split cannot authenticate everything.
 - **Key check at the edge.** The request presents a key, and a Worker validates it and grants a
-  short-lived signed URL for the subscriber prefix. The Lite prefix also takes a key, which users obtain
-  self-serve through a form.
+  short-lived signed URL for the subscriber prefix. The Lite prefix also takes a key. Users obtain
+  that key self-serve through a form.
 - **Issuance and rotation.** Lite keys are self-serve, and subscriber keys are issued with the license. Holders can
   rotate both. Revocation exists for abuse (such as a key republished on a torrent), and
   revoking a key never affects artifacts already downloaded.
@@ -146,7 +146,7 @@ infrastructure:
 
 > **PENDING COUNSEL — L2.** Under what instrument is the Lite key issued? The AGPL does not fit,
 > because it governs code we wrote and not data we compiled, and the commercial license does not fit either. It
-> needs to be a short data-use notice that carries the attribution condition of §4 and the
+> needs to be a short data-use notice that states the attribution condition of §4 and the
 > expectation that the subscriber artifact is not redistributed, and it must sit correctly on top
 > of the upstream licenses in §5. Counsel drafts that text. This document only
 > specifies what the text must accomplish.
@@ -175,8 +175,8 @@ waives this condition, because it is ours to waive.
 
 > **PENDING COUNSEL — L4.** What is the exact WOF license? The repo contradicts itself. The
 > licensing pages say **CC0**, `resolver-wof-sqlite/README.md` and the Hugging Face dataset card
-> say **CC-BY 4.0**, and `THIRD_PARTY_NOTICES.md` says WOF draws on several sources with their own
-> licenses. If WOF is CC-BY, the gazetteer carries a standing attribution obligation in _both_
+> state **CC-BY 4.0**, and `THIRD_PARTY_NOTICES.md` states that WOF draws on several sources with their own
+> licenses. If WOF is CC-BY, the gazetteer has a standing attribution obligation in _both_
 > channels, and the data-provenance table is wrong. Resolve this before publishing an attribution
 > policy that depends on it. This is a fact-finding task first and a counsel task second, because
 > the upstream license page may answer the question without a lawyer.
@@ -193,7 +193,7 @@ terms, so restricting access would be both unenforceable and misleading.
 | ------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------- |
 | Admin/candidate gazetteer (`candidate.db`) | WOF, Overture divisions, GeoNames, Census ZCTA | CC0-or-CC-BY (see L4), CDLA-Permissive-2.0, CC-BY 4.0, public domain |
 | `poi.db`                                   | Overture Places                                | CDLA-Permissive-2.0 (attribution)                                    |
-| US situs extracts                          | Overture addresses, OpenAddresses              | CDLA-Permissive-2.0; OA is per-source — see the caveat below         |
+| US situs extracts                          | Overture addresses, OpenAddresses              | CDLA-Permissive-2.0. OA is per-source (see the caveat below)         |
 | US interpolation extracts                  | Census TIGER/Line                              | public domain                                                        |
 | FR situs extract                           | BAN                                            | Licence Ouverte 2.0 (we elect this over BAN's dual ODbL)             |
 | `un-locode.db`                             | UNECE UN/LOCODE code list                      | public domain                                                        |
@@ -205,7 +205,7 @@ Two caveats are mandatory:
 - **OpenAddresses is an aggregator and has no single license.** Its collection mixes CC0, CC-BY, OGL,
   and ODbL/CC-BY-SA rows, depending on the source. The US situs line currently rests on a **measurement**. A
   2026-06-14 audit found the US Overture address set to be NAD (68%, US public domain) plus
-  OpenAddresses (32%, government open data) with **zero** ODbL rows, which is why the build
+  OpenAddresses (32%, government open data) with **zero** ODbL rows. That is why the build
   applies no license filter. A measurement is the right basis for a decision and the wrong basis
   for a standing product. Before the US situs extracts enter the line, that audit becomes a
   build-time filter over the per-row `source` column, with a test. If a future Overture release
@@ -213,16 +213,16 @@ Two caveats are mandatory:
 - **Copy the corpus filter.** `SHARE_ALIKE_PATTERN` /
   `--exclude-share-alike` already does this job on the training side, and it is why the
   weights contain no share-alike data. The artifact side needs the same filter, wired to the per-row `source`
-  column the address-point schema already carries.
+  column the address-point schema already defines.
 
 ### 5.2 Not gateable — share-alike, stays unconditional and opt-in
 
 | Artifact                              | Why                                                                                                                                   |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| OSM rooftop extracts (`osm/`)         | ODbL. Already publish-blocked pending counsel; a paid channel would be the wrong direction of travel.                                 |
+| OSM rooftop extracts (`osm/`)         | ODbL. Already publish-blocked pending counsel, and a paid channel would be the wrong direction of travel.                             |
 | OSM-derived POI/infrastructure layers | ODbL. The layer interface already puts these at `build-local`: we ship the builder, the user builds on their own disk.                |
 | Overture `base`-theme derivatives     | ODbL. Overture does not launder OSM's license.                                                                                        |
-| `timezone.db`                         | timezone-boundary-builder is ODbL; attribution and share-alike apply to the built database. The builder ships; the database does not. |
+| `timezone.db`                         | timezone-boundary-builder is ODbL. Attribution and share-alike apply to the built database. The builder ships, the database does not. |
 
 The reasoning is stated once here so that it is not argued again for each artifact. ODbL share-alike on a
 Derivative Database means every recipient may redistribute it under the same terms. A paid access check
@@ -294,7 +294,7 @@ Steps 1–4 are ours and need no lawyer. Steps 5–7 are the ones likely to stal
    reach. The Worker design changes depending on whether an OEM's _end customers_ need their own keys or the OEM redistributes
    under one key. The cheapest answer is that the OEM's key
    covers their redistribution and their customers never see ours.
-3. **Which artifact goes first?** `poi.db` is the cleanest candidate. It has one permissive upstream,
+3. **Which artifact goes first?** `poi.db` is the candidate with the fewest licensing dependencies. It has one permissive upstream,
    a manifest that already records tier and license, and a version already on a dated path, and the
    OpenAddresses caveat does not apply to it. The gazetteer is the most valuable but depends on L4.
 4. **Does the free channel need a coverage floor?** If Lite is 90 days behind, an artifact

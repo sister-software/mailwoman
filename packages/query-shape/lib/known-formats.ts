@@ -29,8 +29,8 @@ interface FormatPattern {
 const PATTERNS: ReadonlyArray<FormatPattern> = [
 	{ format: "us_zip4", pattern: /^\d{5}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	{ format: "ca_postcode", pattern: /^[A-Z]\d[A-Z]\d[A-Z]\d$/i, tokenSpan: 1, confidence: 0.95 },
-	// Japanese postcodes are often written with a leading 〒 (U+3012), and the
-	// tokenizer keeps it attached to the digits.
+	// Japanese postcodes can be written with a leading 〒 (U+3012), and the tokenizer
+	// keeps it attached to the digits.
 	{ format: "jp_postcode", pattern: /^〒?\d{3}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	// A UK postcode is two tokens when written with a space, as in "SW1A 1AA".
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },

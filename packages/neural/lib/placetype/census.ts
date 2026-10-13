@@ -247,7 +247,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	/**
 	 * Returns the census node for one folded parent name, or `null`.
 	 *
-	 * A `null` result usually reflects gazetteer coverage, so callers should treat it as neutral evidence.
+	 * A `null` result can reflect a gap in gazetteer coverage, so callers should treat it as neutral evidence.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null

@@ -26,7 +26,7 @@ direct non-circular signal. 101 rows had a miss from one or both parsers.
 
 | bucket                    |  count | what it is                                                                  |
 | ------------------------- | -----: | --------------------------------------------------------------------------- |
-| **(A) name-form variant** | **40** | resolver found the RIGHT place; the eval's name-matcher rejects the form    |
+| **(A) name-form variant** | **40** | resolver found the RIGHT place. The eval's name-matcher rejects the form    |
 | (B) wrong place           |     13 | resolved to a real but incorrect admin — the resolver-disambiguation target |
 | (C) no locality resolved  |     23 | parser mis-segment, `<Null>` tokens, or WOF coverage gap                    |
 
@@ -69,13 +69,13 @@ The eval has been _underselling_ the resolver. Examples from (A): `Butte`→`But
 3. **Neural parser robustness (feeds the retrain/MLM track rather than the resolver).** Two concrete
    patterns from (C):
    - **`<Null>` literal tokens** in OA input (`21695 <Null> 210TH STREET, Holland, IA`) →
-     neural fails to parse; v0 survives. Input sanitization and/or a corpus augmentation.
+     neural fails to parse, and v0 parses it. Input sanitization and/or a corpus augmentation.
    - **DC directional quadrant** (`6th Street Ne, Washington` → neural tags `Ne Smith` as
-     locality) and **multi-word locality truncation** (`Belle Fourche`→`Belle`, `Fort Pierre`
-     →`Fort`, SD). Corpus-augmentation candidates for the next train.
+     locality) and **multi-word locality truncation** (`Belle Fourche`→`Belle`, `Fort Pierre` to
+     `Fort`, SD). Corpus-augmentation candidates for the next train.
 
 4. **WOF coverage (lowest priority, after (1)).** A handful of tiny localities resolve to
-   nothing (`Pennco`, `Dakota Dunes`, `Essex Junction Village SD/VT`). Extend the custom
+   no place (`Pennco`, `Dakota Dunes`, `Essex Junction Village SD/VT`). Extend the custom
    `admin-global-priority.db` build rather than chasing these individually.
 
 ## Geography of failures

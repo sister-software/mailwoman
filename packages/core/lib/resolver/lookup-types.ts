@@ -70,7 +70,7 @@ export interface AddressPointLookup {
 		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried after postcode and locality.
 		 *
 		 * For extracts whose points contain no postcode or locality of their own
-		 * (many OSM addr nodes do not) but include a coordinate, the resolved locality's
+		 * (some OSM addr nodes do not) but include a coordinate, the resolved locality's
 		 * bounding box scopes the `(street, number)` probe instead.
 		 * US situs never passes it, so the Latin path stays byte-stable.
 		 */
@@ -80,7 +80,7 @@ export interface AddressPointLookup {
 
 /**
  * One interpolated coordinate estimate, never an exact situs point.
- * `uncertaintyM` prices the estimate honestly.
+ * `uncertaintyM` states the estimate's radius in meters.
  *
  * A structural mirror of `InterpolatedHit` in `resolver-wof-sqlite/interpolation.ts`.
  * Keep this a subset of that shape so the concrete `StreetInterpolator`
@@ -107,7 +107,7 @@ export interface InterpolatedPointHit {
 	 */
 	bracket: "both" | "single" | null
 	/**
-	 * Honest uncertainty radius in meters (half the matched segment length).
+	 * Uncertainty radius in meters, measured as half the matched segment length.
 	 */
 	uncertaintyM: number
 	source: string
@@ -159,20 +159,21 @@ export interface InterpolationLookup {
  * One street-centroid hit, the street-level tier below the exact address-point tier
  * and above admin-centroid resolution.
  *
- * A street's centroid and an honest extent-derived radius, for a street-only query with no house number.
+ * A street's centroid and a radius derived from the street's extent,
+ * for a street-only query with no house number.
  * An address-point tier cannot serve that query.
  *
  * Derived from a national register's rooftop points in `street-centroids-<cc>.db`,
  * a `group BY street` roll-up.
  *
- * `uncertaintyM` prices the coarseness as half the street's bbox diagonal,
+ * `uncertaintyM` states the coarseness in meters as half the street's bbox diagonal,
  * so a consumer never mistakes it for a rooftop.
  */
 export interface StreetCentroidHit {
 	lat: number
 	lon: number
 	/**
-	 * Honest coarse radius in meters, half the street's bounding-box diagonal.
+	 * Coarse radius in meters, measured as half the street's bounding-box diagonal.
 	 */
 	uncertaintyM: number
 	source: string

@@ -43,7 +43,7 @@ const processEnv = process.env
 const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 
 /**
- * Lines Docusaurus prints for genuine problems.
+ * Lines Docusaurus prints for build problems, as opposed to informational output.
  *
  * We scan combined stdout+stderr for these markers rather than relying solely on exit code,
  * because broken-link warnings (the most common docs regression) are emitted as

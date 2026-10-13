@@ -194,15 +194,15 @@ describe("brussels adapter against the fixture member", () => {
 		expect(isVoid(validFrom)).toBe(true)
 		expect(voidReason(validFrom)).toBeNull()
 
-		// An element the publisher populated is not void, so `isVoid` is not simply answering true.
+		// An element the publisher populated is not void, so `isVoid` does not answer true for every element.
 		expect(isVoid(childElement(address!, "ad:beginLifespanVersion"))).toBe(false)
 	})
 
 	it("reports an address whose postal-zone reference is empty rather than yielding it", async () => {
 		const manifest = await run()
 
-		// `componentHrefs` skips an empty href, so an unwary reader yields this row
-		// with the postcode simply missing.
+		// `componentHrefs` skips an empty href, so an unwary reader yields this
+		// row with no postcode and no error.
 		// The row is refused instead, and the count is the difference between the ten
 		// addresses in the fixture and the nine rows.
 		expect(manifest.yielded).toBe(9)

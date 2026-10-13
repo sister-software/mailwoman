@@ -4,10 +4,10 @@ GeoNames populated-places → `CanonicalRow`. Global locality coverage (incl. th
 coarser admin gazetteer lacks) — the cheapest way to broaden the corpus's **locale** coverage.
 
 - **Source:** [GeoNames](https://www.geonames.org/) geographical database.
-- **License:** **CC-BY-4.0** (attribution required on redistribution). Stamped `"CC-BY-4.0"` per row;
-  attribute "GeoNames" in any redistributed corpus. See `feedback-no-irrelevant-trivia` — the
+- **License:** **CC-BY-4.0** (attribution required on redistribution). Stamped `"CC-BY-4.0"` per row.
+  Attribute "GeoNames" in any redistributed corpus. See `feedback-no-irrelevant-trivia` — the
   per-row `license` + `source`/`source_id` are the provenance record.
-- **Coverage:** every country GeoNames publishes; this adapter ingests `feature_class = "P"`
+- **Coverage:** every country GeoNames publishes. This adapter ingests `feature_class = "P"`
   (populated places), excluding historical/abandoned/destroyed codes (`PPLH`/`PPLQ`/`PPLW`/`PPLCH`).
 
 ## Download
@@ -23,7 +23,7 @@ curl -O https://download.geonames.org/export/dump/countryInfo.txt             # 
 ```
 
 The `admin1CodesASCII.txt` and `countryInfo.txt` must sit in the **same directory** as the country
-file; the adapter reads them as siblings of `inputPath`. If either is missing the corresponding
+file. The adapter reads them as siblings of `inputPath`. If either is missing the corresponding
 component (region / country) is omitted and the adapter still emits locality-only rows.
 
 ## Run
@@ -50,7 +50,7 @@ falls back to `{ locality, country }` or `{ locality }`.
 
 ## Format reference
 
-GeoNames main-table columns (0-based, tab-separated, no header) used here:
+GeoNames main-table columns (0-based, tab-separated, without a header) used here:
 `0` geonameid · `1` name · `3` alternatenames · `6` feature_class · `7` feature_code ·
 `8` country_code · `10` admin1_code. Full schema: the "geoname" table in the
 [export readme](https://download.geonames.org/export/dump/readme.txt).

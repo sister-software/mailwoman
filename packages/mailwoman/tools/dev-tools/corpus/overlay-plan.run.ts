@@ -5,7 +5,7 @@
  *
  *   Derive the overlay plan for the next corpus version from the previous version's manifest.
  *
- *   An overlay is a parquet file added to a built corpus after the base build, carrying rows a recipe
+ *   A corpus overlay is a parquet file added to a built corpus after the base build, carrying rows a recipe
  *   produced rather than an adapter. The previous corpus's manifest records every one of them with its
  *   `source` label and the split it entered, so readers can see which overlays the plan retains
  *   rather than maintained by hand.
@@ -292,8 +292,9 @@ if (renamed.length) {
  * These entries are derived.
  * The source comes from the plan's current spelling instead of the previous manifest.
  *
- * A directory read rather than a read of the originals is deliberate: routing decides how many files
- * exist and which splits each source enters, so the plan lists files it wrote and files it declined.
+ * A directory read rather than a read of the originals is deliberate:
+ * routing decides the number of files that exist and which splits each source enters,
+ * so the plan lists files it wrote and files it declined.
  */
 async function routedLists(directory: string): Promise<{ parquet: string[]; source: string[]; split: string[] }> {
 	const names = (await Globerator.from("*.parquet", { cwd: directory, onlyFiles: true }).toArray())

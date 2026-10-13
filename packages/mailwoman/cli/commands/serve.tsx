@@ -54,8 +54,8 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
 		// Tracks whether any worker has ever reached "listening" — distinguishes a
-		// genuine boot failure (every worker died before one of them opened the port)
-		// from an ordinary shutdown after a healthy run.
+		// boot failure (every worker died before one of them opened the port) from
+		// an ordinary shutdown after a healthy run.
 		// `cluster.on("listening", …)` mirrors the per-worker wiring in WorkerStatus,
 		// but at the primary, where the exit handler below can see it.
 		let anyListened = false
@@ -85,8 +85,8 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 
 		// Graceful shutdown: a term/INT delivered to the primary pid (docker stop, systemctl stop)
 		// never reaches worker JS handlers — Node's cluster teardown bypasses them.
-		// Forward the signal explicitly so each worker's serveNode drain actually runs,
-		// then exit once they're gone (bounded — a hung worker must not wedge the shutdown).
+		// Forward the signal explicitly so each worker's serveNode drain runs, then exit
+		// once they're gone (bounded — a hung worker must not wedge the shutdown).
 		const forward = (signal: NodeJS.Signals) => {
 			const alive = Object.values(cluster.workers ?? {}).filter(isPresent)
 
@@ -224,7 +224,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				// The rest exit silently.
 				// Chosen over a primary-side pre-fork check
 				// (the primary doesn't otherwise call createServeEngine() at all. An import
-				// and database-existence check there just to avoid forking would change more code)
+				// and database-existence check there only to avoid forking would change more code)
 				// and over routing the message back through the primary's cluster "exit" handler
 				// (would require an IPC round-trip for what's a one-line dedupe).
 				if (cluster.worker?.id === 1) {

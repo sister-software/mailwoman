@@ -99,7 +99,8 @@ describe("synthesizeHouseVenueRow", () => {
 		})
 
 		expect(row).not.toBeNull()
-		// The GB layout prints the postcode on its own line, which the one-line form joins with a comma.
+		// The GB layout prints the postcode on its own line.
+		// The one-line form joins that line with a comma.
 		expect(row!.raw).toMatch(/^.+, 27 Minories, London, EC3N 1DE$/)
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("EC3N 1DE")

@@ -43,7 +43,7 @@ function localeForDirectory(directory: string): string {
 
 /**
  * A package is a family's graph when its `files` array declares `model.onnx`;
- * an overlay declares no graph and names its base through `mailwoman.baseWeights`.
+ * a weights overlay declares no graph and names its base through `mailwoman.baseWeights`.
  */
 function declaresGraph(manifest: WeightsManifest): boolean {
 	return (manifest.files ?? []).includes("model.onnx")
@@ -142,7 +142,7 @@ export const weightsFamilyCheck: RepoCheck = {
 			}
 		}
 
-		// Two scripts routing to two families would make `familyForSegment`'s iteration order load-bearing.
+		// Two scripts routing to two families would make the result depend on `familyForSegment`'s iteration order.
 		const scriptOwners = new Map<string, string[]>()
 
 		for (const family of FAMILIES) {

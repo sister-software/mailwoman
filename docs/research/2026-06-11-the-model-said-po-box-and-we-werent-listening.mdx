@@ -11,14 +11,14 @@ same cause: the decoder discarded information the model had produced. When a mod
 an eval, the usual responses are more data or more parameters. This post is about a third
 option. It covers three questions: why a model that scored 89 on post-office boxes in
 validation scored 60 at the check, why fixing that broke French postcodes, and what this
-says about where a parser's knowledge lives.
+shows about where a parser's knowledge lives.
 
 {/* truncate */}
 
 ## A tag with a 98% failure rate, sorted by punctuation
 
 Our parser had three empty rows on its scorecard: `po_box`, `cedex`, and intersections.
-Last night's release candidate carried new training data for all three, and the check had
+Last night's release candidate included new training data for all three, and the check had
 pre-registered floors for each. Intersections scored 100 and cedex scored 96. `po_box`
 scored 60.4 against a floor of 70.
 
@@ -39,7 +39,7 @@ gap in the representation.
 ## The decoder merges fragments across punctuation
 
 The fix needed neither new data nor new weights. It is a dozen lines of decode logic that
-we now call the span bridge. When two fragments carry the same tag and only a short run of
+we now call the span bridge. When two fragments have the same tag and only a short run of
 intra-token punctuation (dots, hyphens, or slashes) separates them, the bridge merges them
 and absorbs the punctuation the corpus could never label. The model and weights stayed the
 same, with no GPU time spent. `po_box` went from 60.4 to 87.
@@ -57,14 +57,14 @@ The third battery passed 17 floors out of 17, and the release shipped before sun
 ## Where the knowledge lives
 
 We have learned this more than once. The transformer is one layer of a system, and an
-eval failure points at the _system_, which may or may not mean the weights. Last month a
+eval failure points at the _system_. The cause may or may not be in the weights. Last month a
 stubborn tag turned out to be contradictory labels in the corpus. Last night it was a
 label format that could not represent what the model already knew. In both cases, scaling
 the model or the data would have cost a week and changed no outcome, because the constraint
 was in a different layer. A review of forty failing rows exposed it.
 
 The investigation used three full check batteries in one night and retained the
-pre-registered floor without rounding it up. That cost is worth paying. A check that fails twice and
+pre-registered floor without rounding it up. A check that fails twice and
 shows why is more useful than several that pass without explanation.
 
 A larger fix is still needed. The punctuation gap is a property of our corpus format, and

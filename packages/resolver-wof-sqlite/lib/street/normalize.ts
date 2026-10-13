@@ -272,7 +272,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			break
 		case "es":
 			// Keep the leading type, as `it` does and more strongly, because `Calle Mayor`
-			// and `Plaza Mayor` often share a municipio.
+			// and `Plaza Mayor` can share a municipio.
 			if (tokens.length > 1) {
 				tokens[0] = ES_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
 			}

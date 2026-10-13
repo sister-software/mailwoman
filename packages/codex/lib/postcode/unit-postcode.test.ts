@@ -6,7 +6,7 @@
  *
  *   Canada Post puts a `0` in the second position of a rural forward sortation area. The two populations measure a
  *   granularity apart — urban 78 m p50, rural 2.08 km — so admitting CA wholesale would have claimed a tier for half
- *   the country that only the other half earns. These cases pin the boundary at the one character that decides it.
+ *   the country that only the other half qualifies for. These cases pin the boundary at the one character that separates the halves.
  */
 
 import { describe, expect, it } from "vitest"
@@ -23,7 +23,7 @@ describe("CA urban LDU", () => {
 	})
 
 	it("REFUSES a rural code — the `0` in the second position", () => {
-		// T0H 1M0 is the worked case: 0.29 km from its locality centroid, 43.18 km from its own postal code.
+		// T0H 1M0 is the worked case: 0.29 km from its locality centroid, 43.18 km from its own postcode.
 		for (const code of ["T0H 1M0", "T0H1M0", "B0P 1E0", "G0X 2S8", "R0J 1W0"]) {
 			expect(shapeAccepts(code)).toBe(false)
 		}

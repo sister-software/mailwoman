@@ -26,7 +26,7 @@ import { jaccard } from "@mailwoman/match"
 import { colocatedDistinctPairs, scanColocatedProviders, stateOption, type ColocatedProvider } from "#tools/shared"
 
 /**
- * Similarity at or above which a pair is a near-miss worth inspecting rather than unrelated.
+ * Similarity at or above which a pair is a near-miss for a reviewer to inspect rather than unrelated.
  */
 const WEAK_SIMILARITY_MIN = 0.3
 
@@ -162,7 +162,7 @@ export async function dedupCeiling(
 		`| < 0.3 | ${separable} | ${pct(separable, pairs)} | clearly different names → separable |`,
 		"",
 		`Of the ${collide} collision pairs, **${collideSharePhone}** (${pct(collideSharePhone, collide)}) also share a phone — ` +
-			`so phone (a shared institutional switchboard) does NOT separate them either; if anything it over-links. This is ` +
+			`so phone (a shared institutional switchboard) does NOT separate them either. If anything it over-links. This is ` +
 			`why the benchmark found phone an unreliable secondary identifier.`,
 		"",
 		`## Splitting the collisions: NPI over-segmentation vs genuinely distinct providers`,
@@ -201,13 +201,13 @@ export async function dedupCeiling(
 		"",
 		`## Caveats`,
 		"",
-		`- **Geocode-free + exact address key.** "Co-located" here is an exact normalized-address match; geocoding would ` +
+		`- **Geocode-free + exact address key.** "Co-located" here is an exact normalized-address match. A geocoded key would ` +
 			`add near-but-not-exact neighbors (suite splits, slightly different formatting), which can only RAISE the ` +
 			`collision count. So this is a LOWER bound on the irreducible over-merge.`,
 		`- **Recall side under-measured.** NPPES same-NPI records almost always share an address or the org name, so the ` +
-			`recall floor looks ~1.0 here; real-world feeds with distant + name-drifted same-entity records would lower it. ` +
+			`recall floor looks ~1.0 here. Real-world feeds with distant + name-drifted same-entity records would lower it. ` +
 			`The F1 ceiling reported tracks the PRECISION constraint, which is the binding one for the over-merge problem.`,
-		`- **Token-Jaccard ≠ the model's name comparison.** A proxy for separability; the GBT uses the FS agreement ` +
+		`- **Token-Jaccard ≠ the model's name comparison.** It is a proxy for separability. The GBT uses the FS agreement ` +
 			`levels. The collision SET (sim ≥ τ + shared phone) is robust to the exact similarity metric.`,
 		"",
 	]

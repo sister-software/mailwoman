@@ -66,7 +66,7 @@ function probe(numberReturned: number): string {
  *
  * A page no larger than the reported count agrees with it whatever the truth is,
  * so the guard asks whether a feature sits at that index.
- * A service holding exactly that many returns none, and `beyond(0)` stands for it.
+ * A service holding exactly that number returns none, and `beyond(0)` stands for it.
  * One that capped its count returns a feature.
  */
 function beyond(numberReturned: number): string {

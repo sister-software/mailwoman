@@ -9,8 +9,8 @@ role: explanation
 ## The question
 
 These two get one page because they are frequently met together and are frequently confused with each
-other. One is a geocoder assembled from services; the other is a parser that several geocoders —
-including the first one — use as a component. Identify which of them you are comparing against before deciding
+other. One is a geocoder assembled from services. The other is a parser that several geocoders,
+including the first one, use as a component. Identify which of them you are comparing against before deciding
 what the comparison is even about.
 
 ## What Pelias is
@@ -63,7 +63,7 @@ on top of it.
 | Store                   | Elasticsearch                        | None — model files on disk        | Sealed SQLite files, read from disk               |
 | Model                   | Query parsing, then ranked retrieval | A conditional random field        | A neural sequence labeler with gazetteer evidence |
 | Autocomplete            | A first-class endpoint               | Not applicable                    | Supported, and not the design center              |
-| Deployment              | Several services                     | A C library and its models        | An npm package; HTTP servers optional             |
+| Deployment              | Several services                     | A C library and its models        | An npm package. HTTP servers optional             |
 
 The row that matters against libpostal is the second one. If what you need is a coordinate, libpostal
 is a component of your answer rather than the answer, and comparing it to a geocoder on coordinate
@@ -83,10 +83,10 @@ that difference through, including what it costs each design.
   adaptation.
 - **You want to compose your own geocoder.** Import the sources you want, replace a component, run
   the interpolation service or skip it. If your requirement is unusual enough that a fixed pipeline
-  will not fit it, modularity is the property to buy.
+  will not fit it, replaceable components let you change the one stage that does not fit.
 - **You already operate Elasticsearch.** The store is the operational weight, and a team running it
   well has paid most of the cost already.
-- **Your queries mix addresses and place names.** One ranked index over both is the design; a parser
+- **Your queries mix addresses and place names.** One ranked index over both is the design. A parser
   has to decide which kind of query it received before it can be useful.
 - **You want a self-hosted geocoder over open data, with a documented API.** That is what it is, and
   it has been doing it for a long time.
@@ -94,7 +94,7 @@ that difference through, including what it costs each design.
 ## When to choose libpostal
 
 - **You need parsing only, in C or with C bindings.** It is the direct answer, it has bindings in a
-  long list of languages, and it is battle-tested across the field.
+  long list of languages, and several geocoders already use it as a component.
 - **You want `expand_address`.** The function produces every standardized address form for indexing. It is
   a distinct capability, and it is what makes libpostal the preprocessing step in a great deal of
   record matching.
@@ -103,13 +103,13 @@ that difference through, including what it costs each design.
 
 ## When to choose Mailwoman
 
-- **You need the parse and the coordinate from one thing.** libpostal stops before the coordinate;
-  this does both, and the resolver walks the parse it produced rather than a re-derived one.
+- **You need the parse and the coordinate from one thing.** libpostal stops before the coordinate.
+  Mailwoman does both, and the resolver walks the parse it produced rather than a re-derived one.
 - **You want the resident footprint small.** The reference data is read from disk rather than held in
   an index, and coverage is a set of downloads.
 - **You want per-locale evidence.** Coverage is claimed where a coordinate-graded evaluation exists,
   and the [benchmarks](../benchmarks/index.mdx) publish the scripts.
-- **You are on Node and want no second runtime.** The package installs and runs; the model is a file.
+- **You are on Node and want no second runtime.** The package installs and runs. The model is a file.
 - **You have libpostal clients already written.** `@mailwoman/libpostal` serves `/parse` and `/expand`
   on a compatible surface.
 
@@ -128,7 +128,7 @@ node fr-ban-panel.ts --data-root <DATA_ROOT>
 ```
 
 The French panel is the one to read first for a parsing comparison: its failure table is four
-street-span truncations and two same-name street collisions, which is the shape a parser-driven
+street-span truncations and two same-name street collisions. That is the shape a parser-driven
 geocoder fails in.
 
 ## Related

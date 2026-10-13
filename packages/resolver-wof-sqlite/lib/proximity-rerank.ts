@@ -88,7 +88,7 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 	const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
 	let proxTerm = 0
 
-	// A candidate at the null island has no coordinate, so it warrants no nearness term.
+	// A candidate at 0,0 (Null Island) has no coordinate, so it receives no nearness term.
 	// A 0,0 pair interpreted as a real coordinate would receive an enormous score.
 	if (!(candidate.lat === 0 && candidate.lon === 0)) {
 		for (const b of bias) {

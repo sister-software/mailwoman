@@ -189,7 +189,7 @@ export interface ZoningReading {
 	/**
 	 * The coverage row for the location, when the product has data in that cell.
 	 *
-	 * Its basis is always `source_present`, which only shows that the source has data nearby.
+	 * Its basis is always `source_present`, which only shows that the source has data in the coverage cell.
 	 * Neither a present nor an absent coverage row means the location is unrestricted.
 	 */
 	coverage: (CoverageCell & { h3CellIndex: string; resolution: number }) | null

@@ -154,7 +154,7 @@ const expandPostRoute = createRoute({
  * (well-formed JSON, string-only interface fields).
  * That is deliberate defense in depth.
  *
- * Don't drop this side's tolerance just because the middleware upstream makes it look redundant.
+ * Don't drop this side's tolerance because the middleware upstream makes it look redundant.
  * The two are meant to fail safe independently.
  */
 async function readBody(c: Context): Promise<Record<string, unknown>> {

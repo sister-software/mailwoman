@@ -101,7 +101,7 @@ describe("pair-index ↔ model-card parity", () => {
 			)
 
 			// A card claiming a delta the binary does not contain would misdescribe the
-			// shipped behavior rather than just the shipped size.
+			// shipped behavior as well as the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 
 			expect(cardDelta, `${pkg}: card delta_calibration does not mention the artifact's δ=${facts.delta}`).toContain(

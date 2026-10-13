@@ -49,7 +49,7 @@ const VERB_WORD = new RegExp(`^${VERB}[.,;:)\\]"'\`]*$`, "i")
 const FINITE = new RegExp(`\\b${VERB}\\b`, "gi")
 
 /**
- * Openers that usually prefer a comma instead of a sentence break.
+ * Openers that prefer a comma instead of a sentence break.
  */
 const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|not|never|with|for|leaving|making|giving|taking)\b/i
@@ -135,7 +135,7 @@ function jointsIn(sentence: string): Joint[] {
 
 		if (/[,;:([]$/.test(before)) continue
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Small in-memory sentence slice.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Small in-memory sentence substring.
 		const words = after.replace(/[.!?]+$/, "").split(/\s+/)
 		const comma = COMMA_OPENERS.test(after) || glosses(words)
 		const closed = /[.!?][)"'\]`]*$/.test(before)
@@ -280,7 +280,7 @@ function capitalizeAt(text: string, index: number, capitalize: boolean): string 
 
 	if (offset === -1) return text
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- First word in a tiny in-memory slice.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- First word in a tiny in-memory substring.
 	const word = rest.slice(offset).split(/\s/)[0] ?? ""
 
 	if (!capitalizable(word)) return text

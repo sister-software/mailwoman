@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for the postal-city alias table (`postal-city-alias-<cc>.db`, built by
- *   `scripts/build-postal-city-alias.ts`) — the single source of truth for the columns shared by
+ *   `scripts/build-postal-city-alias.ts`) — the one declaration of the columns shared by
  *   the builder and the reader ({@link WOFPostalCityAliasLookup}). Like {@link CandidateTable}, the
  *   interface is a Kysely `Database` interface plus the table DDL as a string, so a column rename in
  *   the builder is a compile error in the reader.
@@ -34,7 +34,7 @@ export interface PostalCityAliasTable {
 	 */
 	postal_city: string
 	/**
-	 * The geographic locality name the postcode actually sits in (≈ the gazetteer's canonical name).
+	 * The geographic locality name the postcode sits in (≈ the gazetteer's canonical name).
 	 */
 	geo_locality: string
 	/**

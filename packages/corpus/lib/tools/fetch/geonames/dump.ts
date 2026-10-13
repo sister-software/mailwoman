@@ -116,7 +116,7 @@ const GAZETTEER_DUMP_COLUMNS = 19
  * The capitals builder already holds each country dump as a string.
  *
  * A byte-oriented spliterator would UTF-8 encode that input and allocate up to
- * another 350 MB just to inspect the first non-empty line.
+ * another 350 MB only to inspect the first non-empty line.
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0

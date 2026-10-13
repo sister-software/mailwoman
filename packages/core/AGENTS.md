@@ -25,7 +25,7 @@ disk behavior.
 ## Filesystem and paths
 
 Executable repository code accesses the filesystem through `@mailwoman/core/fs`. Only core imports
-`node:fs`; oxlint reports imports elsewhere and names the core module to use.
+`node:fs`. Oxlint reports an import of it elsewhere, and its message identifies the core module to use.
 
 - `/readers` and `/writers` return promises.
 - `/streams` returns streams immediately and performs work as consumers pull.
@@ -77,8 +77,8 @@ documented in `docs/plugins/demo-assets/resolve.ts`.
 
 Static and dynamic sibling imports use the workspace `#` imports map. Do not use a relative dynamic
 import. A literal `#` alias may be resolved with `import.meta.resolve` when a child process needs the
-module's file path; convert its `file:` URL with `fileURLToPath`.
-Importing `package.json` as a JSON module makes TypeScript copy it into
+module's file path. Convert its `file:` URL with `fileURLToPath`.
+A JSON-module import of `package.json` makes TypeScript copy it into
 `out/` and changes the compiled package scope. Read it with
 `readLocalJSONFile(resolvePackagePath(name, "package.json"))`.
 
@@ -89,7 +89,7 @@ would invalidate the probe.
 
 `packages/core/lib/utils/repo.ts` counts upward from `import.meta.url`. The source `lib/` tree and the
 compiled `out/` tree have equal depth, so the same constants serve both. Preserve that equal-depth
-layout; the removed compiled-tree branch overshot `out/` in production.
+layout. The removed compiled-tree branch overshot `out/` in production.
 
 ## Shared implementations
 
@@ -118,7 +118,7 @@ function. A justified local implementation uses
 `// repo-health-ignore private-name-shadows-export -- <reason>`.
 
 When a shared helper does not fit a caller, determine whether its performance, asynchronous interface,
-or dependency graph caused the local implementation. Fix the shared interface when appropriate; keep a
+or dependency graph caused the local implementation. Fix the shared interface when appropriate. Keep a
 documented local implementation when the dependency cost is larger than the duplication.
 
 ## Core tests and Vite
@@ -126,5 +126,5 @@ documented local implementation when the dependency cost is larger than the dupl
 When one core test imports both `@mailwoman/core` and a core subpath, Vite can interleave the barrel and
 subpath graphs before the barrel finishes binding its exports. Base classes can then evaluate as
 `undefined`. A side-effect `import "@mailwoman/core"` at the start of the affected test forces the barrel
-to initialize first. This is a structural import-graph issue tracked on #481; top-level await is not its
+to initialize first. This is a structural import-graph issue tracked on #481. Top-level await is not its
 cause.

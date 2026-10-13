@@ -55,7 +55,7 @@ const COMMA_OPENERS =
 const LEFT_HALF_FLOOR = 24
 
 /**
- * Words a comma-opening right half needs before the comma is worth taking.
+ * Words a comma-opening right half needs before the sweep replaces the dash with a comma.
  *
  * Two words behind `which` or `and` form an aside.
  * The dash is the right mark for one.
@@ -363,7 +363,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 	})
 
 	// The second pass reads the first pass's output.
-	// Its rewrites shift offsets, so the spans are taken again from the text this pass actually sees.
+	// Its rewrites shift offsets, so the spans are taken again from the text this pass receives.
 	const shifted = literalSpans(blocks, fileName)
 
 	return blocks.replaceAll(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {

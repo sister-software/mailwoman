@@ -112,7 +112,7 @@ export function mapPaneCellSize(columns: number, rows: number): { columns: numbe
 }
 
 /**
- * How many output lines are visible at once, exported so a caller clamping its scroll
+ * The number of output lines visible at once, exported so a caller clamping its scroll
  * offset uses the pane's own arithmetic rather than a second copy.
  */
 export function outputPaneCapacity(rows: number): number {

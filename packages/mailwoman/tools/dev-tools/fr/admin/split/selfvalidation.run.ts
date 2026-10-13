@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The pre-GPU eval for the international admin-split retrain. Before spending an A100, falsify the
- *   premise: does splitting the département out of the locality actually move the resolved coordinate,
+ *   premise: does splitting the département out of the locality move the resolved coordinate,
  *   anchor-on, through the production resolver? Or does FTS land the same commune either way, the
  *   silent-wash risk of a label change the resolver ignores?
  *
@@ -72,8 +72,8 @@ interface Commune {
 	collisionCount: number
 }
 
-// Communes with their département (placetype 'region' in WOF-FR) + how many distinct
-// départements share the same commune name (the collision degree, the disambiguation pressure).
+// Communes with their département (placetype 'region' in WOF-FR) + the number of distinct
+// départements that share the same commune name (the collision degree, the disambiguation pressure).
 const rows = allRows<Commune>(
 	db.prepare(
 		`WITH fr_comm AS (
@@ -101,8 +101,8 @@ const resolver = createWOFResolver(backend)
 const resolveOpts = { defaultCountry: { country: "FR", source: "caller" as const } }
 
 /**
- * Unresolved penalty = the coordinate the geocoder actually falls back to
- * when the place isn't found: the country centroid.
+ * Unresolved penalty = the coordinate the geocoder falls back to when the place
+ * isn't found: the country centroid.
  *
  * Makes the three states comparable on one error metric (resolved point if found, else country-centroid)
  * instead of averaging over different resolved subsets.

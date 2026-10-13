@@ -4,7 +4,7 @@
 # Fisher, learning rate 1e-5, 4,000 steps at batch 128 (512,000 samples). `source_reps` are the v7.2.0
 # values divided by 15 (60,000 / 4,000 steps), so every source's derived weight equals the base run's and the
 # mixture is the base's. The receipts are unchanged because the audit epoch is 1,000,000 rows regardless of steps.
-# Grade a candidate minus this run. This run prices the fine-tune itself for the v7.2.0 base.
+# Grade a candidate minus this run. This run measures the board rows the fine-tune itself moves for the v7.2.0 base.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.7.2-address-systems/corpus-v0.7.2-address-systems

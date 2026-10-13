@@ -31,7 +31,7 @@ export interface StreetCentroidTable {
 	/**
 	 * The commune key with any arrondissement removed.
 	 *
-	 * BAN stores Paris, Lyon and Marseille per arrondissement, but a query usually gives the base commune.
+	 * BAN stores Paris, Lyon and Marseille per arrondissement, but a query can give only the base commune.
 	 * The reader uses this column when the query has no postcode.
 	 */
 	locality_base: NameKey

@@ -1,6 +1,6 @@
 ## Flag says in comments and docstrings for review.
 extends: existence
-message: "'%s' may obscure the source or behavior; identify the actor or state what the output contains."
+message: "'%s' may obscure the source or behavior. Identify the actor or state what the output contains."
 level: warning
 ignorecase: true
 tokens:

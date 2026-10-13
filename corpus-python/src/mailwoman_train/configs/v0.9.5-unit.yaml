@@ -4,7 +4,7 @@
 # German, v0.7.2 base, seed 42). This is the "continue from v0.9.3 + the unit source" the DeepSeek recipe
 # consult (2026-06-08, 2 turns) signed off.
 #
-# why. The v0-parity assessment found `unit` at ~0% F1 — a corpus-coverage gap (NAD carries units at
+# why. The v0-parity assessment found `unit` at ~0% F1 — a corpus-coverage gap (NAD stores units at
 # weight 1.0, but the tag is too rare + had no synth variety). #454 added the unit-designator synth
 # augmentation (USPS Pub-28 C2 codex); this run raises prevalence with the unit-heavy recipe output. The
 # hypothesis is "negative space": giving the model the `unit` category should also reduce `street`
@@ -16,7 +16,7 @@
 # B-unit/I-unit class weights were already 1.5. no schema/model/anchor change.
 #
 # source provenance (eval-honesty): the train rows are real non-Vermont US OpenAddresses skeletons with
-# USPS Pub-28 C2 designators injected (OA carries bare unit ids only); the held-out unit eval is real
+# USPS Pub-28 C2 designators injected (OA stores bare unit ids only); the held-out unit eval is real
 # vermont OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
 # /tmp/unit-val.jsonl. Geographic split = no leakage. note: designators are injected in both, so the VT
 # eval measures designator recognition on held-out addresses. the real-in-the-wild designator signal is

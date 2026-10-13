@@ -185,7 +185,7 @@ train:
   classifier_learning_rate: 1.0e-3
   # These rows reset to the mean of the live rows. The reset requires init_from and --resume none.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]
-  # Only parameters under these prefixes train. The optimizer then holds the classifier group alone.
+  # Only parameters under these prefixes train. The optimizer then holds only the classifier group.
   trainable_only_prefixes: ["classifier."]
   trackio_project: mailwoman
   trackio_run_name: v3.12.0-crt-probe-s42

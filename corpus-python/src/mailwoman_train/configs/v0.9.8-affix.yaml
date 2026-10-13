@@ -7,7 +7,7 @@
 #
 # why. The v0-parity assessment (#15) found street_prefix + street_suffix at ~0% F1 — collapsed into
 # `street` (the model lumps "N Main St" into one street span). Same coverage mechanism as `unit`:
-# the corpus carries the tags (tiger/NAD-structured), but prevalence is too low. This recipe output raises
+# the corpus contains the tags (tiger/NAD-structured), but prevalence is too low. This recipe output raises
 # prevalence with format diversity (abbrev "N"/"St" vs expanded "North"/"Street", + full/bare/
 # street-only/venue layouts), and injects a directional onto ~30% of prefix-less streets for
 # street_prefix signal. hypothesis (negative space): teaching the model to split off prefix+suffix

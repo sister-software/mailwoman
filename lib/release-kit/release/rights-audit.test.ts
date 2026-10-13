@@ -10,7 +10,7 @@
  *   stating a use that is not training, because reporting them together turns an unrecorded fact into a measured one.
  *
  *   The counts are against the committed tree, so a card edit moves them. That is intended: a number in this file
- *   moving is what indicates that a rights-bearing document changed.
+ *   moves when a document that states rights changed.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"

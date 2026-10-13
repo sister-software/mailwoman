@@ -8,7 +8,7 @@ role: explanation
 
 ## The question
 
-At the end of scoring, every piece of the input carries a number for each of the 33 available labels.
+At the end of scoring, every piece of the input has a number for each of the 33 available labels.
 If you take each piece's highest-scoring label, you get the obvious next move, and it is wrong. It produces
 sequences that are not readings of anything, like a "continues the locality" label with no locality
 open in front of it. The standard symptom is `Saint Petersburg, FL` coming back with a locality of
@@ -39,7 +39,7 @@ route planner never proposes the dead end, because a route through it is not a r
 
 ## Legality first
 
-Before any search runs, the parser builds a table from the label list, once, that says which label
+Before any search runs, the parser builds a table from the label list, once, that records which label
 may follow which. The rule is short enough to state in full:
 
 - Anything may be followed by `O`.
@@ -61,10 +61,10 @@ candidate, so no downstream stage has to defend against the orphan.
 
 With the table in hand, the decoder scores a whole reading as the sum of its per-piece scores plus
 its transition scores, and searches for the highest-scoring legal reading of the entire line. The
-search is the Viterbi algorithm, which is what makes this affordable: rather than enumerating every
+search is the Viterbi algorithm. It makes this affordable: rather than enumerating every
 combination, it sweeps left to right keeping, for each label at each position, the best way to reach
 it, and then walks the backpointers home. Cost is proportional to the number of pieces times the
-square of the label count, which for 24 pieces and 33 labels is small enough to disappear next to the
+square of the label count. For 24 pieces and 33 labels, that cost is small enough to disappear next to the
 model itself.
 
 Walk the failure it rules out. Suppose the model is unsure about `Saint` in `Saint Petersburg` —
@@ -72,9 +72,9 @@ scoring `O` a shade above `B-locality` — and confident about `Petersburg` as `
 argmax takes both winners and emits `O`, `I-locality`, which the span walk reads as a one-word town.
 The best-path search never considers that pair, because the transition is impossible. Its best legal
 option pays the small cost on `Saint` to take `B-locality` and keeps the higher score on `Petersburg`.
-The model was not more sure; the reading was better.
+The model was not more sure. The reading was better.
 
-Here is the part worth knowing about the shipped model, because it changes what the guarantee is
+One fact about the shipped model matters here, because it changes what the guarantee is
 for. The classifier accepts a diagnostic per-piece decode alongside the default best-path one, so
 the two can be compared directly. Run 56 varied inputs through both — lowercase, comma-free,
 venue-led, fragments, non-Latin script, deliberately broken rows — and they produce byte-identical
@@ -84,7 +84,7 @@ That is not an argument for removing it. A model well-fit enough to rarely emit 
 sequence is not a model that cannot, and the failure is silent when it happens: an orphan
 continuation does not raise, it shortens a town name. The table costs one table build at startup and
 a comparison per transition, and in exchange the tree that reaches your code is well-formed on input
-nobody has tried yet. Guarantees are worth most exactly where measurement reports no failure.
+that no test has tried yet. A guarantee matters most on input where measurement has reported no failure.
 
 ## Why the transition scores are constraints rather than weights
 
@@ -96,7 +96,7 @@ learned from data.
 Mailwoman decodes with Viterbi over a transition table, so the shape is a conditional random field's.
 The transition table is not. It is built from the label list at startup, holds only legality, and is
 never updated by training. No shipped weights package supplies a learned transition
-matrix; the decoder has a slot for one and every published bundle leaves it empty. The training objective scores
+matrix. The decoder has a slot for one and every published bundle leaves it empty. The training objective scores
 each piece's label on its own — cross-entropy per position, with no sequence-level term — which is
 what the model card records as training without a conditional random field and decoding with one.
 
@@ -115,10 +115,9 @@ its keep — the legality table — without the part that was not.
 
 **The decoder has no view on what is common.** It rules out the impossible and is indifferent among
 the possible, so a rare-but-legal ordering is never penalized and a frequent one is never rewarded.
-All of that work sits in the model, whose scores are computed with the whole line visible rather than
+All of that work sits in the model. Its scores are computed with the whole line visible rather than
 piece by piece. The 56-input comparison above is what makes that arrangement look survivable: the
-per-piece winners already formed a legal sequence on every one of those inputs, which is not what you
-would see if the scores were being produced without reference to their neighbors.
+per-piece winners already formed a legal sequence on every one of those inputs. You would not see that result if the scores were being produced without reference to their neighbors.
 
 **It cannot fix a confidently wrong label.** Best-path search redistributes among readings the scores
 make close. When the model is sure and wrong, every legal reading agrees with it, and the decoder

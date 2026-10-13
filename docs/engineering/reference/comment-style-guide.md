@@ -20,7 +20,7 @@ State what the code does and the condition that requires it.
 // The import map is generated after TypeScript compilation, so load it dynamically.
 ```
 
-This tells the reader why a static import would fail. A comment that only says “Load the import map dynamically” repeats the operation without explaining the constraint.
+This tells the reader why a static import would fail. A comment that only reads “Load the import map dynamically” repeats the operation without explaining the constraint.
 
 ### State an invariant and its consequence
 
@@ -30,7 +30,7 @@ Name the property the code relies on, then state what follows from it.
 // The lookup table contains an entry for every luminance value, so this lookup cannot miss.
 ```
 
-Use the actual buffer, index, state, or lifecycle rule. The word “invariant” can be useful when discussing a named invariant, but it should not replace the property itself.
+Use the actual buffer, index, state, or lifecycle rule. The word “invariant” can be useful when discussing a specific, documented invariant, but it should not replace the property itself.
 
 ### Lead with the subject and its action
 
@@ -42,7 +42,7 @@ Start with the person, component, or operation that acts. An opening `-ing` phra
 
 ### Give each causal step a sentence
 
-When an explanation needs several steps, let each sentence carry one step. A short sequence can still sound like a person explaining the code.
+When an explanation needs several steps, let each sentence state one step. A short sequence can still sound like a person explaining the code.
 
 ```ts
 // `readPixels` returns rows from bottom to top. The rasterizer reverses the row index to display the image upright.
@@ -72,9 +72,9 @@ API documentation should help a caller use an export correctly. Describe the beh
  */
 ```
 
-Start JSDoc or TSDoc with a complete sentence that says what the symbol does or represents. Add detail when it changes how a caller should use it.
+Start JSDoc or TSDoc with a complete sentence that states what the symbol does or represents. Add detail when it changes how a caller should use it.
 
-### Keep a conversational voice when it carries the explanation
+### Keep a conversational voice when it makes the explanation clearer
 
 First person, contractions, and direct address are welcome when they make a concrete explanation easier to follow.
 

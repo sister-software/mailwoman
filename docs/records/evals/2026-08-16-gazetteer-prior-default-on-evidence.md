@@ -36,7 +36,7 @@ Row-level diff over all failing rows (conditional + tracked), 209 OFF and 208 ON
 
 ### Parity corpus, 321 fixtures
 
-Wired for this decision — until then the change was reachable only from the gauntlet, which is #1497's
+Wired for this decision. Until then the change was reachable only from the gauntlet. That limitation is #1497's
 title verbatim ("FST decoder bias is invisible to every live eval").
 
 | metric                                  | en-US OFF → ON    | fr-FR OFF → ON    |
@@ -50,9 +50,9 @@ title verbatim ("FST decoder bias is invisible to every live eval").
 The three spurious streets it stops emitting are `Perth`, `Dallas` and `California`.
 
 **Every floor tally is byte-identical in all four runs.** The prior's entire effect appears in the
-PRECISION half that `parity-corpus.ts` documents the floors structurally cannot see — _"a tag emitted
-where the gold has NONE costs nothing, forever."_ A floors-only reading reports "no change" and misses
-both the result and the loss, which is why this promotion rests on the full-agreement and spurious
+precision half. `parity-corpus.ts` documents that the floors structurally cannot see it: a tag emitted
+where the gold has no value for that tag adds zero to every floor. A floors-only reading reports "no change" and misses
+both the result and the loss. For that reason this promotion rests on the full-agreement and spurious
 columns.
 
 ## The D-rule (iron rule 6)
@@ -63,18 +63,17 @@ Tier-1 is US and FR.
 - Under **fr-FR** weights: the FR bucket is unchanged. The −1 is the **US bucket parsed with FR
   weights** — a configuration production does not route.
 
-No tier-1 regression in any shipping configuration. The residual −1 is carried deliberately and named
-here rather than waived: since every floor is identical in that run, the row moved on a NON-FLOOR tag
-(locality, region or country), which is exactly where a gazetteer prior acts. It was not isolated to a
-named row; an independent reimplementation of parity's full-agreement rule did not reproduce it, so
+No tier-1 regression in any shipping configuration. The residual −1 is accepted deliberately and recorded
+here rather than waived. Every floor is identical in that run, so the row moved on a non-floor tag
+(locality, region or country). A gazetteer prior acts on exactly those tags. The −1 was not traced to a
+specific row. An independent reimplementation of parity's full-agreement rule did not reproduce it, so
 what is reported is parity's own metric.
 
 ## The objection this had to answer
 
 The register's `fst` row records that the pipeline ships the street-context check with the emission
 prior **zeroed**, because unconditional it measured **US-golden −48**. That number is about the
-**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST, and it is unaffected
-here: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
+**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST. This change does not affect it: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
 purpose, so the two paths cannot drift (#1669) — so both ship `fstStreetContextPositiveScale = 0`
 identically. The gazetteer prior does not re-open the morphology question.
 
@@ -84,6 +83,6 @@ The change is now visible to the gauntlet and to the parity corpus. It remains i
 `eval error-analysis`, the coordinate panels and the golden per-tag evals, so "no known regression" is
 bounded by those two batteries. Issue #1497 tracks the remaining work.
 
-Five shipped overlays still carry no FST at all (`es-es` and `it-it` were built 2026-08-16 but are
+Five shipped overlays still ship no FST at all (`es-es` and `it-it` were built 2026-08-16 but are
 staged rather than promoted; `en-au`, `en-in`, `en-nz` have none), so the prior is inert for them and the
-gauntlet now says so out loud per locale. See #1705.
+gauntlet now prints that per locale. See #1705.

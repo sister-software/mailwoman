@@ -93,7 +93,7 @@ export const DK_INSPIRE_COUNTRIES: readonly string[] = ["DK"]
 export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postaldescriptor", "thoroughfarename"]
 
 /**
- * How many rows Kysely buffers per chunk while streaming the join.
+ * The number of rows Kysely buffers per chunk while streaming the join.
  */
 const STREAM_CHUNK_ROWS = 2000
 

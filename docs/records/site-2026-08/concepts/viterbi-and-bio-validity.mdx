@@ -90,8 +90,8 @@ The emission scores come from the encoder + priors. The transition
 scores come from a single source today: **the structural BIO mask**
 (always present) — `-∞` for invalid transitions, `0` for valid ones.
 That's the whole matrix. There's no second, learned layer of transition
-scores stacked on top of it; see [CRF decoder](./crf-decoder.mdx) for
-why — CRF training was tried, destabilized repeatedly, and has been
+scores stacked on top of it. See [CRF decoder](./crf-decoder.mdx) for
+the reason: CRF training was tried, destabilized repeatedly, and has been
 permanently disabled (CE-only) since v0.6.3.
 
 The output is a valid label sequence that maximizes the total score.
@@ -131,8 +131,8 @@ labels themselves might be wrong about the address content).
 
 ## When the structural mask is insufficient
 
-The mask says "this transition is structurally allowed." It doesn't
-say "this transition is statistically likely."
+The mask records that a transition is structurally allowed. It doesn't
+record whether that transition is statistically likely.
 
 Consider: `B-region → B-locality` is structurally valid. So is
 `B-region → B-postcode`. But in real addresses, `region` is almost
@@ -143,8 +143,8 @@ A learned transition matrix could in principle encode that statistical
 preference — after training, it would score `B-region → B-postcode`
 higher than `B-region → B-locality`, and Viterbi would prefer the more
 common sequence. Mailwoman doesn't ship one. Viterbi runs on emission
-scores alone, which is what ships today. It works well enough because
-the encoder's emissions already carry most of the sequencing signal
+scores only, and that configuration ships today. It works well enough because
+the encoder's emissions already encode most of the sequencing signal
 via attention — a learned transition layer would be an additive
 refinement on top of that rather than a replacement for it.
 
@@ -162,7 +162,7 @@ probe), every config from v0.6.3 on has stayed at `0.0` — the current
 one included. [Dual-loss curvature
 conflict](./dual-loss-curvature-conflict.mdx) has the full diagnostic
 story of why the two losses fought instead of cooperating. There's no
-active plan to revisit it — the structural mask alone already provides the
+active plan to revisit it. The structural mask by itself already provides the
 concrete win (no orphan-I), and the encoder's attention covers most of
 the rest.
 
@@ -180,8 +180,8 @@ B-locality` is rare. A learned matrix could rank these apart.
 
 It would not provide:
 
-- Better encoder representations. The encoder is the upstream learner;
-  a CRF layer is downstream of it rather than a substitute for it.
+- Better encoder representations. The encoder is the upstream learner,
+  and a CRF layer is downstream of it rather than a substitute for it.
 - Novel patterns. If a sequence isn't represented well in
   training, a transition matrix has no opinion either.
 - Inference speed. Viterbi over a learned matrix is marginally slower
@@ -193,7 +193,7 @@ It would not provide:
 The `parse()` API accepts a `decode` option:
 
 - `"viterbi"` (default): full Viterbi over the BIO validity mask — no
-  learned transitions ship, so this is the mask alone. Produces
+  learned transitions ship, so this mode applies only the mask. Produces
   structurally valid sequences.
 - `"argmax"`: per-token argmax with no sequence consideration. Faster
   but produces invalid sequences. Used in ablation studies to measure

@@ -97,7 +97,7 @@ export interface ScoreAffixTag {
 /**
  * What {@linkcode scoreAffix} returns.
  *
- * The same object written to the JSON sidecar, so a caller never has to re-read the file it just asked for.
+ * The same object written to the JSON sidecar, so a caller never has to re-read the file it asked for.
  */
 export interface ScoreAffixResult {
 	n: number

@@ -71,3 +71,5 @@ _Towards Monosemanticity: Decomposing Language Models With Dictionary Learning._
 _Right for the Right Reasons: Training Differentiable Models by Constraining their Explanations._
 _Shortcut Learning in Deep Neural Networks._
 _Measuring Calibration in Deep Learning._
+
+The query asks for the Golden Gate Bridge, which crosses the Golden Gate near East Gate Road.

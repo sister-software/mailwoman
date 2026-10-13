@@ -8,7 +8,7 @@
  */
 
 /**
- * A bracketed tail with at most this many tokens gets the lower short-tail confidence.
+ * A bracketed tail with at most this number of tokens gets the lower short-tail confidence.
  */
 const SHORT_INPUT_MAX_TOKENS = 3
 
@@ -88,7 +88,7 @@ export interface SpanProposerLexicon {
 	 */
 	levelDesignators: ReadonlySet<string>
 	/**
-	 * Designators that usually introduce descriptive text.
+	 * Designators that can introduce descriptive text.
 	 * Their unit phrases get lower confidence.
 	 */
 	weakDesignators: ReadonlySet<string>

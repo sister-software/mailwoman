@@ -8,16 +8,16 @@ Pre-registered 2026-09-18, before the run reported. Config:
 [the v5.8.0 record](./2026-09-18-gazetteer-choreography-off.md).
 
 Every number below was measured before any result was read. Bar 5 and the donor-code swap it rests
-on were added after the run launched, which is stated where they appear. The result section is empty
+on were added after the run launched. The record states this where they appear. The result section is empty
 on purpose.
 
 ## What is being tested
 
-v5.7.0 already carries the bare `locality, REGION postcode` surface: `synth-trailing-region-us`
+v5.7.0 already trains on the bare `locality, REGION postcode` surface: `synth-trailing-region-us`
 added 16,000 rows to `v0.31.0-region-code-and-unit`. It reads 555/603 (92.0%) on the 603-city bare
 arm and 46/77 (59.7%) in that panel's suffix-word bucket. This arm asks whether the remaining
 shortfall is exposure to the shape, by redrawing the same 16,000-row budget over locality name
-shape and changing nothing else.
+shape and holding every other setting fixed.
 
 `applyCountryBudget` gains the shape in its bucket key, so the budget spends across
 (cc, region, shape) rather than (cc, region):
@@ -29,14 +29,14 @@ shape and changing nothing else.
 | single word                | 12,423 (77.6%) | 8,530 (53.4%) |
 | total                      |         16,000 |        15,976 |
 
-22.4% is the ceiling this budget reaches. The US GeoNames postal export holds 40,979 rows carrying
-both a place and an admin1, of which 4,189 end in a USPS suffix word;
+22.4% is the ceiling this budget reaches. The US GeoNames postal export holds 40,979 rows with
+both a place and an admin1. Of those, 4,189 end in a USPS suffix word.
 `createKnownLocalityCheck("US")` admits 4,060 and the draw takes 3,575 of them (88.1%). An even
-three-way split at 16,000 tuples would need 5,333, which the source does not hold.
+three-way split at 16,000 tuples would need 5,333 suffix-word rows, more than the source holds.
 
-Nothing else about the source moved. Component sequences hold at
+Every other property of the source stayed the same. Component sequences hold at
 `locality+region+postcode+country` 50.0%, `house_number+locality+region+postcode` 25.0%,
-`locality+region+postcode` 25.0%; the region is written as a full name in 66.7% of rows and as a
+`locality+region+postcode` 25.0%. The region is written as a full name in 66.7% of rows and as a
 code in 33.3%. The 24 missing rows are the ones the recipe's own label audit refused.
 
 ## The parse behind the failures
@@ -50,7 +50,7 @@ one more component in either direction, so the place is reachable and the surfac
 | `Saint Louis, MO 63131, USA`         | `Saint Louis`     |
 | `123 Main St, Saint Louis, MO 63131` | `Saint Louis`     |
 
-Read through `diagnoseParse`, the leading token of every failure carries `B-street`:
+Read through `diagnoseParse`, the leading token of every failure is labeled `B-street`:
 
 | input                    | leading token | label        | confidence | parsed locality |
 | ------------------------ | ------------- | ------------ | ---------: | --------------- |
@@ -68,8 +68,8 @@ Read through `diagnoseParse`, the leading token of every failure carries `B-stre
 | `Burlington, VT 05401`   | `▁Burlington` | `B-locality` |       0.91 | `Burlington`    |
 
 Word count does not separate the groups: `Sparta` and `Oxford` are single words and fail,
-`Forrest City` is two words and passes at 0.10. Neither does the suffix word, which `Sparta`,
-`Oxford` and `Saint Louis` do not carry. What the table establishes is the competing label: the
+`Forrest City` is two words and passes at 0.10. The suffix word does not separate them
+either: `Sparta`, `Oxford` and `Saint Louis` end in no suffix word. What the table establishes is the competing label: the
 decode is choosing `B-street` confidently rather than failing to choose. The next section separates
 the two candidate causes it cannot.
 
@@ -98,10 +98,10 @@ six names:
 | `Saint Louis` | street 0.91 | street 0.90 | street 0.92 | locality 0.56 | locality 0.52 | locality 0.49 | street 0.90   |
 | `Little Rock` | street 0.93 | street 0.92 | street 0.93 | locality 0.67 | locality 0.48 | locality 0.43 | street 0.89   |
 
-`Sparta` reads as a street before `TN` and as a locality before `VT`, so the name alone does not
-decide it inside the frame. A swap ranks the values a component takes and cannot show that the
-component's presence is what accounts for the effect, which is why the removal arm is the one that
-settles the attribution and this table is not. The per-region rate on this panel carries a
+`Sparta` reads as a street before `TN` and as a locality before `VT`, so inside the frame the
+label depends on the region code as well as the name. A swap ranks the values a component takes and
+cannot show that the component's presence accounts for the effect. For that reason the removal arm
+settles the attribution and this table does not. The per-region rate on this panel has a
 96.6-point spread, from MO 1/29 (3.4%) to MA 21/21 and KS 24/24 (100.0%) over the 23 states holding
 20 or more rows — a reading of the frame rather than a property of the regions.
 
@@ -167,23 +167,23 @@ Both panels are build-local. `us-shape-stratified.jsonl` rebuilds byte for byte 
 | 5   | same panel, MA and KS                     | 21/21 and 24/24 | may not fall |
 
 Bar 2 is what separates a shape result from a row-count result. The corpus change adds 1,922
-suffix-word rows and nothing for the other two buckets, so if all three rise by as much, the arm
-measured the extra rows rather than their shape and the stratification carries no separate result.
+suffix-word rows and zero rows to the other two buckets. If all three rise by as much, the arm
+measured the extra rows rather than their shape, and the stratification gives no separate result.
 
-Bar 4 names the two readings v5.8.0 failed at: US postcode F1 95.6% → 95.2%, and 10 regressions
+Bar 4 restates the two readings v5.8.0 failed at: US postcode F1 95.6% → 95.2%, and 10 regressions
 across FR, GB and DE.
 
 Bar 5 was added after the run launched and before any result was read.
 [#2311](https://github.com/sister-software/mailwoman/issues/2311) requires a corpus arm on this
 surface to state the per-region effect before the run and to grade per region rather than on a
-pooled rate; bars 1 through 4 are all per-shape or pooled, so without bar 5 this arm could pass every
+pooled rate. Bars 1 through 4 are all per-shape or pooled, so without bar 5 this arm could pass every
 one of them while the three states reading under 21% stayed there. These are per-region readings of
 the coded-plus-postcode frame rather than region properties — that frame is what a user types, so a
 state stuck at 3.4% inside it is a user-visible outcome whatever its cause. A pooled rise with MO, AR
 and TX flat is what bar 5 exists to make visible.
 
-The shape panel carries no streets, so its `street_only` arm reads 0/0 and the reverse risk is read
-on the 603-city panel alone.
+The shape panel holds no streets, so its `street_only` arm reads 0/0. The reverse risk is read only
+on the 603-city panel.
 
 ## Result
 
@@ -198,7 +198,7 @@ objective and decide none of the five bars.
 ### Receipts
 
 Every reading below is read back from a receipt under
-`$MAILWOMAN_DATA_ROOT/eval/receipts/2026-09-19-v590/`. Each receipt carries the commit it ran at, the
+`$MAILWOMAN_DATA_ROOT/eval/receipts/2026-09-19-v590/`. Each receipt records the commit it ran at, the
 count of dirty tracked files at that commit, the argument vector, the panel's sha256, and the md5 of
 the `model.onnx` the resolver opened for that run. The md5 is what distinguishes the arms: a staged
 candidate's `model-card.json` is a symlink into the shared data root, so both arms read card 9.1.0.
@@ -209,16 +209,16 @@ candidate's `model-card.json` is a symlink into the shared data root, so both ar
 | `v590-us-shape-stratified.json`                | `8287d3790adf4a07824fcb3ac5bdbe10` | `us-shape-stratified.jsonl` | `af671e35…`  |
 | `v570-us.json`                                 | `e72b0cbb38754c5b07116870aeee04a4` | `us.jsonl`                  | `45a509a1…`  |
 | `v590-us.json`                                 | `8287d3790adf4a07824fcb3ac5bdbe10` | `us.jsonl`                  | `45a509a1…`  |
-| `paired-us-shape-stratified-v570-vs-v590.json` | both, named inside                 | derived                     | —            |
+| `paired-us-shape-stratified-v570-vs-v590.json` | both, listed inside                | derived                     | —            |
 
 All four ran at commit `60ad48217` with zero dirty tracked files, through
-`locality-region-postcode-arms.run.ts`. The `us.jsonl` panel had no recorded hash before this run;
-it is `45a509a1908466a454e6a549170f782803a23d8e950c27732da1a4eb2de16cb6`.
+`locality-region-postcode-arms.run.ts`. The `us.jsonl` panel had no recorded hash before this run.
+Its hash is `45a509a1908466a454e6a549170f782803a23d8e950c27732da1a4eb2de16cb6`.
 
 Both arms were staged with the same nine weights packages — the seven the board routes, plus the
-published but unrouted `fr-fr` and `en-au`. The two cache roots differ in the base `model.onnx`
-bytes and in nothing besides. The earlier v5.7.0 and v5.9.0 caches carried seven packages and the
-v5.8.0 grading carried eight, so an FR reading taken across those three caches compares three
+published but unrouted `fr-fr` and `en-au`. The two cache roots differ only in the base `model.onnx`
+bytes. The earlier v5.7.0 and v5.9.0 caches held seven packages and the
+v5.8.0 grading held eight, so an FR reading taken across those three caches compares three
 different stages.
 
 ### The five bars
@@ -239,16 +239,16 @@ different stages.
 | 5   | same panel, KS                            |  24/24 (100.0%) |   13/24 (54.2%) | may not fall | **fail**  |
 
 Bar 2 separates a shape result from a row-count result, and it separates them. The corpus change
-added 1,922 suffix-word rows and nothing to the other two buckets. Suffix-word rose 43.5pp, other
+added 1,922 suffix-word rows and zero rows to the other two buckets. Suffix-word rose 43.5pp, other
 multi-word rose 33.0pp and single word rose 1.7pp, so the buckets did not move together and the
-stratification carries a result of its own.
+stratification gives a result of its own.
 
 ### What the pooled rate hides
 
 Pooled shape-panel bare matching rose from 633/1,132 (55.9%) to 923/1,132 (81.5%), a gain of
 25.6pp. Of the 1,132 paired rows, 354 were fixed and 64 regressed, for a net of 290.
 
-Eighteen states carry at least one regression. The eight that lost ground overall:
+Eighteen states have at least one regression. The eight that lost ground overall:
 
 | state | panel rows | v5.7.0 | v5.9.0 |   change | fixed | regressed |
 | ----- | ---------: | -----: | -----: | -------: | ----: | --------: |
@@ -261,7 +261,7 @@ Eighteen states carry at least one regression. The eight that lost ground overal
 | MA    |         21 | 100.0% |  90.5% |  −9.5 pp |     0 |         2 |
 | CT    |         11 |  63.6% |  54.5% |  −9.1 pp |     1 |         2 |
 
-South Carolina loses every one of its 17 rows and sits outside bar 5, which named the five states at
+South Carolina loses every one of its 17 rows and sits outside bar 5. Bar 5 listed the five states at
 the ends of v5.7.0's pre-result spread. Bar 5 is therefore a sample of the region-level requirement
 rather than the whole of it, and this table is the reason to write the next one over every state
 carrying enough rows to read.

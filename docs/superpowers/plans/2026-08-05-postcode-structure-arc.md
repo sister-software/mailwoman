@@ -1,6 +1,6 @@
-# Postcodes carry structure we never read — preregistration for three mechanisms
+# Postcodes contain structure we never read — preregistration for three mechanisms
 
-This arc opened on 2026-08-05 from the operator's sketch, which makes three claims. In the
+This arc opened on 2026-08-05 from the operator's sketch. The sketch makes three claims. In the
 operator's order:
 
 1. We cannot enumerate every postcode, but we can enumerate the rules for each country's postcodes.
@@ -35,10 +35,10 @@ idea, and the name is not concordance.
   `core/pipeline/runtime-pipeline.ts:479`) and (b) the unrelated WOF external-ID table
   (`resolver-wof-sqlite/unified-schema.ts`). The reader-facing definition at
   `docs/records/site-2026-08/understanding/the-problem/what-is-a-concordance.mdx:16` still describes
-  the operator's concept exactly, which is why the word came to mind. A new mechanism with this name
+  the operator's concept exactly. That is why the word came to mind. A new mechanism with this name
   would collide with both existing uses.
 
-**New work in this arc is therefore named `*Coherence` and described as joint-consistency.** The name
+**New work in this arc therefore uses the name `*Coherence` and described as joint-consistency.** The name
 a mechanism `concordance` counts as a defect.
 
 ## Part A — Inventory
@@ -53,9 +53,9 @@ covers, so the design in Part C proposes only what is missing.
 | Per-system postcode shape + brand | `codex/{us,de,fr,ca,gb,jp,au,nz,es,it}/`                  | 10 modules, each a `Tagged` brand + `*_PATTERN` + normalizer. `codex/us/zipcode.ts:169`, `codex/gb/postcode.ts:55`, etc. | 1         |
 | `candidateSystemsForPostcode`     | `codex/postcode-systems.ts:59`                            | The shape oracle: which of 8 systems accept this string. `SYSTEM_ACCEPTS` at `:43` — `es`/`it` deliberately absent       | 1         |
 | `ADDRESS_SYSTEM_CONVENTIONS`      | `codex/address-system-conventions.ts:43`                  | The only actual postcode RECORD type (`postcodePattern` + `forbiddenTags`). **2 entries**: `fr`, `gb`                    | 1         |
-| `PATTERNS` (query-shape)          | `query-shape/known-formats.ts:31`                         | 11 rows, 9 `KnownFormat` members. Carries `nl_postcode`, which codex has no module for                                   | 1         |
+| `PATTERNS` (query-shape)          | `query-shape/known-formats.ts:31`                         | 11 rows, 9 `KnownFormat` members. Includes `nl_postcode`. Codex has no module for it                                     | 1         |
 | `POSTCODE_PATTERNS` (neural)      | `neural/postcode-repair.ts:61`                            | 10 rows. Adds IE/NL/PT/PL — four systems with no codex module                                                            | 1         |
-| `postcode_shapes.py`              | `corpus-python/src/mailwoman_train/postcode_shapes.py:24` | 9 rows. Header claims to mirror `postcode-repair.ts` verbatim; **it is one row behind (IE missing)**                     | 1         |
+| `postcode_shapes.py`              | `corpus-python/src/mailwoman_train/postcode_shapes.py:24` | 9 rows. Header claims to mirror `postcode-repair.ts` verbatim, but **it is one row behind (IE missing)**                 | 1         |
 | `scoreByPostcode`                 | `locale-hint/rules.ts:55`                                 | Format hit → locale candidate. Ambiguous 5-digit → en-US @0.5                                                            | 1         |
 | `scorePostcodeOnly`               | `kind-classifier/classify.ts:38`, `rules.ts:22–54`        | The `postcode_only` kind, with a share threshold and a full-vs-fragment length rule                                      | 1         |
 
@@ -67,20 +67,20 @@ countries.
 
 ### A.2 Prefix → region structure (direction 3)
 
-This table comes from reading every codex module. Only six countries carry any prefix→region
+This table comes from reading every codex module. Only six countries have any prefix→region
 structure.
 
-| Country           | Export                                                          | Shape                                                                                              | Entries |
-| ----------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------- |
-| US                | `codex/us/zipcode.ts:92` `StateAbbreviationZipCodePrefixRecord` | state → **leading digit**                                                                          | 56      |
-| US                | `codex/us/zipcode.ts:154` `ZipCodePrefixAbbreviationMap`        | digit → states (inverted at `:156`)                                                                | 10 keys |
-| GB                | `codex/gb/postcode-area.ts:73` `GB_POSTCODE_AREA_COUNTRY`       | area letters → constituent country                                                                 | 23      |
-| CA                | `codex/ca/postal-code.ts:83` `FSA_LETTER_TO_PROVINCE`           | FSA first letter → province                                                                        | 18      |
-| DE                | `codex/de/postleitzahl.ts:79` `PLZ_LEITZONEN`                   | first digit → Leitzone info                                                                        | 10      |
-| FR                | `codex/fr/departement.ts:37` `FR_DEPARTEMENTS`                  | 2-digit code → département + region                                                                | 101     |
-| JP                | `codex/jp/postal-code.ts:74` `JP_FIRST_DIGIT_REGION`            | first digit → routing region                                                                       | 10      |
-| ES                | —                                                               | `codigoPostalProvincePrefix` returns the raw prefix; the module ships no province table on purpose | 0       |
-| IT / AU / NZ / NL | —                                                               | AU and IT each warn against inferring a region from digits; NL has no codex module                 | 0       |
+| Country           | Export                                                          | Shape                                                                                                  | Entries |
+| ----------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------- |
+| US                | `codex/us/zipcode.ts:92` `StateAbbreviationZipCodePrefixRecord` | state → **leading digit**                                                                              | 56      |
+| US                | `codex/us/zipcode.ts:154` `ZipCodePrefixAbbreviationMap`        | digit → states (inverted at `:156`)                                                                    | 10 keys |
+| GB                | `codex/gb/postcode-area.ts:73` `GB_POSTCODE_AREA_COUNTRY`       | area letters → constituent country                                                                     | 23      |
+| CA                | `codex/ca/postal-code.ts:83` `FSA_LETTER_TO_PROVINCE`           | FSA first letter → province                                                                            | 18      |
+| DE                | `codex/de/postleitzahl.ts:79` `PLZ_LEITZONEN`                   | first digit → Leitzone info                                                                            | 10      |
+| FR                | `codex/fr/departement.ts:37` `FR_DEPARTEMENTS`                  | 2-digit code → département + region                                                                    | 101     |
+| JP                | `codex/jp/postal-code.ts:74` `JP_FIRST_DIGIT_REGION`            | first digit → routing region                                                                           | 10      |
+| ES                | —                                                               | `codigoPostalProvincePrefix` returns the raw prefix, and the module ships no province table on purpose | 0       |
+| IT / AU / NZ / NL | —                                                               | AU and IT each warn against inferring a region from digits, and NL has no codex module                 | 0       |
 
 Accessors: `departementOfCodePostal` (`codex/fr/code-postal.ts:82`), `regionForCodePostal` (`:114`),
 `provinceOfPostalCode` (`codex/ca/postal-code.ts:109`), `leitzoneOf` (`codex/de/postleitzahl.ts:99`),
@@ -96,7 +96,7 @@ that such a table is close to useless as a spatial prior. The FR table is also t
 
 | Change                                      | Where                                                                        | What it does                                                                                                                                                                                                                                                                                                            | Default                            | Direction     |
 | ------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
-| `applyPostcodeConsistency` (#370/#945)      | `resolver/resolve.ts:266-331`, called `:849`                                 | Runs post-walk without backend queries. Finds the first resolved postcode's coordinate; for every `locality`/`dependent_locality` beyond `postcodeConsistencyThresholdKm` (50 km), re-picks from `node.alternatives`, else overwrites the node's lat/lon with the postcode's and stamps `postcode_city_mismatch`        | **ON** (`!== false`)               | 2             |
+| `applyPostcodeConsistency` (#370/#945)      | `resolver/resolve.ts:266-331`, called `:849`                                 | Runs post-walk without backend queries. Finds the first resolved postcode's coordinate. For every `locality`/`dependent_locality` beyond `postcodeConsistencyThresholdKm` (50 km), re-picks from `node.alternatives`, else overwrites the node's lat/lon with the postcode's and stamps `postcode_city_mismatch`        | **ON** (`!== false`)               | 2             |
 | Postcode-country coherence (#42/#1477)      | `resolver/postcode-country-coherence.ts`, called `resolve.ts:790`            | The only PRE-walk pass and the only thing allowed to override `defaultCountry`. Geometric: postcode centroid vs exact-match locality centroid within 25 km (`:86`). Candidate set = `candidateSystemsForPostcode`. Abstains on 0 or ≥2 coherent countries (`:269`)                                                      | **ON**                             | 1 + 2         |
 | `(name_key, postcode)` short-circuit (#741) | `resolver-wof-sqlite/candidate-lookup.ts:310-333`                            | On a locality-wanting query with a postcode, probes `postal_city_candidate` and returns a single synthetic candidate immediately. The whole ranking cascade below is never reached. This is direction 2's REVERSE arrow, already shipped, for one country                                                               | on when the table exists (`:258`)  | **2 reverse** |
 | Postcode abstention (#1480)                 | `resolver-wof-sqlite/candidate-lookup.ts:429-443`, `:300`                    | A `placetype: "postalcode"` query that misses exact + strip now skips the FTS trigram rung entirely instead of returning a trigram-nearest code. Cause: `BT3 9QQ` matched Sheffield's `S3 9QQ`, 200+ km wrong at full confidence                                                                                        | ON                                 | 1             |
@@ -104,13 +104,13 @@ that such a table is close to useless as a spatial prior. The FR table is also t
 | Segment postcode strip                      | `neural/placetype-pair-prior.ts:677-684`, `:725-756`, `:773-813`             | `SEGMENT_PARENT_POSTCODE_SHAPES` (6 countries, patterns imported from codex so they cannot drift). Strips ≤2 trailing (and, for the 4 leading countries, leading) postcode words from a segment before it becomes a pair-index key. Whole-edge went 96.3% → 0.0% on `fr-lieudit-golden.jsonl` without it (`:1126-1128`) | ON                                 | 3             |
 | PCB1 anchor channel                         | `neural/postcode-binary-resolver.ts`, `neural/anchor-inference.ts`           | Per-piece feature vector: country posterior over `LOCALE_ORDER` (`anchor-inference.ts:24`) + quantized lat/lon. `ANCHOR_FEATURE_DIM = 11`                                                                                                                                                                               | Model-declared (`weights.ts:693`)  | 1 + 3         |
 | **The GB hole in PCB1**                     | `docs/records/evals/2026-08-05-en-gb-anchor-off.md`                          | Every training config points at one `pilot-anchor-lookup.json` holding 67,708 keys, **zero letter-containing**, covering US/DE/FR only. GB slot 4 never took a gradient. `postcode-gb.bin` fired on 106/120 gb-golden rows and cost exact postcode 318/318 → 294/318. Fixed #1467 by not shipping the artifact          | GB channel now resolves OFF        | —             |
-| PCN1 census                                 | `neural/placetype-census.ts`, wired `neural/placetype-pair-prior.ts:836-859` | Per-parent child-tag distribution with per-tag lift. **Observability only: no consumer reads it back**, and the header carries no `delta` until a calibration measures one                                                                                                                                              | Opt-in, zero-cost when off         | 2             |
+| PCN1 census                                 | `neural/placetype-census.ts`, wired `neural/placetype-pair-prior.ts:836-859` | Per-parent child-tag distribution with per-tag lift. **Observability only: no consumer reads it back**, and the header holds no `delta` until a calibration measures one                                                                                                                                                | Opt-in, zero-cost when off         | 2             |
 | Convention strategy weights                 | `resolver-wof-sqlite/convention.ts:63-67`                                    | Built-in default `["postcode_area_resolution", "fallback_fuzzy_name_match"]` at 0.6/0.3/0.1 (postcode/name/population)                                                                                                                                                                                                  | Effectively on in the FTS backend  | 2             |
 | `coincident-roles`                          | `resolver-wof-sqlite/coincident-roles.ts`                                    | **No postcode relationship at all** — build-time (admin, locality) same-name pairs, REGION tier, ~124 places. Listed here only to record that it is not part of this arc                                                                                                                                                | build-time                         | —             |
 
 Two docstrings are stale, and whoever touches these files next should correct them.
-`resolver/resolve.ts:263` still says `postcodeConsistency` is default-off, although it was promoted
-on 2026-07-04 in commit `0010bb8c`. `resolver/postcode-country-coherence.ts:71-72` still says its
+`resolver/resolve.ts:263` still states that `postcodeConsistency` is default-off, although it was promoted
+on 2026-07-04 in commit `0010bb8c`. `resolver/postcode-country-coherence.ts:71-72` still states that its
 own flag is opt-in. `docs/engineering/reference/runtime-flags.mdx:49` also lists
 `postcodeConsistency` as default-off. All three statements are wrong.
 
@@ -118,7 +118,7 @@ own flag is opt-in. `docs/engineering/reference/runtime-flags.mdx:49` also lists
 `grep` returns no match on it. Use `grep -a`. An audit of that file without the flag gets a false
 negative.
 
-### A.4 What the inventory says about the sketch
+### A.4 What the inventory shows about the sketch
 
 - **Direction 1 (shape as confidence and exclusion) has the most coverage.** The shape oracle
   exists, is pure, and already supplies the candidate set for the country-coherence pass.
@@ -178,7 +178,7 @@ shape alone vs the system, on the 110 asserted codes
    of headroom here. The Gauntlet is a regression board, and its pass rate is never a ship gauge. The
    count is therefore a ceiling on what the board can show. It does not measure the rate of the
    defect in real input.
-2. **Shape alone cannot identify the system for half the codes.** More than one system accepts 49
+2. **Shape by itself cannot identify the system for half the codes.** More than one system accepts 49
    of the 100 asserted codes, and no system accepts 10 of them (IE Eircode, SI, IM, and the other
    countries with no codex module). A mechanism that treats a valid shape as evidence of a specific
    country is guessing on those codes. This is why `findPostcodeCountryScope` abstains on ≥2
@@ -221,7 +221,7 @@ but still limit the answer to one metro area.
 The BT zero is not an artifact of the query. The database's own metadata records it: `coverage_gap_northern_ireland`
 = "ZERO Northern Ireland (BT) postcodes — measured rather than assumed", and
 `coverage_gap_northern_ireland_options` = BT centroids "CANNOT be filled from a free source" (ONSPD/NSPL
-carry them from LPS Pointer but carve them out of OGL).
+take them from LPS Pointer but carve them out of OGL).
 
 ### M-2b: BT districts from the NI census file
 
@@ -243,10 +243,10 @@ form minus the last three characters, the same rule M-2 uses.
 
 **The file gives 80 districts without coordinates.** The NI tier of any mechanism here is therefore
 an ancestry tier rather than a coordinate tier. A BT district can assert "Northern Ireland" and a
-named district, and it must assert no fact about the location inside that district. Mechanism 3's
+district name, and it must assert no fact about the location inside that district. Mechanism 3's
 bar is written around this constraint.
 
-### M-3: what the ZIP-prefix table buys
+### M-3: the share of ZIPs the ZIP-prefix table assigns to the right state
 
 `m3-zip.ts` / `m3b-zip.ts` / `m3c-zip.ts` run over `codex/us/zipcode.ts` and
 `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-us.db` + `admin-global-priority.db` (both read-only). The
@@ -281,7 +281,7 @@ codex band vs the gazetteer's state (CONUS)
 
 **The shipped ZIP-prefix table does not work as a spatial prior.** A leading digit narrows a ZIP to
 a median of 12 states and a 696 km p95 radius. By comparison, M-2 shows that a GB outward code gives
-3.2 km. Three digits, the USPS sectional-center level that the codex does not carry, reach a 145 km
+3.2 km. Three digits, the USPS sectional-center level that the codex does not model, reach a 145 km
 p95 radius and identify one state 36% of the time. The useful US artifact would be a 3-digit table,
 and that table does not exist.
 
@@ -299,8 +299,8 @@ These are unique or firm ZIPs. Each code is assigned to one high-volume recipien
 processed somewhere outside the code's numbering range. The two sources answer different questions
 correctly. The codex band describes the code's range, and the gazetteer parent describes the
 organization. Two counts support this reading. 13.2% of ZIPs share an exact coordinate with ≥5 other
-ZIPs, which is the pattern expected when facility-assigned codes collapse onto one point. Only 979 of
-42,319 rows carry a `census-zcta-2024` centroid stamp, and the rest have none.
+ZIPs. That is the pattern expected when facility-assigned codes collapse onto one point. Only 979 of
+42,319 rows have a `census-zcta-2024` centroid stamp, and the rest have none.
 
 **Consequence for the design:** a prefix→region artifact must be built from the numbering authority
 (USPS/Census ZCTA) rather than derived from the current postcode gazetteer's parentage. A derivation
@@ -316,7 +316,7 @@ three ship opt-in. A default-on promotion is a separate decision with its own ev
 ### Mechanism 1 — `applyPostcodeShapeCoherence`: shape as exclusion, downstream of the siblings
 
 **Change shape.** This is not a model change. It falls under the "cross-locale grammar leakage" row
-of the taxonomy, which calls for a conventions-plus-mask change. It is implemented as a fifth member
+of the taxonomy. That row calls for a conventions-plus-mask change. It is implemented as a fifth member
 of the joint-consistency coherence family, alongside the four in A.3. It needs no GPU and no
 retrain.
 
@@ -366,13 +366,13 @@ the full check set.
   `defaultCountry` is sometimes wrong, and an exclusion pass that trusts `defaultCountry` will delete
   the evidence the country pass needs.
 - **B1-4 (the board can detect the effect).** Before B1-2 is graded, the 30 Stratum-B Gauntlet cases
-  must carry an asserted `expectComponents.postcode`. Bar: **30/30 filled.** A board that cannot
+  must have an asserted `expectComponents.postcode`. Bar: **30/30 filled.** A board that cannot
   distinguish "right" from "not asserted" cannot measure an exclusion mechanism.
 
 **Kill condition.** The mechanism is killed if B1-3 fails at every exclusion δ, or if B1-1 shows
 diffs that cannot be resolved without a per-country exception. In that case the M-1 verdict stands:
-the curated board has only 6 within-country exclusion spans, and the mechanism is not worth the risk
-of turning it on by default. Record the result as a negative and stop.
+the curated board has only 6 within-country exclusion spans, and that headroom does not justify the risk
+of turning the mechanism on by default. Record the result as a negative and stop.
 
 ### Mechanism 2 — `applyPostcodeContainmentCoherence`: the reverse arrow, generalized
 
@@ -386,7 +386,7 @@ neighbors it". The #741 path stays as the exact-match fast path. This mechanism 
 beneath it, where the population-ordered `neg_rank` fetch currently ignores the postcode
 (`:381-397`).
 
-**What it does.** When a locality-wanting query carries a postcode and the exact `(name_key,
+**What it does.** When a locality-wanting query includes a postcode and the exact `(name_key,
 postcode)` probe misses, the mechanism resolves the postcode's centroid once. It then re-ranks the
 name candidates by distance to that centroid, within the same 25 km limit the country pass uses.
 `Paris TX 75460` and `Paris 75001` differ in which candidate the postcode is near, but the current
@@ -443,7 +443,7 @@ the PIX1 pair index and the PCB1 anchor, and the country-evidence-layer runbook 
 
 **Artifact spec — `PFX1`.** The format follows the PCN1 layout exactly (`neural/placetype-census.ts:25`,
 `:114-165`): magic `"PFX1"` (4 bytes), `u32 headerLen`, `headerLen` bytes of UTF-8 JSON header, then
-the node table. Each country gets its own file, `postcode-prefix-<cc>.bin`, named like
+the node table. Each country gets its own file, `postcode-prefix-<cc>.bin`, following the pattern of
 `postcode-<cc>.bin`.
 
 ```ts
@@ -489,14 +489,14 @@ Three properties follow from the measurements above:
 - **`radiusP95Km` is required whenever a coordinate is present.** M-3 shows why. A 1-digit US band
   and a GB outward code are both "a prefix with a centroid", but their radii differ by 200×. An
   artifact that ships the coordinate without the radius invites the consumer to treat them alike.
-- **The coordinate is optional, and its absence carries meaning.** M-2b's 80 BT districts have no
+- **The coordinate is optional, and its absence has meaning.** M-2b's 80 BT districts have no
   coordinates, and no permissively licensed source will supply them. A node with `ancestors` and no
   `lat`/`lon` belongs to the ancestry-only tier. Under the meaning-of-zero rule it must be stored as
   absent, never as `0,0`.
 - **`source` records the numbering authority.** M-3's 7.9% firm-ZIP disagreement shows why. A US
   build joined against `spr.parent_id` misattributes codes whose gazetteer parent is a mail
-  recipient. The US build uses USPS/Census ZCTA. The GB build uses Code-Point Open, which is already
-  in the data root and already carries the outward structure.
+  recipient. The US build uses USPS/Census ZCTA. The GB build uses Code-Point Open. Code-Point Open is already
+  in the data root and already encodes the outward structure.
 
 **First three builds, in cost order:**
 
@@ -525,10 +525,10 @@ and US are separate decisions with separate evidence, because their radius profi
   10 km**, against the abstention arm's 0% by construction, with **zero cases worse than the
   abstention arm**. An abstention is never worse than a wrong answer, so any regression here directly
   violates the D-rule.
-- **B3-3 (the NI case, which is the reason this mechanism exists).** Use the 80 BT districts from
+- **B3-3 (the NI case, the reason this mechanism exists).** Use the 80 BT districts from
   M-2b, with no coordinates anywhere in the pipeline, and a board of NI addresses whose BT code the
   unit resolver abstains on. Bar: **≥95% receive a country scope of GB with a `NIR`
-  constituent-country ancestry and the correct BT district named, and 0% receive a coordinate.** The
+  constituent-country ancestry and the correct BT district identified, and 0% receive a coordinate.** The
   second condition decides the mechanism. Here the correct output is ancestry without a point. A
   mechanism that invents a BT centroid reproduces the `BT3 9QQ` → Sheffield defect that #1480 just
   fixed. Report the district-level accuracy against the 80/80 census, and separately report the number
@@ -536,7 +536,7 @@ and US are separate decisions with separate evidence, because their radius profi
 - **B3-4 (the US tier is not oversold).** Build `postcode-prefix-us.bin` at 3 digits from ZCTA and
   grade a US board the same way as B3-2. Bar: **≥40% within 100 km**. The bar is deliberately weak,
   because M-3 measured a 145 km median p95, and a bar tighter than the data allows cannot be met. A
-  tighter US bar would require a 5-digit artifact, which is a different artifact.
+  tighter US bar would require a 5-digit artifact. That is a different artifact.
 - **B3-5 (no channel receives an untrained value).** Before any decode wiring, confirm that no
   shipped weights bundle declares a channel this artifact would populate. Bar: **the offline probe
   path touches zero model inputs.** The GB hole cost 24 exact postcodes on gb-golden because slot 4
@@ -557,19 +557,19 @@ reserves retraining for open-vocabulary distributional tags, and postcodes are n
 
 **Order, cheapest first:**
 
-1. **B3-1:** one build and one read-back. It confirms that PFX1's format carries what it claims
+1. **B3-1:** one build and one read-back. It confirms that PFX1's format holds what it claims
    before anything consumes it.
 2. **B1-4:** fill the 30 Stratum-B Gauntlet assertions. This is corpus work only. It unblocks B1-2
-   and is worth doing whether or not mechanism 1 ships.
+   and is needed whether or not mechanism 1 ships.
 3. **B1-1 / B2-1:** the two byte-stability bars. Both are on-versus-off diffs on boards that already
    exist.
 4. **B3-3:** the NI bar. It needs the 80-district artifact and an NI board, and no ZCTA acquisition.
 5. **B2-2 / B2-3:** the ambiguous-name board and the double-repair check.
 6. **B1-2 / B1-3:** the exclusion bars. They come last among the decode-time work because M-1 shows
    only 6 spans of headroom, and the confound is the main risk.
-7. **B3-4:** needs a ZCTA acquisition, which is the only real data work in the arc.
+7. **B3-4:** needs a ZCTA acquisition. That acquisition is the only real data work in the arc.
 
-**Work that would need a training batch, which this document excludes:** feeding a prefix prior into
+**Work that would need a training batch (excluded from this document):** feeding a prefix prior into
 the anchor channel (mechanism 3's second consumer). That requires a channel that saw prefix-shaped
 values during training, and the GB hole shows the cost of shipping it untrained. If a batch is
 being prepared anyway, a cheap addition would extend `pilot-anchor-lookup.json` beyond its 67,708
@@ -588,7 +588,7 @@ the one-variable-per-run rule.
   those files should fix them.
 - **`coincident-roles`.** It was read and has no postcode relationship.
 - **A 5-digit US artifact.** M-3 shows that 3 digits is the longest prefix that still generalizes.
-  5 digits is the full code, which the gazetteer already carries.
+  5 digits is the full code, and the gazetteer already stores it.
 
 ## Reproduce the measurements
 

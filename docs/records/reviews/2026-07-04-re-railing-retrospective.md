@@ -19,8 +19,8 @@ around them was repaired.
 
 The numbers that frame the three days: **80 commits to main, 29 issues closed, four releases
 (5.0.0 → 5.3.0), zero regressions shipped knowingly, and roughly $0 of new GPU spend against
-~7.5 A100-hours' worth of shipped model improvements** — because both model wins were salvaged
-from artifacts the old process would have re-trained (the vocab-splice needed no training at all;
+shipped model improvements that would have taken ~7.5 A100-hours** — because both model wins were salvaged
+from artifacts the old process would have re-trained (the vocab-splice needed no training at all, and
 v2.2.0 was promoted from the archive after a re-check replaced a ~4 A100-h rerun).
 
 The main result of the arc is this: on 2026-07-01 a Czech address had a **44% chance** of
@@ -40,8 +40,8 @@ the fix targeted the reason it froze as well as the freeze), and the cadence rul
 CONTRIBUTING_MODEL_WORK as a check. Evidence it works: the re-score surfaced two unsigned drifts
 (fr.cedex_real −6.7, libpostal clean arena −6); the zero-margin postcode floor it documented
 fired on the very next candidate (v2.2.0's fr.postcode −0.1) and was **adjudicated at a fork
-instead of absorbed**; and the salvage read that found #949 was this discipline pointed at a
-harness nobody had re-run.
+instead of absorbed**. The salvage read that found #949 was this discipline pointed at a
+harness no agent or operator had re-run.
 
 **R2 — the hardest model problem stalled with no probe: TRANSFORMED into a solved-and-mapped
 territory.** The diacritic arc ran end-to-end: the $0 vocab-splice shipped (5.1.0, four locales),
@@ -49,8 +49,8 @@ a second splice generation followed (5.2.0, nordic), the from-scratch retrain qu
 to ground (v2.2.0), and the one class no training composition can hold (SI/FR no-street
 short-forms — five vehicles, all falsified, including from-scratch) got a **model-independent
 resolver floor** (#942, default-ON, all 55 composition-lost rows recovered). That last move is
-the deepest new pattern of the period: when the model provably cannot learn a class, stop buying
-GPU and floor it in the resolver. CharCNN remains parked as the CJK-forward path, now with a
+the deepest new pattern of the period: when five measured vehicles show the model cannot learn a class, stop spending
+GPU hours and floor it in the resolver. CharCNN remains parked as the CJK-forward path, now with a
 public introspection tool that would make its evaluation visible.
 
 **R3 — the demo lies about the product: CLOSED.** The browser runs the shared `resolveTree`
@@ -61,17 +61,17 @@ shared path), the demo default tracks the npm line, and introspection went from 
 not yet wired.
 
 **R4 — operator-conditional decision backlog: DRAINED by folding decisions into evidence.** The
-review's Track 3 imagined a decision sitting; what worked was presenting each decision
+review's Track 3 imagined a decision sitting. What worked was presenting each decision
 as a pre-framed fork at the moment its evidence completed (the SLO overage, the ledger's fate,
 the re-score cadence, the v220 promote). Every fork resolved within hours of being posed. The
 open queue is now in fact externally-blocked-or-owned items rather than re-triage fodder.
 
 **R5 — the record of record is stale: CLOSED, and now self-correcting.** releases.mdx is current
-through 5.3.0; SCOPE.mdx exists (locale tiers, two workstreams, five invariants); the
-runtime-flag register exists with per-flag verdicts and named drifts. The proof it's a live
+through 5.3.0. SCOPE.mdx exists (locale tiers, two workstreams, five invariants). The
+runtime-flag register exists with per-flag verdicts and a list of each drift. The proof it's a live
 discipline rather than a one-time cleanup: the 5.2.0 reduce (made under time pressure in a parallel
 session) skipped its releases.mdx row and left release.config.json stale — and the 5.3.0 prep
-**caught and repaired both** as a matter of course.
+**caught and repaired both** as part of its normal checklist.
 
 **R6 — breaking sweeps mid-campaign: held.** No breaking cosmetic batch landed mid-campaign;
 #875 stays parked for the next major. The tax of the earlier sweep kept surfacing as key-rot
@@ -85,8 +85,8 @@ repaired on contact, reinforcing the ship-whole-or-wait rule.
 | Track                     | Plan           | Actual                                                                                                                                                                                                                                                                        |
 | ------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 — demo truth            | days           | #861 shipped (shared resolver, zero smoke flips, two #822 acceptance rows); demo repointed; /trace added beyond scope. #894 (structural lag check) open.                                                                                                                      |
-| 2 — measurement re-anchor | days           | #885 scorecard + revived automated ledger + cadence rule + truth-passes; two unsigned drifts recorded.                                                                                                                                                                        |
-| 3 — decision session      | hours          | Dissolved into per-fork adjudication; every fork closed same-day.                                                                                                                                                                                                             |
+| 2 — measurement re-anchor | days           | #885 scorecard + revived automated ledger + cadence rule + truth-passes. Two unsigned drifts recorded.                                                                                                                                                                        |
+| 3 — decision session      | hours          | Dissolved into per-fork adjudication. Every fork closed same-day.                                                                                                                                                                                                             |
 | 4 — #825, probe-first     | the funded one | Rewritten by the addendum, then exceeded: 5.1.0 (splice, $0), 5.2.0 (nordic), 5.3.0 (from-scratch v2.2.0, salvaged from the archive) — the "funded campaign" ultimately spent ~3.6 A100-h once, and its artifact shipped after the calculus changed rather than being re-run. |
 | 5 — scope re-declaration  | half a day     | SCOPE.mdx + the flag register (which found two default split-brains, #895) + plan/README marked historical.                                                                                                                                                                   |
 
@@ -109,7 +109,7 @@ The project followed all four of the review's "what not to do" rules:
    leg — running the _failed candidate_ over the floor to show the class recovers — is the
    template for de-risking every future promote against that class.
 
-2. **Salvage-first now has GPU-scale receipts.** Twice in three days the cheapest decisive step
+2. **Salvage-first now has GPU-scale receipts.** Twice in three days the cheapest step that settled the question
    replaced a training run: the tokenizer probe replaced the #825 retrain class entirely, and
    the v220 re-check replaced a same-shape rerun. Both were pre-registered _before_ measurement,
    with explicit falsified-by-copy branches. "No GPU while an archived artifact dominates the
@@ -119,8 +119,8 @@ The project followed all four of the review's "what not to do" rules:
    held under the old calculus and the SI bar failed as-registered under the new one (then went
    to a fork, by the book). Post-ship: the standing 40-row FR harness — re-run only because a
    retrain directive triggered salvage-first — caught #949 on the _shipped_ line. The gap it
-   exposed (no fr.street-class floor; golden-dev FR is postcode-anchored canonical) is the next
-   check-spec improvement. It matches the review's R1: the blind spot was a subset nobody
+   exposed (no fr.street-class floor, and golden-dev FR is postcode-anchored canonical) is the next
+   check-spec improvement. It matches the review's R1: the blind spot was a subset no run had
    re-measured.
 
 4. **Introspection as a product surface.** #941's parse-trace + visualizer turns the decode path
@@ -139,10 +139,10 @@ The project followed all four of the review's "what not to do" rules:
 
 |                         | 07-01 (v4.16.2/v5.0.0 line)           | 07-04 (v5.3.0)                                          |
 | ----------------------- | ------------------------------------- | ------------------------------------------------------- |
-| CZ wrong-city           | 44% (150-row read; 22.4% at n=1k)     | **6.6%**                                                |
+| CZ wrong-city           | 44% (150-row read), 22.4% at n=1k     | **6.6%**                                                |
 | PL wrong-city           | 30% / 7.1%                            | **6.2%**                                                |
 | SK / SI wrong-city      | unmeasured                            | **6.6% / 11.4%** (SI floored by #942)                   |
-| FR bare street-intact   | 90%-era claim; demo-only fix off-line | **34/40 (85%)**, on the main line, anchored 37/40       |
+| FR bare street-intact   | 90%-era claim. Demo-only fix off-line | **34/40 (85%)**, on the main line, anchored 37/40       |
 | SE resolve              | 90.2%                                 | **94.8%**                                               |
 | Åbo (the exonym case)   | 859 km                                | **0.12 km**                                             |
 | US coord p50            | 3.31 km                               | **3.27 km** (identical through three model generations) |
@@ -163,17 +163,17 @@ level_. Guarantee-by-construction design plus byte-level verification produced t
   both small.
 - **#897** residual wrong-city mechanics (span truncation → namesake binding) — the next
   model-side question, now directly separated from everything the splices fixed.
-- **Calibration re-fit** — the carried isotonic tables now sit under from-scratch weights; the
+- **Calibration re-fit** — the isotonic tables fitted to the previous weights now sit under from-scratch weights. The
   standing recommendation has real force for the first time.
 - **#727 span-head / CharCNN** — the two architecture directions, both still correctly parked
   behind evidence they'd need.
 
 ## The direct caveats
 
-Three days is a sprint rather than a trend; the four-releases-in-four-days cadence is sustainable only
+Three days is a sprint rather than a trend. The four-releases-in-four-days cadence is sustainable only
 because three of the four shipped pre-existing artifacts. The SI trade shipped today is real
 (−1.5pp resolve, +2.7pp wrong-city at the model level) and its floor is a resolver behavior —
-if #942 ever regresses, SI regresses with it, which is why the insurance leg belongs in the
+if #942 ever regresses, SI regresses with it. For that reason the insurance leg belongs in the
 standing battery. And the parallel-session bookkeeping lapses (5.2.0's row, the config) show the
 process still depends on the _next_ careful actor; #894-class structural checks are how that
 dependency retires.
@@ -205,7 +205,7 @@ had been silently degraded since July 1** — three stacked failures, each maski
 3. Deepest: **#861's shared cascade had never executed in production at all** (#959). Its
    `createWOFResolver` import hit a deliberate webpack barrel-bypass alias whose comment still
    said "createWOFResolver is never bundled" — a premise that went stale the day #861 merged.
-   The smoke rows this review cites pass in CI builds; production diverged invisibly.
+   The smoke rows this review cites pass in CI builds. Production diverged invisibly.
 
 The repair kept the house naming and migrated the wire (operator direction): one tolerant
 boundary (`normalizeReleasesManifest`), the publisher on house keys, the R2 manifest migrated
@@ -214,19 +214,19 @@ Playwright: an address-point rooftop hit and an SI village through the browser c
 on both — all three tiers working together in production **for the first time since July 1**.
 
 The corrected R3 verdict is that the code converged, but production did not run the converged
-code. The caveat this review already carried, "the process still depends on the next careful
+code. The caveat this review already stated, "the process still depends on the next careful
 actor", now has four examples instead of one. #894-class structural checks are overdue.
 
 ### The v5.2.0 grading claim this document inherits is also wrong
 
-The model-line table and the release notes carry v5.2.0's "14/14 per-locale non-inferiority
+The model-line table and the release notes repeat v5.2.0's "14/14 per-locale non-inferiority
 pass." The #945 investigation found that **9 of the 16 release-grading baselines were byte-copies
 of the v1 candidate's dumps** — never re-run against the artifact that shipped. Eight copies were
-benign; the ninth was FR, the one leg where v2 in fact differed, and it was a regression
+benign. The ninth was FR, the one leg where v2 in fact differed, and it was a regression
 (resolved-p50 2.64 → 4.12) whose root cause predates every model: the FTS sanitizer has fused
 intra-token punctuation since #95, unmatchable for every hyphenated name, masked for years by
-tokenizers that never emitted hyphen-preserved values. The fix (#948) shipped inside v5.3.0;
-the corrected verdict is 7 legs graded + 9 copied, FR failing unobserved. Two standing rules
+tokenizers that never emitted hyphen-preserved values. The fix (#948) shipped inside v5.3.0.
+The corrected verdict is 7 legs graded + 9 copied, FR failing unobserved. Two standing rules
 came out of the erratum: **never copy dumps across model labels**, and **tokenizer directories
 are immutable** (the v1 tokenizer was overwritten in place, making a direct re-grade impossible
 forever).
@@ -237,18 +237,18 @@ The measurement system kept finding things: the eval harness's coordinate conven
 to differ from production's (postcode point vs locality), and the repair became a declared
 **convention epoch** (2026-07-04) — the harness now scores what production serves, FR reads
 1.92 km under it, `postcodeConsistency` (#370) went default-ON behind a corrected check
-(FI 231 wins / 0 losses; US byte-flat), and every pre-epoch dump is retired from comparisons.
+(FI 231 wins / 0 losses, US byte-flat), and every pre-epoch dump is retired from comparisons.
 One false verdict was published and retracted within the hour along the way (a shell
 word-splitting bug ran check legs flagless) — caught because the code contradicted the
-measurement, which is the discipline working exactly as this review describes it.
+measurement. That catch is the discipline working exactly as this review describes it.
 
 ### The open list, re-scored at day's end
 
 - **#894** — correction upon checking: closed on 07-02 (#902, `version-parity.yml` + daily
-  schedule; verified passing against the live surfaces today). What the demo outage
+  schedule, verified passing against the live surfaces today). What the demo outage
   exposes is the adjacent gap: version parity is checked, **functional** parity is not — a
   scheduled live-demo Playwright smoke is the missing structural check, filed in today's triage.
-- **The #942 insurance leg in the standing battery** — this review recommended it; still to land.
-- **#949's fr.street check floor** — the convention epoch gave FR standing baselines; the check-spec
+- **The #942 insurance leg in the standing battery** — this review recommended it. It has not landed yet.
+- **#949's fr.street check floor** — the convention epoch gave FR standing baselines. The check-spec
   floor remains unwritten.
 - #897, the calibration re-fit, #727/CharCNN — unchanged.

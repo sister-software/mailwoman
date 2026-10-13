@@ -46,8 +46,9 @@ export const US_REGION_NAMES: ReadonlySet<string> = new Set(
  * the two disagree on what a token boundary is.
  */
 /**
- * Digit count above which a pure-numeric token stops being unambiguously a house
- * number. 1-4 digits are clearly numeric. 5 and up collide with postcodes,
+ * Digit count above which a pure-numeric token stops being unambiguously a house number.
+ *
+ * A token of 1-4 digits is a house number. 5 and up collide with postcodes,
  * so the proposal is emitted at neutral confidence and the reconciler decides.
  */
 export const MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS = 4

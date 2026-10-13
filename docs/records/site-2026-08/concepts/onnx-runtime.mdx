@@ -88,7 +88,7 @@ const session = await ort.InferenceSession.create("/mailwoman/model.onnx", {
 const results = await session.run({ input_ids, attention_mask })
 ```
 
-The browser path optionally uses **WebGPU** (where available) for GPU acceleration. WebGPU is enabled by default in modern Chrome and Edge; Firefox and Safari are catching up. When WebGPU is not available, the runtime falls back to WASM SIMD, which is roughly 2–3x slower but still fast enough for interactive use.
+The browser path optionally uses **WebGPU** (where available) for GPU acceleration. WebGPU is enabled by default in modern Chrome and Edge. Firefox and Safari are catching up. When WebGPU is not available, the runtime falls back to WASM SIMD. That path is roughly 2–3x slower but still fast enough for interactive use.
 
 `@mailwoman/neural-web` wraps this with the same API as `@mailwoman/neural` so consumer code rarely has to know whether it is running in Node or in the browser.
 
@@ -102,7 +102,7 @@ ONNX gives us portability. **int8 quantization** gives us a small enough file to
 | ONNX fp32 export          | 37 MB           |
 | ONNX int8 quantized       | 25 MB           |
 
-25 MB is the number Mailwoman ships. Combined with the WOF SQLite slim distribution (~35 MB), the total cold-load for the browser demo is about 60 MB. The browser caches everything on first load; subsequent visits are instant.
+25 MB is the number Mailwoman ships. Combined with the WOF SQLite slim distribution (~35 MB), the total cold-load for the browser demo is about 60 MB. The browser caches everything on first load, and subsequent visits are instant.
 
 For context, a single high-resolution photo on a typical news site is 200 KB to 2 MB. A modern app bundle is 5–20 MB. 60 MB is large but not unreasonable for a one-time cold load.
 
@@ -112,7 +112,7 @@ A few subtle issues come up during ONNX export:
 
 - **Dynamic axes.** The model needs to handle variable batch sizes and variable sequence lengths. Both are declared as "dynamic axes" during export. The exported model graph contains shape inference logic so the runtime can adapt at call time.
 - **Operations that have no ONNX equivalent.** Most PyTorch ops do. A few (some custom ROCm kernels, some experimental quantization ops) do not. Mailwoman avoids them.
-- **The `dynamo` exporter path.** PyTorch 2.x ships two ONNX exporters: the legacy TorchScript-based one and the newer `dynamo`-based one. The legacy path crashes on `transformers ≥ 5`'s attention masking implementation; we use the `dynamo` path with `onnxscript` post-processing.
+- **The `dynamo` exporter path.** PyTorch 2.x ships two ONNX exporters: the legacy TorchScript-based one and the newer `dynamo`-based one. The legacy path crashes on `transformers ≥ 5`'s attention masking implementation. We use the `dynamo` path with `onnxscript` post-processing.
 - **CPU-only export on this GPU.** ROCm + bf16 + ONNX tracing hangs on the lab's hardware. The model is moved to CPU before the export call. This is slow (a few minutes) but only runs at ship time rather than per-iteration.
 
 ## Where this lives in the code

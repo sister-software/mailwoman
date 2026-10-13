@@ -21,7 +21,7 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 
 ## Section order
 
-1. `# Title`: the surface, named as it is named in code.
+1. `# Title`: the surface, spelled as it is spelled in code.
 2. **Scope.** One paragraph: what this surface is and what it is not.
 3. **Interface.** The tables. Endpoints, parameters, return shapes, defaults.
 4. **Errors.** One closed table: stable code, one-line meaning, next step.
@@ -43,14 +43,14 @@ promise.
 > `/v1/geocode`, `/v1/batch`, `/v1/resolve`, and `/v1/reload` return `503`. `/v1/format` is the exception.
 > It is wired in-package from `@mailwoman/codex/address/format` and works without any engine method.
 
-Errors go in one closed table. Each row carries a stable code a caller can match on, one line of meaning, and
+Errors go in one closed table. Each row gives a stable code a caller can match on, one line of meaning, and
 the next step. A meaning that only restates the code's name gives the reader no information.
 
 | Status | Body                                                 | Explanation                                                      | Next step                                                               |
 | ------ | ---------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `501`  | `{ "error": "not implemented" }`                     | The engine has no `parse` method.                                | Wire `parse` on the engine object.                                      |
 | `503`  | `{ "error": "unavailable" }`                         | The engine method exists in the type but not in this deployment. | Check the data root and the resolver database path.                     |
-| `400`  | `{ "error": "invalid request body", "detail": "…" }` | The body failed validation.                                      | Read `detail` for the field; the raw validator shape is never returned. |
+| `400`  | `{ "error": "invalid request body", "detail": "…" }` | The body failed validation.                                      | Read `detail` for the field. The raw validator shape is never returned. |
 
 <!-- illustrative -->
 

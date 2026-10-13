@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fixture holds both halves of this publisher's join. That is what makes it worth having.
+ *   The fixture holds both halves of this publisher's join, so the tests exercise the join itself.
  *
  * `fixtures/es-bizkaia/ES.BFA.AD.001.gml` holds five `ad:Address` features copied out of the member
  * of `ES.BFA.AD.001.zip`, Abadiño's archive, and `components.gml` holds the seven features they

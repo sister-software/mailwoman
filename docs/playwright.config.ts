@@ -58,7 +58,7 @@ export default defineConfig({
 		},
 	],
 	// Playwright's web server is configuration-wide, and the `build` project writes `docs/build`
-	// rather than reading it, so the server starts only when the run selects just the `search` project.
+	// rather than reading it, so the server starts only when the run selects only the `search` project.
 	// A running `yarn workspace @mailwoman/docs serve` is reused.
 	webServer: SEARCH_ONLY
 		? {

@@ -79,7 +79,7 @@ const TEXT_CAPABLE_TYPES: ReadonlySet<string> = new Set(["string", "int32", "int
  * Reads a model graph's output signature.
  *
  * Returns a record carrying `unreadable` rather than throwing, so a rights record over
- * many packages reports the one graph it could not open instead of failing the whole pass.
+ * several packages reports the one graph it could not open instead of failing the whole pass.
  */
 export async function readModelGraph(modelPath: PathBuilderLike): Promise<ModelGraphRecord> {
 	if (!(await pathExists(modelPath))) {

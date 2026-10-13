@@ -44,7 +44,7 @@ export interface MapFrame {
  * Reaches asciify's guarded braille conversion from the outside.
  *
  * Constructed fresh per {@link rasterizeToFrame} call — cheap, since the state
- * is just two typed arrays sized to the cell grid.
+ * is two typed arrays sized to the cell grid.
  * The `write` sink is never invoked: this class only ever calls `_computeBrailleCells`
  * directly, never `rasterize`/`flush`.
  */

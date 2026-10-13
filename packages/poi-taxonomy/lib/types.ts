@@ -72,11 +72,11 @@ export interface CategoryRecord {
 	source: CategorySource
 	/**
 	 * Overture `taxonomy.primary` leaf ids that roll up into this canonical category —
-	 * i.e. the values a built `poi.db` actually stores.
+	 * i.e. the values a built `poi.db` stores.
 	 *
 	 * The seed taxonomy keys categories by curated ids (`supermarket`, `trail`),
-	 * but the db stores Overture leaves (`grocery_store`, `hiking_trail`, …);
-	 * this is the one-to-many translation layer between the two namespaces.
+	 * but the db stores Overture leaves (`grocery_store`, `hiking_trail`, …); this field
+	 * maps one canonical id to one or more leaves, translating between the two namespaces.
 	 * Omitted/empty ⇒ the id is its own probe id (identity — 21 of 23 seeds rely on that,
 	 * e.g. `hospital` = Overture `hospital`).
 	 *

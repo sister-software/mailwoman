@@ -3,7 +3,7 @@
 # One change against v8-cjk-kana (the CJK base: 0.9924 blended / 0.9821 municipality macro on the pre-registered JP
 # board, かすみがうら市 0 of 823 failed, 中新川郡上市町 121 of 136 failed): the JP corpus is `v8-jp-shi-2026-09-06`, the
 # same renderer, registers, sampler and seed, with `--upweight-pattern '市.+[町村]$:5'` — every selected train row whose
-# municipality carries 市 inside a 町 / 村 name (市川三郷町, 市貝町, 余市町, 高市郡高取町, 高市郡明日香村: five municipalities,
+# municipality contains 市 inside a 町 / 村 name (市川三郷町, 市貝町, 余市町, 高市郡高取町, 高市郡明日香村: five municipalities,
 # 21,043 of 19,587,889 source rows) appended four more times, each in its own register draw. No synthetic name. the
 # held-out 上市町 stays held out. The CN overlay and the 49-label head are unchanged. the vocabulary is re-sealed.
 #
@@ -13,7 +13,7 @@
 #
 # --- what the RUN must show (pre-registered, same scorer as the kana read) ---------------------------------------
 #   * `中新川郡上市町` on the JP board: failed rows of 136, against 121 (kana) / 66 (shared head). Fewer than 66 is the
-#     reading that says the weight reached the held-out name. fewer than 30 says it closed the class.
+#     reading that shows the weight reached the held-out name. fewer than 30 shows it closed the class.
 #   * `かすみがうら市` failed rows ≤ 5 of 823 (kana: 0) — the weight must not undo the kana register.
 #   * JP board blended ≥ 0.9924 − 0.002 and municipality macro ≥ 0.9821. more than 0.5 pp under either is the finding.
 #   * CN board `locality_unit` ≥ 11 of 14.

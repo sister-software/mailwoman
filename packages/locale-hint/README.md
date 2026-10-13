@@ -45,7 +45,7 @@ Stage 2 in the [Staged Pipeline Interface](https://github.com/sister-software/ma
 - **Bitter-lesson-safe:** script class, postcode regex patterns, known-format
   hits. No place-name memorization.
 - **Surfaces disagreement.** When the caller passes an explicit `--locale`
-  hint and the detector disagrees, the hint carries `detectorDisagreement: true`
+  hint and the detector disagrees, the hint sets `detectorDisagreement: true`
   so the coordinator can decide.
 
 ## Related

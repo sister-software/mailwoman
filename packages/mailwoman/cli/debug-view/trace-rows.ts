@@ -12,7 +12,7 @@ import type { GeocodeTrace } from "#geocode/session"
 // #region Shared
 
 /**
- * What a row shows where the datum genuinely does not exist, kept as a single constant
+ * What a row shows where the datum does not exist, kept as a single constant
  * so every kind of absence reads the same.
  */
 export const ABSENT = "—"
@@ -90,8 +90,8 @@ export function tokensRow(trace: GeocodeTrace | null): string {
 }
 
 /**
- * Per channel, how many pieces contributed a nonzero clue and which ones: `not fed` is
- * an unwired source while `0/12` is a wired channel that matched no entry.
+ * Per channel, the count of pieces that contributed a nonzero clue and which ones:
+ * `not fed` is an unwired source while `0/12` is a wired channel that matched no entry.
  */
 export function channelsRow(trace: GeocodeTrace | null): string {
 	if (!trace) return ABSENT
@@ -121,7 +121,7 @@ export function channelsRow(trace: GeocodeTrace | null): string {
 
 /**
  * What the decode did: algorithm, mean per-token confidence, component sequence,
- * priors that actually contributed a nonzero bias and repair passes that changed a label.
+ * priors that contributed a nonzero bias and repair passes that changed a label.
  */
 export function decodeRow(trace: GeocodeTrace | null): string {
 	if (!trace) return ABSENT

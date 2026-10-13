@@ -243,7 +243,7 @@ export async function scorerCrossStateEval(
 		dGbt > MIN_MEANINGFUL_F1_DELTA
 			? `**The GBT win GENERALIZES across states** — trained on ${TRAIN_STATE}, it still beats the FS baseline on ${EVAL_STATE} ` +
 				`clustering F1 (${pct(gbtArm.f1)}% vs ${pct(fs.f1)}%, ${sgn(dGbt * 100)}${(dGbt * 100).toFixed(1)}pp). The learned scorer ` +
-				`isn't fitting ${TRAIN_STATE}-specific structure; the over-merge signal it learns transfers. This is the strongest ` +
+				`isn't fitting ${TRAIN_STATE}-specific structure. The over-merge signal it learns transfers. This is the strongest ` +
 				`evidence yet for the #603 production GBM — one model, trained once, helps a state it never saw.`
 			: dGbt < -MIN_MEANINGFUL_F1_DELTA
 				? `**The GBT win does NOT generalize** — trained on ${TRAIN_STATE}, it is WORSE than the FS baseline on ${EVAL_STATE} ` +

@@ -8,7 +8,7 @@
  *   confidence with a correct/incorrect label, the `(score, correct?)` pairs the isotonic fitter
  *   (`fit-isotonic-calibration.py`) consumes.
  *
- *   Calibration is over predictions (spans the model emitted). It measures how often the model is
+ *   Calibration is over predictions (spans the model emitted). It measures the rate at which the model is
  *   right when it emits tag T at confidence C. Iterate the decoded tree's spans. Use gold only
  *   used only to label them.
  *

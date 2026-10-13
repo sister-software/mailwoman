@@ -30,4 +30,4 @@ node scripts/link-dev-weights.ts
 ```
 
 Links the country lexicon and street-morphology FST into the package dir. No derived artifacts
-need building — the overlay is lexicons-only at this stage.
+need building. At this stage the package ships only the two lexicon files.

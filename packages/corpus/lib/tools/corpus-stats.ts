@@ -57,7 +57,7 @@ export interface CorpusStatsOptions {
 	parquetPath: string
 	outputPath: string
 	/**
-	 * Read at most this many rows per parquet file.
+	 * Read at most this number of rows per parquet file.
 	 */
 	limitPerFile?: number
 }

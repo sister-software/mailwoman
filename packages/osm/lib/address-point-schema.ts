@@ -53,7 +53,7 @@ export async function createOSMAddressPointTables(db: Kysely<OSMAddressPointData
 }
 
 /**
- * Build after the bulk load so the spine index does not tax streaming inserts.
+ * Build after the bulk load so the spine index is not updated on every streaming insert.
  */
 export async function createOSMAddressPointIndexes(db: Kysely<OSMAddressPointDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_ap_h3").on("address_point").column("h3_cell").execute()

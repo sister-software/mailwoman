@@ -82,7 +82,7 @@ export interface NIOSMParseStats {
 }
 
 /**
- * How many distinct malformed values to retain.
+ * The count of distinct malformed values to retain.
  *
  * The counter is the signal.
  * The samples are the diagnosis.
@@ -107,7 +107,7 @@ export interface NIPostcodeRecord {
 	latitude: number
 	longitude: number
 	/**
-	 * How many OSM elements attested this postcode.
+	 * The count of OSM elements that attested this postcode.
 	 *
 	 * This is coverage evidence.
 	 * A database consumer can distinguish a one-node guess from a 40-building consensus.

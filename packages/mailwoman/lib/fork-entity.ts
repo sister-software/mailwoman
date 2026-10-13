@@ -79,7 +79,7 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 
 	if (!exact.length) return null
 
-	// One venue often has several nearby rows.
+	// One venue can have several rows a short distance apart.
 	// Merge them, keeping the most confident row.
 	const entities: Array<(typeof exact)[number]> = []
 
@@ -211,7 +211,7 @@ export function probeVenueNearAnchor(
 
 	if (!exact.length) return null
 
-	// Merge nearby duplicate rows, as in probeForkEntity.
+	// Merge duplicate rows a short distance apart, as in probeForkEntity.
 	const entities: Array<(typeof exact)[number]> = []
 
 	for (const hit of exact) {
@@ -376,7 +376,8 @@ export function probeVenueNearAnchorFolded(
 /**
  * The fewest words the leading-word retry may probe with.
  *
- * A one-word remainder such as `Ivy` from `The Ivy` is a common noun more often than one venue's name.
+ * A one-word remainder such as `Ivy` from `The Ivy` is treated as a common noun
+ * rather than one venue's name.
  */
 const LEADING_WORD_RETRY_MIN_REMAINDER = 2
 

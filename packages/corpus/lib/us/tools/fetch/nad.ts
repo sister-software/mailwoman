@@ -9,8 +9,8 @@
  *
  *   - Bounded per-chunk page concurrency (4× speedup at safe pressure)
  *   - 5× larger page size (5 000 vs. the old bash fetcher's 2 000) — fewer round-trips per chunk
- *   - Honest `complete: true` flag: only set when every page in the chunk fetched cleanly
- *   - Built-in fetch with gzip/brotli decompression (no curl + Python subprocess tax)
+ *   - A `complete: true` flag that is set only when every page in the chunk fetched without error
+ *   - Built-in fetch with gzip/brotli decompression (no curl or Python subprocess per page)
  *   - Per-chunk manifest with sha256 + record count + error count
  *
  *   ## Source layout

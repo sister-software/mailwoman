@@ -40,7 +40,7 @@ export interface MapHTMLOptions {
 	title?: string
 
 	/**
-	 * Selects the Protomaps basemap flavor, defaulting to `light`, over which the markers read clearly.
+	 * Selects the Protomaps basemap flavor, defaulting to `light`, which keeps contrast with the markers.
 	 */
 	flavor?: MapFlavor
 

@@ -27,9 +27,9 @@ Ink is reserved for interactive interfaces and must sit behind a dynamic route s
 ## Dependency rules
 
 - The root router never imports command implementations statically.
-- Root command summaries live in the router; root help does not load commands to discover metadata.
+- Root command summaries are defined in the router. Root help does not load commands to discover metadata.
 - Validation happens before heavy runtime imports.
-- Command results go directly to stdout; diagnostics and progress go to stderr.
+- Command results go directly to stdout. Diagnostics and progress go to stderr.
 - Machine output never passes through an Ink frame.
 - Shared domain policy lives outside command adapters.
 - Process argument access lives in `@mailwoman/core/scripting/arguments`. Cleanup and logging remain in the heavier

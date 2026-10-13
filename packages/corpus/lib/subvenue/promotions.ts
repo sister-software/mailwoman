@@ -60,8 +60,8 @@ export interface SubVenuePromotion {
  * This ledger is the only input that sets `curated: true` on a machine-derived surface.
  * Rejections stay in the ledger so the system can reject duplicate proposals until new evidence arrives.
  *
- * The span proposer in `packages/neural/lib/venue/structure.ts` ships its English designators
- * without a locale gate, so a rejection here guides recipes only and does not stop the proposer.
+ * The span proposer in `packages/neural/lib/venue/structure.ts` ships its English designators without
+ * a locale restriction, so a rejection here guides recipes only and does not stop the proposer.
  */
 export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	// wing
@@ -171,7 +171,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "france.jsonl 2026-08-05 (251,260 rows), 40 hits; all 19 shape hits enumerated",
 	},
 
-	// gate: the English surface ships without modifier eligibility.
+	// The airport gate designator: the English surface ships without modifier eligibility.
 	// These entries cover its localized forms.
 	{
 		designatorID: "gate",

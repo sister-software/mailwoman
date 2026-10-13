@@ -1,6 +1,6 @@
 # Typed evidence and derivation — design spec
 
-**Status:** implemented 2026-09-04/05 (plan Tasks 1–10; receipts below). **Written:** 2026-08-21.
+**Status:** implemented 2026-09-04/05 (plan Tasks 1–10, receipts below). **Written:** 2026-08-21.
 **Public companion:** [`docs/superpowers/plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md). This spec implements the first increment of that design record.
 **Related:** #1571 (inferential resolution), #1685 (coverage basis, landed), #1756 (`parent_fallback_retry` inert).
 
@@ -24,7 +24,7 @@ None of them can exchange that information with the others.
 | Home                                       | Vocabulary                                | Confidence / status axis                                                             |
 | ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------ |
 | `packages/bdc/lib/sdk/plausibility.ts`     | `filing` \| `physical_plant` \| `abstain` | `coverage_confidence: high \| low \| insufficient_survey_data`, plus per-axis detail |
-| `packages/resolver/lib/street-evidence.ts` | one bit — `hasStreetName`                 | none; fails open unconditionally                                                     |
+| `packages/resolver/lib/street-evidence.ts` | one bit — `hasStreetName`                 | none, fails open unconditionally                                                     |
 | `packages/filer/` (`filer.db`)             | `filer_edge.relationship`                 | `assertion: authoritative \| inferred`, with a DB check constraint                   |
 
 `filer.db`'s vocabulary is the strictest of the three, and SQL enforces it:
@@ -45,7 +45,7 @@ inferred         parent_company 368 …
 ```
 
 AGENTS.md describes what three independent implementations of the same idea indicate: there was no
-shared tool to find, rather than a shared tool that nobody found.
+shared tool to find, rather than a shared tool that no contributor found.
 
 ### 1.2 The check is built and has never been called
 
@@ -102,12 +102,12 @@ A run over the full board (591 rows) with production defaults produced:
   INERT                      :  parent_fallback_retry (196 firings, 196 nothing, 0 conversions) — #1756
 ```
 
-This spec depends on the 96 locality-band rows, which fall into **several classes**:
+This spec depends on the 96 locality-band rows. Those rows fall into **several classes**:
 
 | Class                                                                                                                                                                                                   | Rows       | Would an exclusion be correct?                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------- |
 | Street fragment mis-tagged `locality` — `locality=Avenida` ← `Avenida Corrientes`; `locality=de Catalunya` ← `Rambla de Catalunya`; `locality=Turner St` ← `…Garrod Building, Turner St, London E1 2AD` | several    | **Yes.** Same shape as the FR date-name class that earned the +6.0 pp |
-| POI mis-tagged `locality` — `locality=Statue of Liberty`; `locality=Great Mosque of Niamey`                                                                                                             | some       | Yes; poi.db may also hold them                                        |
+| POI mis-tagged `locality` — `locality=Statue of Liberty`; `locality=Great Mosque of Niamey`                                                                                                             | some       | Yes, poi.db may also hold them                                        |
 | Junk span — `locality=New` ← `New Territories, Hong Kong`; `locality=near NAFTI`                                                                                                                        | few        | Yes                                                                   |
 | **Fold / surface-form miss** — `locality=Tel Aviv-Yafo`; `locality=São Paulo - SP`; `locality=Co. Westmeath`; `locality=ХУД - 15 хороо`                                                                 | unmeasured | **No. This is the trap.**                                             |
 
@@ -149,8 +149,8 @@ later `@mailwoman/match` all need this package. A dependency on `@mailwoman/core
 
 **`CoverageBasis` and `supportsExclusion` move here from `@mailwoman/core/layers`, which re-exports
 them.** Evidence cannot depend on core. The alternative is for each package to declare its own copy of
-the same three strings, which AGENTS.md records as a defect generator: _when two copies must agree,
-share the FUNCTION; sharing the constants proves nothing_. The #861 literals matched for the
+the same three strings. AGENTS.md records that pattern as a defect generator. When two copies must
+agree, they share the function, because shared constants do not prove that the copies behave alike. The #861 literals matched for the
 interface's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
 core. Only the vocabulary and the check move.
 
@@ -171,10 +171,10 @@ type Evidence =
 
 The type enforces these rules:
 
-- **Observation** — retrieved from a named source at a named vintage. It never carries a score.
+- **Observation** — retrieved from an identified source at a stated vintage. It never holds a score.
 - **Exclusion** — proves a candidate impossible. It can be constructed **only** through
   `requireExclusionBasis`, and no public constructor skips the check.
-- **Relation** — structural compatibility between entities. It carries `assertion`, and it carries a
+- **Relation** — structural compatibility between entities. It holds `assertion`, and it holds a
   `score` only when `assertion === "inferred"`. This moves `filer.db`'s check constraint into the type
   system.
 - **Prior** — changes probability. A prior can never, by itself, prove or exclude.
@@ -233,7 +233,7 @@ The arms are ordered by what can be built today rather than by expected value.
 
 ### 4.1 GB spatial existence — `designated`, ready now
 
-`uprn.db` carries designated coverage and no names, so the GB probe is spatial rather than lexical: _does
+`uprn.db` holds designated coverage and no names, so the GB probe is spatial rather than lexical: _does
 any designated address point exist within R of this candidate?_ A candidate landing in a designated
 cell with no UPRN inside R warrants one negative bit.
 
@@ -242,7 +242,7 @@ This arm needs no new artifact. `R` is a parameter with a measured default rathe
 ### 4.2 US block completeness — `surveyed`, three columns
 
 The US has no designated national address register in public hands. `CoverageBasis.Surveyed` is the
-applicable basis, which means the project measures completeness itself against an independent
+applicable basis. Under that basis the project measures completeness itself against an independent
 reference. That reference is Census PL 94-171 table H1, verified as follows:
 
 ```
@@ -321,11 +321,11 @@ Run these before building the arms.
    mis-tag (an exclusion would be correct) and fold failure (an exclusion would be wrong)? The
    denominator is 187, and `mwdev_constraints` already produces the rows. **If fold failures
    dominate, fold repair ships before negative evidence does.** In that case the spec has falsified
-   its own first arm, which is the intended outcome.
+   its own first arm. That is the intended outcome.
 2. **GB arm on the board.** Compare negative mode on and off, demote-only. The bar is the strata table
    rather than a pooled headline.
 3. **Gauntlet 369:** no regression.
-4. **`plausibilityCheck` suite:** passes unchanged, which shows §4.3 is lossless.
+4. **`plausibilityCheck` suite:** passes unchanged. That result shows §4.3 is lossless.
 5. **Trace-off walk:** byte-identical to today. This confirms that the new projection has no effect
    when no sink is attached.
 
@@ -351,7 +351,7 @@ Run these before building the arms.
 - **Occupancy / vacancy as an address-level layer.** Whether inferred occupancy constitutes personal
   data at the UK/EU granularity is an open question for counsel. Census H1 vacancy is a _published
   block aggregate_ and has a materially different legal position from address-level records. That
-  distinction is worth putting to counsel as its own narrow question. Neither ships here.
+  distinction should go to counsel as its own narrow question. Neither ships here.
 - **Removal-power exclusions.** Exclusions stay demote-only until §6.2 has a number.
 - **Central place theory, naming families, terrain masks.** These belong to later increments of the
   companion plan.
@@ -363,11 +363,11 @@ Run these before building the arms.
 
 | Decision        | Choice                                         | Why                                                                       |
 | --------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| Scope           | negative evidence **and** the derivation shape | an exclusion nobody can see in the result is untrustable                  |
+| Scope           | negative evidence **and** the derivation shape | an exclusion hidden from the result is untrustable                        |
 | Exclusion power | demote only, one bit                           | bounds the worst case at the model's own ranking                          |
-| Core home       | new `@mailwoman/evidence` workspace            | three consumers, two of them leaf; core's data weight is the blocker      |
+| Core home       | new `@mailwoman/evidence` workspace            | three consumers, two of them leaf, core's data weight is the blocker      |
 | First arm       | GB spatial                                     | the only designated artifact that exists                                  |
-| US basis        | `surveyed` rather than `designated`            | no public designated US address register; H1 is the independent reference |
+| US basis        | `surveyed` rather than `designated`            | no public designated US address register, H1 is the independent reference |
 | FR arm          | probe-conditional                              | a blanket per-commune designation claim would be false                    |
 
 ## Receipts (2026-09-05)

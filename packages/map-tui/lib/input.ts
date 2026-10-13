@@ -152,7 +152,7 @@ export interface DecodedInput {
 	events: MapTUIInput[]
 	/**
 	 * An unresolved escape fragment from the end of the chunk to prepend to the next,
-	 * empty when the chunk ended cleanly.
+	 * empty when the chunk ended on a complete sequence.
 	 */
 	pending: string
 }

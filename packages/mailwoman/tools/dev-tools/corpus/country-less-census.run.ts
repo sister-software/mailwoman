@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Asks the gazetteer which non-ISO country rows in a corpus file it can attribute to a country.
- *   Reports how many rows remain unattributed.
+ *   Reports the number of rows that remain unattributed.
  *
  *   `v0.6.0-register-surface` contains 4,765 rows whose `country` reads `ZZ`, the ISO 3166-1 user-assigned
  *   range rather than a country, every one with `locale: und` and `source: synth-fragment`. The recipe that

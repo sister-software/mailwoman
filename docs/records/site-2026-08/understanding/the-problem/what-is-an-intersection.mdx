@@ -12,7 +12,7 @@ tags:
 
 # What is an intersection address?
 
-An intersection address identifies a location by the crossing of two streets. Unlike a conventional street address ("350 5th Ave"), it does not specify a building number. It tells the reader to find where the two streets meet. This form is common in urban navigation, emergency dispatch, and some countries (notably Japan) where the street-address system is entirely different.
+An intersection address identifies a location by the crossing of two streets. Unlike a conventional street address ("350 5th Ave"), it does not specify a building number. It tells the reader to find where the two streets meet. This form is common in urban navigation, emergency dispatch, and some countries (Japan among them) where the street-address system is entirely different.
 
 ## Why intersections exist
 
@@ -22,7 +22,7 @@ Today, intersections persist for three reasons:
 
 1. **Navigation.** "Broadway and 42nd" is more recognizable to a New Yorker than "1501 Broadway," even though they describe the same block.
 2. **Emergency dispatch.** 911 operators use intersections as fallback locations when the caller does not know the exact address. "I'm at the corner of 5th and Main" is a valid location for a dispatcher.
-3. **Countries without street numbers.** Japan, Korea, and some other East Asian addressing systems do not use building numbers along named streets. Japanese addresses use block-based numbering (chōme/banchi/gō). Intersection-based routing is the closest analogue to "cross streets" navigation.
+3. **Countries without street numbers.** Japan, Korea, and some other East Asian addressing systems do not use building numbers along streets. Japanese addresses use block-based numbering (chōme/banchi/gō). Intersection-based routing is the closest analogue to "cross streets" navigation.
 
 ## The two forms
 
@@ -79,14 +79,14 @@ Both street names are multi-word. The parser must decide where one name ends and
 
 ### The Japanese problem
 
-Japanese addresses do not use named streets with building numbers. An intersection in Tokyo might be described as:
+Japanese addresses do not use street names with building numbers. An intersection in Tokyo might be described as:
 
 ```
 渋谷駅前交差点 (Shibuya Station Front Intersection)
 六本木交差点 (Roppongi Intersection)
 ```
 
-These are named intersections rather than street pairs. A parser expecting `StreetA & StreetB` format will fail on Japanese intersection references. The JP-specific tags in Mailwoman's schema (`district`, `block`, `sub_block`) are designed to handle block-based addressing, but named intersections (交差点, kōsaten) are a separate concept that would need schema expansion.
+These are intersections with their own names rather than street pairs. A parser expecting `StreetA & StreetB` format will fail on Japanese intersection references. The JP-specific tags in Mailwoman's schema (`district`, `block`, `sub_block`) are designed to handle block-based addressing, but intersection names (交差点, kōsaten) are a separate concept that would need schema expansion.
 
 ## How Mailwoman handles intersections
 

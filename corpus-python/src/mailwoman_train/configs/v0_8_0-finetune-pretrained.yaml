@@ -1,4 +1,4 @@
-# v0.8.0 — supervised fine-tune from the MLM-pretrained encoder (arm A of the decisive A/B).
+# v0.8.0 — supervised fine-tune from the MLM-pretrained encoder (arm A of the pretraining A/B).
 #
 # Phase 2 of pretrain -> fine-tune. Loads the MLM-pretrained encoder
 # (output-v080-mlm-pretrain/checkpoints/step-020000) via init_from (encoder weights only — no
@@ -13,7 +13,7 @@
 #   - label_smoothing 0.1: shared calibration change on both arms.
 #   - CRF off (crf_loss_weight 0.0): matches what trained stably. avoids the CRF-under-bf16 NaN.
 #   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
-#     so the comparison reflects the parser the product actually uses.
+#     so the comparison reflects the parser the product uses.
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \

@@ -27,7 +27,7 @@ export interface CountryCoverageFact {
 	country: string
 	/**
 	 * The promotion-eval verdict that hard-filtering this country is a pure win.
-	 * A hard-filter miss is almost always a genuine non-match.
+	 * A hard-filter miss is almost always a true non-match.
 	 *
 	 * Stored as a verdict rather than re-derived from `hardResolveRate` at read time,
 	 * since it is a judgment over a panel.
@@ -73,8 +73,8 @@ export interface CountryBBoxFact {
  * Facts a loaded gazetteer artifact declares about itself.
  *
  * Read from the artifact's own manifest tables at open time, stored on the
- * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from
- * the artifact they are actually resolving against.
+ * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts
+ * from the artifact they resolve against.
  *
  * `null` on the handle means the artifact predates the manifest.
  * Consumers then use the code constants.

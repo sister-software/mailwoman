@@ -166,7 +166,7 @@ describe("vlaanderen adapter against the fixture harvest", () => {
 		const rows = await readCanonicalRows(scratch.path, VLAANDEREN_ADAPTER_ID)
 		const voided = rows.find((r) => r.source_id === "vlaanderen-adres_90000002")
 
-		// The row is refused outright.
+		// The row is refused whole, with no partial row emitted.
 		// A void states that the number is unknown, so emitting the address with no
 		// `house_number` would record an absence the publisher never stated.
 		expect(voided).toBeUndefined()

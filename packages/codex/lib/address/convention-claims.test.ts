@@ -49,7 +49,7 @@ describe("stanceFromLayout", () => {
 			ObservationStance.Supports
 		)
 
-		// A street slot can be left empty, so a street-bearing layout is no evidence against the claim.
+		// A street slot can be left empty, so a layout with a street slot is no evidence against the claim.
 		expect(stanceFromLayout(claim, layout, ["house_number", "street", "locality"])).toBe(ObservationStance.Silent)
 		// A layout printing only a locality and a region describes a locality and falls outside the claim.
 		expect(stanceFromLayout(claim, layout, ["locality", "region"])).toBe(ObservationStance.Silent)

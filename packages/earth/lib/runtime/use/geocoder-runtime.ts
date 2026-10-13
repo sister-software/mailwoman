@@ -255,8 +255,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			if (!classifier) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
-			// The classify front half: pipeline import → query-shape/kind → neural runPipeline
-			// → flatten, with `onStage(1)` firing between shape and classify.
+			// The classify front half: pipeline import, then query-shape/kind, then neural
+			// runPipeline, then flatten, with `onStage(1)` firing between shape and classify.
 			const { tree, nodes, kindResult, timing } = await runClassifyStage(
 				input,
 				{

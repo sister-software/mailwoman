@@ -116,7 +116,7 @@ export function parseJSONStrict<T = unknown>(input: string): T {
  * because a non-array there is a schema change at the source rather than something to coerce.
  * An empty array would read as "none", which is not what a differently-shaped value means.
  *
- * @param scope Names the reader in the error, e.g. `coastal client`.
+ * @param scope The reader the error message identifies, e.g. `coastal client`.
  */
 export function parseJSONArray<T>(raw: string | null | undefined, scope: string): T[] {
 	if (!raw) return []

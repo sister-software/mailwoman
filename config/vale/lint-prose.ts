@@ -48,10 +48,9 @@ async function pathspecsFor(value: Surface): Promise<string[]> {
  * `scratchpad/` is covered by `.git/info/exclude` in some clones and by no rule in others,
  * because that file is per-clone and uncommitted.
  *
- * A listing built from git alone therefore lints these documents in one checkout and skips
- * them in the next, which is why a findings document written there could not be linted at all.
+ * A listing built only from git therefore lints these documents in one checkout and skips them in the next.
  *
- * Enumerating them from the filesystem gives every clone the same surface.
+ * A filesystem listing of these directories gives every clone the same surface.
  */
 const DOCS_DIRECTORIES_OUTSIDE_GIT: readonly string[] = ["scratchpad"]
 
@@ -83,21 +82,21 @@ async function documentsOutsideGit(): Promise<string[]> {
  * A run naming none skips those directories.
  *
  * The reason is the size of the existing set rather than a judgment that the prose there matters less.
- * Measured on 2026-09-29: 62 of 68 scratchpad documents carry 667 errors between
- * them, dominated by `styles.Negation` at 173 and `styles.Nothing` at 135,
- * while the tracked docs surface carries 0 errors.
+ * Measured on 2026-09-29: 62 of 68 scratchpad documents hold 667 errors between them,
+ * led by `styles.Negation` at 173 and `styles.Nothing` at 135.
+ * The tracked docs surface held 0 errors.
  *
- * Chaining that set into `yarn lint` would refuse every push until all 62 are rewritten.
+ * If `yarn lint` read that set, it would refuse every push until all 62 are rewritten.
  * A clone-specific exemption list cannot express the boundary either,
  * because each clone holds different scratch files.
  */
 const UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT = false
 
 /**
- * The file list split into one slice per core for concurrent Vale processes.
+ * The file list split into one chunk per core for concurrent Vale processes.
  *
  * Vale reads an explicit file list on a single core.
- * Each core processes its own slice, and the full run takes a few seconds.
+ * Each core processes its own chunk, and a lint of every file takes a few seconds.
  */
 function chunkFiles(files: readonly string[], chunkCount: number): string[][] {
 	return Array.from(chunks(files, Math.max(1, Math.ceil(files.length / chunkCount))))
@@ -143,7 +142,7 @@ async function runVale(
 
 /**
  * The closing line Vale prints per process.
- * A chunked run would otherwise repeat it once per slice.
+ * A chunked run would otherwise repeat it once per chunk.
  */
 const SUMMARY_LINE = /^[✔✖] (\d+) errors?, (\d+) warnings? and (\d+) suggestions? in (\d+) files?\.\n?$/mu
 

@@ -9,7 +9,7 @@
 
 domain:
   label: Domain
-  description: The address-parsing problem space — why addresses are hard, how postal systems work, what users actually type.
+  description: The address-parsing problem space — why addresses are hard, how postal systems work, what users type in practice.
 
 architecture:
   label: Architecture
@@ -141,7 +141,7 @@ fr-fr:
 
 ja-jp:
   label: Japan (ja-JP)
-  description: Japanese addressing — block-based numbering, no streets, chōme/banchi/gō, Phase 6 planning.
+  description: Japanese addressing — block-based numbering without street names, chōme/banchi/gō, Phase 6 planning.
 
 international:
   label: International
@@ -204,15 +204,15 @@ lexicon:
 
 checks:
   label: Checks & margins
-  description: Pre-registered promotion checks — floors, noise-honest margins, boards, and gauntlets.
+  description: Pre-registered promotion checks — floors, margins sized to run-to-run noise, boards, and gauntlets.
 
 process:
   label: Process discipline
-  description: How model work is run — pre-registration, named watches, envelopes, stop rules.
+  description: How model work is run — pre-registration, listed regressions to watch, envelopes, stop rules.
 
 method:
   label: Methods
-  description: Named diagnostic techniques — fingerprints, probes, ablations, and attribution tools.
+  description: Diagnostic techniques — fingerprints, probes, ablations, and attribution tools.
 
 doctrine:
   label: Doctrine
@@ -250,7 +250,7 @@ enterprise:
 
 multilocale:
   label: Multi-locale
-  description: Working across many address systems at once — mixed-country corpora and cross-locale evaluation.
+  description: Working across several countries' address systems at once — mixed-country corpora and cross-locale evaluation.
 
 overture:
   label: Overture Maps

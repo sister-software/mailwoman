@@ -7,7 +7,7 @@ audience: developers
 
 # Support
 
-Mailwoman is maintained in the open by a small team. Everything below routes to a real person; none
+Mailwoman is maintained in the open by a small team. Everything below routes to a real person. None
 of it routes to a queue.
 
 ## I found a bug
@@ -21,12 +21,12 @@ one that gets a follow-up question:
   bug about half the time.
 - What you expected, and what you got.
 - The output of `npx mailwoman doctor`. It names your versions, your Node build, and which data
-  layers you have, which is most of the reproduction.
+  layers you have. That output is most of the reproduction.
 - Whether the resolver was wired. A missing coordinate on a parse-only pipeline is the documented
   behavior rather than a bug.
 - The locale, if it is not `en-US`.
 
-A wrong parse is worth filing. Send the address that broke rather than a description of the class of
+File a wrong parse. Send the address that broke rather than a description of the class of
 address that broke: a concrete string can go straight into a test case, and a description cannot.
 
 If an AI coding assistant is filing the issue on your behalf, run `npx mailwoman skill install` first

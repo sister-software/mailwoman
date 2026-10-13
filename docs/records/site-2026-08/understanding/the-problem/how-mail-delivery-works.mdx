@@ -18,7 +18,7 @@ This article walks through what happens when you mail a letter, because the mech
 
 You drop a letter in a blue box or hand it to a carrier. The letter enters the USPS network at the nearest **processing and distribution center** (P&DC). There are about 250 of these in the United States. Each one serves a region roughly the size of a congressional district.
 
-At this point, nobody has read your address. The letter is in a bin with thousands of others, sorted only by rough destination zone. The destination ZIP code — not the street address — determines which P&DC it goes to next. This is the first hint that the postal system cares about routing codes more than precise addresses.
+At this point, your street address is still unread by any person or machine. The letter is in a bin with thousands of others, sorted only by rough destination zone. The destination ZIP code — not the street address — determines which P&DC it goes to next. This is the first hint that the postal system cares about routing codes more than precise addresses.
 
 ## Step 2 — OCR and the Remote Encoding Center
 
@@ -40,7 +40,7 @@ The +4 extension narrows this: it maps to a block face (one side of one street b
 
 The letter arrives at the destination post office, sorted into trays by carrier route and walk sequence. The carrier loads their vehicle (or satchel) and delivers.
 
-Carriers possess **local knowledge** that no database has. They know that the blue house on Elm Street is 142 Elm, even though the mailbox says 140. They know that the new apartment building at the end of the block uses the address of the demolished warehouse that stood there before, because USPS hasn't updated the delivery sequence yet. They know that the occupant of 15 Main Street moved to Florida six months ago and mail should be forwarded.
+Carriers possess **local knowledge** that no database has. They know that the blue house on Elm Street is 142 Elm, even though the mailbox reads 140. They know that the new apartment building at the end of the block uses the address of the demolished warehouse that stood there before, because USPS hasn't updated the delivery sequence yet. They know that the occupant of 15 Main Street moved to Florida six months ago and mail should be forwarded.
 
 This is the deepest layer of the postal system's fuzziness: the human at the end of the chain who overrides the machine's decisions.
 
@@ -51,8 +51,8 @@ If the address is malformed enough that even the REC operators cannot resolve it
 But typically, wrong addresses get handled earlier:
 
 - **Return to sender.** If the address exists but the recipient has moved, the letter gets a yellow sticker and goes back.
-- **Forwarded mail.** A filed change-of-address gives the letter a new barcode and sends it to the new destination. First-class mail forwarding orders last 12 months; after that, mail is returned.
-- **Carrier correction.** The carrier knows the delivery point. If the address is close but not quite right ("142 Elm" when the mailbox says "140"), the carrier corrects it without returning it. This is friction, but it works frequently enough that the system tolerates it.
+- **Forwarded mail.** A filed change-of-address gives the letter a new barcode and sends it to the new destination. First-class mail forwarding orders last 12 months. After that, mail is returned.
+- **Carrier correction.** The carrier knows the delivery point. If the address is close but not quite right ("142 Elm" when the mailbox reads "140"), the carrier corrects it without returning it. This is friction, but it works frequently enough that the system tolerates it.
 
 ## What this means for a parser
 
@@ -67,7 +67,7 @@ The postal system has **four layers of ambiguity resolution**, escalating from c
 
 A parser that returns **"I'm 70% sure this is Springfield IL, 25% Springfield MA, 5% Springfield MO"** is mimicking Layer 2 — human triage — before the letter ever leaves the sender's computer. It tells the downstream system: "you need more information before you can route this." That serves the consumer better than returning "Springfield IL" with 98% confidence because the gazetteer has a population-weighted default.
 
-The design principle for Mailwoman's confidence model: **a low-confidence correct answer is better than a high-confidence wrong one.** The postal system already works this way. The carrier would rather get an envelope that says "maybe 142 Elm St?" than one that says "definitely 140 Elm St" when the correct address is 142. An uncertain machine gets a second look from a human; a falsely confident one does not.
+The design principle for Mailwoman's confidence model: **a low-confidence correct answer is better than a high-confidence wrong one.** The postal system already works this way. The carrier would rather get an envelope marked "maybe 142 Elm St?" than one marked "definitely 140 Elm St" when the correct address is 142. An uncertain machine gets a second look from a human. A falsely confident one does not.
 
 ## See also
 

@@ -19,7 +19,7 @@ The fix is not to rewrite everything. It's to add **curatorial structure**: a st
 
 ### 1. The domain-education material (Tier 0 / Tier 0.5)
 
-The "Understanding Mailwoman" track opens with articles that establish the problem before proposing the solution. This is the correct order. The six Tier 0 articles — from "How mail delivery works" through "The 90% trap" — build a careful economic and structural case for why address parsing is harder than it looks and why a neural approach is justified. The "case for simple geocoders" appendix is especially well done: it steel-mans the alternatives rather than dismissing them, which gives the project intellectual credibility.
+The "Understanding Mailwoman" track opens with articles that establish the problem before proposing the solution. This is the correct order. The six Tier 0 articles — from "How mail delivery works" through "The 90% trap" — build a careful economic and structural case for why address parsing is harder than it looks and why a neural approach is justified. The "case for simple geocoders" appendix is especially well done: it steel-mans the alternatives rather than dismissing them. That treatment gives the project intellectual credibility.
 
 The Tier 0.5 postal concept articles (postcode, ZIP code, concordance, intersection, dual-address) add domain grounding that most geocoding documentation skips. These are concrete, well-exemplified, and educational.
 
@@ -53,9 +53,9 @@ The ~60MB cold-load budget is used as an architectural guardrail throughout the 
 
 A reader arriving at the docs has no way to answer "what works right now?" The information exists but is scattered across:
 
-- `plan/README.md` — says "Phases 0-3 shipped" but the status list is a bullet-point blob
+- `plan/README.md` — states "Phases 0-3 shipped" but the status list is a bullet-point blob
 - `v0-5-0-shipped.md` — detailed but buried in the plan directory
-- `how-it-works-now.md` — says what the pipeline looks like, but mixes shipped and in-progress features
+- `how-it-works-now.md` — describes what the pipeline looks like, but mixes shipped and in-progress features
 - `how-it-will-work.md` — lists what's in progress, some of which contradicts `how-it-works-now.md`
 - Several blog posts — written from a specific moment rather than maintained
 - `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, `STAGES.md` — each with its own status header, some stale
@@ -98,7 +98,7 @@ The project uses **Tier**, **Stage**, **Phase**, and **Thread** as organizationa
 - **Phase** — a plan milestone (Phase 0: Foundation, Phase 1: Corpus, Phase 2: Training, ...)
 - **Thread** — a v0.5.0 parallel workstream (Thread A1: tokenizer retrain, Thread B: kryptonite catalogue, ...)
 
-The docs acknowledge this problem — the glossary notes the Stage/Tier rename occurred on 2026-05-22 — but the old usage persists in shipped filenames (`stage2-step-001800-eval.md`, `PHASE_2_training.md` referencing "Stage 2" in the old sense). The `STAGES.md` document still bears a header that says "stages 1/2/2.5/candidate-list are unbuilt" while later sections say they shipped.
+The docs acknowledge this problem — the glossary notes the Stage/Tier rename occurred on 2026-05-22 — but the old usage persists in shipped filenames (`stage2-step-001800-eval.md`, `PHASE_2_training.md` referencing "Stage 2" in the old sense). The `STAGES.md` document still bears a header that reads "stages 1/2/2.5/candidate-list are unbuilt" while later sections report that they shipped.
 
 A first-time reader reading about the "staged pipeline" (six runtime stages) and then encountering "Stage 2 label expansion" (Tier 2 model vocabulary) in the plan docs has no way to resolve the conflict except by finding the rename note buried in the glossary.
 
@@ -116,7 +116,7 @@ The content itself is strong. The "two voices" post in particular could be a sta
 
 **Fix:** Add a 2-3 sentence "If you found this via search" preamble to each post, linking to a glossary or the project home. Something like:
 
-> **If you're new here:** Mailwoman is an open-source address parser. This post is about a training problem we debugged. The TL;DR is that two competing objectives inside the model were fighting each other. You don't need to know the project to follow the debugging story. Jump to [What we're building](pathname:///research/2026-05-24-two-voices-arguing#what-were-building-in-one-paragraph) for the 1-paragraph version.
+> **If you're new here:** Mailwoman is an open-source address parser. This post is about a training problem we debugged. In short, two competing objectives inside the model were fighting each other. You don't need to know the project to follow the debugging steps. Jump to [What we're building](pathname:///research/2026-05-24-two-voices-arguing#what-were-building-in-one-paragraph) for the 1-paragraph version.
 
 ### 5. The blog vs docs boundary is blurred
 
@@ -124,7 +124,7 @@ Several blog posts contain substantive technical explanations that belong in the
 
 - The v0.4.0 retrospective contains the definitive explanation of the cosine-LR meta-bug, the NAD source-rebalance effect, and the false-negative bucketing methodology — all referenced from `how-it-works-now.md` via external links
 - The "taming WOF" post is the project's best explanation of Who's On First's structural gotchas, but it lives in the blog rather than in the concepts articles
-- The "two voices" post contains the clearest explanation of dual-loss gradient dominance, which the concepts articles reference but don't fully replicate
+- The "two voices" post contains the clearest explanation of dual-loss gradient dominance. The concepts articles reference it but don't fully replicate it
 
 This means the most accessible and well-written versions of key technical explanations are in a part of the site (the blog) that readers don't treat as reference material.
 
@@ -152,14 +152,14 @@ Three full project-direction reviews were written on 2026-05-24 — by Codex, De
 
 A reader trying to understand "what went wrong with v0.4.0/v0.5.0 training" has five entry points with overlapping but different information.
 
-**Fix:** Consolidate into a single "training divergence investigation" document that references the blog posts and the reviews as historical artifacts but presents the current understanding in one place. The reviews can remain as-is with date stamps — they're useful as a record of the thinking — but add a README in `reviews/` that says "start here for the current state of understanding."
+**Fix:** Consolidate into a single "training divergence investigation" document that references the blog posts and the reviews as historical artifacts but presents the current understanding in one place. The reviews can remain as-is with date stamps — they're useful as a record of the thinking — but add a README in `reviews/` that reads "start here for the current state of understanding."
 
 ### 8. Required pages are absent
 
 There are several pages a new reader would expect that don't exist:
 
-- **Installation guide.** The docs have no page that says "here's how to install Mailwoman and parse your first address." The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
-- **API reference.** The staged pipeline interface and schema are documented, but there's no page that says "here's the `parse()` function signature, here's the return type, here's what `AddressNode` contains."
+- **Installation guide.** The docs have no page that shows how to install Mailwoman and parse a first address. The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
+- **API reference.** The staged pipeline interface and schema are documented, but no page gives the `parse()` function signature, the return type, and the fields of `AddressNode`.
 - **What you can use today.** A reader evaluating the project needs to know: can I install this and parse US addresses right now? What accuracy should I expect? What doesn't work? The answer is "yes, with caveats" — but that answer isn't the result shows stated anywhere.
 - **Demo explanation.** The demo page (`/demo`) runs in the browser with no explanation of what it's doing, what model it's using, or what the confidence numbers mean. A short "About this demo" section would bridge the gap.
 
@@ -195,15 +195,15 @@ There are several pages a new reader would expect that don't exist:
 
 ### `v0-5-0-shipped.md`
 
-- **Good:** The thread table with PR links is the cleanest status artifact in the docs.
+- **Good:** The thread table links each thread to its PR, so a reader can verify each status.
 - **Issue:** Buried at `plan/phases/v0-5-0-shipped.md` — a reader has to know it exists.
 - **Issue:** Still references B2 as "still cooking" (2600+ rows expected at time of writing). That's now stale.
 
 ### `ARCHITECTURE.md`
 
 - **Good:** The "Anti-patterns to avoid" section is valuable infrastructure hygiene.
-- **Issue:** Describes the torch shape as "Encoder-only + classification head" with 47 BIO labels and 16K tokenizer — the shipped product uses 21 labels and an A1 tokenizer context. The headnote says "training run that exercises them (C-train) is in progress" — that's now a known-diverged state.
-- **Issue:** The spaCy comparison, multi-head extension, and casual descriptions sections are ~60% of the document but will be read by almost nobody who needs to understand the architecture.
+- **Issue:** Describes the torch shape as "Encoder-only + classification head" with 47 BIO labels and 16K tokenizer — the shipped product uses 21 labels and an A1 tokenizer context. The headnote states "training run that exercises them (C-train) is in progress" — that's now a known-diverged state.
+- **Issue:** The spaCy comparison, multi-head extension, and casual descriptions sections are ~60% of the document and a reader who needs to understand the architecture will rarely read them.
 
 ### `SCHEMA.md`
 
@@ -212,7 +212,7 @@ There are several pages a new reader would expect that don't exist:
 
 ### Blog posts — collective notes
 
-- **Good:** The writing quality is high. The voice is direct (the v0.4.0 retrospective explicitly says we shipped with regressions and here's why). The technical explanations don't condescend.
+- **Good:** The writing quality is high. The voice is direct (the v0.4.0 retrospective explicitly states that we shipped with regressions and explains why). The technical explanations don't condescend.
 - **Issue:** Posts use internal shorthand (`§1`, `§3`, `Thread C-s`, `kryptonite catalogue`) without defining these references in each post. The "bisect-by-elimination" post references "yesterday's post" — the narrative chain is serial.
 - **Issue:** The blog feed page shows all five in reverse chronological order with no grouping or "start here" marker. A "Featured" or "Start here" post would help.
 - **Issue:** The tags system (`tags.yml`) is elaborate (29 tags for 5 posts) but underused — several tags apply to only one post and don't enable useful filtering.
@@ -284,6 +284,6 @@ The most direct sentence in the entire documentation is in `CONTEXT.md`:
 
 That gap is the project's reason to exist. The docs should make this sentence louder — it's the answer to the first question every visitor has: "why should I care about this project?"
 
-The second question is "can I use it today?" The docs should answer that too: "yes, with these caveats, and here's what's coming." The status page is the vehicle for that answer.
+The second question is "can I use it today?" The docs should answer that too: "yes, with these caveats, and these features are coming." The status page is the vehicle for that answer.
 
 The third question is "should I bet on this?" The Knowledge Ladder architecture, the Ship of Theseus migration, the direct retrospectives, and the browser-first constraint all make a strong case. The docsneed to present that case more directly to someone who isn't already inside the project's reasoning.

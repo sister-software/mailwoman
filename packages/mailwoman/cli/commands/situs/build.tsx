@@ -76,7 +76,7 @@ export const spec = {
  *
  * NH + HI have zero Overture address coverage in this release, so they're absent —
  * interpolation-only states.
- * VI (territory) included for completeness.
+ * VI (territory) is also included.
  * Harmless if the parser's region→slug map skips it.
  */
 const STATES_BY_COVERAGE = [

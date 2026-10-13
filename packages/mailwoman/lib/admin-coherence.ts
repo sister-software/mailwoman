@@ -211,7 +211,8 @@ export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
 /**
  * Builds the `admin_coherence` field for a forked-entity answer.
  *
- * The entity has a country but no ancestry, so a parsed region is usually `unverifiable`.
+ * The entity has a country but no ancestry, so a parsed region has no ancestor to match
+ * and can come back `unverifiable`.
  */
 export function forkedEntityCoherenceField(
 	roots: readonly AdminCoherenceTreeNode[],

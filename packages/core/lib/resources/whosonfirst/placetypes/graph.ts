@@ -37,7 +37,7 @@ export interface PlacetypeGraphLink {
  *
  * Each node and each (parent, child) edge appears exactly once.
  * See {@linkcode generatePlacetypeGraph} for why this is the preferred shape
- * when the root has many shared descendants (e.g. `planet`).
+ * when the root has descendants shared by several branches (e.g. `planet`).
  */
 export interface PlacetypeGraph {
 	root: string
@@ -51,7 +51,7 @@ export interface PlacetypeGraph {
  * Unlike {@linkcode generatePlacetypeTree}, this emits each node and each (parent, child) edge exactly once.
  * WOF placetypes form a DAG with heavy descendant sharing.
  *
- * For example, `installation` is a leaf reachable from many parents.
+ * For example, `installation` is a leaf reachable from more than one parent.
  * A nested tree duplicates every shared subtree under every parent path in that DAG
  * and blows up exponentially for roots like `planet` (~165 MB for the full hierarchy).
  *

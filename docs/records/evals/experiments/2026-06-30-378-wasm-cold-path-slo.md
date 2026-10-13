@@ -5,7 +5,7 @@ description: A cold-path accounting for the browser geocoder (model + candidate.
 
 # #378 — browser/WASM cold-path budget + SLO proposal
 
-We target the browser as a first-class runtime but have never written down a performance budget, so nothing
+We target the browser as a first-class runtime but have never written down a performance budget, so no document
 tells us which features are even shippable to a mid-range phone. This sets a proposed SLO and accounts for
 the cold path from measured artifact sizes + a node-side compute floor. **What's measured vs estimated is
 marked** — the in-browser P95 still wants a real device/headless trace (see _Open_).
@@ -14,8 +14,8 @@ marked** — the in-browser P95 still wants a real device/headless trace (see _O
 
 The browser geocoder has two distinct latency surfaces, and conflating them hides the real costs:
 
-1. **Cold load** — page open → first interactive parse. One-time; network-dominated.
-2. **Per-keystroke** — parse + resolve on each input change. Steady-state; compute + query dominated.
+1. **Cold load** — page open → first interactive parse. One-time and network-dominated.
+2. **Per-keystroke** — parse + resolve on each input change. Steady-state and dominated by compute + query.
 
 ### Proposed SLO
 
@@ -36,7 +36,7 @@ What the loader (`neural-web/loader.ts`) fetches and runs before the first parse
 | tokenizer + anchor + postcode bins | ~MB (estimated)                                                            | HTTP fetch                             | small                                                      |
 | `candidate.db` warmup              | **~12 cold byte-range fetches** (measured, candidate-table spike)          | sql.js-httpvfs over a **1.3 GB** R2 DB | not a full download — header + B-tree nodes only           |
 | model session-init                 | **126 ms** (measured, node native EP)                                      | local                                  | WASM EP is ~3–5× → est. ~400–600 ms in-browser             |
-| first (cold) parse                 | **219 ms** (measured, node; includes one-time lazy decoder/gazetteer init) | local                                  | amortized after the first parse                            |
+| first (cold) parse                 | **219 ms** (measured, node, includes one-time lazy decoder/gazetteer init) | local                                  | amortized after the first parse                            |
 
 Per-keystroke floor (node native EP, measured): **warm parse 5.7 ms**. The browser WASM EP runs ~3–5× slower,
 so a ~15–30 ms in-browser parse is the realistic estimate — comfortably inside the 50 ms parse budget. The
@@ -47,7 +47,7 @@ suspected per-keystroke bottleneck (DeepSeek S45).
 
 **Cold load is network-bound on the 29 MB model** rather than compute. The session-init (126 ms node → ~0.5 s WASM)
 and the ~12 candidate-table byte-range fetches are small beside a 29 MB sequential download. So the cold-load
-SLO is won or lost on **model transfer size**, which points the changes at: a smaller model (distillation /
+SLO is won or lost on **model transfer size**. That points the changes at a smaller model (distillation /
 structured pruning past int8), HTTP streaming + compile-while-download, and CDN edge-caching — not at the
 SQLite path.
 

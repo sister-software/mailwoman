@@ -290,8 +290,10 @@ const CONTENT_TYPES: Record<string, string> = {
 }
 
 /**
- * Extensions worth compressing; `.onnx`, `.model` and `.bin` are already entropy-dense
- * and the live demo serves them identity-encoded too.
+ * Extensions the test compresses.
+ *
+ * The `.onnx`, `.model` and `.bin` files are already entropy-dense and the live
+ * demo serves them identity-encoded too.
  */
 const COMPRESSIBLE_EXTENSIONS = new Set([".html", ".js", ".mjs", ".json", ".wasm", ".map"])
 
@@ -828,7 +830,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 		// ORT writes warnings to wasm stderr.
 		// They reach the page as console errors.
 		// `VerifyEachNodeIsAssignedToAnEp` fires on every session.
-		// Those messages would become page errors and make genuine page errors easy to miss.
+		// Those messages would become page errors and make the other page errors easy to miss.
 		if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
 			pageErrors.push(message.text())
 		}

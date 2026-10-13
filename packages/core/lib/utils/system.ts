@@ -11,7 +11,7 @@ import { arch, availableParallelism as nativeAvailableParallelism, cpus, platfor
 import { getHeapStatistics } from "node:v8"
 
 /**
- * How many threads can run at once, as the runtime measures it — the ceiling for a worker pool.
+ * The number of threads that can run at once, as the runtime measures it — the ceiling for a worker pool.
  */
 export function availableParallelism(): number {
 	return nativeAvailableParallelism()

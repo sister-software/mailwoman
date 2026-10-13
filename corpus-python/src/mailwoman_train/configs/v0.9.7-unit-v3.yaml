@@ -1,5 +1,5 @@
 # === v0.9.7-unit-v3 (#451 v3) — lower unit weight, the v0.9.6-v2 regression check fix. ============
-# v0.9.6-v2 (format-diverse unit recipe output @ synth-unit 2.5) decisively won the real-designator check
+# v0.9.6-v2 (format-diverse unit recipe output @ synth-unit 2.5) passed the real-designator check
 # (unit F1 0→95.4%, street +8pp negative-space) but breached the no-regression check: US
 # house_number 83.1→79.6 (-3.5, floor was -1pp. clean fp32 v1→v2 delta -1.5) and FR street/postcode/
 # locality -3..-4 (confounded by int8-vs-fp32 + FR noise. v1 did not hurt FR). DeepSeek's prescribed

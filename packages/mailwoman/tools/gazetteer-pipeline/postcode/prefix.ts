@@ -14,7 +14,7 @@
  *   than the prefix. The tier is a property of the source and is deliberately not overridable.
  *
  *   The US arm asserts a region by point-in-polygon under a unanimity rule, because a WOF gazetteer
- *   join contradicts the ZIP numbering plan more often.
+ *   join contradicts the ZIP numbering plan at a higher rate.
  */
 
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"

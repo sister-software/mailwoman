@@ -44,7 +44,7 @@ The `scorePair` function computes a match probability using:
 - **Label-free EM estimation** — `m`/`u` parameters learned via
   expectation-maximization without labeled training data
 - **Term frequency adjustment** — rare-value agreement (e.g., an unusual
-  organization name) up-weighted; common-value agreement down-weighted
+  organization name) is up-weighted, and common-value agreement is down-weighted
 - **Learned (GBT) scorer** — optional gradient-boosted tree scorer for
   single-dataset dedup, available via `scorer` hook
 

@@ -14,7 +14,7 @@ import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
 import { alignRow } from "@mailwoman/corpus/utils"
 ```
 
-`alignRow` lives on `./utils` rather than the barrel; the barrel re-exports `#adapters`,
+`alignRow` lives on `./utils` rather than the barrel. The barrel re-exports `#adapters`,
 `#build`, `#runner`, `#recipes/index` and `#types` only.
 
 ## What it produces
@@ -38,7 +38,7 @@ training pipeline (`corpus-python/`).
 | Module                      | Purpose                                                                |
 | --------------------------- | ---------------------------------------------------------------------- |
 | **`types.ts`**              | `CanonicalRow`, `LabeledRow`, `SourceProvenance`, `CorpusAdapter`      |
-| **`utils/align.ts`**        | Tokenize raw address → BIO label sequence; quarantine what refuses     |
+| **`utils/align.ts`**        | Tokenize raw address → BIO label sequence, and quarantine what refuses |
 | **`build.ts`**              | Drive the end-to-end build, write `labeled.jsonl` + `quarantine.jsonl` |
 | **`runner.ts`**             | Run one adapter or all of them, and emit the run manifest              |
 | **`synthesizers/*.ts`**     | Synthetic row generators (boundary stress, order variants, etc.)       |
@@ -89,15 +89,15 @@ mailwoman corpus fetch geonames-postal
 require thirteen before a source enters the training set. Read what follows before writing an
 adapter ([#2323](https://github.com/sister-software/mailwoman/issues/2323)).
 
-**Address role.** `CanonicalRow.addressRole` says what an address is the address of, from the
+**Address role.** `CanonicalRow.addressRole` records what an address is the address of, from the
 `AddressRole` vocabulary in `lib/types.ts`. Every adapter declares one and `runner.ts` stamps it on
-each row the adapter leaves unset; an adapter over a source with more than one address column sets
+each row the adapter leaves unset. An adapter over a source with more than one address column sets
 the field per row instead. Taiwan's company register is that case — the registered company address
 (公司地址) and the business address the economic ministry records for companies (營業地址) sit in
 separate columns of one row, and reading the file without the role field teaches the premise parser
 registered-office grammar.
 
-The field is required on `CorpusAdapter` and carries no default, because the answer is a property of
+The field is required on `CorpusAdapter` and has no default, because the answer is a property of
 the source that only the adapter's author has read. Ten of the 23 adapters here emit a non-premise
 role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
 `usgov-samhsa-treatment-locator`), three mailing (`invented-po-box`, `state-tx-notaries`,
@@ -108,8 +108,8 @@ role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
 [`@mailwoman/evidence`](../evidence/lib/status.ts) records what a publisher asserts, per field, in
 six values: `identity`, `address`, `geometry`, `observation`, `grammar`, `routing`. A company
 register is an authority on the identifier it issues while the registered-office string on the same
-row is an `observation` somebody filed. One verdict for the whole source cannot say both, which is
-why `lib/tools/fetch/index.ts` names the assertion and the role per entry rather than grading each
+row is an `observation` somebody filed. One verdict for the whole source cannot state both. For that
+reason `lib/tools/fetch/index.ts` names the assertion and the role per entry rather than grading each
 source once. The Korean permit registry (지방행정인허가데이터) is the worked example: it grants
 permit identity, and its address string is what a clerk typed in two address systems with no
 validation.
@@ -117,9 +117,9 @@ validation.
 **A label the build reads for obligations.** `license` holds a string, and `utils/license.ts` reads it
 through `readLicenseRecord` in `@mailwoman/core/license/record`, which resolves it to an SPDX expression
 and looks up that expression's recorded obligations. `--license-policy share-alike-free` refuses a row
-whose expression carries share-alike, and separately a row whose text cites a share-alike license while
-stating no grant of its own. Until 2026-09-27 the decision was an anchored prefix match over the column,
-which admitted the second class.
+whose expression includes share-alike, and separately a row whose text cites a share-alike license while
+stating no grant of its own. Until 2026-09-27 the decision was an anchored prefix match over the column.
+That match admitted the second class.
 
 Which terms the build elects for a dual-licensed source still sits in a docstring rather than in the data.
 BAN is `Licence Ouverte` or ODbL, and the `ban` adapter stamps the former. Still open.
@@ -137,12 +137,12 @@ terms. It is a backlog made checkable: **twenty-nine rows of 426 are ingest-elig
 `ingestEligibilityProblems()` answers for the other 397 with the reasons rather than a bare `false`.
 
 Two tables. The jurisdiction table enumerates all 250 — every ISO 3166-1 alpha-2 code plus the
-operational `XK` — whether or not anybody found a source; the source table holds 426 rows across 240
-of them. A jurisdiction with no sources states `researchState` and a `stateReason`, so "nobody has
-looked yet" is written down rather than inferred from an empty list.
+operational `XK` — whether or not anybody found a source. The source table holds 426 rows across 240
+of them. A jurisdiction with no sources states `researchState` and a `stateReason`, so "not yet
+researched" is written down rather than inferred from an empty list.
 
 `readAddressSourceRegister()` refuses a register that fails its audit. Regenerate it with
-`mailwoman corpus source-register`; `data/PROVENANCE.md` carries the command, the input row counts,
+`mailwoman corpus source-register`. `data/PROVENANCE.md` records the command, the input row counts,
 and the three fields no row resolved.
 
 ### When a jurisdiction has no row yet
@@ -154,7 +154,7 @@ jurisdiction the register calls `unexamined`, and promote what you resolve into 
 
 | Sector               | Lookup                                                                                                                                         |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| business/legal       | GLEIF Global LEI Index, the jurisdiction's own slice                                                                                           |
+| business/legal       | GLEIF Global LEI Index, filtered to the jurisdiction's own records                                                                             |
 | business register    | GLEIF Registration Authorities List, for the local official register                                                                           |
 | health               | the national Health Facility Master List, discovered or validated through the WHO's geolocated health-facility data                            |
 | education            | the national school register or EMIS, with Giga Maps' government-sourced records as a discovery layer                                          |
@@ -163,10 +163,10 @@ jurisdiction the register calls `unexamined`, and promote what you resolve into 
 | procurement/grants   | the national e-procurement, supplier or award register, and the Open Contracting Partnership's data registry where the country publishes to it |
 | environment/industry | the national pollutant-release register or industrial permit register, located through PRTR.net or the OECD                                    |
 
-A global aggregator is a locator, never the source. When one carries a national official record,
+A global aggregator is a locator, never the source. When one republishes a national official record,
 keep the national publisher's provenance — the register has `publisher` and `sourceURL` fields for
 exactly that, and the one `verified-corpus-stale` row is what happens when an aggregator's copy
-stops and nobody checked the national portal behind it.
+stops updating and no researcher checked the national portal behind it.
 
 ## Related
 

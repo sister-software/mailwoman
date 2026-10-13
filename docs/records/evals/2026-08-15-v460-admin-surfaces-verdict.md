@@ -2,25 +2,25 @@
 
 **Recommendation: DO NOT PROMOTE. The run trades a real +11.0 pp gain on US `country` for the
 collapse of the bare-toponym class — 21 net new counted board failures, several placing the answer
-thousands of kilometers out. The cause is identified and the extract is worth rebuilding, but this
+thousands of kilometers out. The cause is identified and a rebuilt extract can fix it, but this
 artifact should not ship in any posture.**
 
 **DECIDED 2026-08-15: NOT PROMOTED.** The operator accepted the recommendation. v4.4.0 remains the
-shipped model; nothing in `release.config.json`, the weights cards or the demo moves.
+shipped model. `release.config.json`, the weights cards and the demo stay unchanged.
 
 This document is the evidence behind that call. The artifacts are retained — fp32
 `f2dbf4a85f845068234a1a565c323682`, int8 `afb8ca11bc1e2952b049d437bba611ef`, both on the Modal
 volume — because the next attempt is a re-weight and rebuild of the same recipe rather than a fresh design, and
-the comparison arm is worth keeping.
+the retry needs this run as its comparison arm.
 
-## What a retry needs before it is worth GPU time
+## What a retry needs before it gets GPU time
 
-Both, together. Either alone fails for the reason the other one causes.
+Both, together. Either fix without the other fails for the reason the other one causes.
 
 1. **#1677 — re-weight `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
    against 5× for the 53,078-row Spanish extract weighted six times higher. 0.030 puts it at parity.
    The sampler allocates by weight normalized across sources and ignores row count, so weight is not
-   reps per row and nothing in the config or launch output displays the number anyone reasons in.
+   reps per row. Neither the config nor the launch output displays reps per row, the number people reason in.
 2. **#1673 — rebuilt the ES extract on official-language names.** It teaches English exonyms:
    461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
    the wrong column for any non-English locale.
@@ -34,8 +34,8 @@ the `*-street-name-*` family — go on the watch list before the run rather than
 ## What shipped instead, on the same day
 
 The class this run was built to fix had a cheaper answer. `Intl.DisplayNames` supplies ~5,244 country
-surfaces across 280 regions from the runtime's own ICU; folding them into the candidate gazetteer
-(#1687) fixed every non-Latin bare-country query — 格鲁吉亚, 沙特阿拉伯, 巴布亚新几内亚, 多米尼加共和国,
+surfaces across 280 regions from the runtime's own ICU. #1687 folded them into the candidate gazetteer, and that
+fixed every non-Latin bare-country query — 格鲁吉亚, 沙特阿拉伯, 巴布亚新几内亚, 多米尼加共和国,
 布基纳法索 — at **zero** board regressions and no training at all.
 
 That is the retrieval-over-memorisation principle with a receipt: a fact the atlas can hold should be
@@ -95,7 +95,7 @@ reason, per the no-silent-check-drift rule.
 ### The `us.street_prefix` regression is exactly one row
 
 Reproduced identically across two independent control runs: v4.4.0 scores 24 tp / 0 fp / **1** fn on
-n=25; v4.6.0 scores 23 / 0 / **2**. A comparison of the two encoders over the fixture names showed:
+n=25, and v4.6.0 scores 23 / 0 / **2**. A comparison of the two encoders over the fixture names showed:
 
 ```
 10 South Dearborn, Chicago, IL 60603
@@ -104,21 +104,21 @@ n=25; v4.6.0 scores 23 / 0 / **2**. A comparison of the two encoders over the fi
   v4.6.0  undefined  ✗
 ```
 
-One row of twenty-five, and a coherent one: `Dearborn` carries **no street suffix**, so the leading
+One row of twenty-five, and a coherent one: `Dearborn` has **no street suffix**, so the leading
 directional has no suffix anchor to lean on. v4.6.0 declines to call it a prefix.
 
 That reading is strengthened by the board, where v4.6.0 newly passes a whole family of
 directional street names — `george-street-north`, `bloor-street-west`, `yonge-street-north`,
 `wellington-street-west`, `robson-street-west`, `ocean-parkway-south`. The model has shifted how it
 treats directionals: better on trailing ones attached to a full street name, worse on a leading one
-with nothing after the name.
+with no token after the name.
 
 ## Board: 329/352 conditional vs the shipped model's 350/352 — **21 NET NEW FAILURES**
 
 **This section replaces an earlier reading of mine that was wrong, and wrong in the direction that
 would have mattered most.** I first reported "+15 rows, zero regressions" after reading only the
 tail of the board output, where the promote-flag block sits. The counted pass/fail header is printed
-above that block and I truncated it away. Both halves are true and only one of them is decisive.
+above that block and I truncated it away. Both halves are true, and the counted header is the one that decides promotion.
 
 |                                   | shipped v4.4.0 |      v4.6.0 |
 | --------------------------------- | -------------: | ----------: |
@@ -185,7 +185,7 @@ against a 95 bar.
 
 ## Acceptance test: fail, on the pre-registered criterion
 
-Only one of the two named rows was ever live. **`gb-op2-st-margarets-hope` already passed on the
+Only one of the two pre-registered rows was ever live. **`gb-op2-st-margarets-hope` already passed on the
 shipped model** when re-measured at 06:00 UTC — most likely fixed by #1662's dominance race — so it
 is not creditable to this run.
 
@@ -213,18 +213,18 @@ failed hypothesis about the trailing-region extract.
 
 1. **Do not promote, in any posture.** This is not a D-rule blocking question. 21 counted board
    failures with multi-thousand-kilometer coordinate errors on bare city names is not a regression
-   to check behind a flag; it is an artifact to rebuild.
+   to check behind a flag. It is an artifact to rebuild.
 2. **Fix #1673 and rebuilt the ES extract on official-language names**, then rerun. The acceptance row
    is one surface away, and the mechanism is understood.
-3. **File the `arena.perturb` floor for its own check revision.** It fails the shipped model; leaving
-   it stale means every future candidate carries a phantom failure.
+3. **File the `arena.perturb` floor for its own check revision.** It fails the shipped model. If it stays
+   stale, every future candidate reports a phantom failure.
 4. **Re-weight `synth-bare-country-v23` before the next run.** 277 rows at weight 1.0 repeat ~20× an
    epoch under the per-source sampler, and they taught "bare capitalized name → country" strongly
    enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
-   +11.0 pp shows — but the weight is the change, and the next attempt should carry a pre-registered
+   +11.0 pp shows — but the weight is the change, and the next attempt should have a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
 5. **The measurement lesson.** The board's counted pass/fail header prints above the promote-flag
-   block. The tail alone shows the flips and hides the breakage. Use `counted cases pass`
+   block. A read of only the tail shows the flips and hides the breakage. Use `counted cases pass`
    first, every time.
 
 ## Caveat that still applies
@@ -232,7 +232,7 @@ failed hypothesis about the trailing-region extract.
 > **STRUCK 2026-08-19 — no longer true, and it was true only for one more day after this was written.**
 > `gazetteerPrior` became default-ON in the harness on **2026-08-16** (`harness.ts`'s `priorDepsFor`:
 > "only an explicit `false` withholds the prior"), so the board grades with the prior. The numbers in
-> this document stand — they were measured under the caveat — but do not carry the caveat forward to a
+> this document stand — they were measured under the caveat — but do not apply the caveat to a
 > later reading. It survived in the type's own docstring until ba515ebdc and was quoted as live in #1684.
 
 ~~The gauntlet grades **FST-less** (#1497, corroborated independently by #1669): `parseForGeocode`

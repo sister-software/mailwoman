@@ -277,7 +277,7 @@ function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>
 }
 
 /**
- * Locale surfaces worth pinning by name beyond the derived battery.
+ * Locale surfaces the test pins by name beyond the derived battery.
  *
  * They include high-traffic capitals and multi-token or partial shapes.
  * For Spanish, they include the Portopetro pair from the promotion battery.

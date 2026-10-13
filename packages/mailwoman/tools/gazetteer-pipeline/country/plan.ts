@@ -87,7 +87,7 @@ export function servingSources(census: SourceCensus): AdminSource[] {
 /**
  * The approximate ratio of a cloned WOF repository's disk size to the packed size GitHub reports.
  *
- * WOF repositories unpack to many small GeoJSON files, so operators should see the checkout size.
+ * WOF repositories unpack to one small GeoJSON file per place, so operators should see the checkout size.
  */
 export const CHECKOUT_SIZE_RATIO = 7
 

@@ -10,7 +10,7 @@ verified-with: mailwoman v6.1.0
 
 Coordinates in a JSON array tell you the geocoder worked. They don't tell you whether the _answers_ are right. That a cluster of clinics really sits where you'd expect, that the three records you merged into one entity share a building. For that you need to see them on a map, and you'd rather not stand up a tile server and a frontend to glance at a few hundred points.
 
-`@mailwoman/registry` renders a self-contained map for you. You hand it resolved entities; it hands back a single HTML file you open in a browser. By the end you'll have a `map.html` you can open locally or serve from anywhere. [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers how `resolveEntities` gets from raw records to the entities this recipe maps.
+`@mailwoman/registry` renders a self-contained map for you. You hand it resolved entities, and it hands back a single HTML file you open in a browser. By the end you'll have a `map.html` you can open locally or serve from anywhere. [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers how `resolveEntities` gets from raw records to the entities this recipe maps.
 
 ## From records to a map
 
@@ -31,7 +31,7 @@ writeFileSync("map.html", html)
 
 ## What you're looking at
 
-The page renders on the house stack: MapLibre GL over a Protomaps vector basemap, the same one [the demo map](https://mailwoman.ai/demo) uses. Markers encode the resolution details: by default, color shows the source-dataset count for each entity — a point pinned by at least two datasets stands out from a single-source one, which is the cross-dataset confirmation you're typically scanning for. If your reconciliation output tags each entity with a `bucket`, the map colors by that instead. You can force either with the `colorBy` option, and pick a basemap with `flavor`:
+The page renders on the house stack: MapLibre GL over a Protomaps vector basemap, the same one [the demo map](https://mailwoman.ai/demo) uses. Markers encode the resolution details: by default, color shows the source-dataset count for each entity — a point pinned by at least two datasets stands out from a single-source one. That cross-dataset confirmation is typically what you scan for. If your reconciliation output tags each entity with a `bucket`, the map colors by that instead. You can force either with the `colorBy` option, and pick a basemap with `flavor`:
 
 ```ts
 toMapHTML(fc, { title: "Funded sites", flavor: "dark", colorBy: "sources" })
@@ -49,4 +49,4 @@ Serve the file over localhost and the basemap fills in:
 npx serve .   # then open http://localhost:3000/map.html
 ```
 
-Your points are accurate either way; it's only the map _under_ them that wants the origin.
+Your points are accurate either way. It's only the map _under_ them that wants the origin.

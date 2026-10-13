@@ -54,7 +54,7 @@ Adapters live under `corpus/src/adapters/`. Each adapter:
 - Composes a plausible `raw` string from the components when the source does not provide one.
 - Sets the correct license on every row.
 
-There are currently 14 adapters: WOF (admin + postcode), BAN (France), TIGER (US Census), NPPES (US healthcare), HRSA, IMLS, NAD (US DOT), three state notary/contractor sources, and a few others. `corpus-v0.3.0` enabled 11 of them, which contributed 677 million aligned rows.
+There are currently 14 adapters: WOF (admin + postcode), BAN (France), TIGER (US Census), NPPES (US healthcare), HRSA, IMLS, NAD (US DOT), three state notary/contractor sources, and a few others. `corpus-v0.3.0` enabled 11 of them. Those 11 contributed 677 million aligned rows.
 
 ## Stage 2 — Alignment
 
@@ -124,11 +124,11 @@ A **parity check** then runs the same inputs through the original PyTorch model 
 
 ## Stage 8 — int8 quantization
 
-ONNX models start in fp32 (32-bit floating point). For shipping, Mailwoman applies **dynamic int8 quantization**, which converts each layer's weights to 8-bit integers at load time. Quantization:
+ONNX models start in fp32 (32-bit floating point). For shipping, Mailwoman applies **dynamic int8 quantization**. It converts each layer's weights to 8-bit integers at load time. Quantization:
 
 - Reduces the model file from 37 MB to 25 MB.
 - Speeds up CPU inference, because 8-bit arithmetic is cheaper.
-- Costs about 1–2% accuracy on the eval, which is measurable but acceptable.
+- Costs about 1–2% accuracy on the eval. The loss is measurable but acceptable.
 
 Quantization is a built-in `onnxruntime.quantization` operation, applied once at ship time.
 

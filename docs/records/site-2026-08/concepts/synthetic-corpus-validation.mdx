@@ -35,7 +35,7 @@ The implementation is unglamorous (`generate_deepseek_corpus.py::align_or_reject
 LLMs hallucinate around component boundaries. The B and B2 reject logs catalogue the common failure modes:
 
 - **Component embedded in another component**. `house_number=350, street=350 5th Avenue` — the street contains the house number. A naïve trainer would see `350` as both a house number and as the first token of a street, and learn an incoherent BIO labeling.
-- **Hallucinated transliteration fragments**. For B2's Cyrillic / Japanese / Hangul output, the LLM sometimes added a transliterated suffix or prefix that does not appear in the source surface. The annotated component could match itself while failing to match the source surface, which would silently misalign the data.
+- **Hallucinated transliteration fragments**. For B2's Cyrillic / Japanese / Hangul output, the LLM sometimes added a transliterated suffix or prefix that does not appear in the source surface. The annotated component could match itself while failing to match the source surface. Such a row would silently misalign the data.
 - **Component missing from surface**. The LLM produced a `venue` field for a string that had no venue in it (model imagined one). No substring match → reject.
 - **Off-by-one in the annotation**. `house_number=35` for a surface starting `350 5th Avenue` — close but wrong. The validator rejects the partial match even though `35` appears, and it requires the full token.
 
@@ -52,13 +52,13 @@ Neither approaches zero. The 1–2% range is the **floor** for DeepSeek-as-corpu
 
 For corpora harvested from real sources (NPPES, NAD, WOF, BAN), alignment problems are bugs in the harvester or in the source — rare, deterministic, fixable by a one-line ETL patch. A 0.01% reject rate is plausible.
 
-For LLM-generated corpora, alignment problems are inherent to the generation process. The model is producing both the surface and the annotation in the same forward pass; no constraint forces internal consistency. Even with temperature=0 and `reasoning_effort=low`, the 1–2% rate persists.
+For LLM-generated corpora, alignment problems are inherent to the generation process. The model is producing both the surface and the annotation in the same forward pass, and no constraint forces internal consistency. Even with temperature=0 and `reasoning_effort=low`, the 1–2% rate persists.
 
-This shifts the validator from "quality filter" to "trust boundary" — the difference between training on data the LLM only thinks it generated correctly, and training on data that's provably consistent with its own annotation.
+This shifts the validator from "quality filter" to "trust boundary" — the difference between training on data the LLM only thinks it generated correctly, and training on data that a substring check confirmed is consistent with its own annotation.
 
 ## What the validator does not catch
 
-The substring check enforces structural consistency but not semantic correctness. A row where the LLM annotated `street=Main` for the surface `123 Main Street` will pass — `Main` substring-matches. But the correct annotation is `street=Main Street`. The check confirms _what is annotated_ exists in the surface; it does not confirm _what should be annotated_ matches what _is_ annotated.
+The substring check enforces structural consistency but not semantic correctness. A row where the LLM annotated `street=Main` for the surface `123 Main Street` will pass — `Main` substring-matches. But the correct annotation is `street=Main Street`. The check confirms _what is annotated_ exists in the surface. It does not confirm _what should be annotated_ matches what _is_ annotated.
 
 Three things bridge the gap:
 
@@ -68,7 +68,7 @@ Three things bridge the gap:
 
 The validator is the first line of defense. Audit and eval are the second and third.
 
-## Pattern to carry forward
+## Pattern to reuse
 
 Any future synthetic-corpus pipeline should ship with:
 

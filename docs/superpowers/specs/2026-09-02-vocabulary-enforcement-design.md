@@ -13,7 +13,7 @@ enforce parts of that ban, and the ban covers more than they enforce:
 | Surface                                                                  | Config            | Rules applied                            |
 | ------------------------------------------------------------------------ | ----------------- | ---------------------------------------- |
 | `docs/articles`, `docs/src/pages`, `writing-system.md`, `page-templates` | `.vale.ini`       | the full `Mailwoman` style               |
-| Root interfaces, `docs/engineering`, package `README.md`                 | `.vale-vocab.ini` | `AmbiguousShorthand` only; six rules off |
+| Root interfaces, `docs/engineering`, package `README.md`                 | `.vale-vocab.ini` | `AmbiguousShorthand` only, six rules off |
 | Agent replies                                                            | `.vale-chat.ini`  | `Mailwoman` + `MailwomanChat`            |
 | **`.ts`, `.tsx`, `.py` comments and docstrings**                         | **none**          | **none**                                 |
 | `CHANGELOG.md`, `.github/`, `scripts/` markdown                          | none              | none                                     |
@@ -21,11 +21,11 @@ enforce parts of that ban, and the ban covers more than they enforce:
 The gap has two consequences, both measured at `9996e8f60`:
 
 1. **The deferred sweep is growing.** `.vale-vocab.ini` turned six rules off because switching them
-   on failed on 175 alerts, and it called the remainder "a separate sweep". Nobody scheduled that
-   sweep. The same run now reports **213**.
-2. **Source comments are unenforced.** 2,638 tracked `.ts`/`.tsx`/`.py` files carry **2,014**
+   on failed on 175 alerts, and it called the remainder "a separate sweep". No one on the project
+   scheduled that sweep. The same run now reports **213**.
+2. **Source comments are unenforced.** 2,638 tracked `.ts`/`.tsx`/`.py` files contain **2,014**
    `AmbiguousShorthand` hits across **619** files. The only code-side vocabulary check is
-   `repo-health`'s `bannedVocabulary` counter, which covers the retired word alone.
+   `repo-health`'s `bannedVocabulary` counter. That counter covers only the retired word.
 
 Vale reads comment prose in all three languages correctly. It extracts comments and ignores code, so the
 gap is a missing config section rather than a missing tool.
@@ -40,7 +40,7 @@ stated.
 **Scope: every committed prose surface.** TypeScript and TSX comments, Python docstrings and
 comments, the six rules `.vale-vocab.ini` turned off, and `CHANGELOG.md` / `.github` / `scripts`.
 
-**Exempt, unchanged:** dated point-in-time records, which are `docs/records/**` (1,488 hits) and
+**Exempt, unchanged:** dated point-in-time records. These are `docs/records/**` (1,488 hits) and
 `docs/engineering/design/**` (6 hits, every file date-prefixed). These are historical documents. The
 acronym-casing convention already exempts them, and this ban uses the same exemption.
 
@@ -50,22 +50,22 @@ The retired word went from 3,481 occurrences to zero only after its four concept
 corpus recipe, a corpus recipe output, a WOF extract, and a region database. Each site then had one agreed
 replacement rather than a per-site guess. `AGENTS.md` records that as the working precedent.
 
-A per-site rewrite without a census can strip a docstring of its meaning. This repository's comments carry
+A per-site rewrite without a census can strip a docstring of its meaning. This repository's comments state
 invariants and measured numbers that a careless reword destroys. The census is therefore the first
 deliverable.
 
-When grouped by the word modifying `check`, the results contain 519 distinct constructions; most appear once.
+When grouped by the word modifying `check`, the results contain 519 distinct constructions, and most appear once.
 `scripts/vocab-census.ts` classifies every hit by the action it needs, and the three actions differ in
 cost by an order of magnitude. Measured at `9996e8f60` over 2,638 tracked `.ts`/`.tsx`/`.py` files:
 
-| Action         | Count | What it means                                                                                                                                                                                                                                                   | Judgment                             |
-| -------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `backtick`     | 163   | The site refers to an interface-tied identifier: `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                   | none                                 |
-| `rename-check` | 956   | The modifier carries the check's real name: `street-context check` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
-| `read-context` | 895   | The site says only "the check" / "a check". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                            | full                                 |
+| Action         | Count | What it means                                                                                                                                                                                                                                              | Judgment                             |
+| -------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `backtick`     | 163   | The site refers to an interface-tied identifier: `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                              | none                                 |
+| `rename-check` | 956   | The modifier is the check's real name: `street-context check` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
+| `read-context` | 895   | The site reads only "the check" / "a check". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                      | full                                 |
 
 By word family, in the rule's listing order, the counts are 1,741, 158, 114, and one occurrence of the
-retired word. That one occurrence is `scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant, which
+retired word. That one occurrence is `scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant. That constant
 must contain the word it counts.
 
 This paragraph deliberately does not spell that word, for the reason its counter's docstring gives: the
@@ -106,7 +106,7 @@ list rather than reword nine interfaces.
 **`names the` (10 hits) is flagged by `StockPhrases`,** while "name the concrete thing" is the
 house instruction that the `AmbiguousShorthand` rule's own message gives. A rule that forbids the
 action another rule prescribes is a rule defect. Narrow `StockPhrases` to the stock construction it
-means and leave the plain verb alone.
+means, and stop flagging the plain verb.
 
 ## Verification
 

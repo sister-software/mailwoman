@@ -165,8 +165,8 @@ describe("the generated layout table matches libaddressinput", () => {
 		const unusable = [...countryFormats].filter(([, fmt]) => !fmt || !skeletonOfFormat(fmt).length).map(([cc]) => cc)
 
 		// Absence is a real answer here: rendering no text beats inventing an order.
-		// The count is pinned so that a dataset refresh which quietly drops a country's
-		// `fmt` shows up as a failure rather than as silence.
+		// The count is pinned so that a dataset refresh which drops a country's `fmt`
+		// shows up as a failure rather than as silence.
 		expect(unusable).toHaveLength(55)
 
 		// A country the dataset leaves unusable may still have an approved S42 template.

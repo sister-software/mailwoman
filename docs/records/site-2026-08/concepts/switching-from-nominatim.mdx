@@ -26,12 +26,12 @@ geo.reverse((38.8977, -77.0365))
 
 ## Endpoint map
 
-| Nominatim      | Mailwoman      | Notes                                                                                             |
-| -------------- | -------------- | ------------------------------------------------------------------------------------------------- |
-| `GET /search`  | `GET /search`  | free-text `q` and the structured fields                                                           |
-| `GET /reverse` | `GET /reverse` | `lat` / `lon`, point-in-polygon over the same admin data                                          |
-| `GET /lookup`  | `501`          | Nominatim looks up by OSM id; Mailwoman is WOF/Overture-keyed, so there are no OSM ids to look up |
-| `GET /status`  | `GET /status`  | `{ status: 0, message: "OK" }`                                                                    |
+| Nominatim      | Mailwoman      | Notes                                                                                                 |
+| -------------- | -------------- | ----------------------------------------------------------------------------------------------------- |
+| `GET /search`  | `GET /search`  | free-text `q` and the structured fields                                                               |
+| `GET /reverse` | `GET /reverse` | `lat` / `lon`, point-in-polygon over the same admin data                                              |
+| `GET /lookup`  | `501`          | Nominatim looks up by OSM id, but Mailwoman is WOF/Overture-keyed, so there are no OSM ids to look up |
+| `GET /status`  | `GET /status`  | `{ status: 0, message: "OK" }`                                                                        |
 
 Supported parameters are `q`, the structured set (`street`, `city`, `county`, `state`, `country`, `postalcode`), `countrycodes`, `limit`, `viewbox`, `bounded`, `addressdetails`, `accept-language`, and `format`. `format` accepts `jsonv2` (the default), `json`, or `geojson`. The `geojson` format returns a GeoJSON `FeatureCollection` with the coordinate in `geometry`, `boundingbox` in `bbox`, and the other fields in `properties`. Mailwoman ignores these less common Nominatim parameters: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`_kml`, and `exclude_place_ids`.
 
@@ -43,7 +43,7 @@ Supported parameters are `q`, the structured set (`street`, `city`, `county`, `s
 
 ## What's missing
 
-- **Coordinate precision varies by coverage.** Where the address-point and street extracts have coverage, `/search` returns the rooftop or an interpolated point. For example, `1600 Pennsylvania Avenue NW` resolves to the building, with `addressdetails` down to `house_number` and `road`. Elsewhere, you get the admin centroid, which is the right place but not the exact building. The `addressdetails` always reflect what was parsed.
+- **Coordinate precision varies by coverage.** Where the address-point and street extracts have coverage, `/search` returns the rooftop or an interpolated point. For example, `1600 Pennsylvania Avenue NW` resolves to the building, with `addressdetails` down to `house_number` and `road`. Elsewhere, you get the admin centroid. The centroid is the right place but not the exact building. The `addressdetails` always reflect what was parsed.
 - **Bare ambiguous names can still collide.** The worldwide gazetteer ranks international cities by population, so `Vienna, Austria`, `Sydney`, and `Tirana, Albania` all resolve correctly. Coverage includes less-populous countries that used to return no result. When a US namesake outranks the place you meant, a bare query can still resolve to the American place. `countrycodes` selects the right one (`?q=Sydney&countrycodes=au`). Work is underway to have the coarse country router emit a country prior for those bare cases ([#822](https://github.com/sister-software/mailwoman/issues/822)). An exonym such as `Wien`/`Vienna` needs the model rather than the gazetteer.
 
 See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix across Nominatim, Photon, OpenCage, Pelias, and libpostal. It includes two rows that the hosted services cannot satisfy.

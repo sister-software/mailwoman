@@ -124,8 +124,8 @@ export function isLargestFirstSystem(countryCode: string | null, script?: Addres
 }
 
 /**
- * Which order a layout actually prints: `true` when its `region` line precedes its
- * street line, or `null` when the layout names no region or no street.
+ * Which order a layout prints: `true` when its `region` line precedes its street line,
+ * or `null` when the layout names no region or no street.
  *
  * A layout and {@link isLargestFirstSystem} can disagree, in which case an address
  * prints one system's sequence with another's separators; `layouts.test.ts`
@@ -278,8 +278,8 @@ ${dependent_locality}
 ${locality} ${region} ${postcode}
 ${country}`,
 
-	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it: written on one line the whole
-	// admin run is unseparated and only the postal code takes a space (`〒100-0005 東京都千代田区丸の内1-9-1`).
+	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it: written on one line the
+	// whole admin run is unseparated and only the postcode takes a space (`〒100-0005 東京都千代田区丸の内1-9-1`).
 	JP: addr`${country}
 〒${postcode}
 ${region}${japaneseSubPrefecture}

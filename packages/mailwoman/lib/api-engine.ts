@@ -84,7 +84,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// `pathExists` below therefore checks every candidate.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
-		// A weights package that does not resolve here simply falls through to the next candidate.
+		// A weights package that does not resolve here falls through to the next candidate.
 	}
 
 	candidates.push("packages/neural-weights-en-us/model-card.json")

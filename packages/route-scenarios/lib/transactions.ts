@@ -10,7 +10,7 @@
  *   its lease payments are the case's obligations. Acquired subscribers join a selected building as existing
  *   subscribers. They take no activation cost, never count as new activations, and never exceed the
  *   building's occupied units. Salvage proceeds arrive in the horizon's last month only, because a plant sold
- *   earlier would still earn in the later months of the table. An adjacent building enters a scenario only as
+ *   earlier would still produce revenue in the later months of the table. An adjacent building enters a scenario only as
  *   a planned building with its own identity and unit evidence, and a transaction case has no field for an
  *   expansion value.
  *

@@ -1,8 +1,1 @@
-config/vale/**
-docs/**/test-fixtures/**
-packages/**/test-fixtures/**
-packages/neural/test/fixtures/**
-packages/mailwoman/tools/eval-harness/conformance/fixture.ts
-.yarnrc.yml
-docker/docker-compose.yml
-docs/tags.yml
+config/vale/fixtures/**

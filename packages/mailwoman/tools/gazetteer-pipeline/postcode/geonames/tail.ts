@@ -98,7 +98,7 @@ export interface GeonamesPostalSourceFact {
 	md5: string
 	rows: number
 	/**
-	 * How many of those codes the dump listed on several rows that all referred to one coordinate.
+	 * The count of those codes that the dump listed on several rows that all referred to one coordinate.
 	 *
 	 * GeoNames averages that coordinate from neighboring codes where a name match fails, so the
 	 * count tells a consumer how much of a country's coverage is inherited rather than agreed.

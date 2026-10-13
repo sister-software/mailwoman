@@ -7,11 +7,11 @@
 # 1. `data.corpus_dir` moves to v0.7.1-osm-exposure.
 #
 # 2. Country admission, source admission and sampling weight are three settings here. `country_weights`
-#    already admitted all eight countries in v7.0.0 and is unchanged. Each country's OSM rows carry their
+#    already admitted all eight countries in v7.0.0 and is unchanged. Each country's OSM rows have their
 #    own source id, so admitting a country does not admit every source for it:
 #
-#    - `osm-cn` is weighted 0.0. Its 50,963 train rows are Han script, which the weights-family registry
-#      routes to the CJK character family rather than to this Latin graph. Admitting them here would
+#    - `osm-cn` is weighted 0.0. Its 50,963 train rows are Han script. The weights-family registry
+#      routes Han script to the CJK character family rather than to this Latin graph. Admitting them here would
 #      teach Han through SentencePiece byte fallback.
 #    - `osm`, the September PK, VN and BD rows, is weighted 0.0. `osm-pk`, `osm-vn` and `osm-bd` are the
 #      2026-10-02 refresh of the same three extracts, and keeping both would draw the same addresses twice.
@@ -30,7 +30,7 @@
 #
 #    A source near 50,000 rows takes two passes and the 6,702 Nigerian rows take four, so no country is
 #    repeated more than four times. Russia's rows outnumber the run's budget for one country, so its reps
-#    is set for about 400,000 draws, 5.2% of the run, rather than for a pass count. The overlay holds a
+#    is set for about 400,000 draws, 5.2% of the run, rather than for a pass count. The v0.7.1 corpus overlay holds a
 #    2,000,177-row sample of Russia's 6,453,759 canonical rows, the rows whose sha256(source_id) falls in
 #    the lowest 31% of the hash space.
 #
@@ -147,7 +147,7 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # The key is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+    # The key is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
     "NO": 1.0
     NZ: 1.0
     OM: 1.0
@@ -411,7 +411,7 @@ data:
       min_street_rows: 10
   augment_exclude_sources:
     - spliced-suffix-boundary
-    # This source teaches a postcode alone, such as `119 00`, so augmentation would add tokens the row
+    # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
     # must not contain.
     - codex-bare-postcode
   train_rows_per_epoch: 1000000

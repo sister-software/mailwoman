@@ -63,7 +63,7 @@ interface ScoredPlace {
 /**
  * What {@link loadImportanceIndex} measured while reading the source.
  *
- * Reported by the builder so a run reports how much of the gazetteer it actually scored,
+ * Reported by the builder so a run reports how much of the gazetteer it scored,
  * rather than leaving the caller to infer it from a column full of nulls.
  */
 export interface ImportanceIndexStats {
@@ -108,7 +108,7 @@ export class ImportanceIndex {
 	 * The key matched a scored group, but the nearest member was outside the radius,
 	 * so it is a different place wearing the same name.
 	 *
-	 * This is the number worth watching across rebuilds.
+	 * Compare this number across rebuilds.
 	 * A jump means the score source and the admin source have drifted apart
 	 * and the join is being asked to guess.
 	 * It does not mean the radius is too tight.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * `mwdev_reliability` collects graded confidences for one surface and curves them.
- * The report states what an eval would buy. A well-calibrated surface can still have no threshold worth setting.
+ * The report states the number of correct answers each threshold would keep and discard. A well-calibrated surface can still have no threshold that keeps enough correct answers to set.
  */
 
 import { resolvePath } from "path-ts"
@@ -64,7 +64,8 @@ const STRATA_FOR: Record<ReliabilitySurface, readonly string[]> = {
 }
 
 /**
- * One surface's collected sample plus the facts a confidence-bound sentence needs to describe it honestly.
+ * One surface's collected sample plus the facts a confidence-bound sentence
+ * needs to describe it without overstating it.
  */
 interface SurfaceRun {
 	sample: SurfaceSample
@@ -89,8 +90,8 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const check = thresholdTable(sample.observations, thresholds)
 
-	// Read at the lowest threshold that admits anything, so the classes describe an eval
-	// someone could actually set rather than an empty confusion matrix.
+	// Read at the lowest threshold that admits anything, so the classes describe an
+	// eval someone could set rather than an empty confusion matrix.
 	const thresholdForClasses = check.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({

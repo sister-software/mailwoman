@@ -80,7 +80,7 @@ export interface JurisdictionLegendEntry {
 
 /**
  * The legend for one jurisdiction fill: its title, its rows, and a note for a
- * fill with too many classes to list.
+ * fill with more classes than the legend lists.
  */
 export interface JurisdictionLegend {
 	title: string

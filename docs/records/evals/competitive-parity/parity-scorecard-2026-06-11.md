@@ -1,8 +1,8 @@
 # Parity Scorecard — 2026-06-11 (baseline: v4.3.0, the relabel + conventions release)
 
 Supersedes [2026-06-10](./parity-scorecard-2026-06-10.md). Same two lenses, same rules:
-arena head-to-head is whole-parse-strict (direct, understates per-tag wins); per-tag F1 is
-what the campaign moves; real-OOD columns are the truth for campaign tags. Self-emitted
+arena head-to-head is whole-parse-strict (direct, understates per-tag wins). Per-tag F1 is
+what the campaign moves. Real-OOD columns are the truth for campaign tags. Self-emitted
 from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not hand-edit.
 
 **What changed since 06-10:** the #492 ladder closed (cause = a 1,039:1 label contradiction rather than capacity), the #511 relabel run shipped as **v4.3.0** after a FAIL→corrective→PASS check
@@ -20,7 +20,7 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 > **Recorded dip, characterized:** the perturb drop vs v4.2.0 is dominated by the "glue"
 > perturbation class (region+postcode fused: `NY14201` — v1.1.0 swallows the token as postcode,
 > ~24–31 of 40 flips), plus street-boundary wobbles (post-directional `NW`, `Main St Apt`).
-> Same boundary-instability family as the FR digit-split the conventions mask fixed; the US glue
+> Same boundary-instability family as the FR digit-split the conventions mask fixed. The US glue
 > class needs a training-side augmentation (follow-up filed). Flagged-not-conditional, same precedent
 > as night-10. v0 still leads only on rare edge formats.
 
@@ -45,7 +45,7 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 | de.native_locality | de-order (anchor on)         |   90.6 |   90.9 |       90.1 |
 
 ¹ v4.2.0's country figure was measured under the historically gaz-starved country leg
-(fixed this check) — not directly comparable to v4.3.0's 85.1; both clear the 83.3 floor.
+(fixed this check) — not directly comparable to v4.3.0's 85.1. Both clear the 83.3 floor.
 
 The authoritative check record, including the direct-eval VT leg (region 99.6, coord p50/p90
 3.4/7.4 km) and the FAIL→corrective→PASS story: [v4.3.0 ship check](../model-versions/2026-06-11-v4.3.0-ship-check.md).

@@ -6,7 +6,7 @@
  *   Counts the spans the flat component map deletes on the regression board, by tag.
  *
  *   `decodeAsJSON` holds one value per tag, so a parse with two spans of one tag reports one and
- *   deletes the other. `slotNodes` decides which one survives. This counts how often that decision is
+ *   deletes the other. `slotNodes` decides which one survives. This counts the times that decision is
  *   made and on which tags. Those two counts bound what an ordering change inside it can move.
  *
  *   The report is the projection's own `dropped` array rather than a second walk of the tree, so the

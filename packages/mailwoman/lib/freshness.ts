@@ -190,7 +190,7 @@ async function readArtifact({ name, path: artifactPath }: NamedPath): Promise<Ar
 
 /**
  * Report the provenance of the artifacts a session opened, called once at boot
- * with the paths the process actually resolved.
+ * with the paths the process resolved.
  *
  * A server holds its database handles open for its whole life, so the artifact it serves
  * from is the one it opened at start, whatever a later symlink swap points at.

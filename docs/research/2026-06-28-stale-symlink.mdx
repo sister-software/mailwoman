@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [geocoding, evals, retrospective, hubris]
 ---
 
-Last night the plan was straightforward: mailwoman was missing a pile of non-US coverage, and we were going to fix the parser to close the gap. By morning we'd shipped something better than planned, killed the original idea, and caught ourselves about to spend a GPU budget on a bug that lived in a symlink. Here's how a night of "fix the model" turned into "stop trusting your evals."
+Last night the plan was simple: mailwoman was missing a pile of non-US coverage, and we were going to fix the parser to close the gap. By morning we'd shipped something better than planned, killed the original idea, and caught ourselves about to spend a GPU budget on a bug that lived in a symlink. Here's how a night of "fix the model" turned into "stop trusting your evals."
 
 {/* truncate */}
 
@@ -13,13 +13,13 @@ Last night the plan was straightforward: mailwoman was missing a pile of non-US 
 
 Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and you got no result. Same for Yerevan, Kabul, Ulaanbaatar, Sarajevo — 147 countries where the candidate gazetteer, the table the demo and the drop-ins query, held exactly zero rows. You didn't get a wrong coordinate, you got silence, as if the country didn't exist.
 
-That gap is easy to miss, because the cities that do resolve — Berlin, Paris, Tokyo — resolve beautifully, and those are the ones you check by hand. The hole was in the long tail of countries nobody on the team types into a demo at 2am.
+That gap is easy to miss, because the cities that do resolve — Berlin, Paris, Tokyo — resolve beautifully, and those are the ones you check by hand. The hole was in the long tail of countries that no one on the team types into a demo at 2am.
 
 If you've shipped a data pipeline you know how this happens. A from-scratch rebuild enriched every existing place with alternate-language names, so Berlin now answers to Berlino, Берлин, 柏林, all 134 of its surface forms. Wonderful. But enriching the places you have adds no coverage for the places you don't, and the gap-fill that was supposed to add the missing countries lived in a side index the candidate table never folded in. Every piece worked. The join between them was empty, and no component failed loudly enough to notice.
 
 ## The plan was wrong, and a ten-minute probe said so
 
-The plan blamed exonyms — the Warsaw-versus-Warszawa problem, where the address says one name and the gazetteer holds another. Reasonable theory, and an expensive fix: a model retrain to learn the aliases.
+The plan blamed exonyms — the Warsaw-versus-Warszawa problem, where the address uses one name and the gazetteer holds another. Reasonable theory, and an expensive fix: a model retrain to learn the aliases.
 
 So before betting the night on it, we ran the cheap version first. For the top cities of every failing country, is the local name already in the table? If it is, exonyms are the problem. If it isn't, it's coverage. The answer came back in ten minutes: exonym reliance was about one percent. The alt-names were already there. The cities themselves were missing.
 
@@ -31,13 +31,13 @@ That's the result, and we staged it to ship. It's the part you'd put in the chan
 
 With coverage handled, we asked a different question: when mailwoman does parse a foreign address, does it land in the right place? We ran the assembled-coordinate eval on Portugal, Poland, and Australia — real addresses, scored on distance to truth.
 
-The numbers were ugly. Portugal's median error came back at 47 kilometers. Poland 116. Australia 798. The parser was reading the street name as the city and resolving to a same-named town three regions over. Feed it a perfect parse and the error dropped under a kilometer. Clean story: the parser is the bottleneck, this warrants a GPU retrain, write it up as a GO.
+The numbers were ugly. Portugal's median error came back at 47 kilometers. Poland 116. Australia 798. The parser was reading the street name as the city and resolving to a town with that name three regions over. Feed it a perfect parse and the error dropped under a kilometer. Clean story: the parser is the bottleneck, this warrants a GPU retrain, write it up as a GO.
 
 I almost did. Then I checked which model the eval had loaded.
 
 It was a six-week-old build. The dev symlink that points at "the shipped model" had drifted to an old one — a test re-creates that symlink as a side effect, and it had been pinning the wrong file for weeks. Every eval that loaded the model by its default path was grading something we retired in May.
 
-Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8. Poland 2.3. Australia 1.2. The disaster evaporated. The shipped parser was fine the whole time; the only broken thing was the ruler I measured it with. The retrain I was about to recommend would have fixed a problem that didn't exist — and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came. We didn't need a GPU. We needed to read a symlink.
+Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8. Poland 2.3. Australia 1.2. The disaster evaporated. The shipped parser was fine the whole time. The only broken thing was the ruler I measured it with. The retrain I was about to recommend would have fixed a problem that didn't exist — and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came. We didn't need a GPU. We needed to read a symlink.
 
 ## What went wrong, both times
 

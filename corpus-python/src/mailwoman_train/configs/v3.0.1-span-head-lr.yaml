@@ -16,7 +16,7 @@
 #   v3.0.0 read seg@1 0.004 vs token@1 0.348 (channel-starved numbers — that script feeds no
 #   anchor/gazetteer/country channels, so its absolutes are not the JS harness's 0.573. the check is a
 #   relative comparison and both heads read the same starved encoder).
-# Secondary read: the span NLL must actually converge. If loss again ends ~17 and still falling, the
+# Secondary read: the span NLL must converge. If loss again ends ~17 and still falling, the
 # LR is not the binding constraint and the fork reopens.
 #
 # Not a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are

@@ -49,7 +49,7 @@ const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) =>
 			await ingestPlaceNames({ release: options.release, onPhase: (_, detail) => log(detail ?? "") })
 		}
 
-		// Manifest slice paths start with the training host's `/data` root.
+		// Manifest file paths start with the training host's `/data` root.
 		// This host keeps them under the data root.
 		const dataRoot = dataRootPath().toString()
 

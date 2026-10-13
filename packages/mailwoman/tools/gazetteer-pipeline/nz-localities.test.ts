@@ -30,7 +30,7 @@ beforeAll(async () => {
 
 	const rows = [
 		HEADER,
-		// Five points make the floor, so Stanmore Bay earns a row.
+		// Five points make the floor, so Stanmore Bay gets a row.
 		...[0, 1, 2, 3, 4].map((i) => row(174.71 + i / 1000, -36.51 - i / 1000, "Stanmore Bay", "Rodney", i)),
 		// Two points sit under it, so this group is skipped and counted.
 		row(174.9, -36.9, "Thin Place", "Rodney", 10),

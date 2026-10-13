@@ -44,7 +44,7 @@ describe("describeCapabilityGaps", () => {
 
 		expect(gaps.map((g) => g.capability).toSorted()).toEqual(["ancestors", "coincidentLocalitiesFor"])
 		// Every gap reported must be one a caller did not choose.
-		// That is the whole reason it is worth reporting.
+		// A gap the caller chose by configuration is not reported.
 		expect(gaps.every((g) => g.defaultOn)).toBe(true)
 		expect(gaps.every((g) => g.option === "hierarchyCompletion")).toBe(true)
 	})

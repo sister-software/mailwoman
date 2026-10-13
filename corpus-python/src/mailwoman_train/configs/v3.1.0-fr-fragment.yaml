@@ -1,6 +1,6 @@
 # This run fine-tunes v264 with one change: the synth-fr-fragment source at weight 12.0.
 # The source teaches French streets that appear without a house number, such as "Rue Montmartre".
-# It also carries bare localities so the street designator, rather than a missing number, decides the label.
+# It also contains bare localities so the street designator, rather than a missing number, decides the label.
 # The recipe excludes every street surface that the FR fragment board reserves for evaluation.
 #
 # Launch the run from corpus-python:

@@ -1,7 +1,7 @@
 # The CJK weights package and its serving path — proposal
 
-Status: steps 1–6 and the release wiring of step 7 landed on `main` 2026-09-06; the base is the Korean run over the kana recipe (#2184; the kana-register run #2165 before it) (epic #2164; record
-`docs/records/evals/2026-09-06-v8-cjk-shared-head.md`); the release-list move and the `ja-jp` / `zh-cn` overlays are
+Status: steps 1–6 and the release wiring of step 7 landed on `main` 2026-09-06. The base is the Korean run over the kana recipe (#2184, with the kana-register run #2165 before it) (epic #2164, record
+`docs/records/evals/2026-09-06-v8-cjk-shared-head.md`). The release-list move and the `ja-jp` / `zh-cn` overlays are
 the operator's. Written 2026-09-05 after the operator's distribution decision on #2034 / #1176 ("a consumer can
 choose to engage with CJK entirely"), measured on `main` at 1d23433e9.
 
@@ -16,10 +16,10 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
 
 | Piece                          | State                                                                                                                                                                                                                                     | Where                                                                                                                         |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| JP model, 47 labels, char path | trained; coordinate-acceptability 0.9928 on the 20,000-row held-out board                                                                                                                                                                 | `$MAILWOMAN_DATA_ROOT/models/v8-jp-full-s42/step-024000`, the 2026-08-05 v8-jp-full 24k record under `docs/records/evals/`    |
-| CJK model, 49 labels           | trained (`v8-cjk-full`, app `ap-J0uaLu8mQutAWu4ZdtBNzZ`); 0.9653 on the JP board, 598 of its 664 failures on one held-out hiragana municipality; control run in flight                                                                    | `/data/output-v8-cjk-full-s42/step-024000` on the Modal volume, receipt on #1176                                              |
+| JP model, 47 labels, char path | trained, coordinate-acceptability 0.9928 on the 20,000-row held-out board                                                                                                                                                                 | `$MAILWOMAN_DATA_ROOT/models/v8-jp-full-s42/step-024000`, the 2026-08-05 v8-jp-full 24k record under `docs/records/evals/`    |
+| CJK model, 49 labels           | trained (`v8-cjk-full`, app `ap-J0uaLu8mQutAWu4ZdtBNzZ`); 0.9653 on the JP board, 598 of its 664 failures on one held-out hiragana municipality, control run in flight                                                                    | `/data/output-v8-cjk-full-s42/step-024000` on the Modal volume, receipt on #1176                                              |
 | Char encoder interface (D1)    | fixed by the trainer: one unit per character, `char_ids (S, W)` with S = 96 units, W = 7 (the unit plus 3 context characters each side), sealed vocabulary as a JSON `{character: id}` map with `<pad>` 0 and `<unk>` 1, code-point order | `corpus-python/src/mailwoman_train/char_tokenizer.py` (`encode_row_units`), `char-vocab-cjk.json` (2,335 entries)             |
-| Label set                      | `stage3-cjk`, 49 BIO labels, every `stage3-jp` id unchanged                                                                                                                                                                               | `corpus-python/src/mailwoman_train/labels.py`; TypeScript `ComponentTag` already carries `locality_unit` and the JP fine tags |
+| Label set                      | `stage3-cjk`, 49 BIO labels, every `stage3-jp` id unchanged                                                                                                                                                                               | `corpus-python/src/mailwoman_train/labels.py`; TypeScript `ComponentTag` already defines `locality_unit` and the JP fine tags |
 | Decoder grammar                | containment for the JP ladder and `locality_unit`                                                                                                                                                                                         | `packages/core/lib/decoder/containment.ts`                                                                                    |
 | Script detection               | `CharacterClass` includes `cjk` per token and per input                                                                                                                                                                                   | `packages/query-shape/lib/types.ts`                                                                                           |
 
@@ -38,7 +38,7 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
    `model.onnx`, `char-vocab.json` and `model-card.json`, and no tokenizer. The card needs an `encoder` field
    (`"sentencepiece"` today, `"char"` here) with the vocabulary sibling and its window constants, and the resolver
    must require the tokenizer only for the SentencePiece encoder.
-5. **Route selection.** Production routes by locale hint; a CJK query with no hint must reach the CJK package. The rule from
+5. **Route selection.** Production routes by locale hint. A CJK query with no hint must reach the CJK package. The rule from
    #1177 Phase B: a Unicode-block histogram in `@mailwoman/query-shape` (the `cjk` character class already exists)
    selects the CJK package when the input is mostly Han, kana or Hangul. The Latin model is untouched.
 6. **Evaluation through the served path.** The board scorer in `corpus-python/scripts/score_jp_probe_board.py`
@@ -52,17 +52,17 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
 `@mailwoman/neural-weights-cjk` (published, data-only, joins the release list and `SANCTIONED_RELEASE_ABSENCES`'s
 arithmetic): `model.onnx`, `char-vocab.json`, `model-card.json` with `encoder: "char"`, `label_set: "stage3-cjk"`,
 `char_ctx: 3`, `max_unit_width: 7`, `max_units: 96`, and `files_md5` for both binaries. Locale overlays
-(`neural-weights-ja-jp`, `neural-weights-zh-cn`, later `ko-kr`) carry data siblings only, the way the Latin overlays
+(`neural-weights-ja-jp`, `neural-weights-zh-cn`, later `ko-kr`) ship data siblings only, the way the Latin overlays
 do over `en-us`. A consumer who wants CJK installs the base plus the overlays for the locales they serve.
 
 ## 5. Han unification, priced
 
 Of the CJK corpus's 166 Han characters from the Chinese rows, 102 are code points the Japanese corpus already labels,
-and every one of the 102 carries a different majority label in the two languages (一: JP `block` 68%, CN
+and every one of the 102 has a different majority label in the two languages (一: JP `block` 68%, CN
 `locality_unit` 89%). The 24k read split the JP board's municipality failures by whether the name contains a shared
-character: names with one read 0.9947 on the shared head against 0.9909 on the JP-only model; names without one read
-0.9217 against 0.9997, and 598 of those 598 are `かすみがうら市`. The shared code points did not cost the JP tags;
-one held-out hiragana municipality did, and the control run says whether that is the mixture or run variance.
+character: names with one read 0.9947 on the shared head against 0.9909 on the JP-only model. Names without one read
+0.9217 against 0.9997, and 598 of those 598 are `かすみがうら市`. The shared code points did not cost the JP tags.
+One held-out hiragana municipality did, and the control run decides whether that is the mixture or run variance.
 
 ## 6. What this does not decide
 
@@ -82,6 +82,6 @@ Two items this section first listed have since landed: the CJK FST builders (#14
 4. Runner: char-mode session in `onnx-runner.ts`, then `web-onnx-runner.ts`; the decoder receives character units.
 5. Route selection: the query-shape rule and the locale-hint route to the CJK package.
 6. The served read: the JP board through `mailwoman geocode`, compared against the PyTorch record.
-7. Package: `mwops release scaffold-weights-overlay` for the base and the first overlay; release-list arithmetic.
+7. Package: `mwops release scaffold-weights-overlay` for the base and the first overlay, plus the release-list arithmetic.
 
-Each step is a PR with its own receipt; step 6 is the one that says the package is real.
+Each step is a PR with its own receipt. Step 6 is the one whose receipt shows the package works.

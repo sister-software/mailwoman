@@ -28,7 +28,7 @@ Traditional address parsers validate their output structurally. The parse must h
 | `locality=Springfield, region=IL`      | Yes                 | Yes — Springfield, IL exists              |
 | `locality=Springfield, region=MA`      | Yes                 | Yes — Springfield, MA ALSO exists         |
 
-The last two rows are the hard case, because both parses are structurally and geographically valid. The parser cannot tell them apart from the text alone. "Springfield" without a state is ambiguous. "Springfield, IL" and "Springfield, MA" are unambiguous, but telling them apart requires knowing which states contain a Springfield. That knowledge lives in the gazetteer rather than the parser.
+The last two rows are the hard case, because both parses are structurally and geographically valid. The parser cannot tell them apart from the text by itself. "Springfield" without a state is ambiguous. "Springfield, IL" and "Springfield, MA" are unambiguous, but telling them apart requires knowing which states contain a Springfield. That knowledge lives in the gazetteer rather than the parser.
 
 Concordance brings gazetteer knowledge into the parsing decision.
 
@@ -104,7 +104,7 @@ Joint decoding avoids this by keeping the top-K alternatives alive through the c
 ## What concordance does not do
 
 - It does not guarantee correctness. If the gazetteer is wrong (wrong parent_id chain, missing locality, outdated boundaries), concordance can reward wrong parses and punish correct ones. This is why the WOF parent-id spot check exists as a diagnostic step.
-- It does not resolve ambiguity alone. When two parses are both concordant (Springfield IL vs Springfield MA), the downstream application must decide by population prior, user context, or an explicit "did you mean?" prompt.
+- It does not resolve ambiguity by itself. When two parses are both concordant (Springfield IL vs Springfield MA), the downstream application must decide by population prior, user context, or an explicit "did you mean?" prompt.
 - It does not replace the classifier. If the classifier never emits the correct tag in its top K, concordance cannot recover it. The reconciler only re-ranks candidates and never invents new ones.
 
 ## See also

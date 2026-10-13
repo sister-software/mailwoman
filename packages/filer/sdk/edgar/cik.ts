@@ -87,7 +87,7 @@ export interface CompanyTickerEntry {
  * @throws a descriptive error naming the offending row key on a structural mismatch
  * (decision 8's "malformed input must be loud" discipline, continued from `form499.ts`/`provider-list.ts`).
  * This is SEC's own canonical reference file, so a row that doesn't fit the documented shape
- * is a real signal something changed upstream rather than a case worth silently skipping.
+ * is a real signal something changed upstream rather than a case to skip without a report.
  */
 export function parseCompanyTickers(raw: unknown): CompanyTickerEntry[] {
 	if (!raw || typeof raw !== "object") {
@@ -196,7 +196,7 @@ export interface CIKCandidate {
 	cik: CIK
 	/**
 	 * The company's name exactly as `company_tickers.json` spells it (`title`),
-	 * never canonicalized, so a caller sees what SEC actually published.
+	 * never canonicalized, so a caller sees what SEC published.
 	 */
 	companyName: string
 	ticker: string
@@ -231,7 +231,7 @@ export interface ResolveCIKOptions {
 	 * `company_tickers.json` contains more than 10,000 rows.
 	 * A report of every candidate below a real match adds noise.
 	 *
-	 * Never narrows a genuine tie at the top score below this cap (see the function's own docstring).
+	 * Never narrows an exact tie at the top score below this cap (see the function's own docstring).
 	 * `limit` trims the long low-scoring tail rather than a collision the caller needs to see.
 	 */
 	limit?: number
@@ -258,7 +258,7 @@ function canonicalOf(name: string): string {
  * A caller that also passes `limit: 1` (the natural thing to do when it wants "the" answer)
  * would otherwise see the ambiguity vanish behind a plain `.slice(0, limit)`.
  *
- * So a genuine tie for the TOP score is reported in full regardless of `limit`: querying
+ * So an exact tie for the top score is reported in full regardless of `limit`: querying
  * `"American Broadband"` against a ticker file naming both `"American Broadband LLC"`
  * and `"American Broadband, Inc."`
  *
@@ -282,7 +282,7 @@ function canonicalOf(name: string): string {
  *
  * Per CIK the highest-scoring row wins (first seen wins within an exact score tie,
  * so the result is deterministic in ticker-file order), which is what keeps the
- * reported `companyName`/`ticker` the ones that actually matched.
+ * reported `companyName`/`ticker` the ones that matched.
  */
 export function resolveCIKCandidates(
 	companyName: string,

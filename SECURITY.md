@@ -1,6 +1,6 @@
 # Security Policy
 
-## Reporting a vulnerability
+## Report a vulnerability
 
 If you find a security issue in Mailwoman, please report it privately — **do not
 open a public GitHub issue** for anything that could be exploited.
@@ -22,8 +22,8 @@ We're happy to credit you in the release notes if you'd like.
 
 Mailwoman is pre-1.0 in spirit even though the npm version is 5.x — the public
 API is still settling. Security fixes land on the **latest published minor**
-(`5.x`). We don't backport to older minors; upgrading forward is the supported
-path.
+(`5.x`). We don't backport to older minors. The supported path is to upgrade
+forward.
 
 ## Scope
 
@@ -31,8 +31,8 @@ What's in scope: the published npm packages (`mailwoman`, `@mailwoman/*`), the
 CLI, and the resolver/server code in this repository.
 
 What's out of scope: third-party data we bundle or attribute (libpostal,
-libaddressinput, Who's on First, GeoNames — see
+libaddressinput, Who's On First, GeoNames — see
 [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)), and issues that require a
 malicious local data file you supplied yourself. The model is a statistical
-parser — a wrong parse is a quality bug rather than a security one; please file those
+parser. A wrong parse is a quality bug rather than a security bug. Please file those
 as normal issues.

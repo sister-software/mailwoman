@@ -1,7 +1,7 @@
 # Progressive atlas distribution
 
 **Date:** 2026-08-09
-**Status:** direction approved; implementation plan pending
+**Status:** direction approved, implementation plan pending
 **Related:** [issue #1577](https://github.com/sister-software/mailwoman/issues/1577),
 [spatial-layer interface](../../engineering/reference/layer-interface.mdx),
 [WOF granularity scorecard](./2026-08-02-wof-granularity-scorecard-design.md),
@@ -9,8 +9,8 @@
 
 ## The questions
 
-Mailwoman currently distributes three kinds of consumer artifact through two mechanisms. npm carries
-the engine and model packages. `mailwoman data pull` downloads SQLite databases named `candidate`,
+Mailwoman currently distributes three kinds of consumer artifact through two mechanisms. npm distributes
+the engine and model packages. `mailwoman data pull` downloads the SQLite databases `candidate`,
 `us`, `fr`, and `poi`. The downloader works, but those four names mix an implementation detail, two
 territories, and a semantic layer.
 
@@ -53,7 +53,7 @@ do not dictate the physical shape of every downloaded database.
 
 The global atlas does not imply a universal address grammar. Component order, postcode semantics,
 dependent-locality use, numbering, formatting, and omission rules vary by address system. The model
-and resolver continue to carry that distinction.
+and resolver continue to record that distinction.
 
 The present model shape remains:
 
@@ -72,7 +72,7 @@ coupled to runtime versions and belong in the application's dependency lockfile.
 Country is a strong address-system prior. Language is a separate observation. Multilingual
 countries, exonyms, native-script venue names, and transliterated queries all require a several-to-several
 relationship between country, script, locale, and address system. A future `AddressSystemID` may
-make that relationship explicit. An ISO country code alone should never imply that the
+make that relationship explicit. An ISO country code without other evidence should never imply that the
 country has one language.
 
 The CLI diagnoses model availability and prints a package-manager command. `mailwoman data pull`
@@ -88,9 +88,9 @@ The installed atlas is a coverage pyramid:
 | locality    | locality identities, primary names, coordinates/bounds, parent edges                | locality                         |
 | aliases     | alternate names, exonyms, transliterations, language/script metadata                | same geometry, broader retrieval |
 | postcode    | postcode geometry and locality relationships                                        | postcode region                  |
-| street      | named street geometry and interpolation support                                     | street or interpolated range     |
+| street      | street geometry with names and interpolation support                                | street or interpolated range     |
 | address     | situs/rooftop points and address relationships                                      | address point                    |
-| POI         | venues, businesses, landmarks, categories, brands                                   | named place                      |
+| POI         | venues, businesses, landmarks, categories, brands                                   | place with a name                |
 | domain      | infrastructure, BDC, parcels, hazards, private records                              | layer-specific claim             |
 
 "Worldwide coverage" describes the surviving spatial claim. It does not promise every locality
@@ -167,8 +167,8 @@ npx mw data plan --area gb --detail address
 npx mw data pull --area gb --detail address
 ```
 
-Profiles provide progressive disclosure. `starter`, `standard`, `local`, and `complete` are named
-catalog queries rather than frozen bundles with bespoke loaders.
+Profiles provide progressive disclosure. `starter`, `standard`, `local`, and `complete` are
+catalog queries with names rather than frozen bundles with bespoke loaders.
 
 ## Area selection and physical extracts
 
@@ -277,7 +277,7 @@ the smallest command that installs the layer. Verbose mode prints resolved model
 profiles, data/config/cache paths, registries, installed catalog receipts, layers, vintages, and
 coverage.
 
-The `mw` alias and `man mailwoman` are packaging/documentation work around the same commands; they do
+The `mw` alias and `man mailwoman` are packaging/documentation work around the same commands. They do
 not introduce alternate behavior.
 
 ## Filesystem interface

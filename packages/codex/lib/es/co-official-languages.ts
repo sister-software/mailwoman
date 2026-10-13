@@ -18,7 +18,7 @@
  *   Asturian and Aragonese are guarded by their statutes and not co-official, so Asturias, Huesca, Teruel and Zaragoza
  *   have no entry. Ceuta, Melilla and the province-less territories also have no entry.
  *
- *   why a table. Who's On First stores preferred province names in many languages.
+ *   why a table. Who's On First stores preferred province names in several languages.
  *   For languages not spoken in a province, its preferred name may belong to the autonomous community.
  *   Zamora's Catalan preferred name is `Castella i Lleó`. Seville's Asturian name is `Andalucía`.
  *   Ourense's Occitan name is `Galícia`. If every language's name were treated as a province surface, the data would

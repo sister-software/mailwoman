@@ -21,7 +21,7 @@ a constant.
   `candidate.db` on disk at `<data root>/db/wof/candidate.db`. Every transcript below assumes both. The
   scripts find it through `resolveCandidateDBPath()`, so no environment variable needs exporting.
 - [customers.csv](/examples/customers.csv) next to your scripts — twenty rows, repeated to make a file
-  worth timing.
+  large enough to time.
 - A machine whose core count you know. `nproc` on Linux, `sysctl -n hw.ncpu` on macOS.
 
 The comparison tables below come from one sweep, run back to back on one machine: an AMD Ryzen 9 8945HS,
@@ -96,10 +96,10 @@ startup 0.68 s
 ```
 
 Run it three times. During the sweep this page reports, the three runs landed at 136.0, 138.9 and 137.9
-rows/s; a later run on the same machine under lighter load reached 153.3. Re-running the same script on
+rows/s. A later run on the same machine under lighter load reached 153.3. Re-running the same script on
 the same box a day later, against `8.7.0` at head, gave 111.0, 111.6 and 113.3. That is a 27% spread
 across sessions on one machine with one model and one gazetteer, and none of it is a code change. It
-is what a shared box does. It is also why the table in step 4 is worth more than any single figure in
+is what a shared box does. It is also why the table in step 4 is more reliable than any single figure in
 it: every row of that table was measured in one sitting, so the ratios hold even where the absolute
 rates drift. Compare your ratios to ours rather than your rows per second.
 
@@ -269,7 +269,7 @@ Fastest of three runs per size:
 | 8 workers                     | 157.0  | 1.13×       |
 
 The curve peaks and then falls. Sixteen cores did not provide 16×, and eight workers were worse than two.
-One worker is the baseline plus a message hop, which is the sanity check that the pool itself costs
+One worker is the baseline plus a message hop. That row checks that the pool itself costs
 no more than a message hop.
 
 Part of the reason the peak sits low is that each worker's inference session already claims four
@@ -305,7 +305,7 @@ prefers width over depth. Take the peak and stop tuning.
 
 ## Verify
 
-Check that the pool wrote one record per input row, and that every record carries a coordinate:
+Check that the pool wrote one record per input row, and that every record contains a coordinate:
 
 ```bash
 node pool.mjs 4 250
@@ -322,7 +322,7 @@ jq -c 'select(.query | startswith("1275 Pennsylvania"))' customers.pooled.jsonl 
 
 The `jq` filter rather than `head -1` is deliberate: records arrive in completion order rather than input
 order, so the first line of the file is a different row on every run. That is also why each record
-carries its own `query`. If you need the input order back, carry an index through the batch and sort at
+includes its own `query`. If you need the input order back, pass an index through the batch and sort at
 the end.
 
 ## The shipped version of this
@@ -338,8 +338,8 @@ const normalized = normalizeCSV("customers.csv", { mapping })
 for await (const rec of geocodeStream(normalized, { mapping, geocode, concurrency: 4 })) sink.write(rec)
 ```
 
-It parses once per row and shares the tree between the returned components and the geocode, which the
-hand-rolled pool above does not. One constraint decides whether it fits: its worker builds a
+It parses once per row and shares the tree between the returned components and the geocode. The
+hand-rolled pool above does not share the tree. One constraint decides whether it fits: its worker builds a
 `WOFSQLitePlaceLookup`, so it resolves against a full WOF SQLite distribution rather than against
 `candidate.db`. If your setup is the `candidate.db` one the tutorials teach, the pool in step 3 is what
 you can run today.
@@ -353,11 +353,11 @@ you can run today.
   different sweep — an NPPES run against a single 4 GB WOF database that peaked at 2 workers and
   degraded from there. Same shape, different peak. Re-run step 4 when the data root or the box changes.
 - **This is CPU inference.** The browser runtime (`@mailwoman/neural/web/onnx-runner`) has a WebGPU
-  path; the Node runtime does not, and no amount of pool tuning substitutes for that. See
+  path. The Node runtime does not, and no amount of pool tuning substitutes for that. See
   [Parse in the browser](../tutorials/parse-in-the-browser.mdx).
 - **A batch inside one session did not pay in the measured run.** The model was re-exported so the graph could accept
   a batch at all, throughput peaked at 1.12× for a batch of 4 and went backwards past 8 — 0.62× at 64.
-  A batch raises arithmetic intensity, which helps when cores are idle waiting on memory, and a single
+  A batch raises arithmetic intensity. Higher intensity helps when cores are idle waiting on memory, and a single
   batch=1 inference here already occupies 8.02 cores. The receipts, including the flat 1.00× concurrency
   table this page's step 2 reproduces, are in
   [`performance.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx).

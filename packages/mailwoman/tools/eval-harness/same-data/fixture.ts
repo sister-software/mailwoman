@@ -303,7 +303,7 @@ export interface ArmEvidenceObservation {
  * Checks whether every arm read the same evidence for every row.
  *
  * It compares the row digest, pool size, candidate ID set and candidate field-name
- * set from the evidence the arms actually read.
+ * set from the evidence the arms read.
  */
 export function assertEqualEvidence(observations: readonly ArmEvidenceObservation[]): FixtureProblem[] {
 	const problems: FixtureProblem[] = []

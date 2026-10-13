@@ -27,7 +27,7 @@ A corpus version is a frozen set of `(raw, tokens, BIO labels)` triples ready fo
 | wall-clock to build            | ~6.5 hours                         |
 | splits                         | train (90%) / val (5%) / test (5%) |
 
-The corpus is built once per ship. Re-running the build is idempotent; running incremental updates is not yet supported.
+The corpus is built once per ship. A re-run of the build is idempotent. The build does not yet support incremental updates.
 
 ## The data sources
 
@@ -57,7 +57,7 @@ The diversity of sources matters more than the absolute count. NPPES contributes
 
 ## Stage 1 — Per-adapter row emission
 
-Each adapter is a TypeScript async generator that yields `CanonicalRow` objects. The interface is straightforward:
+Each adapter is a TypeScript async generator that yields `CanonicalRow` objects. The interface has one method:
 
 ```ts
 interface CorpusAdapter {
@@ -125,7 +125,7 @@ The training pipeline picks up from here. See [Training pipeline](./training-pip
 
 - **Incremental updates.** Today, adding a new source means a full rebuild. ~6 hours of wall-clock.
 - **Wall-clock cost scales with synthesis.** The 5x synthesis multiplier doubles the alignment + extract routing time vs. a synth-off build. v0.3.0 added more sources without bumping max_steps, so the corpus is now under-utilized: a 50K-step training run sees only 6.4 million examples (~1% of the corpus per pass).
-- **Disk pressure.** The intermediate NDJSON dumps land at ~400 GB and stay until the next build. The host is on a 1 TB nvme; this is fine but tight.
+- **Disk pressure.** The intermediate NDJSON dumps land at ~400 GB and stay until the next build. The host is on a 1 TB nvme. That capacity is enough, with little room to spare.
 
 ## Where this lives in the code
 

@@ -223,7 +223,7 @@ export async function buildStreetMorphologyFST(
 			// Fixed referential score: street affixes are structurally unambiguous
 			// (Avenue is almost never anything but street-typing).
 			// The morphology prior caps bias separately.
-			// This value just feeds the cap formula `referential * cap`.
+			// This value only feeds the cap formula `referential * cap`.
 			// No encyclopedic score — a street affix is not a place and has no article.
 			referential: 1,
 			encyclopedic: null,

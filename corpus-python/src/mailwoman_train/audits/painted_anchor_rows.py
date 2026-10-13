@@ -1,4 +1,4 @@
-"""Count how many corpus rows the anchor painter actually PAINTS, per lookup.
+"""Count the corpus rows the anchor painter PAINTS, per lookup.
 
 A zero here is not a smaller number: it is the anchor channel being switched off for a country while
     the config still sets ``use_postcode_anchor: true``. Run it before a launch, once per recipe output

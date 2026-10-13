@@ -8,9 +8,9 @@ coverage layers over its extents — together with every question the records le
 record that would resolve each.
 
 The package checks supplied property records and refuses dangling references, duplicate identifiers and
-malformed dates; the admitted records project into a dossier for an explicit `asOf` date. A record is
-admitted by its availability date alone, so a decision dated 2022 cannot rest on a record published in 2023. The package acquires no source, computes no cost, and renders no map: it checks what it is given and
-says what the given records support. `reportLines` turns a dossier into the line records of the report an
+malformed dates. The admitted records project into a dossier for an explicit `asOf` date. The availability date
+is the only date that admits a record, so a decision dated 2022 cannot rest on a record published in 2023. The package acquires no source, computes no cost, and renders no map. It checks the records it is given and
+states what those records support. `reportLines` turns a dossier into the line records of the report an
 operator reads, and `renderReport` prints them as Markdown.
 
 The eight synthetic scenarios of the inventory spec
@@ -20,7 +20,7 @@ House, Example Annex and Example Parcel — are `test/fixtures/example-house.ts`
 
 ## Memberships, positions and unplaced readings
 
-A membership record states that a building lies in an extent, and it cites the source that says so. It
+A membership record states that a building lies in an extent, and it cites the source that states it. It
 writes the extent as a layer reading writes it, such as `census-block:<GEOID>`, an H3 cell or a postcode.
 A layer reading attaches to buildings by three rules, applied in order:
 
@@ -54,7 +54,7 @@ from, whatever the date of the claim's own record.
 `reportLines` returns the report as line records. Each record holds the line's text, the part of the
 report it belongs to, its kind, the building whose section holds it, and the source records behind it.
 `renderReport` prints the text of each record in order, one line per record, so the printed report and the
-records cannot disagree. A line's kind says what the line states:
+records cannot disagree. A line's kind identifies what the line states:
 
 - A `conclusion` states a value that admitted records supply. Its text cites each of those records in
   parentheses after the value it supports.
@@ -94,7 +94,7 @@ never support. Only a `surveyed` or `designated` zero establishes an absence.
 The section ranks the explanations only when each has one documented probability that cites a record.
 Otherwise it shows each explanation's scenarios. A later reading that holds records resolves the
 exception, and the explanations stay hypotheses about the earlier date. Every statement in the section
-carries one of five kinds: fact, deduction, estimate, hypothesis or decision. An operator disposition
+has one of five kinds: fact, deduction, estimate, hypothesis or decision. An operator disposition
 records which explanation the operator investigated and what the investigation found, and
 `reportOperatorResults` measures blocker accuracy and time saved with their denominators.
 
@@ -112,7 +112,7 @@ the building's census block as its extent, because the FCC files state availabil
 ## The Example House report
 
 The report below is the verbatim output of `renderReport(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }))`
-over the fixture records. The fixture's readings carry no `subject`, so each attaches through a
+over the fixture records. The fixture's readings have no `subject`, so each attaches through a
 membership. The survey places Example House in cell-1, and the permit places Example House and Example
 Annex in district-1. The Annex therefore shows only the district reading. No record places a building in
 cell-3, so the report lists the cable reading there as unplaced, and the route explanation for Example

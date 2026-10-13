@@ -49,7 +49,7 @@ export interface PoBoxInputRow extends PoBoxBaseTuple {
 
 export interface PoBoxAdapterOptions {
 	/**
-	 * How many PO box variants to emit per input tuple, each picking a different leader
+	 * The number of PO box variants to emit per input tuple, each picking a different leader
 	 * (and possibly a different number or noise level); default 1.
 	 */
 	variantsPerInput?: number

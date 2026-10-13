@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Measures the index and the feature count used to select its resolution.
- *   It checks how many features a polyfill-only index would drop.
+ *   It checks the count of features a polyfill-only index would drop.
  *   `classifyFeatureCells` cannot report that count because it refuses features that reach no cell.
  */
 

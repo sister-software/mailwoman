@@ -1,6 +1,6 @@
-# `postcodeConsistencyMaxMoveKm` against the population that carries #370's wins
+# `postcodeConsistencyMaxMoveKm` against the population that holds #370's wins
 
-Date: 2026-09-15. Record for #2301. Point-in-time; numbers are not updated.
+Date: 2026-09-15. Record for #2301. The record is point-in-time, and its numbers are not updated.
 
 ## Question
 
@@ -13,9 +13,9 @@ The pass (`applyPostcodeConsistency`, `packages/resolver/lib/resolve/passes.ts`)
 things to a locality that resolves farther than `postcodeConsistencyThresholdKm` from a resolved
 sibling postcode, numbered here as its own docstring numbers them:
 
-- **Step 2, the re-pick** — swap to the same-named candidate nearest the postcode, taking its id and
+- **Step 2, the re-pick** — swap to the candidate with the same name nearest the postcode, taking its id and
   its coordinate. Uncapped by design.
-- **Step 3, the coordinate fallback** — when no same-named candidate reconciles, move the coordinate
+- **Step 3, the coordinate fallback** — when no candidate with the same name reconciles, move the coordinate
   onto the postcode point while keeping the selected locality's id. This is the step
   `postcodeConsistencyMaxMoveKm` bounds, and the step that relocated `Nawāda, 744301` by 1,914 km.
 
@@ -56,8 +56,8 @@ Read through `admin-global-priority.db` + `postcode-locality-intl.db` with
 `--candidate-db candidate.db`, weights `weights/en-us` (npm 9.1.0). `--default-country none` for the
 three European sets, `US` for the American one.
 
-**FI and SI are absent, and they are two of the three locales #370's promotion named.** No FI or SI
-coordinate set survives on disk; the four above are what does. FR is the substitute and is the locale
+**FI and SI are absent, and they are two of the three locales #370's promotion cited.** No FI or SI
+coordinate set survives on disk. Only the four above survive. FR is the substitute and is the locale
 #370's motivating example came from (`06260 Saint-Pierre`, 617 km off).
 
 ## Result
@@ -96,11 +96,11 @@ come from the step a cap bounds. The tradeoff paragraph's premise does not hold 
 
 **Does not settle**: this population prices no cap VALUE against another, because step 3 never fires
 on it. That is the same limit the frozen same-data fixture has, reached from the other side. There
-the fallback fires and never helps; here the pass helps and the fallback never fires. Neither holds a
+the fallback fires and never helps. Here the pass helps and the fallback never fires. Neither holds a
 row where the fallback is the thing that produced a win, and after 5,300 real addresses across four
 countries no such row has been observed.
 
-The two bounds that do carry a value are unchanged from #2301:
+The two bounds that do measure a cap value are unchanged from #2301:
 
 - The same-data sweep: contradictory wrong-area 67.0% uncapped → 19.0% at 300 km → 13.0% at 100 km,
   with selection accuracy flat at 71.7% across every arm.
@@ -117,13 +117,13 @@ The two bounds that do carry a value are unchanged from #2301:
 300 km sits above the 99th percentile of agreeing (postcode, settlement) pairs, so it admits every
 relocation a CORRECT postcode could require, and refuses the class the option was opened for — a
 transposed, retired or metro-adjacent code carrying the answer hundreds of kilometers from the
-locality whose id the result keeps. It costs nothing measurable on the 5,300 rows above, which
-include two tier-1 locales at 3,000 and 2,000 rows, and it recovers 48 of the 54 available
+locality whose id the result keeps. It changes no row of the 5,300 rows above.
+Those rows include two tier-1 locales at 3,000 and 2,000 rows. It also recovers 48 of the 54 available
 wrong-area points on the same-data panel.
 
 The residual is FI and SI: their #370 counts (231/0 and 37/6) cannot be re-run from surviving
 artifacts, so if either locale's wins came from the coordinate fallback rather than the re-pick, this
-default would reduce them. 300 km above a p99 of 153.3 km is the margin that bounds that risk; a
+default would reduce them. 300 km above a p99 of 153.3 km is the margin that bounds that risk. A
 tighter value does not have it.
 
 ## Reproduction
@@ -140,11 +140,11 @@ mailwoman eval oa-resolver \
   --out-rows <arm>.json
 ```
 
-The eval's rows are `{ input, lat, lon, expected, state, source }`. The 2026-07 sets carried the same
+The eval's rows are `{ input, lat, lon, expected, state, source }`. The 2026-07 sets stored the same
 facts under `{ raw, components, country, lat, lon }`; the published artifacts above are already in
 the eval's shape.
 
-A refused move now reaches a caller: `GeocodeResult.unfollowed_components` carries the postcode, the
+A refused move now reaches a caller: `GeocodeResult.unfollowed_components` holds the postcode, the
 reason `postcode_move_refused`, and the distance following it would have moved the answer. It is
-separate from `dropped_components`, which names a span the flat projection deleted. A refused
+separate from `dropped_components`, which lists a span the flat projection deleted. A refused
 postcode is KEPT, and reads as if it had been honoured without this field.

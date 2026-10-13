@@ -49,6 +49,6 @@ Map widgets (`leaflet-control-geocoder`, `@openrunner/photon-geocoder`) call thi
 ## Status
 
 Shipped. `/api` and `/reverse` resolve over the live engine and return Photon GeoJSON. `/api` runs the
-query through the geocoder today; the dedicated prefix-first FST front (the last bit of Photon's tuned
+query through the geocoder today. The dedicated prefix-first FST front (the last bit of Photon's tuned
 type-ahead ordering) is a refinement. Pairs with [`@mailwoman/nominatim`](../nominatim) for the
 structured-lookup shape and the OpenCage-style annotations block.

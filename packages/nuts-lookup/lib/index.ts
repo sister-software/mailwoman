@@ -57,8 +57,8 @@ export function nutsFromID(id: string): NUTS {
 }
 
 /**
- * How many parsed regions {@link NUTSLookup} keeps. 256 covers every region a bounded-area
- * workload touches while holding a small fraction of the table.
+ * The count of parsed regions {@link NUTSLookup} keeps. 256 covers every region a
+ * bounded-area workload touches while holding a small fraction of the table.
  */
 const GEOMETRY_CACHE_LIMIT = 256
 

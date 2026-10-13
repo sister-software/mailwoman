@@ -181,7 +181,8 @@ export interface FindPlaceQuery {
 	regionQualifier?: string
 
 	/**
-	 * A proximity hint that boosts nearby candidates and filters by radius only when `maxDistanceKm` is set.
+	 * A proximity hint that boosts candidates closer to the point and filters by
+	 * radius only when `maxDistanceKm` is set.
 	 */
 	near?: LatLon & { maxDistanceKm?: number }
 

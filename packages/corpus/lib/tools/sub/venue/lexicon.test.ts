@@ -100,7 +100,7 @@ test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue/structure.ts's VENUE_STRUCTUR
 })
 
 test("SHIPPED_DESIGNATOR_SEED's modifierEligible set matches MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS", () => {
-	// `gate` and `building` are excluded upstream because "East Gate"
+	// The airport gate designator and `building` are excluded upstream because "East Gate"
 	// and "Building Society Place" are real GB streets.
 	// The GB extract's 890 `gate` transport features are essentially none of them sub-venues.
 	expect(
@@ -177,7 +177,7 @@ test("classifyIdentifier covers the shapes real refs take", () => {
 	expect(classifyIdentifier("B")).toBe("letter")
 	expect(classifyIdentifier("A12")).toBe("letter-digit")
 	expect(classifyIdentifier("2F")).toBe("digit-letter")
-	// Both separators OSM uses for a gate serving more than one stand — measured on Berlin.
+	// Both separators OSM uses for a boarding gate serving more than one stand — measured on Berlin.
 	expect(classifyIdentifier("16-18")).toBe("range")
 	expect(classifyIdentifier("0/1")).toBe("range")
 	expect(classifyIdentifier("General Aviation Terminal")).toBe("other")
@@ -193,8 +193,8 @@ test("nameContainsSurfaces matches whole tokens for Latin script, not substrings
 	expect(nameContainsSurfaces("Terminal E (Untere Ebene)", index)).toEqual(["terminal"])
 	expect(nameContainsSurfaces("South Terminal", index)).toEqual(["terminal"])
 	expect(nameContainsSurfaces("Terminal 3, Pier 6", index)).toEqual(["terminal"])
-	// The compound miss is deliberate: admitting suffix matches would fire on every
-	// -gate/-hall compound in Germanic and Nordic street naming (Briggate, Kirkgate).
+	// The compound miss is deliberate: admitting suffix matches would fire on every Germanic
+	// and Nordic street-name compound such as Briggate and Kirkgate.
 	expect(nameContainsSurfaces("Nordterminal", index)).toEqual([])
 	expect(nameContainsSurfaces("Briggate", index)).toEqual([])
 	expect(nameContainsSurfaces("Otto Lilienthal Flughafen Berlin Tegel", index)).toEqual([])

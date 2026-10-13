@@ -24,7 +24,7 @@ three different kinds of knowledge, and they have very different shapes:
 1. **Grammar** is what address _structure_ looks like.
    A number before a street name is probably a house number, the text after a comma is probably a locality,
    and "St" ends a street name but starts "St Petersburg".
-   Grammar generalizes, because these rules stay mostly stable even for streets nobody has written down yet.
+   Grammar generalizes, because these rules stay mostly stable even for streets that no dataset has recorded yet.
 2. **Tokenization** turns raw text into units a model can read, such as subwords, characters, or bytes.
 3. **The world** is which places exist, where they are, and what they contain.
    This knowledge is enormous and ambiguous ("Washington" is a state, dozens of cities, and thousands of streets),
@@ -45,27 +45,27 @@ its knowledge can be inspected or swapped from the outside.
 **Pelias puts the knowledge in an index.** The parser is thin, because Pelias calls libpostal. The
 rest of the knowledge lives in an Elasticsearch cluster as synonym files, analyzers, and query-time
 heuristics over a several-gigabyte import of the planet. The dictionary became infrastructure. To
-know what Pelias knows, you stand up the cluster and feed it. That is straightforward to operate
-but heavy.
+know what Pelias knows, you stand up the cluster and feed it. That setup has few moving parts to operate,
+but it is heavy.
 
 **LLM-era parsers put everything in parameters.** Systems in the AddrKG-LLM direction hand the
 task to a large generative model, sometimes coupled to a knowledge graph. The model holds the
 grammar, the dictionary, and a lossy copy of the atlas all at once. That design gains flexibility
 and pays for it everywhere else. It needs billions of parameters and GPU serving, it gives no
 character-offset guarantees for the labels it emits, and its confidence cannot be calibrated. When
-it doesn't know a place, it can invent one, which the other architectures structurally cannot do.
+it doesn't know a place, it can invent one. The other architectures structurally cannot do that.
 
 **Mailwoman's choice is the factoring itself.** Each kind of knowledge goes where it generalizes
 best, and _only_ structure lives in parameters:
 
-| Knowledge    | Where it lives                                                                                                          | Why there                                                                                                                                                                          |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Grammar      | a ~39 MB encoder ([why neural](./why-a-neural-parser.mdx))                                                              | structure generalizes; a small model trained on hundreds of millions of addresses learns the game's rules rather than its roster                                                   |
-| Tokenization | a [SentencePiece subword vocabulary](../../concepts/tokenization.mdx) with byte fallback                                | learned from the address corpus itself; byte fallback means no input is unrepresentable (measured: 0.155% of pieces over a 684M-row feed fall back to bytes)                       |
-| The world    | swappable data files — the gazetteer, [FST evidence channels](../../concepts/fst-gazetteer-prior.mdx), curated lexicons | the atlas changes monthly and must not require retraining; it reaches the model as _graded evidence_, so an unknown place is a normal input rather than an out-of-vocabulary error |
-| Query idiom  | small curated tables (brand aliases, regional variants)                                                                 | "Macca's" → McDonald's is human knowledge with a maintainer rather than a statistical fact                                                                                         |
+| Knowledge    | Where it lives                                                                                                          | Why there                                                                                                                                                                              |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grammar      | a ~39 MB encoder ([why neural](./why-a-neural-parser.mdx))                                                              | structure generalizes, and a small model trained on hundreds of millions of addresses learns the game's rules rather than its roster                                                   |
+| Tokenization | a [SentencePiece subword vocabulary](../../concepts/tokenization.mdx) with byte fallback                                | learned from the address corpus itself, and byte fallback means no input is unrepresentable (measured: 0.155% of pieces over a 684M-row feed fall back to bytes)                       |
+| The world    | swappable data files — the gazetteer, [FST evidence channels](../../concepts/fst-gazetteer-prior.mdx), curated lexicons | the atlas changes monthly and must not require retraining, and it reaches the model as _graded evidence_, so an unknown place is a normal input rather than an out-of-vocabulary error |
+| Query idiom  | small curated tables (brand aliases, regional variants)                                                                 | "Macca's" → McDonald's is human knowledge with a maintainer rather than a statistical fact                                                                                             |
 
-At inference time, the model consults the world through evidence channels, which report that a
+At inference time, the model consults the world through evidence channels. A channel reports that a
 span matches a known locality surface with a given ambiguity class. During training, the model
 learned how much to trust that evidence against context. Memorization was deliberately kept _out_
 of the parameters and moved into files you can read, diff, replace, and license independently.
@@ -80,7 +80,7 @@ knowledge makes the minimum artifact enormous.
 
 **Update cost.** For a new Who's On First release, you rebuild the gazetteer artifacts and leave
 the model unchanged. For new brand aliases, you edit a table. The model is retrained only when the
-_grammar_ needs to improve, which is rare and deliberate. The world changes constantly, and none of
+_grammar_ needs to improve. That retrain is rare and deliberate. The world changes constantly, and none of
 those changes require retraining.
 
 **Auditability.** Because each store is separate, each is measurable on its own terms. The
@@ -90,7 +90,7 @@ ablated to show exactly what the gazetteer contributes, and the parser's confide
 only be evaluated end-to-end, but a factored one can be examined a layer at a time.
 
 **Visible failure.** When Mailwoman meets a place it has never heard of, the gazetteer offers no
-evidence, the model parses on structure alone, and the confidence score reflects that. No stage
+evidence, the model parses on structure only, and the confidence score reflects that. No stage
 invents a coordinate.
 
 ## The same principle, one level down
@@ -98,7 +98,7 @@ invents a coordinate.
 This article is about where knowledge is _stored_. Its sibling, [The knowledge
 ladder](./the-knowledge-ladder.mdx), is about when knowledge is _applied_: cheap structural
 checks come before expensive inference, and inference comes before resolution. Both articles
-apply the same principle to different dimensions, which is to keep each kind of knowledge where
+apply the same principle to different dimensions: keep each kind of knowledge where
 it is cheapest to keep correct.
 
 If you came here from Pelias, [From Pelias to Mailwoman](./from-pelias-to-mailwoman.mdx) tells

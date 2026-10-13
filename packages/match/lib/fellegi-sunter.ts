@@ -96,7 +96,7 @@ export interface TermFrequencyAdjustment<R> {
 	 */
 	frequency(value: string): number
 	/**
-	 * The level indices the adjustment applies to (typically just the exact level).
+	 * The level indices the adjustment applies to (by default, only the exact level).
 	 */
 	levels: ReadonlySet<number>
 	/**

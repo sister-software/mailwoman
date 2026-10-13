@@ -15,7 +15,7 @@
  * Two registers are absent from the OA tuples. A comma-free single line (`Neusser Str. 12 Nippes 50733
  * Köln`) segments as one unit at stage 2. With one segment, the placetype-pair prior never fires.
  * The model then reads `Nippes` as a second street. The one-value-per-tag projection deletes it.
- * `--comma-free-fraction` renders that many native-order rows with `" "` as the line separator. OA
+ * `--comma-free-fraction` renders that share of native-order rows with `" "` as the line separator. OA
  * rows also lack a district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
  * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
  * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.

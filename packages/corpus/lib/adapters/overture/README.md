@@ -7,7 +7,7 @@ Overture Maps **Addresses** theme → canonical corpus rows. The fill-rate-check
 
 Overture's global Addresses theme is the single-schema, well-normalized address dataset that fixes
 OpenAddresses' per-country patchiness: OA dropped Spain entirely and OA-DE omits the Bundesland, but
-Overture carries `{ street, number, unit, postcode, address_levels }` for **every** locale at scale
+Overture publishes `{ street, number, unit, postcode, address_levels }` for **every** locale at scale
 (FR 26M, IT 26M, DE 19M, ES 16M, NL 10M, …) — and it even re-hosts the OpenAddresses Spain data the
 standalone OA bucket no longer serves. This adapter exists because the model was en-us/fr-trained and
 never saw non-en/fr street formats (the 2026-06-19 EU parse-blocker measured locality-parse accuracy
@@ -21,9 +21,9 @@ A per-country **line-delimited JSON** dump of the corpus-relevant fields:
 { "street": "CALLE JULAN", "number": "12", "unit": null, "postcode": "38914", "locality": "El Pinar de El Hierro" }
 ```
 
-Produced by the scripts-side ingest tool (which does the DuckDB / S3 heavy lifting — it stays out of
+The scripts-side ingest tool produces the dump and does the DuckDB / S3 work. The tool stays out of
 `@mailwoman/corpus` because corpus is a **runtime dep of the `mailwoman` CLI** and must not pull the
-heavy native `@duckdb/node-api`):
+heavy native `@duckdb/node-api`.
 
 ```bash
 node scripts/ingest-overture-addresses.ts \
@@ -33,7 +33,7 @@ node scripts/ingest-overture-addresses.ts \
 
 ## Run
 
-`--country` is required (the JSONL is per-country; rows omit a country field):
+`--country` is required because the JSONL is per-country and its rows omit a country field:
 
 ```bash
 mailwoman corpus run overture \
@@ -41,7 +41,7 @@ mailwoman corpus run overture \
   --country ES --output /data/corpus-staging
 ```
 
-## Mapping
+## Field map
 
 | field      | ComponentTag                                                                                   |
 | ---------- | ---------------------------------------------------------------------------------------------- |
@@ -51,10 +51,10 @@ mailwoman corpus run overture \
 | `postcode` | `postcode`                                                                                     |
 | `locality` | `locality` — Overture `address_levels` municipality, or `postal_city`                          |
 
-Overture's admin levels stop at the municipality, which is all this street/locality corpus subset needs. The
+Overture's admin levels stop at the municipality. This street/locality corpus subset needs no deeper level. The
 few in-text-region locales (DE Bundesland, FR département) are covered by the `geonames-postal` adapter
 (it already emits `{ postcode, locality, region }`) — don't duplicate that here.
 
-License: **CDLA-Permissive-2.0** (attribution; not share-alike). Per the #471 fill-rate requirement, check
-`fill-rates.md` before committing a locale: ES/NL/FR fill completely; IT postcode is ~0% (street+locality
-only); DE postcode is sparse in Overture (use GeoNames for DE postcodes).
+License: **CDLA-Permissive-2.0** (attribution required, without a share-alike term). Per the #471 fill-rate requirement, check
+`fill-rates.md` before committing a locale. ES/NL/FR fill completely. IT postcode is ~0% (street+locality
+only). DE postcode is sparse in Overture (use GeoNames for DE postcodes).

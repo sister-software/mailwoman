@@ -579,7 +579,8 @@ export interface TrainCrossSourceModelOptions {
 	/**
 	 * Assemble the emitted `<prefix>_META` object.
 	 *
-	 * The caller owns field names and order so a retrain diffs cleanly against its committed module.
+	 * The caller owns field names and order so a retrain's diff against its committed
+	 * module shows only the changed values.
 	 */
 	meta: (figures: CrossSourceTrainingFigures) => Record<string, unknown>
 	report?: (line: string) => void

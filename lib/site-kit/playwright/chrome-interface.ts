@@ -19,9 +19,9 @@ export interface Box {
 }
 
 /**
- * The bearing in degrees that the compass check rotates the map to.
+ * The rotation in degrees that the compass check turns the map to.
  *
- * Any bearing outside the compass's dead zone works.
+ * Any rotation outside the compass's dead zone works.
  */
 const BEARING_OFF_NORTH = 42
 

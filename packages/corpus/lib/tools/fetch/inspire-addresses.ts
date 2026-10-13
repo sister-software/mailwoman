@@ -131,7 +131,7 @@ export interface WFSCapabilities {
 /**
  * A value a GeoServer JSON response uses for a voidable property that holds no value.
  *
- * INSPIRE marks many attributes voidable.
+ * The INSPIRE schema marks a set of attributes voidable.
  * A voidable property must be present with either a value or a void with a reason.
  *
  * GeoServer encodes that void as an object rather than as `null`, so `String(value)`

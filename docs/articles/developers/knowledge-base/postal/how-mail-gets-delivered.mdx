@@ -17,7 +17,7 @@ around and it answers itself: who reads an envelope, in what order, and what doe
 Two readers, in sequence, with opposite requirements.
 
 The first is a sorting machine, and it reads from the bottom. It wants the country, then the postcode,
-then whatever narrows the delivery office — the coarse fields, which is why they sit on the last line.
+then whatever narrows the delivery office. Those are the coarse fields, and they sit on the last line for that reason.
 Give it those and it can put the envelope on the right truck without understanding a word of the rest.
 
 The second is a carrier, on foot or in a van, holding a tray already sorted into the order they walk.
@@ -30,7 +30,7 @@ the machine, and the address is read in both directions by different parties on 
 ## What happens in between
 
 An envelope enters at a processing facility and passes an optical reader. If the reader resolves the
-address, a barcode is sprayed on the envelope and the text is never read again. The barcode carries
+address, a barcode is sprayed on the envelope and the text is never read again. The barcode directs
 the machine down to the delivery point, and the walk-sequence sort falls out of it.
 
 The interesting part is what happens when the reader fails. The image is sent to a person. In the US
@@ -64,17 +64,17 @@ A parser sits above the first rung of that ladder, and it can imitate the ladder
 break it. A failure looks like answering a bare `Springfield` with one coordinate because one of
 the [92 US places by that name](./falsehoods-about-addresses.mdx) is the most populous.
 
-Mailwoman's default geocode path does exactly that, and it is worth being plain about it. A bare
+Mailwoman's default geocode path does exactly that. A bare
 `Springfield` comes back as Springfield, Missouri — the most populous — at the `admin` tier, with a
 single entry in `candidates`. The underspecification is reported one field over, as
 `kind: locality_only`: the input was a place name with no other component to disambiguate against. A
-caller reading only the coordinate never sees that, which is the failure mode to design against.
+caller reading only the coordinate never sees that. Design against that failure mode.
 
 Three habits keep the ladder's discipline where the pipeline keeps it. Report a confidence per
 component, so that a downstream system can route the uncertain ones to a person the way a processing
 plant routes an unreadable image
 ([Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx)). Repair what is
-mechanically repairable and leave the rest alone
+mechanically repairable and leave the rest unchanged
 ([Handle messy input](../../how-to/handle-messy-input.mdx)). And separate "this string parsed" from
 "this address exists", which is the check a postal file answers and a parse cannot
 ([Validate an address before you use it](../../how-to/validate-addresses.mdx)).
@@ -83,7 +83,7 @@ mechanically repairable and leave the rest alone
 
 The escalation model is expensive for the postal service and cheap for the sender, and software
 inherits the same asymmetry pointing the other way. If you surface uncertainty, callers have to
-handle it: a confidence score nobody reads is worse than useless, because it looks like diligence.
+handle it: a confidence score that no caller reads is worse than useless, because it looks like diligence.
 The value arrives only when something downstream — a review queue, a second data source, a form that
 asks the user again — is wired to the low-confidence branch.
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reports how many training rows contain a written form the source attested. It also reports how many contain one
+ *   Reports the number of training rows that contain a written form the source attested. It also reports the number that contain one
  *   a recipe composed from normalized fields.
  *
  *   A normalized source supplies `{street, number, unit, postcode, locality}` and discards the line a

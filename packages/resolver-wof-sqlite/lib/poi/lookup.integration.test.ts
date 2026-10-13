@@ -183,7 +183,7 @@ async function buildFixture(path: PathBuilderLike): Promise<void> {
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` — unused here, but the category-codes
-	// dictionary lives alongside it and there's no standalone builder for just that table.
+	// dictionary lives alongside it and there's no builder that creates only that table.
 	await createPOIStagingTables(kdb)
 	createPOISearchFTS(kdb)
 

@@ -49,7 +49,8 @@ const DEFAULT_MARKER_CHAR = "●"
 const DEFAULT_MARKER_COLOR: RGB = [255, 80, 80]
 
 /**
- * A ring radius below this many device pixels degenerates the midpoint circle algorithm to a single point.
+ * A ring radius below this number of device pixels degenerates the midpoint
+ * circle algorithm to a single point.
  */
 const MIN_RING_RADIUS_PX = 2
 

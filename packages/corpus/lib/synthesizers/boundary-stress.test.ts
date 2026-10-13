@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verifies that boundary-stress rows align cleanly through the real `alignRow` aligner, so the
+ *   Verifies that boundary-stress rows align without a dropped span through the real `alignRow` aligner, so the
  *   gold boundary survives tokenization and BIO labeling.
  */
 

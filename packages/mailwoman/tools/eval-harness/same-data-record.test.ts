@@ -94,7 +94,7 @@ const parse = async (query: string): Promise<AddressTree> => ({
 })
 
 /**
- * Every candidate id the recording actually kept, across every question it asked.
+ * Every candidate id the recording kept, across every question it asked.
  */
 async function recordedIDs(withholdEveryDenotingRow: boolean): Promise<Set<string>> {
 	const { fixture } = await recordFixture({

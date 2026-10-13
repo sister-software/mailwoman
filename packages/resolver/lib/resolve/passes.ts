@@ -194,7 +194,7 @@ export interface ResolutionState {
 	defaultCountry: DefaultCountry | null
 
 	/**
-	 * The tree's only value-bearing node when it maps to `locality`, or null otherwise.
+	 * The tree's only node with a value when it maps to `locality`, or null otherwise.
 	 *
 	 * Its lookup also probes countries and regions of the same name, because the locality
 	 * placetype filter cannot reach a country that the parser tagged as a locality.
@@ -206,7 +206,7 @@ export interface ResolutionState {
 	 * The tree's first postcode value.
 	 *
 	 * Locality lookups send it to the backend.
-	 * The backend can then favor nearby candidates.
+	 * The backend can then favor candidates closer to the postcode.
 	 */
 	postcode?: string | null
 
@@ -366,7 +366,8 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 
 /**
  * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes.
- * a locality lookup uses it because the postcode node is usually a sibling.
+ *
+ * A locality lookup uses it because the postcode node is a sibling in the tree shape this pass expects.
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | null {
 	for (const n of walkNodes(roots)) {
@@ -546,8 +547,8 @@ async function reconcileLocalitiesToAnchor(
 }
 
 /**
- * How many same-name localities {@link applyRooftopConsistency} asks the backend for,
- * ranked by distance to the rooftop.
+ * The count of same-name localities {@link applyRooftopConsistency} asks the
+ * backend for, ranked by distance to the rooftop.
  */
 const ROOFTOP_NAMESAKE_LIMIT = 25
 

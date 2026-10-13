@@ -33,7 +33,7 @@
  * Measured over the 179,622 rows of the 2026-09-28 edition with a generic-word probe rather than a
  * language classifier: 133,449 values open with a French street generic such as `Rue`, `Avenue` or
  * `Montée`, 18,629 close with a Luxembourgish one such as `-strooss`, `-wee` or `-gaass`, and the
- * remaining 27,544 match neither probe and include plainly Luxembourgish forms such as
+ * remaining 27,544 match neither probe and include Luxembourgish forms such as
  * `Am Stengber`, `An Hiesel` and `Um Reebou`.
  * No column marks a row's language, so `locale` reads `und-LU`.
  * `und` is BCP-47's undetermined language subtag, and the repository already stores it in

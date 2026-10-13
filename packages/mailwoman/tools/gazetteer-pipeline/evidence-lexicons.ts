@@ -224,8 +224,8 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
  * `parentImportance` is the highest importance among the parent localities of neighborhoods with this name.
  *
  * A person-name surface must clear the higher floor on its own importance,
- * because a neighborhood bearing a person's name in a large city would otherwise pass
- * on its parent's importance and match street names such as "Rue Joseph".
+ * because a neighborhood whose name is a person's name in a large city would otherwise
+ * pass on its parent's importance and match street names such as "Rue Joseph".
  */
 export function clearsProminenceFloor(
 	surface: string,

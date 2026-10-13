@@ -29,7 +29,7 @@ export interface ScaffoldWeightsOverlayOptions {
 	 */
 	locale: string
 	/**
-	 * The one artifact the overlay adds.
+	 * The one artifact the weights overlay adds.
 	 *
 	 * @defaultValue `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
@@ -99,7 +99,7 @@ export async function scaffoldWeightsOverlay(
 			license: "AGPL-3.0",
 			type: "module",
 			// `directory` names this package.
-			// It is the field that has been wrong every time an overlay was created by copying a sibling.
+			// It is the field that has been wrong every time a weights overlay was created by copying a sibling.
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",

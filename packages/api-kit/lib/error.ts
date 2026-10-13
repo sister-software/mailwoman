@@ -43,7 +43,7 @@ const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
 /**
- * The "engine method absent" 503, for the engine method the route actually needed.
+ * The "engine method absent" 503, for the engine method the route needed.
  *
  * `<subject> not available` is published verbatim in the http API reference table and the
  * docker deploy guide, so a caller branching on it is doing what the docs told them to;

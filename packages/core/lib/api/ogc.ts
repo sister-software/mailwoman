@@ -209,10 +209,10 @@ export interface OGCFeature<Properties = Record<string, unknown>> {
 /**
  * A reader answering an OGC API Features bbox query around a point.
  *
- * The service answers a bbox rather than a point, so this returns what it published nearby
- * and the containment decision belongs to the caller, against the returned rings —
- * comparing a verdict against a bare "the service returned something here" would
- * pass on any polygon within the probe's width.
+ * The service answers a bbox rather than a point, so this returns what it
+ * published inside that bbox and the containment decision belongs to the caller,
+ * against the returned rings — comparing a verdict against a bare "the service returned
+ * something here" would pass on any polygon within the probe's width.
  */
 export function createOGCFeaturesBBoxReader<Feature>(
 	options: CreateOGCFeaturesBBoxReaderOptions
@@ -240,7 +240,7 @@ export function createOGCFeaturesBBoxReader<Feature>(
 /**
  * The extent an OGC API Features collection declares, in CRS84 order.
  *
- * @param options.subject Names the collection in the refusal, where the caller reads more than one.
+ * @param options.subject Identifies the collection in the refusal, where the caller reads more than one.
  */
 export async function readOGCCollectionBBox(
 	client: Pick<APIClient, "fetch">,
@@ -319,7 +319,7 @@ async function readReportedNumberMatched(
  * {@linkcode readCheckedWFSFeatureCount} instead.
  * That reader asks a second time.
  *
- * @param options.subject Names the layer in the refusal, where the caller reads more than one.
+ * @param options.subject Identifies the layer in the refusal, where the caller reads more than one.
  */
 export async function readWFSFeatureCount(
 	client: Pick<APIClient, "fetch">,
@@ -346,7 +346,7 @@ export async function readWFSFeatureCount(
 }
 
 /**
- * How much a service's own feature count is worth.
+ * How far a service's own feature count can be trusted.
  *
  * `reported` is the number the service stated, and `usable` records whether a second read agreed with it.
  * A caller records the count only where `usable` is true and records `because` otherwise,
@@ -391,7 +391,7 @@ const COUNT_PROBE_SIZE = 10
  * so a caller that needs the number retries, through `APIClient`'s `retry` configuration
  * or by reading the `numberMatched` a feature page holds.
  *
- * @param options.subject Names the layer in the reason, where the caller reads more than one.
+ * @param options.subject Identifies the layer in the reason, where the caller reads more than one.
  */
 export async function readCheckedWFSFeatureCount(
 	client: Pick<APIClient, "fetch">,
@@ -445,7 +445,7 @@ export async function readCheckedWFSFeatureCount(
 	// A page no larger than the reported count agrees with it whatever the truth is,
 	// so agreement does not establish that the count describes the type.
 	// One request does: asking for one feature at the reported index.
-	// A service holding exactly that many returns none there.
+	// A service holding exactly the reported number of features returns none there.
 	//
 	// Poland's address service is why this request exists.
 	// It answers `numberMatched="1000"`, MapServer's own feature cap, and its pages cap at 1,000 too.

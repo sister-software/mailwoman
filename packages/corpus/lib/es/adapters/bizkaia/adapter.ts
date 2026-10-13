@@ -164,7 +164,7 @@ const MUNICIPALITY_LEVEL = "3rdOrder"
 const HOUSE_NUMBER_TYPE = "buildingIdentifier"
 
 /**
- * How many dot-separated fields a designator has.
+ * The number of dot-separated fields a designator has.
  *
  * Municipality, street, number: `48.001.00026.003` splits the municipality code across two.
  */

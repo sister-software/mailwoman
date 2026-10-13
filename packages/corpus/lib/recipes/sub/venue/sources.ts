@@ -330,7 +330,7 @@ const MIN_OWN_SHAPE_OBSERVATIONS = 20
 /**
  * Builds a region's identifier model from the lexicon's `identifierShapes`.
  *
- * The pooled fallback combines the gate, terminal and campus distributions.
+ * The pooled fallback combines the airport gate, terminal and campus distributions.
  */
 export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: string): IdentifierModel {
 	const byDesignator = new Map<string, ShapeBucket[]>()
@@ -515,8 +515,9 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
 ]
 
 /**
- * Reads the venue and confound name pools for one country from the Overture place-names file,
- * which holds `name`, `category` and `country` for every country the release covers.
+ * Reads the venue and confound name pools for one country from the Overture place-names file.
+ *
+ * That file holds `name`, `category` and `country` for every country the release covers.
  *
  * The venue categories fill the `venues` pool.
  * Every row of a venue or confound category is tested against the rejected phrases

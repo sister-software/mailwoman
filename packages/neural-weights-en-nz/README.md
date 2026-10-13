@@ -50,8 +50,8 @@ tracks that database build as a follow-up in `model-card.json`.
 ## Intended use
 
 The bundle parses free-text NZ postal addresses into structured components
-(locality, dependent_locality, street, house_number, …) for **geocoding**, which
-resolves a parsed address to coordinates through a gazetteer or resolver.
+(locality, dependent_locality, street, house_number, …) for **geocoding**.
+A geocoder resolves a parsed address to coordinates through a gazetteer or resolver.
 
 ## Ship-config requirement (read before using)
 

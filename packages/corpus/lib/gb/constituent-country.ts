@@ -7,7 +7,7 @@
  *
  *   A GB row labels its constituent country `region`, because WOF records England, Scotland, Wales and
  *   Northern Ireland as `macroregion` places under the United Kingdom.
- *   The postcode-area table in the codex assigns a whole area to one country, which is wrong on the border:
+ *   The postcode-area table in the codex assigns a whole area to one country. That assignment is wrong on the border:
  *   every `SY` postcode maps to Wales, and `SY1` to `SY5` lie in Shrewsbury, England.
  *   NSUL records the country of each UPRN, so the postcode's country is a count of its UPRNs.
  */

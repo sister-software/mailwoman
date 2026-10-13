@@ -39,7 +39,8 @@ import { inputSetProvenance, provenanceFor } from "#dev-mcp/tool-kit"
 export { expectationCase, type ExpectationReading } from "#dev-mcp/diagnose/expectation"
 
 /**
- * The confidence at which a known-format hit is treated as a structural assertion worth contradicting.
+ * The confidence at which a known-format hit is treated as a structural assertion
+ * that a disagreeing parse contradicts.
  *
  * `KnownFormatHit.confidence` is deliberately damped where postcode shapes overlap
  * (`fr_postcode` / `de_postcode` against `us_zip` is the documented case),
@@ -56,7 +57,7 @@ const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 const SHAPE_ID_CAP = 20
 
 /**
- * Above this many rows, counterfactuals run only on rows that matched a non-`clean` shape.
+ * Above this row count, counterfactuals run only on rows that matched a non-`clean` shape.
  *
  * A flip is one geocode per row per setting and the setting space is five wide, so a full
  * board would be thousands of extra resolves plus an engine build per distinct patch.
@@ -89,7 +90,7 @@ export const DIAGNOSE_SHAPES = [
 export type DiagnoseShape = (typeof DIAGNOSE_SHAPES)[number]
 
 /**
- * What each shape asserts, as the predicate actually reads it.
+ * What each shape asserts, as the predicate reads it.
  *
  * Emitted with every result so a classification travels with its own definition,
  * because a shape name relayed without its predicate is the bare label this design refuses.

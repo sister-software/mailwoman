@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `diffGeocode` — saying why the answer moved rather than just that it did.
+ * @file `diffGeocode` — saying why the answer moved rather than only that it did.
  *
  *   A distance delta is the geocoding equivalent of a component map: it reports that the answer moved and not which of
  *   three unrelated problems caused it. These tests distinguish the three because each needs a different fix.

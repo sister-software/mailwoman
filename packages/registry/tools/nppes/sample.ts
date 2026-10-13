@@ -57,7 +57,7 @@ export interface NPPESSample extends NPPESStateSample {
 	/**
 	 * Corpus-wide address-frequency table, the inverse-frequency signal.
 	 *
-	 * Counted over every practice address in the registry rather than just the sample,
+	 * Counted over every practice address in the registry rather than only the sample,
 	 * so the sharing structure is a corpus statistic rather than a sampling artifact.
 	 */
 	addressFrequency: TermFrequencyTable
@@ -183,7 +183,7 @@ export async function buildNPPESStateSamples(
 
 				// Entity-level (site) truth is the same org and the same physical address.
 				// Subparts (NPPES "Is Organization Subpart" plus parent LBN/TIN) collapse to their parent,
-				// so the matcher is not charged for correctly fusing one org's many subpart-NPIs at a site.
+				// so the matcher is not charged for correctly fusing one org's subpart-NPIs at a site.
 				// An NPI's mailing and practice records stay distinct sites.
 				// `orgKey` is the parent identity for a subpart, else the NPI,
 				// so independent orgs sharing an address stay distinct.

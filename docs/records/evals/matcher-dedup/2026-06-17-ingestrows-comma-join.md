@@ -20,7 +20,7 @@ Four configs, same script, same data:
 | B      | comma | off            |     **100%** |           610 (+5%) |      837 |                 23 |
 | C      | comma | **on**         |     **100%** |      **667 (+15%)** |      825 |             **25** |
 
-## What it says
+## What the measurement shows
 
 **1. Space-join + #690 craters (config A+).** Title-casing a concatenated all-caps run
 (`"214 JONES RD ELKHART TX 75839"` → `"...Rd Elkhart Tx 75839"`) destroys segmentation: geocode rate
@@ -31,7 +31,7 @@ wired into the geocoder.
 input and the geocode rate holds at 100% with **or without** #690. The crater is gone.
 
 **3. Comma-join + #690 is the best config (C) — +15% rooftop over the current baseline.** The delimiter
-alone lifts rooftop 579 → 610 (the parser segments better with commas); adding #690 lifts it again to
+change by itself lifts rooftop 579 → 610 (the parser segments better with commas); adding #690 lifts it again to
 **667 (+15% over A)**, and cross-source links 23 → **25** (fcc-rhc ↔ nppes 1 → 3). the result is
 concentrated exactly where it should be — the all-caps sources, where #690 fixes the OOD parse:
 
@@ -53,7 +53,7 @@ The evidence supports flipping the record-matcher's geocode ingest to **`address
 
 - It changes the parsed address string → re-validate the matcher's clustering at scale (here, links
   held at 23 and rose to 25, but a larger run should confirm).
-- The dedup GBT was trained on space-joined strings; anything that feeds GBT training/eval must be
+- The dedup GBT was trained on space-joined strings. Any input that feeds GBT training/eval must be
   re-baselined if flipped. The capability stays **default-OFF** until that migration is deliberate.
 
 _Source: `scripts/record-matcher/cross-dataset-correlation.ts` (--comma-address, --normalize-case);

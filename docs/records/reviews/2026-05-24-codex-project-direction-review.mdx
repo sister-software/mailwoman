@@ -78,13 +78,13 @@ Until that path exists, further training only validates part of the system.
 
 There are several status conflicts:
 
-- `TODO.md` still marks v0.5.0 threads A-E as pending, while `v0-5-0-shipped.md` says most shipped or partially shipped.
+- `TODO.md` still marks v0.5.0 threads A-E as pending, while `v0-5-0-shipped.md` reports most shipped or partially shipped.
 - `STAGES.md` has an old status header saying stages 1/2/2.5/candidate-list are unbuilt, then later sections say they shipped.
 - `runtime-pipeline.ts` comments still describe locale check/kind classifier as stubbed even though kind is wired and locale-hint exists as a workspace.
 - `ARCHITECTURE.md` still describes a 47-label schema and old `packages/` layout, while shipped weights use the 21-label Tier 2 subset.
 - `tokenization.md` describes the v0.1 16K tokenizer as if current, while v0.5 docs discuss a 48K A1 tokenizer.
 
-This matters because next steps are expensive. If the docs are the operating layer, stale status can burn GPU cycles on the wrong premise. The first low-cost next step is a status freeze: one page that says "shipped, default, opt-in, scaffold-only, failed, next experiment."
+This matters because next steps are expensive. If the docs are the operating layer, stale status can burn GPU cycles on the wrong premise. The first low-cost next step is a status freeze: one page that marks each thread "shipped, default, opt-in, scaffold-only, failed, next experiment."
 
 ### 3. Eval evidence is still too weak for a large spend
 
@@ -92,9 +92,9 @@ The project has made real progress, but the model metrics are not yet a green li
 
 - v0.3.0 gained `house_number`, `street`, and `venue` capability, but coarse labels regressed badly.
 - v0.4.0 produced small fine-label gains (`street` 0.27 -> 0.30, `house_number` 0.78 -> 0.79) but `postcode` regressed 0.76 -> 0.69 and full-parse exact match fell 0.107 -> 0.082.
-- Aggregate macro F1 improved in one framing, but the component-level story is mixed and exact match remains very low.
-- Confidence is reported mostly per token; product users need parse-level and candidate-level calibration.
-- Golden v0.1.2 includes adversarial transliteration rows the model was not trained for; that is useful as a stress test but misleading as a headline denominator unless separately weighted.
+- Aggregate macro F1 improved in one framing, but the component-level results are mixed and exact match remains very low.
+- Confidence is reported mostly per token. Product users need parse-level and candidate-level calibration.
+- Golden v0.1.2 includes adversarial transliteration rows the model was not trained for. Those rows are useful as a stress test but misleading as a headline denominator unless separately weighted.
 
 The next expensive run needs predefined acceptance subsets rather than a single headline F1. Minimum:
 
@@ -112,7 +112,7 @@ The next expensive run needs predefined acceptance subsets rather than a single 
 
 ### 4. Instability in training is now the central technical blocker
 
-v0.4.0 and v0.5.0 both show the same pattern: loss descends through warmup, reaches a useful basin, then climbs catastrophically under sustained peak LR. The v0.5.0 bisect ruled out learning rate alone, loss-side knobs, hidden-size bump, and phrase-prior conditioning. The remaining suspect is the A1 tokenizer / corpus-v0.4.0 pair, especially transliteration data distribution.
+v0.4.0 and v0.5.0 both show the same pattern: loss descends through warmup, reaches a useful basin, then climbs catastrophically under sustained peak LR. The v0.5.0 bisect ruled out learning rate as the only cause, loss-side knobs, hidden-size bump, and phrase-prior conditioning. The remaining suspect is the A1 tokenizer / corpus-v0.4.0 pair, especially transliteration data distribution.
 
 That means the bottleneck is no longer architecture ideation. It is training-system forensics. The next cycle should isolate:
 

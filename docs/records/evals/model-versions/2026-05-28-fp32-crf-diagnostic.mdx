@@ -90,7 +90,7 @@ Both previously-NaN'd steps (bold) cleared directly. macro_f1 climbing monotonic
 0.2235 → 0.2589 → 0.2979. val_loss dropping: 4.34 → 3.85 → 3.63.
 
 **The bf16 + masked -inf transition hypothesis is empirically confirmed.** fp32 precision
-inside the CRF's `logsumexp` forward eliminates the precision loss; the rest of the model
+inside the CRF's `logsumexp` forward eliminates the precision loss. The rest of the model
 runs in bf16 for throughput as before.
 
 ## Implications
@@ -138,7 +138,7 @@ modal app logs <app-id>  # look for loss=nan in the step 900-2000 range
 - 2026-05-28 night-2 postmortem — the open question
   this diagnostic closes
 - [v0.6.2 training config](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/configs/v0_6_2-stage3-rebalance.yaml)
-  — the mainline retrain (CE-only per NaN protocol; CRF deferred to v0.6.3 with these
+  — the mainline retrain (CE-only per NaN protocol, with CRF deferred to v0.6.3 with these
   fp32 changes)
 - [Street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx) — the
   v0.6.2 retrain context

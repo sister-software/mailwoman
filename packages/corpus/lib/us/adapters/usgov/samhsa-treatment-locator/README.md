@@ -3,7 +3,7 @@
 > **Status: DEFERRED (2026-05-22, issue #33).** The bulk CSV this adapter
 > was written against is no longer publicly available, and the adapter
 > is **not** registered in `BUILTIN_ADAPTERS` (`corpus/src/adapters/index.ts`).
-> The factory, named export, fixture, and test suite remain in-tree so
+> The factory, its export, fixture, and test suite remain in-tree so
 > the adapter can be hand-registered the moment a compatible source
 > returns. See [Source availability (deferral)](#source-availability-deferral)
 > below for the investigation summary and revisit triggers.
@@ -19,8 +19,8 @@ value matches HRSA on the venue + address co-occurrence dimension and
 adds a distinctive feature: **two-line addresses**. The `street1` /
 `street2` split is the SAMHSA-specific training signal:
 
-- `street1` carries the canonical postal address (`"123 Main St"`).
-- `street2` carries the suite / floor / sub-tenant designator
+- `street1` holds the canonical postal address (`"123 Main St"`).
+- `street2` holds the suite / floor / sub-tenant designator
   (`"Suite C, behind main building"`, `"2nd Floor"`, `"Adjacent to
   pharmacy"`).
 
@@ -36,7 +36,7 @@ expansion (2026-05-17) we could not locate the export anywhere on the
 public web:
 
 - `findtreatment.gov/locator` is an interactive SPA — no "Download all"
-  control, no `exportsAsCsv` endpoint. Probing
+  control, no `exportsAsCsv` endpoint. A request to
   `findtreatment.gov/locator/exportsAsCsv` and
   `findtreatment.samhsa.gov/locator/exportsAsCsv` returns the SPA HTML
   shell rather than CSV.
@@ -46,8 +46,8 @@ public web:
   (N-SUMHSS PUF — facility-survey microdata) is a different shape than
   this adapter expects.
 - The `catalog.data.gov` substance-abuse-locator dataset entry lists
-  only the HTML locator URL, no CSV resource.
-- The "Open Data Foundry" itself was deprecated; the bulk-export story
+  only the HTML locator URL and lists no CSV resource.
+- The "Open Data Foundry" itself was deprecated. The bulk export
   appears to have migrated into N-SUMHSS without a venue+address
   surface form.
 
@@ -58,22 +58,22 @@ public web:
   sitting idle, and reinstating it the day a compatible CSV reappears
   is one one-line change to `corpus/src/adapters/index.ts`.
 - **Rewrite against N-SUMHSS PUF (rejected).** The PUF is
-  per-facility survey microdata (service mix, capacity, modalities) rather than a venue-name + two-line postal-address record. Rewriting against
+  per-facility survey microdata (service mix, capacity, modalities) rather than a venue-name + two-line postal-address record. A rewrite against
   it would lose the only training signal this adapter exists to
   contribute — the `street1` / `street2` narrative sub-tenant chaos
   ("Suite C, behind main building") — and would be a parallel,
   weaker NPPES.
 - **Find via FOIA / SAMHSA dev channels (deferred rather than chosen).**
   The data exists (the locator UI is backed by it); the access path is
-  not in our hands on a useful timeline. Worth keeping on the
-  follow-up list but not blocking on.
+  not in our hands on a useful timeline. The path stays on the
+  follow-up list, and no work waits on it.
 
 ### Impact
 
 Per the issue triage: SAMHSA's distinct contribution is the **two-line
 address** shape. NPPES + HRSA together still cover ~95% of the
 venue+address training signal SAMHSA would have added (NPPES has
-two-line addresses for healthcare-provider venues; HRSA has venue +
+two-line addresses for healthcare-provider venues, and HRSA has venue +
 single-line addresses). The corpus loses an adversarial-source
 diversity check but no irreplaceable schema coverage.
 
@@ -89,7 +89,7 @@ true:
    distribution.
 2. An operator obtains a compatible CSV through FOIA / partnership and
    wants to run a one-shot ingest. The CLI can still drive the adapter
-   via direct factory invocation without re-registering it; registering
+   via direct factory invocation without re-registering it. Registration
    is only needed for inclusion in default `corpus build` runs.
 3. The schema gap left by deferral becomes evidence-backed (eval set
    shows the model failing on two-line narrative-suite addresses at a
@@ -118,11 +118,11 @@ Foundry. Streamed via `CSVSpliterator`; no SQLite step needed.
 | `name2`   | Optional parent / organizational name → joined onto `venue` with `-` |
 | `street1` | Primary street line                                                  |
 | `street2` | Optional secondary line (suite, floor, narrative)                    |
-| `city`    | → `locality`                                                         |
-| `state`   | → `region` (2-char USPS)                                             |
-| `zip`     | → `postcode`                                                         |
+| `city`    | Mapped to `locality`                                                 |
+| `state`   | Mapped to `region` (2-char USPS)                                     |
+| `zip`     | Mapped to `postcode`                                                 |
 
-Any other column SAMHSA's export carries is ignored.
+The adapter ignores any other column in SAMHSA's export.
 
 ## Output
 
@@ -133,7 +133,7 @@ mis-label venue's "Buffalo" as locality.
 
 `source_id` shape:
 
-- `usgov-samhsa-treatment-locator-<frid>` when the CSV row carries a frid
+- `usgov-samhsa-treatment-locator-<frid>` when the CSV row has a frid
 - `usgov-samhsa-treatment-locator-<content-hash>` otherwise (via `stableSourceId`)
 
 The adapter:
@@ -160,7 +160,7 @@ Mountain Plains Counseling Services - Catholic Charities of Wyoming, 1500 Capito
 Buffalo Treatment Services, 200 Elmwood Ave, Suite C, behind main building, Buffalo, NY 14222
 ```
 
-## Filtering
+## Dropped rows
 
 Rows are silently dropped when:
 
@@ -173,7 +173,7 @@ Rows are silently dropped when:
 
 ## License
 
-Every emitted row carries `license: "Public Domain"` per the SAMHSA
+Every emitted row sets `license: "Public Domain"` per the SAMHSA
 Open Data Foundry's federal-government distribution terms.
 
 ## Country filter
@@ -195,4 +195,4 @@ rows covering:
 - One row with empty `name1` but populated `name2` (parent-only venue)
 - One row with unrecognized state code `"ZZ"` (silently dropped)
 
-All `frid` values are illustrative; none match a real SAMHSA record.
+All `frid` values are illustrative, and none match a real SAMHSA record.

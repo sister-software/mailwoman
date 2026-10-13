@@ -3,13 +3,13 @@
 - Source: `https://raw.githubusercontent.com/spdx/license-list-data/main/text/NLOD-2.0.txt`, with
   `https://data.norge.no/nlod/en/2.0` returning HTTP 200 on the same date
 - Retrieved: 2026-09-21
-- Publisher: the responsible Norwegian ministry, named in the text as the Ministry of Local
+- Publisher: the responsible Norwegian ministry. The text identifies it as the Ministry of Local
   Government and Modernisation
 - Version stated in the text: 2.0
 
 An earlier pass recorded `data.norge.no/nlod/en/2.0` as returning HTTP 406 to an automated fetch. It
 returned HTTP 200 on 2026-09-21, so that record was a transient failure rather than a refusal, and
-`PROVENANCE.md` is corrected. The text below is from SPDX, which publishes it as plain text.
+`PROVENANCE.md` is corrected. The text below is from SPDX. SPDX publishes it as plain text.
 
 This is the grant the register's Brønnøysund entity register row would be read against.
 
@@ -60,7 +60,7 @@ not covered by the licence.
 ```
 
 The first exemption carves personal data out of the grant itself. A source under this license is
-therefore not fully granted by the license alone, which is why `AddressSourceRecord` carries a
+therefore not fully granted by the license text. For that reason `AddressSourceRecord` stores a
 `personalDataReview` apart from its license decision.
 
 ## The attribution condition

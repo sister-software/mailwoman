@@ -31,7 +31,7 @@ interface CensusSchema {
 }
 
 /**
- * One publisher stamp and how many rows have it.
+ * One publisher stamp and the number of rows that have it.
  */
 interface SourceTally {
 	source: string

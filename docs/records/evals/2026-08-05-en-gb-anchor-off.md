@@ -1,13 +1,13 @@
 # en-GB ships anchor-off — the interim mitigation (2026-08-05)
 
-**Issue:** #1467 · **Status:** shipped as an interim mitigation; the retrain that would undo it has its
+**Issue:** #1467 · **Status:** shipped as an interim mitigation. The retrain that would undo it has its
 prescription filed separately.
 
 `@mailwoman/neural-weights-en-gb` no longer ships `postcode-gb.bin`. The postcode-anchor channel now
 resolves off for `en-gb` loads, the same posture `@mailwoman/neural-weights-en-nz` has always had. The
 placetype-pair prior (`pair-index-gb.bin`) is untouched, and so is every other locale.
 
-This page is the receipt. The diagnosis it implements is elsewhere; what follows is the measurement
+This page is the receipt. The diagnosis it implements is elsewhere. What follows is the measurement
 taken against the change as it landed.
 
 ## Why
@@ -37,13 +37,13 @@ anchor lookup keys: 2951
 anchor fired on 106/120 rows
 ```
 
-All 106 of the 120 rows on that board carry a postcode. The binary pushed essentially every
+All 106 of the 120 rows on that board contain a postcode. The binary pushed essentially every
 GB parse along an input direction the encoder has no learned response to.
 
-The general rule this inverts is worth stating, because the overlay's own README used to state the other
-half of it: zeroing a **trained** channel is out-of-distribution, which is why `createScorer` fails
+This case inverts a general rule, and the overlay's own README used to state only the other
+half of it: zeroing a **trained** channel is out-of-distribution. That is why `createScorer` fails
 closed. The GB slot was never trained, so there is no distribution to leave. Zero is what the encoder
-saw for every GB example it has ever been shown; a value is the out-of-distribution case.
+saw for every GB example it has ever been shown. A non-zero value is the out-of-distribution case.
 
 ## The boards
 
@@ -53,7 +53,7 @@ parentDelta=5. Production runtime pipeline (`createRuntimePipeline` with the cla
 per row: as-written, lowercase, UPPERCASE. The evaluator uses exact match on the tag's concatenated span, folded
 to uppercase with whitespace stripped.
 
-`mailwoman/eval-harness/fixtures/gb-golden.jsonl`, 120 rows — 106 carry a postcode, 69 carry a
+`mailwoman/eval-harness/fixtures/gb-golden.jsonl`, 120 rows. Of those, 106 contain a postcode and 69 contain a
 `dependent_locality`.
 
 | board                                   |   n | anchor on (before) | anchor off (shipped) |
@@ -66,11 +66,11 @@ Per register, anchor off: postcode 106/106 · 106/106 · 106/106; `dependent_loc
 69/69. The outcome is uniform across registers. It is not a casing artifact.
 
 **The comma-stripped row is the cost, and it is one row.** `Goulbourne Road St Georges Telford TF2 9LE`
-loses `St Georges` to a clipped `St`, in all three registers; the other two misses (`Sonning Common`,
+loses `St Georges` to a clipped `St`, in all three registers. The other two misses (`Sonning Common`,
 `Woodlesford`) miss in both arms. Twenty-four exact postcodes for one comma-free dependent locality is
 the trade, taken deliberately. It is also the one number that contradicts the 2026-07-24 re-anchor note
-in the country-evidence runbook, which recorded the GB anchors helping comma-free recall (50→55 emit);
-that note was right, and this change gives some of that back. The correction is now in the runbook.
+in the country-evidence runbook. That note recorded the GB anchors helping comma-free recall (50→55 emit).
+The note was right, and this change gives some of that back. The correction is now in the runbook.
 
 ## Everything else
 
@@ -82,7 +82,7 @@ before  sha256: c79ba30359e4c80c71858e0b2db2120703b9de16afd426688908009adae5e5fd
 after   sha256: c79ba30359e4c80c71858e0b2db2120703b9de16afd426688908009adae5e5fd  (300 parses)
 ```
 
-**`postcode-us.bin` still resolves and still fires**, which is the assertion that keeps the byte-stability
+**`postcode-us.bin` still resolves and still fires.** That assertion keeps the byte-stability
 above from being vacuous:
 
 ```
@@ -102,12 +102,12 @@ anchor ON   sha256: fe71facf1908d2dec3ff8a8439ac5e5d120f1b072d8b9a52e542e09f7b30
 anchor OFF  sha256: fe71facf1908d2dec3ff8a8439ac5e5d120f1b072d8b9a52e542e09f7b30efb7  (138 parses)
 ```
 
-`fr-fr` resolves its own `postcode-fr.bin` in both. Nothing at runtime reads `release.config.json`, so
+`fr-fr` resolves its own `postcode-fr.bin` in both. No runtime code reads `release.config.json`, so
 the `postcodeDBByCountry` edit is release-time only.
 
 ## Gauntlet
 
-Standard check, no flags, both arms on the same worktree with only `postcode-gb.bin` differing.
+Standard check without flags, both arms on the same worktree with only `postcode-gb.bin` differing.
 
 Before (anchor ON):
 
@@ -141,7 +141,7 @@ VERDICT: FAIL — do not ship
 fail predates this work and is unchanged by it. Zero newly-failing counted cases.
 
 The tracked (`improvement_target`, non-blocking) population moves 66 → 64: `gb-venue-north-face-covent`
-and `gb-op2-via-emilia` now pass outright. Within the rows that still fail, most GB entries lose their
+and `gb-op2-via-emilia` now pass. Within the rows that still fail, most GB entries lose their
 `postcode "null" ≠ …` mismatch — the same recovery the golden board measures. Three get worse in other
 fields (`gb-op2-24n-fitness`, `gb-subvenue-st-thomas-wing`, `gb-op2-east-west-kingsland`) and two get
 better (`gb-op2-bar-with-shapes`, `gb-op2-china-red`); all five were already failing in both arms. The
@@ -149,7 +149,7 @@ metamorphic layer is byte-identical.
 
 ## What holds the line
 
-Re-adding the binary is silent — nothing errors, GBgets worse — so the guards are assertions
+Re-adding the binary is silent. No component raises an error, and GB parses get worse. So the guards are assertions
 rather than documentation:
 
 - `neural/test/weights.test.ts` pins `resolveWeights({locale: "en-gb"}).anchorLookupPath` **undefined**,
@@ -158,7 +158,7 @@ rather than documentation:
 - `neural-weights-en-gb/scripts/link-dev-weights.ts` deletes any `postcode-gb.bin` it finds, loudly. A
   checkout predating this change would otherwise keep one around and without output grade against it.
 - `release.config.json`'s `softFeed.postcodeDBByCountry` has no `gb` key, so `copy-weights.ts` skips it
-  at release time; the publish workflow no longer fetches `postcode-gb.bin` from the bucket.
+  at release time. The publish workflow no longer fetches `postcode-gb.bin` from the bucket.
 
 The artifact stays buildable. `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb.db` is untouched and
 `mailwoman gazetteer postcode-binary --out neural-weights-en-gb --locale GB:<extract>` still produces the

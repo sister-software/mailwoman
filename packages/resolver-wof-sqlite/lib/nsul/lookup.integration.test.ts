@@ -33,7 +33,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * The fixture rows exercise the one-to-many probe, its order and the key equivalence.
+ * The fixture rows exercise the probe that returns several rows for one key,
+ * its order and the key equivalence.
  *
  * - Two Wokingham UPRNs share `RG40 4HR`.
  * - One Bognor Regis uprn is on `PO21 1HR`.

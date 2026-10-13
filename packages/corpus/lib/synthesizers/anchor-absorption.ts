@@ -16,7 +16,7 @@ import { sample } from "@mailwoman/core/random"
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches defines the
    output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   would hide the distribution behind a wall of identifiers. Decision thresholds in these files are
     extracted as constants above. */
 
 /**

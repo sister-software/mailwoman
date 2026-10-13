@@ -109,9 +109,9 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 	 * Parent chains of the entries this reader has served, id-keyed.
 	 *
 	 * A place's chain is identical across its surfaces (it is place-row data), so last-write-wins is safe.
-	 * The algorithm asks {@link FSTReader.ancestorsOf} only for ids it just received
-	 * from {@link FSTReader.entriesAt}, so serving from this memo answers every
-	 * real call without an artifact-wide id index.
+	 * The algorithm asks {@link FSTReader.ancestorsOf} only for ids it received in the
+	 * same call from {@link FSTReader.entriesAt}, so serving from this memo answers
+	 * every real call without an artifact-wide id index.
 	 */
 	readonly #chains = new Map<number, number[]>()
 

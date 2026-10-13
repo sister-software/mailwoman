@@ -7,15 +7,15 @@ impossibility, and each claim cites its source.
 
 ## 1. The benchmark filter — the FCC's own fields already do the sorting
 
-`bdc_availability` already carries `technology_code`, `max_advertised_download_speed`,
+`bdc_availability` already stores `technology_code`, `max_advertised_download_speed`,
 `max_advertised_upload_speed`, and **`low_latency`**. These four fields are enough to apply the FCC's
 _own_ definitions instead of anyone's judgment:
 
 - **The 100/20 Mbps fixed benchmark** (the Commission's current standard): arithmetic decides whether a filing
   meets it.
 - **`low_latency`**: the BDC data model has this flag because round-trip latency is a
-  service-defining property that speed alone hides. Geostationary satellite fails it because of orbital
-  geometry, which is a physical limit and not a preference.
+  service-defining property that a speed figure does not show. Geostationary satellite fails it because of orbital
+  geometry. That geometry is a physical limit and not a preference.
 
 The product therefore never has to call any technology good or bad. It reports: _of the N filings
 in this block, M meet the FCC's 100/20 benchmark with the low-latency flag set._ That line is citable and
@@ -27,7 +27,7 @@ defined by the Commission, and it reduces the headline number directly.
 filings: 5  →  corporate families: 2  →  meeting 100/20 + low-latency: 1
 ```
 
-That progression is the most informative output this stack can print, and every step of it
+Each step of that progression removes filings for a stated reason, and every step
 applies someone else's published definition to someone else's published data.
 
 ## 2. Axis three: the provider's own address-level availability check
@@ -55,7 +55,7 @@ supports a narrower claim:
 
 - **Comcast filed 2000 and markets 2000, an exact match.** The self-check corroborates the filing.
 - **WOW filed 1200, and its own site reports the address as unserviceable.** This divergence concerns availability
-  rather than speed. The disagreement is about _whether service exists at all_, which is a different and
+  rather than speed. The disagreement is about _whether service exists at all_. That is a different and
   more consequential axis than throughput.
 
 Two design consequences follow, and the second corrects the reasoning of the first revision:
@@ -67,7 +67,7 @@ Two design consequences follow, and the second corrects the reasoning of the fir
    example does not show under-claiming. Filings could still understate for mundane reasons,
    such as a vintage that predates a speed upgrade or conservative reporting. The comparison therefore keeps
    `filed_exceeds_channel` / `channel_exceeds_filed` / `agree` instead of a one-way over-claim
-   detector. This hedges against a case nobody has observed, and this note should not imply otherwise.
+   detector. This hedges against a case no one on this project has observed, and this note should not imply otherwise.
    The output never uses a word that implies intent, in either direction.
 
 **Before reading any divergence as an error, encode the reporting standard.** BDC's availability
@@ -79,7 +79,7 @@ a filing and a sales funnel that declines the order. The product reports the div
 the standard. It does not infer that a filer misapplied the standard.
 
 The Comcast case is also technologically self-consistent: "fiber to the street, coax to the
-home" is HFC, which _is_ the filed cable technology code. The divergence is in the speed and
+home" is HFC, and HFC _is_ the filed cable technology code. The divergence is in the speed and
 availability fields and not in the technology field. Encode this so that the check does not flag correct
 technology reporting as a mismatch.
 
@@ -96,7 +96,7 @@ sweep addresses in bulk.
 
 The same worked example revealed a second, structural problem: **WideOpenWest was acquired roughly
 seven months before this observation** (broadbandbreakfast.com, "WOW acquisition closed"). A
-filing that carries WOW's FRN and provider ID therefore describes an entity whose ownership has since changed. The
+filing that lists WOW's FRN and provider ID therefore describes an entity whose ownership has since changed. The
 BDC vintage cadence (a twice-yearly `as_of_date`) guarantees months of lag even without an acquisition.
 
 This is a **schema requirement** and not a data-quality complaint:
@@ -104,13 +104,13 @@ This is a **schema requirement** and not a data-quality complaint:
 1. **Family edges must be time-scoped.** A corporate-family assertion holds _as of_ a date and never
    permanently. Phase 3's crosswalk edges need `valid_from` / `valid_to` (or at minimum a mandatory
    `as_of`), and a family rollup query must take a date. A family graph without dates will
-   report today's ownership against a filing from two vintages ago, and nobody will see the error.
+   report today's ownership against a filing from two vintages ago, and no reader of the output will see the error.
 2. **Vintage skew must be reported instead of silently reconciled.** When a `filingLandscape` result at
    vintage V is joined to a family rollup current at date D, the output states both. Where the skew
    spans a known ownership change, the answer reports that change.
 3. **M&A is a first-class event and not noise.** Consolidation is frequent enough in this sector that
    "the filer of record no longer exists as an independent entity" is a routine state. The spine
-   should be able to say so, and that is one of the more useful things it can say. The statement cites the
+   should be able to report that state. The statement cites the
    transaction record and does not characterize the transaction.
 
 This strengthens the case for Phase 3 in general. Without a time-aware identity layer, every

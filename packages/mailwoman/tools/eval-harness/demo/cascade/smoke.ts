@@ -140,7 +140,7 @@ export async function demoCascadeSmoke(
 	// Lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
 	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install.
 	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
-	// loads only when the leg actually runs.
+	// loads only when the leg runs.
 	// In a clean install without the package the leg fails here, loudly, with the import in the message.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = PathBuilder.from(options.stageDir || wofHotStageDir())

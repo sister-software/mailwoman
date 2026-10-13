@@ -20,7 +20,7 @@
 # PRE-registered read (the fork this run adjudicates):
 #   primary (must rise) — board 3 bare-street-hn rises toward the full-range 0.825 (it is a 3-digit-heavy
 #     class); `aleja Wojska Polskiego 178` -> house_number. If it does not rise, 3-digit is too narrow
-#     and the range needs 4-digit too, which falsifies the claim that the 3-digit pieces produce the
+#     and the range needs 4-digit too. That result falsifies the claim that the 3-digit pieces produce the
 #     house_number rise.
 #   postcode (must not drop, the whole point) — parity postcode holds at ~0.986 (not the -9.7pp of the full
 #     range). board 3 bare-pc (Norwegian 4-digit) holds. the 6 demo presets hold. If parity postcode

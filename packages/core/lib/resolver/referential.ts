@@ -25,7 +25,7 @@
  * Population divisor in {@link referentialFromPopulation}.
  *
  * A 1,000-person place scores `log2(2)/14` — the curve starts counting at the scale
- * where WOF actually records population.
+ * where WOF records a population value.
  */
 export const REFERENTIAL_POPULATION_DIVISOR = 1000
 

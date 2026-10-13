@@ -22,8 +22,8 @@ you connect this function to a checkout form.
   [Install and first parse](../get-started/install-and-first-parse.mdx), plus `@mailwoman/codex` for
   the postal reference tables.
 - You do not need a gazetteer database for the checks. Each check uses only the parse and the
-  reference tables, so none of them needs a data root. The last section adds a geocode, which does need
-  one.
+  reference tables, so none of them needs a data root. The last section adds a geocode. The geocode does
+  need one.
 
 ## 1. Flatten the parse into components
 
@@ -40,7 +40,7 @@ function flatten(nodes, into = new Map()) {
 }
 ```
 
-Each node carries a `confidence` in `[0, 1]`, aggregated across the span's tokens. The tree has no
+Each node has a `confidence` in `[0, 1]`, aggregated across the span's tokens. The tree has no
 whole-parse confidence field. It exposes only per-component scores, so you compute a row-level result
 yourself. Base it on the weakest component.
 
@@ -75,7 +75,7 @@ is the regular expression `^\d{5}(?:[-\s]\d{4})?$`, so `00000` passes and `2000`
 per-ZIP registry by design. It is a zero-dependency reference package, and existence data is in the
 gazetteer.
 
-Other locales ship the same pair of functions under their own subpath, named with the local term
+Other locales ship the same pair of functions under their own subpath. Their names use the local term
 instead of a generic one: `isUkPostcode`/`normalizeUkPostcode` under `@mailwoman/codex/gb`,
 `isCodePostal`/`normalizeCodePostal` under `/fr`, `isPostleitzahl`/`normalizePLZ` under `/de`. Check the
 subpath's exports instead of guessing the name.
@@ -181,7 +181,7 @@ FAIL  1275 Pennsylvania Avenue Northwest, Washington
         1275 is not ZIP Code shaped
 ```
 
-The last failure is the most informative. `1275 Pennsylvania Avenue Northwest, Washington` has no state
+The last failure shows the limit of string checks. `1275 Pennsylvania Avenue Northwest, Washington` has no state
 and no ZIP Code, so the parse assigned `Washington` to `region` at 0.507 and `1275` to `postcode` at
 0.724. Both assignments are wrong, and both scored low. The confidence check and the shape check each
 caught the same defect independently.
@@ -200,8 +200,8 @@ address places it in Chicago.
 Both addresses are complete, read with high confidence, and correctly shaped. Neither exists.
 
 The checks cannot close this gap. Presence, confidence and shape are properties of the string.
-Existence is a property of the world, and checking it requires a record to match against, which is
-what geocoding provides. `resolution_tier` on a geocode result identifies the finest record that
+Existence is a property of the world, and checking it requires a record to match against.
+A geocode provides that record. `resolution_tier` on a geocode result identifies the finest record that
 matched:
 
 ```bash
@@ -225,7 +225,7 @@ the city matched, and the returned coordinate is the city centroid. Require
 `result.resolution_tier === "address_point"` in your check to test whether a rooftop record matched,
 rather than whether the address is merely well-formed. That is the closest this system comes to checking existence.
 
-A matching record still does not establish deliverability. A rooftop record says a structure was
+A matching record still does not establish deliverability. A rooftop record states that a structure was
 surveyed at that address. It does not say that mail is accepted there, that the unit number is right,
 or who the occupant is. No part of Mailwoman contacts a carrier. If you need to know whether a parcel
 will arrive, use a postal carrier's address-verification service.

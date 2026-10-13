@@ -16,14 +16,14 @@ and store a raw coordinate that no report can read.
 
 Reverse geocoding becomes a local read. `WOFReverseGeocoder` pulls every place whose bounding box
 contains the point from an `R*Tree` index, smallest area first, then ray-casts each candidate's real
-boundary against a polygon sidecar; the first polygon containing the point wins. No socket opens, so
+boundary against a polygon sidecar. The first polygon containing the point wins. No socket opens, so
 the rate is bounded by disk and CPU rather than by a quota, and `reverseGeocodeSync` does the same
 work on the calling thread for an ingest path that is already synchronous.
 
 Every result includes a `containment` field reading `polygon` or `approximate`, which is how you tell
 a boundary-confirmed answer from a nearest-centroid one before anything downstream acts on it.
 
-## What you still carry
+## What remains your responsibility
 
 Three limits decide whether this fits, and all three arrive before the first lookup.
 
@@ -35,7 +35,7 @@ clock and tens of gigabytes of source data.
 
 **The polygon sidecar is a second build, and its coverage is per-country.** `mailwoman gazetteer
 polygons` produces it. Without it every result reads `approximate` by construction, because no
-point-in-polygon test is attempted; with it, only the countries in that sidecar get boundary
+point-in-polygon test is attempted. With it, only the countries in that sidecar get boundary
 confirmation. So a fleet running outside those countries reads `approximate` on every row, and the
 `containment` discriminator above stops discriminating. Decide the sidecar's country list from where
 your vehicles are, before you build it.
@@ -44,13 +44,13 @@ your vehicles are, before you build it.
 locality, county, region, country — and never a house number. A local copy of the US rooftop databases
 does not change that, because the reverse path never consults an address-point database.
 
-[Reverse geocode a coordinate](../developers/how-to/reverse-geocode.mdx) carries these with their
-transcripts, including the failure worth designing for: a coordinate outside every boundary you hold
+[Reverse geocode a coordinate](../developers/how-to/reverse-geocode.mdx) shows these with their
+transcripts, including the failure to design for: a coordinate outside every boundary you hold
 polygons for still gets an answer, so threshold `distanceKm` whenever `containment` reads
 `approximate`.
 
 ## Next
 
 - [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx) — the install and the
-  gazetteer pull, which come before the admin build.
+  gazetteer pull. Both come before the admin build.
 - [License prices](../pricing.mdx) — the same monthly figure at any ping interval.

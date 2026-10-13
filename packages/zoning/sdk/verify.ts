@@ -75,7 +75,7 @@ export interface AgreementRow {
 	serviceLocalCode: string | null
 	result: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
+	 * Meters from the point to the nearest edge of any polygon the service returned for the query box.
 	 *
 	 * Every row includes this distance.
 	 * It separates a real defect from a difference caused by the two channels
@@ -166,10 +166,10 @@ export type ServiceFeatureReader = (latitude: number, longitude: number) => Prom
 /**
  * The reader the live check uses: a bounding-box query against the Department's own service.
  *
- * The service answers a BOX rather than a point, so this returns what it published nearby
- * and the containment decision is made in {@link readServiceContainment} against
- * those rings — comparing the artifact's verdict against a bare "the service returned
- * something here" would pass on any polygon within eleven meters.
+ * The service answers a BOX rather than a point, so this returns what it published inside
+ * the query box and the containment decision is made in {@link readServiceContainment}
+ * against those rings — comparing the artifact's verdict against a bare "the service
+ * returned something here" would pass on any polygon within eleven meters.
  */
 export function createServiceReader(client: Pick<GZTClient, "readFeaturesNear">): ServiceFeatureReader {
 	return async (latitude, longitude) => client.readFeaturesNear(latitude, longitude, PROBE_HALF_WIDTH_DEGREES)

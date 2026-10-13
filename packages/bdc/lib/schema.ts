@@ -59,8 +59,10 @@ export interface BDCAvailabilityTable {
  * No FK against `bdc_availability.provider_id`, since SQLite does not enforce FKs
  * without `pragma foreign_keys` and the join happens at read time.
  *
- * An explicitly lossy denormalization rather than the source of truth: the FCC's The provider list
- * lets one `provider_id` map to multiple `frn` values and conflicting `holding_company` strings.
+ * An explicitly lossy denormalization rather than the canonical record.
+ * The FCC's provider list lets one `provider_id` map to multiple `frn` values
+ * and conflicting `holding_company` strings.
+ *
  * A one-row-per-provider table cannot express those values.
  * `filer.db` (`@mailwoman/filer`) retains every edge.
  *

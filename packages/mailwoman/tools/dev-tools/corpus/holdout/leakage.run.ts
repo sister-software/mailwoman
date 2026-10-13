@@ -7,7 +7,7 @@
  *
  *   A holdout added to `defaultHoldouts()` takes effect at the next base rebuild. An overlay
  *   never passes through the align loop that applies it. This reads what a finished corpus holds and
- *   answers the question directly: for each country the policy names, how many of its held-out rows
+ *   answers the question directly: for each country the policy names, the number of its held-out rows that
  *   are in the train split.
  *
  *   The matchers come from `defaultHoldouts()` rather than being restated here, so a prefix added to
@@ -52,7 +52,7 @@ const clauses: string[] = []
 /**
  * One predicate per country, kept so an offending row can be read back after the count.
  *
- * A count reports how many rows the policy names.
+ * A count reports the number of rows the policy names.
  * It does not say which rows matched.
  *
  * The cases differ: a row whose `region` span holds a holdout name is the policy
@@ -112,15 +112,15 @@ console.log(
 )
 
 /**
- * How many flagged rows are read back for confirmation.
+ * The number of flagged rows read back for confirmation.
  *
  * The SQL count is a candidate set rather than an answer.
- * `substr` counts characters and a span records UTF-16 code units, so a row carrying an
- * astral character slices 1 unit late per such character: `𐍀𐍂𐍉𐍆𐌹𐌳𐌰𐌹𐌽𐍃, RHODE ISLAND`
+ * `substr` counts characters and a span records UTF-16 code units, so a row carrying an astral
+ * character takes its substring 1 unit late per such character: `𐍀𐍂𐍉𐍆𐌹𐌳𐌰𐌹𐌽𐍃, RHODE ISLAND`
  * read its region as `ND`, taken from `ISLAND`, and matched North Dakota.
  *
- * A row-by-row check through `holdoutComponents` and `splitForRow` settles it
- * with the same functions the corpus writer used.
+ * A row-by-row check through `holdoutComponents` and `splitForRow` confirms each
+ * candidate with the same functions the corpus writer used.
  */
 const CONFIRM_LIMIT = 10_000
 

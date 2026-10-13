@@ -55,7 +55,7 @@ export function deriveSchemaName(path: PathBuilderLike): string {
 /**
  * Per-extract configuration.
  *
- * The simple form is just a path string.
+ * The simple form is a path string.
  * The schema name is derived from it.
  *
  * The object form lets callers override the derived schema name (useful when a filename

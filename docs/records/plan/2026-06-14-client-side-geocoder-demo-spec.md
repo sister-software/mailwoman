@@ -4,7 +4,7 @@ _2026-06-14. The marquee: flesh the demo into a Google-Maps-style geocoder that 
 browser** — type an address, get a map pin with a calibrated radius and the resolved hierarchy, with
 no server round-trip. This spec resolves the architecture (the hard parts are the sync/async worker
 boundary and the byte-range data layer), records the measurement that de-risks it, and lays out the
-implementation in executable steps. Written headless during the 2026-06-14 night shift; the build
+implementation in executable steps. Written headless during the 2026-06-14 night shift. The build
 itself needs a browser (Playwright via `run-docs`) + R2 hosting, so it is scoped as the next session's
 work, de-risked and specified here._
 
@@ -31,7 +31,7 @@ byte-bound.
 
 ### One data layer tuning note
 
-The situs extracts are `page_size` 4096; the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
+The situs extracts are `page_size` 4096, and the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
 chunks (16 pages). A situs point lookup touches ~6 _scattered_ B-tree pages, so it lands in a few
 64 KB chunks — this is precisely the "sparse single-row access over-fetches" tradeoff the
 `httpvfs-resolver.ts` header already calls out for the polygon DB. Two changes for the hosted demo
@@ -75,7 +75,7 @@ exactly like the WOF one the demo already opens.
 
 The cascade is heavy (ONNX + several sync-XHR byte-range walks); on a cold cache it can block the main
 thread long enough to jank the typeahead and the map. So **moving the whole cascade into a Web Worker
-is still the right call** for UI responsiveness — but it is now an _optimization_ layered on a correct
+is still planned** for UI responsiveness — but it is now an _optimization_ layered on a correct
 async main-thread implementation rather than the thing that makes correctness possible. Build the async street
 tier first (it works on the main thread, like today's WOF resolve), then lift it into a worker. If/when
 lifted, the page↔worker interface is:
@@ -99,16 +99,16 @@ lifted, the page↔worker interface is:
 - **Per-tier timeout with admin-centroid fallback.** If the situs/interp byte-range walk stalls (cold
   cache, slow link), abandon the street tier and return the admin-centroid result the WOF resolve
   already produced — a coarse pin beats a spinner. The tier field tells the UI to widen the radius and
-  state that in the caption. The cascade already degrades tier-by-tier; the worker adds the wall-clock guard.
+  state that in the caption. The cascade already degrades tier-by-tier, and the worker adds the wall-clock guard.
 - **Warm-up on idle**, mirroring `WofHTTPVFSPlaceLookup.warmUp()` — pull the situs index root + the
   hot WOF pages during browser idle so the first submit isn't paying cold serial RTTs.
 
 ### Service Worker (build on `2026-06-06-demo-service-worker-design.mdx`)
 
 Cache the immutable assets (sql.js-httpvfs UMD + worker + WASM, the ONNX model, the tokenizer) and the
-byte-range responses (range requests are cacheable; a region's hot index pages stay warm across
+byte-range responses (range requests are cacheable, so a region's hot index pages stay warm across
 queries → near-instant repeat lookups + offline resilience once warm). **Cap the cache** — the CA
-extract's range responses could accumulate; an LRU eviction with a size ceiling (e.g. 50 MB of range
+extract's range responses could accumulate. An LRU eviction with a size ceiling (e.g. 50 MB of range
 chunks) keeps it under storage quota. Indiscriminate caching of a 3.3 GB extract's pages is the failure
 mode to avoid.
 
@@ -124,26 +124,26 @@ and immutable `Cache-Control`:
 | CA    |     13.5 M |    3.30 GB | the stress test — if it's OK, every state is |
 
 State routing: `regionSlugFromTree()` (already in `geocode-core.ts`) picks the extract from the parsed
-region; the worker lazy-loads that state's situs+interp handles on first use and caches them. The
-demo's region constraint already biases the WOF resolve; the same slug selects the street extracts.
+region. The worker lazy-loads that state's situs+interp handles on first use and caches them. The
+demo's region constraint already biases the WOF resolve, and the same slug selects the street extracts.
 
 ## The autocomplete nuance (per the DeepSeek hint)
 
 The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggests _places_ (localities,
 counties: "San Diego", "San Juan"), ranked by importance. That is the right typeahead for the
-_locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions ("350 5th Ave"
-→ "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
+_locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions (from "350 5th Ave"
+to "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
 extracts rather than the admin FST. Three direct options, in increasing cost:
 
 1. **Place-level typeahead only** (ship now): wire the existing FST autocomplete into the search box.
-   Suggests cities/regions; the user types the full street themselves. Lowest cost, real value.
+   Suggests cities/regions, and the user types the full street themselves. Lowest cost, real value.
 2. **Street-name autocomplete** within a resolved locality: once the user has a city, prefix-complete
    street names from that state's situs extract (`street_norm` has a natural prefix index). Mid cost.
 3. **Full address autocomplete** (true Google-Maps): house-number + street + city as one suggestion
-   stream. Highest cost; needs a dedicated suggestion index and ranking. A later milestone.
+   stream. Highest cost, because it needs a dedicated suggestion index and ranking. A later milestone.
 
 Recommend shipping (1) with the demo and designing the box so (2) slots in. Make (3) its own
-epic; it requires more than wiring the existing feature.
+epic, because it requires more than wiring the existing feature.
 
 ## Implementation steps
 
@@ -155,13 +155,13 @@ epic; it requires more than wiring the existing feature.
    locality + the two lookups, return `{ lat, lon, tier, uncertaintyM }` (situs → interp → null), so
    `index.tsx` runs it before `runCascade` and falls back to admin on a null. Main-thread async — no
    worker needed for correctness.
-3. **Host MI first** (229 MB — smallest) byte-range; wire the street tier on Michigan end-to-end; verify
+3. **Host MI first** (229 MB — smallest) byte-range. Wire the street tier on Michigan end-to-end. Verify
    via `run-docs` that the browser issues **Range** requests (pulls ~KB rather than the full extract) on a real
-   geocode. The check — confirm before NY/CA. (Local Range-serving for the verification; R2 for prod.)
-4. **Add NY, then CA**; measure CA's real in-browser geocode latency against the < 3 s budget.
+   geocode. The check — confirm before NY/CA. (Local Range-serving for the verification, R2 for prod.)
+4. **Add NY, then CA**, and measure CA's real in-browser geocode latency against the < 3 s budget.
 5. **UX (#377):** map pin + calibrated-radius circle (the per-region factor from
-   `data/calibration/interp-radius-conformal.json`) + tier caption; span-highlight by tag; resolved-
-   hierarchy tree; per-stage timing; place-level autocomplete typeahead (option 1).
+   `data/calibration/interp-radius-conformal.json`) + tier caption, span-highlight by tag, resolved-
+   hierarchy tree, per-stage timing, and place-level autocomplete typeahead (option 1).
 6. **Lift the cascade into a Web Worker** (UI responsiveness) + a **Service Worker** with the capped
    cache. Both are enhancements over the working main-thread version rather than prerequisites.
 
@@ -171,8 +171,8 @@ Steps 1–2 are pure code mirroring an existing, tested pattern — written + qu
 extract with `node:sqlite` (the httpvfs version runs the identical SQL). Steps 3+ change browser code
 whose correctness is only observable in a browser (Range requests fired, WASM loaded, map render) and
 need extracts served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
-stress extract, and does the sync `find()` interface force a worker — are **both retired here** (it does;
-it doesn't, because the demo's cascade is already async). So the remaining work is execution against a
+stress extract, and does the sync `find()` interface force a worker — are **both retired here**. Byte-range survives,
+and the interface does not force a worker, because the demo's cascade is already async). So the remaining work is execution against a
 de-risked spec rather than open questions.
 
 ## Sources

@@ -228,7 +228,7 @@ function zStat(cand: number, prod: number, n: number): number {
 /**
  * Run the held-out layer.
  *
- * `exitCode` is 0 for `pass` and 1 when the candidate is significantly worse.
+ * `exitCode` is 0 for `pass` and 1 when the candidate is worse at the test's significance level.
  * It is 2 for a usage error, such as a missing candidate or unknown source.
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {

@@ -51,7 +51,7 @@ export interface ArcResult {
 	candidate: ArcLeg
 
 	/**
-	 * The candidate's regressions minus the null leg's.
+	 * The candidate's regressions minus the placebo control arm's.
 	 * It is `null` when no null leg ran.
 	 */
 	attributableRegressions: number | null

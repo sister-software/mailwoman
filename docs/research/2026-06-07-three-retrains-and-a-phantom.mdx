@@ -7,7 +7,7 @@ tags: [neural, resolver, hubris]
 
 There is a particular kind of engineering misery where you fix a bug three times and it never gets better, because the bug is in your ruler. This is that story.
 
-Our neural parser handles German two ways. Native order — `Hauptstraße 5, 10115 Berlin` — is the layout real German feeds and real German people use. International order — `5 Hauptstraße, Berlin, 10115` — is the Americanized layout our evaluation set happens to ship. For months, international-order German "collapsed": locality accuracy sat around 44% while native cleared 80%. We had a story for it. The postcode anchor — a side-channel that feeds the model a country hint derived from the postcode — sits at the _trailing_ postcode, which in international order lands on the far side of the locality from where it's needed. Plausible. So we retrained.
+Our neural parser handles German two ways. Native order — `Hauptstraße 5, 10115 Berlin` — is the layout real German feeds and real German people use. International order — `5 Hauptstraße, Berlin, 10115` — is the Americanized layout our evaluation set happens to ship. For months, international-order German "collapsed": locality accuracy sat around 44% while native cleared 80%. We had a story for it. The postcode anchor — a side-channel that feeds the model a country hint derived from the postcode — sits at the _trailing_ postcode. In international order that postcode lands on the far side of the locality from where it's needed. Plausible. So we retrained.
 
 {/* truncate */}
 
@@ -31,7 +31,7 @@ Berlin            36.3%          36.3%        ( 0.0pp)
 
 Two completely different stories had been hiding under one average.
 
-**Saxony was never broken.** The model places Saxon addresses correctly three times in four; the name-match metric only credited half of them. Look at what it was rejecting:
+**Saxony was never broken.** The model places Saxon addresses correctly three times in four. The name-match metric only credited half of them. Look at what it was rejecting:
 
 ```
 gold "Plauen Vogtl"     resolved "Plauen"        point inside Plauen ✓
@@ -39,7 +39,7 @@ gold "Chemnitz Sachs"   resolved "Chemnitz"      point inside Chemnitz ✓
 gold "Marienberg Erzgeb" resolved "Marienberg"   point inside Marienberg ✓
 ```
 
-OpenAddresses tags these with the regional district — _Vogtländischer Kreis_, _Sachsen_, _Erzgebirge_ — and Who's On First's canonical name doesn't carry the suffix. So `Plauen Vogtl` ≠ `Plauen`, the string check fails, and the model eats a miss for resolving an address to _exactly the right town_. Twenty-five points of "collapse" was our ruler refusing to call Plauen Plauen.
+OpenAddresses tags these with the regional district — _Vogtländischer Kreis_, _Sachsen_, _Erzgebirge_ — and Who's On First's canonical name doesn't include the suffix. So `Plauen Vogtl` ≠ `Plauen`, the string check fails, and the model eats a miss for resolving an address to _exactly the right town_. Twenty-five points of "collapse" was our ruler refusing to call Plauen Plauen.
 
 **Berlin was broken** — just not the way we'd been retraining for. Of 1,500 Berlin addresses, 955 resolved to no coordinate at all. The model drops the locality entirely in the city-state layout `…, Berlin, Berlin 10115`, where the city and the state are the same word: one `Berlin` gets labeled the region, the other vanishes, and the resolver has no locality to place. That's a real bug. It is also specific to Berlin, Hamburg, and Bremen, and it is entirely unrelated to the postcode anchor or word order — which is precisely why three anchor-and-order retrains never laid a finger on it.
 

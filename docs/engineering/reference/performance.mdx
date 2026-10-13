@@ -10,7 +10,7 @@ records the measurements, so anyone considering a batch path can read them first
 The measurements were taken on 2026-07-16 against the v6.3.0 model shipped at the time
 (`v264-country-softguard`, int8) on a 16-core machine. They still apply to the current 6.5.0. Every
 release since then has changed only the weights on the same int8 graph shape, and parse latency
-depends on the graph shape alone.
+depends only on the graph shape.
 
 ## Where the time goes
 
@@ -34,7 +34,7 @@ Throughput stays at 1.00x from one worker to sixteen, for both parse and full ge
 |       8 |        274.6 |   1.00x |
 |      16 |        274.5 |   1.00x |
 
-Two things block the thread, and either one alone is enough to prevent overlap:
+Two things block the thread, and either one by itself is enough to prevent overlap:
 
 - **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It does not hand work to the
   libuv pool. `Promise.all` over N inferences runs them one after another, for any N.
@@ -47,8 +47,8 @@ means that no work overlapped.
 
 For this reason, `MAILWOMAN_BATCH_CONCURRENCY` was removed on 2026-07-16. It defaulted to 8 and was
 documented as a tuning knob, but it had never had any effect. Values of 1 and 16 produced the
-same throughput to three digits. `POST /v1/batch` is now an explicit sequential loop, which is how it
-had always behaved in practice.
+same throughput to three digits. `POST /v1/batch` is now an explicit sequential loop. It
+had always behaved that way in practice.
 
 The same change works in Python, where `intra_op=1` plus 16 threads gives 1.64x, because Python's ORT
 binding releases the GIL during a run. That result does not transfer to Node, because the Node
@@ -56,7 +56,7 @@ binding behaves differently.
 
 ## Batch requests do not improve throughput
 
-The obvious counterexample is [deepparse](https://deepparse.org/), which parses at 3.1 ms/addr
+The obvious counterexample is [deepparse](https://deepparse.org/). It parses at 3.1 ms/addr
 batched against 32.5 ms sequential, a 10x improvement. That 10x comes from amortizing per-call Python
 and torch overhead. Mailwoman does not have that overhead, so batching has no such overhead to amortize. Our
 sequential path (~300 addr/s) already matches deepparse's batched throughput (320 addr/s) and has
@@ -77,7 +77,7 @@ arithmetic intensity helps when cores sit idle waiting on memory, and our cores 
 Above B=8, the working set no longer fits, and throughput drops.
 
 **On CPU, do not build a batching path.** On GPU or WebGPU the arithmetic intensity differs, and
-batching could plausibly help, but nobody has measured it. Treat that as an open question.
+batching could plausibly help, but it is unmeasured. Treat that as an open question.
 
 ## A `batch` axis that isn't
 
@@ -126,7 +126,7 @@ database. Measure the worker count on your own data and machine instead of defau
 `availableParallelism()`.
 
 Parse-only threading has no database and no contention, so it should scale further than geocoding.
-Nobody has measured it. In Python, `intra_op=2` with 8 threads reached 1.57x. That result suggests
+That scaling is unmeasured. In Python, `intra_op=2` with 8 threads reached 1.57x. That result suggests
 the likely shape of the curve, but it is not a figure to quote.
 
 ## Before you re-measure
@@ -135,8 +135,8 @@ Avoid two mistakes, both of which produced a wrong answer during the original sw
 
 - **Warm up, and repeat.** A single cold run showed concurrency at 1.19x on the geocode path and
   nearly led to keeping the concurrency setting. Repeated runs showed no trend, and `c=1` beat `c=8`
-  half the time. The spread across identical configs is ~13%, wider than most effects worth
-  investigating.
+  half the time. The spread across identical configs is ~13%, wider than most effects under
+  investigation.
 - **Instrument the real runner.** The forward-pass split needs `classifier.cfg.runner`.
   The wrong field reports 0 ms and 0%, which looks like a measurement but means the
   code measured no work. This is the same class of bug as
@@ -189,4 +189,4 @@ hyperfine --runs 5 \
   './node_modules/.bin/mw geocode --stdin < addresses.txt >/dev/null'
 ```
 
-`xargs -P` measures capacity under concurrency, which is a different quantity from warm sequential throughput.
+`xargs -P` measures capacity under concurrency. That is a different quantity from warm sequential throughput.

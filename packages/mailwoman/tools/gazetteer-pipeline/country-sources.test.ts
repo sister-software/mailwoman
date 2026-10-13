@@ -173,7 +173,7 @@ describe("planCountryMove", () => {
 
 	it("multiplies the packed size out to the checkout cost", () => {
 		// GitHub reports packed size.
-		// It understates the checkout cost a sync actually writes.
+		// It understates the checkout cost a sync writes.
 		const plan = planCountryMove({
 			country: "TR",
 			target: AdminSource.WOF,

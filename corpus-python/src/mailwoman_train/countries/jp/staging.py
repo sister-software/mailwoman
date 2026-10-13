@@ -13,7 +13,7 @@ import os
 KANA_CORPUS = "v8-jp-kana-2026-09-06"
 #: The noisy register corpus: corporate numbers, a separate build with its own single part.
 REGISTER_CORPUS = "v8-jp-registry-2026-09-08"
-#: How many numbered train parts the kana build writes.
+#: The number of numbered train parts the kana build writes.
 TRAIN_PARTS = 8
 
 

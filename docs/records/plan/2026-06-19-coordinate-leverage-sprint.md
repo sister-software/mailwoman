@@ -8,7 +8,7 @@ _Defined 2026-06-19, after the v4.11.0 ship (FR-admin-split), the research-romp 
 (`.notes/research-romp-applicability.md`), and a 4-turn DeepSeek consult
 (`.agents/skills/deepseek-consult/session-notes-2026-06-19-research-nextsteps.md`)._
 
-We grade the **assembled geocoded coordinate**, never label-F1 alone. That rule has worked
+We grade the **assembled geocoded coordinate**, never label-F1 by itself. That rule has worked
 all month, because of the "#566 trap": label improvements that never reach the coordinate. This sprint applies the
 same rule to deciding what to build next, and the answer is to **measure before committing**.
 A single zero-GPU diagnostic decides the direction of the cycle, and the one strategic choice goes to
@@ -86,7 +86,7 @@ blocks it (fix: WOF ingest), without doing the ingest first.
 | `coverage_blocker_pct` > 0.70 (zero-DB locale)            | **Coverage expansion** (WOF ingest)           |
 
 **Run US first.** It has the highest volume, the widest coverage variation (urban vs rural), and the fastest
-computation, and it gives the most informative single routing signal.
+computation, so its matrix covers the largest share of current errors.
 
 ### The decision rule (apply after the US matrix)
 
@@ -99,15 +99,15 @@ computation, and it gives the most informative single routing signal.
 Coverage wins: US `coverage_gap ≈ 12–15%`, `ranking_gap ≈ 3–5%` (reranker ceiling too small to move the
 US aggregate); EU `coverage_gap > 30%` → **EU gazetteer ingest is the binding strategic constraint.**
 _Flip condition:_ US `ranking_gap ≥ 8%` AND the EU parse-blocker shows the parser already produces clean
-admin-split on > 60% of ES/IT/AU → the reranker wins (build once, deploy globally; coverage becomes a
-parallel data track). Treat the consult's structure as a reasonable hypothesis and **test its numbers**,
-which the diagnostic exists to check.
+admin-split on > 60% of ES/IT/AU → the reranker wins (build once and deploy globally, with coverage as a
+parallel data track). Treat the consult's structure as a reasonable hypothesis and **test its numbers**.
+The diagnostic exists to check them.
 
 ### Workstream A — RESULT (US, 2026-06-19)
 
 Ran `scripts/eval/three-gap-matrix.ts` on 10,000 OA-US rows. Faithful query (region `parentId` +
 postcode + parent-fallback, two-extract admin + postcode-locality), coordinate/name bucketing (rank of
-the right place rather than a specific WOF id, because the first pass over-counted ranking gaps where WOF carries
+the right place rather than a specific WOF id, because the first pass over-counted ranking gaps where WOF stores
 duplicate ids for one place).
 
 | metric (k = 10)                | value      |
@@ -129,7 +129,7 @@ coverage gap is ~2% on this sample (it bet 12–15%).
 `Essex Junction Village`, `Saint Albans City` vs `Saint Albans Town` (VT town/city/village splits);
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
 township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
-coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution) rather than a
+coverage change is a granularity/alias mapping (OA-city → WOF place, plus CDP/localadmin resolution) rather than a
 WOF re-ingest**, because the places mostly exist but are modeled at a different granularity.
 
 **Caveats:**
@@ -138,7 +138,7 @@ WOF re-ingest**, because the places mostly exist but are modeled at a different 
   over-weighting the hard township states. A national, population-weighted coverage number is almost
   certainly **lower** (urban volume resolves directly: CA/DC/IL coverage-gap ≈ 0–1%).
 - Input is **clean** OA (correct region + postcode). Ranking-gap ≈ 0 is measured _given_ clean
-  disambiguating context, which a reranker would also have. Clean OA does **not** exercise the consult's
+  disambiguating context. A reranker would also have that context. Clean OA does **not** exercise the consult's
   case where a reranker helps on ambiguity (missing postcode / wrong region). If real traffic is noisier,
   ranking headroom could be higher. A degraded-input probe is worthwhile before ruling out the reranker
   entirely, but on clean data it would not help.
@@ -181,12 +181,12 @@ and only FR got a dedicated extract. Per locale:
 **Caveats (loc-correct is a lower bound):** strict `normName` equality under-counts multi-token / bilingual /
 variant names. ES is further lowered by bilingual slash-truth (`Sant Vicent del Raspeig/San
 Vicente del Raspeig`); DE by the city-state drop. The relative ordering (FR ≫ IT/NL > DE > ES) is the
-trustworthy signal rather than the absolute floors. OA samples are clean-ish; real traffic may differ.
+trustworthy signal rather than the absolute floors. OA samples are clean-ish, and real traffic may differ.
 
 **Implication for routing:** the EU multi-locale work is larger and more parser-dependent than WOF ingestion.
 Per-locale parser readiness limits the coordinate before coverage can pay off. The cheapest
-EU coordinate improvement is a **DE admin-split extract** (resolver already covers DE; clear, measured parse
-gap), directly reusing the FR-admin-split template.
+EU coordinate improvement is a **DE admin-split extract** (the resolver already covers DE, and the parse
+gap is clear and measured), directly reusing the FR-admin-split template.
 
 ## The strategic fork (operator's call — surfaced rather than assumed)
 
@@ -207,7 +207,7 @@ smokes that misled at scale:
 - **Leave-one-state-out / leave-one-region-out** splits (random splits leak geographic structure).
 - Full held-out set rather than smokes (the 250-record smoke misled us 3×).
 - **Feature ablation to detect over-fit:** pop-only (baseline) / name-only / hierarchy-only / full. A
-  generalizable signal also improves scores on held-out states; an over-fit one only helps in training states.
+  generalizable signal also improves scores on held-out states, and an over-fit one only helps in training states.
 - **Pre-register per error class** rather than aggregate p50 (which conflates the three gaps): right-name-
   wrong-instance "Springfield" (target ≥ 50% recovery), population-tiebreak (≥ 30%), hierarchy-conflict
   (≥ 70%, the easiest, because the correct feature is directly observable), and feature-type (< 5%, likely a
@@ -217,13 +217,13 @@ smokes that misled at scale:
   hand-tuned resolver on the ranking-gap subset, a transformer won't either.
 
 If it's **coverage expansion** or a **multi-locale extract**, that's a separate scoping (WOF ingest
-pipeline per the existing national-situs / Overture work; or the FR-admin-split extract template).
+pipeline per the existing national-situs / Overture work, or the FR-admin-split extract template).
 
 ## Out of scope / parked
 
 - **Span-head + lower-fertility vocab (#727):** future-enablement for CJK/Cyrillic rather than this sprint.
   Coordinate-invisible today.
-- **The `enforceWordConsistency` decode-fix:** already shipped default-OFF; not revived here.
+- **The `enforceWordConsistency` decode-fix:** already shipped default-OFF, and this sprint does not revive it.
 - **A transformer reranker:** blocked behind the cheap LightGBM falsifier showing ranking-gap signal.
 
 ## Exit criteria
@@ -271,9 +271,9 @@ already-covered ES/IT/NL control, from the global WOF path):
 **The median coordinate for 14 of 15 locales falls in the same range as the ES/IT/NL control (1.5–2.2 km).**
 It comes from the Overture divisions gazetteer plus the postcode anchor, without GPU work.
 
-The one outlier is **LT**, and it is an eval-data artifact rather than a coverage gap: the DB carries 20,960
+The one outlier is **LT**, and it is an eval-data artifact rather than a coverage gap: the DB stores 20,960
 Lithuanian localities and `Vilnius` / `Kaunas` / `Klaipėda` resolve perfectly, but the LT _address_
-locality field carries settlement-type suffixes (`mstl.` / `m.` / `k.` = miestelis / miestas / kaimas),
+locality field contains settlement-type suffixes (`mstl.` / `m.` / `k.` = miestelis / miestas / kaimas),
 Lithuanian genitive declension (`Rumšiškių` vs the gazetteer's nominative `Rumšiškės`), and an `LT-`
 postcode prefix, so the held-out strings do not match the gazetteer names. Real LT input would need
 that normalization (or a model that learns it). The gazetteer itself is correct.
@@ -284,5 +284,5 @@ coverage on the unresolved fraction) and the **p90 tail** (wrong-place name coll
 covered control, also has a tail to 118 km, so the tail is a general resolver-ranking problem (population tiebreak /
 postcode constraint) rather than one specific to the new locales. Neither needs a parser retrain.
 
-The staging DB (`admin-global-priority-eu.db`) is built and validated; promoting it to the shipped
+The staging DB (`admin-global-priority-eu.db`) is built and validated. Its promotion to the shipped
 `admin-global-priority.db` is the conditional canonical-DB swap awaiting operator approval.

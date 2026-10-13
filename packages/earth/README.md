@@ -23,7 +23,7 @@ ready. The docs dev server holds port 7770.
 
 `/` is the geocoder, `/debug` the same page with the decode-path drawer open, `/trace` the live model visualizer.
 `?q=<address>` pre-fills the query on all three, and `?runtime=fake` mounts the canned runtime the shell smoke uses,
-with no model download. Cloudflare's SPA fallback serves `index.html` for each; the app reads `location.pathname`.
+with no model download. Cloudflare's SPA fallback serves `index.html` for each, and the app reads `location.pathname`.
 
 ## Layout
 
@@ -53,5 +53,5 @@ when one of them lies in its dependency closure, walked from the manifests, or a
 table the workflow deploys from is `lib/release-kit/deploy/targets.ts`.
 
 Two rules outside the repository decide whether a deployment works: the public bucket's CORS rule must admit the
-origin the app is served from (`https://earth.mailwoman.ai` is admitted; a `*.workers.dev` preview origin is not), and
+origin the app is served from (`https://earth.mailwoman.ai` is admitted, but a `*.workers.dev` preview origin is not), and
 the tile worker's CORS list in `packages/tile-worker/lib/cors.ts` must name the same origin.

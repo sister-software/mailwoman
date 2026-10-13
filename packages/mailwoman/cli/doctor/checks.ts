@@ -639,7 +639,7 @@ export interface LayerLicenseObservation {
 	/**
 	 * Lists other `.db` files in the layer's directory when the expected file is absent.
 	 *
-	 * These usually come from a build written under a name the session does not attach.
+	 * A listed file can come from a build written under a name the session does not attach.
 	 */
 	alternates: string[] | null
 }

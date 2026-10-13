@@ -50,8 +50,8 @@ describe("blank env values are treated as absent", () => {
 		})
 
 		test(`${key} still REJECTS a genuinely invalid value`, () => {
-			// The blank exemption must not become a general tolerance: a caller who sets 0
-			// or a word has made a mistake worth surfacing, unlike one whose shell handed us "".
+			// The blank exemption must not become a general tolerance: a caller who sets 0 or a word
+			// has made a mistake that the parse must report, unlike one whose shell handed us "".
 			expect(() => PublicNeuralEnvSchema.parse({ [key]: "0" })).toThrow(/expected/i)
 			expect(() => PublicNeuralEnvSchema.parse({ [key]: "banana" })).toThrow(/expected/i)
 		})

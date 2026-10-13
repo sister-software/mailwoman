@@ -31,7 +31,7 @@ export const spec = {
 			validate: (value) => Number.isInteger(value) && value >= 1 && value <= 100,
 			validationMessage: "--limit must be an integer between 1 and 100.",
 		},
-		fst: { type: "string", hint: "path", description: "FST binary; defaults from $MAILWOMAN_FST_BIN." },
+		fst: { type: "string", hint: "path", description: "FST binary. The default comes from $MAILWOMAN_FST_BIN." },
 		json: {
 			type: "boolean",
 			default: false,

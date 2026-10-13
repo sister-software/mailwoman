@@ -43,7 +43,7 @@ The run diverged at step 1000 with the same loss pattern. The step-750 checkpoin
 
 `configs/v0_4_0-lr1.5e4.yaml`. By this point the bisect pattern was visible: 5e-4 → step 750, 3e-4 → step 1000. A pure-LR explanation predicted lr=1.5e-4 → step 1875 (linear) or ~step 2200 (proportional). It diverged at step 2000.
 
-A 3.3× LR drop delayed divergence by 2.7× in steps. The relationship is sub-linear, which indicates that LR controls _when_ the divergence appears but is not the root cause. The destabilizer is in the recipe rather than the LR setting. The step-1250 checkpoint at macro_f1 0.39 is preserved.
+A 3.3× LR drop delayed divergence by 2.7× in steps. The relationship is sub-linear. That shape indicates that LR controls _when_ the divergence appears but is not the root cause. The destabilizer is in the recipe rather than the LR setting. The step-1250 checkpoint at macro_f1 0.39 is preserved.
 
 ### Runs 4 & 5 — ablations at lr=5e-4
 
@@ -81,7 +81,7 @@ The run did not diverge. macro_f1 peaked at 0.42 at step ~2200 and declined grad
 
 cw-only's smoke (3000 steps, cosine schedule) had its LR back near zero by step 2750. The "pass" criterion ("`macro_f1` stable across the last three evals past step 2000") was measuring stability _under an LR decayed to near zero_. The full 50K run kept the LR near its 1.5e-4 peak for thousands of steps. Sustained peak LR was also where the destabilization happened in every other run.
 
-The smoke tested a different loss landscape from the full run. The low LR in the cosine schedule's tail had produced the apparent stability.
+The smoke tested a different loss landscape from the from-scratch run. The low LR in the cosine schedule's tail had produced the apparent stability.
 
 **Process fix for future smokes**:
 
@@ -94,7 +94,7 @@ Before deferring §1 and §3 we audited `model.py` and `crf.py` for implementati
 
 - `crf.py:155-164`: the `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`, which matches the docstring. The code has no NaN-prone path, and `.clamp(min=1)` guards the empty-batch edge case.
 - `model.py:270-300`: class_weights enter via `nn.functional.cross_entropy(..., weight=class_weights)`, the standard PyTorch path. The model constructor asserts `class_weights.shape == (num_labels,)`, which rules out a silent broadcast mismatch.
-- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. The §1 hypothesis was that per-token normalization brings CRF NLL to CE magnitude, which would make equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction safe. In practice, training destabilizes when §1 is active. Either per-token CRF NLL is not comparable to per-token CE on this corpus, or the magnitudes are comparable and some other dynamic dominates.
+- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. The §1 hypothesis was that per-token normalization brings CRF NLL to CE magnitude. That would make equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction safe. In practice, training destabilizes when §1 is active. Either per-token CRF NLL is not comparable to per-token CE on this corpus, or the magnitudes are comparable and some other dynamic dominates.
 
 The audit found no implementation bug. The destabilization comes from an interaction in the recipe.
 
@@ -186,7 +186,7 @@ Final eval, shipped checkpoint vs v0.3.0, golden v0.1.2:
 
 Macro F1 raw: 0.357 vs 0.293. Token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107.
 
-On Issue #116's "≥2 of 4 axes improved" metric, only fine F1 improved directly (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration was flat. The campaign found negative training stability, which is its central result.
+On Issue #116's "≥2 of 4 axes improved" metric, only fine F1 improved directly (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration was flat. The campaign's central result is negative training stability.
 
 ## See also
 

@@ -35,7 +35,7 @@ export interface WhitespaceResult {
 	text: string
 	map: number[]
 	/**
-	 * How many inline-whitespace runs were rewritten.
+	 * The count of inline-whitespace runs rewritten.
 	 *
 	 * A run longer than one character, or a one-character run that was not already an ascii space.
 	 *

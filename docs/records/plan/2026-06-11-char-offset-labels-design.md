@@ -1,15 +1,15 @@
 # Char-offset labels — design (2026-06-11, REVIEWED)
 
-Status: **APPROVED — operator design review 2026-06-11.** The four open questions are ruled;
-scheduling is the v0.5.0 rebuild's. Rulings:
+Status: **APPROVED — operator design review 2026-06-11.** The four open questions are ruled.
+The v0.5.0 rebuild owns the scheduling. Rulings:
 
 1. **Storage: parallel arrays** (`span_starts[]` / `span_ends[]` / `span_tags[]`) — flat-column
-   decode for the 1M-row/epoch streaming loader; the manifest schema documents the triple's
+   decode for the 1M-row/epoch streaming loader. The manifest schema documents the triple's
    invariants (sorted, non-overlapping).
 2. **Migration: from-source rebuild.** v0.5.0 rebuilds from sources emitting native char spans —
-   `alignRow` already finds char offsets and QUANTIZES to tokens; the new format deletes the
+   `alignRow` already finds char offsets and QUANTIZES to tokens. The new format deletes the
    quantization rather than adding a converter. No conversion step exists, so the converter's
-   Unicode-mismatch class (scope item 7) dissolves into a build-time NFC assertion; the
+   Unicode-mismatch class (scope item 7) reduces to a build-time NFC assertion. The
    per-piece channel invariance checks (item 8) remain as encode-time checks. Old corpora stay
    frozen as history.
 3. **Span bridge: RETIRE FULLY on check-pass** (operator override of the keep-reduced option,
@@ -34,15 +34,15 @@ What this cost, concretely:
   span bridge (decode-side merge), which is containment rather than fix: the bridge must GUESS which
   punctuation is intra-span (periods, hyphens) vs separator (commas) — a global heuristic where
   the data could have been the authority, per surface, per locale.
-- **The comma over-merge** (battery 2): the bridge's guess was wrong for commas; six FR golden
-  rows measured it. A label format that could SAY "the comma is outside both spans" makes the
+- **The comma over-merge** (battery 2): the bridge's guess was wrong for commas, and six FR golden
+  rows measured it. A label format that could STATE "the comma is outside both spans" makes the
   guess unnecessary.
 - **The glue augmentation's ceiling**: raw-fused/tokens-split worked (#513) but only because the
   piece projection happens to align — the augmentation lives at the mercy of an encoding detail
   the format can't express directly.
 - The paired-delimiter future (#518): quoted venues and parenthetical annotations cannot be
-  labeled AROUND — `"Big Company HQ"` needs venue on the inner span and no label on the quotes;
-  the token format can only label the quote-containing token whole.
+  labeled AROUND — `"Big Company HQ"` needs venue on the inner span and no label on the quotes.
+  The token format can only label the quote-containing token whole.
 
 ## The proposal
 
@@ -65,7 +65,7 @@ Properties:
 ## What this change touches (the full list)
 
 1. **Corpus schema + every extract builder** (affix, unit, intersection, po_box/cedex, country,
-   german, base adapters): emit spans instead of token labels. Mechanical per builder; the
+   german, base adapters): emit spans instead of token labels. The change is mechanical per builder, and the
    `synth` ancestry stamping is untouched.
 2. **`encode_row` + augmentations + the relabel pass + choreography** (corpus-python): the glue
    augmentation and the #511 relabel pass re-target spans (both get SIMPLER — the relabel pass's
@@ -95,12 +95,12 @@ Properties:
    token-rows on the fly) — the dual loader avoids a 673M-row rewrite but keeps two code paths
    alive indefinitely (the kind of fork that rots).
 3. Does the span bridge RETIRE post-migration, or stay as a safety net at reduced scope? The
-   model needs retraining on punctuation-labeled data first; the interim (new corpus, old
-   model, bridge on) is eval-confounded — the consult's point stands: the first new-format
+   model needs retraining on punctuation-labeled data first. The interim (new corpus, old
+   model, bridge on) is eval-confounded. The consult's point stands: the first new-format
    retrain pre-registers both bridge-on and bridge-off reads, with the result condition being
    dotted po_box ≥ the bridge-on baseline (89.1) with the bridge off, FR postcode ≥ 99.5 held,
    affix floors unchanged, and an over-merge precision floor (the failure punctuation-
    labelability could newly enable). The #518 punctuation-stress eval doubles as this retrain's
    apostrophe/slash/hyphen lens.
-4. Schema versioning: this is corpus-major (v0.5.0) by any reading — what rides along
-   (the DE holdout is already queued for the next base rebuild; bundling vs creeping scope).
+4. Schema versioning: this is corpus-major (v0.5.0) by any reading. Which other changes ship in the same version?
+   (The DE holdout is already queued for the next base rebuild. The trade-off is bundling vs creeping scope.)

@@ -11,7 +11,7 @@ Covers:
   - the pre-existing 3-group shape (span_head + classifier carve-outs, `rest` non-empty) is
     unaffected by that skip
   - raw torch AdamW/LambdaLR can construct with an all-carved-out (would-be-empty) group.
-    They can step and round-trip the state_dict cleanly — evidence for the "prove it's safe" half of
+    They can step and round-trip the state_dict without error — evidence for the "prove it's safe" half of
     the empty-group question (this repo instead chose to skip inserting it, per build_optimizer's
     docstring, but the underlying torch behavior is pinned here too so the "unsafe" alternative
     reading can't creep back in unnoticed)
@@ -59,7 +59,7 @@ def test_v3120_crt_probe_config_loads_the_one_variable():
     cfg = load_config(CONFIG_DIR / "v3.12.0-crt-probe.yaml")
     assert cfg.train.trainable_only_prefixes == ["classifier."]
     # unchanged-from-parent settings (same stream, same resurrection settings, same 8k) — the one
-    # variable claim is only true if these actually match v3.11.0-deploc-feed.yaml.
+    # variable claim is only true if these match v3.11.0-deploc-feed.yaml.
     parent = load_config(CONFIG_DIR / "v3.11.0-deploc-feed.yaml")
     assert cfg.data == parent.data
     assert cfg.model == parent.model
@@ -123,7 +123,7 @@ def test_all_carved_out_without_lr_override_is_also_one_group():
 def test_three_group_shape_unaffected_by_the_empty_group_skip():
     """Pre-existing shape (span_head_learning_rate and classifier_learning_rate, encoder still
     trainable so `rest` is non-empty) must be untouched by the `if rest:` guard — the base group
-    still gets inserted when it actually has params."""
+    still gets inserted when it has params."""
     m = TinySpanClassifierModel()
     optim, labels = build_optimizer(
         m,
@@ -145,7 +145,7 @@ def test_three_group_shape_unaffected_by_the_empty_group_skip():
 
 def test_raw_adamw_tolerates_an_empty_param_group():
     """AdamW accepts a group with zero parameters. It constructs and steps the optimizer.
-    Its state_dict also round-trips cleanly. This evidence supports keeping an
+    Its state_dict also round-trips without error. This evidence supports keeping an
     empty group for safety reasons — the skip in build_optimizer is a shape/readability choice
     (no permanently-empty phantom "base" label), not a workaround for broken torch behavior."""
     lin = torch.nn.Linear(4, 4)

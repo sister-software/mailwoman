@@ -29,7 +29,7 @@
  * public bodies, and the one role whose parties can be sole traders publishes no address.
  * {@linkcode readANACParty} still applies a name check and refuses a party whose name takes the
  * `Surname, Firstname` form, because a later edition could add one. On the 2025 edition the check
- * refuses no party: 0 of the 18,740 address-bearing buyer and payer parties take that form, while 56
+ * refuses no party: 0 of the 18,740 buyer and payer parties that have an address take that form, while 56
  * hold a comma inside an organization name — `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E
  * ALBURNI` and `SETTORE PATRIMONIO, AMBIENTE E LAVORI PUBBLICI` among them. The check therefore
  * requires one word on each side of the comma rather than any comma.
@@ -304,8 +304,9 @@ const KILOMETRE_POINT = /[\s,]+km\.?[\s,]*\d+(?:[.,]\d+)?$/iu
 /**
  * A name of the form `Surname, Firstname`: one comma, one word on each side, letters only.
  *
- * An organization name in this release holds a comma often and holds a word on each side of it rarely:
- * `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI` has eight words after the comma.
+ * An organization name in this release can hold a comma, but a name with a single word on
+ * each side of the comma is rare: `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI`
+ * has eight words after the comma.
  * The single word on each side is what the inverted personal form has
  * and what a department or authority name does not.
  */

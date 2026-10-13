@@ -202,7 +202,7 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			let bits = lexicon.entries.get(key) ?? 0
 
 			if (n === 1) {
-				// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bitmask accumulation rather than a mistyped logical or
+				// oxlint-disable-next-line oxc/bad-bitwise-operator -- intended bitmask accumulation rather than a mistyped logical or
 				bits |= lexicon.codeEntries.get(parts[0]!) ?? 0
 			}
 

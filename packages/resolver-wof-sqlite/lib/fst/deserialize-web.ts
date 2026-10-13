@@ -127,7 +127,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 			// v1 stored a raw population u32 here. v2-v4 stored the conflated `importance`
 			// float. v5 stored the referential score.
-			// The Node deserializer explains why a v1 value is genuinely referential.
+			// The Node deserializer explains why a v1 value is the referential score.
 			const referential = isV2
 				? view.getFloat32(pp + 12, true)
 				: Math.min(1, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)

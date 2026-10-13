@@ -96,7 +96,7 @@ for (const shape of SHAPES) {
 			if (!base) continue
 			const text = register(base, reg)
 
-			// Grade only where the channels are actually live.
+			// Grade only where the channels are live.
 			if (deriveGeocodeRegister(text) !== "fragmented") {
 				if (reg === "asis") {
 					skippedByShape.set(shape.name, (skippedByShape.get(shape.name) ?? 0) + 1)

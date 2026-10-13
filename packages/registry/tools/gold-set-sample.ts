@@ -5,7 +5,7 @@
  *
  *   Gold-set sampling for adjudication. The programmatic entity truth
  *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts (Is-Subpart plus parent
- *   LBN/TIN), so it cannot settle the genuinely ambiguous co-located collisions: distinct NPIs at
+ *   LBN/TIN), so it cannot settle the ambiguous co-located collisions: distinct NPIs at
  *   one address with near-identical name text and no subpart flag for the same parent.
  *   NPI truth and programmatic rules may disagree on these pairs. A frozen
  *   adjudicated gold set must cover.

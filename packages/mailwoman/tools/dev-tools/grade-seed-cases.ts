@@ -102,7 +102,7 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 }
 
 /**
- * How many failing rows a per-group read prints.
+ * The number of failing rows a per-group read prints.
  * The file records every row's status.
  */
 export const ISSUES_SHOWN_PER_GROUP = 12

@@ -131,7 +131,7 @@ archive from https://protomaps.com/downloads and point --tiles at it.
 `
 
 /**
- * Reads one numeric flag, rejecting anything `Number` would quietly accept as garbage
+ * Reads one numeric flag, rejecting anything `Number` would accept without an error
  * (empty string, whitespace, `Infinity`) as well as out-of-range values.
  */
 function numericFlag(name: string, raw: string | null | undefined, fallback: number, min: number, max: number): number {

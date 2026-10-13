@@ -57,8 +57,8 @@ dragging pans, and a click centers the map on the cell you clicked.
 Protomaps publishes daily planet builds and a region extractor at
 [protomaps.com/downloads](https://protomaps.com/downloads). Any PMTiles archive
 with the [protomaps-basemap](https://github.com/protomaps/basemaps) layer names
-(`earth`, `water`, `roads`, `boundaries`, `places`, …) renders; other schemas
-decode fine but draw only the layers this package styles.
+(`earth`, `water`, `roads`, `boundaries`, `places`, …) renders. Archives with other schemas
+decode, but they draw only the layers this package styles.
 
 The committed test fixture, a hand-authored extract of southeast Portland, lets you run the browser
 without downloading anything:

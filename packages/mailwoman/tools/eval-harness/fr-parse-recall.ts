@@ -162,7 +162,7 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 }
 
 /**
- * Measures how often French street names survive parsing with and without a postcode.
+ * Measures the rate at which French street names survive parsing with and without a postcode.
  *
  * When `options.floor` is set, it also checks the bare rate against that floor.
  *

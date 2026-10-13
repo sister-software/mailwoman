@@ -108,7 +108,7 @@ function bucketKey(row: CSVRecord, address: Address): string {
 interface SampleOptions {
 	perBucket: number
 	/**
-	 * Stop once this many rows are held.
+	 * Stop once this number of rows is held.
 	 *
 	 * Ignored in reservoir mode.
 	 * That mode must see the whole stream.

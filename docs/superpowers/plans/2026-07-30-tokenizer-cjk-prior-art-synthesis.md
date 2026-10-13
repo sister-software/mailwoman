@@ -40,7 +40,7 @@ records every required finding. Verdicts come first and receipts after.
    counsel clears juso.**
 6. **CN is out of scope for legal rather than technical reasons.** Private surveying is illegal,
    GCJ-02 obfuscation is mandatory, and API ToS bar storage. The one buildable precedent is
-   GeoGLUE, which annotates on OSM to avoid the mapping-data regime.
+   GeoGLUE. GeoGLUE annotates on OSM to avoid the mapping-data regime.
 
 ## The steal list (JP Phases 3–5)
 
@@ -50,7 +50,7 @@ records every required finding. Verdicts come first and receipts after.
   - Variant folding that NFKC does not do (ヶ/ケ/が/ガ, 之/ノ/の, 新字体↔旧字体).
   - Prefecture and county completion.
   - The non-丁目 tail (Sapporo 条, Iwate 地割, 甲乙丙/いろは, 無番地).
-  - Half-width katakana folding, including dakuten composition, which changes string length.
+  - Half-width katakana folding, including dakuten composition. That composition changes string length.
 - **Kyoto 通り名: keep it in a dedicated field** (ABR's `kyoto_st`) rather than deleting it.
   Geolonia deletes it and loses information. 大和大路通正面下る大和大路2 is the documented worst
   case.
@@ -59,11 +59,11 @@ records every required finding. Verdicts come first and receipts after.
   output is a ready-made resolve-schema target.
 - **A residual tag for non-address content** (MGeo's `other`, ABR's `unmatched_address`). Delivery
   notes and building names are not parse failures.
-- **A romanization lexicon at no cost:** Geolonia v1 carries kana and romaji for 277k town-level
+- **A romanization lexicon already in an acquired source:** Geolonia v1 contains kana and romaji for 277k town-level
   rows (CC BY 4.0). abr-geocoder cannot search romaji, so this would put Mailwoman ahead of it
   rather than at parity.
 - **Historical address conversion has commercial value.** ZENRIN sells it, and no open equivalent
-  exists. ABR's masters carry effective dates, so the raw material is GREEN-licensed but
+  exists. ABR's masters record effective dates, so the raw material is GREEN-licensed but
   unpackaged.
 - **KR structure notes** (for when KR is unblocked):
   - 지하 is a building-number prefix.
@@ -80,14 +80,14 @@ records every required finding. Verdicts come first and receipts after.
   a hyphen) and U+2010/2015/FE63/FF70 all survive** in real JP input. The normalizer needs a
   hyphen-equivalence class.
 - The JP char vocab must be rebuilt from the full Phase-3 extract. The probe vocab has 1,918 kanji,
-  and the full MLIT data has 2,640 distinct kanji. The missing tail is proper-noun kanji, which is
+  and the full MLIT data has 2,640 distinct kanji. The missing tail is proper-noun kanji. That is
   the class an address parser exists to handle. A hash-bucket OOV fallback is under consideration
   as an alternative.
 - Non-BMP correctness: 49.5% of Japan's official administrative character set is outside the BMP.
   Two Plane-2 kanji (𨦻 𨫤) are verified real place names in Overture-JP. The TS decode path must
   work on code points. The lesson from #519 applies here too.
 
-## Latin-side exclusions (receipts, so nobody re-litigates cheaply)
+## Latin-side exclusions (with receipts, so a later reader does not reopen them without new evidence)
 
 - Learned/dynamic chunking: static boundaries beat learned ones at our scale (a 41M-param study
   with WikiANN static 66.79, learned ≤66.57, BPE 61.39).
@@ -95,35 +95,35 @@ records every required finding. Verdicts come first and receipts after.
   negative result at 1.5B scale.
 - Byte-SSMs: ONNX has no fused Mamba op, the loop path runs 17× slower than realtime at 9.6M
   params, and the contrib ops are float-only (no int8).
-- FLOTA: lossy, so it cannot carry char-offset gold. CANINE without channels: −13.8 NER.
+- FLOTA: lossy, so it cannot preserve char-offset gold. CANINE without channels: −13.8 NER.
 - Per-word CharCNN has a structural limit for Latin. It cannot represent a tag boundary inside a
   word (`12-14`, `123A`, `SW1A 1AA`). Pure char mode (built for JP) is the Latin variant if the v9
   unification ever runs.
 - Evidence for keeping v9 open: ByT5 beats mT5 on NER at every size (+4.2 at Small). Under
-  random-case noise, ByT5 loses only 1.5 while mT5 loses 25.7, which replicates the user-register
+  random-case noise, ByT5 loses only 1.5 while mT5 loses 25.7. That result replicates the user-register
   doctrine externally. CharacterBERT reaches parity with fewer params and gains 5 F1 at 40% noise.
   Char gains are 5–10× larger outside English (Dutch +8.6), which matches our multi-locale
   condition.
 
 ## JP dictionary licensing (if a JP dictionary channel is ever wanted)
 
-ipadic is Debian-non-free, which blocks npm shipping, and Kuromoji's bundled model inherits that
+ipadic is Debian-non-free. That license blocks npm shipping, and Kuromoji's bundled model inherits that
 license. jumandic has no license file upstream. **The clean path is SudachiDict (Apache-2.0) plus
 UniDic (BSD-3).** MJ文字情報一覧表 and MJ縮退マップ (the official variant-collapse tables) are CC
 BY-SA 2.1 JP. Share-alike is a real constraint on shipping a derived normalization table. Our
 char-level design needs none of these at inference. The itaiji problem (辺/邊/邉, and 舘/館 at
-near coin-flip rates in real data) belongs to resolver-side normalization and can be sourced from
+near-50% rates in real data) belongs to resolver-side normalization and can be sourced from
 GREEN data.
 
 ## Data-licensing summary for the CJK roadmap
 
 | Region | Verdict             | Note                                                                                                                                                                                                                                           |
 | ------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| JP     | GREEN               | ABR PDL-1.0 (CC BY 4.0-compatible; modification notice required), MLIT PDL-1.0, Geolonia CC BY 4.0, KEN_ALL copyright expressly disclaimed. Parcel-level (地番) is AMBER (a second MoJ grant rides it).                                        |
-| KR     | RED pending counsel | juso ToS + the export pledge; portal metadata saying "no restriction" does not override the statute. VWorld unverifiable from here.                                                                                                            |
-| TW     | GREEN               | OGDL-Taiwan-1.0 with a per-agency attribution manifest (~21 entries) shipped in the package; attribution failure voids ab initio; pin/archive against §5.2 withdrawal. Chunghwa Post 3+3 postcodes are RED (no distribution/adaptation grant). |
+| JP     | GREEN               | ABR PDL-1.0 (CC BY 4.0-compatible, modification notice required), MLIT PDL-1.0, Geolonia CC BY 4.0, KEN_ALL copyright expressly disclaimed. Parcel-level (地番) is AMBER (a second MoJ grant applies).                                         |
+| KR     | RED pending counsel | juso ToS + the export pledge. Portal metadata saying "no restriction" does not override the statute. VWorld unverifiable from here.                                                                                                            |
+| TW     | GREEN               | OGDL-Taiwan-1.0 with a per-agency attribution manifest (~21 entries) shipped in the package. Attribution failure voids ab initio. Pin/archive against §5.2 withdrawal. Chunghwa Post 3+3 postcodes are RED (no distribution/adaptation grant). |
 | CN     | RED                 | Law rather than licensing.                                                                                                                                                                                                                     |
-| HK     | AMBER               | ALS bulk exists; terms silent on adaptation/sublicense — same counsel posture as osm/.                                                                                                                                                         |
+| HK     | AMBER               | ALS bulk exists, with terms silent on adaptation/sublicense — same counsel posture as osm/.                                                                                                                                                    |
 
 ## Addendum 2026-07-30 — the KR alternative path (operator prompt: WOF + the data-sources vein)
 
@@ -134,10 +134,10 @@ assets we already hold change the Phase-6 picture:
    308 counties, 1,482 localadmins, 50,465 localities and 693 neighborhoods, with centroids and
    68,658 Korean-language name records (Hangul 충청북도, the alias 충북, and hanja 忠淸北道). Its
    license is clean (the WOF CC0/CC-BY family). WOF-KR covers the admin and resolve side. WOF has
-   no streets or house numbers anywhere, which is the known hierarchy gap.
+   no streets or house numbers anywhere. That is the known hierarchy gap.
 2. **`.notes/data-sources.md` already lists the corpus source: localdata.go.kr.** It covers every
    permitted business in Korea under KOGL (attribution required, commercial use and derivatives
-   allowed). Each record has both the road-name and the jibun address, which is the dual-system
+   allowed). Each record has both the road-name and the jibun address. That pair is the dual-system
    pairing signal the notes point out. This is a different legal object from the juso register.
    It is business-permit disclosure data published for public release, and it is not covered by
    the 도로명주소법 pledge that binds the address DB. HIRA, NEIS and FSS are the cross-check
@@ -154,16 +154,16 @@ precedent.
 
 **Operator disposition (2026-07-30): the KR framework is decided.**
 
-- Parse uses the no-juso recipe above. It also uses OSM-KR through the osm/ implementation, which
+- Parse uses the no-juso recipe above. It also uses OSM-KR through the osm/ implementation. That implementation
   is disabled but retained, with ODbL data quarantined per standing practice.
 - Juso becomes a **plug-and-play build-local layer** on the layer interface. We ship
   `gazetteer build juso`, written against the documented format and synthetic fixtures. We do not
   touch real juso data ourselves before counsel review. The customer acquires juso under their own
-  grant and builds in-country. The layer manifest carries the juso obligations as a structural
+  grant and builds in-country. The layer manifest records the juso obligations as a structural
   notice, and the resolver's AddressPointLookup consumes the layer as a tier upgrade
   (locality-centroid → rooftop).
 - The GTM framing is that the export pledge blocks every cloud geocoder. In-process self-hosting is
-  the only legal path to rooftop KR, and that is the product.
+  the only legal path to rooftop KR. That path is the product.
 
 **The counsel question is now narrower.** It was "clear the juso export pledge". It is now (a)
 confirm the KOGL type on the specific localdata datasets and (b) confirm that the address-register

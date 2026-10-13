@@ -14,7 +14,7 @@ import { greatCircleDistance, haversine, haversineKm } from "#index"
 const R = 6371
 
 // `[longitude, latitude]` tuples.
-// The object form keeps the Null-Island sentinel, so the equator pair starts ten degrees east of (0, 0).
+// The object form keeps the `(0, 0)` sentinel, so the equator pair starts ten degrees east of (0, 0).
 test("greatCircleDistance takes the body radius: a quarter turn on the Moon is πR/2", () => {
 	const quarter = greatCircleDistance([10, 0], [100, 0], { body: "moon" })
 

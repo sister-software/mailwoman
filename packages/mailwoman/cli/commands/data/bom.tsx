@@ -39,7 +39,7 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"Leave out the data root's manifested databases. The document then carries the four bundles alone, " +
+				"Leave out the data root's manifested databases. The document then lists only the four bundles, " +
 				"and no component records attribution, source vintage or build revision",
 		},
 	},

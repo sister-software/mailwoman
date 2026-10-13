@@ -24,7 +24,7 @@ export const SubVenueTier = {
 	/**
 	 * A venue-interior structure — the `unit` side.
 	 *
-	 * Terminals, gates, platforms.
+	 * Terminals, airport boarding points, platforms.
 	 */
 	SubVenue: "subvenue",
 	/**

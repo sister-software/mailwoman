@@ -6,7 +6,7 @@
 
 :::
 
-A **verdict smoke** is a short (few-hundred-to-few-thousand-step) training run whose only job is to decide whether a full-length training run is worth launching. The full run is expensive (rented GPU, ~6–10h). The smoke runs in minutes and should surface divergence, NaN, sampler starvation, and other recipe-level bugs before they cost a full run.
+A **verdict smoke** is a short (few-hundred-to-few-thousand-step) training run whose only job is to decide whether to launch a full-length training run. The full-length run is expensive (rented GPU, ~6–10h). The smoke runs in minutes and should surface divergence, NaN, sampler starvation, and other recipe-level bugs before they cost a full-length run.
 
 This document describes the v0.4.0 meta-bug that made the framework unreliable and the redesigned framework that v0.5.0 and later use.
 
@@ -31,12 +31,12 @@ Pick one of two modes for every smoke. Use **constant-LR** for any new or unstab
 The LR warms up linearly from 0 to `learning_rate` over `warmup_steps`, then **stays flat at `learning_rate` for the entire smoke window** without decay.
 
 - Divergence shows up immediately because no decay masks it.
-- The smoke window tests whether the recipe survives sustained peak LR, which is the question that predicts whether the full run will diverge.
+- The smoke window tests whether the recipe survives sustained peak LR. That question predicts whether the full-length run will diverge.
 - Use this for any recipe that introduces a new loss term, a new normalization scheme, new class weights, a tokenizer change, or any other change that hasn't been validated at full LR before.
 
 ### Mode B — Long-tail cosine
 
-This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail does not dominate the visible portion of the smoke window. By step 3000, with `max_steps=10000`, LR is still at ~84% of peak, which is close enough for destabilization to surface.
+This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail does not dominate the visible portion of the smoke window. By step 3000, with `max_steps=10000`, LR is still at ~84% of peak. That is close enough for destabilization to surface.
 
 - Use this when the recipe is a tweak on a known-stable baseline (a small source-weight nudge, a tiny class-weight adjustment within a previously-stable family) and when the full-train cosine dynamics matter for the verdict you're trying to reach.
 - This mode costs more wall-clock than constant-LR smokes (a 10K-step smoke is ~6× the wall-clock of a 1.5K-step constant-LR smoke).
@@ -47,11 +47,11 @@ This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail d
 | -------------------------------------------------------------------------- | ------------------------------------------------------- |
 | New recipe (new loss, new normalization, new tokenizer, new class weights) | **A — constant-LR**                                     |
 | First time exercising a knob at a new LR                                   | **A — constant-LR**                                     |
-| Tweak on a known-stable baseline (`±20%` source weight, etc.)              | **B — long-tail** if cosine dynamics matter; else **A** |
-| Pre-flight integration check (wiring, dtype, sampler) — not a verdict      | Either; constant-LR is faster                           |
+| Tweak on a known-stable baseline (`±20%` source weight, etc.)              | **B — long-tail** if cosine dynamics matter, else **A** |
+| Pre-flight integration check (wiring, dtype, sampler) — not a verdict      | Either, and constant-LR is faster                       |
 | Reproduce a known divergence to characterize it                            | **A — constant-LR**                                     |
 
-When unsure, pick constant-LR. A false positive (a stable recipe flagged at sustained peak LR that would survive cosine decay) costs little, because you promote it to the full run anyway. A false negative (a divergent recipe passes the smoke and wastes a full run) is the cost the v0.4.0 campaign paid.
+When unsure, pick constant-LR. A false positive (a stable recipe flagged at sustained peak LR that would survive cosine decay) costs little, because you promote it to the full-length run anyway. A false negative (a divergent recipe passes the smoke and wastes a full-length run) is the cost the v0.4.0 campaign paid.
 
 ## How to invoke
 
@@ -73,7 +73,7 @@ python -m mailwoman_train train \
 python -m mailwoman_train smoke --config <recipe>-smoke.yaml
 ```
 
-The flag overrides `cfg.train.lr_schedule`. Full runs continue to use whatever the config declares, which is cosine by default, as in v0.4.0.
+The flag overrides `cfg.train.lr_schedule`. Full-length runs continue to use whatever the config declares. The default is cosine, as in v0.4.0.
 
 Long-tail mode does not change `max_steps`; it asserts the recipe already has it sized correctly and warns when `max_steps < 10000`.
 
@@ -84,7 +84,7 @@ A smoke answers **only** whether the recipe survives sustained peak LR for the s
 - **Loss is finite and trending down / sideways across the full smoke window** → promote to full run.
 - **Loss spikes, NaN, or trends up at any point in the smoke window** → recipe is unstable at this LR. Reduce LR or revisit the recipe.
 - **Loss looks fine until the cosine tail (constant-LR mode disabled)** → you've reproduced the v0.4.0 meta-bug. Re-run in constant-LR mode.
-- **Val F1 peaks early and decays** in a constant-LR smoke → the full run may still be fine (early stopping or the full cosine schedule recovers it), but the smoke cannot decide this. Promote and let the full run decide.
+- **Val F1 peaks early and decays** in a constant-LR smoke → the full-length run may still be fine (early stopping or the full cosine schedule recovers it), but the smoke cannot decide this. Promote and let the full-length run decide.
 
 ## Sidecars that ride alongside
 
@@ -105,13 +105,13 @@ Run these three v0.4.0 diagnostic tools against every v0.5.0 smoke / full-run pa
 
 The v0.5.0 C-train bisect campaign added two rules. The original framework missed both failure modes.
 
-### Smoke effective batch must match the full run
+### Smoke effective batch must match the full-length run
 
 The v0.5.0 ablation smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error: loss descended, val_macro_f1 climbed, and the run did not diverge through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
 
-**The recipe's stability depends on batch geometry.** A smoke that does not reproduce the full run's gradient noise cannot detect this class of failure. The per-step gradient noise at `eff_batch=8` is ~4× larger than at `eff_batch=128`. That extra noise _stabilizes_ training against the curvature-conflict instability, because the model cannot settle deep enough into the basin where the conflict appears.
+**The recipe's stability depends on batch geometry.** A smoke that does not reproduce the full-length run's gradient noise cannot detect this class of failure. The per-step gradient noise at `eff_batch=8` is ~4× larger than at `eff_batch=128`. That extra noise _stabilizes_ training against the curvature-conflict instability, because the model cannot settle deep enough into the basin where the conflict appears.
 
-**Rule:** the smoke's `batch_size` × `grad_accum_steps` must equal the full run's product. If the full run uses eff_batch=128, the smoke must too, even if that means fewer steps per wall-clock minute. The smoke exists to reproduce the full run's dynamics, and speed is secondary.
+**Rule:** the smoke's `batch_size` × `grad_accum_steps` must equal the full-length run's product. If the full-length run uses eff_batch=128, the smoke must too, even if that means fewer steps per wall-clock minute. The smoke exists to reproduce the full-length run's dynamics, and speed is secondary.
 
 ### Gradient-norm ratio probe before retraining
 

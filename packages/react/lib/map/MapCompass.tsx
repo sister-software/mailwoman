@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shows a compass that rotates with the map bearing and hides when the map faces north. A press
- *   it asks the host to reset the bearing.
+ *   Shows a compass that rotates with the map's rotation angle and hides when the map faces north.
+ *   A press asks the host to rotate the map back to north.
  */
 
 import type { ReactNode } from "react"
@@ -12,7 +12,7 @@ import type { ReactNode } from "react"
 import { cx } from "#common/cx"
 
 /**
- * The compass counts as facing north below this bearing.
+ * The compass counts as facing north below this rotation angle.
  * It fades out below the same threshold.
  */
 const HIDE_BELOW_DEGREES = 0.5
@@ -22,7 +22,7 @@ const HIDE_BELOW_DEGREES = 0.5
  */
 export interface MapCompassProps {
 	/**
-	 * The map's bearing in degrees as MapLibre reports it, where 0 is north.
+	 * The map's rotation in degrees as MapLibre's `getBearing` reports it, where 0 is north.
 	 */
 	bearing: number
 	/**

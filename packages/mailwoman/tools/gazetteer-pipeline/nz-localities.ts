@@ -18,7 +18,7 @@
  *   Shape: one `spr` row per (city, district) group. The city column is the address's
  *   suburb/locality line. 49 names span more than one district (`Hillsborough` is both an
  *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
- *   address point (robust against depot-coded outliers). The bbox is the group's p5–p95 envelope.
+ *   address point. A few depot-coded outliers cannot move a median. The bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`, the tier NZ addressing uses for suburbs and bare
  *   parsed toponyms. A `neighbourhood` row would be invisible to the locality filter group.
  *   and widening that group is a global ranking change this database must not smuggle in. Population

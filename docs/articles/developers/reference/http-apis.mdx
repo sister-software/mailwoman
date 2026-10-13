@@ -48,13 +48,13 @@ http://localhost:3000/v1/geocode
    └───────────────────────── scheme — the servers speak HTTP; terminate TLS in front
 ```
 
-The version prefix is the one part that differs by surface. `/v1` exists on the native API alone,
+The version prefix is the one part that differs by surface. `/v1` exists only on the native API,
 because the drop-ins reproduce paths their originals already fixed.
 
 ## Native API
 
 `@mailwoman/api` takes an engine object in which every method is optional. An absent method answers a
-status rather than throwing, which is what makes a partial deployment legible.
+status rather than throwing. That makes a partial deployment legible.
 
 | Method | Path          | Operation ID        | Body or query                            | 200 response                                                       |
 | ------ | ------------- | ------------------- | ---------------------------------------- | ------------------------------------------------------------------ |
@@ -189,7 +189,7 @@ The native surface returns one envelope: an `error` string a caller matches on, 
 | `400`  | `invalid request body`                      | `<field>: <message>`                        | A validated field failed                          | Read `detail` for the failed field                      |
 | `400`  | `invalid request body`                      | `malformed JSON`                            | The body did not parse as JSON                    | Send well-formed JSON                                   |
 | `413`  | `request body too large`                    | absent                                      | The body exceeded the limit, 2 MiB by default     | Split the request                                       |
-| `413`  | `batch too large: <n> > <max>`              | absent                                      | More rows than the batch cap allows               | Chunk to the cap; set `MAILWOMAN_BATCH_MAX` to raise it |
+| `413`  | `batch too large: <n> > <max>`              | absent                                      | More rows than the batch cap allows               | Chunk to the cap. Set `MAILWOMAN_BATCH_MAX` to raise it |
 | `500`  | `internal error`                            | the underlying message                      | The engine faulted                                | Read `detail`, then report it                           |
 | `501`  | `parse not implemented`                     | absent                                      | The engine has no `parse`. The model is not wired | Install the weights package for your locale             |
 | `503`  | `geocoder not available`                    | the install line for the missing dependency | `geocode`, `batch` or `reload` is absent          | Follow `detail` for the packages and database paths     |
@@ -197,7 +197,7 @@ The native surface returns one envelope: an `error` string a caller matches on, 
 
 The `501` and `503` split is deliberate. `501` means the surface exists and the capability was never
 wired. `503` means the code is present and a deployment dependency — a gazetteer database, a resolver
-package — is missing. The first is a build decision; the second is fixable by installing something.
+package — is missing. The first is a build decision. The second is fixable by installing something.
 
 Two orderings matter to a caller writing retry logic: the batch-size check runs before the engine
 check, so an oversized batch against an unwired engine answers `413` rather than `503`; and an
@@ -218,7 +218,7 @@ written against the original parses that shape. That is the whole point of a dro
 | `GET`  | `/status`  | none                                                                                                                                                 | `{ status, message, data_updated? }`        |
 
 `lat` and `lon` are required on `/reverse`. `format` accepts `jsonv2` (the default), `json`,
-`geojson` and `jsonld`; `limit` defaults to `10`. Results carry an OpenCage-style `annotations` block
+`geojson` and `jsonld`; `limit` defaults to `10`. Results include an OpenCage-style `annotations` block
 — see [Use annotations](../how-to/use-annotations.mdx).
 
 `/lookup` accepts `format=jsonld` and answers with the `jsonv2` array anyway. That is the original's
@@ -294,11 +294,11 @@ code, the response parsing, and the tests written against a particular JSON shap
 shape a deployment already parses moves that cost to zero and makes the swap reversible: point the
 base URL back and the old system answers again.
 
-The native surface carries the `/v1` prefix the drop-ins lack because it is the one shape this
+The native surface has the `/v1` prefix the drop-ins lack because it is the one shape this
 project controls and therefore the one that has to survive its own revisions.
 
 Absent engine methods answer statuses rather than throwing because a partial deployment is a normal
-state rather than a bug. A parser with no gazetteer is a useful service; it should say `503` on `/v1/geocode`
+state rather than a bug. A parser with no gazetteer is a useful service. It should return `503` on `/v1/geocode`
 and keep answering `/v1/parse`.
 
 ## See also

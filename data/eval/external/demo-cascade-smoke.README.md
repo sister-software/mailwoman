@@ -1,6 +1,6 @@
 # Demo-cascade smoke rows (`demo-cascade-smoke.jsonl`)
 
-The whole-stack smoke eval (#524). Every other validation lens is per-layer; this file
+The whole-stack smoke eval (#524). Every other validation lens is per-layer. This file
 exists because three production bugs (#520 gazetteer-feeds crash, #521 reconcile
 fragmentation subsidy, #522 resolver placetype exclusion) all shipped through
 green per-layer checks on 2026-06-11. No check in the battery ran
@@ -27,8 +27,8 @@ whenever the hot DB is present and skips with a loud note when it isn't.
   row is committed: query the staged `wof-hot.db` directly (e.g. via
   `WofSqlitePlaceLookup.findPlace`) and confirm the id, name, placetype, and
   rough coordinates identify the place you mean. Never pin an id by copying the
-  runner's own output — that bakes the current behavior in as truth, which is
-  exactly the failure mode this eval exists to catch.
+  runner's own output. A copied id records the current behavior as truth. A
+  truth copied from current behavior is exactly the failure mode this eval exists to catch.
 - **Do not massage a failing row.** A FAIL here is a finding (it may be a real
   bug — that is the point). If the gazetteer itself changes (a WOF id
   supersedes another), update the row with a note explaining the re-verification.
@@ -48,9 +48,9 @@ One JSON object per line (blank lines and `#`/`//` comment lines are skipped):
 
 - `input` (required): the raw query, verbatim as a user would type it.
 - `expect` (required): exactly one of
-  - `id` — positive-integer WOF id the top cascade hit must carry, or
+  - `id` — positive-integer WOF id the top cascade hit must have, or
   - `anchor_centroid: true` — the cascade must dead-end (no WOF row, e.g. a
-    bare US ZIP on the slim DB, which ships **no postalcode rows**) and the
+    bare US ZIP on the slim DB, since that DB ships **no postalcode rows**) and the
     demo's anchor-centroid fallback (`postcode-us.bin`) must fire instead.
 - `note` / `source` (optional strings): provenance + intent.
 
@@ -67,7 +67,7 @@ row fails with a message naming the row number.
   fall-through.
 - Bare famous names (`Chicago`, `Seattle`, `San Francisco`, `Berlin`, `Paris`)
   plus known-hard shapes: `Saint Paul, MN` (multi-token locality fragmentation
-  kryptonite), `Springfield, IL` (same-name disambiguation — population alone
+  kryptonite), `Springfield, IL` (same-name disambiguation, where ranking by population
   picks the MO Springfield), `Washington, DC` (region-abbreviation expansion).
 
 All ids verified against the staged `v4.4.0` `wof-hot.db`

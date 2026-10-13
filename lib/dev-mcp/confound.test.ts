@@ -85,8 +85,8 @@ describe("the declared vocabulary", () => {
 		// The tool schema documents `variable: ["place_country"]`.
 		// The effective configs differ at `placeCountry`.
 		// Compared raw, the same change was counted twice under two spellings —
-		// once as declared-but-unmoved, once as moved-but-undeclared — so every honest
-		// single-change comparison reported attribution ambiguous.
+		// once as declared-but-unmoved, once as moved-but-undeclared — so every correctly
+		// declared single-change comparison reported attribution ambiguous.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
 
 		expect(reading.variable_isolation).toBe("clean")

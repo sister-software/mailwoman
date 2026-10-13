@@ -190,13 +190,13 @@ export interface AblationRowResult {
 	 */
 	anchorRungDepth: number | null
 	/**
-	 * The deepest rung the ablated answer actually landed in and its depth.
+	 * The deepest rung the ablated answer landed in and its depth.
 	 * `null` when it abstained or landed outside every rung.
 	 */
 	achievedRung: string | null
 	achievedRungDepth: number | null
 	/**
-	 * How many rungs the answer fell (0 = held at the base).
+	 * The number of rungs the answer fell (0 = held at the base).
 	 */
 	degradedRungs: number | null
 	grade: AblationGrade

@@ -6,9 +6,9 @@ two thousand, and its F1 swings with each of those three rows. `po_box` entered 
 score from 3 rows of 4,096 (#2438).
 
 The count reads the validation set the trainer scores: the same split, row limit and seed, through
-`iter_encoded`. A row holds a label when any of its pieces carries that label's `B-` tag. The
+`iter_encoded`. A row holds a label when any of its pieces has that label's `B-` tag. The
 per-country floors in `validation_coverage` read the parquet directly, because they ask what the
-split contains. This audit asks what the trainer's draw contains, which is a property of the sampler.
+split contains. This audit asks what the trainer's draw contains. The draw is a property of the sampler.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from ..tokenizer import Tokenizer
 
 
 class LabelSupportError(RuntimeError):
-    """A declared per-label validation floor is not met. Carries the report so a reader has the numbers."""
+    """A declared per-label validation floor is not met. The error holds the report so a reader has the numbers."""
 
     def __init__(self, message: str, report: dict[str, Any]) -> None:
         super().__init__(message)

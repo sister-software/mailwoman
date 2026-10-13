@@ -41,4 +41,4 @@ Thread B's synthetic transliterations) should drive it down. The A0→A1 delta i
 headline tokenizer KPI for v0.5.0.
 
 Target: <5% byte-fallback overall on the fixture **after** A1 lands. If A0 misses 5%, that
-is expected; A0's job is to establish the baseline + validate the harness.
+is expected. A0's job is to establish the baseline + validate the harness.

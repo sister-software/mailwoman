@@ -20,7 +20,7 @@ the house number, the town and the postcode. Then the clerk looks up where that 
 Mailwoman keeps those two jobs separate. `npm install mailwoman` gives you the reading job: a
 function that takes `apt 4b 350 5th ave new york ny 10118` and returns a tree of tagged components,
 each with a confidence score. The lookup job is a second pass that walks that tree and attaches
-coordinates from a gazetteer, which is a database of places and their locations.
+coordinates from a gazetteer. A gazetteer is a database of places and their locations.
 
 The reading pass runs a sequence labeler. This is a small model that assigns one tag to each piece
 of the input, the way a spam filter assigns one label to a message. This page needs no other model

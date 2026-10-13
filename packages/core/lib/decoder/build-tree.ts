@@ -155,7 +155,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// It is not a real component boundary, so it must not flush the open span.
 			// The span stays open so the following same-tag `B-` token can merge in
 			// (see the spurious-boundary repair below).
-			// A non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
+			// A non-whitespace `O` (comma, slash, …) is a real separator and still flushes.
 			if (open && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
 			open = flush(open, raw, out, attribution)
 

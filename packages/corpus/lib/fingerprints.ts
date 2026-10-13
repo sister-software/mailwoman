@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file A fixed-capacity set of 128-bit fingerprints in one flat `Uint32Array`.
  *
- *   The adapter runner deduplicates by holding every key it has seen. A V8 `Set` refuses its 16,777,217th
- *   entry outright, so the runner capped itself at 10,000,000 keys. Three adapters passed that cap in
+ *   The adapter runner deduplicates by holding every key it has seen. A V8 `Set` throws on its 16,777,217th
+ *   entry, so the runner capped itself at 10,000,000 keys. Three adapters passed that cap in
  *   `v0.7.0-de-holdout`. The duplicate census over that build measured what the cap costs: of the
  *   2,491,399 duplicate rows the three adapters wrote, 1,490,992 duplicate a key first seen after the cap.
  *   A membership test on a capped set cannot refuse those rows.
@@ -77,7 +77,7 @@ export class FingerprintSet {
 	}
 
 	/**
-	 * How many keys this table accepts before {@linkcode add} throws.
+	 * The number of keys this table accepts before {@linkcode add} throws.
 	 */
 	get limit(): number {
 		return this.#limit

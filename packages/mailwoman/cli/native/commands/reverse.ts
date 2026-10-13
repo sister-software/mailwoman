@@ -36,7 +36,7 @@ export const spec = {
 		"polygons-db": {
 			type: "string",
 			hint: "path",
-			description: "Optional polygon sidecar; without it containment is approximate.",
+			description: "Optional polygon sidecar. Without it, containment is approximate.",
 		},
 		format: {
 			type: "string",

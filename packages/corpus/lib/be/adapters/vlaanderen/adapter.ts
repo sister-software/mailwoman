@@ -282,7 +282,7 @@ export function componentResourceID(href: string): string | null {
  * A Flemish street name read apart from the homonym discriminator that follows it.
  *
  * `gn:text` on an `ad:ThoroughfareName` states more than the street name: the name,
- * an underscore, and a discriminator that is usually empty.
+ * an underscore, and a discriminator that is empty in most identifiers.
  * Over 20,000 values at twenty offsets, 19,979 end with `_` and the remaining
  * 21 have a discriminator after it.
  *

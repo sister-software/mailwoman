@@ -6,7 +6,7 @@
  *   The admin gazetteer's `layer_manifest`.
  *
  *   Derived from the run rather than from the recipe: `source` is composed from the rows each fold
- *   actually ingested, so a build that reads no Overture rows does not claim Overture as a source.
+ *   ingested, so a build that reads no Overture rows does not claim Overture as a source.
  *
  *   The license is a conjunction: three sources with three different terms fold into one file, so the
  *   field contains an SPDX-style `AND` expression naming exactly the contributing folds. Each term is
@@ -17,7 +17,7 @@ import type { LayerManifest } from "@mailwoman/core/layers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 
 /**
- * How many rows each fold contributed to a build.
+ * The number of rows each fold contributed to a build.
  */
 export interface IngestCounts {
 	wof: number
@@ -48,8 +48,8 @@ const SOURCE_TERMS = {
 } as const satisfies Record<keyof IngestCounts, { name: string; license: string }>
 
 /**
- * The folds that actually contributed rows, in a fixed order so two builds with
- * the same sources produce the same string.
+ * The folds that contributed rows, in a fixed order so two builds with the
+ * same sources produce the same string.
  */
 function contributingSources(counts: IngestCounts): Array<keyof IngestCounts> {
 	return (["wof", "overture", "geonames"] as const).filter((key) => counts[key] > 0)

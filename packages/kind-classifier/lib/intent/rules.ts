@@ -13,7 +13,7 @@
  * The top kind is the only thing the coordinator routes on, so pinning it is what makes these additions
  * answer-neutral on the bare-city-name register. Their intent travels on the marker.
  *
- * `near_me` does win its top slot (0.91), because there is no incumbent worth preserving: a query
+ * `near_me` does win its top slot (0.91), because no incumbent reading competes for the slot: a query
  * ending "near me" is not a locality.
  */
 
@@ -162,9 +162,11 @@ const TOPONYM_TAIL_NOUNS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Deictic locator tails — "near me", "nearby", "around here", "in my area" —
- * the bounded class `preposition + a reference to the asker`, where `me`, `here`,
- * `my <noun>` are function words rather than places.
+ * Deictic locator tails, a preposition followed by a reference to the asker ("near me").
+ *
+ * The one-word adverb forms are in {@linkcode DEICTIC_ADVERB_TAIL}.
+ * This is the bounded class `preposition + a reference to the asker`, where `me`,
+ * `here`, `my <noun>` are function words rather than places.
  *
  * Anchored to the end of the string (`$`) on purpose: the query names no anchor,
  * so anything after the locator is an anchor and disqualifies it.

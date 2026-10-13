@@ -33,5 +33,5 @@ async function main(): Promise<void> {
 try {
 	await main()
 } catch {
-	// See the header: the rule listing is worth less than a session that starts.
+	// See the header: a session that starts takes priority over the rule listing.
 }

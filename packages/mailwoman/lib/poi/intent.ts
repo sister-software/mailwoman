@@ -213,8 +213,8 @@ export interface POIIntentStageDeps {
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
 
 	/**
-	 * The executor, usually from `createPOIExecutor`, that turns a matched intent
-	 * into results or an abstention.
+	 * The executor, such as one from `createPOIExecutor`, that turns a matched
+	 * intent into results or an abstention.
 	 *
 	 * Without it, the stage returns the intent unexecuted.
 	 */

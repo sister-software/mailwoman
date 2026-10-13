@@ -290,8 +290,8 @@ interface MultiSourceSpec {
 	 */
 	role?: "eligibility" | "funding"
 	/**
-	 * Read at most this many rows (the head of the file), so a huge source can
-	 * be sampled without pre-filtering.
+	 * Read at most this number of rows (the head of the file), so a huge source
+	 * can be sampled without pre-filtering.
 	 */
 	limit?: number
 }

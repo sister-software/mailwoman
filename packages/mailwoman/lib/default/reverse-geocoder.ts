@@ -13,7 +13,7 @@
  *
  *   `@mailwoman/resolver-wof-sqlite` is an optional peer dep and the admin gazetteer (with its
  *   `place_bbox` R*Tree, `mailwoman gazetteer build fts`) is a multi-GB build artifact that may not be on
- *   disk — either gap yields `null` and POI results simply have no `ancestry` key at all (house
+ *   disk — either gap yields `null` and POI results have no `ancestry` key at all (house
  *   meaning-of-zero: absence, never an empty array). The polygon sidecar (`wof-polygons.db`) is optional
  *   too. without it every ancestry chain still resolves, just `containment: "approximate"`
  *   (`WOFReverseGeocoder`'s own centroid-descent fallback).

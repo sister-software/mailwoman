@@ -207,7 +207,7 @@ export interface Phase2Lane {
 	claim: string
 	/**
 	 * Work that has merged for the lane.
-	 * A blocked lane usually has some.
+	 * A blocked lane can still have some.
 	 */
 	landed: string
 	note: string
@@ -784,7 +784,7 @@ export function computePhase2Counts(
 /**
  * Applies the frozen thresholds.
  *
- * Too many control misses or a missing measurable lane stops the phase.
+ * A control-miss count above its frozen threshold, or a missing measurable lane, stops the phase.
  * Otherwise the evidence and resolution bars choose between the three decisions.
  *
  * Blocked lanes appear in the coverage report and do not change the counts.

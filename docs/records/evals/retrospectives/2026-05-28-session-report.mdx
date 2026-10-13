@@ -13,7 +13,7 @@ Two major infrastructure shifts: (1) migrated from self-hosted docs to GitHub Pa
 
 ### The bug
 
-The demo's ONNX model produced correct results via WASM but garbage via WebGPU on Safari/iOS. All-locality output with 0.2-0.4 confidence. Playwright tests (headless, no GPU) always passed — masking the bug entirely.
+The demo's ONNX model produced correct results via WASM but garbage via WebGPU on Safari/iOS. All-locality output with 0.2-0.4 confidence. Playwright tests (headless, without a GPU) always passed — masking the bug entirely.
 
 ### Root cause
 
@@ -22,7 +22,7 @@ onnxruntime-web ships two WebGPU execution providers in the same package:
 - `import "onnxruntime-web"` → JSEP (old, broken `Slice` kernel on Metal)
 - `import "onnxruntime-web/webgpu"` → Native EP (correct on all backends)
 
-The default import uses JSEP. Chrome's Dawn/Vulkan masked the bug; Safari's Metal exposed it.
+The default import uses JSEP. Chrome's Dawn/Vulkan masked the bug, and Safari's Metal exposed it.
 
 ### Fix
 
@@ -95,7 +95,7 @@ Multi-language FST with Unicode-aware normalization:
 | Places          | 94K           | 1.25M        |
 | Name insertions | 128K          | 4.16M        |
 | Binary size     | 9 MB          | 302 MB       |
-| CJK queries     | Impossible    | Working      |
+| CJK queries     | Impossible    | Works        |
 
 "東京" → Tokyo, "北京" → Beijing, "서울" → Seoul, "大阪" → Osaka.
 
@@ -120,7 +120,7 @@ The global FST's root state has 488K edges — overflowed the u16 `edgeCount` fi
 The run used a Modal A100 with:
 
 - v0.6.0-a0 tokenizer (multi-script, 0% CJK byte-fallback)
-- v0.5.1 recipe (wof-admin: 2.0, constant LR, no label smoothing, 100K steps)
+- v0.5.1 recipe (wof-admin: 2.0, constant LR, without label smoothing, 100K steps)
 - Per-tag F1 logging
 - Step 48000/100000 at time of writing
 
@@ -146,7 +146,7 @@ The run used a Modal A100 with:
 - The run completed training (100K steps, A100, ~2.5h)
 - Export → fp32 117 MB → int8 28.1 MB
 - Demo presets: 6/6 correct on int8
-- Error analysis: 17.0% exact match on 4535 golden entries (cross-tokenizer comparison invalid per eval protocol — schema mismatch dominates; Stage 3 will close most boundary errors)
+- Error analysis: 17.0% exact match on 4535 golden entries (cross-tokenizer comparison invalid per eval protocol — schema mismatch dominates, and Stage 3 will close most boundary errors)
 - Uploaded to HF `en-us/v0.5.4/` with model.onnx, tokenizer.model, fst-en-US.bin, model-card.json
 - `en-us/releases.json` updated, `defaultVersion: v0.5.4`
 - `neural-weights-en-us` package version bumped to 0.5.4

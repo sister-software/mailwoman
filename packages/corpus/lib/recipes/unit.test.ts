@@ -20,7 +20,8 @@ const TUPLE: UnitTuple = {
 }
 
 /**
- * A share is only observable across many streams because both builders draw from a caller-supplied stream.
+ * A share is only observable across several streams because both builders
+ * draw from a caller-supplied stream.
  */
 const over = <T>(n: number, f: (random: () => number) => T): T[] =>
 	Array.from({ length: n }, (_, seed) => f(mulberry32(seed + 1)))

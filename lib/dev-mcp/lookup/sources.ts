@@ -338,7 +338,7 @@ export interface CandidateDelta {
 	 * The rows only artifact A returned; `only_in_b` holds the reverse.
 	 *
 	 * Rows match on `(spr_id, name)`, because a rebuilt artifact can assign new IDs to
-	 * Overture places, so the same name on both sides is usually one place.
+	 * Overture places, so the same name on both sides is taken as one place.
 	 */
 	only_in_a: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
 	only_in_b: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
@@ -352,7 +352,7 @@ export interface CandidateDelta {
  * Diffs two artifacts' answers by query index.
  *
  * The diff covers only the returned rows, so both sides stop at the caller's limit
- * and a key with many rows needs a higher limit.
+ * and a key with more rows than that limit needs a higher limit.
  */
 export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): CandidateDelta[] {
 	return rowsA.map((rowA, index) => {

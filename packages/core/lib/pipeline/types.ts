@@ -42,7 +42,8 @@ export type CaseNormalization = "title-case" | "preserve"
 /**
  * How a caller sources an optional stage.
  *
- * - `"auto"` loads the bundled default, usually on the first parse.
+ * - `"auto"` loads the bundled default when it is first needed.
+ *   For a typical caller that is the first parse.
  * - `"none"` disables the stage.
  * - Any other value is the stage itself.
  */
@@ -186,7 +187,7 @@ export interface QueryShapeLite {
 	segments: ReadonlyArray<{ body: string; index: number; span: { start: number; end: number } | null }> | null
 	characterClass: string | null
 	/**
-	 * ISO 15924 scripts ranked by share of script-bearing characters.
+	 * ISO 15924 scripts ranked by share of characters that belong to a script.
 	 */
 	scripts: ReadonlyArray<{ script: string; share: number }> | null
 	/**
@@ -212,7 +213,7 @@ export interface LocaleHint {
 	/**
 	 * ISO 15924 scripts in the input, ranked by character share.
 	 *
-	 * The array is empty when the input has no script-bearing text.
+	 * The array is empty when no character of the input belongs to a script.
 	 * `locale` stays a BCP-47 language tag.
 	 */
 	script: ReadonlyArray<{ script: string; confidence: number }>
@@ -263,7 +264,7 @@ export type QueryKind = z.infer<typeof QueryKindSchema>
  */
 export const QueryIntentCode = {
 	/**
-	 * Resolution found no decisive candidate for a place with a recognized name.
+	 * Resolution found no single candidate that outranks the rest for a place with a recognized name.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
 	/**

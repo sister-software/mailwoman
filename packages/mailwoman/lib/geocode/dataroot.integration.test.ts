@@ -32,7 +32,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		// Only its overlay rung is governed by `dataRoot`.
 		// A checkout whose workspace packages or weights cache contain binaries
 		// (CI links them into its checkout) resolves the FST from those rungs,
-		// while a checkout without them rejects outright.
+		// while a checkout without them rejects.
 		// Both are in-interface, so this pin asserts that whatever the ladder answers is never a path
 		// inside the process env data root's weights overlay when the session was given a different root.
 		const session = await createGeocodeSession(

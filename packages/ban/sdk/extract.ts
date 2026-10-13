@@ -139,7 +139,8 @@ export function cleanLieuDit(raw: string | null, commune: string | null): string
 	if (LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN.test(trimmed)) return null
 
 	// Exact duplicate of the commune name (case-insensitive).
-	// No new signal, would just relabel locality twice (survey: 89,977 rows, 5.0% of filled).
+	// This column adds no new signal.
+	// It would relabel locality a second time (survey: 89,977 rows, 5.0% of filled).
 	if (commune && trimmed.localeCompare(commune, undefined, { sensitivity: "base" }) === 0) return null
 
 	return trimmed

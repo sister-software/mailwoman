@@ -32,8 +32,8 @@
  *
  * Every FINESS establishment is an organization's site: a hospital, a pharmacy, a laboratory, a
  * service office. Three categories house the people they serve in a private dwelling. In `462`
- * Lieux de vie et d'accueil the staff live with the people they receive. A `238` Centre d'accueil
- * familial spécialisé places patients with host families, as a `236` Service de placement familial
+ * Lieux de vie et d'accueil the staff live with the people they receive. A FINESS category `238`
+ * establishment, specialized family reception, places patients with host families, as a `236` Service de placement familial
  * does. An address in those three can be a family's home, so they are refused under
  * {@linkcode FinessRefusal.FamilyPlacement}, as is an establishment whose name states family
  * placement or a lieu de vie under another category. A row whose street type is TRE-R35's `CHEZ`,
@@ -56,7 +56,7 @@
  *
  * A digit in `voie` is refused under {@linkcode FinessRefusal.StreetDigitUnplaced} unless the digits
  * name the street, as a numbered route (`NATIONALE 2`) or a date (`DU 22 MAI`) does. The number has
- * its own field, so a digit left in the name is a box, a building or a door: `VALLÉE 3 BP 208`,
+ * its own field, so a digit left in the street name is a box, a building or a door: `VALLÉE 3 BP 208`,
  * `DIAKA BAT A4 PORTE 2`.
  *
  * ## The lieu-dit and box line, and the routing line
@@ -166,8 +166,9 @@ export const FR_FINESS_COUNTRIES: readonly string[] = [
 ]
 
 /**
- * The establishment categories whose address can be a private dwelling: lieux de vie et
- * d'accueil, centres d'accueil familial spécialisés and services de placement familial.
+ * The establishment categories whose address can be a private dwelling: FINESS
+ * categories `462` (lieux de vie et d'accueil), `238` (specialized family reception)
+ * and `236` (services de placement familial).
  */
 export const FINESS_FAMILY_PLACEMENT_CATEGORIES: ReadonlySet<string> = new Set(["236", "238", "462"])
 

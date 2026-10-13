@@ -19,7 +19,7 @@ import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import { spansOverlap } from "#span/repair"
 
 /**
- * Candidate count above which the shape prior is too diffuse to be worth applying.
+ * Candidate count above which the shape prior is too diffuse to apply.
  */
 const MAX_PRIOR_CANDIDATES = 4
 

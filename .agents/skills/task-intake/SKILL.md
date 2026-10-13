@@ -1,6 +1,6 @@
 ---
 name: task-intake
-description: Use for an authorized implementation or training arc expected to produce a PR or require a handoff. Creates the GitHub issue from the repo's issue-form fields, seeds its task list, and links the session so todo updates mirror into the issue. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator asks for one. The todo list is the working plan; the issue is the durable copy the operator reads.
+description: Use for an authorized implementation or training arc expected to produce a PR or require a handoff. Creates the GitHub issue from the repo's issue-form fields, seeds its task list, and links the session so todo updates mirror into the issue. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator asks for one. The todo list is the working plan, and the issue is the durable copy the operator reads.
 ---
 
 ## Why this exists
@@ -26,8 +26,8 @@ State the steps before touching anything. Use the development MCP for every clie
 - **Claude Code with `TodoWrite`:** Use `TodoWrite`; the hook below mirrors its list into the linked
   issue automatically.
 - **Claude Code without task tools:** Keep the issue's task list current with the `mwdev_issue`
-  `update_tasks` action. Enabling the task tools through `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` is an
-  operator decision.
+  `update_tasks` action. The operator decides whether to enable the task tools through
+  `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`.
 
 ## Step 2 — create the issue from the template's fields
 
@@ -52,9 +52,9 @@ The hook's interface is:
 - **Markers required** — it never writes into an issue whose body lacks both
   `<!-- todo-sync:begin -->` and `<!-- todo-sync:end -->`; absent markers mean the issue was not
   shaped by this skill, and rewriting it would clobber prose.
-- **`TodoWrite` only** — `TaskCreate`/`TaskUpdate` carry deltas a stateless hook cannot fold into a
-  list; in those sessions update the issue at milestones by hand.
-- **One link per checkout** — `.claude/state/linked-issue` is last-writer-wins; concurrent sessions
+- **`TodoWrite` only** — `TaskCreate`/`TaskUpdate` send deltas a stateless hook cannot fold into a
+  list. In those sessions, update the issue at milestones by hand.
+- **One link per checkout** — `.claude/state/linked-issue` is last-writer-wins, so concurrent sessions
   in one checkout should not both link. Worktrees have their own state dir and do not collide.
 
 ## Step 4 — close out
@@ -62,8 +62,8 @@ The hook's interface is:
 - Check every box, or say on the issue why a box stays open. An unchecked box with no comment reads
   as forgotten rather than deferred.
 - Call `mwdev_pull_request` with `action: create` and the issue number. The tool verifies the issue's task
-  list, creates a Vale-checked body that says `Closes #<n>`, and starts a tracked CI monitor.
-- PR creation starts verification; it does not complete the task. Poll the monitor through `mwdev_job`,
+  list, creates a Vale-checked body that contains `Closes #<n>`, and starts a tracked CI monitor.
+- PR creation starts verification. It does not complete the task. Poll the monitor through `mwdev_job`,
   inspect failed check logs, fix failures, push, and follow checks for the new head.
 - PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
   After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool

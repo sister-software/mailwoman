@@ -62,7 +62,7 @@ interface BuildOpts {
  * Builds a minimal valid FST binary buffer in the v1/v2 layout.
  *
  * Mirrors fst-serialize.ts closely enough to round-trip through the web deserializer,
- * but kept hand-rolled so the test asserts the format the reader actually expects
+ * but kept hand-rolled so the test asserts the format the reader expects
  * (not whatever the Node serializer happens to emit at v4).
  */
 function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {

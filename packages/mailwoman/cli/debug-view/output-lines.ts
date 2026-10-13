@@ -58,7 +58,7 @@ function formatMsFixed(ms: number): string {
 }
 
 /**
- * Whether the per-span script is worth printing: the tree holds more than one writing system,
+ * Whether to print the per-span script: true when the tree holds more than one writing system,
  * with `Zyyy` excluded because a house number or postcode answers it.
  */
 function scriptsWorthShowing(tree: AddressTree): boolean {

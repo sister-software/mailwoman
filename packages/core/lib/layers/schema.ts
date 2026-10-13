@@ -146,7 +146,7 @@ export interface LayerCoverageTable {
 	 */
 	basis: CoverageBasis | null
 	/**
-	 * Rows this layer actually holds in the cell.
+	 * Rows this layer stores in the cell.
 	 */
 	observed_rows: number
 }

@@ -11,7 +11,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-// The package declares no `./cli` export, so this reads the bin the manifest actually publishes.
+// The package declares no `./cli` export, so this reads the bin the manifest publishes.
 const CLI_PATH = fileURLToPath(import.meta.resolve("#dev-mcp/cli"))
 
 /**

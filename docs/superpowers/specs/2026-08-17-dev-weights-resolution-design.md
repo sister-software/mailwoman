@@ -24,11 +24,11 @@ worktree could not build an engine until the farm stopped re-pointing the weight
 
 ### Which registers hold "which model is the dev model"
 
-Three registers hold it. The en-us link script's docstring lists all three and describes the incident:
-
-> Bump this path, model-card.json `files_md5`, and release.config.json `weights.model` in LOCKSTEP on each
-> ship — the 9.0.0 reduce moved only release.config, which left this default and the card's md5 record on the
-> prior base for a full release cycle.
+Three registers hold it. The en-us link script's docstring listed all three and described the incident at the
+time. Each release had to bump the script's path, the `files_md5` in `model-card.json` and `weights.model` in
+`release.config.json` together. The 9.0.0 release moved only `release.config.json`. The script's default and
+the card's md5 record stayed on the prior base for a full release cycle. The docstring now states the same
+rule at `packages/neural-weights-en-us/scripts/link-dev-weights.ts:15-17`.
 
 | Register                                                                | Holds                                                                                                     | Read by                                                                            |
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -44,8 +44,8 @@ template is a defect generator"), and the 9.0.0 lockstep miss is an instance of 
 
 A config file was considered and rejected. `scratchpad/add-a-country-runbook.md` Addendum A argues three
 points: a JSON recipe is "the same shape as the thing that lagged" in #1015, it adds a register, and JSON
-cannot carry the reasoning a code comment does. The first two objections rule out a new file. The third does
-not apply here, because `release.config.json` already carries more prose in `lineage` than the code comment
+cannot hold the reasoning a code comment does. The first two objections rule out a new file. The third does
+not apply here, because `release.config.json` already holds more prose in `lineage` than the code comment
 it would replace.
 
 So this design adds no file and no configuration system. It deletes the third register and points the dev
@@ -76,10 +76,10 @@ The new rung sits between the installed-package rung and the user cache. When th
 resolves but has no binaries, the resolver probes the overlay before throwing.
 
 `@mailwoman/neural` ships to npm, so it knows the directory convention and never the recipe. It knows the
-directory layout but does not know that `release.config.json` exists. The dev link command, which exists only
-in the monorepo, reads the recipe and writes the overlay.
+directory layout but does not know that `release.config.json` exists. The dev link command exists only
+in the monorepo. It reads the recipe and writes the weights overlay.
 
-The overlay is a derived artifact rather than a register. It is rebuilt from the recipe and verified against
+The weights overlay is a derived artifact rather than a register. It is rebuilt from the recipe and verified against
 the card's `files_md5`. The runbook treats `wof-build-manifest.json` as a log because it can be re-derived.
 By that criterion the overlay cannot lag in the #1015 sense. A stale entry fails its digest check instead of
 being used.
@@ -88,7 +88,7 @@ With this change no process symlinks into a tracked package directory any more. 
 cause of three known hazards: `yarn test` mutating tracked directories as a side effect of
 `weights.test.ts`, the `fs.copyFile`-through-a-symlink trap in `copy-weights.ts`, and the publish tarball
 symlink refusal (`YN0035`). **The `publish-workspace.ts` dereference net stays.** Its usual cause is removed,
-but AGENTS.md says not to remove it, and it still dereferences any symlink that reappears.
+but AGENTS.md instructs agents not to remove it, and it still dereferences any symlink that reappears.
 
 ### 3. Sibling reporting, because the rung trades a loud failure for a quiet one
 
@@ -105,7 +105,7 @@ rather than per package.
 
 ### 4. The `files_md5` check
 
-Across the ten weights workspaces, only `en-us` carries a populated `files_md5`. Every overlay's
+Across the ten weights workspaces, only `en-us` has a populated `files_md5`. Every overlay's
 `files_md5` is empty, and `base-latn` has no card at all.
 
 The empty digests are defensible for `model.onnx` and `tokenizer.model`, because overlays share the base
@@ -129,8 +129,8 @@ it unchecked. This applies the runbook's closing recommendation, "promote the wa
 
 Unit, against a temporary data root and a fake package directory:
 
-- package with binaries → resolves from the package; overlay never probed
-- package empty, overlay populated → resolves from the overlay, `source` says so
+- package with binaries → resolves from the package, and the weights overlay is never probed
+- package empty, overlay populated → resolves from the overlay, and `source` names the overlay
 - package empty, overlay empty, user cache populated → falls through to the cache (the lookup still uses the cache)
 - package empty, with no artifact anywhere → throws and lists the package dir, the overlay and the cache
 - overlay model present, tokenizer absent → throws rather than half-resolving
@@ -142,25 +142,25 @@ Unit, against a temporary data root and a fake package directory:
 Integration:
 
 - a git worktree of HEAD resolves weights with no setup step (the case that prompted this)
-- `link` is idempotent: a second run makes no change and says so
+- `link` is idempotent: a second run makes no change and reports that it made none
 
 Regression:
 
 - `packages/neural/test/weights.test.ts` currently invokes `link-dev-weights.ts` and re-creates symlinks in
   `packages/neural-weights-en-us/` as a side effect. After this change it must leave tracked directories
-  untouched; assert that explicitly rather than assuming it.
+  untouched. The test must assert that explicitly rather than assuming it.
 
 ## Open questions
 
-1. **Does the overlay hold one locale directory per locale, or one shared directory plus per-locale
+1. **Does the weights overlay hold one locale directory per locale, or one shared directory plus per-locale
    overlays?** Every locale shares `model.onnx` and `tokenizer.model` byte-for-byte, so ten per-locale
    directories would hold ten copies of ~40 MB. A shared `base/` plus per-locale directories mirrors the
    `mailwoman.baseWeights` relationship the resolver already implements. The current preference is a shared
    directory. This needs a decision before implementation because it fixes the on-disk layout.
 2. **Does `copy-weights.ts` read the overlay or the data root directly?** Today it reads the data root
-   through `release.config.json`, and that works. The smaller change is to leave it alone. A change to point it at the
+   through `release.config.json`, and that works. The smaller change is to leave it unchanged. A change to point it at the
    overlay would make the release ship exactly the bytes dev ran. The current preference is to leave it
-   alone for phase 0 and revisit when phase 3 gives artifacts manifests.
+   unchanged for phase 0 and revisit when phase 3 gives artifacts manifests.
 3. **What populates the overlay on a machine that has never trained?** The recipe gives a path under
    `$MAILWOMAN_DATA_ROOT/models/`, which exists only because someone trained there. A fresh lab has no such
    file. Phases 1–3 address this reproducibility gap, so phase 0 should fail with an explicit error that

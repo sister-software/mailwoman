@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reads nearby flood features from the Environment Agency service.
+ * @file Reads the flood features around a point from the Environment Agency service.
  */
 
 import { createOGCFeaturesBBoxReader, type OGCFeature } from "@mailwoman/core/api"
@@ -44,10 +44,10 @@ export type ServiceFeatureReader = (latitude: number, longitude: number) => Prom
 /**
  * The reader the live check uses: an OGC API Features bbox query against the EA's own service.
  *
- * The service answers a bbox rather than a point, so this returns what it published nearby
- * and the containment decision is made in {@link readServiceZone} against those rings —
- * comparing the artifact's verdict against a bare "the service returned something
- * here" would pass on any polygon within eleven meters.
+ * The service answers a bbox rather than a point, so this returns what it published
+ * inside that bbox and the containment decision is made in {@link readServiceZone}
+ * against those rings — comparing the artifact's verdict against a bare "the service
+ * returned something here" would pass on any polygon within eleven meters.
  */
 export function createEAServiceReader(client: Pick<EAFloodClient, "fetch">): ServiceFeatureReader {
 	return createOGCFeaturesBBoxReader<ServiceFeature>({

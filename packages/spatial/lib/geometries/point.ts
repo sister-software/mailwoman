@@ -357,7 +357,7 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	/**
-	 * Whether the GeoPoint is the null island at 0, 0.
+	 * Whether the GeoPoint sits at 0, 0 (Null Island).
 	 */
 	public isNullIsland(): boolean {
 		return this.#latitude === 0 && this.#longitude === 0

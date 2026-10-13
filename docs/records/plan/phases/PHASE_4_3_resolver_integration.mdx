@@ -3,7 +3,7 @@
 **Parent:** [`PHASE_4_resolver.md`](./PHASE_4_resolver.mdx).
 **Predecessor:** [`PHASE_4_2_wof_sqlite.md`](./PHASE_4_2_wof_sqlite.mdx).
 
-**Goal:** wire `@mailwoman/resolver-wof-sqlite` into the parser pipeline. After Phase 4.3 a user can run `mailwoman parse --resolve --format xml "75004 Paris"` and get back an `<address>` tree whose `<locality>` carries `src="wof-admin:101751119"`, `lat="48.85"`, `lon="2.34"` — the resolver overlays its attribution on top of the classifier-derived provenance from Phase 4.1.
+**Goal:** wire `@mailwoman/resolver-wof-sqlite` into the parser pipeline. After Phase 4.3 a user can run `mailwoman parse --resolve --format xml "75004 Paris"` and get back an `<address>` tree whose `<locality>` has `src="wof-admin:101751119"`, `lat="48.85"`, `lon="2.34"` — the resolver overlays its attribution on top of the classifier-derived provenance from Phase 4.1.
 
 **Branch:** TBD when this phase begins. Probably broken into 4.3.a (output-shape changes) and 4.3.b (pipeline wiring) for reviewability.
 
@@ -21,7 +21,7 @@ Phase 4.2 ships a self-contained `PlaceLookup` that takes a text query and retur
 2. **A wiring point** in the parser where the resolver runs after the decoder produces the tree.
 3. **A CLI flag** (`--resolve`) that toggles the pipeline on.
 
-The decorated `AddressTree` flows through the existing XML/JSON/tuple projections. Phase 4.1's `src` attribute already carries the right shape, and the resolver only overlays its own `source` + `sourceId` on the nodes it resolved, displacing the classifier-derived attribution into `metadata` for debugging.
+The decorated `AddressTree` flows through the existing XML/JSON/tuple projections. Phase 4.1's `src` attribute already has the right shape, and the resolver only overlays its own `source` + `sourceId` on the nodes it resolved, displacing the classifier-derived attribution into `metadata` for debugging.
 
 ## Public API sketch
 
@@ -109,7 +109,7 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 ## Tests
 
 - Unit: `resolveTree` against a tree + a fake `PlaceLookup` that returns canned candidates. Cover a full match, a partial match, a miss, a parent-constrained child lookup, and the `maxLookups` budget.
-- Integration: `mailwoman parse --resolve --format xml` against a known-good WOF DB. Pinned outputs for ~6 well-known addresses (Paris,FR; Paris,TX; Springfield,IL; etc.).
+- Integration: `mailwoman parse --resolve --format xml` against a known-good WOF DB. Pinned outputs for ~6 well-known addresses (Paris FR, Paris TX, Springfield IL, and similar).
 - The CLI integration tests depend on the WOF DB being present (skip-if-missing pattern, matching how the locale-flag tests handle their fixture deps).
 
 ## Open questions
@@ -123,7 +123,7 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 
 ## Open dependencies
 
-- WOF data download still needs operator authorization (carried over from the Phase 4.2 handover). Without the actual DB on disk, the CLI integration tests cannot run end-to-end.
+- WOF data download still needs operator authorization, an open item from the Phase 4.2 handover. Without the actual DB on disk, the CLI integration tests cannot run end-to-end.
 
 ## Changelog
 
@@ -131,5 +131,5 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 - **2026-05-20** (Phase 4.3.x — proximity ranking) — `FindPlaceQuery` gains `near` (soft boost or hard filter via `maxDistanceKm`) and `bbox` (hard filter). An R\*Tree virtual table built alongside FTS5 by `mailwoman-wof-build-fts` backs both. The change adds no dependencies, because FTS5 and R\*Tree both ship with core SQLite. Closes the "no popularity signal" gap from Phase 4.2 by letting callers express "I'm here, find what's near me" or "find places within this region" without SpatiaLite. The change is backwards-compatible: DBs built before this PR keep working. The bbox filter is silently dropped when the R\*Tree is missing, and the proximity boost still works through the centroid columns. 13 new unit tests + smoke against real WOF (142,383 bbox rows indexed in 3.14s alongside the FTS5 build).
 - **2026-05-20** (same day, post-sync) — shipped. Three deviations from the original plan:
   1. **`@mailwoman/resolver-wof-sqlite` is an optional peer dep rather than a hard dep.** The CLI dynamic-imports it inside `withResolver()` so callers who never set `--resolve` don't pay the kysely + resolver bundle cost. Honors the Phase 4.2 plan's "optional dep" intent.
-  2. **`PlaceCandidate.wof_id` → `id` rename.** Phase 4.2 shipped the WOF candidate with a `wof_id` field; that was structurally incompatible with `core/resolver`'s generic `ResolvedPlace.id`. Renamed in this PR so `WofSqlitePlaceLookup` satisfies `ResolverBackend` without an adapter shim. There were no external consumers yet, so the breaking change affected no one.
+  2. **`PlaceCandidate.wof_id` → `id` rename.** Phase 4.2 shipped the WOF candidate with a `wof_id` field. That field was structurally incompatible with `core/resolver`'s generic `ResolvedPlace.id`. Renamed in this PR so `WofSqlitePlaceLookup` satisfies `ResolverBackend` without an adapter shim. There were no external consumers yet, so the breaking change affected no one.
   3. **Pre-existing locale-casing bug fix bundled.** `resolveWeights` was forming `@mailwoman/neural-weights-en-US` (uppercase region) but the package is lowercase. The CLI accepts canonical `en-US` casing; `weights.ts` now lowercases before forming the package name. The first end-to-end smoke test exposed it, and the fix shipped alongside Phase 4.3.

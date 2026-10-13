@@ -45,7 +45,7 @@ interface GNAFTuple {
 }
 
 /**
- * The address layouts an AU address actually arrives in.
+ * The address layouts an AU address arrives in.
  *
  * The model already handles postcode-trailing (canonical); the two postcode-leading
  * forms are the ones it fails, so they show the change.

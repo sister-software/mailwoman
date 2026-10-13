@@ -53,7 +53,8 @@ export interface DeltaDistribution {
 	max: number
 	mean: number
 	/**
-	 * Share of joined postcodes further apart than 1 km — the tail worth reading rows from.
+	 * Share of joined postcodes further apart than 1 km.
+	 * A reviewer reads rows from this tail.
 	 */
 	over1km: number
 	/**
@@ -79,7 +80,7 @@ export interface ProbeResult {
 }
 
 /**
- * The "only in the incumbent" set, split into the three things it actually contains.
+ * The "only in the incumbent" set, split into the three kinds of row it contains.
  *
  * One number makes a swap look like a 92,704-postcode regression.
  * The split is what makes it a decision.
@@ -137,7 +138,7 @@ export interface CodePointCheckReport {
 	 * Non-GB Crown-dependency areas covered by the incumbent and absent from
 	 * Code-Point not (Isle of Man, Guernsey, Jersey).
 	 *
-	 * Same licensing shape as the NI rows and worth separating for the same reason.
+	 * Same licensing shape as the NI rows, and it is separated for the same reason.
 	 */
 	crownDependencies: {
 		incumbentRows: Record<string, number>

@@ -7,7 +7,7 @@
 ## The observed result
 
 - **MX locality +8.7** (74.0 → 82.7, native-order held-out board). The first in fact-new locale coverage — the model now parses Mexican addresses (Spanish city surfaces, `Privada`/`Calle` streets) meaningfully better than shipped.
-- **CA neutral** — v381 already parses Canadian (US-order) addresses; CA adds coverage-provenance but no measurable gain. Ships free.
+- **CA neutral** — v381 already parses Canadian (US-order) addresses. CA adds coverage-provenance but no measurable gain. Ships free.
 
 ## The guards (all pass)
 
@@ -23,20 +23,20 @@
 | house_number | 96.9         | 96.7         | +0.2     |
 | **country**  | **89.8**     | **91.4**     | **−1.6** |
 
-No tag > 2pp down → **PASS**. The one nick is `country` **−1.6pp** (220 vs 224 / 245 — small-N; recovered from the 2k probe's −2.0). The #1104 country channel reacts to the new CA/MX surfaces. Sub-threshold and stated; the 4-row miss characterization (CA/MX-adjacent vs US/FR) is a tracked follow-up.
+No tag > 2pp down → **PASS**. The one nick is `country` **−1.6pp** (220 vs 224 / 245, small N, recovered from the 2k probe's −2.0). The #1104 country channel reacts to the new CA/MX surfaces. The drop is sub-threshold and stated here. The 4-row miss characterization (CA/MX-adjacent vs US/FR) is a tracked follow-up.
 
-**Gauntlet** (`eval gauntlet --candidate`): regression **33/33 PASS**; metamorphic INV 62/63, DIR 3/3, BAND 16/21 — **identical known-xfail profile to shipped v381** (the 1 INV[comma-drop] xfail is the pre-existing FR `Rue du Chevaleret` #1101 case; the US comma-drop held). **No new regression.**
+**Gauntlet** (`eval gauntlet --candidate`): regression **33/33 PASS**. Metamorphic INV 62/63, DIR 3/3, BAND 16/21 — **identical known-xfail profile to shipped v381** (the 1 INV[comma-drop] xfail is the pre-existing FR `Rue du Chevaleret` #1101 case, and the US comma-drop held). **No new regression.**
 
 ## Autonomous decisions
 
 - BR **dropped** (0% OA-lineage → license unclear; `number` field is `SN (CASA N)` garbage). Deferred rather than blocked.
 - NZ **excluded** — `dependent_locality` was unemittable in v381. NZ is not in this overlay.
-- 2k → 8k escalation was blocked on a net-positive 2k probe + a passing golden 2pp; the 8k recovered the country nick from −2.0 to −1.6.
+- 2k → 8k escalation was blocked on a net-positive 2k probe + a passing golden 2pp. The 8k recovered the country nick from −2.0 to −1.6.
 
 ## To promote (operator)
 
 1. Materialize v385 as the `neural-weights-en-us` model bundle (`scripts/copy-weights.ts` / the card's `files_md5`), bump the model card, append the eval-ledger row.
-2. `npm` release as **v7.1.0** (package minor; first post-v7 model) via the publish workflow.
-3. Optional pre-promote: characterize the 4-row country miss; add a native-order render to the CA/MX golden board (the eval-direction closed-loop artifact caught this cycle).
+2. `npm` release as **v7.1.0** (package minor, first post-v7 model) via the publish workflow.
+3. Optional pre-promote: characterize the 4-row country miss, and add a native-order render to the CA/MX golden board (the eval-direction closed-loop artifact caught this cycle).
 
 Model + artifacts staged (uncommitted): int8 on the Modal volume `/models/quantized/model-v385-latam8k-int8.onnx`; recipe/config on branch `feat/locale-expansion-nz-camx`.

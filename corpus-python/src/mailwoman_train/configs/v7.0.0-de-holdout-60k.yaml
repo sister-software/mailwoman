@@ -1,4 +1,4 @@
-# v7.0.0 trains on the v0.7.0-de-holdout corpus, the first assembly whose held-out splits carry German
+# v7.0.0 trains on the v0.7.0-de-holdout corpus, the first assembly whose held-out splits contain German
 # street rows and the first whose rows store the operation spelling of every recipe-output source.
 #
 # The differences from v6.0.0-register-surface-60k.yaml are:
@@ -6,15 +6,15 @@
 # 1. `data.corpus_dir` moves to v0.7.0-de-holdout. A run on v0.6.0-register-surface stopped at the CPU
 #    preflight because its DE test split held no street row. Measured on the assembled corpus with
 #    `python -m mailwoman_train.audits.validation_coverage`: DE val holds 49,831 rows of which 12,537
-#    carry a street or a house number, and DE test holds 49,511 rows of which 12,583 do. All four
+#    contain a street or a house number, and DE test holds 49,511 rows of which 12,583 do. All four
 #    declared floors are met.
 #
-# 2. Every recipe-output source key carries the operation spelling. The corpus stores it: the assembly
+# 2. Every recipe-output source key uses the operation spelling. The corpus stores it: the assembly
 #    rewrote each routed overlay file before the manifest computed its digest, and the per-file record
 #    beside those files states the row count and the ordered source_id digest verified on both sides.
 #    The mapping is a prefix swap recorded in packages/corpus/lib/recipes/sources.ts, and the tail of
-#    each name is unchanged except for Germany, whose retired name spelled a language word where every
-#    other locale read as an ISO code. The 54 keys below are the same 54 sources v6.0.0 weighted, and
+#    each name is unchanged except for Germany. The retired German name spelled a language word where
+#    every other locale read as an ISO code. The 54 keys below are the same 54 sources v6.0.0 weighted, and
 #    the weights and reps targets are unchanged value for value.
 #
 # 3. `train.output_dir` and `train.trackio_run_name` name the v700 run.
@@ -29,8 +29,8 @@
 # 4. `ve-locality-postcode-region` asks for 200 draws where v6.0.0 asked for 250. Every other receipt
 #    floor, weight and reps target, and the model, train and eval blocks, match v6.0.0.
 #
-#    v6.0.0's floor of 250 sat above the mixture's own expectation. `reviewed-postcode-tail` carries
-#    weight 0.05, and a source's requested share follows its weight alone: measured over the audit's
+#    v6.0.0's floor of 250 sat above the mixture's own expectation. `reviewed-postcode-tail` has
+#    weight 0.05, and a source's requested share depends on its weight and on no other setting: measured over the audit's
 #    `requested` map, every source reads `share / weight = 0.00488798`, and `rendered-de` at 187,485 rows
 #    and `rendered-nl-postcode` at 10,000 rows both read 0.02932786 at weight 6.0. So the share is
 #    0.05 / 204.58 = 0.00024440, and 1,000,000 draws expect 244.4 with a binomial standard deviation of
@@ -40,14 +40,14 @@
 #    200 is 2.85 standard deviations below the expectation, so it is a function of the weight and the
 #    draw count rather than of the 240 observed. Had seed 43 drawn 262 and passed, the same arithmetic
 #    would still give 200. The floor keeps its purpose: a mixture change that stopped routing these rows
-#    to the trainer still refuses. It is stale if the weight moves, which is the argument for a receipt
-#    field stating a fraction of the expected draws rather than a constant.
+#    to the trainer still refuses. It is stale if the weight moves. That staleness is the argument for a
+#    receipt field stating a fraction of the expected draws rather than a constant.
 #
 #    The other two candidate changes were declined. Raising the weight above 0.05 would choose a training
 #    parameter so that a check passes, and it would shift every other source's share. Emitting more than
-#    the 22 rows leaves the expected draws at 244.4, because the share follows the weight alone, so it
+#    the 22 rows leaves the expected draws at 244.4, because the share depends only on the weight, so it
 #    cannot move this receipt. It would lower the 10.9 reps per row, and that number is 240 divided by 22,
-#    so it carries the same information as the draw count.
+#    so it holds the same information as the draw count.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout
@@ -148,7 +148,7 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # The key is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+    # The key is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
     "NO": 1.0
     NZ: 1.0
     OM: 1.0
@@ -204,7 +204,7 @@ data:
     usgov-nad: 1.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
-    # These two sources are set to zero to match v5.7.0, whose loader never indexed them. The current
+    # These two sources are set to zero to match v5.7.0. The v5.7.0 loader never indexed them. The current
     # loader sees them and rejects any source without a weight, so they must be listed.
     state-ia-contractors: 0.0
     usgov-imls-pls: 0.0
@@ -363,7 +363,7 @@ data:
       min_street_rows: 1000
   augment_exclude_sources:
     - spliced-suffix-boundary
-    # This source teaches a postcode alone, such as `119 00`, so augmentation would add tokens the row
+    # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
     # must not contain.
     - codex-bare-postcode
   train_rows_per_epoch: 1000000

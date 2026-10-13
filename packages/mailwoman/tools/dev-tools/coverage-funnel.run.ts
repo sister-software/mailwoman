@@ -177,7 +177,7 @@ for (const stage of FUNNEL_STAGES) {
 }
 
 /**
- * Sets how many country codes an incumbency cell prints before it summarizes the rest,
+ * Sets the number of country codes an incumbency cell prints before it summarizes the rest,
  * to keep the terminal table readable; `--out-json` writes every code.
  */
 const CODES_PER_GROUP_CELL = 18

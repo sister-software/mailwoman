@@ -55,7 +55,7 @@ data:
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0
     synth-unit: 1.5
-    # This weight doubles the v385 share to replay cedex rows, which fine-tuning otherwise forgets.
+    # This weight doubles the v385 share to replay cedex rows. Fine-tuning otherwise forgets those rows.
     synth-po-box-cedex: 3.0
     synth-affix: 2.0
     synth-country: 2.0

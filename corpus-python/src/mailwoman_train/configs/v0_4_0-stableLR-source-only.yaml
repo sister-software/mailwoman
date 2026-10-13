@@ -1,4 +1,4 @@
-# This ablation adds the v0.4.0 source_weights to the v0.3.0 recipe and changes nothing else.
+# This ablation adds the v0.4.0 source_weights to the v0.3.0 recipe and keeps every other setting unchanged.
 # It keeps the v0.3.0 learning rate of 1.5e-4, because training diverged at 5e-4.
 
 data:

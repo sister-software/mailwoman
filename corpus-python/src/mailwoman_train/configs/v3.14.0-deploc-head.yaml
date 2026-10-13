@@ -1,6 +1,6 @@
 # This 2k probe replaces the dependent_locality row re-init of v3.13.0 with a separate dependent_locality head.
 # The encoder stays shared and trainable, and the new head owns the dependent_locality outputs.
-# The probe tests whether the head alone can revive the tag without breaking the comma-drop invariance.
+# The probe tests whether the head, with no data change, can revive the tag without breaking the comma-drop invariance.
 # The head starts from fresh weights because init_from loads the v385 checkpoint with strict=False.
 #
 # Launch the run from corpus-python:

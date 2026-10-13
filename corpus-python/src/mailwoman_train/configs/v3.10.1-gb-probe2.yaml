@@ -1,5 +1,5 @@
 # This 2k probe repeats v3.10.0-gb-probe with one change: the synth-gb weight rises from 6.0 to 36.0.
-# The higher weight feeds the dependent_locality head about five times as many positive rows.
+# The higher weight feeds the dependent_locality head about five times the positive rows.
 #
 # The run must launch with --resume none.
 # A resumed run skips reinit_label_rows without raising an error.

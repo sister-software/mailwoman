@@ -169,7 +169,7 @@ export function carriesLetter(text: string): boolean {
  * Merges overlapping postcode hits in the final segment into sorted, disjoint spans.
  */
 function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end: number }> {
-	// Postcode hits in earlier segments are often house numbers.
+	// Postcode hits in earlier segments can be house numbers, so only the last segment counts.
 	const tail = shape.segments?.at(-1)?.span
 
 	if (!tail) return []
@@ -228,10 +228,10 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 		if (isDisqualifyingStreetSuffix(w)) return 0
 	}
 
-	// A leading number usually is a house number.
+	// This rule reads a leading number as a house number.
 	if (/^\d+\s/.test(text)) return 0
 
-	// Venue names often contain a number after the first word.
+	// A venue name can contain a number after the first word.
 	const hasInternalNumber = /\s\d+/.test(text) && !/^\d/.test(text)
 
 	const allProperCase = words.length > 1 && words.every((w) => /^[A-Z]/.test(w))

@@ -181,11 +181,11 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 
 	lines.push(
 		`Inverse-frequency weighting uses the corpus-wide table (${addressFrequency.distinct.toLocaleString()} distinct addresses ` +
-			`over ${addressFrequency.total.toLocaleString()} providers) to down-weight a crowded shared address; collapsing the redundant ` +
-			`address-key + distance comparisons into one spatial signal (A1) removes the double-count that let a shared address ` +
+			`over ${addressFrequency.total.toLocaleString()} providers) to down-weight a crowded shared address. One spatial signal (A1) that replaces the redundant ` +
+			`address-key + distance comparisons removes the double-count that let a shared address ` +
 			`over-vote a disagreeing name. The address-frequency + A1 baseline is F1 ${pct(progression[2]!.score.f1)}% at the ` +
 			`default threshold; the **authorized-official discriminator** is roughly neutral there (${signed(100 * (progression[3]!.score.f1 - progression[2]!.score.f1))}) ` +
-			`but enables a higher cutoff — it holds recall where the baseline alone collapses, reaching **${pct(best.score.f1)}%** at ` +
+			`but enables a higher cutoff — it holds recall where the baseline without it collapses, reaching **${pct(best.score.f1)}%** at ` +
 			`threshold ${best.t} (below), the first config past the baseline (#625).`
 	)
 
@@ -238,7 +238,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 
 	lines.push(
 		`- **Over-merge (precision):** ${base.score.overMergedClusters} clusters fuse ≥2 distinct NPIs (largest fuses ` +
-			`${base.score.maxNpisFused}; ${base.score.recordsInOverMerged} records) — **co-located providers sharing a clinic / ` +
+			`${base.score.maxNpisFused}, ${base.score.recordsInOverMerged} records) — **co-located providers sharing a clinic / ` +
 			`billing address**, linked by address agreement despite different names.`
 	)
 
@@ -339,7 +339,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	lines.push("")
 
 	lines.push(
-		`Caveats: the programmatic site-truth is CONSERVATIVE (collapses only NPPES-flagged subparts; unflagged same-org pairs still ` +
+		`Caveats: the programmatic site-truth is CONSERVATIVE (collapses only NPPES-flagged subparts, so unflagged same-org pairs still ` +
 			`read as over-merge), so it understates the subpart correction. A hand-adjudicated gold set on the ambiguous co-located + ` +
 			`two-site stratum is the next refinement (#625).`
 	)
@@ -370,7 +370,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 
 	lines.push(
 		`NPI-as-truth is **conservative**: a cluster fusing two NPIs is a candidate "same entity, two NPIs" surfaced for ` +
-			`review, not an adjudicated error; an NPI split across genuinely-distant addresses is geo-first behaving correctly, ` +
+			`review, not an adjudicated error. An NPI split across genuinely-distant addresses is geo-first behaving correctly, ` +
 			`counted here as a recall miss. We resolve and report; interpretation is the consumer's.`
 	)
 

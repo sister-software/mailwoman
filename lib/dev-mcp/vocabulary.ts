@@ -128,7 +128,7 @@ function characterCoverage(
 export interface VocabularyOptions {
 	texts: readonly string[]
 	/**
-	 * A comparison arm — the same content the tokenizer handles well, usually the
+	 * A comparison arm — the same content the tokenizer handles well, such as the
 	 * same addresses transliterated — without which a fallback share is a number
 	 * with no comparison arm to be high or low against.
 	 */
@@ -143,7 +143,7 @@ export interface VocabularyOptions {
  * Measure vocabulary coverage.
  *
  * The tokenizer is resolved through `resolveWeights` like every other consumer, so the answer
- * describes the tokenizer the runtime would actually load rather than a file someone typed a path to.
+ * describes the tokenizer the runtime would load rather than a file someone typed a path to.
  */
 export async function runVocabulary(options: VocabularyOptions): Promise<VocabularyReport> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")

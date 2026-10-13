@@ -56,7 +56,7 @@ export interface RerankResult<T = unknown> {
 	 */
 	best: RerankedCandidate<T>
 	/**
-	 * True when resolution evidence actually changed the answer from the model's rank-1.
+	 * True when resolution evidence changed the answer from the model's rank-1.
 	 */
 	changed: boolean
 }
@@ -69,7 +69,7 @@ export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
 	/**
-	 * Resolve at most this many candidates.
+	 * Resolve at most this number of candidates.
 	 *
 	 * Each costs a resolver round-trip, so this is the latency knob.
 	 *

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Measures how many board rows' expected street receives paint from the `street_type` evidence
+ *   Measures the number of board rows whose expected street receives paint from the `street_type` evidence
  *   lexicon, per country.
  *
  *   `data/gazetteer/street-type-lexicon-v3.json` is built from `@mailwoman/codex fr/us/gb/de/ca`, so

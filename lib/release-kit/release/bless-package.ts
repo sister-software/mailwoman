@@ -307,8 +307,7 @@ export async function blessPackages(options: BlessPackageOptions): Promise<Bless
 		blessed.push({ name: (await readPkg(d)).name, published, trusted })
 
 		// The pause limits the request rate.
-		// The npm auth grant usually stays valid across the pause, so a run of
-		// packages often needs only one approval.
+		// The npm auth grant can stay valid across the pause, so a run of packages can need only one approval.
 		await $`sleep 2`
 	}
 

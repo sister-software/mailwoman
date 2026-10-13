@@ -33,7 +33,8 @@ export interface MatchProtocol {
 	near: readonly [number, number]
 	/**
 	 * The far band as `[metres, minimum name similarity]`.
-	 * It usually requires closer names.
+	 *
+	 * A protocol is expected to set a higher similarity minimum here than in the near band.
 	 */
 	far: readonly [number, number]
 	/**

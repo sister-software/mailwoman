@@ -103,11 +103,11 @@ export interface RealizeExtentOptions {
 }
 
 /**
- * Pull the outline out of whatever a boundary file actually holds: a bare geometry,
+ * Pull the outline out of whatever a boundary file holds: a bare geometry,
  * a `Feature` wrapping one, or a `FeatureCollection`.
  *
  * A collection must contain exactly one feature.
- * Every export tool writes a `FeatureCollection`, so refusing the shape outright would
+ * Every export tool writes a `FeatureCollection`, so refusing every collection would
  * refuse the ordinary case, but taking the first of several would silently choose
  * which country the coverage claim describes.
  * The claim depends on the outline used for clipping.

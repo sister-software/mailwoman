@@ -1,6 +1,6 @@
 """Invariance checks for the v0.5.0 char-offset label format (#519 — the consult keepers, as tests).
 
-Three checks, pre-registered in the design doc (2026-06-11-char-offset-labels-design.md, blast-radius
+Three checks, pre-registered in the design doc (2026-06-11-char-offset-labels-design.md, affected-surface
 items 6 + 8, plus the positive case the migration exists for):
 
 (a) **Label-stream bit-identity** — on rows without intra-span punctuation, the spans-based
@@ -185,7 +185,7 @@ def test_check_b_channels_identical_through_encode_row(name, raw, tokens, labels
 
 
 def test_check_b_gazetteer_painting_fires_on_fixtures():
-    """Anti-vacuity: the gazetteer clue actually lights up on at least one fixture piece."""
+    """Anti-vacuity: the gazetteer clue is set on at least one fixture piece."""
     raw = "Strasse 12 10115 Berlin"
     pieces = _pieces(raw, ["Strasse", "12", "101", "15", "Ber", "lin"])
     feats, confs = realign_gazetteer_to_pieces(raw, pieces, LEXICON)

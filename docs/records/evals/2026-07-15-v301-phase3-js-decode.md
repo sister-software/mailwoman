@@ -24,13 +24,13 @@ country channels **fed**, against the real 0.573 baseline.
 Phase 1's +7.9pp was measured in the channel-starved Python check, where `token@1` reads 0.4906
 instead of 0.5693. **A large part of that gap was the BIO head's starvation rather than the span head's
 strength.** Feed the channels and the BIO head recovers most of it. The Phase-1 doc flagged the
-absolutes as non-comparable; it did not anticipate that the _margin_ would shrink this much, and the
+absolutes as non-comparable. It did not anticipate that the _margin_ would shrink this much, and the
 direct correction belongs at the top rather than in a footnote.
 
 ## What survives the correction — and it's the part that matters
 
 **1. The trained scorer beats the summed-BIO stand-in by +12.4pp** (seg@1 0.453 → 0.5768), on the
-same instrument, channels fed both times. That was Phase 1's actual falsifier and it holds decisively.
+same instrument, channels fed both times. That was Phase 1's actual falsifier, and it holds at +12.4pp.
 
 **2. The secondary read passed: oracle@10 rose 0.749 → 0.7753** (+2.6pp), oracle@5 0.663 → 0.7228
 (+6.0pp). The config pre-registered this: _"If seg@1 crosses but oracle@10 is flat, the scorer
@@ -50,18 +50,18 @@ state: **+23.8pp at rank 1**, and oracle@5 clears **0.90** on this fixture.
 ## The synthesis
 
 The span head's value is **concentrated exactly where the BIO head fails**. On contextful addresses —
-most of the general corpus — BIO + channels already works and the span decode adds ~nothing at rank 1.
+most of the general corpus — BIO + channels already works and the span decode adds ~0 at rank 1.
 On bare fragments it adds 24 points. That is a coherent result rather than a disappointing one: it is the
 night-3 partition (66% of street failures are bare fragments) showing up in the ledger.
 
-**But it also means `seg@1` alone does not justify shipping the decode.** A +0.75pp aggregate margin
+**But it also means `seg@1` by itself does not justify shipping the decode.** A +0.75pp aggregate margin
 is not a reason to change production. The case is the **list**: oracle@5 0.723 / oracle@10 0.775
 against a shipped 0.573 is ~15–20 points of headroom that only a **reranker** can collect — which is
 Phase 4, and which is now the required phase rather than a nice-to-have.
 
 ## What shipped
 
-- `ONNXRunner.InferResult.spanScores` + `maxSpan` — optional, mirroring the `localeLogits` interface; a
+- `ONNXRunner.InferResult.spanScores` + `maxSpan` — optional, mirroring the `localeLogits` interface. A
   pre-v3 bundle has no `span_scores` output and the BIO path is untouched.
 - `NeuralParseTrace.spanScores` — threaded through `traceParse`.
 - `neural/semi-markov-decode.ts` — `decodeSegmentationsKBest` + `parseSemiCRFTransitions`. **11 tests**:
@@ -87,14 +87,14 @@ flat buffer must produce the same nested array on both sides.
 **#378 SLO, measured on `onnxruntime-web`'s WASM EP** — the runtime the demo runs rather than the
 `onnxruntime-node` bench Phase 2 used:
 
-|                                | ms/infer             | spans read |
-| ------------------------------ | -------------------- | ---------- |
-| v264 (shipped, no span output) | 14.74                | no         |
-| v301 (span graph)              | 14.82                | **yes**    |
-| **delta**                      | **+0.08 ms (+0.5%)** |            |
+|                               | ms/infer             | spans read |
+| ----------------------------- | -------------------- | ---------- |
+| v264 (shipped, without spans) | 14.74                | no         |
+| v301 (span graph)             | 14.82                | **yes**    |
+| **delta**                     | **+0.08 ms (+0.5%)** |            |
 
 That is the **full** cost — this runner unflattens the span tensor on _every_ inference, so it
-includes the decode-side marshalling, not just the graph. Reproducible via
+includes the decode-side marshalling as well as the graph. Reproducible via
 `neural-web/span-slo.bench.test.ts` (reported, never asserted — a wall-clock threshold in CI is a
 flake generator).
 
@@ -102,13 +102,13 @@ Combined with Phase 2's size check (+0.22 MB int8, +0.57%), the browser cost of 
 is **+0.5% latency and +0.6% download** — and that is while _reading_ the spans. A browser that never
 decodes them pays neither.
 
-**Still not done, deliberately:** the loader does not fetch `semi-crf-transitions.json`. Nothing
-consumes it in the browser yet — the rerank is Phase 4 — and wiring a fetch for data with no consumer
+**Still not done, deliberately:** the loader does not fetch `semi-crf-transitions.json`. No browser code
+consumes it yet — the rerank is Phase 4 — and wiring a fetch for data with no consumer
 is the speculative structure this project keeps refusing (cf. the `<= -0.5` importance band, #1142).
 
 ## Next
 
 Phase 4 is now the whole ballgame: resolver rerank over the k-best list + the isotonic calibration for
 the ambiguity check + option C (kind-posterior + recall-weighted loss) for the 17 locality-refusals the
-span head provably does not fix. The headroom is measured (oracle@5 0.723 vs shipped 0.573); the
+span head was measured not to fix. The headroom is measured (oracle@5 0.723 vs shipped 0.573); the
 question is how much of it evidence-based reranking can collect.

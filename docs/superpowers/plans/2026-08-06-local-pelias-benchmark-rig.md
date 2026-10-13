@@ -39,22 +39,22 @@ tags. Data vintages are pinned by a SHA-256 manifest (§4).
 | Source          | Ours                                                                    | Pelias path                                                                                    |
 | --------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | WOF admin       | official per-country `whosonfirst-data-admin-XX` SQLites (we hold them) | `data/whosonfirst` verbatim — our combined 5.3 GB product is not used                          |
-| OpenAddresses   | standard-schema per-country CSVs (~20 countries held)                   | `data/openaddresses` verbatim; fetch `us` + `fr` (OA-fr ≈ BAN, which is upstream of it)        |
-| TIGER           | 2024 shapefiles                                                         | `pelias/tiger` importer; 2020 unused                                                           |
+| OpenAddresses   | standard-schema per-country CSVs (~20 countries held)                   | `data/openaddresses` verbatim. Fetch `us` + `fr` (OA-fr ≈ BAN, its upstream source)            |
+| TIGER           | 2024 shapefiles                                                         | `pelias/tiger` importer. 2020 unused                                                           |
 | GNAF (AU)       | derived, non-official schema                                            | not used — OA au countrywide instead                                                           |
-| Code-Point Open | postcode centroids                                                      | not used (no importer; postcode-level anyway)                                                  |
+| Code-Point Open | postcode centroids                                                      | not used (no importer, postcode-level anyway)                                                  |
 | OSM             | none on disk                                                            | Geofabrik country PBFs: DE, GB, AT, CH, CZ, DK, BE, NL, AU, NZ (+US pending the §2 falsifiers) |
 
 **Per-country @1km attribution, assigned pre-hoc.** The table records which data the metric will
 depend on in each country and where the scoped build diverges from hosted geocode.earth:
 
-| Country  | @1km rides on                          | Scoped-build divergence risk                                                                         |
+| Country  | @1km depends on                        | Scoped-build divergence risk                                                                         |
 | -------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | US       | TIGER ranges, then OA points, then OSM | if US OSM is skipped: venue rows suffer + no interpolation (see §2a/b) — annotate `TIGER+OA, no OSM` |
 | FR       | OA/BAN points                          | low — expect strong @1km                                                                             |
-| GB       | OSM address nodes + interpolation      | **OSM required**; OA-gb sparse                                                                       |
-| DE       | OSM address nodes + interpolation      | **OSM required**; OA-de patchy                                                                       |
-| AU, NZ   | OA countrywide points                  | low; OSM optional                                                                                    |
+| GB       | OSM address nodes + interpolation      | **OSM required**. OA-gb sparse                                                                       |
+| DE       | OSM address nodes + interpolation      | **OSM required**. OA-de patchy                                                                       |
+| AU, NZ   | OA countrywide points                  | low. OSM optional                                                                                    |
 | EU panel | OSM address nodes + interpolation      | **all six small PBFs required**                                                                      |
 
 **Memory limits (29 GB host, ~16 GB usable):** importers run as one-shot `docker compose run --rm`
@@ -87,8 +87,8 @@ before any import runs:
 
 - **(a) `pelias/interpolation` builds only from polylines (OSM centerlines), never TIGER.**
   Probe: shallow-clone `pelias/interpolation`, run `grep -Ril tiger`, and read the README data
-  section. If TIGER can feed it, the US can keep interpolation without US OSM, which shrinks the
-  scope considerably.
+  section. If TIGER can feed it, the US can keep interpolation without US OSM. That would shrink
+  the scope considerably.
 - **(b) `pelias/polylines` may accept only a planet file rather than per-country files.** Probe:
   shallow-clone it, grep for the `files` config key, and read the download script. If per-country
   files work, US interpolation is affordable. If it is planet-only, the US row is annotated
@@ -185,13 +185,13 @@ what our scoping removed and limits what the local numbers can claim.
 - [ ] pelias/docker commit + image digests
 - [ ] Data manifest: SHA-256 for every OA CSV, WOF sqlite, TIGER shapefile, OSM PBF, polylines file
 - [ ] `pelias.json` hash + compose overrides (`ES_JAVA_OPTS`, memory caps)
-- [ ] Panel file hash; per-row `truth_type` + `local_coverage_hint` assigned
+- [ ] Panel file hash, per-row `truth_type` + `local_coverage_hint` assigned
 - [ ] Score definition (§4 verbatim), scorer command + hash, determinism check
-- [ ] Distance formula + thresholds; no-result + tie-break definitions; equivalence margin
+- [ ] Distance formula + thresholds. No-result + tie-break definitions. Equivalence margin
 - [ ] Bootstrap seed + resamples
 - [ ] §2 falsifier outcomes, graded
 - [ ] §3 probe results per country
-- [ ] Google-oracle logic; stop rule for failed country imports
+- [ ] Google-oracle logic, stop rule for failed country imports
 - [ ] Hosted-arm response headers / version capture plan
 
 ## §6 — Consult calibration record
@@ -201,13 +201,13 @@ Session `019fd8b2-63e4-71f6-931b-0f197276cdf8`, three turns, flash tier.
 - Structural contributions (adopted): one project with one index. Keep placeholder and
   interpolation, because skipping them deflates the metric under comparison. Run one-shot importers
   sequentially. The control critique: comparing a scoped local build against a stale hosted result
-  is uncontrolled, which led to the three-arm same-day design. The `truth_type` and
+  is uncontrolled. That critique led to the three-arm same-day design. The `truth_type` and
   `local_coverage_hint` pre-hoc columns. An equivalence bound for any parity headline. Google as an
   oracle that never filters.
 - Factual claims, turned into falsifiers (§2) and graded before being trusted: interpolation never
   uses TIGER, polylines accepts only a planet file, and the build fits in 16 GB. The outcomes are
   recorded in §2b.
-- Quantitative predictions: the consult offered none beyond the memory envelope, which §2c covers.
+- Quantitative predictions: the consult offered none beyond the memory envelope. §2c covers that envelope.
 
 ## §7 — Scope addition (2026-08-07, operator): local Nominatim + Photon arms
 
@@ -221,14 +221,14 @@ These arms use the same panel, host and PBFs. One download feeds all three syste
   pin list.
 - **Photon:** Photon builds its Lucene index from the Nominatim Postgres by exporting it and then
   serving the index standalone. `komoot/photon` is pinned, and its JVM is capped at 6–8 GB. It runs
-  alone, with the Postgres buffers lowered. Every practical path requires Nominatim.
+  with no other import running, with the Postgres buffers lowered. Every practical path requires Nominatim.
   `photon.komoot.io` is an unpinned reference only and is never a scored arm.
 - **Order, one step at a time:** Pelias imports → Nominatim import → Photon export. At 16 GB the
   steps cannot overlap.
 - **Arms:** five scored arms: mailwoman 9.0.0, local Pelias, local Nominatim, local Photon, and
   hosted geocode.earth (the primary hosted arm). Public nominatim.openstreetmap.org at 1 rps serves
   only as a sanity check.
-- **New pre-registration columns**, because the scope-cost column alone cannot separate scoped data
+- **New pre-registration columns**, because the scope-cost column by itself cannot separate scoped data
   from version drift: `system_scope` (planet vs country-subset), `source_vintage`,
   `interpolation_enabled` (Pelias arms), `result_type` (address/street/locality/POI), and
   `response_version` (hosted captures).

@@ -1,9 +1,9 @@
 # The harness is v0's home turf — reframing the scoreboard (2026-05-30)
 
-**TL;DR.** The 415-assertion `harness-v0-neural` suite — our de-facto neural
+**Summary.** The 415-assertion `harness-v0-neural` suite — our de-facto neural
 "promote bar" — is a **port of the Pelias parser + addressit corpora**, the same
 lineage the `v0` rule parser was built from. v0 scores 93.7% on it almost
-tautologically; the neural model scores 19.8%. A 25% neural target misreads a
+tautologically, and the neural model scores 19.8%. A 25% neural target misreads a
 suite that structurally disadvantages neural models. The
 **resolver end-to-end metric** (address to correct WOF place) is the direct
 scoreboard, and there the same v0.7.2 model already **wins**: neural 68.9% vs
@@ -40,7 +40,7 @@ this exact corpus_.
 ## Why that is expected rather than alarming
 
 `data/eval/external/README.md` already documented the lineage problem for the
-external arenas; it applies to the harness itself. The `mailwoman/test/*.test.ts`
+external arenas. The same problem applies to the harness itself. The `mailwoman/test/*.test.ts`
 files the harness extracts `assert(input, ...expected)` calls from are, on
 inspection, a **port of Pelias parser + addressit** — and our v0 parser is itself
 Pelias-derived. So:
@@ -62,10 +62,10 @@ Spot-checking the failing cases (the dominant pattern across the 317 v0-only
 wins): the model **collapses adjacent fields** on inputs that drift from the
 clean, comma-delimited US training distribution. Representative real failures:
 
-- `6000, NSW, Australia` — expected postcode/region/country; neural tagged `6000`
+- `6000, NSW, Australia` — expected postcode/region/country, but neural tagged `6000`
   as house_number and `NSW` as locality (AU postcode-leading line).
-- `Unit 12/345 Main St` — expected unit_designator/unit/house_number/street;
-  neural produced street `Unit 12`, locality `Main St` (AU unit-slash format).
+- `Unit 12/345 Main St` — expected unit_designator/unit/house_number/street,
+  but neural produced street `Unit 12`, locality `Main St` (AU unit-slash format).
 - `U 12 345 Main St` — neural produced only locality `U`, postcode `12`.
 
 The pattern is consistent: when the surface form drifts from the canonical
@@ -104,12 +104,12 @@ perturbed/noisy input** over the best single parser. Coordinate error is p50 0 k
    neural on a v0-lineage suite" as the goal. It asks the neural model to imitate
    Pelias's conventions on Pelias's own corpus.
 3. **Coverage, measured on lineage-neutral sets, is the change.** The
-   under-segmentation on non-canonical formats (above) is the real gap, and it
-   shows up on the _perturbed_ resolver subset and the external arenas — both
-   lineage-neutral — not just the Pelias harness.
+   under-segmentation on non-canonical formats (above) is the gap that coverage must close. It
+   shows up on the _perturbed_ resolver subset and the external arenas as well as on the Pelias harness. The perturbed subset and
+   the external arenas are both lineage-neutral.
 
 This reframe unblocks two stalled cycles (v0.6.x held after three recipe
-iterations; v0.7.x calibration null on the harness): both were optimizing a
+iterations, and v0.7.x calibration null on the harness). Both were optimizing a
 lineage-biased metric. It is consistent with the v0.7.2 eval's own conclusion
 ("the path to 25% is coverage and the resolver rather than another recipe tweak") and
 with `project-neural-vs-v0-capability-map`.
@@ -130,7 +130,7 @@ by at least 1.5pp, revert — the lineage-mismatch result still has that evidenc
 These numbers were produced during a session in which the local tool-output
 display layer had earlier been corrupting/duplicating command output. After the
 environment was restarted and verified clean (a fixed string hashed repeatedly
-returned a stable digest; a 17-command parallel batch ran with no cancellations),
+returned a stable digest, and a 17-command parallel batch ran with no cancellations),
 **both evals were re-run from scratch.** The harness cross-tab sums to 415, and
 the resolver table reproduces from an independent recompute of the raw sidecar —
 the figures here are trustworthy. Per-case forensic breakdowns that could not be

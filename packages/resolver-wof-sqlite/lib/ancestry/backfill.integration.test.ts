@@ -201,7 +201,7 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	// No geojson exists for any of them.
 	// Every candidate is skipped, none fixed.
 	// The assertion that matters is that the pass completes at all instead of
-	// throwing "too many SQL variables".
+	// throwing SQLite's bound-variable limit error.
 	expect(result.placesFixed).toBe(0)
 	expect(result.rowsAdded).toBe(0)
 	expect(result.noGeojson).toBe(33_000)

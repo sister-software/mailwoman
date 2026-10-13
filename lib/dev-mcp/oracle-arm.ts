@@ -169,8 +169,8 @@ export class OracleMeter {
 	}
 
 	/**
-	 * A cache hit still counts: the client answers a repeat for free but hands back
-	 * `OracleGeocodeResult[]` and never identifies which of those cost a request,
+	 * A cache hit still counts: the client answers a repeat with no request but hands
+	 * back `OracleGeocodeResult[]` and never identifies which of those cost a request,
 	 * so the meter counts queries and over-counts a warm run — the direction to be wrong in,
 	 * because the alternative is a cap that undercounts real spend.
 	 */

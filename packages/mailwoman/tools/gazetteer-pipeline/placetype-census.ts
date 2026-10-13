@@ -9,7 +9,7 @@
  *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children through that
  *   projection.
  *
- *   The census counts what the source can actually answer. `admin-global-priority.db` contains nine
+ *   The census counts what the source can answer. `admin-global-priority.db` contains nine
  *   placetypes (locality, localadmin, neighborhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those. The projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
@@ -32,7 +32,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION}
+ * The complete Who's On First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION}
  * must contain a key for every entry — a test asserts it — so a placetype can never reach
  * {@link buildPlacetypeCensus} unmapped and turn a build into a throw at the worst moment.
  *
@@ -125,7 +125,8 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	// A WOF `building`/`campus` place has a venue name ("Empire State Building", "MIT Campus");
 	// the interior subdivisions have a unit designator ("Concourse B", "Terminal 4", "West Wing").
 	// The admin build stocks none of these today.
-	// That is the ingest allowlist (`ADMIN_PLACETYPES`), not the source.
+	// The ingest allowlist (`ADMIN_PLACETYPES`) excludes them.
+	// The source contains them.
 	// The `mailwoman gazetteer granularity` command measures the difference.
 	building: "venue",
 	campus: "venue",

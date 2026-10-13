@@ -15,7 +15,7 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale.
  *
- * Deliberately small: only the countries we actually ship an OSM rooftop extract for.
+ * Deliberately small: only the countries we ship an OSM rooftop extract for.
  * Each supported country needs a one-line entry and a matching per-locale branch
  * in `normalizeStreetForKeyLocale` — keep them in lockstep.
  */

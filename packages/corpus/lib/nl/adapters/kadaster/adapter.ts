@@ -360,8 +360,8 @@ function documentChunks(documentPath: PathBuilderLike): AsyncIterable<Uint8Array
 /**
  * Every document under `inputPath`, where `inputPath` is one GML file or a directory holding them.
  *
- * A directory is read because the download is one national file today and the
- * service document could list more than one entry tomorrow.
+ * A directory is read because the download is one national file now and a later
+ * service document could list more than one entry.
  * A directory holding no document raises rather than yielding zero rows, so a wrong
  * path reports itself instead of reading as an empty publisher.
  */

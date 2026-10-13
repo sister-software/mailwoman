@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus migrate-overlays` — rewrite every overlay parquet of a corpus onto the current row
- *   schema, where an overlay slice is one the corpus manifest lists and its base manifest does not, compared
+ *   schema, where an overlay parquet is a file the corpus manifest lists and its base manifest does not, compared
  *   by `sha256`.
  *
  *   Each migrated file is written beside its original as `<name>.migrated.parquet` and no file is swapped, so the
@@ -40,7 +40,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		type Manifest = Parameters<typeof baseManifestFiles>[0]
 
-		// A slice without a hash could match another unhashed slice.
+		// A manifest file without a hash could match another unhashed file.
 		// The migration could then skip an overlay as a base.
 		const readHashedFiles = async (path: string) => {
 			const files = baseManifestFiles(await readLocalJSONFile<Manifest>(path))

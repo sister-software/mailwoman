@@ -33,7 +33,7 @@ test("applyNFC: composes a combining accent and maps the composed char to its so
 })
 
 test("applyNFC: a mid-word combining mark composes, later chars map past it", () => {
-	const r = applyNFC("Cafe" + COMBINING_ACUTE) // → "Caf" + é
+	const r = applyNFC("Cafe" + COMBINING_ACUTE) // composes to "Caf" + é
 	expect(r.changed).toBe(true)
 	expect(r.text).toBe("Caf" + E_ACUTE)
 	expect(r.text).toHaveLength(4)
