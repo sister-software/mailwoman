@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman wof mermaid <localRepoDir> <placetype>` — render a Mermaid flowchart of the WOF
- *   placetype hierarchy rooted at the given placetype.
+ *   `mailwoman gazetteer inspect mermaid <localRepoDir> <placetype>` renders a Mermaid flowchart of
+ *   the WOF placetype hierarchy rooted at the given placetype.
  *
- *   Reads from the local `whosonfirst-placetypes` clone that `mailwoman wof sync` produces.
+ *   It reads `<localRepoDir>/whosonfirst/whosonfirst-placetypes`, the clone that
+ *   `mailwoman gazetteer inspect sync` produces.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -102,7 +103,7 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 
 		if (!placetype) {
 			throw new CommandError(
-				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
+				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a whosonfirst/whosonfirst-placetypes clone (run \`mailwoman gazetteer inspect sync\` first).`
 			)
 		}
 
