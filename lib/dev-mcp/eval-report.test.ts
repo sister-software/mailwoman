@@ -83,6 +83,25 @@ describe("readEvalReport", () => {
 		expect(report.notes.join(" ")).toContain("different results")
 	})
 
+	it("reports a verdict.json written before the job started as an earlier run's file", async () => {
+		const dir = await outDir(PASSING, "md5 abc model.onnx\n")
+		const report = await readEvalReport(dir, "", "", { startedAt: Date.now() + 60_000 })
+
+		expect(report.verdict).toBeNull()
+		expect(report.floors).toEqual([])
+		expect(report.provenance).toBeNull()
+		expect(report.notes.join(" ")).toContain("before this job started")
+		expect(summarizeEvalReport(report)).toContain("No verdict was assembled")
+	})
+
+	it("reads a verdict.json written after the job started", async () => {
+		const dir = await outDir(PASSING, "md5 abc model.onnx\n")
+		const report = await readEvalReport(dir, "", "", { startedAt: Date.now() - 60_000 })
+
+		expect(report.verdict).toBe("PASS")
+		expect(report.provenance).toContain("md5 abc")
+	})
+
 	it("surfaces the ledger command and refuses to imply it was run", async () => {
 		const log =
 			"ledger (#885): on promote, append this run —\n" +

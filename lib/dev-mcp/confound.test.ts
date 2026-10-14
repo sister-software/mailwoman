@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -25,6 +27,29 @@ describe("checkConfounds", () => {
 		expect(reading.variable_isolation).toBe(VariableIsolation.Clean)
 		expect(reading.variable_effective).toEqual(["gazetteerPrior"])
 		expect(reading.warnings).toHaveLength(0)
+	})
+
+	it("reads two data-root builders that render one path as one value", () => {
+		// `resolveConfig` fills `dataRoot` from a factory that returns a fresh builder on every call.
+		const reading = checkConfounds(
+			{ dataRoot: dataRootPath(), gazetteerPrior: false },
+			{ dataRoot: dataRootPath(), gazetteerPrior: true },
+			["gazetteer_prior"]
+		)
+
+		expect(reading.variable_isolation).toBe(VariableIsolation.Clean)
+		expect(reading.moved_but_undeclared).toEqual([])
+	})
+
+	it("still reads two builders that render different paths as a moved key", () => {
+		const reading = checkConfounds(
+			{ dataRoot: PathBuilder.from("/mnt/a"), gazetteerPrior: false },
+			{ dataRoot: PathBuilder.from("/mnt/b"), gazetteerPrior: true },
+			["gazetteer_prior"]
+		)
+
+		expect(reading.variable_isolation).toBe(VariableIsolation.Ambiguous)
+		expect(reading.moved_but_undeclared).toEqual(["dataRoot"])
 	})
 
 	it("catches the documented backend/country-scope confound", () => {

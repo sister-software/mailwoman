@@ -15,7 +15,8 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
+import { isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -46,8 +47,8 @@ export interface FloorReading {
 
 export interface EvalReport {
 	/**
-	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent —
-	 * a run that crashed before assembling one.
+	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent, as after a run
+	 * that crashed before assembling one, or when the file predates the job that is read.
 	 */
 	verdict: string | null
 	label: string | null
@@ -63,7 +64,8 @@ export interface EvalReport {
 	int8_vs_fp32_deltas: Record<string, number>
 	out_dir: string
 	/**
-	 * Contents of `provenance.txt`, or `null` when the run did not get far enough to write one.
+	 * Contents of `provenance.txt`, or `null` when the run did not get far enough to
+	 * write one or the file predates the job that is read.
 	 */
 	provenance: string | null
 	/**
@@ -110,21 +112,71 @@ export const LEDGER_NOTE =
 	"npm semver, at promote time."
 
 /**
+ * How a battery artifact in the out-dir relates to the job being read.
+ *
+ * `current` is a file written after the job started, or any file when no start time is known.
+ * `stale` is a file an earlier run left in the same out-dir.
+ */
+type ArtifactCurrency = "absent" | "current" | "stale"
+
+/**
+ * Reports whether a battery artifact was written by the job being read.
+ *
+ * An out-dir can hold a complete battery from an earlier run, and a job that has not
+ * written its own verdict yet would otherwise report that run's floors as its own.
+ */
+async function artifactCurrency(path: PathBuilderLike, startedAt: number | undefined): Promise<ArtifactCurrency> {
+	const stat = await tryStat(path)
+
+	if (!stat) return "absent"
+
+	return startedAt !== undefined && stat.mtimeMs < startedAt ? "stale" : "current"
+}
+
+/**
+ * Options for {@link readEvalReport}.
+ */
+export interface ReadEvalReportOptions {
+	/**
+	 * The epoch milliseconds at which the job started.
+	 *
+	 * A `verdict.json` or `provenance.txt` modified before this instant is reported as
+	 * an earlier run's file rather than read as this job's result.
+	 */
+	startedAt?: number
+}
+
+/**
  * Assemble a report from a finished eval run's out-dir plus its log.
  */
-export async function readEvalReport(outDir: PathBuilderLike, stdout: string, stderr: string): Promise<EvalReport> {
+export async function readEvalReport(
+	outDir: PathBuilderLike,
+	stdout: string,
+	stderr: string,
+	options: ReadEvalReportOptions = {}
+): Promise<EvalReport> {
 	const notes: string[] = []
 	const verdictPath = resolvePath(outDir, "verdict.json")
 	const provenancePath = resolvePath(outDir, "provenance.txt")
 
 	let raw: RawVerdict | null = null
 
-	if (await pathExists(verdictPath)) {
+	const verdictCurrency = await artifactCurrency(verdictPath, options.startedAt)
+
+	if (verdictCurrency === "current") {
 		try {
 			raw = await readLocalJSONFile<RawVerdict>(verdictPath)
 		} catch (error) {
 			notes.push(`verdict.json exists but did not parse: ${(error as Error).message}`)
 		}
+	} else if (verdictCurrency === "stale") {
+		const written = isoSeconds(new Date((await tryStat(verdictPath))!.mtimeMs))
+
+		notes.push(
+			`The verdict.json at ${verdictPath} was written at ${written}, before this job started at ` +
+				`${isoSeconds(new Date(options.startedAt!))}. It belongs to an earlier run that used the same out-dir, ` +
+				"so this job has no verdict yet."
+		)
 	} else {
 		notes.push(
 			`No verdict.json at ${verdictPath}. The run did not reach the verdict assembler — read the log. This is not a ` +
@@ -180,8 +232,15 @@ export async function readEvalReport(outDir: PathBuilderLike, stdout: string, st
 		}
 	}
 
-	if (!(await pathExists(provenancePath))) {
+	const provenanceCurrency = await artifactCurrency(provenancePath, options.startedAt)
+
+	if (provenanceCurrency === "absent") {
 		notes.push(`No provenance.txt at ${provenancePath}, so the graded artifacts' md5s are unrecorded for this run.`)
+	} else if (provenanceCurrency === "stale") {
+		notes.push(
+			`The provenance.txt at ${provenancePath} predates this job, so the graded artifacts' md5s are unrecorded ` +
+				"for this run."
+		)
 	}
 
 	return {
@@ -191,7 +250,7 @@ export async function readEvalReport(outDir: PathBuilderLike, stdout: string, st
 		floors,
 		int8_vs_fp32_deltas: raw?.int8_vs_fp32_deltas ?? {},
 		out_dir: outDir.toString(),
-		provenance: (await pathExists(provenancePath)) ? await readLocalTextFile(provenancePath) : null,
+		provenance: provenanceCurrency === "current" ? await readLocalTextFile(provenancePath) : null,
 		ledger_command: ledgerCommand,
 		ledger_note: LEDGER_NOTE,
 		lore_guard_refusal: loreGuardRefusal,
