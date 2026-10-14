@@ -133,6 +133,23 @@ function wordsWithSegments(groups: readonly WordGroup[], pieces: ReadonlyArray<{
 }
 
 /**
+ * Whether the segment holding the head at `head` opens, before the head,
+ * with a word that contains a digit, such as a house number.
+ */
+function numberOpensSegment(words: readonly Word[], head: number): boolean {
+	let first = head
+
+	while (first > 0 && words[first - 1]!.segment === words[head]!.segment) {
+		first--
+	}
+
+	if (first === head) return false
+	const opener = words[first]!
+
+	return opener.isIdentifier && DIGIT_RE.test(opener.group.fstToken)
+}
+
+/**
  * Builds a `[seqLen][numLabels]` bias matrix toward `B-venue` and `I-venue` from venue-head lookups.
  * A vocabulary without `B-venue` returns the zero matrix.
  */
@@ -193,8 +210,13 @@ export function buildVenueHeadEmissionPriors(
 		if (sameSegment(following) && isStreetAffix(following!.group.fstToken)) continue
 		const scaled = (bias: number | null): number | null => (bias === null ? null : Math.min(maxBias, bias * biasScale))
 
-		const last = sameSegment(words[index - 1]) ? scaled(lexicon.last(token)) : null
-		const suffix = scaled(lexicon.suffix(token))
+		// A head that is itself a street type closes a street name when a house number
+		// opens the span, as `Plaza` does in `30 Rockefeller Plaza`.
+		// The table measured `plaza` and `center` as venue heads on names without a number,
+		// so its rate applies to an unnumbered name only.
+		const numbered = isStreetAffix(token) && numberOpensSegment(words, index)
+		const last = sameSegment(words[index - 1]) && !numbered ? scaled(lexicon.last(token)) : null
+		const suffix = numbered ? null : scaled(lexicon.suffix(token))
 		const backward = Math.max(last ?? 0, suffix ?? 0)
 
 		if (backward > 0) {
