@@ -37,7 +37,14 @@ const NEW_YORK_AS_REGION =
 const AUCKLAND_POSTCODE_AS_HOUSE_NUMBER =
 	"`Auckland 1010`: the postcode `1010` reads as a house number, which has no street anchor."
 
+const ROCKEFELLER_PLAZA_AS_VENUE =
+	"`Rockefeller Plaza` reads as a venue, so the house number has no street anchor. The #2562 board rows are `improvement_target`; the venue-head guard of #2567 left this surname-before-Plaza residue."
+
 const KNOWN_INVALID: Record<string, string> = {
+	"us-venue-as-street-1-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
+	"us-venue-as-street-10-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
+	"us-venue-as-street-30-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
+	"us-venue-as-street-45-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
 	"us-f3-brooklyn-new-york": NEW_YORK_AS_REGION,
 	"us-f3-brooklyn-new-york-lower": NEW_YORK_AS_REGION,
 	"us-f7-hell-s-kitchen-new-york": NEW_YORK_AS_REGION,
