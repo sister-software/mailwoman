@@ -7,7 +7,7 @@ description: One from-scratch run that tests the two queued corpus hypotheses, `
 
 `v7.6.0-venue-gb-region-60k.yaml` trains the v7.4.1 run shape from scratch over the `0.7.6-venue-gb-region`
 corpus (#2568). The corpus is `0.7.3.2-venue-planet` with its three `rendered-gb` files replaced by the
-`rendered-gb` v2 split files, which label the GB constituent country `region` after the locality (#2554).
+`rendered-gb` v2 split files. Those files label the GB constituent country `region` after the locality (#2554).
 The config keeps `fragment-venue-bare` at weight 0, the arm v7.4.0's record proposed, and `spliced-venue-locality`
 at reps 0.07394. One run therefore tests both queued hypotheses. This record grades it under the `training-arc`
 skill. A from-scratch run inherits no base, so the shipped model is the baseline and no placebo applies.
@@ -138,8 +138,8 @@ missed at 92.2 and 85.7. `us.country_homograph_f1` reads 89.8 against 64.8 where
 where v7.4.0 read 61.2% and 52.3%.
 
 The battery wrote into the out-dir of v7.4.0's battery, and a `verdict.json` from 2026-10-10 sat there until
-this run's verdict replaced it. The figures above come from the file written at 19:15 BST on 2026-10-14,
-whose `provenance.txt` carries the candidate's md5.
+this run's verdict replaced it. The figures above come from the file written at 19:15 BST on 2026-10-14.
+The `provenance.txt` beside it records the candidate's md5.
 
 ## Decision
 
@@ -148,7 +148,7 @@ questions. With `fragment-venue-bare` at weight 0, the FR, DE, ES and IT bare-st
 gone, and the England and Wales `region` relabel reaches the parser. The cost is a new US mechanism, a bare
 locality before `region postcode` read as a street. A trailing directional still breaks a bare street under
 both venue arms, on the same eight Canadian and US rows. The relabel cannot reach Scotland or Northern Ireland
-from Price Paid Data, which holds neither.
+from Price Paid Data. Price Paid Data holds rows for England and Wales only.
 
 The next arm needs a source of bare US `locality, region postcode` rows at a share that competes with the
 bare-street rows, and a directional-suffix fragment source so a trailing `East` or `North` is seen on a
