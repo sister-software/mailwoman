@@ -134,11 +134,35 @@ export function refusalFor(text: string): CitationRefusal | null {
 }
 
 /**
+ * A position suffix such as `:129`, `:129:4` or `:129-131`.
+ *
+ * Each digit run is separated from the next by exactly one colon or hyphen,
+ * so the pattern matches a string in one way.
+ */
+const POSITION_SUFFIX = /^:\d+(?:[:-]\d+)*$/
+
+/**
  * The file path of a citation with any `#anchor` and position suffix
  * (`:129`, `:129:4`, `:129-131`) removed, keeping a trailing slash.
  */
 export function citationTarget(text: string): string {
-	return text.replace(/#.*$/, "").replace(/:\d+(?:[:-]\d+)*$/, "")
+	const anchor = text.indexOf("#")
+	const located = anchor === -1 ? text : text.slice(0, anchor)
+
+	// The position suffix is the trailing run of digits, colons and hyphens.
+	// A single backward scan finds where it starts, so the input length bounds the work.
+	let start = located.length
+
+	while (start > 0 && /[\d:-]/.test(located[start - 1]!)) {
+		start--
+	}
+
+	const suffix = located.slice(start)
+	const colon = suffix.indexOf(":")
+
+	if (colon === -1) return located
+
+	return POSITION_SUFFIX.test(suffix.slice(colon)) ? located.slice(0, start + colon) : located
 }
 
 /**
