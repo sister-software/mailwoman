@@ -45,12 +45,18 @@ def _file_row_iter(
     country_weights: dict[str, float],
     max_weight: float,
     coarse_filter: bool,
+    row_group_limit: int | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Yield filter-accepted rows from a single parquet file, with row-group and row shuffle.
 
     Applies the country-weight acceptance test and the coarse-label check when ``coarse_filter`` is set.
     It also checks per-row source equality when ``expected_source`` is given. A file can span sources,
     so without it the per-source iterator would yield rows from the wrong source.
+
+    ``row_group_limit`` caps the accepted rows taken from each row group. A caller that wants a small
+    sample of the file sets it, so the sample spreads over the file's row groups rather than coming
+    from the first one the shuffled order visits. A row group holds consecutive rows of the writer's
+    stream, and in a multi-source file that is one source's rows.
 
     Does **not** apply source weighting. That is the multinomial sampler in ``_raw_row_stream``, which
     makes the observed mix match ``source_weights`` exactly.
@@ -80,7 +86,10 @@ def _file_row_iter(
         span_cols = {c: t[c] for c in _SPAN_COLUMNS} if has_spans else None
         idx_order = list(range(t.num_rows))
         rng.shuffle(idx_order)
+        taken = 0
         for i in idx_order:
+            if row_group_limit is not None and taken >= row_group_limit:
+                break
             source = sources[i].as_py()
             if expected_source is not None and source != expected_source:
                 continue
@@ -122,6 +131,7 @@ def _file_row_iter(
                         "would train as all-O"
                     )
                 row.update(spans)
+            taken += 1
             yield row
 
 

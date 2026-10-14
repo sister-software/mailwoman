@@ -9,15 +9,38 @@ mixed-source validation file by its first row would drop every later source.
 from __future__ import annotations
 
 import logging
+import math
 import random
 from collections.abc import Callable, Iterator
+from itertools import islice
 from pathlib import Path
 from typing import Any
+
+import pyarrow.parquet as pq
 
 from .corpus_files import _parquet_paths, file_source_counts
 from .parquet import _file_row_iter, _source_iter
 
 logger = logging.getLogger(__name__)
+
+
+def _held_out_quotas(paths: list[Path], row_limit: int, rng: random.Random) -> list[int]:
+    """Rows to take from each file for a draw of ``row_limit`` rows, in proportion to the file's rows.
+
+    Each file's share is ``row_limit`` times its rows over the split's rows. The draw takes the whole
+    part of the share. It takes one more row with probability equal to the fractional part. A file too
+    small for one whole row therefore reaches the draw at its share across repeated draws.
+    """
+    rows = [pq.ParquetFile(s).metadata.num_rows for s in paths]
+    total = sum(rows)
+    if total == 0:
+        return [0 for _ in paths]
+    quotas: list[int] = []
+    for n in rows:
+        share = row_limit * n / total
+        whole = math.floor(share)
+        quotas.append(whole + (1 if rng.random() < share - whole else 0))
+    return quotas
 
 
 def _stream_held_out(
@@ -28,16 +51,26 @@ def _stream_held_out(
     country_weights: dict[str, float],
     max_weight: float,
     coarse_filter: bool,
+    row_limit: int | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Every filter-accepted row of every parquet file, file order shuffled, with no source bucketing.
 
     The sampler identifies a file's source from its first row and filters every row to it — correct for
     the source-segregated train corpus, but a mixed-source validation file silently loses its
     later-source rows. Held-out streams have no source mixture to steer.
+
+    With ``row_limit`` the stream yields close to ``row_limit`` rows, taken from every file in proportion to
+    its rows and spread over each file's row groups. Without it the files stream whole, one after
+    another, and a short prefix of that stream is the leading file's rows: the trainer's 4,096-row
+    validation draw over a split of 36 files held 745 rows with ``unit`` under one file order and 64
+    under another, where the split holds 9.0%.
     """
     order = [s for s in paths if s.exists()]
     rng.shuffle(order)
-    for s in order:
+    quotas = _held_out_quotas(order, row_limit, rng) if row_limit is not None else [None] * len(order)
+    for s, quota in zip(order, quotas, strict=True):
+        if quota == 0:
+            continue
         # Keep a --golden misuse check here. A label-less golden file used for val would produce
         # garbage metrics. `file_source_counts` raises on the non-string cell such a file contains.
         try:
@@ -47,14 +80,27 @@ def _stream_held_out(
                 f"parquet file {s} has no `source` field — likely a --golden (label-less) file used as a "
                 f"{split!r} file. Rebuild it WITHOUT --golden so rows carry source + labels."
             ) from exc
-        yield from _file_row_iter(
+        if quota is None:
+            yield from _file_row_iter(
+                s,
+                expected_source=None,
+                rng=rng,
+                country_weights=country_weights,
+                max_weight=max_weight,
+                coarse_filter=coarse_filter,
+            )
+            continue
+        row_groups = max(1, pq.ParquetFile(s).num_row_groups)
+        rows = _file_row_iter(
             s,
             expected_source=None,
             rng=rng,
             country_weights=country_weights,
             max_weight=max_weight,
             coarse_filter=coarse_filter,
+            row_group_limit=math.ceil(quota / row_groups),
         )
+        yield from islice(rows, quota)
 
 
 def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
@@ -200,12 +246,15 @@ def _raw_row_stream(
     country_weights: dict[str, float],
     source_weights: dict[str, float] | None,
     coarse_filter: bool,
+    row_limit: int | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Internal stream: yields filter-accepted rows, sampled by weighted source multinomial.
 
     Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer. The multinomial is fixed for the
     whole epoch, so the observed mix matches ``source_weights`` exactly per pull regardless of raw
-    share or file layout. Non-train splits skip source bucketing and stream every file's rows directly.
+    share or file layout. Non-train splits skip source bucketing and stream every file's rows directly,
+    or a ``row_limit`` draw of them in proportion to each file's rows. The train stream ignores
+    ``row_limit``, because its mixture already decides what a prefix of the stream holds.
 
     Memory is one active row-group per source, about ``|sources| × 50 MB`` peak.
     """
@@ -220,6 +269,7 @@ def _raw_row_stream(
             country_weights=country_weights,
             max_weight=max_weight,
             coarse_filter=coarse_filter,
+            row_limit=row_limit,
         )
         return
 
