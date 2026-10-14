@@ -7,6 +7,7 @@
 import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
+import { PathBuilder, resolvePath } from "path-ts"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"
 import type { RoutedArtifactRecord } from "#dev-mcp/routed-mailwoman-arm"
@@ -50,10 +51,22 @@ export interface ConfoundReading {
 	warnings: string[]
 }
 
+/**
+ * Returns a configuration value in the form the key comparison reads.
+ *
+ * A `PathBuilder` has no enumerable fields, so deep equality compares two builders by identity.
+ * The geocode command factory builds a fresh `dataRoot` builder on every call,
+ * and two arms that resolved the same root would otherwise read as a moved key.
+ * The rendered path is the value the session reads.
+ */
+function comparableValue(value: unknown): unknown {
+	return value instanceof PathBuilder ? resolvePath(value) : value
+}
+
 function differingKeys(a: Record<string, unknown>, b: Record<string, unknown>): string[] {
 	const keys = new Set([...Object.keys(a), ...Object.keys(b)])
 
-	return [...keys].filter((key) => !isIdentical(a[key], b[key])).toSorted()
+	return [...keys].filter((key) => !isIdentical(comparableValue(a[key]), comparableValue(b[key]))).toSorted()
 }
 
 /**
