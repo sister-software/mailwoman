@@ -94,6 +94,45 @@ describe("buildVenueHeadEmissionPriors", () => {
 		expect(stopped[2]![I]).toBe(0)
 	})
 
+	it("gives no bias to a street-type head whose span opens with a house number", () => {
+		const isStreetAffix = (w: string) => w === "plaza" || w === "center" || w === "garden"
+		const lex = lexicon({ last: { plaza: 2, center: 3, gallery: 2 } })
+
+		const numbered = build(lex, pieces("30", "Rockefeller", "Plaza"), LABELS, { isStreetAffix })
+
+		expect(numbered.flat().every((v) => v === 0)).toBe(true)
+
+		const twoWordName = build(lex, pieces("1", "Dag", "Hammarskjold", "Plaza"), LABELS, { isStreetAffix })
+
+		expect(twoWordName.flat().every((v) => v === 0)).toBe(true)
+
+		// The number opens the segment even when a street affix or a single letter sits inside the name.
+		const affixInside = build(lex, pieces("42", "Garden", "Center"), LABELS, { isStreetAffix })
+
+		expect(affixInside.flat().every((v) => v === 0)).toBe(true)
+
+		const letterInside = build(lex, pieces("110", "Issac", "S", "Cole", "Plaza"), LABELS, { isStreetAffix })
+
+		expect(letterInside.flat().every((v) => v === 0)).toBe(true)
+
+		// The number must open the span itself: a number before a comma belongs to another segment.
+		const venueAfterNumber = build(lex, pieces("45", ",", "Rockefeller", "Center"), LABELS, { isStreetAffix })
+
+		expect(venueAfterNumber[2]![B]).toBeCloseTo(3)
+		expect(venueAfterNumber[3]![I]).toBeCloseTo(3)
+
+		// A head that is not a street type keeps its bias after a number.
+		const gallery = build(lex, pieces("30", "City", "Gallery"), LABELS, { isStreetAffix })
+
+		expect(gallery[1]![B]).toBeCloseTo(2)
+		expect(gallery[2]![I]).toBeCloseTo(2)
+
+		// A single letter is an identifier but not a number, so `Concourse B` keeps the rule out.
+		const letter = build(lex, pieces("B", "Food", "Center"), LABELS, { isStreetAffix })
+
+		expect(letter[2]![I]).toBeCloseTo(3)
+	})
+
 	it("decays the bias by extensionDecay once for each word from the head", () => {
 		const m = build(lexicon({ last: { gallery: 2 } }), pieces("Manchester", "Art", "Gallery"), LABELS, {
 			extensionDecay: 0.5,
