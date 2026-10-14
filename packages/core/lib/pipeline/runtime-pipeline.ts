@@ -507,6 +507,16 @@ async function safeClassify(
 export const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
 
 /**
+ * The street-morphology options that bias a street affix at the prior's own weights,
+ * on a segment that opens with a house number only.
+ */
+export const NUMBERED_MORPHOLOGY_OPTS = {
+	biasScale: 1,
+	dependentLocalityPenalty: 2,
+	numberedSegmentOnly: true,
+} as const
+
+/**
  * The scale for positive street-context emissions.
  * Zero disables the positive boost.
  */
@@ -515,19 +525,27 @@ export const STREET_CONTEXT_POSITIVE_SCALE = 0
 /**
  * Returns the street-context classifier options, or an empty object unless both the FST
  * and the street-morphology matcher are available.
+ *
+ * With `streetMorphologyPrior` the matcher also biases a street affix on a numbered segment.
+ * Without it the matcher serves the street-context check at zero emission weight.
  */
-export function streetContextRequirementFor(stages: {
-	fst?: FSTMatcherLike | null
-	streetMorphology?: FSTMatcherLike | null
-}): {
+export function streetContextRequirementFor(
+	stages: {
+		fst?: FSTMatcherLike | null
+		streetMorphology?: FSTMatcherLike | null
+	},
+	options: { streetMorphologyPrior?: boolean } = {}
+): {
 	fstStreetMorphology?: FSTMatcherLike
-	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
+	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number; numberedSegmentOnly?: boolean }
 	fstStreetContextPositiveScale?: number
 } {
 	return stages.fst && stages.streetMorphology
 		? {
 				fstStreetMorphology: stages.streetMorphology,
-				fstStreetMorphologyOpts: { ...ZEROED_MORPHOLOGY_OPTS },
+				fstStreetMorphologyOpts: options.streetMorphologyPrior
+					? { ...NUMBERED_MORPHOLOGY_OPTS }
+					: { ...ZEROED_MORPHOLOGY_OPTS },
 				fstStreetContextPositiveScale: STREET_CONTEXT_POSITIVE_SCALE,
 			}
 		: {}

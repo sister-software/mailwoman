@@ -170,6 +170,10 @@ export interface GauntletResolverPins {
 	 */
 	venueHeadBiasScale: "production" | number
 	/**
+	 * The street-morphology emission prior on a segment that opens with a house number.
+	 */
+	streetMorphologyPrior: SwitchPin
+	/**
 	 * A span-rescore sub-span may drop context but never a word of the name.
 	 */
 	spanRescoreRequireContextRemainder: SwitchPin
@@ -193,6 +197,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	poiVenueTier: "production",
 	venueHeadPrior: "production",
 	venueHeadBiasScale: "production",
+	streetMorphologyPrior: "production",
 	spanRescoreRequireContextRemainder: "production",
 	spanRescoreWeakResolution: "production",
 }
@@ -254,6 +259,10 @@ export function describeResolverPins(pins: GauntletResolverPins): string {
 
 	if (pins.venueHeadBiasScale !== "production") {
 		entries.push(`venueHeadBiasScale=${pins.venueHeadBiasScale}`)
+	}
+
+	if (pins.streetMorphologyPrior !== "production") {
+		entries.push(`streetMorphologyPrior=${pins.streetMorphologyPrior.toUpperCase()}`)
 	}
 
 	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
@@ -645,6 +654,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return deps
 	}
 
+	const streetMorphologyPrior = pinnedSwitch(pins.streetMorphologyPrior, GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior)
+
 	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every
@@ -692,6 +703,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			...(capitalLevel ? { capitalLevel } : {}),
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 			...(await venueHeadDepsFor(caseCountry)),
+			streetMorphologyPrior,
 			...forkEntityDeps,
 			...forwarded,
 			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
@@ -707,6 +719,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			const priorDeps = {
 				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 				...(await venueHeadDepsFor(caseCountry)),
+				streetMorphologyPrior,
 			}
 
 			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)

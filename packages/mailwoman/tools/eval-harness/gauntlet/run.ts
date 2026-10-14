@@ -127,6 +127,10 @@ export interface GauntletRunOptions {
 	 */
 	venueHeadBiasScale?: number
 	/**
+	 * The street-morphology prior on numbered segments.
+	 */
+	streetMorphologyPrior?: SwitchPin
+	/**
 	 * Ablation: where the map artifacts land.
 	 *
 	 * @defaultValue `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
@@ -175,6 +179,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		poiVenueTier: options.poiVenueTier ?? "production",
 		venueHeadPrior: options.venueHeadPrior ?? "production",
 		venueHeadBiasScale: options.venueHeadBiasScale ?? "production",
+		streetMorphologyPrior: options.streetMorphologyPrior ?? "production",
 	}
 }
 

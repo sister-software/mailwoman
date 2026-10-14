@@ -51,6 +51,12 @@ export interface EngineConfig {
 	 * Multiplier on the venue-head table's biases.
 	 */
 	venue_head_bias_scale?: number
+	/**
+	 * Whether the street-morphology prior biases a street affix on a numbered segment.
+	 *
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior`
+	 */
+	street_morphology_prior?: SwitchPin
 	place_country?: SwitchPin
 	place_country_threshold?: number
 	postcode_country_coherence?: SwitchPin
@@ -101,6 +107,7 @@ export const EFFECTIVE_KEY_FOR = {
 	gazetteer_prior: "gazetteerPrior",
 	venue_head_prior: "venueHeadPrior",
 	venue_head_bias_scale: "venueHeadBiasScale",
+	street_morphology_prior: "streetMorphologyPrior",
 	place_country: "placeCountry",
 	place_country_threshold: "placeCountryThreshold",
 	postcode_country_coherence: "postcodeCountryCoherence",
@@ -161,6 +168,10 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		gazetteerPrior: pinnedSwitch(config.gazetteer_prior ?? "production", production.gazetteerPrior),
 		venueHeadPrior: pinnedSwitch(config.venue_head_prior ?? "production", production.venueHeadPrior),
 		venueHeadBiasScale: config.venue_head_bias_scale ?? production.venueHeadBiasScale,
+		streetMorphologyPrior: pinnedSwitch(
+			config.street_morphology_prior ?? "production",
+			production.streetMorphologyPrior
+		),
 		adminContainmentRerank: pinnedSwitch(
 			config.admin_containment_rerank ?? "production",
 			production.adminContainmentRerank

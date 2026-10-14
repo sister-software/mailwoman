@@ -16,7 +16,13 @@
  *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` and loaded into a second `FSTMatcher`.
  */
 
-import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "#fst-prior"
+import {
+	groupPiecesIntoWords,
+	numberOpensSegment,
+	wordsWithSegments,
+	type FSTMatcherLike,
+	type WordGroup,
+} from "#fst-prior"
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
@@ -41,6 +47,20 @@ export interface StreetMorphologyPriorOpts {
 	 * Magnitude of the negative bias on `dependent_locality` BIO labels for adjacent tokens, default 2.0.
 	 */
 	dependentLocalityPenalty?: number
+	/**
+	 * Whether an affix match biases only when it closes a segment that a word with a digit opens.
+	 *
+	 * `Plaza` in `30 Rockefeller Plaza, New York, NY 10112` is such a match.
+	 * The match takes the suffix reading only, and the street bias falls on the word before it.
+	 *
+	 * The unbounded prior reads a bare `Plaza` or `Center` as a street affix wherever it stands.
+	 * That reading measured 48 rows down on the US golden set in #1315.
+	 *
+	 * A trailing affix on a numbered segment is the position where the affix reading is the street reading.
+	 *
+	 * @defaultValue `false`
+	 */
+	numberedSegmentOnly?: boolean
 }
 
 /**
@@ -80,6 +100,9 @@ export function buildStreetMorphologyEmissionPriors(
 	const wordGroups = groupPiecesIntoWords(pieces)
 
 	if (!wordGroups.length) return matrix
+
+	const segmentWords = wordsWithSegments(wordGroups, pieces)
+	const segmentOf = new Map(segmentWords.map((word) => [word.group, word.segment]))
 
 	// Track matched word-group spans so the neighbor pass needs no second FST walk.
 	interface AffixMatch {
@@ -133,6 +156,20 @@ export function buildStreetMorphologyEmissionPriors(
 
 		if (!hasAffix) continue
 
+		// Under the bound the affix closes a segment a house number opens,
+		// as `Plaza` does in `30 Rockefeller Plaza, New York`.
+		// An affix inside the name, as `Rte` in `VT State Rte 100`, or one that opens the name,
+		// as `Rue` in `12 Rue de Rivoli`, takes no bias.
+		if (opts.numberedSegmentOnly) {
+			const wordIndex = segmentWords.findIndex((word) => word.group === group)
+			const endWordIndex = segmentWords.findIndex((word) => word.group === wordGroups[bestEnd])
+			const next = segmentWords[endWordIndex + 1]
+
+			if (!numberOpensSegment(segmentWords, wordIndex)) continue
+
+			if (next && next.segment === segmentWords[endWordIndex]!.segment) continue
+		}
+
 		affixMatches.push({ startGroupIdx: start, endGroupIdx: bestEnd })
 
 		const affixPieceIndices: number[] = []
@@ -148,13 +185,18 @@ export function buildStreetMorphologyEmissionPriors(
 		}
 
 		// Bias both prefix and suffix BIO labels on the matched tokens rather than pre-committing to one.
+		// A bounded match closes its segment, so only the suffix reading applies.
 		const affixBias = biasScale * maxAffixBias
 
 		for (let k = 0; k < affixPieceIndices.length; k++) {
 			const pi = affixPieceIndices[k]!
 			const prefixCol = k === 0 ? bStreetPrefix : (iStreetPrefix ?? bStreetPrefix)
 			const suffixCol = k === 0 ? bStreetSuffix : (iStreetSuffix ?? bStreetSuffix)
-			matrix[pi]![prefixCol] = Math.max(matrix[pi]![prefixCol]!, affixBias)
+
+			if (!opts.numberedSegmentOnly) {
+				matrix[pi]![prefixCol] = Math.max(matrix[pi]![prefixCol]!, affixBias)
+			}
+
 			matrix[pi]![suffixCol] = Math.max(matrix[pi]![suffixCol]!, affixBias)
 		}
 	}
@@ -164,8 +206,9 @@ export function buildStreetMorphologyEmissionPriors(
 	const neighbourStreetBias = biasScale * maxNeighbourStreetBias
 
 	for (const match of affixMatches) {
-		const before = findNeighbour(wordGroups, match.startGroupIdx, -1)
-		const after = findNeighbour(wordGroups, match.endGroupIdx, +1)
+		const before = findNeighbour(wordGroups, match.startGroupIdx, -1, segmentOf)
+		// A bounded match closes its segment, so the street's name is the word before it only.
+		const after = opts.numberedSegmentOnly ? null : findNeighbour(wordGroups, match.endGroupIdx, +1, segmentOf)
 
 		for (const neighbour of [before, after]) {
 			if (!neighbour) continue
@@ -188,14 +231,26 @@ export function buildStreetMorphologyEmissionPriors(
 }
 
 /**
- * Walk word groups outward from `fromGroupIdx` in `direction`, skipping empty groups
- * (whitespace / punctuation), and return the first non-empty neighbor or `null`.
+ * Walks word groups outward from `fromGroupIdx` in `direction`, skipping empty groups
+ * (whitespace and punctuation), and returns the first non-empty neighbor in the same segment.
+ *
+ * A neighbor across a comma is the next component rather than the street's name.
+ * The locality in `7 HILLVIEW AVENUE, KINGSTON 10` takes no street bias from `AVENUE`.
  */
-function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
+function findNeighbour(
+	groups: WordGroup[],
+	fromGroupIdx: number,
+	direction: 1 | -1,
+	segmentOf: ReadonlyMap<WordGroup, number>
+): WordGroup | null {
+	const segment = segmentOf.get(groups[fromGroupIdx]!)
+
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {
 		const g = groups[i]!
 
-		if (g.fstToken !== "") return g
+		if (g.fstToken === "") continue
+
+		return segmentOf.get(g) === segment ? g : null
 	}
 
 	return null

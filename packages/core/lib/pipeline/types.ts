@@ -555,7 +555,7 @@ export interface ClassifierOpts {
 	/**
 	 * Emission-prior weights for the street-morphology matcher.
 	 */
-	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number }
+	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number; numberedSegmentOnly?: boolean }
 	/**
 	 * Applies deterministic postcode repair after decoding.
 	 */

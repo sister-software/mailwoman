@@ -107,6 +107,12 @@ export const spec = {
 			hint: "multiplier",
 			description: "Multiplier on the venue-head table's biases.",
 		},
+		"street-morphology-prior": {
+			type: "boolean",
+			default: true,
+			description:
+				"Bias a trailing street-type affix toward the street labels when its segment opens with a house number; --no-street-morphology-prior disables it.",
+		},
 		"place-country": {
 			type: "boolean",
 			default: true,
@@ -216,6 +222,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		gazetteerPrior: booleanValue(values, "gazetteer-prior"),
 		venueHeadPrior: booleanValue(values, "venue-head-prior"),
 		venueHeadBiasScale: numberValue(values, "venue-head-bias-scale")!,
+		streetMorphologyPrior: booleanValue(values, "street-morphology-prior"),
 		placeCountry: booleanValue(values, "place-country"),
 		postcodeCountryCoherence: booleanValue(values, "postcode-country-coherence"),
 		forkEntity: booleanValue(values, "fork-entity"),

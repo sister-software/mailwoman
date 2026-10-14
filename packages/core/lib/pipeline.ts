@@ -11,6 +11,7 @@ export {
 	HARD_PLACE_COUNTRY_SAFELIST,
 	hardCountryFor,
 	STREET_CONTEXT_POSITIVE_SCALE,
+	NUMBERED_MORPHOLOGY_OPTS,
 	streetContextRequirementFor,
 	ZEROED_MORPHOLOGY_OPTS,
 	isBareLocalityTree,
