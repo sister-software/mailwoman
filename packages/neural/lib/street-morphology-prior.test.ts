@@ -133,4 +133,106 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 		expect(matrix[0]![labelCol("B-street")]!).toBe(4)
 		expect(matrix[0]![labelCol("B-dependent_locality")]!).toBe(-7)
 	})
+
+	it("gives no neighbor bias across a comma", () => {
+		const fst = mockAffixFST(["avenue"])
+		const pieces = makePieces("7 HILLVIEW AVENUE, KINGSTON 10") // "AVENUE," holds the comma
+		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
+
+		expect(matrix[1]![labelCol("B-street")]!).toBeGreaterThan(0)
+		expect(matrix[3]![labelCol("B-street")]!).toBe(0)
+		expect(matrix[3]![labelCol("B-dependent_locality")]!).toBe(0)
+	})
+
+	describe("numberedSegmentOnly", () => {
+		const fst = mockAffixFST(["plaza"])
+
+		it("biases an affix whose segment opens with a house number", () => {
+			// "Plaza," is one piece holding the comma.
+			const pieces = makePieces("30 Rockefeller Plaza, New York")
+
+			const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			expect(matrix[2]![labelCol("B-street_suffix")]!).toBeGreaterThan(0)
+			expect(matrix[1]![labelCol("B-street")]!).toBeGreaterThan(0)
+		})
+
+		it("leaves an affix alone when nothing numbered opens its segment", () => {
+			const pieces = makePieces("Rockefeller Plaza, New York")
+
+			const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			for (const row of matrix) {
+				expect(row.every((v) => v === 0)).toBe(true)
+			}
+		})
+
+		it("reads the number from the affix's own segment, not an earlier one", () => {
+			const pieces = makePieces("Suite 4, Rockefeller Plaza, New York")
+
+			const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			for (const row of matrix) {
+				expect(row.every((v) => v === 0)).toBe(true)
+			}
+		})
+
+		it("gives no prefix bias and no bias to the word after the affix", () => {
+			const pieces = makePieces("30 Rockefeller Plaza, New York")
+
+			const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			expect(matrix[2]![labelCol("B-street_prefix")]!).toBe(0)
+			expect(matrix[3]![labelCol("B-street")]!).toBe(0)
+		})
+
+		it("leaves an affix inside the name alone", () => {
+			const fstWithRte = mockAffixFST(["rte", "rd"])
+			const pieces = makePieces("05350 VT State Rte 100")
+
+			const matrix = buildStreetMorphologyEmissionPriors(fstWithRte, pieces, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			for (const row of matrix) {
+				expect(row.every((v) => v === 0)).toBe(true)
+			}
+
+			const trailing = makePieces("05161 Cider Mill Rd VT")
+
+			const trailingMatrix = buildStreetMorphologyEmissionPriors(fstWithRte, trailing, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			expect(trailingMatrix[3]![labelCol("B-street_suffix")]!).toBe(0)
+		})
+
+		it("leaves an affix that opens the name alone", () => {
+			const fstWithRue = mockAffixFST(["rue"])
+			const pieces = makePieces("12 Rue de Rivoli, Paris")
+
+			const matrix = buildStreetMorphologyEmissionPriors(fstWithRue, pieces, STAGE3_BIO_LABELS, {
+				numberedSegmentOnly: true,
+			})
+
+			for (const row of matrix) {
+				expect(row.every((v) => v === 0)).toBe(true)
+			}
+		})
+
+		it("is off by default, so an unnumbered affix keeps its bias", () => {
+			const pieces = makePieces("Rockefeller Plaza, New York")
+			const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
+
+			expect(matrix[1]![labelCol("B-street_suffix")]!).toBeGreaterThan(0)
+		})
+	})
 })

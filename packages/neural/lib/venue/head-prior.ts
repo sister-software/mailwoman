@@ -23,7 +23,7 @@
  *   `addEmissionMatrix`; where the admin FST also claims a word, the decoder weighs both biases.
  */
 
-import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
+import { groupPiecesIntoWords, numberOpensSegment, wordsWithSegments, type SegmentWord } from "#fst-prior"
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 
 /**
@@ -97,58 +97,6 @@ export interface VenueHeadPriorOpts {
 	isStreetAffix?: (word: string) => boolean
 }
 
-const SEGMENT_BREAK_RE = /[,;|\n]/u
-const DIGIT_RE = /\p{N}/u
-
-interface Word {
-	group: WordGroup
-	segment: number
-	/**
-	 * Whether the word is an identifier rather than a name word: it contains a digit or is a single letter.
-	 */
-	isIdentifier: boolean
-}
-
-function isIdentifierWord(token: string): boolean {
-	return DIGIT_RE.test(token) || [...token].length === 1
-}
-
-function wordsWithSegments(groups: readonly WordGroup[], pieces: ReadonlyArray<{ piece: string }>): Word[] {
-	const words: Word[] = []
-	let segment = 0
-
-	for (const group of groups) {
-		const text = group.pieceIndices.map((i) => pieces[i]!.piece).join("")
-
-		if (group.fstToken !== "") {
-			words.push({ group, segment, isIdentifier: isIdentifierWord(group.fstToken) })
-		}
-
-		if (SEGMENT_BREAK_RE.test(text)) {
-			segment++
-		}
-	}
-
-	return words
-}
-
-/**
- * Whether the segment holding the head at `head` opens, before the head,
- * with a word that contains a digit, such as a house number.
- */
-function numberOpensSegment(words: readonly Word[], head: number): boolean {
-	let first = head
-
-	while (first > 0 && words[first - 1]!.segment === words[head]!.segment) {
-		first--
-	}
-
-	if (first === head) return false
-	const opener = words[first]!
-
-	return opener.isIdentifier && DIGIT_RE.test(opener.group.fstToken)
-}
-
 /**
  * Builds a `[seqLen][numLabels]` bias matrix toward `B-venue` and `I-venue` from venue-head lookups.
  * A vocabulary without `B-venue` returns the zero matrix.
@@ -176,7 +124,7 @@ export function buildVenueHeadEmissionPriors(
 	// Every piece of the span takes the bias on both venue columns.
 	// A piece between two words, such as a bare `▁`, belongs to no word and keeps `O`.
 	// The next word can then open a new venue span only if its `B-venue` cell holds the bias too.
-	const mark = (word: Word, bias: number): void => {
+	const mark = (word: SegmentWord, bias: number): void => {
 		for (const pieceIndex of word.group.pieceIndices) {
 			const row = matrix[pieceIndex]!
 			row[bVenue] = Math.max(row[bVenue]!, bias)
@@ -203,7 +151,10 @@ export function buildVenueHeadEmissionPriors(
 
 		if (word.isIdentifier) continue
 		const token = word.group.fstToken
-		const sameSegment = (other: Word | undefined): boolean => other?.segment === word.segment && !other.isIdentifier
+
+		const sameSegment = (other: SegmentWord | undefined): boolean =>
+			other?.segment === word.segment && !other.isIdentifier
+
 		const following = words[index + 1]
 
 		// A head followed by a street type is the street's name, as in `Museum Street`.

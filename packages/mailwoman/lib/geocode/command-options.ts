@@ -35,6 +35,11 @@ export interface GeocodeCommandOptions {
 	 * Multiplier on the venue-head table's biases (`--venue-head-bias-scale`).
 	 */
 	venueHeadBiasScale: number
+	/**
+	 * Street-morphology prior on a trailing affix of a numbered segment (`--street-morphology-prior`).
+	 * On by default.
+	 */
+	streetMorphologyPrior: boolean
 	placeCountry: boolean
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
@@ -76,6 +81,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		gazetteerPrior: GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
 		venueHeadPrior: GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
 		venueHeadBiasScale: DEFAULT_VENUE_HEAD_BIAS_SCALE,
+		streetMorphologyPrior: GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior,
 		placeCountry: true,
 		postcodeCountryCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeCountryCoherence,
 		forkEntity: true,

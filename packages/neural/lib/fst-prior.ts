@@ -459,6 +459,70 @@ export function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
 	return fst.accepting(match.stateID).some((e) => e.placetype === "street_affix")
 }
 
+const SEGMENT_BREAK_RE = /[,;|\n]/u
+const DIGIT_RE = /\p{N}/u
+
+/**
+ * A word group with the comma-separated segment it sits in.
+ */
+export interface SegmentWord {
+	group: WordGroup
+	segment: number
+	/**
+	 * Whether the word is an identifier rather than a name word: it contains a digit or is a single letter.
+	 */
+	isIdentifier: boolean
+}
+
+function isIdentifierWord(token: string): boolean {
+	return DIGIT_RE.test(token) || [...token].length === 1
+}
+
+/**
+ * Assigns each non-empty word group its segment index.
+ *
+ * A comma, semicolon, bar or newline in a group's pieces closes the segment after that group.
+ */
+export function wordsWithSegments(
+	groups: readonly WordGroup[],
+	pieces: ReadonlyArray<{ piece: string }>
+): SegmentWord[] {
+	const words: SegmentWord[] = []
+	let segment = 0
+
+	for (const group of groups) {
+		const text = group.pieceIndices.map((i) => pieces[i]!.piece).join("")
+
+		if (group.fstToken !== "") {
+			words.push({ group, segment, isIdentifier: isIdentifierWord(group.fstToken) })
+		}
+
+		if (SEGMENT_BREAK_RE.test(text)) {
+			segment++
+		}
+	}
+
+	return words
+}
+
+/**
+ * Whether the segment holding the word at `index` opens, before that word,
+ * with a word that contains a digit, such as a house number.
+ */
+export function numberOpensSegment(words: readonly SegmentWord[], index: number): boolean {
+	if (index < 0 || index >= words.length) return false
+	let first = index
+
+	while (first > 0 && words[first - 1]!.segment === words[index]!.segment) {
+		first--
+	}
+
+	if (first === index) return false
+	const opener = words[first]!
+
+	return opener.isIdentifier && DIGIT_RE.test(opener.group.fstToken)
+}
+
 function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 | -1): number {
 	for (let i = from + direction; i >= 0 && i < groups.length; i += direction) {
 		if (groups[i]!.fstToken !== "") return i

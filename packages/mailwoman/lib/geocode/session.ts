@@ -66,6 +66,7 @@ import {
 export interface GeocodeSessionSettings {
 	gazetteerPrior: boolean
 	venueHeadPrior: boolean
+	streetMorphologyPrior: boolean
 	capitalTier: CapitalTier
 	variantAliasExemption: VariantAliasExemption
 }
@@ -76,6 +77,7 @@ export interface GeocodeSessionSettings {
 export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
 	gazetteerPrior: true,
 	venueHeadPrior: true,
+	streetMorphologyPrior: true,
 	capitalTier: "auto",
 	variantAliasExemption: "applied",
 }
@@ -87,6 +89,7 @@ export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>)
 	return {
 		gazetteerPrior: options.gazetteerPrior ?? GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
 		venueHeadPrior: options.venueHeadPrior ?? GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
+		streetMorphologyPrior: options.streetMorphologyPrior ?? GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior,
 		capitalTier: options.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: options.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 	}
@@ -117,6 +120,13 @@ export interface GeocodeSessionOptions {
 	 * @defaultValue `1`
 	 */
 	venueHeadBiasScale?: number
+	/**
+	 * Whether the street-morphology matcher biases a street affix on a segment that opens
+	 * with a house number, as `Plaza` in `30 Rockefeller Plaza, New York, NY 10112`.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
+	 */
+	streetMorphologyPrior?: boolean
 	locale: string
 
 	/**
@@ -669,12 +679,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		| "inputMode"
 		| "fst"
 		| "streetMorphology"
+		| "streetMorphologyPrior"
 		| "venueHead"
 		| "venueHeadOpts"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
+		streetMorphologyPrior: settings.streetMorphologyPrior,
 		...(venueHead ? { venueHead } : {}),
 		...(venueHead && options.venueHeadBiasScale !== undefined
 			? { venueHeadOpts: { biasScale: options.venueHeadBiasScale } }

@@ -36,6 +36,7 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"poi_venue_tier",
 	"venue_head_prior",
 	"venue_head_bias_scale",
+	"street_morphology_prior",
 ])
 
 /**
@@ -255,6 +256,7 @@ export async function buildRoutedMailwomanArm(
 				poiVenueTier: config.poi_venue_tier ?? "production",
 				venueHeadPrior: config.venue_head_prior ?? "production",
 				venueHeadBiasScale: config.venue_head_bias_scale ?? "production",
+				streetMorphologyPrior: config.street_morphology_prior ?? "production",
 			},
 		})
 	)

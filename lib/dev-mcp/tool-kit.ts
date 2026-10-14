@@ -203,6 +203,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 		gazetteer_prior: SwitchPinSchema.optional(),
 		venue_head_prior: SwitchPinSchema.optional(),
 		venue_head_bias_scale: z.number().optional(),
+		street_morphology_prior: SwitchPinSchema.optional(),
 		place_country: SwitchPinSchema.optional(),
 		place_country_threshold: z.number().optional(),
 		postcode_country_coherence: SwitchPinSchema.optional(),

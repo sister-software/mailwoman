@@ -190,6 +190,12 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
+	 * Whether the street-morphology matcher also biases a street affix on a numbered segment.
+	 *
+	 * Absent, the matcher serves the street-context check at zero weight.
+	 */
+	streetMorphologyPrior?: boolean
+	/**
 	 * Venue-head lookups for the session's locale.
 	 * Absent, the venue-head prior does not run.
 	 */
@@ -324,7 +330,14 @@ export function geocodeParseInputs(
 	input: string,
 	deps: Pick<
 		GeocodeDeps,
-		"normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology" | "venueHead" | "venueHeadOpts"
+		| "normalizeInput"
+		| "caseNormalization"
+		| "inputMode"
+		| "fst"
+		| "streetMorphology"
+		| "streetMorphologyPrior"
+		| "venueHead"
+		| "venueHeadOpts"
 	> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
@@ -364,10 +377,13 @@ export function geocodeParseInputs(
 			// Optional gazetteer prior.
 			...(deps.fst ? { fst: deps.fst } : {}),
 			// Street-context requirements from shared helper.
-			...streetContextRequirementFor({
-				...(deps.fst ? { fst: deps.fst } : {}),
-				...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
-			}),
+			...streetContextRequirementFor(
+				{
+					...(deps.fst ? { fst: deps.fst } : {}),
+					...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
+				},
+				{ streetMorphologyPrior: deps.streetMorphologyPrior ?? false }
+			),
 			...(deps.venueHead ? { venueHead: deps.venueHead } : {}),
 			...(deps.venueHead && deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
 		},
@@ -388,6 +404,7 @@ export async function parseForGeocode(
 		| "inputMode"
 		| "fst"
 		| "streetMorphology"
+		| "streetMorphologyPrior"
 		| "venueHead"
 		| "venueHeadOpts"
 	>
