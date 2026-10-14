@@ -25,6 +25,7 @@ import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
+import { loadParsePriors } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
@@ -605,21 +606,16 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		if (cached) return cached
 
-		const [{ deserializeFST }, { loadStreetMorphologyFST: loadMorph }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/fst"),
-			import("@mailwoman/resolver-wof-sqlite/street"),
-		])
+		// The loader reports a missing or unreadable artifact and returns no prior for it,
+		// because a silent absent prior scores lower and reads as a model difference.
+		const loaded = await loadParsePriors(
+			{ fstPath, streetMorphologyPath: (forClassifier as { streetMorphologyPath?: string }).streetMorphologyPath },
+			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
+		)
 
-		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
-
-		try {
-			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: (await loadMorph()).matcher }
-		} catch (error) {
-			// A missing or unreadable artifact degrades to no prior, with its reason recorded
-			// because a silent absent prior scores lower and reads as a model difference.
-			console.error(
-				`[gauntlet] gazetteer prior unavailable at ${fstPath}: ${(error as Error).message} — grading without it`
-			)
+		const deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {
+			...(loaded.fst ? { fst: loaded.fst } : {}),
+			...(loaded.streetMorphology ? { streetMorphology: loaded.streetMorphology } : {}),
 		}
 
 		priorDepsByPath.set(fstPath, deps)

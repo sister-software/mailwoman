@@ -23,31 +23,11 @@
  *   `addEmissionMatrix`; where the admin FST also claims a word, the decoder weighs both biases.
  */
 
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "@mailwoman/core/pipeline"
+
 import { groupPiecesIntoWords, numberOpensSegment, wordsWithSegments, type SegmentWord } from "#fst-prior"
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 
-/**
- * Venue-head lookups for one locale.
- * Each method returns a bias in natural-log units or `null`.
- */
-export interface VenueHeadLexiconLike {
-	/**
-	 * The bias of `word` as the first word of a venue name.
-	 */
-	first(word: string): number | null
-	/**
-	 * The bias of `word` as the last word of a venue name.
-	 */
-	last(word: string): number | null
-	/**
-	 * The bias of the longest suffix of `word`, shorter than `word`, that marks a venue name.
-	 */
-	suffix(word: string): number | null
-}
-
-/**
- * Overrides for {@linkcode buildVenueHeadEmissionPriors}.
- */
 /**
  * The default multiplier on the lexicon's bias.
  *
@@ -56,46 +36,6 @@ export interface VenueHeadLexiconLike {
  * At 2, the full regression board changes 6 of 1,257 rows, 2 of them improvements and none regressed.
  */
 export const DEFAULT_VENUE_HEAD_BIAS_SCALE = 2
-
-export interface VenueHeadPriorOpts {
-	/**
-	 * Multiplier on the lexicon's bias.
-	 *
-	 * @defaultValue {@link DEFAULT_VENUE_HEAD_BIAS_SCALE}
-	 */
-	biasScale?: number
-	/**
-	 * Maximum bias, in logits, on any one cell.
-	 *
-	 * The table's biases are log rate ratios and seldom exceed 6.
-	 * The cap bounds a scaled bias.
-	 *
-	 * @defaultValue `6`
-	 */
-	maxBias?: number
-	/**
-	 * The most words the venue span extends from its head.
-	 *
-	 * @defaultValue `3`
-	 */
-	extensionWords?: number
-	/**
-	 * Factor applied to the bias once for each word between a word and its head.
-	 *
-	 * The shipped model's venue logits trail the winning label by a near-constant margin
-	 * across a landmark name's pieces, so the default extends the head's bias undiminished.
-	 *
-	 * @defaultValue `1`
-	 */
-	extensionDecay?: number
-	/**
-	 * Whether a word is a street-type affix, in `normalizeFSTToken` form.
-	 *
-	 * A head followed by one is a street name (`Museum Street`) and gets no bias,
-	 * and an extension stops at one.
-	 */
-	isStreetAffix?: (word: string) => boolean
-}
 
 /**
  * Builds a `[seqLen][numLabels]` bias matrix toward `B-venue` and `I-venue` from venue-head lookups.

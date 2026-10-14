@@ -34,6 +34,7 @@ import type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
+	VenueHeadLexiconLike,
 } from "#pipeline/types"
 import type { ResolveOpts } from "#resolver/types"
 
@@ -399,6 +400,8 @@ export async function runPipeline(
 			caseNormalization: opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 			placetypePair: opts?.placetypePair ?? "inherit",
 			streetMorphology: stages.streetMorphology ?? null,
+			streetMorphologyPrior: stages.streetMorphologyPrior ?? false,
+			venueHead: stages.venueHead?.(locale) ?? null,
 			inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
 		})
 
@@ -477,10 +480,12 @@ async function safeClassify(
 		caseNormalization: CaseNormalization
 		placetypePair: PlacetypePairSelection
 		streetMorphology: FSTMatcherLike | null
+		streetMorphologyPrior: boolean
+		venueHead: VenueHeadLexiconLike | null
 		inputMode: InputMode
 	}
 ): Promise<AddressTree> {
-	const { fst, caseNormalization, placetypePair, streetMorphology, inputMode } = knobs
+	const { fst, caseNormalization, placetypePair, streetMorphology, streetMorphologyPrior, venueHead, inputMode } = knobs
 
 	try {
 		return await classifier.parse(text, {
@@ -491,7 +496,8 @@ async function safeClassify(
 			caseNormalization,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			placetypePair,
-			...streetContextRequirementFor({ fst, streetMorphology }),
+			...streetContextRequirementFor({ fst, streetMorphology }, { streetMorphologyPrior }),
+			...(venueHead ? { venueHead } : {}),
 		})
 	} catch (error) {
 		recordFault(faults, PipelineFaultStage.Classifier, error)

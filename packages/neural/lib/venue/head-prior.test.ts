@@ -4,14 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "@mailwoman/core/pipeline"
 import { describe, expect, it } from "vitest"
 
-import {
-	buildVenueHeadEmissionPriors,
-	DEFAULT_VENUE_HEAD_BIAS_SCALE,
-	type VenueHeadLexiconLike,
-	type VenueHeadPriorOpts,
-} from "#venue/head-prior"
+import { buildVenueHeadEmissionPriors, DEFAULT_VENUE_HEAD_BIAS_SCALE } from "#venue/head-prior"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-venue", "I-venue"]
 const B = LABELS.indexOf("B-venue")

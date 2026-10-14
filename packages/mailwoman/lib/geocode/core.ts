@@ -33,7 +33,6 @@ import {
 	type QueryKindResult,
 	type StageSource,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
-	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
 import type {
 	AuthoritativeProvider,
@@ -58,6 +57,7 @@ import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
+import { parsePriorOptions } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
 import {
@@ -199,11 +199,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * Venue-head lookups for the session's locale.
 	 * Absent, the venue-head prior does not run.
 	 */
-	venueHead?: import("@mailwoman/neural/venue/head-prior").VenueHeadLexiconLike
+	venueHead?: import("@mailwoman/core/pipeline").VenueHeadLexiconLike
 	/**
 	 * Overrides for the venue-head prior's bias scale, cap and extension.
 	 */
-	venueHeadOpts?: import("@mailwoman/neural/venue/head-prior").VenueHeadPriorOpts
+	venueHeadOpts?: import("@mailwoman/core/pipeline").VenueHeadPriorOpts
 	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
@@ -374,18 +374,15 @@ export function geocodeParseInputs(
 			inputMode,
 			// Default word-consistency enforcement.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			// Optional gazetteer prior.
-			...(deps.fst ? { fst: deps.fst } : {}),
-			// Street-context requirements from shared helper.
-			...streetContextRequirementFor(
+			// The loaded priors, through the options builder every production parse path uses.
+			...parsePriorOptions(
+				{ fst: deps.fst ?? null, streetMorphology: deps.streetMorphology ?? null },
 				{
-					...(deps.fst ? { fst: deps.fst } : {}),
-					...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
-				},
-				{ streetMorphologyPrior: deps.streetMorphologyPrior ?? false }
+					streetMorphologyPrior: deps.streetMorphologyPrior ?? false,
+					venueHead: deps.venueHead ?? null,
+					...(deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
+				}
 			),
-			...(deps.venueHead ? { venueHead: deps.venueHead } : {}),
-			...(deps.venueHead && deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
 		},
 	}
 }

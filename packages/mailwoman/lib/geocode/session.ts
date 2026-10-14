@@ -7,7 +7,6 @@
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
@@ -16,7 +15,6 @@ import {
 	type InputMode,
 	type PipelineTiming,
 	type QueryKindResult,
-	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
 import {
 	type RegionDatabaseProvider,
@@ -459,52 +457,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const classifier = routed.primary
 
-	let fst: FSTMatcherLike | null = null
-	let streetMorphology: FSTMatcherLike | null = null
+	const { loadParsePriors } = await import("#geocode/parse-priors")
 
-	if (settings.gazetteerPrior) {
-		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/fst"),
-			import("@mailwoman/resolver-wof-sqlite/street"),
-		])
+	const priors = await loadParsePriors(classifier, {
+		gazetteerPrior: settings.gazetteerPrior,
+		venueHeadPrior: settings.venueHeadPrior,
+		label: `locale ${options.locale}`,
+	})
 
-		const fstPath = classifier.fstPath
+	const { fst, streetMorphology } = priors
 
-		if (fstPath) {
-			try {
-				fst = deserializeFST(await readLocalBuffer(fstPath))
-			} catch (error) {
-				console.warn(`[mailwoman] failed to load the gazetteer FST at ${fstPath}: ${(error as Error).message}`)
-			}
-		}
-
-		if (!fst) {
-			console.warn(
-				`[mailwoman] --gazetteer-prior was requested for locale ${options.locale} but no FST artifact resolved` +
-					`${classifier.fstPath ? ` at ${classifier.fstPath}` : " (the weights package ships none)"} — the gazetteer ` +
-					"channel is OFF for this run. Results are the base model's, not the prior's."
-			)
-		}
-
-		if (fst) {
-			try {
-				streetMorphology = (
-					await loadStreetMorphologyFST({
-						...(classifier.streetMorphologyPath ? { artifactPath: classifier.streetMorphologyPath } : {}),
-						onWarn: (message) => console.warn(`[mailwoman] ${message}`),
-					})
-				).matcher
-			} catch (error) {
-				console.warn(`[mailwoman] street-morphology FST unavailable: ${(error as Error).message} — check off`)
-			}
-		}
-	}
-
-	const venueHeadCountry = (options.defaultCountry ?? options.locale.split("-")[1] ?? "").toUpperCase()
-
-	const venueHead = settings.venueHeadPrior
-		? (await import("@mailwoman/poi-taxonomy/venue-heads")).venueHeadLexicon(venueHeadCountry)
-		: null
+	const venueHead = priors.venueHeadFor(options.defaultCountry ?? options.locale.split("-")[1] ?? null)
 
 	const weightsLoadedAt = performance.now()
 

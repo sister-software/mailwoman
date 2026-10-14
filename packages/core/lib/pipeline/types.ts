@@ -536,6 +536,68 @@ export interface FSTMatcherLike {
 }
 
 /**
+ * Venue-head lookups for one country.
+ * Each method returns a bias in natural-log units or `null`.
+ */
+export interface VenueHeadLexiconLike {
+	/**
+	 * The bias of `word` as the first word of a venue name.
+	 */
+	first(word: string): number | null
+	/**
+	 * The bias of `word` as the last word of a venue name.
+	 */
+	last(word: string): number | null
+	/**
+	 * The bias of the longest suffix of `word`, shorter than `word`, that marks a venue name.
+	 */
+	suffix(word: string): number | null
+}
+
+/**
+ * Overrides for the venue-head prior.
+ */
+export interface VenueHeadPriorOpts {
+	/**
+	 * Multiplier on the lexicon's bias.
+	 *
+	 * The prior's own default applies when this is absent.
+	 */
+	biasScale?: number
+	/**
+	 * Maximum bias, in logits, on any one cell.
+	 *
+	 * The table's biases are log rate ratios and seldom exceed 6.
+	 * The cap bounds a scaled bias.
+	 *
+	 * @defaultValue `6`
+	 */
+	maxBias?: number
+	/**
+	 * The most words the venue span extends from its head.
+	 *
+	 * @defaultValue `3`
+	 */
+	extensionWords?: number
+	/**
+	 * Factor applied to the bias once for each word between a word and its head.
+	 *
+	 * The shipped model's venue logits trail the winning label by a near-constant margin
+	 * across a landmark name's pieces, so the default extends the head's bias undiminished.
+	 *
+	 * @defaultValue `1`
+	 */
+	extensionDecay?: number
+	/**
+	 * Whether a word is a street-type affix, in `normalizeFSTToken` form.
+	 *
+	 * A head followed by one is a street name (`Museum Street`) and gets no bias,
+	 * and an extension stops at one.
+	 */
+	isStreetAffix?: (word: string) => boolean
+}
+
+/**
  * Options for {@link AddressClassifier.parse}.
  */
 export interface ClassifierOpts {
@@ -556,6 +618,21 @@ export interface ClassifierOpts {
 	 * Emission-prior weights for the street-morphology matcher.
 	 */
 	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number; numberedSegmentOnly?: boolean }
+	/**
+	 * The scale for positive street-context emissions.
+	 */
+	fstStreetContextPositiveScale?: number
+	/**
+	 * Venue-head lookups for the input's country.
+	 *
+	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
+	 * Absent, the prior does not run.
+	 */
+	venueHead?: VenueHeadLexiconLike
+	/**
+	 * Overrides for the venue-head prior's bias magnitudes and extension.
+	 */
+	venueHeadOpts?: VenueHeadPriorOpts
 	/**
 	 * Applies deterministic postcode repair after decoding.
 	 */
@@ -647,6 +724,19 @@ export interface RuntimePipelineStages {
 	 * The street-context check runs only when `fst` is also set.
 	 */
 	streetMorphology?: FSTMatcherLike
+	/**
+	 * Whether the street-morphology matcher also biases a street affix on a segment that
+	 * opens with a house number, as `Plaza` in `30 Rockefeller Plaza, New York, NY 10112`.
+	 *
+	 * Absent, the matcher serves the street-context check at zero emission weight.
+	 */
+	streetMorphologyPrior?: boolean
+	/**
+	 * The venue-head lexicon for the detected locale, or `null` for none.
+	 *
+	 * The pipeline calls it once per parse with the locale hint and passes the lexicon to the classifier.
+	 */
+	venueHead?: (locale: LocaleHint) => VenueHeadLexiconLike | null
 	resolver?: Resolver
 	/**
 	 * The backend for resolver candidate and parent-chain lookups during reconciliation.

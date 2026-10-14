@@ -23,6 +23,7 @@ import {
 	perTagRates,
 	scorePerTagCounts,
 } from "#tools/eval-harness/per/tag-f1"
+import { productionPriorOptions } from "#tools/eval-harness/production-priors"
 
 /**
  * Options for {@linkcode scoreAffix}.
@@ -143,10 +144,13 @@ export async function scoreAffix(
 
 	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
+	// Every fixture this scorer reads is US, so the venue-head lexicon is the US one.
+	const priorOptions = (await productionPriorOptions(neural))("US")
+
 	const stat = await scorePerTagCounts(
 		rows,
 		TAGS,
-		async (raw) => decodeAsJSON(await neural.parse(raw)) as Record<string, string>
+		async (raw) => decodeAsJSON(await neural.parse(raw, priorOptions)) as Record<string, string>
 	)
 
 	report(`# affix per-tag (unfolded) — ${model.split("/").slice(-2).join("/")} · n=${rows.length}`)

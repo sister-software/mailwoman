@@ -23,6 +23,7 @@ import {
 	perTagRates,
 	scorePerTagCounts,
 } from "#tools/eval-harness/per/tag-f1"
+import { productionPriorOptions } from "#tools/eval-harness/production-priors"
 
 /**
  * Options for {@linkcode scoreCountryHomograph}.
@@ -142,6 +143,9 @@ export async function scoreCountryHomograph(
 
 	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
+	// The homograph fixture is US, so the venue-head lexicon is the US one.
+	const priorOptions = (await productionPriorOptions(neural))("US")
+
 	let overfire = 0 // gold region/locality token tagged as country
 	let missedCountry = 0 // gold country present, model emitted no country
 	const overfireCases: string[] = []
@@ -150,7 +154,7 @@ export async function scoreCountryHomograph(
 	const stat = await scorePerTagCounts(
 		rows,
 		TAGS,
-		async (raw) => decodeAsJSON(await neural.parse(raw)),
+		async (raw) => decodeAsJSON(await neural.parse(raw, priorOptions)),
 		(row, got) => {
 			const exp = row.components
 
