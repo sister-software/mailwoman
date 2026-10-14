@@ -245,7 +245,7 @@ export interface ForkEntityAnswerTarget {
  * Rewrites a result whose whole input is one entity's name as that entity and no other component.
  *
  * The parse read the name as admin words, so every component it produced and the hierarchy
- * the resolver built from them describe a place the input never named.
+ * the resolver built from them describe a place the input does not state.
  */
 function answerAsWholeInputEntity(result: ForkEntityAnswerTarget, entity: ForkEntityHit): void {
 	applyForkEntityAnswer(result, entity, [])
@@ -523,9 +523,9 @@ function venueHeadSegment(venueRaw: string): string | null {
  * of the query and of each row.
  * It still requires a single match within the radius.
  *
- * An exact row inside the radius outranks every partial-name reading: when exact
- * rows are present and the exact probe abstains among them, the retries do not run,
- * so `Empire State Building, New York, NY` cannot fall through to a row named `State Building`.
+ * An exact row inside the radius outranks every partial-name reading: when exact rows
+ * are present and the exact probe abstains among them, the retries do not run, so
+ * `Empire State Building, New York, NY` cannot fall through to a row with the name `State Building`.
  */
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,
