@@ -93,7 +93,7 @@ export interface ParsePriors {
 	/**
 	 * The venue-head lexicon for a country, or `null` when the venue-head prior was not requested.
 	 *
-	 * A `null` country reads the language aggregates alone.
+	 * A `null` country reads the language aggregates and no country table.
 	 */
 	venueHeadFor(country: string | null): VenueHeadLexiconLike | null
 }
@@ -188,7 +188,7 @@ export interface ParsePriorSelection {
 }
 
 /**
- * The classifier options that carry the loaded priors into one parse.
+ * The classifier options that pass the loaded priors to one parse.
  */
 export type ParsePriorOptions = Partial<
 	Pick<

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The production parse priors for a battery leg. A leg that parses with the classifier alone
- *   grades a configuration production never runs, so every floored leg loads the gazetteer FST,
+ *   The production parse priors for a battery leg. A leg that parses with the classifier and no
+ *   prior grades a configuration production never runs, so every floored leg loads the gazetteer FST,
  *   the street-morphology matcher and the venue-head lexicon through the loader the geocode
  *   session uses, under the session's default switches.
  */
@@ -27,7 +27,7 @@ export type ProductionPriorOptions = (country: string | null) => ParsePriorOptio
  *
  * The switches are the geocode session's defaults, so the battery grades the parse the session runs.
  * A classifier without an FST artifact reports the absence through `reportError`
- * and parses with the venue-head prior alone.
+ * and parses with the venue-head prior and no FST matcher.
  */
 export async function productionPriorOptions(
 	classifier: ParsePriorArtifacts,
