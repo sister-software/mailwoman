@@ -94,7 +94,7 @@ def test_val_row_limit_draws_every_file_in_proportion(tmp_path: Path) -> None:
 
 def test_val_row_limit_spreads_over_row_groups(tmp_path: Path) -> None:
     """A file's share of a limited draw comes from every row group, so a draw of a multi-source part
-    file holds each of its sources rather than the one its first row group carries."""
+    file holds each of its sources rather than the source of its first row group."""
     corpus = tmp_path / "corpus"
     (corpus / "val").mkdir(parents=True)
     rows = [_row(f"{i} Gamma St", "a") for i in range(64)]

@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 def _held_out_quotas(paths: list[Path], row_limit: int, rng: random.Random) -> list[int]:
     """Rows to take from each file for a draw of ``row_limit`` rows, in proportion to the file's rows.
 
-    Each file's share is ``row_limit`` times its rows over the split's rows. The whole part of the share
-    is taken, and the fractional part is taken with that probability, so a file too small for one whole
-    row still reaches the draw at its share over many draws.
+    Each file's share is ``row_limit`` times its rows over the split's rows. The draw takes the whole
+    part of the share. It takes one more row with probability equal to the fractional part. A file too
+    small for one whole row therefore reaches the draw at its share across repeated draws.
     """
     rows = [pq.ParquetFile(s).metadata.num_rows for s in paths]
     total = sum(rows)
@@ -59,7 +59,7 @@ def _stream_held_out(
     the source-segregated train corpus, but a mixed-source validation file silently loses its
     later-source rows. Held-out streams have no source mixture to steer.
 
-    With ``row_limit`` the stream yields about that many rows, taken from every file in proportion to
+    With ``row_limit`` the stream yields close to ``row_limit`` rows, taken from every file in proportion to
     its rows and spread over each file's row groups. Without it the files stream whole, one after
     another, and a short prefix of that stream is the leading file's rows: the trainer's 4,096-row
     validation draw over a split of 36 files held 745 rows with ``unit`` under one file order and 64

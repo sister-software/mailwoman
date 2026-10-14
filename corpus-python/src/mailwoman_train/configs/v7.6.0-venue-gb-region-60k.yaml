@@ -3,14 +3,15 @@
 #
 # kind: from-scratch. 60,000 steps at batch 128, learning rate 5e-4, cosine, seed 42, no `train.init_from`,
 # no EWC.
-# why: the run carries two corpus changes that no fine-tune of v7.2.0 can deliver. A fine-tune cannot relabel
+# why: the run tests two corpus changes that no fine-tune of v7.2.0 can deliver. A fine-tune cannot relabel
 # a source the base already learned, and v7.5.0 at EWC 1e4 left every constituent-country parse unchanged.
 # control_run: none. A from-scratch run inherits no base, so shipped 10.1.0 is the baseline.
 #
 # The differences from v7.4.1-venue-locality-60k.yaml are:
 #
-# 1. `data.corpus_dir` moves to v0.7.6-venue-gb-region. The `rendered-gb` rows of that corpus label England,
-#    Scotland and Wales `region` after the locality, read from NSUL by postcode (#2554). The base's
+# 1. `data.corpus_dir` moves to v0.7.6-venue-gb-region. The `rendered-gb` rows of that corpus label England
+#    and Wales `region` after the locality, read from NSUL by postcode (#2554). Price Paid Data covers
+#    England and Wales, so the rows hold no Scottish or Northern Irish postcode. The base's
 #    `rendered-gb` rows labeled them `country`, which disagreed with `wof-admin`'s `region` label for the same
 #    names. The source keeps its weight of 6 and its wire identifier.
 #
@@ -23,7 +24,7 @@
 #    in proportion to its rows, where it read whichever files led the shuffled order. Under that draw the
 #    split's 9.0% of rows holding `unit` give about 368 rows at 4,096, below the `unit` floor of 500
 #    that v7.4.0 met with 745 rows from a draw its leading file dominated. The floor keeps its value and
-#    the draw doubles, which also doubles the support behind every per-label F1 in `train_log.csv`.
+#    the draw doubles. The support behind every per-label F1 in `train_log.csv` doubles with it.
 #
 # 4. `train.output_dir` and `train.trackio_run_name` name the v760 run.
 #
