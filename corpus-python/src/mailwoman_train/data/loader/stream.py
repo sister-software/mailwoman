@@ -148,6 +148,7 @@ def iter_rows(
         country_weights=country_weights,
         source_weights=policy.source_weights,
         coarse_filter=coarse_filter,
+        row_limit=row_limit,
     )
     buf: list[dict[str, Any]] = []
     yielded = 0
