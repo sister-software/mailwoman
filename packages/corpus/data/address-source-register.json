@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "180289293c6544e2c961e54605a417a30e432c8a47ff2befb784f5e9f51243d8",
+	"contentDigest": "0e80fc1a4ae5fa3003ef56378c38dac5ba5bb7e12f1189eae6a18b3886838b79",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -942,6 +942,51 @@
 			"licenseID": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq"
 		},
 		{
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"electedBecause": "Five Great Britain publishers of organization registers license the register under the Open Government Licence v3.0, and the pages read for each are retained in the receipt directory. Three state the license for the data itself. CQC's `using-cqc-data` page, 76,786 bytes, sha256 `2db3eec0967e349830b9e5622e7887e6e5284760d4212f3f66801415147f7ba2`, states `Our data is made available under the Open Government Licence. By using it you are accepting the conditions of this licence.` The Food Standards Agency's terms page, 99,851 bytes, sha256 `b301243640a0230e84a75316267df54d1621fc8cdbd75ff8b835872f42360dbf`, states `Use of proprietary food hygiene ratings information and services is subject to the terms of the Open Government Licence (OGL).` NHS England's TRUD terms, 20,140 bytes, sha256 `b2c90ebee42abff95b1ad5c963eae1ace22e4449e326b4b9a3aa781d95e97e7f`, state `you can use NHS England Content, including copying it, adapting it, and using it for any purpose, including commercially, provided you follow these terms and conditions and the terms of the OGL`, and the Organisation Data Service item page, 16,610 bytes, sha256 `d8d9e77435333049425de7289e89915e4f9a8871a16797fedd1f6c26c63d35d7`, applies `Open Government Licence for SDS`. TRUD excludes `Information owned by third parties which we are not authorised to licence on to you`, which `will be clearly marked`. Two rest on the GOV.UK footer alone, `All content is available under the Open Government Licence v3.0, except where otherwise stated`: DVSA's active MOT test stations publication, 76,532 bytes, sha256 `58184d539a607e2046a1d47f0860c98b2185488bd0c0fadac4c5e59273788a15`, and the Get Information about Schools downloads page, 47,303 bytes, sha256 `270a0e64ae36c363de65c25a2363bcfe255f5ccdcb115da340d44b14a78352be`. Neither page states anything otherwise. **None of the pages read restricts the address fields the way MHCLG's energy performance notice restricts its AddressBase- and PAF-derived fields**, and that is a statement about the text read rather than about where each publisher's address columns came from. GIAS and CQC are the two most likely to have matched addresses against AddressBase, so their field documentation is the read that would settle it. The Food Standards Agency withholds address and geocoding data where an establishment operates from a private address, per `ratings.food.gov.uk/open-data`, 397,874 bytes, sha256 `364a2f3293febbe54f52ff09bf5ac0b71fafce052ff6463566493d9d0069fb4e`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to copy, publish, distribute and transmit the Information."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers reading the address columns out of the published file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation and commercial and non-commercial exploitation, and fitting a model adapts and exploits the Information."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the attribution statement the publisher specifies."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights carry the attribution condition is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for attribution licenses, and the OGL text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "OGL v3.0 grants a worldwide, royalty-free, perpetual, non-exclusive license and states no sublicensing right. Whether that satisfies a commercial agreement is a drafting question."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-driver-and-vehicle-standards-agency"
+		},
+		{
 			"licenseID": "unchecked-access-free-gb-gb-business-legal-1",
 			"state": "unchecked",
 			"publisherStatement": "Free",
@@ -954,10 +999,49 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-charity-nonprofit-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-gb-gb-education-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-education-1 alone."
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"electedBecause": "Five Great Britain publishers of organization registers license the register under the Open Government Licence v3.0, and the pages read for each are retained in the receipt directory. Three state the license for the data itself. CQC's `using-cqc-data` page, 76,786 bytes, sha256 `2db3eec0967e349830b9e5622e7887e6e5284760d4212f3f66801415147f7ba2`, states `Our data is made available under the Open Government Licence. By using it you are accepting the conditions of this licence.` The Food Standards Agency's terms page, 99,851 bytes, sha256 `b301243640a0230e84a75316267df54d1621fc8cdbd75ff8b835872f42360dbf`, states `Use of proprietary food hygiene ratings information and services is subject to the terms of the Open Government Licence (OGL).` NHS England's TRUD terms, 20,140 bytes, sha256 `b2c90ebee42abff95b1ad5c963eae1ace22e4449e326b4b9a3aa781d95e97e7f`, state `you can use NHS England Content, including copying it, adapting it, and using it for any purpose, including commercially, provided you follow these terms and conditions and the terms of the OGL`, and the Organisation Data Service item page, 16,610 bytes, sha256 `d8d9e77435333049425de7289e89915e4f9a8871a16797fedd1f6c26c63d35d7`, applies `Open Government Licence for SDS`. TRUD excludes `Information owned by third parties which we are not authorised to licence on to you`, which `will be clearly marked`. Two rest on the GOV.UK footer alone, `All content is available under the Open Government Licence v3.0, except where otherwise stated`: DVSA's active MOT test stations publication, 76,532 bytes, sha256 `58184d539a607e2046a1d47f0860c98b2185488bd0c0fadac4c5e59273788a15`, and the Get Information about Schools downloads page, 47,303 bytes, sha256 `270a0e64ae36c363de65c25a2363bcfe255f5ccdcb115da340d44b14a78352be`. Neither page states anything otherwise. **None of the pages read restricts the address fields the way MHCLG's energy performance notice restricts its AddressBase- and PAF-derived fields**, and that is a statement about the text read rather than about where each publisher's address columns came from. GIAS and CQC are the two most likely to have matched addresses against AddressBase, so their field documentation is the read that would settle it. The Food Standards Agency withholds address and geocoding data where an establishment operates from a private address, per `ratings.food.gov.uk/open-data`, 397,874 bytes, sha256 `364a2f3293febbe54f52ff09bf5ac0b71fafce052ff6463566493d9d0069fb4e`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to copy, publish, distribute and transmit the Information."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers reading the address columns out of the published file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation and commercial and non-commercial exploitation, and fitting a model adapts and exploits the Information."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the attribution statement the publisher specifies."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights carry the attribution condition is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for attribution licenses, and the OGL text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "OGL v3.0 grants a worldwide, royalty-free, perpetual, non-exclusive license and states no sublicensing right. Whether that satisfies a commercial agreement is a drafting question."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-gb-education-1"
 		},
 		{
 			"licenseID": "unchecked-access-free-gb-gb-environment-industry-1",
@@ -972,22 +1056,139 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-finance-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-gb-gb-food-pharma-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-food-pharma-1 alone."
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"electedBecause": "Five Great Britain publishers of organization registers license the register under the Open Government Licence v3.0, and the pages read for each are retained in the receipt directory. Three state the license for the data itself. CQC's `using-cqc-data` page, 76,786 bytes, sha256 `2db3eec0967e349830b9e5622e7887e6e5284760d4212f3f66801415147f7ba2`, states `Our data is made available under the Open Government Licence. By using it you are accepting the conditions of this licence.` The Food Standards Agency's terms page, 99,851 bytes, sha256 `b301243640a0230e84a75316267df54d1621fc8cdbd75ff8b835872f42360dbf`, states `Use of proprietary food hygiene ratings information and services is subject to the terms of the Open Government Licence (OGL).` NHS England's TRUD terms, 20,140 bytes, sha256 `b2c90ebee42abff95b1ad5c963eae1ace22e4449e326b4b9a3aa781d95e97e7f`, state `you can use NHS England Content, including copying it, adapting it, and using it for any purpose, including commercially, provided you follow these terms and conditions and the terms of the OGL`, and the Organisation Data Service item page, 16,610 bytes, sha256 `d8d9e77435333049425de7289e89915e4f9a8871a16797fedd1f6c26c63d35d7`, applies `Open Government Licence for SDS`. TRUD excludes `Information owned by third parties which we are not authorised to licence on to you`, which `will be clearly marked`. Two rest on the GOV.UK footer alone, `All content is available under the Open Government Licence v3.0, except where otherwise stated`: DVSA's active MOT test stations publication, 76,532 bytes, sha256 `58184d539a607e2046a1d47f0860c98b2185488bd0c0fadac4c5e59273788a15`, and the Get Information about Schools downloads page, 47,303 bytes, sha256 `270a0e64ae36c363de65c25a2363bcfe255f5ccdcb115da340d44b14a78352be`. Neither page states anything otherwise. **None of the pages read restricts the address fields the way MHCLG's energy performance notice restricts its AddressBase- and PAF-derived fields**, and that is a statement about the text read rather than about where each publisher's address columns came from. GIAS and CQC are the two most likely to have matched addresses against AddressBase, so their field documentation is the read that would settle it. The Food Standards Agency withholds address and geocoding data where an establishment operates from a private address, per `ratings.food.gov.uk/open-data`, 397,874 bytes, sha256 `364a2f3293febbe54f52ff09bf5ac0b71fafce052ff6463566493d9d0069fb4e`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to copy, publish, distribute and transmit the Information."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers reading the address columns out of the published file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation and commercial and non-commercial exploitation, and fitting a model adapts and exploits the Information."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the attribution statement the publisher specifies."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights carry the attribution condition is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for attribution licenses, and the OGL text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "OGL v3.0 grants a worldwide, royalty-free, perpetual, non-exclusive license and states no sublicensing right. Whether that satisfies a commercial agreement is a drafting question."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-gb-food-pharma-1"
 		},
 		{
-			"licenseID": "unchecked-access-free-gb-gb-health-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-health-1 alone."
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"electedBecause": "Five Great Britain publishers of organization registers license the register under the Open Government Licence v3.0, and the pages read for each are retained in the receipt directory. Three state the license for the data itself. CQC's `using-cqc-data` page, 76,786 bytes, sha256 `2db3eec0967e349830b9e5622e7887e6e5284760d4212f3f66801415147f7ba2`, states `Our data is made available under the Open Government Licence. By using it you are accepting the conditions of this licence.` The Food Standards Agency's terms page, 99,851 bytes, sha256 `b301243640a0230e84a75316267df54d1621fc8cdbd75ff8b835872f42360dbf`, states `Use of proprietary food hygiene ratings information and services is subject to the terms of the Open Government Licence (OGL).` NHS England's TRUD terms, 20,140 bytes, sha256 `b2c90ebee42abff95b1ad5c963eae1ace22e4449e326b4b9a3aa781d95e97e7f`, state `you can use NHS England Content, including copying it, adapting it, and using it for any purpose, including commercially, provided you follow these terms and conditions and the terms of the OGL`, and the Organisation Data Service item page, 16,610 bytes, sha256 `d8d9e77435333049425de7289e89915e4f9a8871a16797fedd1f6c26c63d35d7`, applies `Open Government Licence for SDS`. TRUD excludes `Information owned by third parties which we are not authorised to licence on to you`, which `will be clearly marked`. Two rest on the GOV.UK footer alone, `All content is available under the Open Government Licence v3.0, except where otherwise stated`: DVSA's active MOT test stations publication, 76,532 bytes, sha256 `58184d539a607e2046a1d47f0860c98b2185488bd0c0fadac4c5e59273788a15`, and the Get Information about Schools downloads page, 47,303 bytes, sha256 `270a0e64ae36c363de65c25a2363bcfe255f5ccdcb115da340d44b14a78352be`. Neither page states anything otherwise. **None of the pages read restricts the address fields the way MHCLG's energy performance notice restricts its AddressBase- and PAF-derived fields**, and that is a statement about the text read rather than about where each publisher's address columns came from. GIAS and CQC are the two most likely to have matched addresses against AddressBase, so their field documentation is the read that would settle it. The Food Standards Agency withholds address and geocoding data where an establishment operates from a private address, per `ratings.food.gov.uk/open-data`, 397,874 bytes, sha256 `364a2f3293febbe54f52ff09bf5ac0b71fafce052ff6463566493d9d0069fb4e`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to copy, publish, distribute and transmit the Information."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers reading the address columns out of the published file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation and commercial and non-commercial exploitation, and fitting a model adapts and exploits the Information."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the attribution statement the publisher specifies."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights carry the attribution condition is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for attribution licenses, and the OGL text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "OGL v3.0 grants a worldwide, royalty-free, perpetual, non-exclusive license and states no sublicensing right. Whether that satisfies a commercial agreement is a drafting question."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-gb-health-1"
 		},
 		{
-			"licenseID": "unchecked-access-free-gb-gb-health-2",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-health-2 alone."
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"electedBecause": "Five Great Britain publishers of organization registers license the register under the Open Government Licence v3.0, and the pages read for each are retained in the receipt directory. Three state the license for the data itself. CQC's `using-cqc-data` page, 76,786 bytes, sha256 `2db3eec0967e349830b9e5622e7887e6e5284760d4212f3f66801415147f7ba2`, states `Our data is made available under the Open Government Licence. By using it you are accepting the conditions of this licence.` The Food Standards Agency's terms page, 99,851 bytes, sha256 `b301243640a0230e84a75316267df54d1621fc8cdbd75ff8b835872f42360dbf`, states `Use of proprietary food hygiene ratings information and services is subject to the terms of the Open Government Licence (OGL).` NHS England's TRUD terms, 20,140 bytes, sha256 `b2c90ebee42abff95b1ad5c963eae1ace22e4449e326b4b9a3aa781d95e97e7f`, state `you can use NHS England Content, including copying it, adapting it, and using it for any purpose, including commercially, provided you follow these terms and conditions and the terms of the OGL`, and the Organisation Data Service item page, 16,610 bytes, sha256 `d8d9e77435333049425de7289e89915e4f9a8871a16797fedd1f6c26c63d35d7`, applies `Open Government Licence for SDS`. TRUD excludes `Information owned by third parties which we are not authorised to licence on to you`, which `will be clearly marked`. Two rest on the GOV.UK footer alone, `All content is available under the Open Government Licence v3.0, except where otherwise stated`: DVSA's active MOT test stations publication, 76,532 bytes, sha256 `58184d539a607e2046a1d47f0860c98b2185488bd0c0fadac4c5e59273788a15`, and the Get Information about Schools downloads page, 47,303 bytes, sha256 `270a0e64ae36c363de65c25a2363bcfe255f5ccdcb115da340d44b14a78352be`. Neither page states anything otherwise. **None of the pages read restricts the address fields the way MHCLG's energy performance notice restricts its AddressBase- and PAF-derived fields**, and that is a statement about the text read rather than about where each publisher's address columns came from. GIAS and CQC are the two most likely to have matched addresses against AddressBase, so their field documentation is the read that would settle it. The Food Standards Agency withholds address and geocoding data where an establishment operates from a private address, per `ratings.food.gov.uk/open-data`, 397,874 bytes, sha256 `364a2f3293febbe54f52ff09bf5ac0b71fafce052ff6463566493d9d0069fb4e`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to copy, publish, distribute and transmit the Information."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers reading the address columns out of the published file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation and commercial and non-commercial exploitation, and fitting a model adapts and exploits the Information."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the attribution statement the publisher specifies."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights carry the attribution condition is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for attribution licenses, and the OGL text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "OGL v3.0 grants a worldwide, royalty-free, perpetual, non-exclusive license and states no sublicensing right. Whether that satisfies a commercial agreement is a drafting question."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-gb-health-2"
 		},
 		{
 			"licenseID": "unchecked-access-free-gb-gb-health-4",
@@ -1014,10 +1215,20 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-property-building-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-gb-gb-property-building-3",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-property-building-3 alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"refusedBecause": "The Valuation Office Agency publishes the non-domestic rating lists under its own restricted terms and states that the Open Government Licence does not apply. Its download page, `https://voaratinglists.blob.core.windows.net/html/rlidata.htm`, 33,414 bytes, sha256 `dafa09c510cf68e3575adbdd256a7b95ff86f1193ecaeda5dce6bd355df49be0`, reads `VO Rating List Downloads are only available under our restricted` license terms and `open government licence does not apply`, and `The information must be used in line with the restricted license terms and conditions`. The row's note describes the lists as the commercial complement to Price Paid Data, which makes this the largest Great Britain business-premises register refused so far. The route to permission is the VOA's restricted license, whose clauses this reading did not open.",
+			"licenseID": "unchecked-access-free-gb-gb-property-building-3"
+		},
+		{
+			"state": "refused",
+			"publisherStatement": "Free",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-org-registers-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"refusedBecause": "The General Pharmaceutical Council reserves commercial use in its web terms. `https://www.pharmacyregulation.org/web-terms-use`, 88,394 bytes, sha256 `c33632ff36e296d16919b1111b121206e59f261c0b6bad7a546f64e42b88983b`, states `You cannot use any of the content or material from or any part of our websites for commercial purposes without obtaining a licence to do so from either us or our licensors.` The registered premises list is published on that website, and this reading found no separate data license for it. A request to the council could produce one.",
+			"licenseID": "unchecked-access-free-gb-general-pharmaceutical-council"
 		},
 		{
 			"state": "elected",
@@ -1731,10 +1942,12 @@
 			"note": "An access label: free after registration. It states no grant. The research pass recorded no publisher, so this decision is scoped to dk-business-legal-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-registration-gb-gb-property-building-2",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "Free-reg",
-			"note": "An access label: free after registration. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-property-building-2 alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-epc-2026-10-12/",
+			"retrievedAt": "2026-10-12",
+			"refusedBecause": "MHCLG licenses the energy performance of buildings data in two parts, and the part this register needs is the restricted one. `https://get-energy-performance-data.communities.gov.uk/guidance/licensing-restrictions`, 19,402 bytes, sha256 `e2164d92b85e88b35db873985b278d02e0cc94576b70b9dca4ddb8ccf5682226`, states that `All data fields other than the address and postcode data` are under the Open Government Licence v3.0, UPRNs included. The address fields, address 1 to 3 and the postcode, were `processed against Ordnance Survey's Address Base Premium product, which incorporates Royal Mail's PAF® database`, and Ordnance Survey and Royal Mail `reserve all their respective copyright, database rights`. The notice permits the address data `solely for specific purposes related to the energy performance of buildings`, plus non-commercial research and private study, and states that `Any use of address data which is not specified in this notice … requires an appropriate licence from Ordnance Survey.` Training a general-purpose address parser and redistributing weights fitted on these strings fall outside the permitted purposes, so the route to permission is an Ordnance Survey license. The OGL fields alone carry a UPRN without an address string, which gives the corpus no labeled address text. The same service's `/guidance/data-protection-requirements`, 19,054 bytes, sha256 `599a56a0722221c25bdac7057bf9b6152b46c8971b0ee118c79782b0e41a6668`, states `Address level data concerning the energy performance of buildings constitute personal data`, which is a second, independent refusal under the 2026-09-30 decision that the corpus carries organization addresses only.",
+			"licenseID": "unchecked-access-free-registration-gb-gb-property-building-2"
 		},
 		{
 			"licenseID": "unchecked-access-free-registration-ie-ie-business-legal-1",
@@ -14244,6 +14457,47 @@
 				"because": "LEI holders are legal entities, but GLEIF registers sole proprietors too. The adapter refuses 131,148 records as natural persons: `EntityCategory` `SOLE_PROPRIETOR` 129,552, an ELF code naming a sole-proprietorship form 382, and a free-text legal form naming a sole trader 1,214. `MailRouting`, which holds care-of lines naming people, is never read, and a first line written as care of a person is refused. A sole trader registered under a non-sole-proprietor category and a business name passes, which is the residual exposure.",
 				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/gleif-terms.json"
 			}
+		},
+		{
+			"sourceID": "gb-mixed-regulatory-2",
+			"iso2": "GB",
+			"sector": "mixed-regulatory",
+			"name": "Active MOT test stations",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "DVSA authorises and lists every premises approved to carry out MOT tests in Great Britain",
+			"geometry": "absent",
+			"license": "unchecked-access-free-gb-driver-and-vehicle-standards-agency",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "quarterly CSV attachment on GOV.UK",
+			"publisher": "Driver and Vehicle Standards Agency",
+			"sourceURL": "https://www.gov.uk/government/publications/active-mot-test-stations",
+			"note": "Columns Site_Number, Trading_Name, Address1, Address2, Address3, Town, Postcode, Phone and six vehicle-class flags. The file read on 2026-10-12 is 2,391,015 bytes with 22,988 lines including the header.",
+			"addressRoles": {
+				"Address1,Address2,Address3,Town,Postcode": "facility"
+			},
+			"coverage": "DVSA's active MOT test stations CSV, `https://assets.publishing.service.gov.uk/media/6abcee45943e890cb55e5d00/active-mot-stations.csv`, read 2026-10-12: 2,391,015 bytes, sha256 `1feeed6fa09140db3cde595c59b0503aa597cdc75a4846444c11122a6e5241c4`, 22,988 data rows over 14 columns with 0 ragged rows under a quote-aware parse; 923 lines carry a quote character. One row is one approved test premises. 22,969 of 22,988 postcodes take a valid Great Britain postcode shape and 121 postcode areas are present, including AB 217, EH 309 and G 369 in Scotland and CF 386, SA 342 and LL 282 in Wales; BT, Northern Ireland, has 0 rows, because Northern Ireland tests vehicles through its own agency. 7,126 rows open `Address1` with a digit, so about a third carry a house number and the rest open with a building, unit or estate name.",
+			"upstreamLineage": ["https://www.gov.uk/government/publications/active-mot-test-stations"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "The address columns locate test premises, and the `Trading_Name` column names a natural person on some rows. Among 22,988 trading names, 235 take an initial-and-surname shape without a business word, as `J J GRIFFITHS`, `R C WILSON`, `V WILLIAMS` and `S BISHOP` do, and 106 carry `AND SON` or `& SONS`, some of which are limited companies. A sole trader's name beside the premises where that person trades identifies them, which is the reading this register gave Enhetsregisteret's sole proprietorships. The shape count is a lower bound. **Whether a build that reads only the five address columns and never `Trading_Name` changes this reading is the same open question recorded for swisstopo's `BDG_NAME`**, and it is the operator's and counsel's to answer: an approved MOT premises is a commercial site with test equipment, so the address alone locates a business."
+			}
+		},
+		{
+			"sourceID": "gb-health-5",
+			"iso2": "GB",
+			"sector": "health",
+			"name": "Registered pharmacies",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Statutory regulator holding the register of pharmacy premises in Great Britain",
+			"geometry": "absent",
+			"license": "unchecked-access-free-gb-general-pharmaceutical-council",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "monthly XLSX premises list",
+			"publisher": "General Pharmaceutical Council",
+			"sourceURL": "https://www.pharmacyregulation.org/web-terms-use",
+			"note": "The web terms reserve commercial use and require a license from the council or its licensors."
 		}
 	]
 }
