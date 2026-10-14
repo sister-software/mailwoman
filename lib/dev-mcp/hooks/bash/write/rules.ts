@@ -37,6 +37,10 @@ const ADMITTED = new Set([
 	"du",
 	"echo",
 	"false",
+	// `ffmpeg` transcodes the media file its input names into the path its last argument names,
+	// and `ffprobe` reads a media file's streams and writes only to stdout.
+	"ffmpeg",
+	"ffprobe",
 	"file",
 	"find",
 	"grep",
@@ -98,6 +102,7 @@ const ADMITTED = new Set([
 	"sqlite3",
 	"tar",
 	"tsc",
+	"unzip",
 	"uv",
 	"uvx",
 	"vale",
