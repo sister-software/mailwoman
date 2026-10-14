@@ -9,8 +9,8 @@ The street-morphology emission prior biases a street-type affix the morphology F
 `street_prefix` and `street_suffix`, and the words beside it toward `street` and away from
 `dependent_locality`. The runtime pipeline has passed it zeroed weights since 426379e4dd, because #1315
 measured the unbounded prior at 48 rows down on the US golden set. #2562 found that the prior at its own
-weights is the one option that moves the four Rockefeller Plaza rows, which the venue-head guard of #2567
-left reading `Rockefeller Plaza` as a venue. This record grades three bounds on that prior. The third
+weights is the one option that moves the four Rockefeller Plaza rows. The venue-head guard of #2567 left
+those rows reading `Rockefeller Plaza` as a venue. This record grades three bounds on that prior. The third
 ships default-on in the geocode session as `streetMorphologyPrior`, with `--no-street-morphology-prior`
 and the dev MCP pin `street_morphology_prior` to turn it off.
 
@@ -82,12 +82,12 @@ the switch changes.
 The trailing-affix bound ships default-on in the geocode session. On the board it improves 4 of 1,277 rows
 and regresses none, and on the golden dev split it moves 5 US rows toward the truth and 1 away with FR
 untouched, so GB, FR, DE and US each regress on zero rows, as the D-rule requires. The four Rockefeller Plaza board rows move from
-`improvement_target` to `pass`, and the structural-validity sweep keeps them listed, because it parses
-with the classifier alone and never wires the prior. The core runtime pipeline that the API and the
-browser runtime call keeps the zeroed weights; it carries no venue-head prior either, and its own grade
-is a separate change.
+`improvement_target` to `pass`. The structural-validity sweep keeps them listed, because it parses
+with the classifier and no prior. The core runtime pipeline that the API and the browser runtime call
+keeps the zeroed weights. That pipeline runs without the venue-head prior as well, and its own grade is
+a separate change.
 
 The remaining #2562 rows, `1 Dag Hammarskjold Plaza`, `1 Hammarskjold Plaza`, `2 MetroTech Center` and
 `4 Embarcadero Center`, pass since #2567. The `mwdev_compare` tool reports `dataRoot` as an undeclared
-difference between two arms whose effective config both read `/mnt/mw`, on every run above; the warning is
+difference between two arms whose effective config both read `/mnt/mw`, on every run above. The warning is
 a tool defect rather than a second variable.
