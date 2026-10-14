@@ -46,6 +46,11 @@ export const spec = {
 				"Split per parquet, comma-separated. Unset puts every file in train. val or test is accepted only for a file `corpus split-slice` wrote, whose name ends .val.parquet or .test.parquet.",
 		},
 		note: { type: "string", required: true, description: "Manifest note" },
+		"replace-source": {
+			type: "string",
+			description:
+				"Base sources to drop, comma-separated. The base's files with each source leave the manifest and its counts, so the added files take their place.",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -86,6 +91,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 				split: (splits[index] ?? "train") as "train" | "val" | "test",
 			})),
 			note: options.note,
+			replaceSources: options.replaceSource ? extractDelimited(options.replaceSource) : [],
 		})
 
 		return "done"

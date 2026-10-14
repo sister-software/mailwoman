@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Assembles a corpus manifest that keeps every file of a base corpus and adds new parquet files.
+ *   Assembles a corpus manifest from a base corpus's files and new parquet files.
+ *   A replaced source's base files are dropped.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -203,6 +204,10 @@ export interface OverlayPlan {
 	 * The filename was the only place that showed this (#2359).
 	 */
 	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
+	/**
+	 * The base sources whose files this overlay dropped.
+	 */
+	replacedSources: string[]
 }
 
 /**
@@ -240,6 +245,12 @@ export interface OverlayManifestOptions {
 	 */
 	files: readonly OverlayFile[]
 	note: string
+	/**
+	 * Base sources whose files the overlay drops, so the added files take their place.
+	 *
+	 * Each source in this list must appear in the base, and its rows leave the split counts.
+	 */
+	replaceSources?: readonly string[]
 }
 
 /**
@@ -269,7 +280,9 @@ export function localManifestFilePath(path: string): string {
 }
 
 /**
- * Writes a corpus manifest that keeps every file of `args.base` and appends `args.files`.
+ * Writes a corpus manifest that keeps the files of `args.base` and appends `args.files`.
+ *
+ * A base file whose source `args.replaceSources` lists is dropped.
  *
  * A `val` or `test` file must use the `.<split>.parquet` suffix written by `splitOverlaySlice`.
  * The suffix shows that the holdout policy chose its rows.
@@ -291,8 +304,16 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		)
 	}
 
+	const replaced = new Set(args.replaceSources)
+
+	for (const source of replaced) {
+		if (!baseFiles.some((s) => s.source === source)) {
+			throw new Error(`${args.base} holds no file with source '${source}', so there is nothing for it to replace.`)
+		}
+	}
+
 	for (const file of args.files) {
-		if (baseFiles.some((s) => s.source === file.source)) {
+		if (!replaced.has(file.source) && baseFiles.some((s) => s.source === file.source)) {
 			console.log(`WARN: base already contains source '${file.source}' — is this the right base?`)
 		}
 	}
@@ -318,7 +339,24 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		)
 	}
 
-	const kept = baseFiles.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
+	const dropped = baseFiles.filter((s) => s.source !== undefined && replaced.has(s.source))
+	const droppedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const file of dropped) {
+		const split = file["split"] as SplitName
+		const rows = file["rows"]
+
+		if (typeof rows !== "number" || !(split in droppedRows)) {
+			throw new Error(`${file.path} records no row count or split, so dropping it would leave the counts unknown.`)
+		}
+
+		droppedRows[split] += rows
+	}
+
+	const kept = baseFiles
+		.filter((s) => !dropped.includes(s))
+		.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
+
 	const added: ParquetFileDescriptor[] = []
 
 	const newDir = PathBuilder.from(args.newDir)
@@ -345,20 +383,31 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	const sources = args.files.map((file) => file.source).join(", ")
 
+	const defaultNote = replaced.size
+		? `${base.corpus_version} files without ${[...replaced].join(", ")} + ${sources}.`
+		: `${base.corpus_version} files (all kept verbatim) + ${sources}. Pure overlay add.`
+
 	const manifest = {
 		corpus_version: args.version,
 		overlay_base: base.corpus_version ?? null,
-		note: args.note || `${base.corpus_version} files (all kept verbatim) + ${sources}. Pure overlay add.`,
+		note: args.note || defaultNote,
 		schema: base.schema,
 		rows_per_slice: baseRowsPerFile(base),
 		row_group_size: base.row_group_size,
 		slices: [...kept, ...added],
 		counts: {
-			train: base.counts.train + addedRows.train,
-			val: base.counts.val + addedRows.val,
-			test: base.counts.test + addedRows.test,
+			train: base.counts.train - droppedRows.train + addedRows.train,
+			val: base.counts.val - droppedRows.val + addedRows.val,
+			test: base.counts.test - droppedRows.test + addedRows.test,
 		},
-		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
+		total_rows:
+			base.total_rows -
+			droppedRows.train -
+			droppedRows.val -
+			droppedRows.test +
+			addedRows.train +
+			addedRows.val +
+			addedRows.test,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// This value in the artifact prevents a reader from deriving an attribution table
 		// from `slices` and treating the base build's set as the whole.
@@ -389,6 +438,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 			split: file.split ?? "train",
 			route: splitRouteFor(file.parquet),
 		})),
+		replacedSources: [...replaced],
 	}
 
 	const planPath = newDir(OVERLAY_PLAN_FILE)
@@ -397,7 +447,9 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	console.log(`wrote ${planPath}`)
 	console.log(`wrote ${out}`)
-	console.log(`  files: ${manifest.slices.length} (${kept.length} base kept, +${added.length} added)`)
+	console.log(
+		`  files: ${manifest.slices.length} (${kept.length} base kept, ${dropped.length} base dropped, +${added.length} added)`
+	)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
 	// The route prints beside the split, because a hand-placed split is otherwise visible only in a filename.

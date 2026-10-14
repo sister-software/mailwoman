@@ -496,5 +496,22 @@
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.7.3.2-venue-planet/ /data/corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
 		]
+	},
+	"sync_v750_gb_region": {
+		"check_paths": [
+			"/data/corpus-python/src/mailwoman_train/configs/v7.5.0-gb-region-4k.yaml",
+			"/data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+			"/data/corpus/versioned/v0.7.5-gb-region/corpus-v0.7.5-gb-region/MANIFEST.json",
+			"/data/corpus/versioned/v0.7.5-gb-region/corpus-v0.7.5-gb-region/train/rendered-gb-v2.train.parquet",
+			"/data/output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz"
+		],
+		"pycache_paths": [
+			"/data/corpus-python/src/mailwoman_train/__pycache__",
+			"/data/corpus-python/src/mailwoman_train/configs/__pycache__"
+		],
+		"rclone_commands": [
+			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.7.5-gb-region/ /data/corpus/versioned/v0.7.5-gb-region/corpus-v0.7.5-gb-region/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+		]
 	}
 }

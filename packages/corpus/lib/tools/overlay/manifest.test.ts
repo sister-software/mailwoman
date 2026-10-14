@@ -165,6 +165,74 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		expect(added[0]!.source).toBe("rendered-de")
 		expect(added[0]!.rows).toBe(1)
 	})
+
+	/**
+	 * A base manifest with one `rendered-gb` file in each split and one file from another source.
+	 */
+	async function writeBaseWithGB(): Promise<string> {
+		const path = scratch.path("MANIFEST.json").toString()
+		const root = "/data/corpus/versioned/v0.1.0/corpus-v0.1.0"
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "0.1.0",
+				schema: {},
+				row_group_size: 50_000,
+				rows_per_slice: 1_000_000,
+				counts: { train: 15, val: 2, test: 3 },
+				total_rows: 20,
+				slices: [
+					{ split: "train", rows: 10, source: "wof-admin", path: `${root}/train/part-0000.parquet` },
+					{ split: "train", rows: 5, source: "rendered-gb", path: `${root}/train/part-gb.train.parquet` },
+					{ split: "val", rows: 2, source: "rendered-gb", path: `${root}/val/part-gb.val.parquet` },
+					{ split: "test", rows: 3, source: "rendered-gb", path: `${root}/test/part-gb.test.parquet` },
+				],
+			},
+			path
+		)
+
+		return path
+	}
+
+	it("drops a replaced source's base files and subtracts their rows from each split", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-gb-v2.train.parquet", "rendered-gb")
+
+		await assembleOverlayManifest({
+			...overlay(parquet, "train"),
+			base,
+			files: [{ parquet, source: "rendered-gb", split: "train" }],
+			replaceSources: ["rendered-gb"],
+		})
+
+		const written = await readLocalJSONFile<{
+			slices: Array<{ path: string; source: string }>
+			counts: { train: number; val: number; test: number }
+			total_rows: number
+		}>(scratch.path("MANIFEST.json").toString())
+
+		expect(written.slices.map((slice) => slice.path.split("/").at(-1))).toEqual([
+			"part-0000.parquet",
+			"part-gb-v2.train.parquet",
+		])
+
+		expect(written.counts).toEqual({ train: 11, val: 0, test: 0 })
+		expect(written.total_rows).toBe(11)
+	})
+
+	it("refuses to replace a source the base does not hold", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-de.train.parquet", "rendered-de")
+
+		await expect(
+			assembleOverlayManifest({
+				...overlay(parquet, "train"),
+				base,
+				files: [{ parquet, source: "rendered-de", split: "train" }],
+				replaceSources: ["rendered-de"],
+			})
+		).rejects.toThrow(/holds no file with source 'rendered-de'/)
+	})
 })
 
 describe("rerootBaseFilePath", () => {
