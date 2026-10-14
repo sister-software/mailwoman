@@ -782,7 +782,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// Apply entity tiers (declared-fork rescue and the venue tier).
 	// The tier reads the merged switch, so a caller that leaves `poiVenueTier` unset
 	// gets the switch's default as a session does.
-	applyEntityTiers(result, markers, parseInput, resolved.roots, { ...deps, poiVenueTier: switches.poiVenueTier })
+	applyEntityTiers(result, markers, parseInput, resolved.roots, {
+		...deps,
+		poiVenueTier: switches.poiVenueTier,
+		kind: verdict.kind,
+	})
 
 	// Append designation markers from attached spatial layers.
 	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]

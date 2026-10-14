@@ -22,6 +22,126 @@ import type { POIExecutorLookup } from "#poi/executor"
 const SAME_ENTITY_M = 150
 
 /**
+ * The distance in meters within which a row whose name contains the query's name corroborates an exact row.
+ *
+ * The rows that decorate a landmark's name, such as `Empire State Building - 102nd Floor`
+ * or `Hampton Inn Manhattan-35th Street and Empire State Building`, sit beside the landmark
+ * and not beside a second exact row elsewhere in the city.
+ */
+const CORROBORATION_M = 1000
+
+type POIHit = ReturnType<POIExecutorLookup["search"]>[number]
+
+/**
+ * The exact-name rows a search returns, beside the rows that decorate the name.
+ */
+interface ExactEntities {
+	/**
+	 * Exact-name rows, with the rows of one physical venue merged into its most confident row.
+	 */
+	entities: POIHit[]
+	/**
+	 * Rows whose name contains the query's name key without equaling it.
+	 */
+	decorated: POIHit[]
+}
+
+/**
+ * Searches the POI database for the query and splits the hits into exact rows and decorated rows.
+ *
+ * FTS ranks by bm25, so the exact-name row may not be first and the limit leaves room to find it.
+ * Returns `null` for a query that normalizes to an empty key.
+ */
+function exactEntities(venueRaw: string, opts: Pick<ForkEntityProbeOpts, "lookup">): ExactEntities | null {
+	const nameKey = normalizeLocalityForKey(venueRaw)
+
+	if (!nameKey) return null
+
+	const exact: POIHit[] = []
+	const decorated: POIHit[] = []
+
+	for (const hit of opts.lookup.search({ name: venueRaw, limit: 24 })) {
+		if (hit.name === null) continue
+		const key = normalizeLocalityForKey(hit.name)
+
+		if (key === nameKey) {
+			exact.push(hit)
+		} else if (key.includes(nameKey)) {
+			decorated.push(hit)
+		}
+	}
+
+	return { entities: mergeSameEntityRows(exact), decorated }
+}
+
+/**
+ * Merges rows of one physical venue, a short distance apart, into the most confident row.
+ */
+function mergeSameEntityRows(rows: readonly POIHit[]): POIHit[] {
+	const entities: POIHit[] = []
+
+	for (const hit of rows) {
+		const twin = entities.find((e) => distanceM(e.latitude, e.longitude, hit.latitude, hit.longitude) <= SAME_ENTITY_M)
+
+		if (twin) {
+			if (hit.confidence > twin.confidence) {
+				entities[entities.indexOf(twin)] = hit
+			}
+
+			continue
+		}
+
+		entities.push(hit)
+	}
+
+	return entities
+}
+
+/**
+ * Picks one of several exact rows by the decorated rows beside it, or returns `null`.
+ *
+ * Two rows under one name are a data ambiguity that neither confidence nor an anchor breaks:
+ * the second `Empire State Building` row holds the higher confidence and both sit in New York.
+ * The row with the most decorated rows within {@link CORROBORATION_M} wins
+ * when it holds the maximum by itself.
+ * A tie, or no decorated row near any exact row, abstains.
+ */
+function pickCorroborated(entities: readonly POIHit[], decorated: readonly POIHit[]): POIHit | null {
+	if (entities.length === 1) return entities[0]!
+
+	if (!entities.length || !decorated.length) return null
+
+	const counts = entities.map(
+		(entity) =>
+			decorated.filter(
+				(row) => distanceM(entity.latitude, entity.longitude, row.latitude, row.longitude) <= CORROBORATION_M
+			).length
+	)
+
+	const most = Math.max(...counts)
+
+	if (most === 0) return null
+
+	const winners = entities.filter((_, index) => counts[index] === most)
+
+	return winners.length === 1 ? winners[0]! : null
+}
+
+/**
+ * Returns the probe answer for a row.
+ */
+function hitOf(row: POIHit, venueRaw: string): ForkEntityHit {
+	return {
+		name: row.name ?? venueRaw,
+		categoryID: row.categoryID,
+		latitude: row.latitude,
+		longitude: row.longitude,
+		country: row.country,
+		confidence: row.confidence,
+	}
+}
+
+/**
  * A POI entity matched by a probe.
  */
 export interface ForkEntityHit {
@@ -57,8 +177,11 @@ function distanceM(latA: number, lonA: number, latB: number, lonB: number): numb
 }
 
 /**
- * Finds the single entity worldwide whose name key equals the query's, or returns `null`;
- * a street-type token or more than one distinct match also returns `null`.
+ * Finds the entity worldwide whose name key equals the query's, or returns `null`.
+ *
+ * A street-type token in the query returns `null`.
+ * Several entities under the name return `null` unless the decorated rows beside one
+ * of them single it out, as {@link pickCorroborated} reads them.
  */
 export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(rawQuery)
@@ -69,46 +192,25 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 		if (token && opts.isStreetGeneric(token)) return null
 	}
 
-	// FTS ranks by bm25, so the exact-name row may not be first.
-	// The limit leaves room to find it.
-	const hits = opts.lookup.search({ name: rawQuery, limit: 24 })
+	return probeLandmarkEntity(rawQuery, opts)
+}
 
-	// Only exact name-key matches count.
-	// FTS also returns partial matches such as "Comer Park" for "comer".
-	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
+/**
+ * Finds the entity worldwide whose name key equals a landmark name, or returns `null`.
+ *
+ * This is {@link probeForkEntity} without the street-type guard.
+ * A landmark name holds a street-type word as its own, as `Building` in `Empire State Building`
+ * and `Center` in `Rockefeller Center`, and the kind classifier has already refused a
+ * name that ends in a street suffix before an input reaches the `landmark` kind.
+ */
+export function probeLandmarkEntity(rawQuery: string, opts: Pick<ForkEntityProbeOpts, "lookup">): ForkEntityHit | null {
+	const found = exactEntities(rawQuery, opts)
 
-	if (!exact.length) return null
+	if (!found) return null
 
-	// One venue can have several rows a short distance apart.
-	// Merge them, keeping the most confident row.
-	const entities: Array<(typeof exact)[number]> = []
+	const top = pickCorroborated(found.entities, found.decorated)
 
-	for (const hit of exact) {
-		const twin = entities.find((e) => distanceM(e.latitude, e.longitude, hit.latitude, hit.longitude) <= SAME_ENTITY_M)
-
-		if (twin) {
-			if (hit.confidence > twin.confidence) {
-				entities[entities.indexOf(twin)] = hit
-			}
-
-			continue
-		}
-
-		entities.push(hit)
-	}
-
-	if (entities.length !== 1) return null
-
-	const top = entities[0]!
-
-	return {
-		name: top.name ?? rawQuery,
-		categoryID: top.categoryID,
-		latitude: top.latitude,
-		longitude: top.longitude,
-		country: top.country,
-		confidence: top.confidence,
-	}
+	return top ? hitOf(top, rawQuery) : null
 }
 
 /**
@@ -125,6 +227,59 @@ export interface ForkEntityAnswerTarget {
 	venue: string | null
 	entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
 	admin_coherence: AdminCoherenceReport | null
+	/**
+	 * The flat component map, cleared when the whole input names one entity.
+	 */
+	components?: Record<string, string | undefined>
+	locality?: string | null
+	region?: string | null
+	postcode?: string | null
+	house_number?: string | null
+	street?: string | null
+	dependent_locality?: string | null
+	unit?: string | null
+	hierarchy?: unknown[]
+}
+
+/**
+ * Rewrites a result whose whole input is one entity's name as that entity and no other component.
+ *
+ * The parse read the name as admin words, so every component it produced and the hierarchy
+ * the resolver built from them describe a place the input never named.
+ */
+function answerAsWholeInputEntity(result: ForkEntityAnswerTarget, entity: ForkEntityHit): void {
+	applyForkEntityAnswer(result, entity, [])
+
+	for (const key of [
+		"locality",
+		"region",
+		"postcode",
+		"house_number",
+		"street",
+		"dependent_locality",
+		"unit",
+	] as const) {
+		if (key in result) {
+			result[key] = null
+		}
+	}
+
+	if (result.components) {
+		result.components = { venue: entity.name }
+	}
+
+	if (result.hierarchy) {
+		result.hierarchy = []
+	}
+}
+
+/**
+ * Reports whether a resolved node's value is the whole input, so the admin race consumed it.
+ */
+function adminConsumedInput(roots: readonly AddressNode[], parseInput: string): boolean {
+	const inputKey = normalizeLocalityForKey(parseInput)
+
+	return collectNodes(roots, (node) => node.lat != null && normalizeLocalityForKey(node.value) === inputKey).length > 0
 }
 
 /**
@@ -195,55 +350,40 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 }
 
 /**
- * Finds the single exact-name venue within the anchor's radius, or returns `null`.
+ * The exact-name probe near an anchor, with the count of exact rows inside the radius.
+ *
+ * The count lets a caller tell an abstention among exact rows from an absence of them.
+ */
+function probeExactNearAnchor(
+	venueRaw: string,
+	anchor: VenueAnchor,
+	opts: Pick<ForkEntityProbeOpts, "lookup">
+): { hit: ForkEntityHit | null; exactNear: number } {
+	const found = exactEntities(venueRaw, opts)
+
+	if (!found) return { hit: null, exactNear: 0 }
+
+	const radiusM = anchor.radiusM ?? VENUE_ANCHOR_THRESHOLD_M
+
+	const near = found.entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= radiusM)
+
+	const top = pickCorroborated(near, found.decorated)
+
+	return { hit: top ? hitOf(top, venueRaw) : null, exactNear: near.length }
+}
+
+/**
+ * Finds the exact-name venue within the anchor's radius, or returns `null`.
+ *
+ * Several exact rows inside the radius answer only when the decorated rows beside one
+ * of them single it out, as {@link pickCorroborated} reads them.
  */
 export function probeVenueNearAnchor(
 	venueRaw: string,
 	anchor: VenueAnchor,
 	opts: Pick<ForkEntityProbeOpts, "lookup">
 ): ForkEntityHit | null {
-	const nameKey = normalizeLocalityForKey(venueRaw)
-
-	if (!nameKey) return null
-
-	const hits = opts.lookup.search({ name: venueRaw, limit: 24 })
-	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
-
-	if (!exact.length) return null
-
-	// Merge duplicate rows a short distance apart, as in probeForkEntity.
-	const entities: Array<(typeof exact)[number]> = []
-
-	for (const hit of exact) {
-		const twin = entities.find((e) => distanceM(e.latitude, e.longitude, hit.latitude, hit.longitude) <= SAME_ENTITY_M)
-
-		if (twin) {
-			if (hit.confidence > twin.confidence) {
-				entities[entities.indexOf(twin)] = hit
-			}
-
-			continue
-		}
-
-		entities.push(hit)
-	}
-
-	const radiusM = anchor.radiusM ?? VENUE_ANCHOR_THRESHOLD_M
-
-	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= radiusM)
-
-	if (near.length !== 1) return null
-
-	const top = near[0]!
-
-	return {
-		name: top.name ?? venueRaw,
-		categoryID: top.categoryID,
-		latitude: top.latitude,
-		longitude: top.longitude,
-		country: top.country,
-		confidence: top.confidence,
-	}
+	return probeExactNearAnchor(venueRaw, anchor, opts).hit
 }
 
 /**
@@ -255,6 +395,10 @@ export function probeVenueNearAnchor(
  *
  * The probe answers only when one entity holds the name.
  * The refinement runs only when `poiVenueTier` is set and the current tier is `admin` or `street`.
+ *
+ * A bare input whose kind verdict is `landmark`, with no venue span and no resolved node that covers
+ * the whole input, takes the exact-name probe on the whole input, so `Empire State Building`
+ * answers from the POI layer rather than from the locality Empire its first word matched.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
@@ -268,6 +412,10 @@ export function applyEntityTiers(
 		poiLookup?: ForkEntityProbeOpts["lookup"]
 		isStreetGeneric?: ForkEntityProbeOpts["isStreetGeneric"]
 		poiVenueTier?: boolean
+		/**
+		 * The kind verdict for the input, read for the bare-landmark probe.
+		 */
+		kind?: string
 	}
 ): void {
 	if (
@@ -280,6 +428,20 @@ export function applyEntityTiers(
 
 		if (entity) {
 			applyForkEntityAnswer(result, entity, resolvedRoots)
+		}
+	}
+
+	if (
+		deps.poiVenueTier === true &&
+		deps.kind === "landmark" &&
+		!result.venue &&
+		deps.poiLookup &&
+		!adminConsumedInput(resolvedRoots, parseInput)
+	) {
+		const entity = probeLandmarkEntity(parseInput, { lookup: deps.poiLookup })
+
+		if (entity) {
+			answerAsWholeInputEntity(result, entity)
 		}
 	}
 
@@ -360,15 +522,21 @@ function venueHeadSegment(venueRaw: string): string | null {
  * Runs {@link probeVenueNearAnchor}, then retries by comparing {@link venueHeadSegment}
  * of the query and of each row.
  * It still requires a single match within the radius.
+ *
+ * An exact row inside the radius outranks every partial-name reading: when exact
+ * rows are present and the exact probe abstains among them, the retries do not run,
+ * so `Empire State Building, New York, NY` cannot fall through to a row named `State Building`.
  */
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,
 	anchor: VenueAnchor,
 	opts: Pick<ForkEntityProbeOpts, "lookup"> & Partial<Pick<ForkEntityProbeOpts, "isStreetGeneric">>
 ): ForkEntityHit | null {
-	const exact = probeVenueNearAnchor(venueRaw, anchor, opts)
+	const exact = probeExactNearAnchor(venueRaw, anchor, opts)
 
-	if (exact) return exact
+	if (exact.hit) return exact.hit
+
+	if (exact.exactNear > 0) return null
 
 	return probeVenueHeadNearAnchor(venueRaw, anchor, opts) ?? probeVenueWithoutLeadingWord(venueRaw, anchor, opts)
 }
@@ -441,36 +609,11 @@ function probeVenueHeadNearAnchor(
 
 	if (!folded.length) return null
 
-	const entities: Array<(typeof folded)[number]> = []
-
-	for (const hit of folded) {
-		const twin = entities.find((e) => distanceM(e.latitude, e.longitude, hit.latitude, hit.longitude) <= SAME_ENTITY_M)
-
-		if (twin) {
-			if (hit.confidence > twin.confidence) {
-				entities[entities.indexOf(twin)] = hit
-			}
-
-			continue
-		}
-
-		entities.push(hit)
-	}
-
 	const radiusM = anchor.radiusM ?? VENUE_ANCHOR_THRESHOLD_M
 
-	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= radiusM)
+	const near = mergeSameEntityRows(folded).filter(
+		(e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= radiusM
+	)
 
-	if (near.length !== 1) return null
-
-	const top = near[0]!
-
-	return {
-		name: top.name ?? venueRaw,
-		categoryID: top.categoryID,
-		latitude: top.latitude,
-		longitude: top.longitude,
-		country: top.country,
-		confidence: top.confidence,
-	}
+	return near.length === 1 ? hitOf(near[0]!, venueRaw) : null
 }

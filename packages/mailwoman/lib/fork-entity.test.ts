@@ -384,3 +384,144 @@ describe("applyEntityTiers for a parsed venue with no coordinate", () => {
 		expect(anchored.lat).toBeCloseTo(51.48223)
 	})
 })
+
+describe("the Empire State Building pair (#2570)", () => {
+	const NEW_YORK = { lat: 40.7127281, lon: -74.0060152 }
+
+	// The poi.db rows of 2026-10-14: two exact rows 3.7 km apart, the Upper East Side
+	// row holding the higher confidence, four decorated rows beside the Midtown row,
+	// and the Brooklyn office the leading-word retry reaches through `State Building`.
+	const manhattan = stubLookup([
+		{
+			name: "Empire State Building",
+			categoryID: "historic_site",
+			lat: 40.7807201,
+			lon: -73.9608153,
+			country: "US",
+			confidence: 0.972,
+		},
+		{
+			name: "Empire State Building",
+			categoryID: "historic_site",
+			lat: 40.749143,
+			lon: -73.986621,
+			country: "US",
+			confidence: 0.951,
+		},
+		{
+			name: "Empire State Building - 102nd Floor",
+			categoryID: "historic_site",
+			lat: 40.7568177,
+			lon: -73.9858098,
+			country: "US",
+		},
+		{ name: "Virgo Business Centers at The Empire State Building", lat: 40.748463, lon: -73.985718, country: "US" },
+		{
+			name: "Hampton Inn Manhattan-35th Street and Empire State Building",
+			categoryID: "hotel",
+			lat: 40.7502467,
+			lon: -73.9864683,
+			country: "US",
+		},
+		{ name: "State Building", categoryID: "government_office", lat: 40.685626, lon: -73.97563, country: "US" },
+	])
+
+	it("picks the exact row the decorated rows sit beside over the more confident exact row, with no anchor", () => {
+		const hit = probeForkEntity("Empire State Building", { lookup: manhattan, isStreetGeneric: NO_GENERICS })
+
+		expect(hit?.latitude).toBeCloseTo(40.749143)
+		expect(hit?.confidence).toBe(0.951)
+	})
+
+	it("picks the corroborated exact row near the anchor rather than the partial-name row", () => {
+		const hit = probeVenueNearAnchorFolded("Empire State Building", NEW_YORK, {
+			lookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+		})
+
+		expect(hit?.name).toBe("Empire State Building")
+		expect(hit?.latitude).toBeCloseTo(40.749143)
+	})
+
+	it("abstains among exact rows with no decorated row beside either, and never falls through to a partial name", () => {
+		const bare = stubLookup([
+			{ name: "Empire State Building", lat: 40.7807201, lon: -73.9608153, country: "US" },
+			{ name: "Empire State Building", lat: 40.749143, lon: -73.986621, country: "US" },
+			{ name: "State Building", lat: 40.685626, lon: -73.97563, country: "US" },
+		])
+
+		expect(
+			probeVenueNearAnchorFolded("Empire State Building", NEW_YORK, { lookup: bare, isStreetGeneric: NO_GENERICS })
+		).toBeNull()
+
+		expect(probeForkEntity("Empire State Building", { lookup: bare, isStreetGeneric: NO_GENERICS })).toBeNull()
+	})
+
+	function placed(locality: string, lat: number, lon: number): AddressNode {
+		return { start: 0, end: locality.length, confidence: 0.7, children: [], tag: "locality", value: locality, lat, lon }
+	}
+
+	const adminAnswer = (locality: string, lat: number, lon: number) => ({
+		lat,
+		lon,
+		resolution_tier: "admin" as string | null,
+		countryCode: "US" as string | null,
+		venue: null as string | null,
+		entity: null,
+		admin_coherence: null,
+		locality: locality as string | null,
+		region: "Building" as string | null,
+		components: { locality, region: "Building" } as Record<string, string | undefined>,
+		hierarchy: [{ tag: "locality", name: locality }] as unknown[],
+	})
+
+	it("answers a bare landmark from the POI layer when the admin race matched its first word only", () => {
+		const result = adminAnswer("Empire", 37.644839, -120.902851)
+
+		// The morphology FST accepts `building` as a street type, and the fork
+		// probe's guard refuses the name for it.
+		// The landmark probe reads the name without that guard.
+		applyEntityTiers(result, [], "Empire State Building", [placed("Empire", 37.644839, -120.902851)], {
+			poiLookup: manhattan,
+			isStreetGeneric: (token) => token === "building",
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(40.749143)
+		expect(result.venue).toBe("Empire State Building")
+		expect(result.locality).toBeNull()
+		expect(result.region).toBeNull()
+		expect(result.components).toEqual({ venue: "Empire State Building" })
+		expect(result.hierarchy).toEqual([])
+	})
+
+	it("keeps an admin answer whose resolved node covers the whole input", () => {
+		const city = stubLookup([{ name: "Empire City", categoryID: "casino", lat: 40.9, lon: -73.86, country: "US" }])
+		const result = adminAnswer("Empire City", 41, -74)
+
+		applyEntityTiers(result, [], "Empire City", [placed("Empire City", 41, -74)], {
+			poiLookup: city,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("admin")
+		expect(result.locality).toBe("Empire City")
+	})
+
+	it("runs the bare-landmark probe for the landmark kind only", () => {
+		const result = adminAnswer("Empire", 37.644839, -120.902851)
+
+		applyEntityTiers(result, [], "Empire State Building", [placed("Empire", 37.644839, -120.902851)], {
+			poiLookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "locality_only",
+		})
+
+		expect(result.resolution_tier).toBe("admin")
+	})
+})
