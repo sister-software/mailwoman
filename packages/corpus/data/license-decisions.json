@@ -9,6 +9,50 @@
 	"$sharedReadings": "One publisher can hold a licence over several jurisdictions, and the register scopes a decision to one publisher in one jurisdiction, so reading that publisher's terms once produces several decisions with the same body. A decision reads `sameAs` to name a body declared here, which keeps each licence id's own decision while the prose behind it has one home. The build refuses a `sameAs` naming a reading this file does not declare.",
 	"$ocpRegistryStatements": "Five of the decisions below rest on the OCP Data Registry's own licence statement rather than on the publisher's page. Each of those register rows records its access as OCDS bulk through that registry and its `sourceURL` as the registry, so the copy this repository would fetch is the registry's and the licence it publishes is the one governing that copy. AusTender is the exception: its publisher's own terms were retrieved, which is the stronger record. Retrieving each of the five publishers' own pages would raise them to the same standard and is not done.",
 	"sharedReadings": {
+		"ogl-uk-3.0-gb-ordnance-survey-opendata": {
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-os-opendata-2026-10-14/",
+			"retrievedAt": "2026-10-14",
+			"electedBecause": "Ordnance Survey licenses four OS OpenData products, Code-Point Open, OS Open Names, OS Open Roads and OS Open USRN, under the Open Government Licence v3.0. Each download ships a `licence.txt`, and each one states `Your use of OS OpenData is subject to the terms at http://os.uk/opendata/licence` (Code-Point Open words it `Your use of data is subject to terms at www.ordnancesurvey.co.uk/opendata/licence`). Both addresses redirected on 2026-10-14 to `https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/`, 10,450 bytes, sha256 `f5b2b9f2af63647cde889fa6c3508f5705925295b74912c68caa28dd37e64aa5`. OS's own `docs.os.uk` terms page, 2,936 bytes, sha256 `83e7e1047ff833d4144e451f596290543b5673915733d3a26b8d48cac5253d7e`, states that the OS OpenData terms `are contained within the Open Government Licence` and that the attribution statement `can be found in the licence file downloaded with the data`. The licence files read are Code-Point Open 2026-08, 346 bytes, sha256 `2273fa3818d2b009ab38c11f3cfc9563e48c0e9e940bf73c1a3685b3188255ad`; OS Open Names 2026-07, 438 bytes, sha256 `1be838dcdba14daa10f6a5015833100858711fcda9e495a9442c9295d357f99f`; OS Open Roads 2026-04, 190 bytes, sha256 `65f3f555aa3e42e93b4db24a29ad277beefd12bc4871076d558c1cc41a6b216d`; and OS Open USRN 2026-10, 442 bytes, sha256 `41e89b74974c31cbb39efec9d78db825107e8fca565611e7098f92c94c6be62e`. The attribution differs by product. Open Roads requires `Contains Ordnance Survey data © Crown copyright and database right 2026`. Code-Point Open and Open Names add `Contains Royal Mail data © Royal Mail copyright and database right 2026` and `Contains National Statistics data © Crown copyright and database right 2026`. Open USRN requires `Contains OS data © Crown Copyright and database rights 2026` and, `Where you use data relating to Scotland`, `This product contains data created and maintained by Scottish Local Government.` No licence file or page read restricts the Royal Mail-derived postcode data beyond that acknowledgement, which is a statement about the text read; the OGL's own exemption for `third party rights the Information Provider is not authorised to license` stays in force. Code-Point Open's `product-supply` page, 4,936 bytes, sha256 `3f71e7910ce3a0107af8217563eb8e193a715c37e91bb5166078fae8ebeb942a`, states `Code-Point Open covers postcodes for Great Britain`, and the 2026-08 release has no BT area, so no Northern Ireland postcode and no Land & Property Services term reaches these sources. This reading covers the licence only. A row that joins a real street to a real postcode and synthesizes a house number can reproduce a residential address, which is a question for the personal-data review in `source-resolutions.json`, not for this reading.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to copy, publish, distribute and transmit the Information."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers reading street names, postcodes and coordinates out of the published files."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to adapt the Information, which covers joining postcodes to street centrelines and synthesizing a house number."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation and commercial and non-commercial exploitation, and fitting a model adapts and exploits the Information."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the per-product attribution statements in each download's `licence.txt`, including the Scottish Local Government acknowledgement for Open USRN data relating to Scotland."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights carry the attribution condition is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for attribution licenses, and the OGL text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "OGL v3.0 grants a worldwide, royalty-free, perpetual, non-exclusive license and states no sublicensing right. Whether that satisfies a commercial agreement is a drafting question."
+				}
+			}
+		},
 		"ogl-uk-3.0-gb-organization-registers": {
 			"state": "elected",
 			"electedTerms": "Open Government Licence v3.0",
@@ -602,6 +646,10 @@
 		"unchecked-access-free-gb-driver-and-vehicle-standards-agency": {
 			"sameAs": "ogl-uk-3.0-gb-organization-registers"
 		},
+		"unchecked-access-free-gb-gb-public-administration-1": { "sameAs": "ogl-uk-3.0-gb-ordnance-survey-opendata" },
+		"unchecked-access-free-gb-gb-public-administration-2": { "sameAs": "ogl-uk-3.0-gb-ordnance-survey-opendata" },
+		"unchecked-access-free-gb-gb-transport-1": { "sameAs": "ogl-uk-3.0-gb-ordnance-survey-opendata" },
+		"unchecked-access-free-gb-gb-transport-2": { "sameAs": "ogl-uk-3.0-gb-ordnance-survey-opendata" },
 		"unchecked-access-free-gb-gb-property-building-3": {
 			"state": "refused",
 			"publisherStatement": "Free",
