@@ -69,6 +69,8 @@ export type {
 	RuntimePipelineStages,
 	StageSource,
 	UserLocation,
+	VenueHeadLexiconLike,
+	VenueHeadPriorOpts,
 	WordConsistencyOpts,
 	WordConsistencySetting,
 } from "#pipeline/types"

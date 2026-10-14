@@ -55,8 +55,8 @@ export interface GeocodeClassifier {
 			/**
 			 * Venue-head lookups for the venue-head prior.
 			 */
-			venueHead?: import("@mailwoman/neural/venue/head-prior").VenueHeadLexiconLike
-			venueHeadOpts?: import("@mailwoman/neural/venue/head-prior").VenueHeadPriorOpts
+			venueHead?: ClassifierOpts["venueHead"]
+			venueHeadOpts?: ClassifierOpts["venueHeadOpts"]
 		}
 	): Promise<AddressTree>
 }

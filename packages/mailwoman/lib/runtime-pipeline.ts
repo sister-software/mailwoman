@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type CaseNormalization,
 	type PlacerCountryUse,
 	type FSTMatcherLike,
+	type LocaleHint,
 	runPipeline,
 	type StageSource,
 	type MachinePreferences,
@@ -17,6 +17,7 @@ import {
 	type POIIntent,
 	type POIQueryResult,
 	type RuntimePipelineStages,
+	type VenueHeadLexiconLike,
 } from "@mailwoman/core/pipeline"
 import type { WOFAncestor } from "@mailwoman/core/resolver"
 import {
@@ -29,17 +30,17 @@ import { type NeuralAddressClassifier, type ParseOpts, scriptFamilyForText } fro
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
+import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
-import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
+import { localeToCountry } from "#country-scope"
 import { loadDefaultPlaceCountry } from "#default/placer"
 import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
 import { loadDefaultStreetEvidence } from "#default/street-evidence"
 import { $public } from "#env"
+import { loadParsePriors, type ParsePriorArtifacts } from "#geocode/parse-priors"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
 import { createPOIExecutor } from "#poi/executor"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"
@@ -116,6 +117,23 @@ export interface CreateRuntimePipelineOpts {
 	 * when an FST matcher is active.
 	 */
 	streetMorphology?: StageSource<FSTMatcherLike>
+
+	/**
+	 * Whether the street-morphology matcher also biases a street affix on a segment that
+	 * opens with a house number, as `Plaza` in `30 Rockefeller Plaza, New York, NY 10112`.
+	 *
+	 * The default is the geocode session's.
+	 *
+	 * @defaultValue `true`
+	 */
+	streetMorphologyPrior?: boolean
+
+	/**
+	 * The venue-head lexicon for each parse's detected locale.
+	 *
+	 * `"auto"` reads the bundled table for the locale's country, and `"none"` runs no venue-head prior.
+	 */
+	venueHead?: StageSource<NonNullable<RuntimePipelineStages["venueHead"]>>
 
 	/**
 	 * A replacement for the default locale detector.
@@ -205,45 +223,27 @@ function wrapWithStreetEvidence(
 	}
 }
 
-async function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"]): Promise<FSTMatcher | null> {
-	const fstPath =
-		classifier && typeof classifier === "object" && "fstPath" in classifier
-			? (classifier as { fstPath?: PathBuilderLike }).fstPath
-			: undefined
+/**
+ * Returns the prior artifact paths a classifier exposes.
+ *
+ * A bare `{ parse }` classifier exposes none, and the pipeline then parses without the FST priors.
+ */
+function classifierPriorArtifacts(classifier: CreateRuntimePipelineOpts["classifier"]): ParsePriorArtifacts {
+	if (!classifier || typeof classifier !== "object") return {}
 
-	if (!fstPath) return null
+	const shaped = classifier as { fstPath?: PathBuilderLike | null; streetMorphologyPath?: string | null }
 
-	try {
-		return deserializeFST(await readLocalBuffer(fstPath))
-	} catch (error) {
-		console.warn(
-			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
-		)
-
-		return null
+	return {
+		...("fstPath" in shaped ? { fstPath: shaped.fstPath } : {}),
+		...("streetMorphologyPath" in shaped ? { streetMorphologyPath: shaped.streetMorphologyPath } : {}),
 	}
 }
 
-async function autoLoadStreetMorphology(
-	classifier: CreateRuntimePipelineOpts["classifier"]
-): Promise<FSTMatcher | null> {
-	const artifactPath =
-		classifier && typeof classifier === "object" && "streetMorphologyPath" in classifier
-			? (classifier as { streetMorphologyPath?: string }).streetMorphologyPath
-			: undefined
-
-	try {
-		const loaded = await loadStreetMorphologyFST({
-			...(artifactPath ? { artifactPath } : {}),
-			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
-		})
-
-		return loaded.matcher
-	} catch (error) {
-		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — check off`)
-
-		return null
-	}
+/**
+ * The venue-head stage that reads the bundled table for the detected locale's country.
+ */
+function venueHeadForLocale(locale: LocaleHint): VenueHeadLexiconLike {
+	return venueHeadLexicon(localeToCountry(locale.locale) ?? "")
 }
 
 /**
@@ -276,6 +276,7 @@ export function createRuntimePipeline(
 	const machinePreferencesSource = opts.machinePreferences ?? "auto"
 	const fstSource = opts.fst ?? "auto"
 	const streetMorphologySource = opts.streetMorphology ?? "auto"
+	const venueHeadSource = opts.venueHead ?? "none"
 	const placeCountrySource = opts.placeCountry ?? "auto"
 	const streetEvidenceSource = opts.streetEvidence ?? "auto"
 
@@ -323,6 +324,12 @@ export function createRuntimePipeline(
 
 		...(typeof fstSource === "object" ? { fst: fstSource } : {}),
 		...(typeof streetMorphologySource === "object" ? { streetMorphology: streetMorphologySource } : {}),
+		streetMorphologyPrior: opts.streetMorphologyPrior ?? true,
+		...(venueHeadSource === "auto"
+			? { venueHead: venueHeadForLocale }
+			: venueHeadSource === "none"
+				? {}
+				: { venueHead: venueHeadSource }),
 		...(opts.resolver ? { resolver: opts.resolver } : {}),
 
 		...(typeof placeCountrySource === "function" ? { placeCountry: placeCountrySource } : {}),
@@ -360,8 +367,7 @@ export function createRuntimePipeline(
 
 	let placeCountryResolved = placeCountrySource !== "auto"
 	let streetEvidenceResolved = streetEvidenceSource !== "auto"
-	let fstResolved = fstSource !== "auto"
-	let morphologyResolved = streetMorphologySource !== "auto"
+	let priorsResolved = fstSource !== "auto" && streetMorphologySource !== "auto"
 
 	const poiDatabasePath = typeof poiQueryKind === "object" ? poiQueryKind.poiDatabasePath : null
 	let poiLookupResolved = !poiDatabasePath
@@ -409,24 +415,24 @@ export function createRuntimePipeline(
 			}
 		}
 
-		if (!fstResolved) {
-			fstResolved = true
-			const matcher = await autoLoadWeightsFST(opts.classifier)
+		if (!priorsResolved) {
+			priorsResolved = true
+			const artifacts = classifierPriorArtifacts(opts.classifier)
 
-			if (matcher) {
-				stages.fst = matcher
+			// A classifier without an FST artifact parses without the FST priors, as it did
+			// before the loader, so a bare classifier raises no warning.
+			const loaded = await loadParsePriors(artifacts, {
+				gazetteerPrior: Boolean(stages.fst) || (fstSource === "auto" && Boolean(artifacts.fstPath)),
+				...(stages.fst ? { fst: stages.fst } : {}),
+				venueHeadPrior: false,
+			})
+
+			if (fstSource === "auto" && loaded.fst) {
+				stages.fst = loaded.fst
 			}
-		}
 
-		if (!morphologyResolved) {
-			morphologyResolved = true
-
-			if (stages.fst) {
-				const morph = await autoLoadStreetMorphology(opts.classifier)
-
-				if (morph) {
-					stages.streetMorphology = morph
-				}
+			if (streetMorphologySource === "auto" && loaded.streetMorphology) {
+				stages.streetMorphology = loaded.streetMorphology
 			}
 		}
 

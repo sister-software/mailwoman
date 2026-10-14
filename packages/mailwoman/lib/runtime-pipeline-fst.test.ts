@@ -11,6 +11,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { NUMBERED_MORPHOLOGY_OPTS, ZEROED_MORPHOLOGY_OPTS } from "@mailwoman/core/pipeline"
 import { buildFSTFromWOF, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -79,10 +80,23 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
-		// The check's morphology matcher is wired with the emission prior zeroed
-		// (the measured-sweet F config — the emission prior stays off on production paths).
+		// The morphology matcher is wired beside the FST, with the numbered-segment
+		// prior the geocode session runs by default.
+		// The venue-head lexicon is opt-in.
 		expect(calls[0]!.fstStreetMorphology).toBeDefined()
-		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })
+		expect(calls[0]!.fstStreetMorphologyOpts).toEqual(NUMBERED_MORPHOLOGY_OPTS)
+		expect("venueHead" in calls[0]!).toBe(false)
+	})
+
+	it("streetMorphologyPrior: false keeps the matcher at the zeroed weights, and venueHead: auto passes the lexicon", async () => {
+		await using dirDirectory = await temporaryDirectory("mw-fst-prior-off-")
+		const dir = dirDirectory.path
+		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
+		const pipeline = createRuntimePipeline({ classifier, streetMorphologyPrior: false, venueHead: "auto" })
+
+		await pipeline("1 Testville Road", { locale: "en-GB" })
+		expect(calls[0]!.fstStreetMorphologyOpts).toEqual(ZEROED_MORPHOLOGY_OPTS)
+		expect((calls[0]!.venueHead as { last(word: string): number | null }).last("gallery")).toBeTypeOf("number")
 	})
 
 	it("fst: none suppresses the auto-load (byte-stable override)", async () => {

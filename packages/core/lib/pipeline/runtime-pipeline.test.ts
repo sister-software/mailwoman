@@ -7,7 +7,9 @@ import {
 	HARD_PLACE_COUNTRY_SAFELIST,
 	hardCountryFor,
 	isBareLocalityTree,
+	NUMBERED_MORPHOLOGY_OPTS,
 	runPipeline,
+	ZEROED_MORPHOLOGY_OPTS,
 } from "#pipeline/runtime-pipeline"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
 import type {
@@ -267,6 +269,43 @@ describe("runPipeline — stage composition", () => {
 			placetypePair: "inherit",
 			inputMode: "formatted",
 		})
+	})
+
+	it("passes the street-morphology prior weights and the locale's venue-head lexicon from the stages", async () => {
+		const matcher = { walk: () => null, walkFrom: () => null, accepting: () => [] }
+		const lexicon = { first: () => null, last: () => null, suffix: () => null }
+		const venueHead = vi.fn(() => lexicon)
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("30 Rockefeller Plaza")) }
+
+		await runPipeline(
+			"30 Rockefeller Plaza",
+			{ classifier, fst: matcher, streetMorphology: matcher, streetMorphologyPrior: true, venueHead },
+			{ locale: "en-US" }
+		)
+
+		expect(venueHead).toHaveBeenCalledWith(expect.objectContaining({ locale: "en-US" }))
+
+		expect(classifier.parse).toHaveBeenCalledWith(
+			"30 Rockefeller Plaza",
+			expect.objectContaining({
+				fst: matcher,
+				fstStreetMorphology: matcher,
+				fstStreetMorphologyOpts: NUMBERED_MORPHOLOGY_OPTS,
+				venueHead: lexicon,
+			})
+		)
+	})
+
+	it("passes the zeroed street-morphology weights and no lexicon when the stages omit both", async () => {
+		const matcher = { walk: () => null, walkFrom: () => null, accepting: () => [] }
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("30 Rockefeller Plaza")) }
+
+		await runPipeline("30 Rockefeller Plaza", { classifier, fst: matcher, streetMorphology: matcher })
+
+		const options = (classifier.parse as ReturnType<typeof vi.fn>).mock.calls[0]![1] as Record<string, unknown>
+
+		expect(options["fstStreetMorphologyOpts"]).toEqual(ZEROED_MORPHOLOGY_OPTS)
+		expect("venueHead" in options).toBe(false)
 	})
 
 	it("threads an explicit PipelineOpts.inputMode to classifier.parse (Decision A)", async () => {
