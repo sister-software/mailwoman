@@ -227,6 +227,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		],
 		["a release checksum", `sha256sum /tmp/package.tgz`],
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
+		["an archive extracted into a scratch directory", `unzip -o -q /tmp/report.zip -d /tmp/report`],
 		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
 		// A quoted value used to split the assignment into two words, so the head became
 		// the quote placeholder and the `quoted` refusal — a word absent from the input,
