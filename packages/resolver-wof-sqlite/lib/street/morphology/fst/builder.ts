@@ -85,8 +85,8 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * Variant surface forms, in joined post-normalization form, that the trie never holds.
 	 *
 	 * A two-character street type that is also a region abbreviation, `ct` for court
-	 * and Connecticut or `la` for lane and Louisiana, reads as the region at parse time,
-	 * and the artifact is locale-general, so the variant stays out for every locale.
+	 * and Connecticut or `la` for lane and Louisiana, reads as the region at parse time.
+	 * The artifact is locale-general, so the variant stays out for every locale.
 	 *
 	 * @defaultValue {@link REGION_ABBREVIATION_VARIANTS}, the codex's US state, Australian state and
 	 *   Canadian province abbreviations
