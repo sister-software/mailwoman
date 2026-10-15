@@ -324,6 +324,8 @@ export function buildFSTEmissionPriors(
 		? wordGroups.map((g) => HOUSE_NUMBER_RE.test(g.fstToken))
 		: null
 
+	const groupSegments: number[] | null = streetContext ? segmentIndexes(wordGroups, pieces) : null
+
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
 
@@ -340,7 +342,7 @@ export function buildFSTEmissionPriors(
 				fst.accepting(match.stateID),
 				[group],
 				tuning,
-				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags)
+				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags, groupSegments)
 			)
 		}
 
@@ -364,7 +366,7 @@ export function buildFSTEmissionPriors(
 					fst.accepting(next.stateID),
 					matchedGroups,
 					tuning,
-					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags)
+					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags, groupSegments)
 				)
 			}
 
@@ -531,25 +533,57 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
 	return -1
 }
 
+/**
+ * Assigns each word group, punctuation groups included, its comma-separated segment index.
+ *
+ * A comma, semicolon, bar or newline in a group's pieces closes the segment after that group.
+ */
+function segmentIndexes(groups: readonly WordGroup[], pieces: ReadonlyArray<{ piece: string }>): number[] {
+	let segment = 0
+
+	return groups.map((group) => {
+		const current = segment
+
+		if (SEGMENT_BREAK_RE.test(group.pieceIndices.map((i) => pieces[i]!.piece).join(""))) {
+			segment++
+		}
+
+		return current
+	})
+}
+
+/**
+ * The scale on a match's positive bias from the street type or house number beside it.
+ *
+ * A street type's adjacency stays inside the match's segment: in `05448 New St, Vermont` the
+ * state follows a comma, so the street type before the comma leaves its region bias whole.
+ * A house number's adjacency crosses the comma, because a convention that writes the number
+ * after the street, as in `Sofia Camarena 38, Loma Blanca`, writes the colonia next, and the
+ * scaled bias keeps a colonia that is also a locality elsewhere on its dependent reading.
+ */
 function streetContextScale(
 	groups: WordGroup[],
 	startIdx: number,
 	endIdx: number,
 	streetContext: StreetContextRequirementOpts | null,
 	streetTypeFlags: boolean[] | null,
-	houseNumberFlags: boolean[] | null
+	houseNumberFlags: boolean[] | null,
+	groupSegments: number[] | null
 ): number {
-	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1
+	if (!streetContext || !streetTypeFlags || !houseNumberFlags || !groupSegments) return 1
 
 	const prev = adjacentNonEmptyIndex(groups, startIdx, -1)
 
-	if (prev >= 0 && (streetTypeFlags[prev] || houseNumberFlags[prev])) {
+	if (
+		prev >= 0 &&
+		(houseNumberFlags[prev] || (streetTypeFlags[prev] && groupSegments[prev] === groupSegments[startIdx]))
+	) {
 		return streetContext.positiveScale ?? 0.25
 	}
 
 	const next = adjacentNonEmptyIndex(groups, endIdx, 1)
 
-	if (next >= 0 && streetTypeFlags[next]) {
+	if (next >= 0 && groupSegments[next] === groupSegments[endIdx] && streetTypeFlags[next]) {
 		return streetContext.positiveScale ?? 0.25
 	}
 

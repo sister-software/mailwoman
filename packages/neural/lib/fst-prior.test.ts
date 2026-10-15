@@ -229,6 +229,30 @@ describe("BuildFSTEmissionPriors — street-context check (syntactic context onl
 		expect(conditional[1]!.every((v) => v === 0)).toBe(true)
 	})
 
+	it("adjacency stays inside the segment: a name after 'Blvd,' keeps its whole bias", () => {
+		const pieces = makePieces("Washington Blvd, New York")
+
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+
+		// `Washington` sits before the street type in its own segment and scales down.
+		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
+		// `New York` follows the comma, so the street type before it is in another segment.
+		expect(conditional[2]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3, 2)
+		expect(conditional[3]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3, 2)
+	})
+
+	it("a house number before the comma still scales the name after it, the colonia of a number-after-street line", () => {
+		const pieces = makePieces("Camarena 38, Washington")
+
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+
+		expect(conditional[2]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
+	})
+
 	it("prefix adjacency ('Rue Washington', FR shape) scales the positive bias", () => {
 		const pieces = makePieces("Rue Washington")
 
