@@ -196,6 +196,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	streetMorphologyPrior?: boolean
 	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 * Absent, the prior does not run.
+	 */
+	anchorRegions?: import("@mailwoman/core/pipeline").AnchorRegionLookupLike
+	/**
 	 * Venue-head lookups for the session's locale.
 	 * Absent, the venue-head prior does not run.
 	 */
@@ -336,6 +341,7 @@ export function geocodeParseInputs(
 		| "fst"
 		| "streetMorphology"
 		| "streetMorphologyPrior"
+		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
 	> &
@@ -376,7 +382,11 @@ export function geocodeParseInputs(
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			// The loaded priors, through the options builder every production parse path uses.
 			...parsePriorOptions(
-				{ fst: deps.fst ?? null, streetMorphology: deps.streetMorphology ?? null },
+				{
+					fst: deps.fst ?? null,
+					streetMorphology: deps.streetMorphology ?? null,
+					anchorRegions: deps.anchorRegions ?? null,
+				},
 				{
 					streetMorphologyPrior: deps.streetMorphologyPrior ?? false,
 					venueHead: deps.venueHead ?? null,
@@ -402,6 +412,7 @@ export async function parseForGeocode(
 		| "fst"
 		| "streetMorphology"
 		| "streetMorphologyPrior"
+		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
 	>

@@ -9,6 +9,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
 
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
@@ -223,6 +224,69 @@ export interface BuildAnchorFeaturesOptions {
 }
 
 /**
+ * One postcode span the anchor lookup resolved.
+ */
+export interface AnchoredPostcodeSpan {
+	start: number
+	end: number
+	/**
+	 * The lookup key the span resolved under: the span itself, or a GB unit's outward district.
+	 */
+	key: string
+	entry: AnchorEntry
+}
+
+/**
+ * Returns the postcode spans of `text` that the anchor lookup resolves, with the key each resolved under.
+ *
+ * {@linkcode buildAnchorFeatures} paints these spans and the anchor-region prior
+ * reads their keys, so the two agree on which postcodes anchored.
+ */
+export function anchoredPostcodeSpans(
+	text: string,
+	lookup: AnchorLookup,
+	spanMode: AnchorSpanMode = "alnum-run"
+): AnchoredPostcodeSpan[] {
+	const spans: AnchoredPostcodeSpan[] = []
+
+	if (spanMode === "shaped") {
+		for (const match of collectMatches(asciiUpper(text))) {
+			// The train painter's normalization verbatim — uppercased with literal spaces removed.
+			// `normalizePostcode` instead collapses `\s+` runs and drops a `D-` prefix.
+			let key = text.slice(match.start, match.end).replaceAll(" ", "").toUpperCase()
+			let entry = lookup.get(key)
+
+			// An unknown GB unit still anchors from its outward district, painting the whole unit span
+			// so the painted extent matches what a known unit would have produced.
+			if (!entry && GB_UNIT_KEY.test(key)) {
+				key = key.slice(0, -GB_INWARD_LENGTH)
+				entry = lookup.get(key)
+			}
+
+			if (entry) {
+				spans.push({ start: match.start, end: match.end, key, entry })
+			}
+		}
+
+		return spans
+	}
+
+	const tokenRe = /[A-Za-z0-9]+/g
+	let m: RegExpExecArray | null
+
+	while ((m = tokenRe.exec(text))) {
+		const key = m[0].toUpperCase()
+		const entry = lookup.get(key)
+
+		if (!entry) continue
+
+		spans.push({ start: m.index, end: m.index + m[0].length, key, entry })
+	}
+
+	return spans
+}
+
+/**
  * Projects per-piece anchor features onto `pieces` by the same char→piece rule the labels use —
  * a piece takes the anchor of the postcode span its first non-whitespace char falls inside.
  */
@@ -261,37 +325,40 @@ export function buildAnchorFeatures(
 		}
 	}
 
-	if (options.spanMode === "shaped") {
-		for (const match of collectMatches(asciiUpper(text))) {
-			// The train painter's normalization verbatim — uppercased with literal spaces removed.
-			// `normalizePostcode` instead collapses `\s+` runs and drops a `D-` prefix.
-			const key = text.slice(match.start, match.end).replaceAll(" ", "").toUpperCase()
-			let entry = lookup.get(key)
-
-			// An unknown GB unit still anchors from its outward district, painting the whole unit span
-			// so the painted extent matches what a known unit would have produced.
-			if (!entry && GB_UNIT_KEY.test(key)) {
-				entry = lookup.get(key.slice(0, -GB_INWARD_LENGTH))
-			}
-
-			if (entry) {
-				paint(match.start, match.end, entry)
-			}
-		}
-
-		return { features, confidence }
-	}
-
-	const tokenRe = /[A-Za-z0-9]+/g
-	let m: RegExpExecArray | null
-
-	while ((m = tokenRe.exec(text))) {
-		const entry = lookup.get(m[0].toUpperCase())
-
-		if (!entry) continue
-
-		paint(m.index, m.index + m[0].length, entry)
+	for (const span of anchoredPostcodeSpans(text, lookup, options.spanMode)) {
+		paint(span.start, span.end, span.entry)
 	}
 
 	return { features, confidence }
+}
+
+/**
+ * Returns the WOF ids of the regions the input's anchored postcodes assert.
+ *
+ * A postcode whose anchor posterior spans several countries asserts no region,
+ * because the index that answers for it is the one country's.
+ */
+export function anchoredRegionIDs(
+	text: string,
+	lookup: AnchorLookup,
+	spanMode: AnchorSpanMode | undefined,
+	regions: AnchorRegionLookupLike
+): Set<number> {
+	const ids = new Set<number>()
+
+	for (const span of anchoredPostcodeSpans(text, lookup, spanMode)) {
+		const countries = Object.entries(span.entry.posterior)
+			.filter(([, weight]) => weight > 0)
+			.map(([country]) => country)
+
+		if (countries.length !== 1) continue
+
+		for (const ancestor of regions.ancestorsFor(span.key, countries[0]!)) {
+			if (ancestor.placetype === "region") {
+				ids.add(ancestor.wofID)
+			}
+		}
+	}
+
+	return ids
 }

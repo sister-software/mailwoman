@@ -30,6 +30,7 @@ import { normalizeInputCase } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
+import { anchoredRegionIDs } from "#anchor-inference"
 import { encodeCharUnits } from "#char-encoder"
 import type {
 	AddressSystemConventions,
@@ -498,9 +499,19 @@ export class NeuralAddressClassifier {
 
 		tracePriors?.push(untracedPrior("queryShape", queryShapePrior !== undefined && matrixHasBias(queryShapePrior)))
 
+		// The anchor-region prior reads the postcodes the anchor channel fired on,
+		// so it is off on the character path, which feeds no channel.
+		const anchorRegionIDs =
+			opts?.fst && opts.anchorRegions && this.cfg.postcodeAnchorLookup && !encoded.charIDs
+				? anchoredRegionIDs(text, this.cfg.postcodeAnchorLookup, this.cfg.postcodeAnchorSpanMode, opts.anchorRegions)
+				: null
+
+		const anchorRegionHits = new Set<number>()
+
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1,
+					...(anchorRegionIDs?.size ? { anchorRegionIDs, anchorRegionHits } : {}),
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
@@ -523,6 +534,7 @@ export class NeuralAddressClassifier {
 		}
 
 		tracePriors?.push(untracedPrior("fst", fstPrior !== undefined && matrixHasBias(fstPrior)))
+		tracePriors?.push(untracedPrior("anchorRegion", anchorRegionHits.size > 0))
 
 		const morphologyPrior = opts?.fstStreetMorphology
 			? buildStreetMorphologyEmissionPriors(

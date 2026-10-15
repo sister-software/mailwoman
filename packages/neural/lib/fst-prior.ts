@@ -36,6 +36,22 @@ export interface FSTPlaceEntryLike {
 	placetype: string
 
 	/**
+	 * The place's gazetteer name.
+	 *
+	 * The anchor-region boost compares it with the written surface, so an alias such
+	 * as `Washington` for the District of Columbia takes no boost.
+	 */
+	name?: string
+
+	/**
+	 * The WOF ids of the place's ancestors.
+	 *
+	 * The anchor-region boost reads it to tell whether a locality of the written
+	 * name lies inside the anchored region.
+	 */
+	parentChain?: readonly number[]
+
+	/**
 	 * The population-based referential likelihood in [0, 1], which scales the positive emission bias.
 	 *
 	 * The type omits the entries' `encyclopedic` score so the bias cannot use article
@@ -282,6 +298,23 @@ export interface FSTPriorOpts {
 	 * The scorer runs it only when this is set.
 	 */
 	streetContext?: StreetContextRequirementOpts
+
+	/**
+	 * The WOF ids of the regions the input's anchored postcodes assert.
+	 *
+	 * A region entry in this set whose gazetteer name is the written surface takes
+	 * the full `maxBias`, outside the referential and the street-context scale,
+	 * because the postcode is positive evidence that the name is that region.
+	 * At that span the street labels are suppressed at full scale, and the locality
+	 * labels are suppressed by `maxBias` unless a locality of the written name with a
+	 * referential lies inside the region, as `New York` does in New York.
+	 */
+	anchorRegionIDs?: ReadonlySet<number>
+
+	/**
+	 * Receives the WOF id of each anchored region the matrix raised, when the caller passes a set.
+	 */
+	anchorRegionHits?: Set<number>
 }
 
 const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
@@ -306,7 +339,17 @@ export function buildFSTEmissionPriors(
 	const suppressionScale = opts.suppressionScale ?? 1.5
 
 	const lengthMode: ImportanceLengthScaleMode = opts.importanceLengthScaleMode ?? "suppression"
-	const tuning: BiasTuning = { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode }
+
+	const tuning: BiasTuning = {
+		biasScale,
+		maxBias,
+		suppressionScale,
+		seenWOFIDs,
+		lengthMode,
+		anchorRegionIDs: opts.anchorRegionIDs ?? null,
+		anchorRegionHits: opts.anchorRegionHits ?? null,
+	}
+
 	const matrix = emptyPriorMatrix(T, L)
 	const labelToCol = labelColumnIndex(labels)
 
@@ -596,6 +639,20 @@ interface BiasTuning {
 	suppressionScale: number
 	seenWOFIDs: Set<number>
 	lengthMode: ImportanceLengthScaleMode
+	anchorRegionIDs: ReadonlySet<number> | null
+	anchorRegionHits: Set<number> | null
+}
+
+/**
+ * Whether the matched groups spell the entry's own gazetteer name, in FST-normalized form.
+ *
+ * An entry without a name is never its own surface, so a matcher that carries
+ * no names gives no anchor-region boost.
+ */
+function surfaceIsEntryName(groups: readonly WordGroup[], entry: FSTPlaceEntryLike): boolean {
+	if (entry.name === undefined) return false
+
+	return normalizeFSTToken(entry.name) === groups.map((group) => group.fstToken).join(" ")
 }
 
 function applyBias(
@@ -606,15 +663,43 @@ function applyBias(
 	tuning: BiasTuning,
 	contextScale: number
 ): void {
-	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode } = tuning
+	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode, anchorRegionIDs, anchorRegionHits } = tuning
 	const seenTags = new Map<string, number>()
 
 	const streetShaped = isStreetShapedSurface(groups.map((group) => group.fstToken))
 
+	const anchoredRegion =
+		anchorRegionIDs === null
+			? null
+			: (entries.find(
+					(entry) =>
+						entry.placetype === "region" &&
+						anchorRegionIDs.has(entry.wofID) &&
+						!seenWOFIDs.has(entry.wofID) &&
+						surfaceIsEntryName(groups, entry)
+				) ?? null)
+
+	// A locality keeps its reading only on positive evidence: its own name is the written surface,
+	// the gazetteer holds a referential for it, and it lies inside the anchored region.
+	// An alias row or a locality with no referential is no evidence that the user means a locality.
+	const localityInsideAnchoredRegion =
+		anchoredRegion !== null &&
+		entries.some(
+			(entry) =>
+				PLACETYPE_TO_BIO.get(entry.placetype) === "locality" &&
+				entry.referential > 0 &&
+				surfaceIsEntryName(groups, entry) &&
+				entry.parentChain?.includes(anchoredRegion.wofID)
+		)
+
+	if (anchoredRegion) {
+		anchorRegionHits?.add(anchoredRegion.wofID)
+	}
+
 	const matchLen = groups.length
 	const lengthScale = FST_MATCH_LENGTH_SCALE.get(matchLen) ?? FULL_FST_MATCH_SCALE
 	const posScale = lengthMode === "both" ? lengthScale : 1
-	const supScale = lengthMode === "off" ? 1 : lengthScale
+	const supScale = anchoredRegion || lengthMode === "off" ? 1 : lengthScale
 
 	for (const entry of entries) {
 		if (seenWOFIDs.has(entry.wofID)) continue
@@ -625,7 +710,9 @@ function applyBias(
 
 		if (streetShaped && MAPPED_TIER_PLACETYPES.has(entry.placetype)) continue
 
-		const impBias = entry.referential * biasScale * maxBias * posScale * contextScale
+		const impBias =
+			entry === anchoredRegion ? biasScale * maxBias : entry.referential * biasScale * maxBias * posScale * contextScale
+
 		const existing = seenTags.get(bioTag) ?? 0
 
 		if (impBias > existing) {
@@ -665,6 +752,18 @@ function applyBias(
 
 				if (col !== undefined) {
 					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -scaledSuppression)
+				}
+			}
+		}
+	}
+
+	if (anchoredRegion && !localityInsideAnchoredRegion) {
+		for (const pi of allPieceIndices) {
+			for (const label of ["B-locality", "I-locality"]) {
+				const col = labelToCol.get(label)
+
+				if (col !== undefined) {
+					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -biasScale * maxBias)
 				}
 			}
 		}

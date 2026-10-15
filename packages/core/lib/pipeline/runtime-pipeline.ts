@@ -23,6 +23,7 @@ import {
 import type {
 	AddressClassifier,
 	CaseNormalization,
+	AnchorRegionLookupLike,
 	FSTMatcherLike,
 	InputMode,
 	LocaleHint,
@@ -401,6 +402,7 @@ export async function runPipeline(
 			placetypePair: opts?.placetypePair ?? "inherit",
 			streetMorphology: stages.streetMorphology ?? null,
 			streetMorphologyPrior: stages.streetMorphologyPrior ?? false,
+			anchorRegions: stages.anchorRegions ?? null,
 			venueHead: stages.venueHead?.(locale) ?? null,
 			inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
 		})
@@ -481,11 +483,21 @@ async function safeClassify(
 		placetypePair: PlacetypePairSelection
 		streetMorphology: FSTMatcherLike | null
 		streetMorphologyPrior: boolean
+		anchorRegions: AnchorRegionLookupLike | null
 		venueHead: VenueHeadStage | null
 		inputMode: InputMode
 	}
 ): Promise<AddressTree> {
-	const { fst, caseNormalization, placetypePair, streetMorphology, streetMorphologyPrior, venueHead, inputMode } = knobs
+	const {
+		fst,
+		caseNormalization,
+		placetypePair,
+		streetMorphology,
+		streetMorphologyPrior,
+		anchorRegions,
+		venueHead,
+		inputMode,
+	} = knobs
 
 	try {
 		return await classifier.parse(text, {
@@ -497,6 +509,7 @@ async function safeClassify(
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			placetypePair,
 			...streetContextRequirementFor({ fst, streetMorphology }, { streetMorphologyPrior }),
+			...(fst && anchorRegions ? { anchorRegions } : {}),
 			...(venueHead ? { venueHead: venueHead.venueHead } : {}),
 			...(venueHead?.venueHeadOpts ? { venueHeadOpts: venueHead.venueHeadOpts } : {}),
 		})

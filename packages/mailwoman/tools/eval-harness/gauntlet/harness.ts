@@ -575,13 +575,13 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// overlay case a gazetteer for the wrong country, a pairing production never runs.
 	// Cached per resolved path, because the overlay classifiers are themselves cached
 	// and several countries share one.
-	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology">>()
+	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">>()
 	const warnedMissingPriorFST = new Set<string>()
 
 	async function priorDepsFor(
 		forClassifier: typeof classifier,
 		label: string
-	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
+	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">> {
 		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
 
 		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
@@ -613,9 +613,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
 		)
 
-		const deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {
+		const deps: Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions"> = {
 			...(loaded.fst ? { fst: loaded.fst } : {}),
 			...(loaded.streetMorphology ? { streetMorphology: loaded.streetMorphology } : {}),
+			...(loaded.anchorRegions ? { anchorRegions: loaded.anchorRegions } : {}),
 		}
 
 		priorDepsByPath.set(fstPath, deps)
@@ -663,7 +664,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	async function caseDepsFor(
 		caseClassifier: typeof classifier,
 		caseCountry: string | undefined
-	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "venueHead" | "venueHeadOpts">> {
+	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions" | "venueHead" | "venueHeadOpts">> {
 		const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
 
 		return { ...priorDeps, ...(await venueHeadDepsFor(caseCountry, priorDeps.streetMorphology ?? null)) }

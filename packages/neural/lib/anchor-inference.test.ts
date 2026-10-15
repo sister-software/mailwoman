@@ -11,6 +11,8 @@ import { describe, expect, it } from "vitest"
 
 import {
 	ANCHOR_FEATURE_DIM,
+	anchoredPostcodeSpans,
+	anchoredRegionIDs,
 	anchorFeatureVector,
 	buildAnchorFeatures,
 	countShapedOnlyKeys,
@@ -378,5 +380,45 @@ describe("shapedKeyerObligationViolation", () => {
 		expect(shapedKeyerObligationViolation(withUnits, "shaped", "postcode-gb.bin")).toBeNull()
 		expect(shapedKeyerObligationViolation(withoutUnits, null, "postcode-gb.bin")).toBeNull()
 		expect(shapedKeyerObligationViolation(null, null, null)).toBeNull()
+	})
+})
+
+describe("anchoredRegionIDs", () => {
+	const lookup: AnchorLookup = new Map<string, AnchorEntry>([
+		["05448", { posterior: { US: 1 }, lat: 44.75, lon: -72.9 }],
+		["SW1A2AA", { posterior: { GB: 1 }, lat: 51.5, lon: -0.12 }],
+		["10000", { posterior: { US: 1, FR: 1 }, lat: 0, lon: 0 }],
+	])
+
+	const regions = {
+		ancestorsFor: (postcode: string, country: string) =>
+			postcode === "05448" && country === "US"
+				? [
+						{ placetype: "country", wofID: 85_633_793, name: "United States" },
+						{ placetype: "region", wofID: 85_688_763, name: "Vermont" },
+					]
+				: postcode === "SW1A2AA" && country === "GB"
+					? [{ placetype: "macroregion", wofID: 404_227_469, name: "England" }]
+					: [],
+	}
+
+	it("returns the region ancestors of each anchored postcode, keyed as the painter keys them", () => {
+		expect([...anchoredRegionIDs("05448 New St Vermont", lookup, "alnum-run", regions)]).toEqual([85_688_763])
+
+		expect(anchoredPostcodeSpans("05448 New St Vermont", lookup, "alnum-run").map((span) => span.key)).toEqual([
+			"05448",
+		])
+	})
+
+	it("reads a shaped GB unit under its space-stripped key and keeps a non-region ancestor out", () => {
+		expect(anchoredRegionIDs("10 Downing St SW1A 2AA", lookup, "shaped", regions).size).toBe(0)
+
+		expect(anchoredPostcodeSpans("10 Downing St SW1A 2AA", lookup, "shaped").map((span) => span.key)).toEqual([
+			"SW1A2AA",
+		])
+	})
+
+	it("asserts no region for a postcode whose posterior spans two countries", () => {
+		expect(anchoredRegionIDs("10000 Main St", lookup, "alnum-run", regions).size).toBe(0)
 	})
 })

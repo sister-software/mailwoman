@@ -570,3 +570,133 @@ describe("Street-shaped surface check on the C4 mapped tiers", () => {
 		expect(collapseFSTBias(entries, ["biggin", "hill"]).get("locality")).toBeCloseTo(0.8, 5)
 	})
 })
+
+describe("buildFSTEmissionPriors — anchor-region boost", () => {
+	const VERMONT = 85_688_763
+	const DISTRICT_OF_COLUMBIA = 85_688_741
+
+	const gazetteer = () =>
+		mockFST(
+			new Map([
+				[
+					"vermont",
+					[
+						{ wofID: VERMONT, placetype: "region", referential: 0.667, name: "Vermont" },
+						{
+							wofID: 85_939_145,
+							placetype: "locality",
+							referential: 0.046,
+							name: "Vermont",
+							parentChain: [404_496_095, 102_086_207, 85_688_697, 85_633_793],
+						},
+					],
+				],
+				[
+					"wyoming",
+					[
+						{ wofID: 85_688_475, placetype: "region", referential: 0.657, name: "Wyoming" },
+						{
+							wofID: 101_734_189,
+							placetype: "locality",
+							referential: 0.003,
+							name: "Albany",
+							parentChain: [102_080_731, 85_688_475, 85_633_793],
+						},
+						{
+							wofID: 1_343_576_949,
+							placetype: "locality",
+							referential: 0,
+							name: "Wyoming",
+							parentChain: [102_080_731, 85_688_475, 85_633_793],
+						},
+					],
+				],
+				["new", []],
+				[
+					"new york",
+					[
+						{ wofID: 85_688_543, placetype: "region", referential: 1, name: "New York" },
+						{
+							wofID: 85_977_539,
+							placetype: "locality",
+							referential: 0.936,
+							name: "New York",
+							parentChain: [102_081_863, 85_688_543, 85_633_793],
+						},
+					],
+				],
+				[
+					"washington",
+					[
+						{ wofID: DISTRICT_OF_COLUMBIA, placetype: "region", referential: 0.672, name: "District of Columbia" },
+						{ wofID: 85_977_000, placetype: "locality", referential: 0.9, name: "Washington" },
+					],
+				],
+				["st", [{ wofID: 900, placetype: "street_affix", referential: 0 }]],
+			])
+		)
+
+	it("raises an anchored region whose name is written to the full bias, past the street-context scale", () => {
+		const pieces = makePieces("New St Vermont")
+		const hits = new Set<number>()
+
+		const matrix = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: gazetteer(), positiveScale: 0 },
+			anchorRegionIDs: new Set([VERMONT]),
+			anchorRegionHits: hits,
+		})
+
+		expect(matrix[2]![labelCol("B-region")]).toBeCloseTo(3, 5)
+		// No locality named Vermont lies inside Vermont, so the locality reading is suppressed.
+		expect(matrix[2]![labelCol("B-locality")]).toBeCloseTo(-3, 5)
+		// The street labels are suppressed at full scale rather than the one-word scale.
+		expect(matrix[2]![labelCol("B-street")]).toBeCloseTo(-1.5, 5)
+		expect([...hits]).toEqual([VERMONT])
+	})
+
+	it("suppresses the locality reading when the in-region rows are an alias and a locality with no referential", () => {
+		const pieces = makePieces("Wyoming")
+
+		const matrix = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			anchorRegionIDs: new Set([85_688_475]),
+		})
+
+		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(3, 5)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(-3, 5)
+	})
+
+	it("keeps the locality reading of a name whose locality lies inside the anchored region", () => {
+		const pieces = makePieces("New York")
+
+		const matrix = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			anchorRegionIDs: new Set([85_688_543]),
+		})
+
+		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(3, 5)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.936 * 3, 5)
+		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.936 * 3, 5)
+	})
+
+	it("leaves the referential bias in place for a region the anchor does not assert", () => {
+		const pieces = makePieces("Vermont")
+
+		const matrix = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			anchorRegionIDs: new Set([DISTRICT_OF_COLUMBIA]),
+		})
+
+		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(0.667 * 3, 5)
+	})
+
+	it("gives an alias no boost: `Washington` is not the District of Columbia's own name", () => {
+		const pieces = makePieces("Washington")
+		const hits = new Set<number>()
+
+		const matrix = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			anchorRegionIDs: new Set([DISTRICT_OF_COLUMBIA]),
+			anchorRegionHits: hits,
+		})
+
+		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(0.672 * 3, 5)
+		expect(hits.size).toBe(0)
+	})
+})

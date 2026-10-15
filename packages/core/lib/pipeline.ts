@@ -46,6 +46,8 @@ export type {
 	AddressClassifier,
 	CaseNormalization,
 	ClassifierOpts,
+	AnchorRegionAncestor,
+	AnchorRegionLookupLike,
 	FSTMatcherLike,
 	InputMode,
 	InputModeSelection,

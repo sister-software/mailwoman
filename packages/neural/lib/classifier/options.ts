@@ -7,6 +7,7 @@
 import { SYSTEM_CODES, type SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type {
+	AnchorRegionLookupLike,
 	CaseNormalization,
 	PlacetypePairSelection,
 	SpanProposerLexicon,
@@ -307,6 +308,15 @@ export interface ParseOpts {
 	 * @internal
 	 */
 	fstStreetContextPositiveScale?: number
+
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 *
+	 * The prior raises an FST region match to the full bias when a postcode the anchor
+	 * channel fired on asserts that region and the written name is the region's own name.
+	 * It runs only with `fst` and the classifier's postcode anchor lookup.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
 
 	/**
 	 * Whether the FST street-context check runs, defaulting to true so `false` keeps

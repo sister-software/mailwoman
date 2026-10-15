@@ -532,7 +532,35 @@ export interface FSTMatcherLike {
 		prev: { stateID: number; depth: number },
 		token: string
 	): { stateID: number; accepted: boolean; depth: number } | null
-	accepting(stateID: number): Array<{ wofID: number; placetype: string; referential: number }>
+	accepting(stateID: number): Array<{ wofID: number; placetype: string; referential: number; name?: string }>
+}
+
+/**
+ * One admin ancestor an anchored postcode asserts.
+ */
+export interface AnchorRegionAncestor {
+	/**
+	 * The WOF placetype, such as `"region"`.
+	 */
+	placetype: string
+	wofID: number
+	/**
+	 * The place's name in the gazetteer, which the prior compares with the written surface.
+	 */
+	name: string
+}
+
+/**
+ * The admin ancestry a postcode's anchor asserts, read by the anchor-region prior.
+ */
+export interface AnchorRegionLookupLike {
+	/**
+	 * Returns the ancestors the index asserts for `postcode` in `country`, coarsest first.
+	 *
+	 * The array is empty when no index covers the country or the index holds no unanimous
+	 * answer for the postcode, as for a prefix whose units sit in two regions.
+	 */
+	ancestorsFor(postcode: string, country: string): readonly AnchorRegionAncestor[]
 }
 
 /**
@@ -637,6 +665,14 @@ export interface ClassifierOpts {
 	 * The scale for positive street-context emissions.
 	 */
 	fstStreetContextPositiveScale?: number
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 *
+	 * The prior raises an FST region match to the full bias when the postcode the anchor
+	 * channel fired on asserts that region and the written name is the region's own name.
+	 * It runs only with `fst` and the classifier's postcode anchor lookup.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
 	/**
 	 * Venue-head lookups for the input's country.
 	 *
@@ -746,6 +782,11 @@ export interface RuntimePipelineStages {
 	 * Absent, the matcher serves the street-context check at zero emission weight.
 	 */
 	streetMorphologyPrior?: boolean
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 * The prior runs only when `fst` is also set.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
 	/**
 	 * The venue-head lexicon for the detected locale with the prior's overrides, or `null` for none.
 	 *
