@@ -439,6 +439,10 @@ export function createRuntimePipeline(
 				stages.fst = loaded.fst
 			}
 
+			if (fstSource === "auto" && loaded.anchorRegions) {
+				stages.anchorRegions = loaded.anchorRegions
+			}
+
 			if (streetMorphologySource === "auto" && loaded.streetMorphology) {
 				stages.streetMorphology = loaded.streetMorphology
 			}

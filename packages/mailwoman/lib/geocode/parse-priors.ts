@@ -12,19 +12,34 @@
 
 import { isCountryToken } from "@mailwoman/codex/country"
 import { streetTypeWordTestFor } from "@mailwoman/codex/street-type"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import {
+	type AnchorRegionAncestor,
+	type AnchorRegionLookupLike,
 	type ClassifierOpts,
 	type FSTMatcherLike,
 	streetContextRequirementFor,
 	type VenueHeadLexiconLike,
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
+import type { PostcodePrefixIndexLike } from "@mailwoman/core/resolver"
 import { isStreetAffix } from "@mailwoman/neural/fst-prior"
+import { PostcodePrefixIndexResolver } from "@mailwoman/neural/postcode/prefix-index"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
-import type { PathBuilderLike } from "path-ts"
+import { probePostcodePrefix } from "@mailwoman/resolver/postcode/prefix"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
+
+/**
+ * The data-root directory that holds the PFX1 postcode-prefix indexes, one file per country scope.
+ */
+export const POSTCODE_PREFIX_DIRECTORY = dataRootPath("postcode-prefix")
+
+const POSTCODE_PREFIX_FILE_GLOB = "postcode-prefix-*.bin"
 
 /**
  * The artifact paths a loaded classifier exposes for its priors.
@@ -68,6 +83,12 @@ export interface LoadParsePriorsOptions {
 	 */
 	venueHeadPrior?: boolean
 	/**
+	 * The directory of PFX1 postcode-prefix indexes the anchor-region prior reads.
+	 *
+	 * @defaultValue {@linkcode POSTCODE_PREFIX_DIRECTORY}
+	 */
+	postcodePrefixDirectory?: PathBuilderLike
+	/**
 	 * A name for the classifier in warnings, such as its locale.
 	 */
 	label?: string
@@ -77,6 +98,12 @@ export interface LoadParsePriorsOptions {
 	 * @defaultValue `console.warn`
 	 */
 	onWarn?: (message: string) => void
+	/**
+	 * Receives the artifacts the loader chose, such as the postcode-prefix index files.
+	 *
+	 * Absent, the choices are not reported.
+	 */
+	onReport?: (message: string) => void
 }
 
 /**
@@ -93,6 +120,13 @@ export interface ParsePriors {
 	 * The street-context check needs both matchers, so the matcher is loaded only beside an FST.
 	 */
 	streetMorphology: FSTMatcherLike | null
+	/**
+	 * The admin ancestry of an anchored postcode, or `null` when the FST is absent
+	 * or no postcode-prefix index loaded.
+	 *
+	 * The anchor-region prior confirms an FST region match, so the lookup is loaded only beside an FST.
+	 */
+	anchorRegions: AnchorRegionLookupLike | null
 	/**
 	 * The venue-head lexicon for a country, or `null` when the venue-head prior was not requested.
 	 *
@@ -129,6 +163,63 @@ export function streetTypeTestFor(fst: FSTMatcherLike | null, country: string | 
 }
 
 /**
+ * Returns an anchor-region lookup over postcode-prefix indexes.
+ *
+ * A postcode is probed through {@linkcode probePostcodePrefix}, which derives the
+ * prefix the index keys, in every index of the postcode's country.
+ * The first index that holds the prefix answers.
+ */
+export function createAnchorRegionLookup(indexes: readonly PostcodePrefixIndexLike[]): AnchorRegionLookupLike {
+	return {
+		ancestorsFor(postcode: string, country: string): readonly AnchorRegionAncestor[] {
+			for (const index of indexes) {
+				const probe = probePostcodePrefix(postcode, index, country)
+
+				if (probe) return probe.node.ancestors
+			}
+
+			return []
+		},
+	}
+}
+
+/**
+ * Loads the newest PFX1 index of each country scope under `directory`.
+ *
+ * Index files carry a build date in their name, so several builds of one scope can sit side by side.
+ * The newest by modification time wins, and the choice is reported through `report`.
+ */
+export async function loadPostcodePrefixIndexes(
+	directory: PathBuilderLike,
+	report: (message: string) => void
+): Promise<PostcodePrefixIndexResolver[]> {
+	const newest = new Map<string, { index: PostcodePrefixIndexResolver; mtimeMs: number; file: string }>()
+
+	for await (const entry of Globerator.from(POSTCODE_PREFIX_FILE_GLOB, { cwd: directory.toString() })) {
+		const file = PathBuilder.from(directory, entry)
+		const stat = await tryStat(file)
+
+		if (!stat) continue
+
+		const index = new PostcodePrefixIndexResolver(new Uint8Array(await readLocalBuffer(file)))
+		const scope = `${index.header.country}:${index.header.scope}`
+		const current = newest.get(scope)
+
+		if (!current || stat.mtimeMs > current.mtimeMs) {
+			newest.set(scope, { index, mtimeMs: stat.mtimeMs, file: file.toString() })
+		}
+	}
+
+	const chosen = [...newest.values()]
+
+	if (chosen.length) {
+		report(`postcode-prefix indexes: ${chosen.map((item) => item.file).join(", ")}`)
+	}
+
+	return chosen.map((item) => item.index)
+}
+
+/**
  * Loads the priors a production parse feeds the classifier.
  *
  * A requested prior whose artifact is absent or unreadable is reported through `onWarn`
@@ -143,6 +234,7 @@ export async function loadParsePriors(
 
 	let fst: FSTMatcherLike | null = options.fst ?? null
 	let streetMorphology: FSTMatcherLike | null = null
+	let anchorRegions: AnchorRegionLookupLike | null = null
 
 	if (options.gazetteerPrior ?? true) {
 		if (!fst && artifacts.fstPath) {
@@ -172,6 +264,25 @@ export async function loadParsePriors(
 			} catch (error) {
 				warn(`street-morphology FST unavailable: ${(error as Error).message} — check off`)
 			}
+
+			const directory = options.postcodePrefixDirectory ?? POSTCODE_PREFIX_DIRECTORY
+
+			try {
+				const indexes = await loadPostcodePrefixIndexes(directory, options.onReport ?? (() => {}))
+
+				if (indexes.length) {
+					anchorRegions = createAnchorRegionLookup(indexes)
+				} else {
+					warn(
+						`no postcode-prefix index under ${directory} — the anchor-region prior is off for ${label}. ` +
+							"A state name after an anchored postcode keeps the FST's own bias."
+					)
+				}
+			} catch (error) {
+				warn(
+					`postcode-prefix indexes unavailable under ${directory}: ${(error as Error).message} — anchor-region prior off`
+				)
+			}
 		}
 	}
 
@@ -182,6 +293,7 @@ export async function loadParsePriors(
 	return {
 		fst,
 		streetMorphology,
+		anchorRegions,
 		venueHeadOptsFor: (country) => {
 			const key = (country ?? "").toUpperCase()
 			let opts = venueHeadOpts.get(key)
@@ -239,6 +351,7 @@ export type ParsePriorOptions = Partial<
 		| "fstStreetMorphology"
 		| "fstStreetMorphologyOpts"
 		| "fstStreetContextPositiveScale"
+		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
 	>
@@ -249,9 +362,10 @@ export type ParsePriorOptions = Partial<
  *
  * The FST and the street-context options come from the core helper the runtime pipeline uses,
  * so every path passes the same weights for the same switch.
+ * The anchor-region lookup passes only beside an FST, because it confirms an FST match.
  */
 export function parsePriorOptions(
-	priors: Pick<ParsePriors, "fst" | "streetMorphology">,
+	priors: Pick<ParsePriors, "fst" | "streetMorphology"> & Partial<Pick<ParsePriors, "anchorRegions">>,
 	selection: ParsePriorSelection = {}
 ): ParsePriorOptions {
 	return {
@@ -260,6 +374,7 @@ export function parsePriorOptions(
 			{ fst: priors.fst, streetMorphology: priors.streetMorphology },
 			{ streetMorphologyPrior: selection.streetMorphologyPrior ?? false }
 		),
+		...(priors.fst && priors.anchorRegions ? { anchorRegions: priors.anchorRegions } : {}),
 		...(selection.venueHead ? { venueHead: selection.venueHead } : {}),
 		...(selection.venueHead && selection.venueHeadOpts ? { venueHeadOpts: selection.venueHeadOpts } : {}),
 	}

@@ -465,7 +465,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		label: `locale ${options.locale}`,
 	})
 
-	const { fst, streetMorphology } = priors
+	const { fst, streetMorphology, anchorRegions } = priors
 
 	const venueHeadCountry = options.defaultCountry ?? options.locale.split("-")[1] ?? null
 	const venueHead = priors.venueHeadFor(venueHeadCountry)
@@ -644,12 +644,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		| "fst"
 		| "streetMorphology"
 		| "streetMorphologyPrior"
+		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
+		...(anchorRegions ? { anchorRegions } : {}),
 		streetMorphologyPrior: settings.streetMorphologyPrior,
 		...(venueHead
 			? {
@@ -716,6 +718,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			classifier: routed,
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
+			...(anchorRegions ? { anchorRegions } : {}),
 			resolver,
 			databases,
 			nationalDatabases,

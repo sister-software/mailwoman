@@ -43,6 +43,7 @@ export async function productionPriorOptions(
 	reportError(
 		`Priors:     fst ${priors.fst ? "on" : "off"}, street-morphology ${priors.streetMorphology ? "on" : "off"} ` +
 			`(prior ${GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior ? "on" : "off"}), ` +
+			`anchor-region ${priors.anchorRegions ? "on" : "off"}, ` +
 			`venue-head ${GEOCODE_SESSION_DEFAULTS.venueHeadPrior ? "on" : "off"}`
 	)
 
