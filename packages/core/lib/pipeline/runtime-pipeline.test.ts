@@ -274,7 +274,8 @@ describe("runPipeline — stage composition", () => {
 	it("passes the street-morphology prior weights and the locale's venue-head lexicon from the stages", async () => {
 		const matcher = { walk: () => null, walkFrom: () => null, accepting: () => [] }
 		const lexicon = { first: () => null, last: () => null, suffix: () => null }
-		const venueHead = vi.fn(() => lexicon)
+		const isStreetAffix = (word: string) => word === "plaza"
+		const venueHead = vi.fn(() => ({ venueHead: lexicon, venueHeadOpts: { isStreetAffix } }))
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("30 Rockefeller Plaza")) }
 
 		await runPipeline(
@@ -292,6 +293,7 @@ describe("runPipeline — stage composition", () => {
 				fstStreetMorphology: matcher,
 				fstStreetMorphologyOpts: NUMBERED_MORPHOLOGY_OPTS,
 				venueHead: lexicon,
+				venueHeadOpts: { isStreetAffix },
 			})
 		)
 	})

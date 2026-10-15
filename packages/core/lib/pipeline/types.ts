@@ -595,6 +595,21 @@ export interface VenueHeadPriorOpts {
 	 * and an extension stops at one.
 	 */
 	isStreetAffix?: (word: string) => boolean
+	/**
+	 * Whether a segment's words, joined by single spaces in `normalizeFSTToken` form,
+	 * are a country name, as `united states of america` is.
+	 *
+	 * No word of such a segment heads a venue, so `of America` keeps its country reading.
+	 */
+	isCountryName?: (segment: string) => boolean
+}
+
+/**
+ * The venue-head lexicon a pipeline stage selects for one parse, with the prior's overrides.
+ */
+export interface VenueHeadStage {
+	venueHead: VenueHeadLexiconLike
+	venueHeadOpts?: VenueHeadPriorOpts
 }
 
 /**
@@ -732,11 +747,11 @@ export interface RuntimePipelineStages {
 	 */
 	streetMorphologyPrior?: boolean
 	/**
-	 * The venue-head lexicon for the detected locale, or `null` for none.
+	 * The venue-head lexicon for the detected locale with the prior's overrides, or `null` for none.
 	 *
-	 * The pipeline calls it once per parse with the locale hint and passes the lexicon to the classifier.
+	 * The pipeline calls it once per parse with the locale hint and passes both to the classifier.
 	 */
-	venueHead?: (locale: LocaleHint) => VenueHeadLexiconLike | null
+	venueHead?: (locale: LocaleHint) => VenueHeadStage | null
 	resolver?: Resolver
 	/**
 	 * The backend for resolver candidate and parent-chain lookups during reconciliation.

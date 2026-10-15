@@ -17,7 +17,7 @@ import {
 	type POIIntent,
 	type POIQueryResult,
 	type RuntimePipelineStages,
-	type VenueHeadLexiconLike,
+	type VenueHeadStage,
 } from "@mailwoman/core/pipeline"
 import type { WOFAncestor } from "@mailwoman/core/resolver"
 import {
@@ -40,7 +40,7 @@ import { loadDefaultPlaceCountry } from "#default/placer"
 import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
 import { loadDefaultStreetEvidence } from "#default/street-evidence"
 import { $public } from "#env"
-import { loadParsePriors, type ParsePriorArtifacts } from "#geocode/parse-priors"
+import { loadParsePriors, type ParsePriorArtifacts, venueHeadOptsFor } from "#geocode/parse-priors"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
 import { createPOIExecutor } from "#poi/executor"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"
@@ -131,7 +131,11 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * The venue-head lexicon for each parse's detected locale.
 	 *
-	 * `"auto"` reads the bundled table for the locale's country, and `"none"` runs no venue-head prior.
+	 * `"auto"` reads the bundled table for the locale's country, with the country's street-type
+	 * and country-name tests, and `"none"` runs no venue-head prior.
+	 * The default is the geocode session's.
+	 *
+	 * @defaultValue `"auto"`
 	 */
 	venueHead?: StageSource<NonNullable<RuntimePipelineStages["venueHead"]>>
 
@@ -240,13 +244,6 @@ function classifierPriorArtifacts(classifier: CreateRuntimePipelineOpts["classif
 }
 
 /**
- * The venue-head stage that reads the bundled table for the detected locale's country.
- */
-function venueHeadForLocale(locale: LocaleHint): VenueHeadLexiconLike {
-	return venueHeadLexicon(localeToCountry(locale.locale) ?? "")
-}
-
-/**
  * Returns the host's locale and time zone from `Intl`, or an empty object when `Intl` fails.
  */
 export function getMachinePreferences(): MachinePreferences {
@@ -276,7 +273,7 @@ export function createRuntimePipeline(
 	const machinePreferencesSource = opts.machinePreferences ?? "auto"
 	const fstSource = opts.fst ?? "auto"
 	const streetMorphologySource = opts.streetMorphology ?? "auto"
-	const venueHeadSource = opts.venueHead ?? "none"
+	const venueHeadSource = opts.venueHead ?? "auto"
 	const placeCountrySource = opts.placeCountry ?? "auto"
 	const streetEvidenceSource = opts.streetEvidence ?? "auto"
 
@@ -299,6 +296,17 @@ export function createRuntimePipeline(
 		if (named.length) return named
 
 		return opts.poiSemanticLookup?.(phrase, locale) ?? []
+	}
+
+	// The venue-head stage for the detected locale's country: the bundled lexicon and a street-type
+	// test over the morphology matcher the first call loads, so the test is built when it is called.
+	const venueHeadForLocale = (locale: LocaleHint): VenueHeadStage => {
+		const country = localeToCountry(locale.locale)
+
+		return {
+			venueHead: venueHeadLexicon(country ?? ""),
+			venueHeadOpts: venueHeadOptsFor(stages.streetMorphology ?? null, country),
+		}
 	}
 
 	const classifierShape = opts.classifier as { encoder?: string; forInput?: unknown } | undefined

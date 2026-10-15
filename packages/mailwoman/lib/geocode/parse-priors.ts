@@ -10,6 +10,8 @@
  *   paths run.
  */
 
+import { isCountryToken } from "@mailwoman/codex/country"
+import { streetTypeWordTestFor } from "@mailwoman/codex/street-type"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type ClassifierOpts,
@@ -18,6 +20,7 @@ import {
 	type VenueHeadLexiconLike,
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
+import { isStreetAffix } from "@mailwoman/neural/fst-prior"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
@@ -96,6 +99,33 @@ export interface ParsePriors {
 	 * A `null` country reads the language aggregates and no country table.
 	 */
 	venueHeadFor(country: string | null): VenueHeadLexiconLike | null
+	/**
+	 * The venue-head prior's overrides for a country, as {@link venueHeadOptsFor}
+	 * builds them over the loaded street-morphology matcher.
+	 */
+	venueHeadOptsFor(country: string | null): VenueHeadPriorOpts
+}
+
+/**
+ * Returns the venue-head prior's overrides for a country: the street-type test of
+ * {@link streetTypeTestFor} and the codex's country-name test.
+ */
+export function venueHeadOptsFor(fst: FSTMatcherLike | null, country: string | null): VenueHeadPriorOpts {
+	return { isStreetAffix: streetTypeTestFor(fst, country), isCountryName: isCountryToken }
+}
+
+/**
+ * Returns the street-type test the venue-head prior reads for a country.
+ *
+ * The morphology FST accepts the street types of every locale but omits one-
+ * and two-letter variants, so the codex's table for the country adds the abbreviations
+ * it writes most, such as `St`, `Rd` and `NW` in the US.
+ * A head followed by one of these is a street name, and one of these after a street name heads no venue.
+ */
+export function streetTypeTestFor(fst: FSTMatcherLike | null, country: string | null): (word: string) => boolean {
+	const codex = streetTypeWordTestFor(country)
+
+	return (word) => (fst !== null && isStreetAffix(fst, word)) || codex(word)
 }
 
 /**
@@ -147,10 +177,22 @@ export async function loadParsePriors(
 
 	const venueHeadPrior = options.venueHeadPrior ?? true
 	const lexicons = new Map<string, VenueHeadLexiconLike>()
+	const venueHeadOpts = new Map<string, VenueHeadPriorOpts>()
 
 	return {
 		fst,
 		streetMorphology,
+		venueHeadOptsFor: (country) => {
+			const key = (country ?? "").toUpperCase()
+			let opts = venueHeadOpts.get(key)
+
+			if (!opts) {
+				opts = venueHeadOptsFor(streetMorphology, key || null)
+				venueHeadOpts.set(key, opts)
+			}
+
+			return opts
+		},
 		venueHeadFor: (country) => {
 			if (!venueHeadPrior) return null
 

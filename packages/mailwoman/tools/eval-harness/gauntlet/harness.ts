@@ -25,7 +25,7 @@ import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
-import { loadParsePriors } from "#geocode/parse-priors"
+import { loadParsePriors, venueHeadOptsFor } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
@@ -628,26 +628,45 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const venueHeadByCountry = new Map<string, Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">>()
 
 	async function venueHeadDepsFor(
-		caseCountry: string | undefined
+		caseCountry: string | undefined,
+		streetMorphology: FSTMatcherLike | null
 	): Promise<Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">> {
 		if (!pinnedSwitch(pins.venueHeadPrior, GEOCODE_SESSION_DEFAULTS.venueHeadPrior)) return {}
 
 		const country = (caseCountry ?? "").toUpperCase()
-		const cached = venueHeadByCountry.get(country)
+		// The street-type test reads the case's morphology matcher, so a country is cached per matcher.
+		const key = `${country}:${streetMorphology ? "fst" : "none"}`
+		const cached = venueHeadByCountry.get(key)
 
 		if (cached) return cached
 
 		const { venueHeadLexicon } = await import("@mailwoman/poi-taxonomy/venue-heads")
 
-		// An unpinned scale leaves `venueHeadOpts` unset, so the prior applies its own default.
+		// An unpinned scale leaves `biasScale` unset, so the prior applies its own default.
 		const deps: Pick<GeocodeDeps, "venueHead" | "venueHeadOpts"> = {
 			venueHead: venueHeadLexicon(country),
-			...(pins.venueHeadBiasScale === "production" ? {} : { venueHeadOpts: { biasScale: pins.venueHeadBiasScale } }),
+			venueHeadOpts: {
+				...venueHeadOptsFor(streetMorphology, country || null),
+				...(pins.venueHeadBiasScale === "production" ? {} : { biasScale: pins.venueHeadBiasScale }),
+			},
 		}
 
-		venueHeadByCountry.set(country, deps)
+		venueHeadByCountry.set(key, deps)
 
 		return deps
+	}
+
+	/**
+	 * The prior deps for one case: the classifier's matchers and the country's venue-head
+	 * lexicon with a street-type test over those matchers.
+	 */
+	async function caseDepsFor(
+		caseClassifier: typeof classifier,
+		caseCountry: string | undefined
+	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "venueHead" | "venueHeadOpts">> {
+		const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+
+		return { ...priorDeps, ...(await venueHeadDepsFor(caseCountry, priorDeps.streetMorphology ?? null)) }
 	}
 
 	const streetMorphologyPrior = pinnedSwitch(pins.streetMorphologyPrior, GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior)
@@ -697,8 +716,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			osmDatabases: osmProvider.for,
 			...pinDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
-			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
-			...(await venueHeadDepsFor(caseCountry)),
+			...(await caseDepsFor(caseClassifier, caseCountry)),
 			streetMorphologyPrior,
 			...forkEntityDeps,
 			...forwarded,
@@ -713,8 +731,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			const caseClassifier = await classifierFor(caseCountry)
 
 			const priorDeps = {
-				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
-				...(await venueHeadDepsFor(caseCountry)),
+				...(await caseDepsFor(caseClassifier, caseCountry)),
 				streetMorphologyPrior,
 			}
 

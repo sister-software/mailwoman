@@ -50,5 +50,6 @@ export async function productionPriorOptions(
 		parsePriorOptions(priors, {
 			streetMorphologyPrior: GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior,
 			venueHead: priors.venueHeadFor(country),
+			venueHeadOpts: priors.venueHeadOptsFor(country),
 		})
 }

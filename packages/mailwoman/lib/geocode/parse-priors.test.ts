@@ -57,6 +57,26 @@ describe("loadParsePriors", () => {
 	})
 })
 
+describe("venueHeadOptsFor", () => {
+	it("reads the country's street-type abbreviations beside the matcher, and the codex country names", async () => {
+		const priors = await loadParsePriors({}, { fst: MATCHER, onWarn: () => {} })
+		const us = priors.venueHeadOptsFor("US")
+
+		expect(us.isStreetAffix!("st")).toBe(true)
+		expect(us.isStreetAffix!("nw")).toBe(true)
+		expect(us.isStreetAffix!("street")).toBe(true)
+		expect(us.isStreetAffix!("school")).toBe(false)
+		expect(us.isCountryName!("united states of america")).toBe(true)
+		expect(us.isCountryName!("of america")).toBe(false)
+		expect(priors.venueHeadOptsFor("us")).toBe(us)
+
+		const jamaica = priors.venueHeadOptsFor("JM")
+
+		expect(jamaica.isStreetAffix!("st")).toBe(false)
+		expect(jamaica.isStreetAffix!("street")).toBe(true)
+	})
+})
+
 describe("parsePriorOptions", () => {
 	it("passes the numbered-segment weights with the prior on and the zeroed weights with it off", () => {
 		const priors = { fst: MATCHER, streetMorphology: MATCHER }
