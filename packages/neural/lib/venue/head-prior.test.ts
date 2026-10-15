@@ -107,6 +107,13 @@ describe("buildVenueHeadEmissionPriors", () => {
 		const streetName = build(lex, pieces("Mountain", "School", "Rd"), LABELS, { isStreetAffix })
 
 		expect(streetName.flat().every((v) => v === 0)).toBe(true)
+
+		// A dash opens a decoration, so the `St` of a Saint name inside it keeps the first-word bias.
+		const decorated = build(lex, pieces("Day", "Spa", "-", "St", "Andrews", "Lakes"), LABELS, { isStreetAffix })
+
+		expect(decorated[3]![B]).toBeCloseTo(2)
+		expect(decorated[4]![I]).toBeCloseTo(2)
+		expect(decorated[0]![B]).toBe(0)
 	})
 
 	it("gives no bias inside a segment that is a country name", () => {

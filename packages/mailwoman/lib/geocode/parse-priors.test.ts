@@ -70,10 +70,13 @@ describe("venueHeadOptsFor", () => {
 		expect(us.isCountryName!("of america")).toBe(false)
 		expect(priors.venueHeadOptsFor("us")).toBe(us)
 
+		// A country without a codex table reads the matcher's own street types.
+		// Those hold `st` and `street` and no directional.
 		const jamaica = priors.venueHeadOptsFor("JM")
 
-		expect(jamaica.isStreetAffix!("st")).toBe(false)
+		expect(jamaica.isStreetAffix!("st")).toBe(true)
 		expect(jamaica.isStreetAffix!("street")).toBe(true)
+		expect(jamaica.isStreetAffix!("nw")).toBe(false)
 	})
 })
 

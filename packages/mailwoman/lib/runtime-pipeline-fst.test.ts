@@ -89,8 +89,9 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 
 		const venueHeadOpts = calls[0]!.venueHeadOpts as { isStreetAffix(word: string): boolean }
 
-		expect(venueHeadOpts.isStreetAffix("st")).toBe(false)
+		expect(venueHeadOpts.isStreetAffix("st")).toBe(true)
 		expect(venueHeadOpts.isStreetAffix("street")).toBe(true)
+		expect(venueHeadOpts.isStreetAffix("nw")).toBe(false)
 	})
 
 	it("streetMorphologyPrior: false keeps the matcher at the zeroed weights, and venueHead: none drops the lexicon", async () => {
