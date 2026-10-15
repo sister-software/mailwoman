@@ -90,6 +90,8 @@ describe("roleForArtifact", () => {
 		expect(roleForArtifact("char-vocab.json")).toBe("character-vocabulary")
 		expect(roleForArtifact("pair-index-gb.bin")).toBe("placetype-pair-index")
 		expect(roleForArtifact("postcode-us.bin")).toBe("postcode-binary")
+		expect(roleForArtifact("postcode-prefix-us.bin")).toBe("postcode-prefix-index")
+		expect(roleForArtifact("postcode-prefix-gb-esw.bin")).toBe("postcode-prefix-index")
 		expect(roleForArtifact("fst-en-gb.bin")).toBe("gazetteer-fst")
 		expect(roleForArtifact("street-type-lexicon-v3.json")).toBe("lexicon")
 		expect(roleForArtifact("calibration-per-locale.json")).toBe("calibration")

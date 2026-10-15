@@ -15,6 +15,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
 import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
@@ -131,6 +132,9 @@ export async function readWeightsRecipe(
 
 	const inheritsBase = (locale: string): boolean => inheriting.has(locale.toLowerCase())
 
+	// The newest dated index of each scope, read once so every locale's list resolves to the same file.
+	const postcodePrefixFiles = await newestPostcodePrefixFiles(resolvePath(dataRoot, "postcode-prefix"))
+
 	const linkableFor = (locale: string): LinkableArtifact[] => {
 		const out: LinkableArtifact[] = inheritsBase(locale)
 			? []
@@ -165,6 +169,17 @@ export async function readWeightsRecipe(
 				sourcePath: wofDatabaseRoot(dataRoot)("fst-street-morphology.bin"),
 			}
 		)
+
+		// Shipped under the scope's name: the data root keeps dated builds, the package keeps one file.
+		const country = locale.split("-")[1]?.toLowerCase() ?? ""
+
+		for (const scope of softFeed.postcodePrefixByCountry?.[country] ?? []) {
+			const file = postcodePrefixFiles.get(scope)
+
+			if (file) {
+				out.push({ shippedName: shippedPostcodePrefixName(scope), sourcePath: file.path })
+			}
+		}
 
 		return out
 	}

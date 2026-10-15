@@ -5,7 +5,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { StageSource } from "@mailwoman/core/pipeline"
+import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
 import { startEarly } from "@mailwoman/core/promises"
 
 import { parseAddressSystemTable } from "#address-system"
@@ -27,7 +27,9 @@ import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inferen
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import type { PairIndexResolver } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
+import { createAnchorRegionLookup } from "#postcode/anchor-regions"
 import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
+import { PostcodePrefixIndexResolver } from "#postcode/prefix-index"
 import { MailwomanTokenizer } from "#tokenizer"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
 import { loadPairIndexes, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
@@ -87,6 +89,14 @@ export interface LoadResult {
 	 * It is empty when `pairIndexURLs` was empty or every fetch failed.
 	 */
 	pairIndexes: readonly LoadedPairIndex[]
+
+	/**
+	 * The anchor-region lookup over the postcode-prefix indexes that fetched and parsed.
+	 *
+	 * It is absent when `postcodePrefixURLs` was empty or every fetch failed, and the host
+	 * then runs the pipeline without the anchor-region prior.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
 
 	/**
 	 * Returns a `placetypePair` option for the loaded index whose country matches the
@@ -164,6 +174,16 @@ export interface LoadFromURLsOptions {
 	 * Pass `[]` to load none.
 	 */
 	pairIndexURLs: readonly string[]
+
+	/**
+	 * URLs of PFX1 postcode-prefix indexes, such as `postcode-prefix-us.bin`.
+	 *
+	 * The loader builds {@link LoadResult.anchorRegions} from them for the anchor-region prior.
+	 *
+	 * An index that fails to fetch or parse is skipped with a warning.
+	 * Omit or pass `[]` to load none.
+	 */
+	postcodePrefixURLs?: readonly string[]
 
 	/**
 	 * A locale or country code.
@@ -289,6 +309,32 @@ async function loadPostcodeAnchorLookup(
 }
 
 /**
+ * Fetches and parses each PFX1 postcode-prefix index, skipping one that fails with a warning.
+ */
+async function fetchPostcodePrefixIndexes(
+	urls: readonly string[],
+	fetchImpl: typeof fetch
+): Promise<PostcodePrefixIndexResolver[]> {
+	const settled = await Promise.all(
+		urls.map(async (url): Promise<PostcodePrefixIndexResolver | null> => {
+			try {
+				return new PostcodePrefixIndexResolver(await fetchBytes(url, fetchImpl))
+			} catch (error) {
+				console.warn(
+					`[@mailwoman/neural/web/loader] optional postcode-prefix index skipped: ${url} — ` +
+						`${error instanceof Error ? error.message : String(error)}. ` +
+						"The anchor-region prior is a soft decode channel; the classifier loads without it."
+				)
+
+				return null
+			}
+		})
+	)
+
+	return settled.filter((index): index is PostcodePrefixIndexResolver => index !== null)
+}
+
+/**
  * Returns the URL of `anchor-lexicon-v1.json` beside the model file.
  */
 export function defaultGazetteerLexiconURL(modelURL: string): string {
@@ -379,6 +425,12 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
 		: Promise.resolve<LoadedPairIndex[]>([])
 
+	const postcodePrefixURLs = opts.postcodePrefixURLs ?? []
+
+	const postcodePrefixIndexesLoad = postcodePrefixURLs.length
+		? fetchPostcodePrefixIndexes(postcodePrefixURLs, fetchImpl)
+		: Promise.resolve<PostcodePrefixIndexResolver[]>([])
+
 	const [
 		modelBytes,
 		embeddings,
@@ -398,12 +450,15 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
 	])
 
-	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
+	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes, postcodePrefixIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, { ...opts.runner, ...(embeddings ? { embeddings } : {}) }),
 		postcodeAnchorLookupLoad,
 		pairIndexesLoad,
+		postcodePrefixIndexesLoad,
 	])
+
+	const anchorRegions = postcodePrefixIndexes.length ? createAnchorRegionLookup(postcodePrefixIndexes) : null
 
 	let configPairIndex: PairIndexResolver | null = null
 
@@ -458,6 +513,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		labels,
 		pairIndexes,
 		selectPairIndexForText: (text, selectOpts) => resolvePairIndexForText(pairIndexes, text, selectOpts),
+		...(anchorRegions ? { anchorRegions } : {}),
 
 		release: () => runner.release(),
 	}

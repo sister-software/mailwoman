@@ -200,6 +200,15 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
+	 * The PFX1 postcode-prefix indexes the weights package ships, for the anchor-region prior.
+	 *
+	 * Only the paths are stored, as for {@link NeuralAddressClassifier.fstPath}.
+	 */
+	get postcodePrefixPaths(): readonly string[] {
+		return this.cfg.postcodePrefixPaths ?? []
+	}
+
+	/**
 	 * The loaded `model.onnx` path and the weights source that supplied it, `null`
 	 * when the instance was constructed directly instead of through {@link loadFromWeights}.
 	 */

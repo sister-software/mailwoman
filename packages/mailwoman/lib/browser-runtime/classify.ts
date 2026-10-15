@@ -14,6 +14,7 @@
 // Do not re-dynamize.
 import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
+import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
@@ -159,6 +160,13 @@ export interface ClassifyStageDeps {
 	 */
 	streetMorphology?: FSTMatcherLike | null
 	/**
+	 * The anchor-region lookup over the release's postcode-prefix indexes.
+	 *
+	 * `null` or omitted when the release lists none, and the anchor-region prior is then off,
+	 * as it is for a release published before the manifest listed the indexes.
+	 */
+	anchorRegions?: AnchorRegionLookupLike | null
+	/**
 	 * The per-parse placetype-pair prior selector.
 	 *
 	 * The loaded {@link SelectPairIndex}, or `null`/omitted when no pair index was staged for this release.
@@ -220,6 +228,7 @@ export async function runClassifyStage(
 			classifier: deps.classifier as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
+			...(deps.anchorRegions ? { anchorRegions: deps.anchorRegions } : {}),
 		},
 		// The demo search box is a human typing fragments, so the input mode is the fragmented
 		// register and the evidence-bundle channels feed once a bundle model ships.

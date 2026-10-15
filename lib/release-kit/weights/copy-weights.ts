@@ -5,9 +5,11 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import {
 	type PairIndexInputs,
@@ -15,6 +17,7 @@ import {
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
 } from "@mailwoman/core/release-config"
+import { PostcodePrefixIndexResolver } from "@mailwoman/neural/postcode/prefix-index"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath } from "path-ts"
 
@@ -171,6 +174,7 @@ export async function copyWeights({
 		await materializeFST(context, workspace, dir)
 		await materializeStreetMorphology(context, workspace, dir)
 		await materializePairIndex(context, workspace, dir)
+		await materializePostcodePrefix(context, workspace, dir)
 	}
 
 	for (const [family, recipe] of Object.entries(config.charWeights ?? {})) {
@@ -346,6 +350,49 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 	if (!(await pathExists(binDest))) throw new Error(`gazetteer postcode-binary ran but ${binDest} was not produced`)
 	await stashDerived(context, dir, `postcode-${country}.bin`)
 	context.log(`built soft-feed → ${workspace}/postcode-${country}.bin`)
+}
+
+/**
+ * Copies the newest PFX1 postcode-prefix index of each scope the country ships into the workspace.
+ *
+ * The data root holds dated builds under `postcode-prefix/`, and the copy takes the
+ * newest of each scope by modification time under the scope's shipped name.
+ * An index whose header records tier `build-local` is refused rather than skipped, because a package
+ * whose `files` array lists the file would otherwise publish bytes its license does not allow.
+ */
+async function materializePostcodePrefix(context: MaterializationContext, workspace: string, dir: string) {
+	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
+	const scopes = context.softFeed.postcodePrefixByCountry?.[country]
+
+	if (!scopes?.length) return
+
+	const newest = await newestPostcodePrefixFiles(resolvePath(context.dataRoot, "postcode-prefix"))
+
+	for (const scope of scopes) {
+		const shippedName = shippedPostcodePrefixName(scope)
+		const source = newest.get(scope)
+
+		if (!source) {
+			throw new Error(
+				`Missing postcode-prefix index for scope "${scope}" under ${context.dataRoot}/postcode-prefix\n` +
+					`Set MAILWOMAN_DATA_ROOT or softFeed.postcodePrefixByCountry.${country}.`
+			)
+		}
+
+		const header = new PostcodePrefixIndexResolver(new Uint8Array(await readLocalBuffer(source.path))).header
+
+		if (header.tier !== "shipped") {
+			throw new Error(
+				`postcode-prefix index ${source.path} records tier "${header.tier}" (${header.source}) and cannot ship in ${workspace}`
+			)
+		}
+
+		const dest = resolvePath(dir, shippedName)
+
+		await removePathIfPresent(dest)
+		await copyFileTo(source.path, dest)
+		context.log(`copied postcode-prefix → ${workspace}/${shippedName} (built ${header.buildDate})`)
+	}
 }
 
 async function materializePairIndex(context: MaterializationContext, workspace: string, dir: string) {

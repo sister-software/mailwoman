@@ -48,6 +48,13 @@ export interface SoftFeedRecipe {
 	localitySurfaceLexicon?: string
 	pairIndexByCountry?: Record<string, PairIndexInputs>
 	postcodeDBByCountry?: Record<string, string>
+	/**
+	 * The PFX1 postcode-prefix index scopes each country ships, such as `["gb-esw"]` for `gb`.
+	 *
+	 * The copy takes the newest dated file of each scope under the data root's
+	 * `postcode-prefix` directory and refuses one whose header tier is `build-local`.
+	 */
+	postcodePrefixByCountry?: Record<string, string[]>
 	[key: string]: unknown
 }
 

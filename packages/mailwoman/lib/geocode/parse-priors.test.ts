@@ -6,15 +6,10 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { NUMBERED_MORPHOLOGY_OPTS, ZEROED_MORPHOLOGY_OPTS, type FSTMatcherLike } from "@mailwoman/core/pipeline"
-import type { PostcodePrefixIndexLike } from "@mailwoman/core/resolver"
+import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor-regions"
 import { describe, expect, it } from "vitest"
 
-import {
-	createAnchorRegionLookup,
-	loadParsePriors,
-	loadPostcodePrefixIndexes,
-	parsePriorOptions,
-} from "#geocode/parse-priors"
+import { loadParsePriors, parsePriorOptions, postcodePrefixIndexPaths } from "#geocode/parse-priors"
 
 const MATCHER: FSTMatcherLike = {
 	walk: () => null,
@@ -125,36 +120,14 @@ describe("parsePriorOptions", () => {
 	})
 })
 
-describe("createAnchorRegionLookup", () => {
-	const VERMONT = { placetype: "region", wofID: 85_688_763, name: "Vermont" }
-	const US = { placetype: "country", wofID: 85_633_793, name: "United States" }
-
-	const usIndex: PostcodePrefixIndexLike = {
-		country: "US",
-		probe: (prefix) =>
-			prefix === "054"
-				? { prefix, ancestors: [US, VERMONT], lat: 44.6, lon: -73, radiusP95Km: 51.6, unitCount: 60 }
-				: prefix === "205"
-					? { prefix, ancestors: [US], lat: 38.9, lon: -77, radiusP95Km: 5.2, unitCount: 75 }
-					: null,
-	}
-
-	it("answers a postcode through its country's index with the prefix rule the resolver uses", () => {
-		const lookup = createAnchorRegionLookup([usIndex])
-
-		expect(lookup.ancestorsFor("05448", "US")).toEqual([US, VERMONT])
-		expect(lookup.ancestorsFor("20500", "US")).toEqual([US])
-		expect(lookup.ancestorsFor("99999", "US")).toEqual([])
-		expect(lookup.ancestorsFor("05448", "GB")).toEqual([])
-	})
-})
-
-describe("loadPostcodePrefixIndexes", () => {
-	it("loads no index from a directory that holds none", async () => {
+describe("postcodePrefixIndexPaths", () => {
+	it("reads the weights package's own indexes before the data-root directory", async () => {
 		await using directory = await temporaryDirectory("parse-priors-")
-		const reports: string[] = []
 
-		expect(await loadPostcodePrefixIndexes(directory.path, (message) => reports.push(message))).toEqual([])
-		expect(reports).toEqual([])
+		expect(
+			await postcodePrefixIndexPaths({ postcodePrefixPaths: ["/pkg/postcode-prefix-us.bin"] }, directory.path)
+		).toEqual(["/pkg/postcode-prefix-us.bin"])
+
+		expect(await postcodePrefixIndexPaths({}, directory.path)).toEqual([])
 	})
 })

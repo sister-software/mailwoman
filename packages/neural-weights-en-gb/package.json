@@ -13,6 +13,7 @@
 		"LICENSE.md",
 		"PROVENANCE.json",
 		"postcode-gb.bin",
+		"postcode-prefix-gb-esw.bin",
 		"pair-index-gb.bin",
 		"fst-en-gb.bin",
 		"fst-street-morphology.bin",

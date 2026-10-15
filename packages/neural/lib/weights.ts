@@ -9,7 +9,9 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { POSTCODE_PREFIX_FILE_GLOB, postcodePrefixScopeOf } from "@mailwoman/core/postcode-prefix-files"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { scriptFamilyBase } from "#char-encoder"
 import type { EncoderDescriptor } from "#char-encoder"
@@ -240,6 +242,13 @@ export interface ResolvedWeights {
 	 * The placetype-pair index for the locale's country, when present.
 	 */
 	pairIndexPath?: string
+
+	/**
+	 * The PFX1 postcode-prefix indexes the package ships, `postcode-prefix-<scope>.bin`, when present.
+	 *
+	 * The anchor-region prior reads them.
+	 */
+	postcodePrefixPaths?: string[]
 
 	/**
 	 * The location that supplied the weights, such as `package:…`, `overlay:…`, `cache:…` or `explicit`.
@@ -518,6 +527,7 @@ async function resolveFromPackageDir(
 			: await resolveEvidenceLexicon("locality_surface", packageDir, modelCardPath ?? null)
 
 	const pairIndexPath = await resolvePairIndexSibling(packageDir, country)
+	const postcodePrefixPaths = await resolvePostcodePrefixSiblings(packageDir)
 
 	const fstCandidate = resolvePath(packageDir, `fst-${locale}.bin`)
 	const fstPath = (await pathExists(fstCandidate)) ? fstCandidate : undefined
@@ -553,6 +563,7 @@ async function resolveFromPackageDir(
 				localitySurfaceLexiconPath,
 			],
 			[`pair-index-${country}.bin`, pairIndexPath],
+			...postcodePrefixPaths.map((path): [string, string] => [basename(path), path]),
 			[`fst-${locale}.bin`, fstPath],
 			["fst-street-morphology.bin", streetMorphologyPath],
 		],
@@ -574,6 +585,7 @@ async function resolveFromPackageDir(
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
 		...(pairIndexPath ? { pairIndexPath } : {}),
+		...(postcodePrefixPaths.length ? { postcodePrefixPaths } : {}),
 		...(fstPath ? { fstPath } : {}),
 		...(streetMorphologyPath ? { streetMorphologyPath } : {}),
 		...(streetTypeLexiconPath ? { streetTypeLexiconPath } : {}),
@@ -597,6 +609,18 @@ async function resolveAnchorLookupSibling(
 	if (await pathExists(json)) return { path: json, binary: false }
 
 	return null
+}
+
+/**
+ * Returns the `postcode-prefix-<scope>.bin` files in a package directory, sorted by name.
+ */
+async function resolvePostcodePrefixSiblings(packageDir: PathBuilder): Promise<string[]> {
+	const names = await Globerator.from(POSTCODE_PREFIX_FILE_GLOB, { cwd: packageDir.toString() }).toArray()
+
+	return names
+		.filter((name) => postcodePrefixScopeOf(name) !== null)
+		.toSorted()
+		.map((name) => resolvePath(packageDir, name))
 }
 
 async function resolvePairIndexSibling(packageDir: PathBuilder, country: string): Promise<string | null> {

@@ -22,6 +22,11 @@
 			"us": "postalcode-us.db",
 			"fr": "postalcode-intl.db"
 		},
+		"postcodePrefixByCountry": {
+			"$comment": "The PFX1 postcode-prefix indexes the anchor-region prior reads (#2585), one scope per entry, copied by copy-weights.ts from the newest dated file under the data root's `postcode-prefix/` directory as `postcode-prefix-<scope>.bin`. A scope whose PFX1 header records tier `build-local` is refused: `gb-ni` is built from OpenStreetMap under ODbL and stays out of every package.",
+			"us": ["us"],
+			"gb": ["gb-esw"]
+		},
 		"pairIndexByCountry": {
 			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) — mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default — see `mailwoman gazetteer pair-index --help`). `source` and `banDir` are relative to the data root. `boroughDB` is a WOF database filename, resolved under the data root's `db/wof/` like postcodeDBByCountry. COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
 			"$comment_parentDelta": "`parentDelta` (#46, the whole-edge parent bias) is present on us/gb/nz/fr ONLY, at the δ=5 the 2026-08-04 verdict recommended (docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md). de/in/es/it deliberately omit it: no board has graded the parent side on those locales, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an inherited magnitude. An ABSENT key means the shipped artifact carries no parentDelta and the parent bias is OFF for that locale — not zero.",
