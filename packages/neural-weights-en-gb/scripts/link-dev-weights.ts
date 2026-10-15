@@ -87,6 +87,8 @@ const overlay = await materializeDevOverlay({
 	},
 	localeFST: true,
 	streetMorphologyFST: true,
+	// The Northern Ireland scope stays out: its source is OpenStreetMap under ODbL, tier build-local.
+	postcodePrefixScopes: ["gb-esw"],
 })
 
 // Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.

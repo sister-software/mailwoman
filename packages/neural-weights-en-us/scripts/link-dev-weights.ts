@@ -51,4 +51,5 @@ await materializeDevOverlay({
 	},
 	localeFST: true,
 	streetMorphologyFST: true,
+	postcodePrefixScopes: ["us"],
 })

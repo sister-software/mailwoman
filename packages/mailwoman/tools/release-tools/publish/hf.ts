@@ -84,6 +84,10 @@ export interface PublishHFOptions {
 	modelSize?: string
 	steps?: number
 	postcodes?: string
+	/**
+	 * The PFX1 postcode-prefix indexes to upload beside the postcode binaries, delimited like `postcodes`.
+	 */
+	postcodePrefixes?: string
 	pairIndexes?: string
 	fsts?: string
 	gazetteerLexicon?: string
@@ -287,6 +291,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	const postcodeBins = await stageBinaryList(args.postcodes ?? null, "postcode binary")
 
+	const postcodePrefixBins = await stageBinaryList(args.postcodePrefixes ?? null, "postcode-prefix index")
+
 	const pairIndexBins = await stageBinaryList(args.pairIndexes ?? null, "pair-index binary")
 
 	const fstBins = await stageBinaryList(args.fsts ?? null, "FST binary")
@@ -328,6 +334,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	uploadFlatByBasename(postcodeBins, remoteBase)
+	uploadFlatByBasename(postcodePrefixBins, remoteBase)
 	uploadFlatByBasename(pairIndexBins, remoteBase)
 
 	uploadFlatByBasename(fstBins, remoteBase)
@@ -412,6 +419,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	await verifyFlatByBasename(fstBins, remoteBase)
 
+	await verifyFlatByBasename(postcodePrefixBins, remoteBase)
+
 	await verifyFlatByBasename(fisherArtifacts, remoteBase)
 
 	await verifyFlatByBasename(splitEmbeddingFiles, remoteBase)
@@ -443,6 +452,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		hasAnchor: postcodeBins.length > 0,
 		postcodeAnchors: postcodeBins.map((localPath) => localPath.split("/").pop()!),
+		postcodePrefixes: postcodePrefixBins.map((localPath) => localPath.split("/").pop()!),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 		splitEmbeddings: splitEmbeddingFiles.length > 0,
 	}

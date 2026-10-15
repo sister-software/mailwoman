@@ -609,7 +609,11 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		// The loader reports a missing or unreadable artifact and returns no prior for it,
 		// because a silent absent prior scores lower and reads as a model difference.
 		const loaded = await loadParsePriors(
-			{ fstPath, streetMorphologyPath: (forClassifier as { streetMorphologyPath?: string }).streetMorphologyPath },
+			{
+				fstPath,
+				streetMorphologyPath: (forClassifier as { streetMorphologyPath?: string }).streetMorphologyPath,
+				postcodePrefixPaths: (forClassifier as { postcodePrefixPaths?: readonly string[] }).postcodePrefixPaths,
+			},
 			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
 		)
 

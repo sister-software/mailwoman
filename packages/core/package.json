@@ -567,6 +567,11 @@
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js"
 		},
+		"./postcode-prefix-files": {
+			"types": "./out/postcode-prefix-files.d.ts",
+			"node": "./lib/postcode-prefix-files.ts",
+			"default": "./out/postcode-prefix-files.js"
+		},
 		"./overture-pins": {
 			"types": "./out/overture-pins.d.ts",
 			"node": "./lib/overture-pins.ts",

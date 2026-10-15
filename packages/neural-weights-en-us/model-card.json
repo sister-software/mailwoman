@@ -365,7 +365,9 @@
 		"locality_surface_lexicon": "locality-surface-lexicon-v7.json",
 		"pair_index": "pair-index-us.bin",
 		"$comment_postcode_anchor": "Added 2026-08-06 (#1516). The package has always shipped this binary (release.config.json softFeed.postcodeDBByCountry.us; link-dev-weights builds it locally) — it was simply never DECLARED here, and this block is now read: `readDeclaredArtifactFile` uses it to decide whether an unfed anchor channel is a broken package (declared, missing) or a supported posture (never declared, e.g. en-gb under #1476). Undeclared meant a missing postcode-us.bin degraded in silence, which is worth 3-4 baseline gauntlet cases.",
-		"postcode_anchor": "postcode-us.bin"
+		"postcode_anchor": "postcode-us.bin",
+		"$comment_postcode_prefix": "Added 2026-10-15 (#2585). The PFX1 postcode-prefix index the anchor-region prior reads: one node per three-digit sectional center, its region asserted by point-in-polygon over the Who's On First region polygons under a unanimity rule, built from postalcode-us.db and admin-global-priority-importance.db. The header records the build date, source digests and tier; copy-weights refuses a build-local tier.",
+		"postcode_prefix": "postcode-prefix-us.bin"
 	},
 	"calibration": {
 		"method": "isotonic-regression (PAVA) over per-span softmax confidence; OPT-IN via core/decoder createCalibrator",

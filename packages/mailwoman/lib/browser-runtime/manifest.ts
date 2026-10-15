@@ -26,6 +26,13 @@ export interface ReleaseInfo {
 	 * The postcode-anchor binaries in the release directory, such as `postcode-gb.bin`.
 	 */
 	postcodeAnchors?: string[]
+	/**
+	 * The PFX1 postcode-prefix indexes in the release directory, such as `postcode-prefix-us.bin`.
+	 *
+	 * The anchor-region prior reads them.
+	 * A release published before the field holds none.
+	 */
+	postcodePrefixes?: string[]
 	hasPolygons?: boolean
 	/**
 	 * Whether the release directory also holds the split model.
@@ -76,6 +83,16 @@ export function postcodeAnchorFilesOf(
 	if (release?.postcodeAnchors) return release.postcodeAnchors
 
 	return release?.hasAnchor === true ? PRE_LIST_POSTCODE_ANCHORS : []
+}
+
+/**
+ * The postcode-prefix indexes a release's classifier load fetches, as file names in its directory.
+ *
+ * A release published before the manifest listed them fetches none,
+ * and the anchor-region prior stays off for it.
+ */
+export function postcodePrefixFilesOf(release: Pick<ReleaseInfo, "postcodePrefixes"> | null): readonly string[] {
+	return release?.postcodePrefixes ?? []
 }
 
 export interface ReleasesManifest {

@@ -17,6 +17,7 @@ import {
 import { md5File } from "@mailwoman/core/hash"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, repoRootPathBuilder, workspacePathBuilder } from "@mailwoman/core/paths"
+import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -328,6 +329,34 @@ export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promi
 }
 
 /**
+ * Symlinks the newest dated PFX1 postcode-prefix index of each scope into an overlay under
+ * the scope's shipped name, so the anchor-region prior reads the file the package would ship.
+ */
+export async function linkPostcodePrefixIndexes(destDir: PathBuilder, scopes: readonly string[]): Promise<void> {
+	const newest = await newestPostcodePrefixFiles()
+
+	for (const scope of scopes) {
+		const file = newest.get(scope)
+		const name = shippedPostcodePrefixName(scope)
+
+		if (!file) {
+			console.error(
+				`WARNING: no postcode-prefix index for scope "${scope}" under ${dataRootPath("postcode-prefix")} — ` +
+					`the anchor-region prior reads the data-root directory instead of ${name}.`
+			)
+
+			continue
+		}
+
+		await linkSoftFeedSibling(
+			file.path,
+			destDir(name),
+			"the anchor-region prior reads the data-root directory instead."
+		)
+	}
+}
+
+/**
  * Symlinks the prebuilt street-morphology FST into an overlay so that the
  * street-context check does not rebuild it from dictionaries.
  */
@@ -595,6 +624,13 @@ export interface DevOverlayManifest {
 	evidenceLexiconsFromCard?: boolean
 
 	/**
+	 * The PFX1 postcode-prefix scopes to link as `postcode-prefix-<scope>.bin`, such as `["gb-esw"]`.
+	 *
+	 * Each links the newest dated index of its scope from the data root's `postcode-prefix` directory.
+	 */
+	postcodePrefixScopes?: readonly string[]
+
+	/**
 	 * Builds `postcode-<country>.bin` from a WOF postcode extract with the compiled CLI.
 	 * The step is skipped when the file already exists.
 	 */
@@ -857,6 +893,10 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 
 	if (manifest.streetMorphologyFST) {
 		await linkStreetMorphologyFST(destDir)
+	}
+
+	if (manifest.postcodePrefixScopes?.length) {
+		await linkPostcodePrefixIndexes(destDir, manifest.postcodePrefixScopes)
 	}
 
 	return { destDir, cli, card }

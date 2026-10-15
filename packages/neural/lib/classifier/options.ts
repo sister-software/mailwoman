@@ -100,6 +100,13 @@ export interface NeuralAddressClassifierConfig {
 	streetMorphologyPath?: string
 
 	/**
+	 * The paths of the PFX1 postcode-prefix indexes beside the resolved weights.
+	 *
+	 * The parse priors loader reads them for the anchor-region prior.
+	 */
+	postcodePrefixPaths?: readonly string[]
+
+	/**
 	 * The path to the loaded `model.onnx`, reported through `resolvedWeights`
 	 * because weight resolution tries several locations.
 	 */

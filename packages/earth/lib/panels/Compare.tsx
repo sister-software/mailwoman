@@ -12,7 +12,7 @@
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { DEFAULT_LOCALE, runClassifyStage, type SelectPairIndex } from "mailwoman/browser-runtime/classify"
 import { fetchWithRetry } from "mailwoman/browser-runtime/fetch"
-import { postcodeAnchorFilesOf, type ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import { postcodeAnchorFilesOf, postcodePrefixFilesOf, type ReleaseInfo } from "mailwoman/browser-runtime/manifest"
 import { neuralClassifierLoadURLs } from "mailwoman/browser-runtime/resources"
 import type { MailwomanClassifierLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
@@ -95,6 +95,7 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 				} = (await loadNeuralClassifierFromURLs({
 					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, {
 						postcodeAnchors: postcodeAnchorFilesOf(release ?? null),
+						postcodePrefixes: postcodePrefixFilesOf(release ?? null),
 						splitEmbeddings: release?.splitEmbeddings,
 					}),
 					fetchImpl: fetchWithRetry,

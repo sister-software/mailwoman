@@ -12,11 +12,8 @@
 
 import { isCountryToken } from "@mailwoman/codex/country"
 import { streetTypeWordTestFor } from "@mailwoman/codex/street-type"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import {
-	type AnchorRegionAncestor,
 	type AnchorRegionLookupLike,
 	type ClassifierOpts,
 	type FSTMatcherLike,
@@ -24,22 +21,14 @@ import {
 	type VenueHeadLexiconLike,
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
-import type { PostcodePrefixIndexLike } from "@mailwoman/core/resolver"
+import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/postcode-prefix-files"
 import { isStreetAffix } from "@mailwoman/neural/fst-prior"
+import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor-regions"
 import { PostcodePrefixIndexResolver } from "@mailwoman/neural/postcode/prefix-index"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
-import { probePostcodePrefix } from "@mailwoman/resolver/postcode/prefix"
-import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
-
-/**
- * The data-root directory that holds the PFX1 postcode-prefix indexes, one file per country scope.
- */
-export const POSTCODE_PREFIX_DIRECTORY = dataRootPath("postcode-prefix")
-
-const POSTCODE_PREFIX_FILE_GLOB = "postcode-prefix-*.bin"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * The artifact paths a loaded classifier exposes for its priors.
@@ -58,6 +47,12 @@ export interface ParsePriorArtifacts {
 	 * Absent, the loader builds the matcher from the bundled dictionaries.
 	 */
 	streetMorphologyPath?: string | null | undefined
+	/**
+	 * The PFX1 postcode-prefix indexes the weights package ships.
+	 *
+	 * Absent or empty, the loader reads the data root's `postcode-prefix` directory instead.
+	 */
+	postcodePrefixPaths?: readonly string[] | null | undefined
 }
 
 /**
@@ -83,7 +78,8 @@ export interface LoadParsePriorsOptions {
 	 */
 	venueHeadPrior?: boolean
 	/**
-	 * The directory of PFX1 postcode-prefix indexes the anchor-region prior reads.
+	 * The directory of dated PFX1 postcode-prefix indexes the anchor-region prior reads
+	 * when the weights package ships none.
 	 *
 	 * @defaultValue {@linkcode POSTCODE_PREFIX_DIRECTORY}
 	 */
@@ -163,60 +159,36 @@ export function streetTypeTestFor(fst: FSTMatcherLike | null, country: string | 
 }
 
 /**
- * Returns an anchor-region lookup over postcode-prefix indexes.
- *
- * A postcode is probed through {@linkcode probePostcodePrefix}, which derives the
- * prefix the index keys, in every index of the postcode's country.
- * The first index that holds the prefix answers.
+ * Loads the PFX1 indexes at `paths`, and reports the files through `report`.
  */
-export function createAnchorRegionLookup(indexes: readonly PostcodePrefixIndexLike[]): AnchorRegionLookupLike {
-	return {
-		ancestorsFor(postcode: string, country: string): readonly AnchorRegionAncestor[] {
-			for (const index of indexes) {
-				const probe = probePostcodePrefix(postcode, index, country)
+export async function loadPostcodePrefixIndexes(
+	paths: readonly PathBuilderLike[],
+	report: (message: string) => void
+): Promise<PostcodePrefixIndexResolver[]> {
+	const indexes: PostcodePrefixIndexResolver[] = []
 
-				if (probe) return probe.node.ancestors
-			}
-
-			return []
-		},
+	for (const path of paths) {
+		indexes.push(new PostcodePrefixIndexResolver(new Uint8Array(await readLocalBuffer(path))))
 	}
+
+	if (paths.length) {
+		report(`postcode-prefix indexes: ${paths.map((path) => path.toString()).join(", ")}`)
+	}
+
+	return indexes
 }
 
 /**
- * Loads the newest PFX1 index of each country scope under `directory`.
- *
- * Index files carry a build date in their name, so several builds of one scope can sit side by side.
- * The newest by modification time wins, and the choice is reported through `report`.
+ * Returns the postcode-prefix index files a classifier reads: the weights package's own when it
+ * ships any, else the newest of each scope under the data root's `postcode-prefix` directory.
  */
-export async function loadPostcodePrefixIndexes(
-	directory: PathBuilderLike,
-	report: (message: string) => void
-): Promise<PostcodePrefixIndexResolver[]> {
-	const newest = new Map<string, { index: PostcodePrefixIndexResolver; mtimeMs: number; file: string }>()
+export async function postcodePrefixIndexPaths(
+	artifacts: Pick<ParsePriorArtifacts, "postcodePrefixPaths">,
+	directory: PathBuilderLike = POSTCODE_PREFIX_DIRECTORY
+): Promise<PathBuilderLike[]> {
+	if (artifacts.postcodePrefixPaths?.length) return [...artifacts.postcodePrefixPaths]
 
-	for await (const entry of Globerator.from(POSTCODE_PREFIX_FILE_GLOB, { cwd: directory.toString() })) {
-		const file = PathBuilder.from(directory, entry)
-		const stat = await tryStat(file)
-
-		if (!stat) continue
-
-		const index = new PostcodePrefixIndexResolver(new Uint8Array(await readLocalBuffer(file)))
-		const scope = `${index.header.country}:${index.header.scope}`
-		const current = newest.get(scope)
-
-		if (!current || stat.mtimeMs > current.mtimeMs) {
-			newest.set(scope, { index, mtimeMs: stat.mtimeMs, file: file.toString() })
-		}
-	}
-
-	const chosen = [...newest.values()]
-
-	if (chosen.length) {
-		report(`postcode-prefix indexes: ${chosen.map((item) => item.file).join(", ")}`)
-	}
-
-	return chosen.map((item) => item.index)
+	return [...(await newestPostcodePrefixFiles(directory)).values()].map((file) => file.path)
 }
 
 /**
@@ -268,20 +240,19 @@ export async function loadParsePriors(
 			const directory = options.postcodePrefixDirectory ?? POSTCODE_PREFIX_DIRECTORY
 
 			try {
-				const indexes = await loadPostcodePrefixIndexes(directory, options.onReport ?? (() => {}))
+				const paths = await postcodePrefixIndexPaths(artifacts, directory)
+				const indexes = await loadPostcodePrefixIndexes(paths, options.onReport ?? (() => {}))
 
 				if (indexes.length) {
 					anchorRegions = createAnchorRegionLookup(indexes)
 				} else {
 					warn(
-						`no postcode-prefix index under ${directory} — the anchor-region prior is off for ${label}. ` +
-							"A state name after an anchored postcode keeps the FST's own bias."
+						`no postcode-prefix index in the weights package or under ${directory} — the anchor-region prior is off ` +
+							`for ${label}. A state name after an anchored postcode keeps the FST's own bias.`
 					)
 				}
 			} catch (error) {
-				warn(
-					`postcode-prefix indexes unavailable under ${directory}: ${(error as Error).message} — anchor-region prior off`
-				)
+				warn(`postcode-prefix indexes unavailable: ${(error as Error).message} — anchor-region prior off`)
 			}
 		}
 	}

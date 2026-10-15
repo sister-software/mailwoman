@@ -385,6 +385,13 @@ export class PostcodePrefixIndexResolver {
 	}
 
 	/**
+	 * The header's prefix granularities, such as `["3"]` or `["outward"]`.
+	 */
+	get levels(): readonly string[] {
+		return this.header.levels
+	}
+
+	/**
 	 * Iterates every node in the file's prefix-sorted order.
 	 *
 	 * Runtime lookups should use {@link PostcodePrefixIndexResolver.probe}.

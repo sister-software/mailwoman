@@ -235,11 +235,16 @@ function wrapWithStreetEvidence(
 function classifierPriorArtifacts(classifier: CreateRuntimePipelineOpts["classifier"]): ParsePriorArtifacts {
 	if (!classifier || typeof classifier !== "object") return {}
 
-	const shaped = classifier as { fstPath?: PathBuilderLike | null; streetMorphologyPath?: string | null }
+	const shaped = classifier as {
+		fstPath?: PathBuilderLike | null
+		streetMorphologyPath?: string | null
+		postcodePrefixPaths?: readonly string[] | null
+	}
 
 	return {
 		...("fstPath" in shaped ? { fstPath: shaped.fstPath } : {}),
 		...("streetMorphologyPath" in shaped ? { streetMorphologyPath: shaped.streetMorphologyPath } : {}),
+		...("postcodePrefixPaths" in shaped ? { postcodePrefixPaths: shaped.postcodePrefixPaths } : {}),
 	}
 }
 
