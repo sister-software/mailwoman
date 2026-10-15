@@ -34,7 +34,7 @@ import type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
-	VenueHeadLexiconLike,
+	VenueHeadStage,
 } from "#pipeline/types"
 import type { ResolveOpts } from "#resolver/types"
 
@@ -481,7 +481,7 @@ async function safeClassify(
 		placetypePair: PlacetypePairSelection
 		streetMorphology: FSTMatcherLike | null
 		streetMorphologyPrior: boolean
-		venueHead: VenueHeadLexiconLike | null
+		venueHead: VenueHeadStage | null
 		inputMode: InputMode
 	}
 ): Promise<AddressTree> {
@@ -497,7 +497,8 @@ async function safeClassify(
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			placetypePair,
 			...streetContextRequirementFor({ fst, streetMorphology }, { streetMorphologyPrior }),
-			...(venueHead ? { venueHead } : {}),
+			...(venueHead ? { venueHead: venueHead.venueHead } : {}),
+			...(venueHead?.venueHeadOpts ? { venueHeadOpts: venueHead.venueHeadOpts } : {}),
 		})
 	} catch (error) {
 		recordFault(faults, PipelineFaultStage.Classifier, error)

@@ -59,7 +59,20 @@ export function buildVenueHeadEmissionPriors(
 	const extensionWords = opts.extensionWords ?? 3
 	const extensionDecay = opts.extensionDecay ?? 1
 	const isStreetAffix = opts.isStreetAffix ?? (() => false)
+	const isCountryName = opts.isCountryName ?? (() => false)
 	const words = wordsWithSegments(groupPiecesIntoWords(pieces), pieces)
+
+	// A segment that is a country name holds no venue head: `america` heads `Bank of America`,
+	// and `United States of America` is the country.
+	const segmentTexts = new Map<number, string[]>()
+
+	for (const word of words) {
+		segmentTexts.set(word.segment, [...(segmentTexts.get(word.segment) ?? []), word.group.fstToken])
+	}
+
+	const countrySegments = new Set(
+		[...segmentTexts.entries()].filter(([, tokens]) => isCountryName(tokens.join(" "))).map(([segment]) => segment)
+	)
 
 	// Every piece of the span takes the bias on both venue columns.
 	// A piece between two words, such as a bare `▁`, belongs to no word and keeps `O`.
@@ -89,7 +102,7 @@ export function buildVenueHeadEmissionPriors(
 	for (let index = 0; index < words.length; index++) {
 		const word = words[index]!
 
-		if (word.isIdentifier) continue
+		if (word.isIdentifier || countrySegments.has(word.segment)) continue
 		const token = word.group.fstToken
 
 		const sameSegment = (other: SegmentWord | undefined): boolean =>
@@ -114,7 +127,13 @@ export function buildVenueHeadEmissionPriors(
 			extend(index, -1, backward)
 		}
 
-		const first = sameSegment(words[index + 1]) ? scaled(lexicon.first(token)) : null
+		// A street type reads as a first-word head only when it opens its segment,
+		// as `St` does in `St Mary's Church`.
+		// After a street name, as in `6th St SW`, it is the street's type.
+		const opensSegment = words[index - 1]?.segment !== word.segment
+
+		const first =
+			sameSegment(words[index + 1]) && (opensSegment || !isStreetAffix(token)) ? scaled(lexicon.first(token)) : null
 
 		if (first !== null && first > 0) {
 			extend(index, 1, first)

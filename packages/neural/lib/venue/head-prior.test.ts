@@ -90,6 +90,43 @@ describe("buildVenueHeadEmissionPriors", () => {
 		expect(stopped[2]![I]).toBe(0)
 	})
 
+	it("gives no first-word bias to a street type after a street name, and keeps it when the type opens the segment", () => {
+		const isStreetAffix = (w: string) => w === "st" || w === "rd"
+		const lex = lexicon({ first: { st: 2 }, last: { school: 2 } })
+
+		const afterName = build(lex, pieces("6th", "St", "SW"), LABELS, { isStreetAffix })
+
+		expect(afterName.flat().every((v) => v === 0)).toBe(true)
+
+		const saint = build(lex, pieces("St", "Mary's", "Church"), LABELS, { isStreetAffix })
+
+		expect(saint[0]![B]).toBeCloseTo(2)
+		expect(saint[1]![I]).toBeCloseTo(2)
+
+		// `School` heads no venue before the street type `Rd`, once `rd` reads as one.
+		const streetName = build(lex, pieces("Mountain", "School", "Rd"), LABELS, { isStreetAffix })
+
+		expect(streetName.flat().every((v) => v === 0)).toBe(true)
+	})
+
+	it("gives no bias inside a segment that is a country name", () => {
+		const isCountryName = (segment: string) => segment === "united states of america"
+		const lex = lexicon({ last: { america: 2 } })
+
+		const country = build(lex, pieces("United", "States", "of", "America", ",", "Vermont"), LABELS, { isCountryName })
+
+		expect(country.flat().every((v) => v === 0)).toBe(true)
+
+		const bank = build(lex, pieces("Bank", "of", "America", ",", "Vermont"), LABELS, { isCountryName })
+
+		expect(bank[2]![B]).toBeCloseTo(2)
+		expect(bank[0]![I]).toBeCloseTo(2)
+
+		const unguarded = build(lex, pieces("United", "States", "of", "America", ",", "Vermont"), LABELS)
+
+		expect(unguarded[3]![B]).toBeCloseTo(2)
+	})
+
 	it("gives no bias to a street-type head whose span opens with a house number", () => {
 		const isStreetAffix = (w: string) => w === "plaza" || w === "center" || w === "garden"
 		const lex = lexicon({ last: { plaza: 2, center: 3, gallery: 2 } })

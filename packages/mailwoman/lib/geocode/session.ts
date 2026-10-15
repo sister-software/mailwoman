@@ -467,7 +467,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const { fst, streetMorphology } = priors
 
-	const venueHead = priors.venueHeadFor(options.defaultCountry ?? options.locale.split("-")[1] ?? null)
+	const venueHeadCountry = options.defaultCountry ?? options.locale.split("-")[1] ?? null
+	const venueHead = priors.venueHeadFor(venueHeadCountry)
 
 	const weightsLoadedAt = performance.now()
 
@@ -650,9 +651,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
 		streetMorphologyPrior: settings.streetMorphologyPrior,
-		...(venueHead ? { venueHead } : {}),
-		...(venueHead && options.venueHeadBiasScale !== undefined
-			? { venueHeadOpts: { biasScale: options.venueHeadBiasScale } }
+		...(venueHead
+			? {
+					venueHead,
+					venueHeadOpts: {
+						...priors.venueHeadOptsFor(venueHeadCountry),
+						...(options.venueHeadBiasScale !== undefined ? { biasScale: options.venueHeadBiasScale } : {}),
+					},
+				}
 			: {}),
 	}
 

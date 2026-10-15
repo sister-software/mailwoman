@@ -71,6 +71,7 @@ export type {
 	UserLocation,
 	VenueHeadLexiconLike,
 	VenueHeadPriorOpts,
+	VenueHeadStage,
 	WordConsistencyOpts,
 	WordConsistencySetting,
 } from "#pipeline/types"

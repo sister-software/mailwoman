@@ -77,26 +77,50 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
 		const pipeline = createRuntimePipeline({ classifier })
 
-		await pipeline("1 Testville Road")
+		// A locale whose country has no street-type table in the codex, so the test reads the FST and no table.
+		await pipeline("1 Testville Road", { locale: "en-JM" })
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
-		// The morphology matcher is wired beside the FST, with the numbered-segment
-		// prior the geocode session runs by default.
-		// The venue-head lexicon is opt-in.
+		// The morphology matcher is wired beside the FST, with the numbered-segment prior the geocode
+		// session runs by default, and the locale's venue-head lexicon with the country's street-type test.
 		expect(calls[0]!.fstStreetMorphology).toBeDefined()
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual(NUMBERED_MORPHOLOGY_OPTS)
-		expect("venueHead" in calls[0]!).toBe(false)
+		expect(calls[0]!.venueHead).toBeDefined()
+
+		const venueHeadOpts = calls[0]!.venueHeadOpts as { isStreetAffix(word: string): boolean }
+
+		expect(venueHeadOpts.isStreetAffix("st")).toBe(false)
+		expect(venueHeadOpts.isStreetAffix("street")).toBe(true)
 	})
 
-	it("streetMorphologyPrior: false keeps the matcher at the zeroed weights, and venueHead: auto passes the lexicon", async () => {
+	it("streetMorphologyPrior: false keeps the matcher at the zeroed weights, and venueHead: none drops the lexicon", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-fst-prior-off-")
 		const dir = dirDirectory.path
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier, streetMorphologyPrior: false, venueHead: "auto" })
+		const pipeline = createRuntimePipeline({ classifier, streetMorphologyPrior: false, venueHead: "none" })
 
-		await pipeline("1 Testville Road", { locale: "en-GB" })
+		await pipeline("1 Testville Road")
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual(ZEROED_MORPHOLOGY_OPTS)
-		expect((calls[0]!.venueHead as { last(word: string): number | null }).last("gallery")).toBeTypeOf("number")
+		expect("venueHead" in calls[0]!).toBe(false)
+	})
+
+	it("venueHead: auto reads the lexicon and the street-type test of the locale's country", async () => {
+		await using dirDirectory = await temporaryDirectory("mw-fst-venue-head-")
+		const dir = dirDirectory.path
+		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
+		const pipeline = createRuntimePipeline({ classifier })
+
+		await pipeline("1 Testville Road", { locale: "en-US" })
+
+		const venueHeadOpts = calls[0]!.venueHeadOpts as {
+			isStreetAffix(word: string): boolean
+			isCountryName(segment: string): boolean
+		}
+
+		expect((calls[0]!.venueHead as { first(word: string): number | null }).first("st")).toBeTypeOf("number")
+		expect(venueHeadOpts.isStreetAffix("st")).toBe(true)
+		expect(venueHeadOpts.isStreetAffix("nw")).toBe(true)
+		expect(venueHeadOpts.isCountryName("united states of america")).toBe(true)
 	})
 
 	it("fst: none suppresses the auto-load (byte-stable override)", async () => {
